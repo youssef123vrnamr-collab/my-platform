@@ -8,7 +8,9 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
+        /* ... (نفس الستايل السابق) ... */
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -836,6 +838,21 @@
             border: none;
         }
 
+        .debug-info {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            color: #ffc107;
+            display: none;
+        }
+
+        .debug-info.active {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .navbar { padding: 1rem; }
             .hero h1 { font-size: 2rem; }
@@ -853,6 +870,7 @@
     <div class="loading" id="loadingScreen">
         <div class="loading-spinner"></div>
         <p>جاري تحميل الفيديوهات...</p>
+        <div class="debug-info" id="debugInfo"></div>
     </div>
 
     <div class="stars" id="stars"></div>
@@ -910,6 +928,12 @@
             </div>
         </div>
 
+        <!-- Debug Info for Admin -->
+        <div class="debug-info" id="adminDebugInfo" style="margin-bottom: 2rem;">
+            <h4><i class="fas fa-bug"></i> معلومات التشخيص</h4>
+            <p id="debugText"></p>
+        </div>
+
         <!-- Videos Section -->
         <div class="videos-section" id="videosSection">
             <h2 class="section-title"><i class="fas fa-video"></i> الفيديوهات التعليمية</h2>
@@ -918,6 +942,9 @@
                 <i class="fas fa-video-slash"></i>
                 <h2>لا توجد فيديوهات حالياً</h2>
                 <p style="margin-top: 1rem;">سيتم إضافة محتوى قريباً!</p>
+                <button class="btn btn-primary" onclick="retryLoad()" style="margin-top: 1rem;">
+                    <i class="fas fa-sync"></i> إعادة المحاولة
+                </button>
             </div>
         </div>
     </div>
@@ -1193,6 +1220,7 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         // ==========================================
         // إعدادات المنصة
@@ -1207,11 +1235,12 @@
         let isAdmin = false;
         let currentUser = null;
         let selectedSource = 'youtube';
+        let isFirebaseReady = false;
 
         document.addEventListener('DOMContentLoaded', function() {
             createStars();
-            loadVideos();
             checkAdminStatus();
+            initializeFirebase();
         });
 
         function createStars() {
@@ -1229,28 +1258,80 @@
         }
 
         // ==========================================
+        // تهيئة Firebase والمصادقة
+        // ==========================================
+        async function initializeFirebase() {
+            try {
+                // محاولة تسجيل الدخول بشكل مجهول
+                await auth.signInAnonymously();
+                console.log('Firebase Anonymous Auth: Success');
+                isFirebaseReady = true;
+                loadVideos();
+            } catch (error) {
+                console.error('Firebase Auth Error:', error);
+                showDebugInfo('خطأ في المصادقة: ' + error.message);
+                // حاول تحميل الفيديوهات على أي حال
+                isFirebaseReady = true;
+                loadVideos();
+            }
+        }
+
+        function showDebugInfo(message) {
+            const debugEl = document.getElementById('debugInfo');
+            const debugText = document.getElementById('debugText');
+            if (debugEl && debugText) {
+                debugEl.classList.add('active');
+                debugText.textContent = message;
+            }
+            console.log('Debug:', message);
+        }
+
+        // ==========================================
         // تحميل الفيديوهات من Firebase Firestore
         // ==========================================
         function loadVideos() {
             document.getElementById('loadingScreen').style.display = 'flex';
             
-            // الاستماع للتغييرات في الوقت الحقيقي
-            db.collection('videos')
-                .orderBy('created_at', 'desc')
-                .onSnapshot((snapshot) => {
-                    videos = [];
-                    snapshot.forEach((doc) => {
-                        const video = doc.data();
-                        video.firestoreId = doc.id; // حفظ معرف Firestore
-                        videos.push(video);
+            try {
+                // الاستماع للتغييرات في الوقت الحقيقي
+                db.collection('videos')
+                    .orderBy('created_at', 'desc')
+                    .onSnapshot((snapshot) => {
+                        videos = [];
+                        snapshot.forEach((doc) => {
+                            const video = doc.data();
+                            video.firestoreId = doc.id;
+                            videos.push(video);
+                        });
+                        renderVideos();
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        
+                        if (isAdmin) {
+                            showDebugInfo(`تم تحميل ${videos.length} فيديو. الاتصال بـ Firebase: ${isFirebaseReady ? 'نعم' : 'لا'}`);
+                        }
+                    }, (error) => {
+                        console.error('Error loading videos:', error);
+                        showDebugInfo('خطأ في تحميل الفيديوهات: ' + error.message);
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        showEmptyState();
                     });
-                    renderVideos();
-                    document.getElementById('loadingScreen').style.display = 'none';
-                }, (error) => {
-                    console.error('Error loading videos:', error);
-                    showToast('❌ خطأ في تحميل الفيديوهات');
-                    document.getElementById('loadingScreen').style.display = 'none';
-                });
+            } catch (error) {
+                console.error('Critical error:', error);
+                showDebugInfo('خطأ حرج: ' + error.message);
+                document.getElementById('loadingScreen').style.display = 'none';
+                showEmptyState();
+            }
+        }
+
+        function retryLoad() {
+            loadVideos();
+        }
+
+        function showEmptyState() {
+            const grid = document.getElementById('videosGrid');
+            const empty = document.getElementById('emptyState');
+            grid.style.display = 'none';
+            empty.style.display = 'block';
         }
 
         function renderVideos() {
@@ -1258,8 +1339,7 @@
             const empty = document.getElementById('emptyState');
 
             if (videos.length === 0) {
-                grid.style.display = 'none';
-                empty.style.display = 'block';
+                showEmptyState();
                 return;
             }
 
@@ -1271,7 +1351,7 @@
                 const iconClass = isYouTube ? 'youtube fa-youtube' : 'drive fa-google-drive';
                 const badgeClass = isYouTube ? 'youtube' : 'drive';
                 const sourceText = isYouTube ? 'YouTube' : 'Drive';
-                const dateStr = v.created_at ? new Date(v.created_at).toLocaleDateString('ar-EG') : '';
+                const dateStr = v.created_at ? new Date(v.created_at.toDate ? v.created_at.toDate() : v.created_at).toLocaleDateString('ar-EG') : '';
                 
                 return `
                 <div class="video-card" onclick="playVideo(${i})">
@@ -1325,6 +1405,7 @@
             document.getElementById('logoutBtn').style.display = 'inline-flex';
             document.getElementById('adminBanner').classList.add('active');
             document.getElementById('publicBanner').style.display = 'none';
+            document.getElementById('adminDebugInfo').classList.add('active');
             renderVideos();
         }
 
@@ -1334,6 +1415,7 @@
             document.getElementById('logoutBtn').style.display = 'none';
             document.getElementById('adminBanner').classList.remove('active');
             document.getElementById('publicBanner').style.display = 'block';
+            document.getElementById('adminDebugInfo').classList.remove('active');
         }
 
         function selectSource(source) {
@@ -1388,7 +1470,7 @@
                 showToast('✅ تم مسح الفيديو بنجاح');
             } catch (error) {
                 console.error('Error deleting video:', error);
-                showToast('❌ خطأ في مسح الفيديو');
+                showToast('❌ خطأ في مسح الفيديو: ' + error.message);
             }
         }
 
@@ -1543,6 +1625,11 @@
                 const batch = db.batch();
                 const snapshot = await db.collection('videos').get();
                 
+                if (snapshot.empty) {
+                    showToast('لا توجد فيديوهات للمسح');
+                    return;
+                }
+                
                 snapshot.docs.forEach((doc) => {
                     batch.delete(doc.ref);
                 });
@@ -1552,7 +1639,7 @@
                 closeModal('deleteAllModal');
             } catch (error) {
                 console.error('Error deleting all videos:', error);
-                showToast('❌ خطأ في مسح الفيديوهات');
+                showToast('❌ خطأ في مسح الفيديوهات: ' + error.message);
             }
         }
 
@@ -1631,7 +1718,7 @@
                 document.getElementById('videoDesc').value = '';
             } catch (error) {
                 console.error('Error adding video:', error);
-                showToast('❌ خطأ في إضافة الفيديو');
+                showToast('❌ خطأ في إضافة الفيديو: ' + error.message);
             }
         }
 
