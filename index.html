@@ -706,6 +706,9 @@
                 });
                 document.getElementById('videoCount').textContent = videos.length + ' فيديو';
                 renderVideos();
+
+                // Check for resume after videos are loaded
+                setTimeout(checkForResume, 1000);
             }, function(error) {
                 console.error('Error:', error);
                 showToast('⚠️ خطأ في الاتصال: ' + error.message);
@@ -774,6 +777,10 @@
             player.poster = video.thumbnail || '';
             
             document.getElementById('videoModal').classList.add('active');
+
+            // Setup progress tracking for this video
+            setupProgressTracking();
+
             player.play().catch(function(e) {
                 console.log('Autoplay prevented:', e);
             });
@@ -781,6 +788,10 @@
 
         function closeModal() {
             const player = document.getElementById('videoPlayer');
+
+            // Save progress before closing
+            saveVideoProgress();
+
             player.pause();
             player.src = '';
             player.poster = '';
@@ -852,6 +863,124 @@
             setTimeout(function() {
                 toast.classList.remove('show');
             }, 4000);
+        }
+
+        
+
+        // ===== RESUME WATCHING FUNCTIONALITY =====
+        const STORAGE_KEY = 'falak_last_watched';
+        let lastWatchedData = null;
+
+        // Save video progress to localStorage
+        function saveVideoProgress() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src || player.paused) return;
+
+            const currentVideo = videos.find(v => v.url === player.src);
+            if (!currentVideo) return;
+
+            const data = {
+                videoId: currentVideo.id,
+                title: currentVideo.title,
+                thumbnail: currentVideo.thumbnail || '',
+                currentTime: player.currentTime,
+                duration: player.duration || 0,
+                timestamp: new Date().getTime()
+            };
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            console.log('💾 Saved progress:', data.title, 'at', formatDuration(data.currentTime));
+        }
+
+        // Check for saved progress on page load
+        function checkForResume() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+
+            try {
+                lastWatchedData = JSON.parse(saved);
+
+                // Check if video still exists in library
+                const videoExists = videos.some(v => v.id === lastWatchedData.videoId);
+                if (!videoExists) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    return;
+                }
+
+                // Check if video was finished (watched more than 95%)
+                if (lastWatchedData.duration > 0 && 
+                    lastWatchedData.currentTime / lastWatchedData.duration > 0.95) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    return;
+                }
+
+                // Show resume notification
+                document.getElementById('resumeVideoTitle').textContent = lastWatchedData.title;
+                document.getElementById('resumeTimeDisplay').textContent = 
+                    'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
+                document.getElementById('resumeNotification').style.display = 'block';
+
+                console.log('📺 Found saved progress:', lastWatchedData.title);
+            } catch (e) {
+                console.error('Error parsing saved data:', e);
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        }
+
+        // Resume watching the saved video
+        function resumeWatching() {
+            if (!lastWatchedData) return;
+
+            const video = videos.find(v => v.id === lastWatchedData.videoId);
+            if (!video) {
+                showToast('❌ الفيديو غير متوفر');
+                dismissResume();
+                return;
+            }
+
+            // Open the video
+            playVideo(lastWatchedData.videoId);
+
+            // Set the time after video loads
+            setTimeout(() => {
+                const player = document.getElementById('videoPlayer');
+                if (player) {
+                    player.currentTime = lastWatchedData.currentTime;
+                    showToast('▶️ استئناف من ' + formatDuration(lastWatchedData.currentTime));
+                }
+            }, 500);
+
+            dismissResume();
+        }
+
+        // Dismiss the resume notification
+        function dismissResume() {
+            document.getElementById('resumeNotification').style.display = 'none';
+        }
+
+        // Save progress periodically and on pause/close
+        function setupProgressTracking() {
+            const player = document.getElementById('videoPlayer');
+            if (!player) return;
+
+            // Save every 5 seconds while playing
+            setInterval(() => {
+                if (!player.paused && !player.ended) {
+                    saveVideoProgress();
+                }
+            }, 5000);
+
+            // Save on pause
+            player.addEventListener('pause', saveVideoProgress);
+
+            // Save on page unload
+            window.addEventListener('beforeunload', saveVideoProgress);
+
+            // Clear saved data when video ends
+            player.addEventListener('ended', () => {
+                localStorage.removeItem(STORAGE_KEY);
+                console.log('🎬 Video finished, cleared saved progress');
+            });
         }
 
         // ===== EVENT LISTENERS =====
