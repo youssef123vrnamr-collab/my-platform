@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فلك العالمي | منصة الفيديوهات المشتركة</title>
+    <title>فلك العالمي | النسخة السحابية</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -19,10 +19,8 @@
             --secondary: #8b5cf6;
             --accent: #ec4899;
             --success: #10b981;
-            --warning: #f59e0b;
             --danger: #ef4444;
             --dark: #0f0a1a;
-            --darker: #050308;
             --card: #1a1025;
         }
         
@@ -30,33 +28,23 @@
         
         body {
             font-family: 'Cairo', sans-serif;
-            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, #1a1a3e 100%);
+            background: linear-gradient(135deg, #050308 0%, #0f0a1a 50%, #1a1a3e 100%);
             color: #fff;
             min-height: 100vh;
         }
         
-        /* Background Animation */
         .bg-animation {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: -1; overflow: hidden;
         }
         
-        .star {
-            position: absolute; width: 2px; height: 2px;
-            background: white; border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
-        
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
-        
         .nebula {
-            position: absolute; width: 600px; height: 600px;
+            position: absolute;
+            width: 600px; height: 600px;
             background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
-            border-radius: 50%; filter: blur(60px);
+            border-radius: 50%;
+            filter: blur(60px);
             animation: float 20s infinite ease-in-out;
         }
         
@@ -69,51 +57,64 @@
             66% { transform: translate(-20px, 20px) scale(0.9); }
         }
         
-        /* Loader */
         .loader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--darker); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 10000;
-            transition: opacity 0.5s, visibility 0.5s;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #050308;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s;
         }
         
-        .loader.hidden { opacity: 0; visibility: hidden; }
+        .loader.hidden { opacity: 0; pointer-events: none; }
         
         .loader-ring {
             width: 120px; height: 120px;
             border: 4px solid transparent;
-            border-top-color: var(--primary);
-            border-right-color: var(--secondary);
-            border-radius: 50%; animation: spin 1s linear infinite; position: relative;
-        }
-        
-        .loader-ring::before {
-            content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
-            border: 4px solid transparent; border-top-color: var(--accent);
-            border-left-color: var(--success); border-radius: 50%;
-            animation: spin 1.5s linear infinite reverse;
+            border-top-color: #6366f1;
+            border-right-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .loader-text { margin-top: 2rem; font-size: 1.3rem; color: var(--primary); animation: pulse 2s infinite; }
+        .loader-text {
+            margin-top: 2rem;
+            font-size: 1.3rem;
+            color: #6366f1;
+            animation: pulse 2s infinite;
+        }
+        
         @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
         
-        /* Navbar */
         .navbar {
-            background: rgba(26, 16, 37, 0.8); backdrop-filter: blur(20px);
+            background: rgba(26, 16, 37, 0.9);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(99, 102, 241, 0.3);
-            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         
         .brand { display: flex; align-items: center; gap: 1rem; }
         
         .brand-icon {
             width: 50px; height: 50px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 15px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
             animation: glow 3s infinite;
         }
         
@@ -123,274 +124,253 @@
         }
         
         .brand-text h1 {
-            font-size: 1.5rem; font-weight: 700;
-            background: linear-gradient(135deg, #fff, var(--primary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .brand-text p { font-size: 0.85rem; color: #888; }
         
-        .nav-actions { display: flex; gap: 0.75rem; align-items: center; }
+        .nav-actions { display: flex; gap: 0.75rem; }
         
         .btn {
-            padding: 0.75rem 1.5rem; border: none; border-radius: 12px; cursor: pointer;
-            font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 0.95rem;
-            transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;
-            position: relative; overflow: hidden;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        
-        .btn::before {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-        
-        .btn:hover::before { left: 100%; }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
         }
         
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6); }
         
-        .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: white; }
-        .btn-danger { background: linear-gradient(135deg, var(--danger), #dc2626); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         
-        .btn-ghost {
-            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .btn-ghost:hover { background: rgba(255,255,255,0.2); }
-        
-        /* Stats Bar */
-        .stats-bar {
-            background: rgba(26, 16, 37, 0.8); backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 1rem 2rem; display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;
-        }
-        
-        .stat-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.5rem 1rem; background: rgba(99, 102, 241, 0.1);
-            border-radius: 10px; border: 1px solid rgba(99, 102, 241, 0.3);
-        }
-        
-        .stat-icon {
-            width: 35px; height: 35px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            font-size: 0.9rem;
-        }
-        
-        .stat-info { display: flex; flex-direction: column; }
-        .stat-value { font-weight: 700; font-size: 1.1rem; }
-        .stat-label { font-size: 0.8rem; color: #888; }
-        
-        /* Container */
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
         
-        /* Hero */
-        .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; position: relative; }
-        
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            background: rgba(16, 185, 129, 0.2); border: 1px solid var(--success);
-            padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;
-            color: var(--success); margin-bottom: 1.5rem;
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-bottom: 3rem;
         }
         
-        .hero-badge .dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; animation: blink 1.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #10b981;
+            margin-bottom: 1.5rem;
+        }
         
-        .hero h2 { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; line-height: 1.3; }
-        .hero h2 span { background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero h2 { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; }
+        .hero h2 span { background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 1.2rem; color: #aaa; max-width: 600px; margin: 0 auto; }
         
-        /* Upload Zone */
         .upload-zone {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-            border: 2px dashed rgba(99, 102, 241, 0.5); border-radius: 25px;
-            padding: 3rem; text-align: center; margin-bottom: 3rem;
-            display: none; position: relative; overflow: hidden;
+            border: 2px dashed rgba(99, 102, 241, 0.5);
+            border-radius: 25px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            display: none;
         }
         
         .upload-zone.active { display: block; animation: fadeInUp 0.5s; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         
-        .upload-zone::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
-            animation: rotate 30s linear infinite;
-        }
-        
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        .upload-content { position: relative; z-index: 1; }
-        
         .upload-icon {
             width: 100px; height: 100px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 2.5rem; margin: 0 auto 1.5rem;
-            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
-            cursor: pointer; transition: transform 0.3s;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s;
         }
         
         .upload-icon:hover { transform: scale(1.1) rotate(10deg); }
-        .upload-zone h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .upload-zone p { color: #888; margin-bottom: 1.5rem; }
         
         .upload-btn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; padding: 1rem 2rem; border: none; border-radius: 12px;
-            font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 600;
-            cursor: pointer; transition: all 0.3s;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
         }
         
-        .upload-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5); }
-        
-        /* Progress */
-        .progress-wrapper { margin-top: 2rem; display: none; }
-        .progress-wrapper.active { display: block; }
-        .progress-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--primary)); width: 0%; transition: width 0.3s; border-radius: 4px; }
-        
-        /* Section Header */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .section-title { font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
-        .section-title i { color: var(--accent); }
-        
-        .view-toggle { display: flex; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 0.25rem; border-radius: 10px; }
-        .view-btn { width: 40px; height: 40px; border: none; background: transparent; color: #888; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
-        .view-btn.active { background: var(--primary); color: white; }
-        
-        /* Videos Grid */
-        .videos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
-        .videos-list { display: flex; flex-direction: column; gap: 1rem; }
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
         
         .video-card {
-            background: var(--card); border-radius: 20px; overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1); transition: all 0.4s;
-            cursor: pointer; position: relative;
+            background: #1a1025;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.4s;
+            cursor: pointer;
         }
         
-        .video-card:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .video-card:hover {
+            transform: translateY(-10px);
+            border-color: #6366f1;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
         
-        .video-thumbnail { position: relative; height: 220px; background: linear-gradient(135deg, #1a1a3e 0%, #0f0f23 100%); overflow: hidden; }
-        .video-thumbnail img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-        .video-card:hover .video-thumbnail img { transform: scale(1.1); }
+        .video-thumbnail {
+            position: relative;
+            height: 220px;
+            background: linear-gradient(135deg, #1a1a3e 0%, #0f0f23 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #6366f1;
+        }
+        
+        .video-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
         
         .play-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.3s;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         
         .video-card:hover .play-overlay { opacity: 1; }
         
         .play-btn {
             width: 80px; height: 80px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            transform: scale(0.8); transition: transform 0.3s;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
         }
-        
-        .video-card:hover .play-btn { transform: scale(1); }
-        
-        .video-duration { position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.8); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; }
-        
-        .video-badge {
-            position: absolute; top: 1rem; right: 1rem;
-            background: rgba(239, 68, 68, 0.9); color: white;
-            padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem;
-            font-weight: 600; display: none; align-items: center; gap: 0.3rem;
-        }
-        
-        .video-card:hover .video-badge { display: flex; }
         
         .video-info { padding: 1.5rem; }
-        .video-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .video-meta { display: flex; gap: 1rem; color: #888; font-size: 0.9rem; }
-        .video-meta span { display: flex; align-items: center; gap: 0.3rem; }
+        .video-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .video-meta { color: #888; font-size: 0.9rem; }
         
-        /* Empty State */
-        .empty-state { text-align: center; padding: 6rem 2rem; color: #666; }
-        .empty-icon { width: 150px; height: 150px; background: rgba(99, 102, 241, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 4rem; margin: 0 auto 2rem; color: var(--primary); }
-        .empty-state h3 { font-size: 1.5rem; color: #fff; margin-bottom: 0.5rem; }
-        
-        /* Modal */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 2rem; }
-        .modal.active { display: flex; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .modal-content { background: var(--card); border-radius: 25px; width: 100%; max-width: 1000px; max-height: 90vh; overflow: hidden; border: 1px solid rgba(99, 102, 241, 0.3); animation: slideUp 0.3s; }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        .modal-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { font-size: 1.3rem; display: flex; align-items: center; gap: 0.75rem; }
-        .modal-close { width: 40px; height: 40px; border: none; background: rgba(239, 68, 68, 0.2); color: var(--danger); border-radius: 10px; cursor: pointer; font-size: 1.2rem; transition: all 0.3s; }
-        .modal-close:hover { background: var(--danger); color: white; }
-        .modal-body { padding: 1.5rem; }
-        .video-player { width: 100%; border-radius: 15px; background: #000; }
-        .modal-footer { padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 1rem; }
-        
-        /* Toast */
-        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card); border: 1px solid var(--primary); padding: 1rem 2rem; border-radius: 15px; display: flex; align-items: center; gap: 0.75rem; z-index: 10001; opacity: 0; transition: all 0.3s; }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        .toast-icon { width: 40px; height: 40px; background: rgba(16, 185, 129, 0.2); color: var(--success); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-        .toast.error .toast-icon { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-        
-        /* Login Modal */
-        .login-modal .modal-content { max-width: 450px; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #aaa; }
-        .form-input { width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo', sans-serif; font-size: 1rem; transition: all 0.3s; }
-        .form-input:focus { outline: none; border-color: var(--primary); background: rgba(99, 102, 241, 0.1); }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .navbar { padding: 1rem; }
-            .brand-text h1 { font-size: 1.2rem; }
-            .hero h2 { font-size: 2rem; }
-            .videos-grid { grid-template-columns: 1fr; }
-            .container { padding: 1rem; }
+        .empty-state {
+            text-align: center;
+            padding: 6rem 2rem;
+            color: #666;
         }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: var(--dark); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 5px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 2rem;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: #1a1025;
+            border-radius: 25px;
+            width: 100%;
+            max-width: 900px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-close {
+            width: 40px; height: 40px;
+            border: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .modal-body { padding: 1.5rem; }
+        .video-player { width: 100%; border-radius: 15px; }
+        
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1025;
+            border: 1px solid #6366f1;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            display: none;
+            z-index: 10001;
+        }
+        
+        .toast.show { display: block; }
     </style>
 </head>
 <body>
-    <!-- Background -->
     <div class="bg-animation">
         <div class="nebula"></div>
         <div class="nebula"></div>
     </div>
     
-    <!-- Loader -->
     <div class="loader" id="loader">
         <div class="loader-ring"></div>
-        <div class="loader-text">جاري الاتصال بالفضاء...</div>
+        <div class="loader-text">جاري الاتصال بالسحابة...</div>
     </div>
     
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="brand">
             <div class="brand-icon"><i class="fas fa-planet-ringed"></i></div>
             <div class="brand-text">
                 <h1>فلك العالمي</h1>
-                <p>منصة الفيديوهات المشتركة</p>
+                <p>النسخة السحابية ☁️</p>
             </div>
         </div>
         <div class="nav-actions">
             <button class="btn btn-ghost" id="adminBtn" onclick="showLogin()">
-                <i class="fas fa-lock"></i> <span>دخول المشرف</span>
+                <i class="fas fa-lock"></i> دخول المشرف
             </button>
             <button class="btn btn-danger" id="logoutBtn" onclick="logout()" style="display: none;">
                 <i class="fas fa-sign-out-alt"></i>
@@ -398,82 +378,39 @@
         </div>
     </nav>
     
-    <!-- Stats -->
-    <div class="stats-bar">
-        <div class="stat-item">
-            <div class="stat-icon"><i class="fas fa-video"></i></div>
-            <div class="stat-info">
-                <span class="stat-value" id="totalVideos">0</span>
-                <span class="stat-label">فيديو</span>
-            </div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-icon"><i class="fas fa-users"></i></div>
-            <div class="stat-info">
-                <span class="stat-value">عالمي</span>
-                <span class="stat-label">الوصول</span>
-            </div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-icon"><i class="fas fa-database"></i></div>
-            <div class="stat-info">
-                <span class="stat-value" id="storageUsed">0 MB</span>
-                <span class="stat-label">المساحة</span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Main -->
     <div class="container">
-        <!-- Hero -->
         <div class="hero">
-            <div class="hero-badge"><span class="dot"></span><span>متصل بالسحابة</span></div>
+            <div class="hero-badge"><i class="fas fa-cloud"></i> متصل بالسحابة</div>
             <h2>اكتشف أسرار <span>الكون</span></h2>
-            <p>منصة مشتركة للفيديوهات الفلكية. أي فيديو ترفعه يظهر فوراً لجميع الزوار!</p>
+            <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم!</p>
         </div>
         
-        <!-- Upload Zone (Admin Only) -->
         <div class="upload-zone" id="uploadZone">
-            <div class="upload-content">
-                <div class="upload-icon" onclick="document.getElementById('fileInput').click()">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                </div>
-                <h3>رفع فيديو جديد</h3>
-                <p>اسحب الفيديو هنا أو اضغط للاختيار من المعرض</p>
-                <input type="file" id="fileInput" accept="video/*" style="display: none;" onchange="handleFile(this)">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    <i class="fas fa-plus"></i> اختيار فيديو
-                </button>
-                
-                <div class="progress-wrapper" id="progressWrapper">
-                    <div class="progress-header">
-                        <span id="progressText">جاري الرفع...</span>
-                        <span id="progressPercent">0%</span>
-                    </div>
-                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-                </div>
+            <div class="upload-icon" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
             </div>
+            <h3>رفع فيديو جديد</h3>
+            <p>الفيديو هيتخزن في السحابة ويظهر للجميع</p>
+            <input type="file" id="fileInput" accept="video/*" style="display: none;" onchange="handleFile(this)">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-plus"></i> اختيار فيديو
+            </button>
         </div>
         
-        <!-- Videos Section -->
-        <div class="section-header">
-            <h3 class="section-title"><i class="fas fa-play-circle"></i> مكتبة الفيديوهات</h3>
-            <div class="view-toggle">
-                <button class="view-btn active" onclick="setView('grid')"><i class="fas fa-th-large"></i></button>
-                <button class="view-btn" onclick="setView('list')"><i class="fas fa-list"></i></button>
-            </div>
-        </div>
+        <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fas fa-play-circle" style="color: #ec4899;"></i>
+            مكتبة الفيديوهات المشتركة
+        </h3>
         
         <div class="videos-grid" id="videosContainer"></div>
         
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <div class="empty-icon"><i class="fas fa-satellite"></i></div>
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-satellite" style="font-size: 6rem; margin-bottom: 2rem;"></i>
             <h3>المكتبة فارغة</h3>
-            <p>لا توجد فيديوهات بعد. ادخل كمشرف لرفع أول فيديو!</p>
+            <p>ادخل كمشرف لرفع أول فيديو!</p>
         </div>
     </div>
     
-    <!-- Video Modal -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -481,41 +418,34 @@
                 <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <video class="video-player" id="videoPlayer" controls playsinline></video>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" style="flex: 1;" onclick="closeModal()"><i class="fas fa-times"></i> إغلاق</button>
-                <button class="btn btn-success" onclick="shareVideo()"><i class="fas fa-share-alt"></i> مشاركة</button>
-                <button class="btn btn-danger" id="deleteBtn" onclick="deleteVideo()" style="display: none;"><i class="fas fa-trash"></i> حذف</button>
+                <video class="video-player" id="videoPlayer" controls></video>
             </div>
         </div>
     </div>
     
-    <!-- Login Modal -->
-    <div class="modal login-modal" id="loginModal">
-        <div class="modal-content">
+    <div class="modal" id="loginModal" style="background: rgba(0,0,0,0.95);">
+        <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h3><i class="fas fa-lock"></i> دخول المشرف</h3>
-                <button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">كلمة المرور</label>
-                    <input type="password" class="form-input" id="passwordInput" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()">
-                </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
+                <input type="password" id="passwordInput" placeholder="كلمة المرور" 
+                       style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; margin-bottom: 1rem;"
+                       onkeypress="if(event.key==='Enter')doLogin()">
+                <button class="btn btn-primary" style="width: 100%;" onclick="doLogin()">
+                    <i class="fas fa-sign-in-alt"></i> دخول
+                </button>
+                <button onclick="closeLogin()" style="width: 100%; background: transparent; border: none; color: #888; margin-top: 1rem; cursor: pointer;">
+                    إلغاء
+                </button>
             </div>
         </div>
     </div>
     
-    <!-- Toast -->
-    <div class="toast" id="toast">
-        <div class="toast-icon"><i class="fas fa-check"></i></div>
-        <span id="toastText">تم بنجاح</span>
-    </div>
+    <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ===== YOUR FIREBASE CONFIG =====
+        // ===== FIREBASE CONFIG =====
         const firebaseConfig = {
             apiKey: "AIzaSyCQVYHMDgInDiBhP69WQn3w3gysPiSzBxg",
             authDomain: "project-119e3e19-1c79-4238-a10.firebaseapp.com",
@@ -530,121 +460,84 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
         
-        // ===== CONFIG =====
+        // ===== APP CONFIG =====
         const ADMIN_PASS = "falak123";
-        
-        // ===== STATE =====
         let isAdmin = false;
         let currentVideo = null;
         let videos = [];
-        let currentView = 'grid';
-        
+
         // ===== INIT =====
         document.addEventListener('DOMContentLoaded', () => {
-            createStars();
+            setTimeout(() => document.getElementById('loader').classList.add('hidden'), 1500);
             loadVideos();
-            setTimeout(() => document.getElementById('loader').classList.add('hidden'), 2000);
         });
-        
-        function createStars() {
-            const container = document.querySelector('.bg-animation');
-            for (let i = 0; i < 50; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                container.appendChild(star);
-            }
-        }
-        
-        // ===== LOAD VIDEOS (Real-time) =====
+
+        // ===== LOAD VIDEOS (Real-time from Cloud) =====
         function loadVideos() {
             db.collection('videos').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                 videos = [];
-                let totalSize = 0;
-                
                 snapshot.forEach(doc => {
-                    const video = doc.data();
-                    video.id = doc.id;
-                    videos.push(video);
-                    totalSize += video.size || 0;
+                    let v = doc.data();
+                    v.id = doc.id;
+                    videos.push(v);
                 });
-                
-                updateStats(videos.length, totalSize);
                 renderVideos();
             }, error => {
                 console.error('Error:', error);
-                showToast('خطأ في الاتصال', true);
+                showToast('❌ خطأ في الاتصال بالسحابة');
             });
         }
-        
-        function updateStats(count, totalSize) {
-            document.getElementById('totalVideos').textContent = count;
-            let sizeText = totalSize < 1024 * 1024 ? 
-                (totalSize / 1024).toFixed(1) + ' KB' : 
-                totalSize < 1024 * 1024 * 1024 ? 
-                (totalSize / (1024 * 1024)).toFixed(1) + ' MB' : 
-                (totalSize / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-            document.getElementById('storageUsed').textContent = sizeText;
-        }
-        
-        // ===== RENDER =====
+
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
             
             if (videos.length === 0) {
                 container.innerHTML = '';
-                container.className = 'videos-grid';
                 emptyState.style.display = 'block';
                 return;
             }
             
             emptyState.style.display = 'none';
-            container.className = currentView === 'grid' ? 'videos-grid' : 'videos-list';
-            
             container.innerHTML = videos.map(video => `
-                <div class="video-card" onclick="openVideo('${video.id}')">
+                <div class="video-card" onclick="playVideo('${video.id}')">
                     <div class="video-thumbnail">
-                        <img src="${video.thumbnail || 'https://via.placeholder.com/640x360/1a1a3e/6366f1?text=فيديو+فلكي'}" alt="${video.title}">
-                        <div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>
-                        ${video.duration ? `<div class="video-duration"><i class="fas fa-clock"></i> ${video.duration}</div>` : ''}
-                        ${isAdmin ? `<div class="video-badge" onclick="event.stopPropagation(); deleteVideoById('${video.id}')"><i class="fas fa-trash"></i> حذف</div>` : ''}
+                        ${video.thumbnail ? 
+                            `<img src="${video.thumbnail}" alt="${video.title}">` : 
+                            '<i class="fas fa-film"></i>'
+                        }
+                        <div class="play-overlay">
+                            <div class="play-btn"><i class="fas fa-play"></i></div>
+                        </div>
+                        ${isAdmin ? `
+                            <div style="position:absolute;top:10px;right:10px;background:#ef4444;color:white;padding:5px 10px;border-radius:20px;font-size:12px;cursor:pointer;" 
+                                 onclick="event.stopPropagation(); deleteVideo('${video.id}')">
+                                <i class="fas fa-trash"></i> حذف
+                            </div>
+                        ` : ''}
                     </div>
                     <div class="video-info">
                         <h4 class="video-title">${video.title}</h4>
                         <div class="video-meta">
-                            <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
-                            <span><i class="fas fa-eye"></i> ${video.views || 0}</span>
+                            <i class="fas fa-calendar"></i> 
+                            ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}
                         </div>
                     </div>
                 </div>
             `).join('');
         }
-        
-        function setView(view) {
-            currentView = view;
-            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.closest('.view-btn').classList.add('active');
-            renderVideos();
-        }
-        
-        // ===== VIDEO PLAYER =====
-        function openVideo(id) {
+
+        function playVideo(id) {
             const video = videos.find(v => v.id === id);
             if (!video) return;
             
             currentVideo = video;
-            db.collection('videos').doc(id).update({ views: firebase.firestore.FieldValue.increment(1) });
-            
             document.getElementById('modalTitle').innerHTML = `<i class="fas fa-play-circle"></i> <span>${video.title}</span>`;
             document.getElementById('videoPlayer').src = video.url;
-            document.getElementById('deleteBtn').style.display = isAdmin ? 'flex' : 'none';
             document.getElementById('videoModal').classList.add('active');
             document.getElementById('videoPlayer').play();
         }
-        
+
         function closeModal() {
             const player = document.getElementById('videoPlayer');
             player.pause();
@@ -652,181 +545,95 @@
             document.getElementById('videoModal').classList.remove('active');
             currentVideo = null;
         }
-        
-        function shareVideo() {
-            if (!currentVideo) return;
-            if (navigator.share) {
-                navigator.share({
-                    title: currentVideo.title,
-                    text: 'شاهد هذا الفيديو الفلكي على منصة فلك!',
-                    url: window.location.href
-                });
-            } else {
-                navigator.clipboard.writeText(window.location.href);
-                showToast('📋 تم نسخ الرابط');
-            }
-        }
-        
-        // ===== UPLOAD =====
+
+        // ===== UPLOAD TO CLOUD =====
         function handleFile(input) {
             const file = input.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('video/')) {
-                showToast('⚠️ يرجى اختيار ملف فيديو', true);
+            if (!file || !file.type.startsWith('video/')) {
+                showToast('⚠️ اختار ملف فيديو صحيح');
                 return;
             }
-            uploadVideo(file);
-        }
-        
-        async function uploadVideo(file) {
-            const wrapper = document.getElementById('progressWrapper');
-            const fill = document.getElementById('progressFill');
-            const percent = document.getElementById('progressPercent');
-            const text = document.getElementById('progressText');
             
-            wrapper.classList.add('active');
+            showToast('⏳ جاري الرفع للسحابة...');
             
-            try {
-                text.textContent = 'جاري إنشاء المعاينة...';
-                const thumbnail = await createThumbnail(file);
-                
-                const fileName = `videos/${Date.now()}_${file.name}`;
-                const uploadTask = storage.ref(fileName).put(file);
-                
-                uploadTask.on('state_changed', 
-                    snapshot => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        fill.style.width = progress + '%';
-                        percent.textContent = Math.round(progress) + '%';
-                    },
-                    error => {
-                        console.error('Upload error:', error);
-                        showToast('❌ فشل الرفع', true);
-                        wrapper.classList.remove('active');
-                    },
-                    async () => {
-                        const url = await uploadTask.snapshot.ref.getDownloadURL();
-                        await db.collection('videos').add({
-                            title: file.name.replace(/\.[^/.]+$/, ''),
-                            url: url,
-                            thumbnail: thumbnail,
-                            size: file.size,
-                            type: file.type,
-                            views: 0,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        showToast('✅ تم رفع الفيديو بنجاح!');
-                        wrapper.classList.remove('active');
-                        fill.style.width = '0%';
-                    }
-                );
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('❌ خطأ في المعالجة', true);
-                wrapper.classList.remove('active');
-            }
-        }
-        
-        function createThumbnail(file) {
-            return new Promise((resolve) => {
-                const video = document.createElement('video');
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                video.src = URL.createObjectURL(file);
-                video.crossOrigin = 'anonymous';
-                
-                video.onloadeddata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const fileName = `videos/${Date.now()}_${file.name}`;
+            const uploadTask = storage.ref(fileName).put(file);
+            
+            uploadTask.on('state_changed', 
+                snapshot => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    showToast(`⏳ جاري الرفع: ${Math.round(progress)}%`);
+                },
+                error => {
+                    console.error('Upload error:', error);
+                    showToast('❌ فشل الرفع');
+                },
+                async () => {
+                    const url = await uploadTask.snapshot.ref.getDownloadURL();
                     
-                    const thumbCanvas = document.createElement('canvas');
-                    thumbCanvas.width = 640;
-                    thumbCanvas.height = 360;
-                    thumbCanvas.getContext('2d').drawImage(canvas, 0, 0, 640, 360);
+                    await db.collection('videos').add({
+                        title: file.name.replace(/\.[^/.]+$/, ''),
+                        url: url,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                     
-                    const dataUrl = thumbCanvas.toDataURL('image/jpeg', 0.8);
-                    URL.revokeObjectURL(video.src);
-                    resolve(dataUrl);
-                };
-                
-                video.onerror = () => resolve(null);
-                setTimeout(() => video.currentTime = 1, 100);
-            });
-        }
-        
-        // ===== DELETE =====
-        async function deleteVideo() {
-            if (!currentVideo || !isAdmin) return;
-            await deleteVideoById(currentVideo.id);
-            closeModal();
-        }
-        
-        async function deleteVideoById(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
-            try {
-                const video = videos.find(v => v.id === id);
-                if (video) {
-                    const fileName = video.url.split('?')[0].split('/').pop().split('%2F').pop();
-                    await storage.ref(`videos/${fileName}`).delete().catch(() => {});
+                    showToast('✅ تم الرفع! يظهر للجميع الآن 🌍');
                 }
+            );
+        }
+
+        async function deleteVideo(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الفيديو من السحابة؟')) return;
+            
+            try {
                 await db.collection('videos').doc(id).delete();
-                showToast('🗑️ تم حذف الفيديو');
-            } catch (error) {
-                console.error('Delete error:', error);
-                showToast('❌ فشل الحذف', true);
+                showToast('🗑️ تم الحذف من السحابة');
+            } catch (e) {
+                showToast('❌ فشل الحذف');
             }
         }
-        
+
         // ===== AUTH =====
-        function showLogin() { document.getElementById('loginModal').classList.add('active'); document.getElementById('passwordInput').focus(); }
-        function closeLogin() { document.getElementById('loginModal').classList.remove('active'); }
+        function showLogin() { 
+            document.getElementById('loginModal').classList.add('active'); 
+            document.getElementById('passwordInput').focus();
+        }
         
+        function closeLogin() { 
+            document.getElementById('loginModal').classList.remove('active'); 
+        }
+
         function doLogin() {
-            const pass = document.getElementById('passwordInput').value;
-            if (pass === ADMIN_PASS) {
+            if (document.getElementById('passwordInput').value === ADMIN_PASS) {
                 isAdmin = true;
                 document.getElementById('uploadZone').classList.add('active');
                 document.getElementById('adminBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'flex';
                 closeLogin();
                 renderVideos();
-                showToast('🔓 مرحباً أيها المشرف!');
+                showToast('🔓 مرحباً أيها المشرف! ☁️');
                 document.getElementById('passwordInput').value = '';
             } else {
-                showToast('❌ كلمة المرور خاطئة', true);
+                showToast('❌ كلمة المرور خاطئة');
             }
         }
-        
+
         function logout() {
             isAdmin = false;
             document.getElementById('uploadZone').classList.remove('active');
             document.getElementById('adminBtn').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'none';
             renderVideos();
-            showToast('👋 تم تسجيل الخروج');
+            showToast('👋 تم الخروج');
         }
-        
-        // ===== UTILS =====
-        function showToast(message, isError = false) {
+
+        function showToast(msg) {
             const toast = document.getElementById('toast');
-            const text = document.getElementById('toastText');
-            const icon = toast.querySelector('.toast-icon');
-            
-            text.textContent = message;
-            if (isError) {
-                toast.classList.add('error');
-                icon.innerHTML = '<i class="fas fa-exclamation"></i>';
-            } else {
-                toast.classList.remove('error');
-                icon.innerHTML = '<i class="fas fa-check"></i>';
-            }
-            
+            toast.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
-        
+
         window.onclick = (e) => {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
