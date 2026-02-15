@@ -373,7 +373,7 @@
                 <i class="fas fa-lock"></i> دخول المشرف
             </button>
             <button class="btn btn-danger" id="logoutBtn" onclick="logout()" style="display: none;">
-                <i class="fas fa-sign-out-alt"></i>
+                <i class="fas fa-sign-out-alt"></i> خروج
             </button>
         </div>
     </nav>
@@ -427,10 +427,11 @@
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h3><i class="fas fa-lock"></i> دخول المشرف</h3>
+                <button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <input type="password" id="passwordInput" placeholder="كلمة المرور" 
-                       style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; margin-bottom: 1rem;"
+                <input type="password" id="passwordInput" placeholder="اكتب كلمة المرور هنا..." 
+                       style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; margin-bottom: 1rem; font-size: 1.1rem; text-align: center;"
                        onkeypress="if(event.key==='Enter')doLogin()">
                 <button class="btn btn-primary" style="width: 100%;" onclick="doLogin()">
                     <i class="fas fa-sign-in-alt"></i> دخول
@@ -467,24 +468,26 @@
         let videos = [];
 
         // ===== INIT =====
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => document.getElementById('loader').classList.add('hidden'), 1500);
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hidden');
+            }, 1500);
             loadVideos();
         });
 
-        // ===== LOAD VIDEOS (Real-time from Cloud) =====
+        // ===== LOAD VIDEOS =====
         function loadVideos() {
-            db.collection('videos').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+            db.collection('videos').orderBy('createdAt', 'desc').onSnapshot(function(snapshot) {
                 videos = [];
-                snapshot.forEach(doc => {
+                snapshot.forEach(function(doc) {
                     let v = doc.data();
                     v.id = doc.id;
                     videos.push(v);
                 });
                 renderVideos();
-            }, error => {
+            }, function(error) {
                 console.error('Error:', error);
-                showToast('❌ خطأ في الاتصال بالسحابة');
+                showToast('❌ خطأ في الاتصال');
             });
         }
 
@@ -499,40 +502,31 @@
             }
             
             emptyState.style.display = 'none';
-            container.innerHTML = videos.map(video => `
-                <div class="video-card" onclick="playVideo('${video.id}')">
-                    <div class="video-thumbnail">
-                        ${video.thumbnail ? 
-                            `<img src="${video.thumbnail}" alt="${video.title}">` : 
-                            '<i class="fas fa-film"></i>'
-                        }
-                        <div class="play-overlay">
-                            <div class="play-btn"><i class="fas fa-play"></i></div>
-                        </div>
-                        ${isAdmin ? `
-                            <div style="position:absolute;top:10px;right:10px;background:#ef4444;color:white;padding:5px 10px;border-radius:20px;font-size:12px;cursor:pointer;" 
-                                 onclick="event.stopPropagation(); deleteVideo('${video.id}')">
-                                <i class="fas fa-trash"></i> حذف
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="video-info">
-                        <h4 class="video-title">${video.title}</h4>
-                        <div class="video-meta">
-                            <i class="fas fa-calendar"></i> 
-                            ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            container.innerHTML = videos.map(function(video) {
+                return '<div class="video-card" onclick="playVideo(\'' + video.id + '\')">' +
+                    '<div class="video-thumbnail">' +
+                        (video.thumbnail ? '<img src="' + video.thumbnail + '" alt="' + video.title + '">' : '<i class="fas fa-film"></i>') +
+                        '<div class="play-overlay">' +
+                            '<div class="play-btn"><i class="fas fa-play"></i></div>' +
+                        '</div>' +
+                        (isAdmin ? '<div style="position:absolute;top:10px;right:10px;background:#ef4444;color:white;padding:5px 10px;border-radius:20px;font-size:12px;cursor:pointer;" onclick="event.stopPropagation(); deleteVideo(\'' + video.id + '\')"><i class="fas fa-trash"></i> حذف</div>' : '') +
+                    '</div>' +
+                    '<div class="video-info">' +
+                        '<h4 class="video-title">' + video.title + '</h4>' +
+                        '<div class="video-meta">' +
+                            '<i class="fas fa-calendar"></i> ' + (video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }
 
         function playVideo(id) {
-            const video = videos.find(v => v.id === id);
+            const video = videos.find(function(v) { return v.id === id; });
             if (!video) return;
             
             currentVideo = video;
-            document.getElementById('modalTitle').innerHTML = `<i class="fas fa-play-circle"></i> <span>${video.title}</span>`;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
             document.getElementById('videoPlayer').src = video.url;
             document.getElementById('videoModal').classList.add('active');
             document.getElementById('videoPlayer').play();
@@ -546,7 +540,7 @@
             currentVideo = null;
         }
 
-        // ===== UPLOAD TO CLOUD =====
+        // ===== UPLOAD =====
         function handleFile(input) {
             const file = input.files[0];
             if (!file || !file.type.startsWith('video/')) {
@@ -556,46 +550,46 @@
             
             showToast('⏳ جاري الرفع للسحابة...');
             
-            const fileName = `videos/${Date.now()}_${file.name}`;
+            const fileName = 'videos/' + Date.now() + '_' + file.name;
             const uploadTask = storage.ref(fileName).put(file);
             
             uploadTask.on('state_changed', 
-                snapshot => {
+                function(snapshot) {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    showToast(`⏳ جاري الرفع: ${Math.round(progress)}%`);
+                    showToast('⏳ ' + Math.round(progress) + '%');
                 },
-                error => {
+                function(error) {
                     console.error('Upload error:', error);
                     showToast('❌ فشل الرفع');
                 },
-                async () => {
-                    const url = await uploadTask.snapshot.ref.getDownloadURL();
-                    
-                    await db.collection('videos').add({
-                        title: file.name.replace(/\.[^/.]+$/, ''),
-                        url: url,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                function() {
+                    uploadTask.snapshot.ref.getDownloadURL().then(function(url) {
+                        db.collection('videos').add({
+                            title: file.name.replace(/\.[^/.]+$/, ''),
+                            url: url,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(function() {
+                            showToast('✅ تم الرفع! يظهر للجميع الآن 🌍');
+                        });
                     });
-                    
-                    showToast('✅ تم الرفع! يظهر للجميع الآن 🌍');
                 }
             );
         }
 
-        async function deleteVideo(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا الفيديو من السحابة؟')) return;
+        function deleteVideo(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
             
-            try {
-                await db.collection('videos').doc(id).delete();
-                showToast('🗑️ تم الحذف من السحابة');
-            } catch (e) {
+            db.collection('videos').doc(id).delete().then(function() {
+                showToast('🗑️ تم الحذف');
+            }).catch(function() {
                 showToast('❌ فشل الحذف');
-            }
+            });
         }
 
         // ===== AUTH =====
         function showLogin() { 
             document.getElementById('loginModal').classList.add('active'); 
+            document.getElementById('passwordInput').value = '';
             document.getElementById('passwordInput').focus();
         }
         
@@ -604,7 +598,12 @@
         }
 
         function doLogin() {
-            if (document.getElementById('passwordInput').value === ADMIN_PASS) {
+            const input = document.getElementById('passwordInput');
+            const enteredPass = input.value.trim();
+            
+            console.log('Entered:', enteredPass); // للتأكد في Console
+            
+            if (enteredPass === ADMIN_PASS) {
                 isAdmin = true;
                 document.getElementById('uploadZone').classList.add('active');
                 document.getElementById('adminBtn').style.display = 'none';
@@ -612,9 +611,10 @@
                 closeLogin();
                 renderVideos();
                 showToast('🔓 مرحباً أيها المشرف! ☁️');
-                document.getElementById('passwordInput').value = '';
             } else {
-                showToast('❌ كلمة المرور خاطئة');
+                showToast('❌ كلمة المرور خاطئة: ' + enteredPass);
+                input.value = '';
+                input.focus();
             }
         }
 
@@ -631,10 +631,12 @@
             const toast = document.getElementById('toast');
             toast.textContent = msg;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
         }
 
-        window.onclick = (e) => {
+        window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
