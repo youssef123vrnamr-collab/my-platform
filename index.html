@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فلك العالمي | النسخة المحدثة</title>
+    <title>فلك العالمي | النسخة السحابية</title>
     
+    <!-- Cloudinary Upload Widget -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
@@ -157,6 +159,7 @@
         
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
         .btn-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
         
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
         
@@ -191,6 +194,8 @@
             text-align: center;
             margin-bottom: 3rem;
             display: none;
+            position: relative;
+            overflow: hidden;
         }
         
         .upload-zone.active { display: block; animation: fadeInUp 0.5s; }
@@ -207,6 +212,7 @@
             margin: 0 auto 1.5rem;
             cursor: pointer;
             transition: transform 0.3s;
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
         }
         
         .upload-icon:hover { transform: scale(1.1) rotate(10deg); }
@@ -221,7 +227,10 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s;
         }
+        
+        .upload-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5); }
         
         .upload-info {
             margin-top: 1rem;
@@ -232,11 +241,17 @@
             color: #888;
         }
         
-        .progress-wrapper { margin-top: 2rem; display: none; }
-        .progress-wrapper.active { display: block; }
-        .progress-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #6366f1); width: 0%; transition: width 0.3s; border-radius: 4px; }
+        .cloudinary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(52, 73, 94, 0.3);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #3498db;
+        }
         
         .videos-grid {
             display: grid;
@@ -268,9 +283,12 @@
             justify-content: center;
             font-size: 4rem;
             color: #6366f1;
+            overflow: hidden;
         }
         
         .video-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .video-thumbnail video { width: 100%; height: 100%; object-fit: cover; }
         
         .play-overlay {
             position: absolute;
@@ -293,11 +311,23 @@
             align-items: center;
             justify-content: center;
             font-size: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         
         .video-info { padding: 1.5rem; }
         .video-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .video-meta { color: #888; font-size: 0.9rem; }
+        .video-meta { color: #888; font-size: 0.9rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        
+        .video-duration {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: white;
+        }
         
         .empty-state {
             text-align: center;
@@ -308,7 +338,7 @@
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: none;
             align-items: center;
             justify-content: center;
@@ -316,14 +346,16 @@
             padding: 2rem;
         }
         
-        .modal.active { display: flex; }
+        .modal.active { display: flex; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .modal-content {
             background: #1a1025;
             border-radius: 25px;
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             border: 1px solid rgba(99, 102, 241, 0.3);
+            overflow: hidden;
         }
         
         .modal-header {
@@ -341,10 +373,13 @@
             color: #ef4444;
             border-radius: 10px;
             cursor: pointer;
+            transition: all 0.3s;
         }
         
-        .modal-body { padding: 1.5rem; }
-        .video-player { width: 100%; border-radius: 15px; }
+        .modal-close:hover { background: rgba(239, 68, 68, 0.4); transform: rotate(90deg); }
+        
+        .modal-body { padding: 0; }
+        .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 25px 25px; }
         
         .toast {
             position: fixed;
@@ -359,36 +394,42 @@
             z-index: 10001;
             max-width: 90%;
             text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s;
         }
+        
+        @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
         
         .toast.show { display: block; }
         
-        .uploading-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9);
-            display: none;
+        /* Cloudinary Widget Customization */
+        .cloudinary-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            z-index: 99999;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
         }
         
-        .uploading-overlay.active { display: flex; }
-        
-        .uploading-spinner {
-            width: 80px; height: 80px;
-            border: 4px solid rgba(99, 102, 241, 0.3);
-            border-top-color: #6366f1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-        
-        .uploading-text {
-            font-size: 1.2rem;
-            color: #6366f1;
-        }
+        .video-card:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { background: #dc2626; transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -400,12 +441,6 @@
     <div class="loader" id="loader">
         <div class="loader-ring"></div>
         <div class="loader-text">جاري الاتصال...</div>
-    </div>
-    
-    <!-- Uploading Overlay -->
-    <div class="uploading-overlay" id="uploadingOverlay">
-        <div class="uploading-spinner"></div>
-        <div class="uploading-text" id="uploadingText">جاري قراءة الفيديو...</div>
     </div>
     
     <nav class="navbar">
@@ -428,33 +463,29 @@
     
     <div class="container">
         <div class="hero">
-            <div class="hero-badge"><i class="fas fa-cloud"></i> متصل بالسحابة</div>
+            <div class="hero-badge"><i class="fas fa-cloud"></i> متصل بـ Cloudinary</div>
             <h2>اكتشف أسرار <span>الكون</span></h2>
-            <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم!</p>
+            <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم عبر Cloudinary!</p>
         </div>
         
         <div class="upload-zone" id="uploadZone">
-            <div class="upload-icon" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon" onclick="openCloudinaryWidget()">
                 <i class="fas fa-cloud-upload-alt"></i>
             </div>
             <h3>رفع فيديو جديد</h3>
-            <p>الفيديو هيتخزن في السحابة ويظهر للجميع</p>
-            <input type="file" id="fileInput" accept="video/*" style="display: none;" onchange="handleFile(this)">
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                <i class="fas fa-plus"></i> اختيار فيديو
+            <p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p>
+            <button class="upload-btn" onclick="openCloudinaryWidget()">
+                <i class="fas fa-plus"></i> فتح واجهة الرفع
             </button>
             
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                الحد الأقصى: 5MB | الصيغ المدعومة: MP4, WebM, MOV
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100MB
             </div>
             
-            <div class="progress-wrapper" id="progressWrapper">
-                <div class="progress-header">
-                    <span id="progressText">جاري الرفع...</span>
-                    <span id="progressPercent">0%</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="cloudinary-badge">
+                <i class="fas fa-shield-alt"></i>
+                محمي بواسطة Cloudinary Upload Widget
             </div>
         </div>
         
@@ -480,7 +511,7 @@
                 <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <video class="video-player" id="videoPlayer" controls></video>
+                <video class="video-player" id="videoPlayer" controls playsinline></video>
             </div>
         </div>
     </div>
@@ -491,14 +522,14 @@
                 <h3><i class="fas fa-lock"></i> دخول المشرف</h3>
                 <button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="padding: 1.5rem;">
                 <input type="password" id="passwordInput" placeholder="اكتب كلمة المرور هنا..." 
                        style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; margin-bottom: 1rem; font-size: 1.1rem; text-align: center;"
                        onkeypress="if(event.key==='Enter')doLogin()">
                 <button class="btn btn-primary" style="width: 100%;" onclick="doLogin()">
                     <i class="fas fa-sign-in-alt"></i> دخول
                 </button>
-                <button onclick="closeLogin()" style="width: 100%; background: transparent; border: none; color: #888; margin-top: 1rem; cursor: pointer;">
+                <button onclick="closeLogin()" style="width: 100%; background: transparent; border: none; color: #888; margin-top: 1rem; cursor: pointer; font-family: 'Cairo';">
                     إلغاء
                 </button>
             </div>
@@ -508,7 +539,14 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ===== FIREBASE CONFIG =====
+        // ===== CLOUDINARY CONFIG =====
+        const CLOUDINARY_CONFIG = {
+            cloudName: 'ds4wy90er',
+            uploadPreset: 'falak_upload',
+            apiKey: '462193620740' // Optional for unsigned uploads
+        };
+        
+        // ===== FIREBASE CONFIG (للـ metadata فقط) =====
         const firebaseConfig = {
             apiKey: "AIzaSyCQVYHMDgInDiBhP69WQn3w3gysPiSzBxg",
             authDomain: "project-119e3e19-1c79-4238-a10.firebaseapp.com",
@@ -524,8 +562,8 @@
         // ===== APP CONFIG =====
         const ADMIN_PASS = "falak123";
         let isAdmin = false;
-        let currentVideo = null;
         let videos = [];
+        let uploadWidget = null;
 
         // ===== INIT =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -533,7 +571,129 @@
                 document.getElementById('loader').classList.add('hidden');
             }, 1500);
             loadVideos();
+            initCloudinaryWidget();
         });
+
+        // ===== CLOUDINARY WIDGET INIT =====
+        function initCloudinaryWidget() {
+            uploadWidget = cloudinary.createUploadWidget({
+                cloudName: CLOUDINARY_CONFIG.cloudName,
+                uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+                
+                // إعدادات الفيديو
+                resourceType: 'video',
+                clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi'],
+                maxFileSize: 100000000, // 100MB
+                
+                // المصادر المتاحة
+                sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
+                
+                // اللغة العربية
+                language: 'ar',
+                text: {
+                    ar: {
+                        or: 'أو',
+                        local: {
+                            browse: 'اختر ملف',
+                            drop: 'اسحب الفيديو هنا'
+                        },
+                        menu: {
+                            files: 'ملفاتي',
+                            web: 'رابط الويب',
+                            camera: 'الكاميرا',
+                            gdrive: 'Google Drive',
+                            dropbox: 'Dropbox'
+                        }
+                    }
+                },
+                
+                // التخصيص
+                styles: {
+                    palette: {
+                        window: '#1a1025',
+                        windowBorder: '#6366f1',
+                        tabIcon: '#6366f1',
+                        menuIcons: '#6366f1',
+                        textDark: '#ffffff',
+                        textLight: '#ffffff',
+                        link: '#ec4899',
+                        action: '#6366f1',
+                        inactiveTabIcon: '#8b5cf6',
+                        error: '#ef4444',
+                        inProgress: '#6366f1',
+                        complete: '#10b981',
+                        sourceBg: '#0f0a1a'
+                    },
+                    fonts: {
+                        default: 'Cairo',
+                        active: 'Cairo'
+                    }
+                },
+                
+                // خيارات متقدمة
+                showAdvancedOptions: false,
+                cropping: false,
+                multiple: false,
+                defaultSource: 'local',
+                
+                // معالجة ما قبل الرفع
+                prepareUploadParams: function(cb, params) {
+                    // إضافة معلومات إضافية
+                    params.context = 'alt=فيديو فلك العالمي';
+                    cb(params);
+                }
+                
+            }, function(error, result) {
+                if (!error && result && result.event === "success") {
+                    console.log('Upload success:', result.info);
+                    handleCloudinarySuccess(result.info);
+                } else if (error) {
+                    console.error('Upload error:', error);
+                    showToast('❌ فشل الرفع: ' + error.message);
+                } else if (result && result.event === "queues-start") {
+                    showToast('⏳ جاري بدء الرفع...');
+                }
+            });
+        }
+
+        function openCloudinaryWidget() {
+            if (uploadWidget) {
+                uploadWidget.open();
+            } else {
+                showToast('⚠️ جاري تحميل واجهة الرفع...');
+                initCloudinaryWidget();
+                setTimeout(() => uploadWidget.open(), 500);
+            }
+        }
+
+        function handleCloudinarySuccess(info) {
+            // حفظ بيانات الفيديو في Firebase
+            const videoData = {
+                title: info.original_filename || 'فيديو بدون عنوان',
+                url: info.secure_url,
+                thumbnail: info.thumbnail_url || info.secure_url.replace('.mp4', '.jpg'),
+                publicId: info.public_id,
+                format: info.format,
+                duration: info.duration,
+                width: info.width,
+                height: info.height,
+                size: info.bytes,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                cloudinaryData: {
+                    assetId: info.asset_id,
+                    version: info.version_id
+                }
+            };
+            
+            db.collection('videos').add(videoData)
+                .then(function() {
+                    showToast('✅ تم الرفع والحفظ بنجاح! 🌍');
+                })
+                .catch(function(err) {
+                    console.error('Error saving to Firebase:', err);
+                    showToast('⚠️ تم الرفع لكن فشل الحفظ في قاعدة البيانات');
+                });
+        }
 
         // ===== LOAD VIDEOS =====
         function loadVideos() {
@@ -564,23 +724,36 @@
             
             emptyState.style.display = 'none';
             container.innerHTML = videos.map(function(video) {
+                const duration = video.duration ? formatDuration(video.duration) : '';
+                
                 return '<div class="video-card" onclick="playVideo(\'' + video.id + '\')">' +
                     '<div class="video-thumbnail">' +
-                        (video.thumbnail ? '<img src="' + video.thumbnail + '" alt="' + video.title + '">' : '<i class="fas fa-film"></i>') +
+                        (video.thumbnail ? 
+                            '<img src="' + video.thumbnail + '" alt="' + video.title + '" class="cloudinary-thumbnail">' : 
+                            '<i class="fas fa-film"></i>'
+                        ) +
+                        (duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + '</div>' : '') +
                         '<div class="play-overlay">' +
                             '<div class="play-btn"><i class="fas fa-play"></i></div>' +
                         '</div>' +
-                        (isAdmin ? '<div style="position:absolute;top:10px;right:10px;background:#ef4444;color:white;padding:5px 10px;border-radius:20px;font-size:12px;cursor:pointer;" onclick="event.stopPropagation(); deleteVideo(\'' + video.id + '\')"><i class="fas fa-trash"></i> حذف</div>' : '') +
+                        (isAdmin ? '<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo(\'' + video.id + '\', \'' + (video.publicId || '') + '\')"><i class="fas fa-trash"></i> حذف</button>' : '') +
                     '</div>' +
                     '<div class="video-info">' +
                         '<h4 class="video-title">' + video.title + '</h4>' +
                         '<div class="video-meta">' +
-                            '<i class="fas fa-calendar"></i> ' + (video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن') +
-                            ' | <i class="fas fa-hdd"></i> ' + formatSize(video.size) +
+                            '<span><i class="fas fa-calendar"></i> ' + (video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن') + '</span>' +
+                            '<span><i class="fas fa-hdd"></i> ' + formatSize(video.size) + '</span>' +
+                            (video.width ? '<span><i class="fas fa-expand"></i> ' + video.width + 'x' + video.height + '</span>' : '') +
                         '</div>' +
                     '</div>' +
                 '</div>';
             }).join('');
+        }
+
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
         }
 
         function formatSize(bytes) {
@@ -594,91 +767,39 @@
             const video = videos.find(function(v) { return v.id === id; });
             if (!video) return;
             
-            currentVideo = video;
             document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
-            document.getElementById('videoPlayer').src = video.url;
+            
+            const player = document.getElementById('videoPlayer');
+            player.src = video.url;
+            player.poster = video.thumbnail || '';
+            
             document.getElementById('videoModal').classList.add('active');
-            document.getElementById('videoPlayer').play();
+            player.play().catch(function(e) {
+                console.log('Autoplay prevented:', e);
+            });
         }
 
         function closeModal() {
             const player = document.getElementById('videoPlayer');
             player.pause();
             player.src = '';
+            player.poster = '';
             document.getElementById('videoModal').classList.remove('active');
-            currentVideo = null;
         }
 
-        // ===== UPLOAD =====
-        function handleFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            if (!file.type.startsWith('video/')) {
-                showToast('⚠️ يرجى اختيار ملف فيديو فقط');
-                return;
-            }
-            
-            // التحقق من الحجم (5MB كحد أقصى)
-            const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-            if (file.size > MAX_SIZE) {
-                showToast('⚠️ حجم الفيديو كبير جداً! الحد الأقصى 5MB');
-                return;
-            }
-            
-            // إظهار شاشة التحميل
-            const overlay = document.getElementById('uploadingOverlay');
-            const text = document.getElementById('uploadingText');
-            overlay.classList.add('active');
-            text.textContent = 'جاري قراءة الفيديو...';
-            
-            const reader = new FileReader();
-            
-            reader.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    text.textContent = 'جاري القراءة: ' + percent + '%';
-                }
-            };
-            
-            reader.onload = function(e) {
-                text.textContent = 'جاري الحفظ في السحابة...';
-                
-                const videoData = {
-                    title: file.name.replace(/\.[^/.]+$/, ''),
-                    url: e.target.result,
-                    size: file.size,
-                    type: file.type,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                
-                db.collection('videos').add(videoData)
-                    .then(function() {
-                        overlay.classList.remove('active');
-                        showToast('✅ تم الرفع بنجاح! 🌍');
-                        input.value = '';
-                    })
-                    .catch(function(err) {
-                        overlay.classList.remove('active');
-                        console.error('Error:', err);
-                        showToast('❌ فشل الحفظ: ' + err.message);
-                    });
-            };
-            
-            reader.onerror = function() {
-                overlay.classList.remove('active');
-                showToast('❌ فشل قراءة الملف');
-            };
-            
-            reader.readAsDataURL(file);
-        }
-
-        function deleteVideo(id) {
+        function deleteVideo(id, publicId) {
             if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
             
+            // حذف من Firebase أولاً
             db.collection('videos').doc(id).delete()
                 .then(function() {
-                    showToast('🗑️ تم الحذف');
+                    showToast('🗑️ تم الحذف من المكتبة');
+                    
+                    // محاولة حذف من Cloudinary (اختياري - يتطلب server-side)
+                    if (publicId) {
+                        console.log('يمكن حذف الملف من Cloudinary عبر:', publicId);
+                        // ملاحظة: الحذف من Cloudinary يتطلب توقيع (signature) من الخادم
+                    }
                 })
                 .catch(function(err) {
                     showToast('❌ فشل الحذف: ' + err.message);
@@ -689,7 +810,7 @@
         function showLogin() { 
             document.getElementById('loginModal').classList.add('active'); 
             document.getElementById('passwordInput').value = '';
-            document.getElementById('passwordInput').focus();
+            setTimeout(() => document.getElementById('passwordInput').focus(), 100);
         }
         
         function closeLogin() { 
@@ -733,12 +854,21 @@
             }, 4000);
         }
 
+        // ===== EVENT LISTENERS =====
         window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
             }
         };
+
+        // إغلاق المودال بزر ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeLogin();
+            }
+        });
     </script>
 </body>
 </html>
