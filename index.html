@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فلك العالمي | النسخة السحابية</title>
+    <title>فلك العالمي | النسخة المحدثة</title>
     
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -225,6 +223,21 @@
             cursor: pointer;
         }
         
+        .upload-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .progress-wrapper { margin-top: 2rem; display: none; }
+        .progress-wrapper.active { display: block; }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #6366f1); width: 0%; transition: width 0.3s; border-radius: 4px; }
+        
         .videos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -344,9 +357,38 @@
             border-radius: 15px;
             display: none;
             z-index: 10001;
+            max-width: 90%;
+            text-align: center;
         }
         
         .toast.show { display: block; }
+        
+        .uploading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 99999;
+        }
+        
+        .uploading-overlay.active { display: flex; }
+        
+        .uploading-spinner {
+            width: 80px; height: 80px;
+            border: 4px solid rgba(99, 102, 241, 0.3);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        .uploading-text {
+            font-size: 1.2rem;
+            color: #6366f1;
+        }
     </style>
 </head>
 <body>
@@ -357,7 +399,13 @@
     
     <div class="loader" id="loader">
         <div class="loader-ring"></div>
-        <div class="loader-text">جاري الاتصال بالسحابة...</div>
+        <div class="loader-text">جاري الاتصال...</div>
+    </div>
+    
+    <!-- Uploading Overlay -->
+    <div class="uploading-overlay" id="uploadingOverlay">
+        <div class="uploading-spinner"></div>
+        <div class="uploading-text" id="uploadingText">جاري قراءة الفيديو...</div>
     </div>
     
     <nav class="navbar">
@@ -395,11 +443,25 @@
             <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
                 <i class="fas fa-plus"></i> اختيار فيديو
             </button>
+            
+            <div class="upload-info">
+                <i class="fas fa-info-circle"></i> 
+                الحد الأقصى: 5MB | الصيغ المدعومة: MP4, WebM, MOV
+            </div>
+            
+            <div class="progress-wrapper" id="progressWrapper">
+                <div class="progress-header">
+                    <span id="progressText">جاري الرفع...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            </div>
         </div>
         
         <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
             <i class="fas fa-play-circle" style="color: #ec4899;"></i>
             مكتبة الفيديوهات المشتركة
+            <span id="videoCount" style="margin-right: auto; background: rgba(99,102,241,0.2); padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem;">0 فيديو</span>
         </h3>
         
         <div class="videos-grid" id="videosContainer"></div>
@@ -456,10 +518,8 @@
             appId: "1:462193620740:web:1cdc0635f1c818b2a70251"
         };
         
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const storage = firebase.storage();
         
         // ===== APP CONFIG =====
         const ADMIN_PASS = "falak123";
@@ -484,10 +544,11 @@
                     v.id = doc.id;
                     videos.push(v);
                 });
+                document.getElementById('videoCount').textContent = videos.length + ' فيديو';
                 renderVideos();
             }, function(error) {
                 console.error('Error:', error);
-                showToast('❌ خطأ في الاتصال');
+                showToast('⚠️ خطأ في الاتصال: ' + error.message);
             });
         }
 
@@ -515,10 +576,18 @@
                         '<h4 class="video-title">' + video.title + '</h4>' +
                         '<div class="video-meta">' +
                             '<i class="fas fa-calendar"></i> ' + (video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن') +
+                            ' | <i class="fas fa-hdd"></i> ' + formatSize(video.size) +
                         '</div>' +
                     '</div>' +
                 '</div>';
             }).join('');
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         }
 
         function playVideo(id) {
@@ -543,47 +612,77 @@
         // ===== UPLOAD =====
         function handleFile(input) {
             const file = input.files[0];
-            if (!file || !file.type.startsWith('video/')) {
-                showToast('⚠️ اختار ملف فيديو صحيح');
+            if (!file) return;
+            
+            if (!file.type.startsWith('video/')) {
+                showToast('⚠️ يرجى اختيار ملف فيديو فقط');
                 return;
             }
             
-            showToast('⏳ جاري الرفع للسحابة...');
+            // التحقق من الحجم (5MB كحد أقصى)
+            const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+            if (file.size > MAX_SIZE) {
+                showToast('⚠️ حجم الفيديو كبير جداً! الحد الأقصى 5MB');
+                return;
+            }
             
-            const fileName = 'videos/' + Date.now() + '_' + file.name;
-            const uploadTask = storage.ref(fileName).put(file);
+            // إظهار شاشة التحميل
+            const overlay = document.getElementById('uploadingOverlay');
+            const text = document.getElementById('uploadingText');
+            overlay.classList.add('active');
+            text.textContent = 'جاري قراءة الفيديو...';
             
-            uploadTask.on('state_changed', 
-                function(snapshot) {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    showToast('⏳ ' + Math.round(progress) + '%');
-                },
-                function(error) {
-                    console.error('Upload error:', error);
-                    showToast('❌ فشل الرفع');
-                },
-                function() {
-                    uploadTask.snapshot.ref.getDownloadURL().then(function(url) {
-                        db.collection('videos').add({
-                            title: file.name.replace(/\.[^/.]+$/, ''),
-                            url: url,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        }).then(function() {
-                            showToast('✅ تم الرفع! يظهر للجميع الآن 🌍');
-                        });
-                    });
+            const reader = new FileReader();
+            
+            reader.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    text.textContent = 'جاري القراءة: ' + percent + '%';
                 }
-            );
+            };
+            
+            reader.onload = function(e) {
+                text.textContent = 'جاري الحفظ في السحابة...';
+                
+                const videoData = {
+                    title: file.name.replace(/\.[^/.]+$/, ''),
+                    url: e.target.result,
+                    size: file.size,
+                    type: file.type,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                db.collection('videos').add(videoData)
+                    .then(function() {
+                        overlay.classList.remove('active');
+                        showToast('✅ تم الرفع بنجاح! 🌍');
+                        input.value = '';
+                    })
+                    .catch(function(err) {
+                        overlay.classList.remove('active');
+                        console.error('Error:', err);
+                        showToast('❌ فشل الحفظ: ' + err.message);
+                    });
+            };
+            
+            reader.onerror = function() {
+                overlay.classList.remove('active');
+                showToast('❌ فشل قراءة الملف');
+            };
+            
+            reader.readAsDataURL(file);
         }
 
         function deleteVideo(id) {
             if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
             
-            db.collection('videos').doc(id).delete().then(function() {
-                showToast('🗑️ تم الحذف');
-            }).catch(function() {
-                showToast('❌ فشل الحذف');
-            });
+            db.collection('videos').doc(id).delete()
+                .then(function() {
+                    showToast('🗑️ تم الحذف');
+                })
+                .catch(function(err) {
+                    showToast('❌ فشل الحذف: ' + err.message);
+                });
         }
 
         // ===== AUTH =====
@@ -601,8 +700,6 @@
             const input = document.getElementById('passwordInput');
             const enteredPass = input.value.trim();
             
-            console.log('Entered:', enteredPass); // للتأكد في Console
-            
             if (enteredPass === ADMIN_PASS) {
                 isAdmin = true;
                 document.getElementById('uploadZone').classList.add('active');
@@ -612,7 +709,7 @@
                 renderVideos();
                 showToast('🔓 مرحباً أيها المشرف! ☁️');
             } else {
-                showToast('❌ كلمة المرور خاطئة: ' + enteredPass);
+                showToast('❌ كلمة المرور خاطئة');
                 input.value = '';
                 input.focus();
             }
@@ -633,7 +730,7 @@
             toast.classList.add('show');
             setTimeout(function() {
                 toast.classList.remove('show');
-            }, 3000);
+            }, 4000);
         }
 
         window.onclick = function(e) {
