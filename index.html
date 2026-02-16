@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* جميع الأنماط السابقة كما هي مع إضافة القليل للتجاوب */
+        /* جميع الأنماط السابقة كما هي */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -665,7 +665,7 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ===== إخفاء شاشة التحميل بعد 1 ثانية (حل المشكلة) =====
+        // ===== إخفاء شاشة التحميل =====
         setTimeout(() => {
             const loader = document.getElementById('loader');
             if (loader) loader.classList.add('hidden');
@@ -678,7 +678,7 @@
             apiKey: '462193620740'
         };
         
-        // ===== FIREBASE CONFIG (تم التحديث لمشروع Planning With AI) =====
+        // ===== FIREBASE CONFIG (مشروع Planning With AI) =====
         const firebaseConfig = {
             apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
             authDomain: "planning-with-ai-390af.firebaseapp.com",
@@ -696,10 +696,11 @@
         let isAdmin = false;
         let videos = [];
         let uploadWidget = null;
+        let unsubscribe = null; // للاستماع المباشر
 
-        // ===== بدء التحميل =====
+        // ===== بدء التحميل والاستماع المباشر =====
         document.addEventListener('DOMContentLoaded', function() {
-            loadVideos();
+            listenToVideos(); // استخدم المستمع بدلاً من get()
             initCloudinaryWidget();
             checkUrlForShare();
             
@@ -708,6 +709,28 @@
                 document.getElementById('loader')?.classList.add('hidden');
             }, 3000);
         });
+
+        // ===== الاستماع المباشر للتحديثات (Realtime Listener) =====
+        function listenToVideos() {
+            // إلغاء أي استماع سابق
+            if (unsubscribe) unsubscribe();
+            
+            unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    videos = [];
+                    snapshot.forEach(doc => {
+                        let v = doc.data();
+                        v.id = doc.id;
+                        videos.push(v);
+                    });
+                    renderVideos();
+                    checkForResume();
+                    checkUrlForShare();
+                }, error => {
+                    console.error('Error listening to videos:', error);
+                    showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام المنصة');
+                });
+        }
 
         // ===== CLOUDINARY WIDGET INIT =====
         function initCloudinaryWidget() {
@@ -774,7 +797,7 @@
             const videoData = {
                 title: info.original_filename || 'فيديو بدون عنوان',
                 url: info.secure_url,
-                thumbnail: info.thumbnail_url || info.secure_url.replace('.mp4', '.jpg'),
+                thumbnail: info.thumbnail_url || info.secure_url.replace(/\.[^/.]+$/, '.jpg'), // تحسين إنشاء الصورة المصغرة
                 publicId: info.public_id,
                 format: info.format,
                 duration: info.duration,
@@ -786,34 +809,17 @@
             };
             
             db.collection('videos').add(videoData)
-                .then(() => showToast('✅ تم الرفع والحفظ بنجاح! 🌍'))
+                .then(() => {
+                    showToast('✅ تم الرفع والحفظ بنجاح! 🌍');
+                    // لا حاجة لإعادة تحميل لأن المستمع سيقوم بالتحديث تلقائياً
+                })
                 .catch(err => {
                     console.error('Error saving to Firebase:', err);
                     showToast('⚠️ تم الرفع لكن فشل الحفظ في قاعدة البيانات');
                 });
         }
 
-        // ===== تحميل الفيديوهات =====
-        function loadVideos() {
-            db.collection('videos').orderBy('createdAt', 'desc').get()
-                .then(snapshot => {
-                    videos = [];
-                    snapshot.forEach(doc => {
-                        let v = doc.data();
-                        v.id = doc.id;
-                        videos.push(v);
-                    });
-                    renderVideos();
-                    // بعد التحميل نتحقق من الاستئناف ومشاركة الرابط
-                    checkForResume();
-                    checkUrlForShare();
-                })
-                .catch(error => {
-                    console.error('Error loading videos:', error);
-                    showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام المنصة');
-                });
-        }
-
+        // ===== عرض الفيديوهات =====
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
@@ -937,7 +943,7 @@
                 document.getElementById('adminBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'flex';
                 closeLogin();
-                renderVideos();
+                renderVideos(); // إعادة رسم لإظهار أزرار الحذف
                 showToast('🔓 مرحباً أيها المشرف! ☁️');
             } else {
                 showToast('❌ كلمة المرور خاطئة');
@@ -951,7 +957,7 @@
             document.getElementById('uploadZone').classList.remove('active');
             document.getElementById('adminBtn').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'none';
-            renderVideos();
+            renderVideos(); // إعادة رسم لإخفاء أزرار الحذف
             showToast('👋 تم الخروج');
         }
 
