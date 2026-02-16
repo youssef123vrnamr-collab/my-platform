@@ -664,7 +664,7 @@
             
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 2 جيجابايت (مع التحميل المُجزأ)
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 3 جيجابايت (مع التحميل المُجزأ)
             </div>
             
             <div class="cloudinary-badge">
@@ -795,14 +795,14 @@
         // ===== APP CONFIG =====
         // كلمة المرور: @@@&&&((()))
         const ADMIN_PASS = "@@@&&&((()))";
-        const MAX_VIDEO_SIZE = 2 * 1024 * 1024 * 1024; // 2 جيجابايت
+        const MAX_VIDEO_SIZE = 3 * 1024 * 1024 * 1024; // 3 جيجابايت
         const CHUNK_SIZE = 20 * 1024 * 1024; // 20 ميجابايت لكل جزء
         
         let isAdmin = false;
         let videos = [];
         let uploadWidget = null;
         let unsubscribe = null;
-        let pendingVideoInfo = null; // لحفظ معلومات الفيديو لحين إدخال الوصف
+        let pendingVideoInfo = null; // لحفظ معلومات الرفع لحين إدخال الوصف
 
         // ===== بدء التحميل والاستماع المباشر =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -897,7 +897,7 @@
                 } else if (error) {
                     console.error('Upload error:', error);
                     if (error.status === 413) {
-                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 2 جيجابايت');
+                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 3 جيجابايت');
                     } else {
                         showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
                     }
@@ -937,18 +937,18 @@
                 '/upload/q_auto,f_auto,vc_auto/'
             );
 
-            // محاولة الحصول على رابط الصورة المصغرة
-            let thumbnailUrl = info.thumbnail_url;
-            if (!thumbnailUrl && info.eager && info.eager.length > 1) {
-                thumbnailUrl = info.eager[1].secure_url;
-            }
-            if (!thumbnailUrl) {
-                thumbnailUrl = info.secure_url.replace('/video/upload/', '/video/upload/so_1,fl_animated/f_auto/') + '.jpg';
+            // إنشاء رابط الصورة المصغرة بشكل موثوق
+            let thumbnailUrl = null;
+            if (info.eager && info.eager.length > 1 && info.eager[1].secure_url) {
+                thumbnailUrl = info.eager[1].secure_url; // استخدام الصورة من eager إن وجدت
+            } else {
+                // بناء الرابط يدويًا باستخدام public_id مع تحديد إطار عند ثانية واحدة وتحويله إلى JPG
+                thumbnailUrl = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_1,f_jpg/${info.public_id}.jpg`;
             }
 
             const videoData = {
                 title: title,
-                description: description, // حقل الوصف الجديد
+                description: description,
                 url: optimizedUrl,
                 originalUrl: info.secure_url,
                 thumbnail: thumbnailUrl,
