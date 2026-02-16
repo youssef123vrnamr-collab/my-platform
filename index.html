@@ -397,7 +397,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,00.1) 0%,.1) 0%, rgba(0,0,0,0.5) 100%);
             z-index: 2;
         }
         
@@ -426,42 +426,55 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         
+        /* ===== تعديل مساحة النص - 5 جيجا ===== */
         .video-info { 
-            padding: 1.5rem; 
+            padding: 2.5rem 2rem 3rem 2rem; 
             flex: 1; 
-            background: linear-gradient(to top, rgba(26,16,37,0.95) 0%, rgba(26,16,37,0.8) 100%);
+            background: linear-gradient(to top, rgba(26,16,37,0.98) 0%, rgba(26,16,37,0.9) 100%);
             position: relative;
             z-index: 4;
             margin-top: -60px;
             border-radius: 20px 20px 0 0;
+            min-height: 400px; /* ارتفاع أدنى كبير جداً */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
         
         .video-title { 
-            font-size: 1.2rem; 
+            font-size: 1.5rem; 
             font-weight: 700; 
-            margin-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.8;
         }
         
         .video-description {
             color: #ccc;
-            font-size: 0.95rem;
-            margin-bottom: 0.75rem;
-            line-height: 1.5;
-            max-height: 3rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 2.2; /* تباعد أسطر أكبر */
+            max-height: none; /* إلغاء الحد الأقصى للارتفاع */
+            overflow: visible; /* إظهار كل النص */
+            text-overflow: clip;
+            display: block; /* إلغاء clamp */
+            -webkit-line-clamp: unset;
+            -webkit-box-orient: unset;
+            flex: 1; /* يأخذ المساحة المتبقية */
+            padding-bottom: 1.5rem;
+            white-space: pre-wrap; /* يحافظ على التنسيق */
+            word-wrap: break-word; /* يكسر الكلمات الطويلة */
         }
         
         .video-meta { 
             color: #aaa; 
-            font-size: 0.9rem; 
+            font-size: 0.95rem; 
             display: flex; 
-            gap: 1rem; 
+            gap: 1.5rem; 
             flex-wrap: wrap; 
+            margin-top: auto; /* يبقى في الأسفل */
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
         
         .video-duration {
@@ -559,7 +572,7 @@
         .modal-share:hover { background: rgba(16, 185, 129, 0.4); transform: scale(1.1); }
         
         .modal-body { padding: 0; }
-        .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 25px 25px; }
+        .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 -radius: 0 0 25px 25px; }
         
         .toast {
             position: fixed;
@@ -612,7 +625,7 @@
         
         /* مودال إدخال الوصف */
         .description-modal-content {
-            max-width: 500px;
+            max-width: 600px;
         }
         
         .form-group {
@@ -638,13 +651,96 @@
         }
         
         .form-group textarea {
-            min-height: 100px;
+            min-height: 200px;
             resize: vertical;
+            font-size: 1.05rem;
+            line-height: 1.8;
         }
         
         .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: #6366f1;
+        }
+        
+        /* ===== شريط التقدم للمساحة ===== */
+        .storage-bar-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        .storage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .storage-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .storage-stats {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .storage-bar-wrapper {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .storage-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .storage-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .storage-bar.low { background: linear-gradient(90deg, #10b981, #059669); }
+        .storage-bar.medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .storage-bar.high { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        
+        .storage-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        
+        .storage-percentage {
+            font-weight: 700;
+            color: #6366f1;
         }
         
         /* Responsive تحسينات */
@@ -662,7 +758,14 @@
             .resume-info { justify-content: center; }
             .resume-actions { justify-content: center; }
             .modal-content { max-width: 95%; }
-            .video-info { margin-top: -40px; }
+            .video-info { 
+                margin-top: -40px; 
+                min-height: 300px;
+                padding: 2rem 1.25rem 2.5rem 1.25rem;
+            }
+            .video-title { font-size: 1.3rem; }
+            .video-description { font-size: 1rem; line-height: 2; }
+            .storage-bar-container { padding: 1rem; }
         }
         
         @media (max-width: 480px) {
@@ -670,7 +773,15 @@
             .brand-icon { width: 40px; height: 40px; font-size: 1.2rem; }
             .hero h2 { font-size: 1.5rem; }
             .video-thumbnail { height: 180px; }
-            .video-info { margin-top: -30px; padding: 1rem; }
+            .video-info { 
+                margin-top: -30px; 
+                min-height: 250px;
+                padding: 1.5rem 1rem 2rem 1rem;
+            }
+            .video-title { font-size: 1.2rem; margin-bottom: 1rem; }
+            .video-description { font-size: 0.95rem; line-height: 1.9; margin-bottom: 1.5rem; }
+            .video-meta { font-size: 0.85rem; gap: 1rem; }
+            .form-group textarea { min-height: 150px; }
         }
     </style>
 </head>
@@ -710,6 +821,27 @@
             <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم عبر Cloudinary!</p>
         </div>
         
+        <!-- شريط المساحة -->
+        <div class="storage-bar-container" id="storageBar" style="display: none;">
+            <div class="storage-header">
+                <div class="storage-title">
+                    <i class="fas fa-hdd" style="color: #6366f1;"></i>
+                    مساحة التخزين
+                </div>
+                <div class="storage-stats">
+                    <span id="usedSpace">0 GB</span> / <span id="totalSpace">5 GB</span>
+                    (<span class="storage-percentage" id="percentage">0%</span>)
+                </div>
+            </div>
+            <div class="storage-bar-wrapper">
+                <div class="storage-bar low" id="storageProgress" style="width: 0%;"></div>
+            </div>
+            <div class="storage-footer">
+                <span id="remainingText">المتبقي: 5 GB</span>
+                <span id="videosCount">0 فيديو</span>
+            </div>
+        </div>
+        
         <div class="upload-zone" id="uploadZone">
             <div class="upload-icon" onclick="openCloudinaryWidget()">
                 <i class="fas fa-cloud-upload-alt"></i>
@@ -722,7 +854,7 @@
             
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 3 جيجابايت (مع التحميل المُجزأ)
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 5 جيجابايت (مع التحميل المُجزأ)
             </div>
             
             <div class="cloudinary-badge">
@@ -811,8 +943,8 @@
                     <input type="text" id="videoTitleInput" placeholder="أدخل عنوان الفيديو" value="">
                 </div>
                 <div class="form-group">
-                    <label>وصف الفيديو</label>
-                    <textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..."></textarea>
+                    <label>وصف الفيديو <span id="descCharCount" style="color: #888; font-size: 0.85rem;">(0 / 5000 MB)</span></label>
+                    <textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5242880"></textarea>
                 </div>
                 <button class="btn btn-success" style="width: 100%;" onclick="saveVideoWithDescription()">
                     <i class="fas fa-save"></i> حفظ الفيديو
@@ -852,8 +984,9 @@
         
         // ===== APP CONFIG =====
         const ADMIN_PASS = "@@@&&&((()))";
-        const MAX_VIDEO_SIZE = 3 * 1024 * 1024 * 1024;
+        const MAX_VIDEO_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
         const CHUNK_SIZE = 20 * 1024 * 1024;
+        const MAX_STORAGE = 5 * 1024 * 1024 * 1024; // 5 GB total
         
         let isAdmin = false;
         let videos = [];
@@ -885,12 +1018,48 @@
                         videos.push(v);
                     });
                     renderVideos();
+                    updateStorageBar();
                     checkForResume();
                     checkUrlForShare();
                 }, error => {
                     console.error('Error listening to videos:', error);
                     showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام المنصة');
                 });
+        }
+
+        // ===== تحديث شريط المساحة =====
+        function updateStorageBar() {
+            const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
+            const percentage = Math.min((totalUsed / MAX_STORAGE) * 100, 100);
+            const remaining = MAX_STORAGE - totalUsed;
+            
+            const usedGB = (totalUsed / (1024 * 1024 * 1024)).toFixed(2);
+            const totalGB = (MAX_STORAGE / (1024 * 1024 * 1024)).toFixed(0);
+            const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(2);
+            
+            document.getElementById('usedSpace').textContent = usedGB + ' GB';
+            document.getElementById('totalSpace').textContent = totalGB + ' GB';
+            document.getElementById('percentage').textContent = percentage.toFixed(1) + '%';
+            document.getElementById('remainingText').textContent = 'المتبقي: ' + remainingGB + ' GB';
+            document.getElementById('videosCount').textContent = videos.length + ' فيديو';
+            
+            const progressBar = document.getElementById('storageProgress');
+            progressBar.style.width = percentage + '%';
+            
+            // تغيير اللون حسب النسبة
+            progressBar.classList.remove('low', 'medium', 'high');
+            if (percentage < 50) {
+                progressBar.classList.add('low');
+            } else if (percentage < 80) {
+                progressBar.classList.add('medium');
+            } else {
+                progressBar.classList.add('high');
+            }
+            
+            // إظهار/إخفاء شريط المساحة للمشرف فقط
+            if (isAdmin) {
+                document.getElementById('storageBar').style.display = 'block';
+            }
         }
 
         // ===== CLOUDINARY WIDGET INIT مع إنشاء GIF تلقائي =====
@@ -964,7 +1133,7 @@
                 } else if (error) {
                     console.error('Upload error:', error);
                     if (error.status === 413) {
-                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 3 جيجابايت');
+                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 5 جيجابايت');
                     } else {
                         showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
                     }
@@ -977,6 +1146,15 @@
         }
 
         function openCloudinaryWidget() {
+            // التحقق من المساحة المتبقية قبل الرفع
+            const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
+            const remaining = MAX_STORAGE - totalUsed;
+            
+            if (remaining <= 0) {
+                showToast('❌ المساحة ممتلئة! احذف بعض الفيديوهات أولاً');
+                return;
+            }
+            
             if (uploadWidget) {
                 uploadWidget.open();
             } else {
@@ -997,6 +1175,13 @@
             const info = pendingVideoInfo;
             const title = document.getElementById('videoTitleInput').value.trim() || 'فيديو بدون عنوان';
             const description = document.getElementById('videoDescriptionInput').value.trim() || '';
+
+            // التحقق من المساحة
+            const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
+            if (totalUsed + info.bytes > MAX_STORAGE) {
+                showToast('❌ لا توجد مساحة كافية! المساحة المتبقية: ' + formatSize(MAX_STORAGE - totalUsed));
+                return;
+            }
 
             const optimizedUrl = info.secure_url.replace(
                 '/upload/',
@@ -1207,6 +1392,7 @@
                 document.getElementById('uploadZone').classList.add('active');
                 document.getElementById('adminBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'flex';
+                updateStorageBar(); // إظهار شريط المساحة
                 closeLogin();
                 renderVideos();
                 showToast('🔓 مرحباً أيها المشرف! ☁️');
@@ -1220,6 +1406,7 @@
         function logout() {
             isAdmin = false;
             document.getElementById('uploadZone').classList.remove('active');
+            document.getElementById('storageBar').style.display = 'none'; // إخفاء شريط المساحة
             document.getElementById('adminBtn').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'none';
             renderVideos();
