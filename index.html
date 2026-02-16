@@ -14,7 +14,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* جميع الأنماط السابقة مع تحسينات Responsive وتفاصيل الوصف */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -366,6 +365,7 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
         
+        /* خلفية الفيديو - GIF متحرك */
         .video-thumbnail {
             position: relative;
             height: 220px;
@@ -378,19 +378,39 @@
             overflow: hidden;
         }
         
-        .video-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        /* GIF كخلفية */
+        .video-thumbnail .bg-gif {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
         
-        .video-thumbnail video { width: 100%; height: 100%; object-fit: cover; }
+        /* طبقة overlay داكنة */
+        .video-thumbnail::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
+            z-index: 2;
+        }
         
         .play-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s;
+            z-index: 3;
         }
         
         .video-card:hover .play-overlay { opacity: 1; }
@@ -406,10 +426,25 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         
-        .video-info { padding: 1.5rem; flex: 1; }
-        .video-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .video-info { 
+            padding: 1.5rem; 
+            flex: 1; 
+            background: linear-gradient(to top, rgba(26,16,37,0.95) 0%, rgba(26,16,37,0.8) 100%);
+            position: relative;
+            z-index: 4;
+            margin-top: -60px;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .video-title { 
+            font-size: 1.2rem; 
+            font-weight: 700; 
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
         .video-description {
-            color: #aaa;
+            color: #ccc;
             font-size: 0.95rem;
             margin-bottom: 0.75rem;
             line-height: 1.5;
@@ -420,7 +455,14 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
         }
-        .video-meta { color: #888; font-size: 0.9rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        
+        .video-meta { 
+            color: #aaa; 
+            font-size: 0.9rem; 
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap; 
+        }
         
         .video-duration {
             position: absolute;
@@ -431,7 +473,21 @@
             border-radius: 6px;
             font-size: 0.85rem;
             color: white;
-            z-index: 2;
+            z-index: 5;
+        }
+        
+        /* مؤشر GIF */
+        .gif-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(236, 72, 153, 0.9);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 5;
         }
         
         .empty-state {
@@ -606,6 +662,7 @@
             .resume-info { justify-content: center; }
             .resume-actions { justify-content: center; }
             .modal-content { max-width: 95%; }
+            .video-info { margin-top: -40px; }
         }
         
         @media (max-width: 480px) {
@@ -613,6 +670,7 @@
             .brand-icon { width: 40px; height: 40px; font-size: 1.2rem; }
             .hero h2 { font-size: 1.5rem; }
             .video-thumbnail { height: 180px; }
+            .video-info { margin-top: -30px; padding: 1rem; }
         }
     </style>
 </head>
@@ -793,16 +851,15 @@
         const db = firebase.firestore();
         
         // ===== APP CONFIG =====
-        // كلمة المرور: @@@&&&((()))
         const ADMIN_PASS = "@@@&&&((()))";
-        const MAX_VIDEO_SIZE = 3 * 1024 * 1024 * 1024; // 3 جيجابايت
-        const CHUNK_SIZE = 20 * 1024 * 1024; // 20 ميجابايت لكل جزء
+        const MAX_VIDEO_SIZE = 3 * 1024 * 1024 * 1024;
+        const CHUNK_SIZE = 20 * 1024 * 1024;
         
         let isAdmin = false;
         let videos = [];
         let uploadWidget = null;
         let unsubscribe = null;
-        let pendingVideoInfo = null; // لحفظ معلومات الرفع لحين إدخال الوصف
+        let pendingVideoInfo = null;
 
         // ===== بدء التحميل والاستماع المباشر =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -810,7 +867,6 @@
             initCloudinaryWidget();
             checkUrlForShare();
             
-            // إخفاء إضافي بعد 3 ثواني
             setTimeout(() => {
                 document.getElementById('loader')?.classList.add('hidden');
             }, 3000);
@@ -837,7 +893,7 @@
                 });
         }
 
-        // ===== CLOUDINARY WIDGET INIT مع دعم الملفات الكبيرة وإنشاء صورة مصغرة =====
+        // ===== CLOUDINARY WIDGET INIT مع إنشاء GIF تلقائي =====
         function initCloudinaryWidget() {
             if (typeof cloudinary === 'undefined') {
                 console.error('Cloudinary widget not loaded');
@@ -849,7 +905,7 @@
                 cloudName: CLOUDINARY_CONFIG.cloudName,
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
                 resourceType: 'video',
-                clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv'],
+                clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv', 'gif'],
                 maxFileSize: MAX_VIDEO_SIZE,
                 maxVideoFileSize: MAX_VIDEO_SIZE,
                 chunkSize: CHUNK_SIZE,
@@ -877,10 +933,22 @@
                 prepareUploadParams: function(cb, params) {
                     params.context = 'alt=فيديو فلك العالمي';
                     
-                    // تحسينات الفيديو مع إنشاء صورة مصغرة (thumbnail)
+                    // إنشاء GIF متحرك تلقائياً من الفيديو (أول 3 ثواني)
                     params.eager = [
                         { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" },
-                        { width: 400, height: 225, crop: "fill", format: "jpg" } // الصورة المصغرة
+                        { width: 400, height: 225, crop: "fill", format: "jpg" },
+                        // إنشاء GIF متحرك من أول 3 ثواني
+                        { 
+                            width: 400, 
+                            height: 225, 
+                            crop: "fill", 
+                            format: "gif",
+                            video_sampling: "10s",
+                            delay: "100",
+                            start_offset: "0",
+                            end_offset: "3",
+                            effect: "loop"
+                        }
                     ];
                     params.eager_async = true;
                     
@@ -889,7 +957,6 @@
             }, function(error, result) {
                 if (!error && result && result.event === "success") {
                     console.log('Upload success:', result.info);
-                    // تخزين معلومات الرفع مؤقتاً وفتح مودال إدخال الوصف
                     pendingVideoInfo = result.info;
                     document.getElementById('videoTitleInput').value = result.info.original_filename || 'فيديو بدون عنوان';
                     document.getElementById('videoDescriptionInput').value = '';
@@ -919,7 +986,7 @@
             }
         }
 
-        // ===== حفظ الفيديو مع الوصف بعد إدخال الوصف =====
+        // ===== حفظ الفيديو مع الوصف وGIF =====
         function saveVideoWithDescription() {
             if (!pendingVideoInfo) {
                 showToast('⚠️ لا توجد معلومات فيديو للحفظ');
@@ -931,19 +998,27 @@
             const title = document.getElementById('videoTitleInput').value.trim() || 'فيديو بدون عنوان';
             const description = document.getElementById('videoDescriptionInput').value.trim() || '';
 
-            // تحسين رابط الفيديو بمعاملات الضغط التلقائي
             const optimizedUrl = info.secure_url.replace(
                 '/upload/',
                 '/upload/q_auto,f_auto,vc_auto/'
             );
 
-            // إنشاء رابط الصورة المصغرة بشكل موثوق
             let thumbnailUrl = null;
+            let gifUrl = null;
+
+            // استخدام الصورة من eager
             if (info.eager && info.eager.length > 1 && info.eager[1].secure_url) {
-                thumbnailUrl = info.eager[1].secure_url; // استخدام الصورة من eager إن وجدت
-            } else {
-                // بناء الرابط يدويًا باستخدام public_id مع تحديد إطار عند ثانية واحدة وتحويله إلى JPG
+                thumbnailUrl = info.eager[1].secure_url;
+            } else if (info.public_id) {
                 thumbnailUrl = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_1,f_jpg/${info.public_id}.jpg`;
+            }
+
+            // استخدام GIF إذا تم إنشاؤه
+            if (info.eager && info.eager.length > 2 && info.eager[2].secure_url) {
+                gifUrl = info.eager[2].secure_url;
+            } else if (info.public_id) {
+                // إنشاء رابط GIF يدوياً
+                gifUrl = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${info.public_id}.gif`;
             }
 
             const videoData = {
@@ -952,7 +1027,8 @@
                 url: optimizedUrl,
                 originalUrl: info.secure_url,
                 thumbnail: thumbnailUrl,
-                publicId: info.public_id,
+                gif: gifUrl, // رابط GIF المتحرك
+                publicId: info.public_id || '',
                 format: info.format,
                 duration: info.duration,
                 width: info.width,
@@ -980,7 +1056,7 @@
             pendingVideoInfo = null;
         }
 
-        // ===== عرض الفيديوهات مع الوصف =====
+        // ===== عرض الفيديوهات مع GIF كخلفية =====
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
@@ -996,12 +1072,38 @@
             emptyState.style.display = 'none';
             videoCountSpan.textContent = videos.length + ' فيديو';
             
-            container.innerHTML = videos.map(video => {
+            container.innerHTML = videos.map((video, index) => {
                 const duration = video.duration ? formatDuration(video.duration) : '';
+                
+                // محاولة الحصول على GIF أو صورة مصغرة
+                let bgSource = video.gif; // GIF أولوية
+                let isGif = true;
+                
+                if (!bgSource) {
+                    bgSource = video.thumbnail;
+                    isGif = false;
+                }
+                
+                // إنشاء رابط GIF تلقائي إذا لم يكن موجوداً
+                if (!bgSource && video.publicId) {
+                    bgSource = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${video.publicId}.gif`;
+                    isGif = true;
+                } else if (!bgSource && video.url) {
+                    const match = video.url.match(/\/video\/upload\/(?:.+\/)?([^/.]+)/);
+                    if (match && match[1]) {
+                        bgSource = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${match[1]}.gif`;
+                        isGif = true;
+                    }
+                }
+                
                 return `
                     <div class="video-card" onclick="playVideo('${video.id}')">
                         <div class="video-thumbnail">
-                            ${video.thumbnail ? `<img src="${video.thumbnail}" alt="${video.title}" class="cloudinary-thumbnail">` : '<i class="fas fa-film"></i>'}
+                            ${bgSource ? `<img src="${bgSource}" alt="${video.title}" class="bg-gif" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : ''}
+                            <div class="fallback-icon" style="display: ${bgSource ? 'none' : 'flex'}; position: absolute; z-index: 2;">
+                                <i class="fas fa-film"></i>
+                            </div>
+                            ${isGif ? '<div class="gif-badge">GIF</div>' : ''}
                             ${duration ? `<div class="video-duration"><i class="fas fa-clock"></i> ${duration}</div>` : ''}
                             <div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>
                             ${isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
