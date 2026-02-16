@@ -588,7 +588,7 @@
             
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100MB
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 1 جيجابايت (مع التحميل المُجزأ)
             </div>
             
             <div class="cloudinary-badge">
@@ -693,6 +693,9 @@
         
         // ===== APP CONFIG =====
         const ADMIN_PASS = "falak123";
+        const MAX_VIDEO_SIZE = 1000 * 1024 * 1024; // 1 جيجابايت
+        const CHUNK_SIZE = 20 * 1024 * 1024; // 20 ميجابايت لكل جزء (افتراضي)
+        
         let isAdmin = false;
         let videos = [];
         let uploadWidget = null;
@@ -732,19 +735,22 @@
                 });
         }
 
-        // ===== CLOUDINARY WIDGET INIT =====
+        // ===== CLOUDINARY WIDGET INIT مع دعم الملفات الكبيرة =====
         function initCloudinaryWidget() {
             if (typeof cloudinary === 'undefined') {
                 console.error('Cloudinary widget not loaded');
                 showToast('⚠️ فشل تحميل واجهة الرفع');
                 return;
             }
+            
             uploadWidget = cloudinary.createUploadWidget({
                 cloudName: CLOUDINARY_CONFIG.cloudName,
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
                 resourceType: 'video',
-                clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi'],
-                maxFileSize: 100000000, // 100MB
+                clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv'],
+                maxFileSize: MAX_VIDEO_SIZE, // 1 جيجابايت
+                maxVideoFileSize: MAX_VIDEO_SIZE, // خاص للفيديو
+                chunkSize: CHUNK_SIZE, // تحميل مقسم 20 ميجابايت
                 sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
                 language: 'ar',
                 text: {
@@ -768,6 +774,11 @@
                 defaultSource: 'local',
                 prepareUploadParams: function(cb, params) {
                     params.context = 'alt=فيديو فلك العالمي';
+                    // إضافة تحسينات للفيديو عند الرفع
+                    params.eager = [
+                        { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }
+                    ];
+                    params.eager_async = true;
                     cb(params);
                 }
             }, function(error, result) {
@@ -776,9 +787,15 @@
                     handleCloudinarySuccess(result.info);
                 } else if (error) {
                     console.error('Upload error:', error);
-                    showToast('❌ فشل الرفع: ' + error.message);
+                    if (error.status === 413) {
+                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 1 جيجابايت');
+                    } else {
+                        showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
+                    }
                 } else if (result && result.event === "queues-start") {
                     showToast('⏳ جاري بدء الرفع...');
+                } else if (result && result.event === "upload-success") {
+                    showToast('📤 تم رفع جزء من الفيديو...');
                 }
             });
         }
@@ -794,10 +811,17 @@
         }
 
         function handleCloudinarySuccess(info) {
+            // تحسين رابط الفيديو بمعاملات الضغط التلقائي
+            const optimizedUrl = info.secure_url.replace(
+                '/upload/',
+                '/upload/q_auto,f_auto,vc_auto/'
+            );
+            
             const videoData = {
                 title: info.original_filename || 'فيديو بدون عنوان',
-                url: info.secure_url,
-                thumbnail: info.thumbnail_url || info.secure_url.replace(/\.[^/.]+$/, '.jpg'), // تحسين إنشاء الصورة المصغرة
+                url: optimizedUrl, // استخدام الرابط المحسّن
+                originalUrl: info.secure_url, // الاحتفاظ بالرابط الأصلي للاحتياط
+                thumbnail: info.thumbnail_url || info.secure_url.replace(/\.[^/.]+$/, '.jpg'),
                 publicId: info.public_id,
                 format: info.format,
                 duration: info.duration,
@@ -805,13 +829,13 @@
                 height: info.height,
                 size: info.bytes,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                cloudinaryData: { assetId: info.asset_id, version: info.version_id }
+                cloudinaryData: { assetId: info.asset_id, version: info.version_id },
+                optimized: true // علامة أن الرابط محسّن
             };
             
             db.collection('videos').add(videoData)
                 .then(() => {
                     showToast('✅ تم الرفع والحفظ بنجاح! 🌍');
-                    // لا حاجة لإعادة تحميل لأن المستمع سيقوم بالتحديث تلقائياً
                 })
                 .catch(err => {
                     console.error('Error saving to Firebase:', err);
@@ -846,7 +870,7 @@
                             ${isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
                         </div>
                         <div class="video-info">
-                            <h4 class="video-title">${video.title}</h4>
+                            <h4 class="video-title">${video.title} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
                             <div class="video-meta">
                                 <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
                                 <span><i class="fas fa-hdd"></i> ${formatSize(video.size)}</span>
@@ -870,7 +894,8 @@
             if (!bytes) return '0 B';
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
         }
 
         function showToast(msg) {
@@ -888,7 +913,7 @@
             document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
             
             const player = document.getElementById('videoPlayer');
-            player.src = video.url;
+            player.src = video.url; // الرابط محسّن بالفعل بـ q_auto,f_auto,vc_auto
             player.poster = video.thumbnail || '';
             
             document.getElementById('videoModal').classList.add('active');
@@ -968,7 +993,7 @@
         function saveVideoProgress() {
             const player = document.getElementById('videoPlayer');
             if (!player || !player.src || player.paused) return;
-            const currentVideo = videos.find(v => v.url === player.src);
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
             if (!currentVideo) return;
             const data = {
                 videoId: currentVideo.id,
@@ -1050,7 +1075,7 @@
         function shareCurrentTime() {
             const player = document.getElementById('videoPlayer');
             if (!player || !player.src) return;
-            const currentVideo = videos.find(v => v.url === player.src);
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
             if (!currentVideo) return;
             const currentTime = Math.floor(player.currentTime);
             const shareUrl = window.location.href.split('?')[0] + '?video=' + currentVideo.id + '&t=' + currentTime;
