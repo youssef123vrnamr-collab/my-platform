@@ -397,7 +397,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,00.1) 0%,.1) 0%, rgba(0,0,0,0.5) 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
             z-index: 2;
         }
         
@@ -572,7 +572,7 @@
         .modal-share:hover { background: rgba(16, 185, 129, 0.4); transform: scale(1.1); }
         
         .modal-body { padding: 0; }
-        .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 -radius: 0 0 25px 25px; }
+        .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 25px 25px; }
         
         .toast {
             position: fixed;
@@ -742,6 +742,23 @@
             font-weight: 700;
             color: #6366f1;
         }
+
+        /* ===== مؤشر سرعة الرفع ===== */
+        .upload-speed-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #10b981;
+        }
+        
+        .upload-speed-indicator i {
+            animation: pulse 1.5s infinite;
+        }
         
         /* Responsive تحسينات */
         @media (max-width: 768px) {
@@ -829,7 +846,7 @@
                     مساحة التخزين
                 </div>
                 <div class="storage-stats">
-                    <span id="usedSpace">0 GB</span> / <span id="totalSpace">5 GB</span>
+                    <span id="usedSpace">0 GB</span> / <span id="totalSpace">1 TB</span>
                     (<span class="storage-percentage" id="percentage">0%</span>)
                 </div>
             </div>
@@ -837,7 +854,7 @@
                 <div class="storage-bar low" id="storageProgress" style="width: 0%;"></div>
             </div>
             <div class="storage-footer">
-                <span id="remainingText">المتبقي: 5 GB</span>
+                <span id="remainingText">المتبقي: 1 TB</span>
                 <span id="videosCount">0 فيديو</span>
             </div>
         </div>
@@ -854,7 +871,10 @@
             
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 5 جيجابايت (مع التحميل المُجزأ)
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 15 جيجابايت (مع التحميل المُجزأ السريع)
+                <div class="upload-speed-indicator">
+                    <i class="fas fa-bolt"></i> سرعة رفع محسّنة (64MB/chunk)
+                </div>
             </div>
             
             <div class="cloudinary-badge">
@@ -943,7 +963,7 @@
                     <input type="text" id="videoTitleInput" placeholder="أدخل عنوان الفيديو" value="">
                 </div>
                 <div class="form-group">
-                    <label>وصف الفيديو <span id="descCharCount" style="color: #888; font-size: 0.85rem;">(0 / 5000 MB)</span></label>
+                    <label>وصف الفيديو <span id="descCharCount" style="color: #888; font-size: 0.85rem;">(0 / 5000 حرف)</span></label>
                     <textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5242880"></textarea>
                 </div>
                 <button class="btn btn-success" style="width: 100%;" onclick="saveVideoWithDescription()">
@@ -982,11 +1002,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // ===== APP CONFIG =====
+        // ===== APP CONFIG - تم التحديث =====
         const ADMIN_PASS = "@@@&&&((()))";
-        const MAX_VIDEO_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
-        const CHUNK_SIZE = 20 * 1024 * 1024;
-        const MAX_STORAGE = 5 * 1024 * 1024 * 1024; // 5 GB total
+        
+        // ===== تغييرات مهمة: زيادة المساحة إلى 1 تيرابايت وتحسين سرعة الرفع =====
+        const MAX_VIDEO_SIZE = 15 * 1024 * 1024 * 1024; // 15 GB (زيادة حجم الملف المسموح)
+        const CHUNK_SIZE = 64 * 1024 * 1024; // 64 MB (زيادة حجم القطعة لسرعة أكبر)
+        const MAX_STORAGE = 1024 * 1024 * 1024 * 1024; // 1 TB = 1024 GB (زيادة المساحة الإجمالية)
         
         let isAdmin = false;
         let videos = [];
@@ -1027,20 +1049,26 @@
                 });
         }
 
-        // ===== تحديث شريط المساحة =====
+        // ===== تحديث شريط المساحة - تم التحديث لـ 1 تيرابايت =====
         function updateStorageBar() {
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             const percentage = Math.min((totalUsed / MAX_STORAGE) * 100, 100);
             const remaining = MAX_STORAGE - totalUsed;
             
             const usedGB = (totalUsed / (1024 * 1024 * 1024)).toFixed(2);
-            const totalGB = (MAX_STORAGE / (1024 * 1024 * 1024)).toFixed(0);
-            const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(2);
+            const usedTB = (totalUsed / (1024 * 1024 * 1024 * 1024)).toFixed(2);
+            const totalTB = (MAX_STORAGE / (1024 * 1024 * 1024 * 1024)).toFixed(0);
+            const remainingTB = (remaining / (1024 * 1024 * 1024 * 1024)).toFixed(2);
+            const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(0);
             
-            document.getElementById('usedSpace').textContent = usedGB + ' GB';
-            document.getElementById('totalSpace').textContent = totalGB + ' GB';
-            document.getElementById('percentage').textContent = percentage.toFixed(1) + '%';
-            document.getElementById('remainingText').textContent = 'المتبقي: ' + remainingGB + ' GB';
+            // عرض بالتيرابايت إذا كان أكبر من 100 جيجا، وإلا بالجيجابايت
+            const displayUsed = totalUsed > 100 * 1024 * 1024 * 1024 ? usedTB + ' TB' : usedGB + ' GB';
+            const displayRemaining = remaining > 100 * 1024 * 1024 * 1024 ? remainingTB + ' TB' : remainingGB + ' GB';
+            
+            document.getElementById('usedSpace').textContent = displayUsed;
+            document.getElementById('totalSpace').textContent = totalTB + ' TB';
+            document.getElementById('percentage').textContent = percentage.toFixed(2) + '%';
+            document.getElementById('remainingText').textContent = 'المتبقي: ' + displayRemaining;
             document.getElementById('videosCount').textContent = videos.length + ' فيديو';
             
             const progressBar = document.getElementById('storageProgress');
@@ -1062,7 +1090,7 @@
             }
         }
 
-        // ===== CLOUDINARY WIDGET INIT مع إنشاء GIF تلقائي =====
+        // ===== CLOUDINARY WIDGET INIT - تم التحديث لسرعة أكبر =====
         function initCloudinaryWidget() {
             if (typeof cloudinary === 'undefined') {
                 console.error('Cloudinary widget not loaded');
@@ -1075,9 +1103,10 @@
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
                 resourceType: 'video',
                 clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv', 'gif'],
-                maxFileSize: MAX_VIDEO_SIZE,
+                maxFileSize: MAX_VIDEO_SIZE, // 15 GB الآن
                 maxVideoFileSize: MAX_VIDEO_SIZE,
-                chunkSize: CHUNK_SIZE,
+                chunkSize: CHUNK_SIZE, // 64 MB لسرعة أكبر
+                maxChunkSize: CHUNK_SIZE, // تحديد الحد الأقصى للقطعة
                 sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
                 language: 'ar',
                 text: {
@@ -1099,6 +1128,9 @@
                 cropping: false,
                 multiple: false,
                 defaultSource: 'local',
+                // ===== تحسينات إضافية للسرعة =====
+                parallelUploads: 3, // رفع قطع متوازية
+                eagerAsync: true, // معالجة async للتحويلات
                 prepareUploadParams: function(cb, params) {
                     params.context = 'alt=فيديو فلك العالمي';
                     
@@ -1133,14 +1165,20 @@
                 } else if (error) {
                     console.error('Upload error:', error);
                     if (error.status === 413) {
-                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 5 جيجابايت');
+                        showToast('❌ الملف كبير جداً. الحد الأقصى هو 15 جيجابايت');
                     } else {
                         showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
                     }
                 } else if (result && result.event === "queues-start") {
-                    showToast('⏳ جاري بدء الرفع...');
+                    showToast('⏳ جاري بدء الرفع بسرعة محسّنة...');
                 } else if (result && result.event === "upload-success") {
                     showToast('📤 تم رفع جزء من الفيديو...');
+                } else if (result && result.event === "progress") {
+                    // عرض تقدم الرفع
+                    if (result.info && result.info.progress) {
+                        const progress = Math.round(result.info.progress);
+                        showToast(`⏳ جاري الرفع: ${progress}%`);
+                    }
                 }
             });
         }
@@ -1151,7 +1189,7 @@
             const remaining = MAX_STORAGE - totalUsed;
             
             if (remaining <= 0) {
-                showToast('❌ المساحة ممتلئة! احذف بعض الفيديوهات أولاً');
+                showToast('❌ المساحة ممتلئة (1 TB)! احذف بعض الفيديوهات أولاً');
                 return;
             }
             
@@ -1320,7 +1358,8 @@
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+            if (bytes < 1024 * 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+            return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + ' TB';
         }
 
         function showToast(msg) {
@@ -1395,7 +1434,7 @@
                 updateStorageBar(); // إظهار شريط المساحة
                 closeLogin();
                 renderVideos();
-                showToast('🔓 مرحباً أيها المشرف! ☁️');
+                showToast('🔓 مرحباً أيها المشرف! ☁️ (1 TB متاحة)');
             } else {
                 showToast('❌ كلمة المرور خاطئة');
                 input.value = '';
