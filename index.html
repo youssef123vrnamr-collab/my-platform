@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* جميع الأنماط السابقة كما هي */
+        /* جميع الأنماط السابقة مع تحسينات Responsive وتفاصيل الوصف */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -356,6 +356,8 @@
             border: 1px solid rgba(255,255,255,0.1);
             transition: all 0.4s;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
         }
         
         .video-card:hover {
@@ -404,8 +406,20 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         
-        .video-info { padding: 1.5rem; }
+        .video-info { padding: 1.5rem; flex: 1; }
         .video-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .video-description {
+            color: #aaa;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+            max-height: 3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
         .video-meta { color: #888; font-size: 0.9rem; display: flex; gap: 1rem; flex-wrap: wrap; }
         
         .video-duration {
@@ -417,6 +431,7 @@
             border-radius: 6px;
             font-size: 0.85rem;
             color: white;
+            z-index: 2;
         }
         
         .empty-state {
@@ -538,6 +553,67 @@
         
         .video-card:hover .delete-btn { opacity: 1; }
         .delete-btn:hover { background: #dc2626; transform: scale(1.05); }
+        
+        /* مودال إدخال الوصف */
+        .description-modal-content {
+            max-width: 500px;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-weight: 600;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        /* Responsive تحسينات */
+        @media (max-width: 768px) {
+            .navbar { padding: 0.75rem 1rem; }
+            .brand-text h1 { font-size: 1.2rem; }
+            .brand-text p { font-size: 0.7rem; }
+            .hero { padding: 2rem 1rem; }
+            .hero h2 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .container { padding: 1rem; }
+            .videos-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+            .upload-zone { padding: 1.5rem; }
+            .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; }
+            .resume-info { justify-content: center; }
+            .resume-actions { justify-content: center; }
+            .modal-content { max-width: 95%; }
+        }
+        
+        @media (max-width: 480px) {
+            .btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
+            .brand-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+            .hero h2 { font-size: 1.5rem; }
+            .video-thumbnail { height: 180px; }
+        }
     </style>
 </head>
 <body>
@@ -588,7 +664,7 @@
             
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 1 جيجابايت (مع التحميل المُجزأ)
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 2 جيجابايت (مع التحميل المُجزأ)
             </div>
             
             <div class="cloudinary-badge">
@@ -612,7 +688,7 @@
             </div>
         </div>
         
-        <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+        <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
             <i class="fas fa-play-circle" style="color: #ec4899;"></i>
             مكتبة الفيديوهات المشتركة
             <span id="videoCount" style="margin-right: auto; background: rgba(99,102,241,0.2); padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem;">0 فيديو</span>
@@ -627,6 +703,7 @@
         </div>
     </div>
     
+    <!-- مودال عرض الفيديو -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -642,6 +719,7 @@
         </div>
     </div>
     
+    <!-- مودال دخول المشرف -->
     <div class="modal" id="loginModal" style="background: rgba(0,0,0,0.95);">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
@@ -657,6 +735,29 @@
                 </button>
                 <button onclick="closeLogin()" style="width: 100%; background: transparent; border: none; color: #888; margin-top: 1rem; cursor: pointer; font-family: 'Cairo';">
                     إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال إدخال وصف الفيديو بعد الرفع -->
+    <div class="modal" id="descriptionModal">
+        <div class="modal-content description-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> تفاصيل الفيديو</h3>
+                <button class="modal-close" onclick="closeDescriptionModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="form-group">
+                    <label>عنوان الفيديو</label>
+                    <input type="text" id="videoTitleInput" placeholder="أدخل عنوان الفيديو" value="">
+                </div>
+                <div class="form-group">
+                    <label>وصف الفيديو</label>
+                    <textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..."></textarea>
+                </div>
+                <button class="btn btn-success" style="width: 100%;" onclick="saveVideoWithDescription()">
+                    <i class="fas fa-save"></i> حفظ الفيديو
                 </button>
             </div>
         </div>
@@ -678,7 +779,7 @@
             apiKey: '462193620740'
         };
         
-        // ===== FIREBASE CONFIG (مشروع Planning With AI) =====
+        // ===== FIREBASE CONFIG =====
         const firebaseConfig = {
             apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
             authDomain: "planning-with-ai-390af.firebaseapp.com",
@@ -692,31 +793,31 @@
         const db = firebase.firestore();
         
         // ===== APP CONFIG =====
-        // كلمة المرور الجديدة: @@@&&&((()))
+        // كلمة المرور: @@@&&&((()))
         const ADMIN_PASS = "@@@&&&((()))";
-        const MAX_VIDEO_SIZE = 1000 * 1024 * 1024; // 1 جيجابايت
+        const MAX_VIDEO_SIZE = 2 * 1024 * 1024 * 1024; // 2 جيجابايت
         const CHUNK_SIZE = 20 * 1024 * 1024; // 20 ميجابايت لكل جزء
         
         let isAdmin = false;
         let videos = [];
         let uploadWidget = null;
-        let unsubscribe = null; // للاستماع المباشر
+        let unsubscribe = null;
+        let pendingVideoInfo = null; // لحفظ معلومات الفيديو لحين إدخال الوصف
 
         // ===== بدء التحميل والاستماع المباشر =====
         document.addEventListener('DOMContentLoaded', function() {
-            listenToVideos(); // استخدم المستمع بدلاً من get()
+            listenToVideos();
             initCloudinaryWidget();
             checkUrlForShare();
             
-            // إخفاء إضافي بعد 3 ثواني كضمان
+            // إخفاء إضافي بعد 3 ثواني
             setTimeout(() => {
                 document.getElementById('loader')?.classList.add('hidden');
             }, 3000);
         });
 
-        // ===== الاستماع المباشر للتحديثات (Realtime Listener) =====
+        // ===== الاستماع المباشر للتحديثات =====
         function listenToVideos() {
-            // إلغاء أي استماع سابق
             if (unsubscribe) unsubscribe();
             
             unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
@@ -749,9 +850,9 @@
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
                 resourceType: 'video',
                 clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv'],
-                maxFileSize: MAX_VIDEO_SIZE, // 1 جيجابايت
-                maxVideoFileSize: MAX_VIDEO_SIZE, // خاص للفيديو
-                chunkSize: CHUNK_SIZE, // تحميل مقسم 20 ميجابايت
+                maxFileSize: MAX_VIDEO_SIZE,
+                maxVideoFileSize: MAX_VIDEO_SIZE,
+                chunkSize: CHUNK_SIZE,
                 sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
                 language: 'ar',
                 text: {
@@ -778,8 +879,8 @@
                     
                     // تحسينات الفيديو مع إنشاء صورة مصغرة (thumbnail)
                     params.eager = [
-                        { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, // تحسين الفيديو
-                        { width: 400, height: 225, crop: "fill", format: "jpg" } // إنشاء صورة مصغرة (400x225)
+                        { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" },
+                        { width: 400, height: 225, crop: "fill", format: "jpg" } // الصورة المصغرة
                     ];
                     params.eager_async = true;
                     
@@ -788,11 +889,15 @@
             }, function(error, result) {
                 if (!error && result && result.event === "success") {
                     console.log('Upload success:', result.info);
-                    handleCloudinarySuccess(result.info);
+                    // تخزين معلومات الرفع مؤقتاً وفتح مودال إدخال الوصف
+                    pendingVideoInfo = result.info;
+                    document.getElementById('videoTitleInput').value = result.info.original_filename || 'فيديو بدون عنوان';
+                    document.getElementById('videoDescriptionInput').value = '';
+                    document.getElementById('descriptionModal').classList.add('active');
                 } else if (error) {
                     console.error('Upload error:', error);
                     if (error.status === 413) {
-                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 1 جيجابايت');
+                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 2 جيجابايت');
                     } else {
                         showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
                     }
@@ -814,8 +919,18 @@
             }
         }
 
-        // ===== معالجة نجاح الرفع واستخراج الصورة المصغرة =====
-        function handleCloudinarySuccess(info) {
+        // ===== حفظ الفيديو مع الوصف بعد إدخال الوصف =====
+        function saveVideoWithDescription() {
+            if (!pendingVideoInfo) {
+                showToast('⚠️ لا توجد معلومات فيديو للحفظ');
+                closeDescriptionModal();
+                return;
+            }
+
+            const info = pendingVideoInfo;
+            const title = document.getElementById('videoTitleInput').value.trim() || 'فيديو بدون عنوان';
+            const description = document.getElementById('videoDescriptionInput').value.trim() || '';
+
             // تحسين رابط الفيديو بمعاملات الضغط التلقائي
             const optimizedUrl = info.secure_url.replace(
                 '/upload/',
@@ -823,23 +938,20 @@
             );
 
             // محاولة الحصول على رابط الصورة المصغرة
-            let thumbnailUrl = info.thumbnail_url; // قد يكون موجوداً إذا كان الرفع يتضمن thumbnail تلقائي
+            let thumbnailUrl = info.thumbnail_url;
             if (!thumbnailUrl && info.eager && info.eager.length > 1) {
-                // إذا كانت لدينا نتائج eager، نأخذ الثاني (بترتيب eager المحدد)
                 thumbnailUrl = info.eager[1].secure_url;
             }
-            
-            // إذا لم نجد صورة مصغرة بعد، نبني رابطاً افتراضياً باستخدام public_id
             if (!thumbnailUrl) {
-                // رابط افتراضي: يحول الفيديو إلى صورة jpg في الثانية الأولى
                 thumbnailUrl = info.secure_url.replace('/video/upload/', '/video/upload/so_1,fl_animated/f_auto/') + '.jpg';
             }
 
             const videoData = {
-                title: info.original_filename || 'فيديو بدون عنوان',
+                title: title,
+                description: description, // حقل الوصف الجديد
                 url: optimizedUrl,
                 originalUrl: info.secure_url,
-                thumbnail: thumbnailUrl, // الصورة المصغرة (خلفية الفيديو)
+                thumbnail: thumbnailUrl,
                 publicId: info.public_id,
                 format: info.format,
                 duration: info.duration,
@@ -854,6 +966,8 @@
             db.collection('videos').add(videoData)
                 .then(() => {
                     showToast('✅ تم الرفع والحفظ بنجاح! 🌟');
+                    closeDescriptionModal();
+                    pendingVideoInfo = null;
                 })
                 .catch(err => {
                     console.error('Error saving to Firebase:', err);
@@ -861,7 +975,12 @@
                 });
         }
 
-        // ===== عرض الفيديوهات =====
+        function closeDescriptionModal() {
+            document.getElementById('descriptionModal').classList.remove('active');
+            pendingVideoInfo = null;
+        }
+
+        // ===== عرض الفيديوهات مع الوصف =====
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
@@ -889,6 +1008,7 @@
                         </div>
                         <div class="video-info">
                             <h4 class="video-title">${video.title} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
+                            ${video.description ? `<div class="video-description">${video.description}</div>` : ''}
                             <div class="video-meta">
                                 <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
                                 <span><i class="fas fa-hdd"></i> ${formatSize(video.size)}</span>
@@ -931,8 +1051,8 @@
             document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
             
             const player = document.getElementById('videoPlayer');
-            player.src = video.url; // الرابط محسّن بالفعل بـ q_auto,f_auto,vc_auto
-            player.poster = video.thumbnail || ''; // تعيين الصورة المصغرة كخلفية قبل التشغيل
+            player.src = video.url;
+            player.poster = video.thumbnail || '';
             
             document.getElementById('videoModal').classList.add('active');
 
@@ -986,7 +1106,7 @@
                 document.getElementById('adminBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'flex';
                 closeLogin();
-                renderVideos(); // إعادة رسم لإظهار أزرار الحذف
+                renderVideos();
                 showToast('🔓 مرحباً أيها المشرف! ☁️');
             } else {
                 showToast('❌ كلمة المرور خاطئة');
@@ -1000,7 +1120,7 @@
             document.getElementById('uploadZone').classList.remove('active');
             document.getElementById('adminBtn').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'none';
-            renderVideos(); // إعادة رسم لإخفاء أزرار الحذف
+            renderVideos();
             showToast('👋 تم الخروج');
         }
 
@@ -1122,6 +1242,7 @@
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
+                else if (e.target.id === 'descriptionModal') closeDescriptionModal();
             }
         };
 
@@ -1129,6 +1250,7 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeLogin();
+                closeDescriptionModal();
             }
         });
     </script>
