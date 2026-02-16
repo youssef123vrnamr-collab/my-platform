@@ -760,6 +760,62 @@
             animation: pulse 1.5s infinite;
         }
         
+        /* ===== شريط تقدم الرفع المخصص ===== */
+        .upload-progress-container {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        
+        .upload-progress-container.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        .upload-progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .upload-progress-bar {
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .upload-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            border-radius: 5px;
+            transition: width 0.3s;
+            position: relative;
+        }
+        
+        .upload-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1s infinite;
+        }
+        
+        .upload-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
         /* Responsive تحسينات */
         @media (max-width: 768px) {
             .navbar { padding: 0.75rem 1rem; }
@@ -869,11 +925,26 @@
                 <i class="fas fa-plus"></i> فتح واجهة الرفع
             </button>
             
+            <!-- شريط تقدم الرفع المخصص -->
+            <div class="upload-progress-container" id="uploadProgressContainer">
+                <div class="upload-progress-header">
+                    <span id="uploadProgressText">جاري الرفع...</span>
+                    <span id="uploadProgressPercent">0%</span>
+                </div>
+                <div class="upload-progress-bar">
+                    <div class="upload-progress-fill" id="uploadProgressFill" style="width: 0%;"></div>
+                </div>
+                <div class="upload-stats">
+                    <span id="uploadSpeed">0 MB/s</span>
+                    <span id="uploadTimeRemaining">--:-- متبقي</span>
+                </div>
+            </div>
+            
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 15 جيجابايت (مع التحميل المُجزأ السريع)
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 20 جيجابايت (مثالية لفيديوهات 4K)
                 <div class="upload-speed-indicator">
-                    <i class="fas fa-bolt"></i> سرعة رفع محسّنة (64MB/chunk)
+                    <i class="fas fa-bolt"></i> رفع سريع جداً (128MB/chunk + 5 اتصالات متوازية)
                 </div>
             </div>
             
@@ -1002,19 +1073,24 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // ===== APP CONFIG - تم التحديث =====
+        // ===== APP CONFIG - تم التحديث لسرعة قصوى =====
         const ADMIN_PASS = "@@@&&&((()))";
         
-        // ===== تغييرات مهمة: زيادة المساحة إلى 1 تيرابايت وتحسين سرعة الرفع =====
-        const MAX_VIDEO_SIZE = 15 * 1024 * 1024 * 1024; // 15 GB (زيادة حجم الملف المسموح)
-        const CHUNK_SIZE = 64 * 1024 * 1024; // 64 MB (زيادة حجم القطعة لسرعة أكبر)
-        const MAX_STORAGE = 1024 * 1024 * 1024 * 1024; // 1 TB = 1024 GB (زيادة المساحة الإجمالية)
+        // ===== إعدادات فائقة السرعة لرفع فيديوهات 4GB+ =====
+        const MAX_VIDEO_SIZE = 20 * 1024 * 1024 * 1024; // 20 GB للملف الواحد (كافي لـ 4.18GB)
+        const CHUNK_SIZE = 128 * 1024 * 1024; // 128 MB لكل قطعة (ضعف السرعة)
+        const MAX_STORAGE = 1024 * 1024 * 1024 * 1024; // 1 TB = 1024 GB
         
         let isAdmin = false;
         let videos = [];
         let uploadWidget = null;
         let unsubscribe = null;
         let pendingVideoInfo = null;
+        
+        // متغيرات تتبع سرعة الرفع
+        let uploadStartTime = 0;
+        let lastUploadedBytes = 0;
+        let lastTime = 0;
 
         // ===== بدء التحميل والاستماع المباشر =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1049,7 +1125,7 @@
                 });
         }
 
-        // ===== تحديث شريط المساحة - تم التحديث لـ 1 تيرابايت =====
+        // ===== تحديث شريط المساحة =====
         function updateStorageBar() {
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             const percentage = Math.min((totalUsed / MAX_STORAGE) * 100, 100);
@@ -1057,16 +1133,14 @@
             
             const usedGB = (totalUsed / (1024 * 1024 * 1024)).toFixed(2);
             const usedTB = (totalUsed / (1024 * 1024 * 1024 * 1024)).toFixed(2);
-            const totalTB = (MAX_STORAGE / (1024 * 1024 * 1024 * 1024)).toFixed(0);
             const remainingTB = (remaining / (1024 * 1024 * 1024 * 1024)).toFixed(2);
             const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(0);
             
-            // عرض بالتيرابايت إذا كان أكبر من 100 جيجا، وإلا بالجيجابايت
             const displayUsed = totalUsed > 100 * 1024 * 1024 * 1024 ? usedTB + ' TB' : usedGB + ' GB';
             const displayRemaining = remaining > 100 * 1024 * 1024 * 1024 ? remainingTB + ' TB' : remainingGB + ' GB';
             
             document.getElementById('usedSpace').textContent = displayUsed;
-            document.getElementById('totalSpace').textContent = totalTB + ' TB';
+            document.getElementById('totalSpace').textContent = '1 TB';
             document.getElementById('percentage').textContent = percentage.toFixed(2) + '%';
             document.getElementById('remainingText').textContent = 'المتبقي: ' + displayRemaining;
             document.getElementById('videosCount').textContent = videos.length + ' فيديو';
@@ -1074,7 +1148,6 @@
             const progressBar = document.getElementById('storageProgress');
             progressBar.style.width = percentage + '%';
             
-            // تغيير اللون حسب النسبة
             progressBar.classList.remove('low', 'medium', 'high');
             if (percentage < 50) {
                 progressBar.classList.add('low');
@@ -1084,13 +1157,12 @@
                 progressBar.classList.add('high');
             }
             
-            // إظهار/إخفاء شريط المساحة للمشرف فقط
             if (isAdmin) {
                 document.getElementById('storageBar').style.display = 'block';
             }
         }
 
-        // ===== CLOUDINARY WIDGET INIT - تم التحديث لسرعة أكبر =====
+        // ===== CLOUDINARY WIDGET INIT - سرعة قصوى =====
         function initCloudinaryWidget() {
             if (typeof cloudinary === 'undefined') {
                 console.error('Cloudinary widget not loaded');
@@ -1103,10 +1175,10 @@
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
                 resourceType: 'video',
                 clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv', 'gif'],
-                maxFileSize: MAX_VIDEO_SIZE, // 15 GB الآن
+                maxFileSize: MAX_VIDEO_SIZE, // 20 GB
                 maxVideoFileSize: MAX_VIDEO_SIZE,
-                chunkSize: CHUNK_SIZE, // 64 MB لسرعة أكبر
-                maxChunkSize: CHUNK_SIZE, // تحديد الحد الأقصى للقطعة
+                chunkSize: CHUNK_SIZE, // 128 MB (سرعة فائقة)
+                maxChunkSize: CHUNK_SIZE,
                 sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
                 language: 'ar',
                 text: {
@@ -1128,17 +1200,18 @@
                 cropping: false,
                 multiple: false,
                 defaultSource: 'local',
-                // ===== تحسينات إضافية للسرعة =====
-                parallelUploads: 3, // رفع قطع متوازية
-                eagerAsync: true, // معالجة async للتحويلات
+                // ===== إعدادات سرعة فائقة =====
+                parallelUploads: 5, // 5 اتصالات متوازية (زيادة كبيرة)
+                maxConcurrentUploads: 5,
+                retryCount: 3, // إعادة المحاولة 3 مرات عند الفشل
+                eagerAsync: true,
                 prepareUploadParams: function(cb, params) {
                     params.context = 'alt=فيديو فلك العالمي';
                     
-                    // إنشاء GIF متحرك تلقائياً من الفيديو (أول 3 ثواني)
+                    // إنشاء GIF متحرك تلقائياً
                     params.eager = [
                         { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" },
                         { width: 400, height: 225, crop: "fill", format: "jpg" },
-                        // إنشاء GIF متحرك من أول 3 ثواني
                         { 
                             width: 400, 
                             height: 225, 
@@ -1157,34 +1230,76 @@
                 }
             }, function(error, result) {
                 if (!error && result && result.event === "success") {
+                    // إخفاء شريط التقدم
+                    document.getElementById('uploadProgressContainer').classList.remove('active');
                     console.log('Upload success:', result.info);
                     pendingVideoInfo = result.info;
                     document.getElementById('videoTitleInput').value = result.info.original_filename || 'فيديو بدون عنوان';
                     document.getElementById('videoDescriptionInput').value = '';
                     document.getElementById('descriptionModal').classList.add('active');
+                    showToast('✅ تم الرفع بنجاح! جاري المعالجة...');
                 } else if (error) {
+                    document.getElementById('uploadProgressContainer').classList.remove('active');
                     console.error('Upload error:', error);
                     if (error.status === 413) {
-                        showToast('❌ الملف كبير جداً. الحد الأقصى هو 15 جيجابايت');
+                        showToast('❌ الملف كبير جداً. الحد الأقصى هو 20 جيجابايت');
                     } else {
                         showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
                     }
                 } else if (result && result.event === "queues-start") {
-                    showToast('⏳ جاري بدء الرفع بسرعة محسّنة...');
+                    uploadStartTime = Date.now();
+                    lastTime = Date.now();
+                    lastUploadedBytes = 0;
+                    document.getElementById('uploadProgressContainer').classList.add('active');
+                    showToast('🚀 جاري بدء الرفع بسرعة فائقة...');
+                } else if (result && result.event === "upload-progress") {
+                    // تحديث شريط التقدم المخصص
+                    updateUploadProgress(result.info);
                 } else if (result && result.event === "upload-success") {
-                    showToast('📤 تم رفع جزء من الفيديو...');
-                } else if (result && result.event === "progress") {
-                    // عرض تقدم الرفع
-                    if (result.info && result.info.progress) {
-                        const progress = Math.round(result.info.progress);
-                        showToast(`⏳ جاري الرفع: ${progress}%`);
-                    }
+                    showToast('📤 تم رفع جزء من الفيديو بنجاح...');
                 }
             });
         }
 
+        // ===== تحديث شريط تقدم الرفع =====
+        function updateUploadProgress(info) {
+            if (!info) return;
+            
+            const percent = info.progress || 0;
+            const uploadedBytes = info.uploadedBytes || 0;
+            const totalBytes = info.totalBytes || 1;
+            const currentTime = Date.now();
+            
+            // حساب السرعة
+            const timeDiff = (currentTime - lastTime) / 1000; // بالثواني
+            const bytesDiff = uploadedBytes - lastUploadedBytes;
+            const speed = timeDiff > 0 ? (bytesDiff / timeDiff) / (1024 * 1024) : 0; // MB/s
+            
+            // حساب الوقت المتبقي
+            const remainingBytes = totalBytes - uploadedBytes;
+            const remainingTime = speed > 0 ? remainingBytes / (speed * 1024 * 1024) : 0;
+            
+            // تحديث الواجهة
+            document.getElementById('uploadProgressFill').style.width = percent + '%';
+            document.getElementById('uploadProgressPercent').textContent = Math.round(percent) + '%';
+            document.getElementById('uploadSpeed').textContent = speed.toFixed(2) + ' MB/s';
+            
+            if (remainingTime > 60) {
+                const mins = Math.floor(remainingTime / 60);
+                const secs = Math.floor(remainingTime % 60);
+                document.getElementById('uploadTimeRemaining').textContent = `${mins}:${secs.toString().padStart(2, '0')} دقيقة متبقية`;
+            } else if (remainingTime > 0) {
+                document.getElementById('uploadTimeRemaining').textContent = Math.floor(remainingTime) + ' ثانية متبقية';
+            } else {
+                document.getElementById('uploadTimeRemaining').textContent = 'جاري إكمال الرفع...';
+            }
+            
+            // تحديث القيم السابقة
+            lastTime = currentTime;
+            lastUploadedBytes = uploadedBytes;
+        }
+
         function openCloudinaryWidget() {
-            // التحقق من المساحة المتبقية قبل الرفع
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             const remaining = MAX_STORAGE - totalUsed;
             
@@ -1214,7 +1329,6 @@
             const title = document.getElementById('videoTitleInput').value.trim() || 'فيديو بدون عنوان';
             const description = document.getElementById('videoDescriptionInput').value.trim() || '';
 
-            // التحقق من المساحة
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             if (totalUsed + info.bytes > MAX_STORAGE) {
                 showToast('❌ لا توجد مساحة كافية! المساحة المتبقية: ' + formatSize(MAX_STORAGE - totalUsed));
@@ -1229,18 +1343,15 @@
             let thumbnailUrl = null;
             let gifUrl = null;
 
-            // استخدام الصورة من eager
             if (info.eager && info.eager.length > 1 && info.eager[1].secure_url) {
                 thumbnailUrl = info.eager[1].secure_url;
             } else if (info.public_id) {
                 thumbnailUrl = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_1,f_jpg/${info.public_id}.jpg`;
             }
 
-            // استخدام GIF إذا تم إنشاؤه
             if (info.eager && info.eager.length > 2 && info.eager[2].secure_url) {
                 gifUrl = info.eager[2].secure_url;
             } else if (info.public_id) {
-                // إنشاء رابط GIF يدوياً
                 gifUrl = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${info.public_id}.gif`;
             }
 
@@ -1250,7 +1361,7 @@
                 url: optimizedUrl,
                 originalUrl: info.secure_url,
                 thumbnail: thumbnailUrl,
-                gif: gifUrl, // رابط GIF المتحرك
+                gif: gifUrl,
                 publicId: info.public_id || '',
                 format: info.format,
                 duration: info.duration,
@@ -1279,7 +1390,7 @@
             pendingVideoInfo = null;
         }
 
-        // ===== عرض الفيديوهات مع GIF كخلفية =====
+        // ===== عرض الفيديوهات =====
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
@@ -1298,8 +1409,7 @@
             container.innerHTML = videos.map((video, index) => {
                 const duration = video.duration ? formatDuration(video.duration) : '';
                 
-                // محاولة الحصول على GIF أو صورة مصغرة
-                let bgSource = video.gif; // GIF أولوية
+                let bgSource = video.gif;
                 let isGif = true;
                 
                 if (!bgSource) {
@@ -1307,7 +1417,6 @@
                     isGif = false;
                 }
                 
-                // إنشاء رابط GIF تلقائي إذا لم يكن موجوداً
                 if (!bgSource && video.publicId) {
                     bgSource = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${video.publicId}.gif`;
                     isGif = true;
@@ -1431,10 +1540,10 @@
                 document.getElementById('uploadZone').classList.add('active');
                 document.getElementById('adminBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'flex';
-                updateStorageBar(); // إظهار شريط المساحة
+                updateStorageBar();
                 closeLogin();
                 renderVideos();
-                showToast('🔓 مرحباً أيها المشرف! ☁️ (1 TB متاحة)');
+                showToast('🔓 مرحباً أيها المشرف! 🚀 (سرعة رفع فائقة)');
             } else {
                 showToast('❌ كلمة المرور خاطئة');
                 input.value = '';
@@ -1445,14 +1554,14 @@
         function logout() {
             isAdmin = false;
             document.getElementById('uploadZone').classList.remove('active');
-            document.getElementById('storageBar').style.display = 'none'; // إخفاء شريط المساحة
+            document.getElementById('storageBar').style.display = 'none';
             document.getElementById('adminBtn').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'none';
             renderVideos();
             showToast('👋 تم الخروج');
         }
 
-        // ===== استئناف المشاهدة (localStorage) =====
+        // ===== استئناف المشاهدة =====
         const STORAGE_KEY = 'falak_last_watched';
         let lastWatchedData = null;
 
@@ -1565,7 +1674,7 @@
             }
         }
 
-        // ===== إغلاق المودالات عند النقر خارجها =====
+        // ===== إغلاق المودالات =====
         window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
