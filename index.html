@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فلك العالمي | النسخة السحابية</title>
+    
+    <!-- Cloudinary Upload Widget -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* جميع الأنماط السابقة كما هي */
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f0a1a;
+            --card: #1a1025;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #050308 0%, #0f0a1a 50%, #1a1a3e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1; overflow: hidden;
+        }
+        
+        .nebula {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 20s infinite ease-in-out;
+        }
+        
+        .nebula:nth-child(1) { top: -300px; right: -300px; }
+        .nebula:nth-child(2) { bottom: -300px; left: -300px; background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%); animation-delay: -10s; }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        
+        .loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #050308;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s;
+        }
+        
+        .loader.hidden { opacity: 0; pointer-events: none; }
+        
+        .loader-ring {
+            width: 120px; height: 120px;
+            border: 4px solid transparent;
+            border-top-color: #6366f1;
+            border-right-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .loader-text {
+            margin-top: 2rem;
+            font-size: 1.3rem;
+            color: #6366f1;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        
+        .navbar {
+            background: rgba(26, 16, 37, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .brand { display: flex; align-items: center; gap: 1rem; }
+        
+        .brand-icon {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            animation: glow 3s infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 10px 40px rgba(236, 72, 153, 0.6); }
+        }
+        
+        .brand-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .brand-text p { font-size: 0.85rem; color: #888; }
+        
+        .nav-actions { display: flex; gap: 0.75rem; }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6); }
+        
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #10b981;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero h2 { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; }
+        .hero h2 span { background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.2rem; color: #aaa; max-width: 600px; margin: 0 auto; }
+        
+        .upload-zone {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+            border: 2px dashed rgba(99, 102, 241, 0.5);
+            border-radius: 25px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-zone.active { display: block; animation: fadeInUp 0.5s; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .upload-icon {
+            width: 100px; height: 100px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+        }
+        
+        .upload-icon:hover { transform: scale(1.1) rotate(10deg); }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5); }
+        
+        .upload-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .cloudinary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(52, 73, 94, 0.3);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #3498db;
+        }
+        
+        /* رسالة استئناف المشاهدة */
+        .resume-notification {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+            backdrop-filter: blur(10px);
+            border: 1px solid #6366f1;
+            border-radius: 20px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            animation: slideDown 0.5s;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .resume-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .resume-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .resume-text h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .resume-text p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .resume-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .resume-btn {
+            background: #6366f1;
+            border: none;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .resume-btn:hover {
+            background: #4f52e0;
+            transform: scale(1.05);
+        }
+        
+        .dismiss-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .dismiss-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        
+        .video-card {
+            background: #1a1025;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.4s;
+            cursor: pointer;
+        }
+        
+        .video-card:hover {
+            transform: translateY(-10px);
+            border-color: #6366f1;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        
+        .video-thumbnail {
+            position: relative;
+            height: 220px;
+            background: linear-gradient(135deg, #1a1a3e 0%, #0f0f23 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #6366f1;
+            overflow: hidden;
+        }
+        
+        .video-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .video-thumbnail video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .play-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .video-card:hover .play-overlay { opacity: 1; }
+        
+        .play-btn {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .video-info { padding: 1.5rem; }
+        .video-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .video-meta { color: #888; font-size: 0.9rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        
+        .video-duration {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 6rem 2rem;
+            color: #666;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 2rem;
+        }
+        
+        .modal.active { display: flex; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .modal-content {
+            background: #1a1025;
+            border-radius: 25px;
+            width: 100%;
+            max-width: 1000px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .modal-close {
+            width: 40px; height: 40px;
+            border: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .modal-close:hover { background: rgba(239, 68, 68, 0.4); transform: rotate(90deg); }
+        
+        .modal-share {
+            width: 40px; height: 40px;
+            border: none;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+        }
+        
+        .modal-share:hover { background: rgba(16, 185, 129, 0.4); transform: scale(1.1); }
+        
+        .modal-body { padding: 0; }
+        .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 25px 25px; }
+        
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1025;
+            border: 1px solid #6366f1;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            display: none;
+            z-index: 10001;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s;
+        }
+        
+        @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        
+        .toast.show { display: block; }
+        
+        .cloudinary-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        
+        .video-card:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { background: #dc2626; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="nebula"></div>
+        <div class="nebula"></div>
+    </div>
+    
+    <div class="loader" id="loader">
+        <div class="loader-ring"></div>
+        <div class="loader-text">جاري الاتصال...</div>
+    </div>
+    
+    <nav class="navbar">
+        <div class="brand">
+            <div class="brand-icon"><i class="fas fa-planet-ringed"></i></div>
+            <div class="brand-text">
+                <h1>فلك العالمي</h1>
+                <p>النسخة السحابية ☁️</p>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-ghost" id="adminBtn" onclick="showLogin()">
+                <i class="fas fa-lock"></i> دخول المشرف
+            </button>
+            <button class="btn btn-danger" id="logoutBtn" onclick="logout()" style="display: none;">
+                <i class="fas fa-sign-out-alt"></i> خروج
+            </button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="hero">
+            <div class="hero-badge"><i class="fas fa-cloud"></i> متصل بـ Cloudinary</div>
+            <h2>اكتشف أسرار <span>الكون</span></h2>
+            <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم عبر Cloudinary!</p>
+        </div>
+        
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon" onclick="openCloudinaryWidget()">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <h3>رفع فيديو جديد</h3>
+            <p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p>
+            <button class="upload-btn" onclick="openCloudinaryWidget()">
+                <i class="fas fa-plus"></i> فتح واجهة الرفع
+            </button>
+            
+            <div class="upload-info">
+                <i class="fas fa-info-circle"></i> 
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 1 جيجابايت (مع التحميل المُجزأ)
+            </div>
+            
+            <div class="cloudinary-badge">
+                <i class="fas fa-shield-alt"></i>
+                محمي بواسطة Cloudinary Upload Widget
+            </div>
+        </div>
+
+        <!-- رسالة استئناف المشاهدة -->
+        <div class="resume-notification" id="resumeNotification">
+            <div class="resume-info">
+                <div class="resume-icon"><i class="fas fa-history"></i></div>
+                <div class="resume-text">
+                    <h4 id="resumeVideoTitle">عنوان الفيديو</h4>
+                    <p id="resumeTimeDisplay">توقفت عند: 0:00</p>
+                </div>
+            </div>
+            <div class="resume-actions">
+                <button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button>
+                <button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button>
+            </div>
+        </div>
+        
+        <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fas fa-play-circle" style="color: #ec4899;"></i>
+            مكتبة الفيديوهات المشتركة
+            <span id="videoCount" style="margin-right: auto; background: rgba(99,102,241,0.2); padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem;">0 فيديو</span>
+        </h3>
+        
+        <div class="videos-grid" id="videosContainer"></div>
+        
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-satellite" style="font-size: 6rem; margin-bottom: 2rem;"></i>
+            <h3>المكتبة فارغة</h3>
+            <p>ادخل كمشرف لرفع أول فيديو!</p>
+        </div>
+    </div>
+    
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3>
+                    <button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button>
+                </div>
+                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <video class="video-player" id="videoPlayer" controls playsinline></video>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="loginModal" style="background: rgba(0,0,0,0.95);">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> دخول المشرف</h3>
+                <button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <input type="password" id="passwordInput" placeholder="اكتب كلمة المرور هنا..." 
+                       style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; margin-bottom: 1rem; font-size: 1.1rem; text-align: center;"
+                       onkeypress="if(event.key==='Enter')doLogin()">
+                <button class="btn btn-primary" style="width: 100%;" onclick="doLogin()">
+                    <i class="fas fa-sign-in-alt"></i> دخول
+                </button>
+                <button onclick="closeLogin()" style="width: 100%; background: transparent; border: none; color: #888; margin-top: 1rem; cursor: pointer; font-family: 'Cairo';">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast">تم بنجاح</div>
+
+    <script>
+        // ===== إخفاء شاشة التحميل =====
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader) loader.classList.add('hidden');
+        }, 1000);
+
+        // ===== CLOUDINARY CONFIG =====
+        const CLOUDINARY_CONFIG = {
+            cloudName: 'ds4wy90er',
+            uploadPreset: 'falak_upload',
+            apiKey: '462193620740'
+        };
+        
+        // ===== FIREBASE CONFIG (مشروع Planning With AI) =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
+            authDomain: "planning-with-ai-390af.firebaseapp.com",
+            projectId: "planning-with-ai-390af",
+            storageBucket: "planning-with-ai-390af.firebasestorage.app",
+            messagingSenderId: "601755857673",
+            appId: "1:601755857673:web:b9d7d63e13035412a819d8"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // ===== APP CONFIG =====
+        const ADMIN_PASS = "falak123";
+        const MAX_VIDEO_SIZE = 1000 * 1024 * 1024; // 1 جيجابايت
+        const CHUNK_SIZE = 20 * 1024 * 1024; // 20 ميجابايت لكل جزء (افتراضي)
+        
+        let isAdmin = false;
+        let videos = [];
+        let uploadWidget = null;
+        let unsubscribe = null; // للاستماع المباشر
+
+        // ===== بدء التحميل والاستماع المباشر =====
+        document.addEventListener('DOMContentLoaded', function() {
+            listenToVideos(); // استخدم المستمع بدلاً من get()
+            initCloudinaryWidget();
+            checkUrlForShare();
+            
+            // إخفاء إضافي بعد 3 ثواني كضمان
+            setTimeout(() => {
+                document.getElementById('loader')?.classList.add('hidden');
+            }, 3000);
+        });
+
+        // ===== الاستماع المباشر للتحديثات (Realtime Listener) =====
+        function listenToVideos() {
+            // إلغاء أي استماع سابق
+            if (unsubscribe) unsubscribe();
+            
+            unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    videos = [];
+                    snapshot.forEach(doc => {
+                        let v = doc.data();
+                        v.id = doc.id;
+                        videos.push(v);
+                    });
+                    renderVideos();
+                    checkForResume();
+                    checkUrlForShare();
+                }, error => {
+                    console.error('Error listening to videos:', error);
+                    showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام المنصة');
+                });
+        }
+
+        // ===== CLOUDINARY WIDGET INIT مع دعم الملفات الكبيرة =====
+        function initCloudinaryWidget() {
+            if (typeof cloudinary === 'undefined') {
+                console.error('Cloudinary widget not loaded');
+                showToast('⚠️ فشل تحميل واجهة الرفع');
+                return;
+            }
+            
+            uploadWidget = cloudinary.createUploadWidget({
+                cloudName: CLOUDINARY_CONFIG.cloudName,
+                uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+                resourceType: 'video',
+                clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv'],
+                maxFileSize: MAX_VIDEO_SIZE, // 1 جيجابايت
+                maxVideoFileSize: MAX_VIDEO_SIZE, // خاص للفيديو
+                chunkSize: CHUNK_SIZE, // تحميل مقسم 20 ميجابايت
+                sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
+                language: 'ar',
+                text: {
+                    ar: {
+                        or: 'أو',
+                        local: { browse: 'اختر ملف', drop: 'اسحب الفيديو هنا' },
+                        menu: { files: 'ملفاتي', web: 'رابط الويب', camera: 'الكاميرا', gdrive: 'Google Drive', dropbox: 'Dropbox' }
+                    }
+                },
+                styles: {
+                    palette: {
+                        window: '#1a1025', windowBorder: '#6366f1', tabIcon: '#6366f1', menuIcons: '#6366f1',
+                        textDark: '#ffffff', textLight: '#ffffff', link: '#ec4899', action: '#6366f1',
+                        inactiveTabIcon: '#8b5cf6', error: '#ef4444', inProgress: '#6366f1', complete: '#10b981', sourceBg: '#0f0a1a'
+                    },
+                    fonts: { default: 'Cairo', active: 'Cairo' }
+                },
+                showAdvancedOptions: false,
+                cropping: false,
+                multiple: false,
+                defaultSource: 'local',
+                prepareUploadParams: function(cb, params) {
+                    params.context = 'alt=فيديو فلك العالمي';
+                    // إضافة تحسينات للفيديو عند الرفع
+                    params.eager = [
+                        { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }
+                    ];
+                    params.eager_async = true;
+                    cb(params);
+                }
+            }, function(error, result) {
+                if (!error && result && result.event === "success") {
+                    console.log('Upload success:', result.info);
+                    handleCloudinarySuccess(result.info);
+                } else if (error) {
+                    console.error('Upload error:', error);
+                    if (error.status === 413) {
+                        showToast('❌ الملف كبير جداً. جرب استخدام فيديو أقل من 1 جيجابايت');
+                    } else {
+                        showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
+                    }
+                } else if (result && result.event === "queues-start") {
+                    showToast('⏳ جاري بدء الرفع...');
+                } else if (result && result.event === "upload-success") {
+                    showToast('📤 تم رفع جزء من الفيديو...');
+                }
+            });
+        }
+
+        function openCloudinaryWidget() {
+            if (uploadWidget) {
+                uploadWidget.open();
+            } else {
+                showToast('⚠️ جاري تحميل واجهة الرفع...');
+                initCloudinaryWidget();
+                setTimeout(() => uploadWidget?.open(), 500);
+            }
+        }
+
+        function handleCloudinarySuccess(info) {
+            // تحسين رابط الفيديو بمعاملات الضغط التلقائي
+            const optimizedUrl = info.secure_url.replace(
+                '/upload/',
+                '/upload/q_auto,f_auto,vc_auto/'
+            );
+            
+            const videoData = {
+                title: info.original_filename || 'فيديو بدون عنوان',
+                url: optimizedUrl, // استخدام الرابط المحسّن
+                originalUrl: info.secure_url, // الاحتفاظ بالرابط الأصلي للاحتياط
+                thumbnail: info.thumbnail_url || info.secure_url.replace(/\.[^/.]+$/, '.jpg'),
+                publicId: info.public_id,
+                format: info.format,
+                duration: info.duration,
+                width: info.width,
+                height: info.height,
+                size: info.bytes,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                cloudinaryData: { assetId: info.asset_id, version: info.version_id },
+                optimized: true // علامة أن الرابط محسّن
+            };
+            
+            db.collection('videos').add(videoData)
+                .then(() => {
+                    showToast('✅ تم الرفع والحفظ بنجاح! 🌍');
+                })
+                .catch(err => {
+                    console.error('Error saving to Firebase:', err);
+                    showToast('⚠️ تم الرفع لكن فشل الحفظ في قاعدة البيانات');
+                });
+        }
+
+        // ===== عرض الفيديوهات =====
+        function renderVideos() {
+            const container = document.getElementById('videosContainer');
+            const emptyState = document.getElementById('emptyState');
+            const videoCountSpan = document.getElementById('videoCount');
+            
+            if (videos.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                videoCountSpan.textContent = '0 فيديو';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            videoCountSpan.textContent = videos.length + ' فيديو';
+            
+            container.innerHTML = videos.map(video => {
+                const duration = video.duration ? formatDuration(video.duration) : '';
+                return `
+                    <div class="video-card" onclick="playVideo('${video.id}')">
+                        <div class="video-thumbnail">
+                            ${video.thumbnail ? `<img src="${video.thumbnail}" alt="${video.title}" class="cloudinary-thumbnail">` : '<i class="fas fa-film"></i>'}
+                            ${duration ? `<div class="video-duration"><i class="fas fa-clock"></i> ${duration}</div>` : ''}
+                            <div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>
+                            ${isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
+                        </div>
+                        <div class="video-info">
+                            <h4 class="video-title">${video.title} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
+                            <div class="video-meta">
+                                <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
+                                <span><i class="fas fa-hdd"></i> ${formatSize(video.size)}</span>
+                                ${video.width ? `<span><i class="fas fa-expand"></i> ${video.width}x${video.height}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ===== دوال مساعدة =====
+        function formatDuration(seconds) {
+            if (!seconds) return '';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // ===== تشغيل الفيديو =====
+        function playVideo(id, startTime = 0) {
+            const video = videos.find(v => v.id === id);
+            if (!video) return;
+            
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
+            
+            const player = document.getElementById('videoPlayer');
+            player.src = video.url; // الرابط محسّن بالفعل بـ q_auto,f_auto,vc_auto
+            player.poster = video.thumbnail || '';
+            
+            document.getElementById('videoModal').classList.add('active');
+
+            if (startTime > 0) {
+                const setStartTime = () => {
+                    player.currentTime = startTime;
+                    player.removeEventListener('loadedmetadata', setStartTime);
+                };
+                player.addEventListener('loadedmetadata', setStartTime);
+            }
+
+            setupProgressTracking();
+            player.play().catch(() => {});
+        }
+
+        function closeModal() {
+            saveVideoProgress();
+            const player = document.getElementById('videoPlayer');
+            player.pause();
+            player.src = '';
+            player.poster = '';
+            document.getElementById('videoModal').classList.remove('active');
+        }
+
+        // ===== الحذف =====
+        function deleteVideo(id, publicId) {
+            if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
+            db.collection('videos').doc(id).delete()
+                .then(() => showToast('🗑️ تم الحذف من المكتبة'))
+                .catch(err => showToast('❌ فشل الحذف: ' + err.message));
+        }
+
+        // ===== المصادقة =====
+        function showLogin() { 
+            document.getElementById('loginModal').classList.add('active'); 
+            document.getElementById('passwordInput').value = '';
+            setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+        }
+        
+        function closeLogin() { 
+            document.getElementById('loginModal').classList.remove('active'); 
+        }
+
+        function doLogin() {
+            const input = document.getElementById('passwordInput');
+            const enteredPass = input.value.trim();
+            
+            if (enteredPass === ADMIN_PASS) {
+                isAdmin = true;
+                document.getElementById('uploadZone').classList.add('active');
+                document.getElementById('adminBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'flex';
+                closeLogin();
+                renderVideos(); // إعادة رسم لإظهار أزرار الحذف
+                showToast('🔓 مرحباً أيها المشرف! ☁️');
+            } else {
+                showToast('❌ كلمة المرور خاطئة');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function logout() {
+            isAdmin = false;
+            document.getElementById('uploadZone').classList.remove('active');
+            document.getElementById('adminBtn').style.display = 'flex';
+            document.getElementById('logoutBtn').style.display = 'none';
+            renderVideos(); // إعادة رسم لإخفاء أزرار الحذف
+            showToast('👋 تم الخروج');
+        }
+
+        // ===== استئناف المشاهدة (localStorage) =====
+        const STORAGE_KEY = 'falak_last_watched';
+        let lastWatchedData = null;
+
+        function saveVideoProgress() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src || player.paused) return;
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
+            if (!currentVideo) return;
+            const data = {
+                videoId: currentVideo.id,
+                title: currentVideo.title,
+                thumbnail: currentVideo.thumbnail || '',
+                currentTime: player.currentTime,
+                duration: player.duration || 0,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function checkForResume() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            try {
+                lastWatchedData = JSON.parse(saved);
+                const videoExists = videos.some(v => v.id === lastWatchedData.videoId);
+                if (!videoExists) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    return;
+                }
+                if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    return;
+                }
+                document.getElementById('resumeVideoTitle').textContent = lastWatchedData.title;
+                document.getElementById('resumeTimeDisplay').textContent = 'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
+                document.getElementById('resumeNotification').style.display = 'flex';
+            } catch (e) {
+                console.error('Error parsing saved data:', e);
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        }
+
+        function resumeWatching() {
+            if (!lastWatchedData) return;
+            const video = videos.find(v => v.id === lastWatchedData.videoId);
+            if (!video) {
+                showToast('❌ الفيديو غير متوفر');
+                dismissResume();
+                return;
+            }
+            playVideo(lastWatchedData.videoId);
+            const player = document.getElementById('videoPlayer');
+            const setTime = () => {
+                player.currentTime = lastWatchedData.currentTime;
+                showToast('▶️ استئناف من ' + formatDuration(lastWatchedData.currentTime));
+                player.removeEventListener('loadedmetadata', setTime);
+            };
+            player.addEventListener('loadedmetadata', setTime);
+            dismissResume();
+        }
+
+        function dismissResume() {
+            document.getElementById('resumeNotification').style.display = 'none';
+        }
+
+        function setupProgressTracking() {
+            const player = document.getElementById('videoPlayer');
+            if (!player) return;
+            setInterval(() => {
+                if (!player.paused && !player.ended) saveVideoProgress();
+            }, 5000);
+            player.addEventListener('pause', saveVideoProgress);
+            window.addEventListener('beforeunload', saveVideoProgress);
+            player.addEventListener('ended', () => localStorage.removeItem(STORAGE_KEY));
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            const player = document.getElementById('videoPlayer');
+            if (document.hidden && player && !player.paused) {
+                player.pause();
+                saveVideoProgress();
+            }
+        });
+
+        // ===== مشاركة الوقت =====
+        function shareCurrentTime() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src) return;
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
+            if (!currentVideo) return;
+            const currentTime = Math.floor(player.currentTime);
+            const shareUrl = window.location.href.split('?')[0] + '?video=' + currentVideo.id + '&t=' + currentTime;
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => showToast('🔗 تم نسخ رابط المشاركة! أرسله لصديقك'))
+                .catch(() => showToast('⚠️ تعذر نسخ الرابط'));
+        }
+
+        function checkUrlForShare() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoId = urlParams.get('video');
+            const time = urlParams.get('t');
+            if (videoId && videos.length > 0) {
+                const video = videos.find(v => v.id === videoId);
+                if (video) {
+                    window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
+                    playVideo(videoId, parseInt(time) || 0);
+                } else {
+                    showToast('❌ الفيديو المطلوب غير موجود');
+                }
+            }
+        }
+
+        // ===== إغلاق المودالات عند النقر خارجها =====
+        window.onclick = function(e) {
+            if (e.target.classList.contains('modal')) {
+                if (e.target.id === 'videoModal') closeModal();
+                else if (e.target.id === 'loginModal') closeLogin();
+            }
+        };
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeLogin();
+            }
+        });
+    </script>
+</body>
+</html>
