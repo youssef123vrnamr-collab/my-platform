@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
+        /* جميع الأنماط السابقة كما هي مع إضافة القليل للتجاوب */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -253,6 +254,95 @@
             color: #3498db;
         }
         
+        /* رسالة استئناف المشاهدة */
+        .resume-notification {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+            backdrop-filter: blur(10px);
+            border: 1px solid #6366f1;
+            border-radius: 20px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            animation: slideDown 0.5s;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .resume-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .resume-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .resume-text h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .resume-text p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .resume-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .resume-btn {
+            background: #6366f1;
+            border: none;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .resume-btn:hover {
+            background: #4f52e0;
+            transform: scale(1.05);
+        }
+        
+        .dismiss-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .dismiss-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
         .videos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -366,6 +456,12 @@
             align-items: center;
         }
         
+        .modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         .modal-close {
             width: 40px; height: 40px;
             border: none;
@@ -377,6 +473,19 @@
         }
         
         .modal-close:hover { background: rgba(239, 68, 68, 0.4); transform: rotate(90deg); }
+        
+        .modal-share {
+            width: 40px; height: 40px;
+            border: none;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+        }
+        
+        .modal-share:hover { background: rgba(16, 185, 129, 0.4); transform: scale(1.1); }
         
         .modal-body { padding: 0; }
         .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 25px 25px; }
@@ -402,7 +511,6 @@
         
         .toast.show { display: block; }
         
-        /* Cloudinary Widget Customization */
         .cloudinary-thumbnail {
             width: 100%;
             height: 100%;
@@ -488,6 +596,21 @@
                 محمي بواسطة Cloudinary Upload Widget
             </div>
         </div>
+
+        <!-- رسالة استئناف المشاهدة -->
+        <div class="resume-notification" id="resumeNotification">
+            <div class="resume-info">
+                <div class="resume-icon"><i class="fas fa-history"></i></div>
+                <div class="resume-text">
+                    <h4 id="resumeVideoTitle">عنوان الفيديو</h4>
+                    <p id="resumeTimeDisplay">توقفت عند: 0:00</p>
+                </div>
+            </div>
+            <div class="resume-actions">
+                <button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button>
+                <button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button>
+            </div>
+        </div>
         
         <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
             <i class="fas fa-play-circle" style="color: #ec4899;"></i>
@@ -507,7 +630,10 @@
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3>
+                <div class="modal-header-left">
+                    <h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3>
+                    <button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button>
+                </div>
                 <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
@@ -539,19 +665,25 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
+        // ===== إخفاء شاشة التحميل بعد 1 ثانية (حل المشكلة) =====
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader) loader.classList.add('hidden');
+        }, 1000);
+
         // ===== CLOUDINARY CONFIG =====
         const CLOUDINARY_CONFIG = {
             cloudName: 'ds4wy90er',
             uploadPreset: 'falak_upload',
-            apiKey: '462193620740' // Optional for unsigned uploads
+            apiKey: '462193620740'
         };
         
-        // ===== FIREBASE CONFIG (للـ metadata فقط) =====
+        // ===== FIREBASE CONFIG (تم تعديل storageBucket) =====
         const firebaseConfig = {
             apiKey: "AIzaSyCQVYHMDgInDiBhP69WQn3w3gysPiSzBxg",
             authDomain: "project-119e3e19-1c79-4238-a10.firebaseapp.com",
             projectId: "project-119e3e19-1c79-4238-a10",
-            storageBucket: "project-119e3e19-1c79-4238-a10.firebasestorage.app",
+            storageBucket: "project-119e3e19-1c79-4238-a10.appspot.com",
             messagingSenderId: "462193620740",
             appId: "1:462193620740:web:1cdc0635f1c818b2a70251"
         };
@@ -565,84 +697,56 @@
         let videos = [];
         let uploadWidget = null;
 
-        // ===== INIT =====
+        // ===== بدء التحميل =====
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                document.getElementById('loader').classList.add('hidden');
-            }, 1500);
             loadVideos();
             initCloudinaryWidget();
+            checkUrlForShare();
+            
+            // إخفاء إضافي بعد 3 ثواني كضمان
+            setTimeout(() => {
+                document.getElementById('loader')?.classList.add('hidden');
+            }, 3000);
         });
 
         // ===== CLOUDINARY WIDGET INIT =====
         function initCloudinaryWidget() {
+            if (typeof cloudinary === 'undefined') {
+                console.error('Cloudinary widget not loaded');
+                showToast('⚠️ فشل تحميل واجهة الرفع');
+                return;
+            }
             uploadWidget = cloudinary.createUploadWidget({
                 cloudName: CLOUDINARY_CONFIG.cloudName,
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-                
-                // إعدادات الفيديو
                 resourceType: 'video',
                 clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi'],
                 maxFileSize: 100000000, // 100MB
-                
-                // المصادر المتاحة
                 sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
-                
-                // اللغة العربية
                 language: 'ar',
                 text: {
                     ar: {
                         or: 'أو',
-                        local: {
-                            browse: 'اختر ملف',
-                            drop: 'اسحب الفيديو هنا'
-                        },
-                        menu: {
-                            files: 'ملفاتي',
-                            web: 'رابط الويب',
-                            camera: 'الكاميرا',
-                            gdrive: 'Google Drive',
-                            dropbox: 'Dropbox'
-                        }
+                        local: { browse: 'اختر ملف', drop: 'اسحب الفيديو هنا' },
+                        menu: { files: 'ملفاتي', web: 'رابط الويب', camera: 'الكاميرا', gdrive: 'Google Drive', dropbox: 'Dropbox' }
                     }
                 },
-                
-                // التخصيص
                 styles: {
                     palette: {
-                        window: '#1a1025',
-                        windowBorder: '#6366f1',
-                        tabIcon: '#6366f1',
-                        menuIcons: '#6366f1',
-                        textDark: '#ffffff',
-                        textLight: '#ffffff',
-                        link: '#ec4899',
-                        action: '#6366f1',
-                        inactiveTabIcon: '#8b5cf6',
-                        error: '#ef4444',
-                        inProgress: '#6366f1',
-                        complete: '#10b981',
-                        sourceBg: '#0f0a1a'
+                        window: '#1a1025', windowBorder: '#6366f1', tabIcon: '#6366f1', menuIcons: '#6366f1',
+                        textDark: '#ffffff', textLight: '#ffffff', link: '#ec4899', action: '#6366f1',
+                        inactiveTabIcon: '#8b5cf6', error: '#ef4444', inProgress: '#6366f1', complete: '#10b981', sourceBg: '#0f0a1a'
                     },
-                    fonts: {
-                        default: 'Cairo',
-                        active: 'Cairo'
-                    }
+                    fonts: { default: 'Cairo', active: 'Cairo' }
                 },
-                
-                // خيارات متقدمة
                 showAdvancedOptions: false,
                 cropping: false,
                 multiple: false,
                 defaultSource: 'local',
-                
-                // معالجة ما قبل الرفع
                 prepareUploadParams: function(cb, params) {
-                    // إضافة معلومات إضافية
                     params.context = 'alt=فيديو فلك العالمي';
                     cb(params);
                 }
-                
             }, function(error, result) {
                 if (!error && result && result.event === "success") {
                     console.log('Upload success:', result.info);
@@ -662,12 +766,11 @@
             } else {
                 showToast('⚠️ جاري تحميل واجهة الرفع...');
                 initCloudinaryWidget();
-                setTimeout(() => uploadWidget.open(), 500);
+                setTimeout(() => uploadWidget?.open(), 500);
             }
         }
 
         function handleCloudinarySuccess(info) {
-            // حفظ بيانات الفيديو في Firebase
             const videoData = {
                 title: info.original_filename || 'فيديو بدون عنوان',
                 url: info.secure_url,
@@ -679,81 +782,79 @@
                 height: info.height,
                 size: info.bytes,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                cloudinaryData: {
-                    assetId: info.asset_id,
-                    version: info.version_id
-                }
+                cloudinaryData: { assetId: info.asset_id, version: info.version_id }
             };
             
             db.collection('videos').add(videoData)
-                .then(function() {
-                    showToast('✅ تم الرفع والحفظ بنجاح! 🌍');
-                })
-                .catch(function(err) {
+                .then(() => showToast('✅ تم الرفع والحفظ بنجاح! 🌍'))
+                .catch(err => {
                     console.error('Error saving to Firebase:', err);
                     showToast('⚠️ تم الرفع لكن فشل الحفظ في قاعدة البيانات');
                 });
         }
 
-        // ===== LOAD VIDEOS =====
+        // ===== تحميل الفيديوهات =====
         function loadVideos() {
-            db.collection('videos').orderBy('createdAt', 'desc').onSnapshot(function(snapshot) {
-                videos = [];
-                snapshot.forEach(function(doc) {
-                    let v = doc.data();
-                    v.id = doc.id;
-                    videos.push(v);
+            db.collection('videos').orderBy('createdAt', 'desc').get()
+                .then(snapshot => {
+                    videos = [];
+                    snapshot.forEach(doc => {
+                        let v = doc.data();
+                        v.id = doc.id;
+                        videos.push(v);
+                    });
+                    renderVideos();
+                    // بعد التحميل نتحقق من الاستئناف ومشاركة الرابط
+                    checkForResume();
+                    checkUrlForShare();
+                })
+                .catch(error => {
+                    console.error('Error loading videos:', error);
+                    showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام المنصة');
                 });
-                document.getElementById('videoCount').textContent = videos.length + ' فيديو';
-                renderVideos();
-
-                // Check for resume after videos are loaded
-                setTimeout(checkForResume, 1000);
-            }, function(error) {
-                console.error('Error:', error);
-                showToast('⚠️ خطأ في الاتصال: ' + error.message);
-            });
         }
 
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
+            const videoCountSpan = document.getElementById('videoCount');
             
             if (videos.length === 0) {
                 container.innerHTML = '';
                 emptyState.style.display = 'block';
+                videoCountSpan.textContent = '0 فيديو';
                 return;
             }
             
             emptyState.style.display = 'none';
-            container.innerHTML = videos.map(function(video) {
+            videoCountSpan.textContent = videos.length + ' فيديو';
+            
+            container.innerHTML = videos.map(video => {
                 const duration = video.duration ? formatDuration(video.duration) : '';
-                
-                return '<div class="video-card" onclick="playVideo(\'' + video.id + '\')">' +
-                    '<div class="video-thumbnail">' +
-                        (video.thumbnail ? 
-                            '<img src="' + video.thumbnail + '" alt="' + video.title + '" class="cloudinary-thumbnail">' : 
-                            '<i class="fas fa-film"></i>'
-                        ) +
-                        (duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + '</div>' : '') +
-                        '<div class="play-overlay">' +
-                            '<div class="play-btn"><i class="fas fa-play"></i></div>' +
-                        '</div>' +
-                        (isAdmin ? '<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo(\'' + video.id + '\', \'' + (video.publicId || '') + '\')"><i class="fas fa-trash"></i> حذف</button>' : '') +
-                    '</div>' +
-                    '<div class="video-info">' +
-                        '<h4 class="video-title">' + video.title + '</h4>' +
-                        '<div class="video-meta">' +
-                            '<span><i class="fas fa-calendar"></i> ' + (video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن') + '</span>' +
-                            '<span><i class="fas fa-hdd"></i> ' + formatSize(video.size) + '</span>' +
-                            (video.width ? '<span><i class="fas fa-expand"></i> ' + video.width + 'x' + video.height + '</span>' : '') +
-                        '</div>' +
-                    '</div>' +
-                '</div>';
+                return `
+                    <div class="video-card" onclick="playVideo('${video.id}')">
+                        <div class="video-thumbnail">
+                            ${video.thumbnail ? `<img src="${video.thumbnail}" alt="${video.title}" class="cloudinary-thumbnail">` : '<i class="fas fa-film"></i>'}
+                            ${duration ? `<div class="video-duration"><i class="fas fa-clock"></i> ${duration}</div>` : ''}
+                            <div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>
+                            ${isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
+                        </div>
+                        <div class="video-info">
+                            <h4 class="video-title">${video.title}</h4>
+                            <div class="video-meta">
+                                <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
+                                <span><i class="fas fa-hdd"></i> ${formatSize(video.size)}</span>
+                                ${video.width ? `<span><i class="fas fa-expand"></i> ${video.width}x${video.height}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
             }).join('');
         }
 
+        // ===== دوال مساعدة =====
         function formatDuration(seconds) {
+            if (!seconds) return '';
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return mins + ':' + (secs < 10 ? '0' : '') + secs;
@@ -766,8 +867,16 @@
             return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         }
 
-        function playVideo(id) {
-            const video = videos.find(function(v) { return v.id === id; });
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // ===== تشغيل الفيديو =====
+        function playVideo(id, startTime = 0) {
+            const video = videos.find(v => v.id === id);
             if (!video) return;
             
             document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
@@ -778,46 +887,36 @@
             
             document.getElementById('videoModal').classList.add('active');
 
-            // Setup progress tracking for this video
-            setupProgressTracking();
+            if (startTime > 0) {
+                const setStartTime = () => {
+                    player.currentTime = startTime;
+                    player.removeEventListener('loadedmetadata', setStartTime);
+                };
+                player.addEventListener('loadedmetadata', setStartTime);
+            }
 
-            player.play().catch(function(e) {
-                console.log('Autoplay prevented:', e);
-            });
+            setupProgressTracking();
+            player.play().catch(() => {});
         }
 
         function closeModal() {
-            const player = document.getElementById('videoPlayer');
-
-            // Save progress before closing
             saveVideoProgress();
-
+            const player = document.getElementById('videoPlayer');
             player.pause();
             player.src = '';
             player.poster = '';
             document.getElementById('videoModal').classList.remove('active');
         }
 
+        // ===== الحذف =====
         function deleteVideo(id, publicId) {
             if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
-            
-            // حذف من Firebase أولاً
             db.collection('videos').doc(id).delete()
-                .then(function() {
-                    showToast('🗑️ تم الحذف من المكتبة');
-                    
-                    // محاولة حذف من Cloudinary (اختياري - يتطلب server-side)
-                    if (publicId) {
-                        console.log('يمكن حذف الملف من Cloudinary عبر:', publicId);
-                        // ملاحظة: الحذف من Cloudinary يتطلب توقيع (signature) من الخادم
-                    }
-                })
-                .catch(function(err) {
-                    showToast('❌ فشل الحذف: ' + err.message);
-                });
+                .then(() => showToast('🗑️ تم الحذف من المكتبة'))
+                .catch(err => showToast('❌ فشل الحذف: ' + err.message));
         }
 
-        // ===== AUTH =====
+        // ===== المصادقة =====
         function showLogin() { 
             document.getElementById('loginModal').classList.add('active'); 
             document.getElementById('passwordInput').value = '';
@@ -856,29 +955,15 @@
             showToast('👋 تم الخروج');
         }
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(function() {
-                toast.classList.remove('show');
-            }, 4000);
-        }
-
-        
-
-        // ===== RESUME WATCHING FUNCTIONALITY =====
+        // ===== استئناف المشاهدة (localStorage) =====
         const STORAGE_KEY = 'falak_last_watched';
         let lastWatchedData = null;
 
-        // Save video progress to localStorage
         function saveVideoProgress() {
             const player = document.getElementById('videoPlayer');
             if (!player || !player.src || player.paused) return;
-
             const currentVideo = videos.find(v => v.url === player.src);
             if (!currentVideo) return;
-
             const data = {
                 videoId: currentVideo.id,
                 title: currentVideo.title,
@@ -887,103 +972,103 @@
                 duration: player.duration || 0,
                 timestamp: new Date().getTime()
             };
-
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            console.log('💾 Saved progress:', data.title, 'at', formatDuration(data.currentTime));
         }
 
-        // Check for saved progress on page load
         function checkForResume() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (!saved) return;
-
             try {
                 lastWatchedData = JSON.parse(saved);
-
-                // Check if video still exists in library
                 const videoExists = videos.some(v => v.id === lastWatchedData.videoId);
                 if (!videoExists) {
                     localStorage.removeItem(STORAGE_KEY);
                     return;
                 }
-
-                // Check if video was finished (watched more than 95%)
-                if (lastWatchedData.duration > 0 && 
-                    lastWatchedData.currentTime / lastWatchedData.duration > 0.95) {
+                if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) {
                     localStorage.removeItem(STORAGE_KEY);
                     return;
                 }
-
-                // Show resume notification
                 document.getElementById('resumeVideoTitle').textContent = lastWatchedData.title;
-                document.getElementById('resumeTimeDisplay').textContent = 
-                    'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
-                document.getElementById('resumeNotification').style.display = 'block';
-
-                console.log('📺 Found saved progress:', lastWatchedData.title);
+                document.getElementById('resumeTimeDisplay').textContent = 'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
+                document.getElementById('resumeNotification').style.display = 'flex';
             } catch (e) {
                 console.error('Error parsing saved data:', e);
                 localStorage.removeItem(STORAGE_KEY);
             }
         }
 
-        // Resume watching the saved video
         function resumeWatching() {
             if (!lastWatchedData) return;
-
             const video = videos.find(v => v.id === lastWatchedData.videoId);
             if (!video) {
                 showToast('❌ الفيديو غير متوفر');
                 dismissResume();
                 return;
             }
-
-            // Open the video
             playVideo(lastWatchedData.videoId);
-
-            // Set the time after video loads
-            setTimeout(() => {
-                const player = document.getElementById('videoPlayer');
-                if (player) {
-                    player.currentTime = lastWatchedData.currentTime;
-                    showToast('▶️ استئناف من ' + formatDuration(lastWatchedData.currentTime));
-                }
-            }, 500);
-
+            const player = document.getElementById('videoPlayer');
+            const setTime = () => {
+                player.currentTime = lastWatchedData.currentTime;
+                showToast('▶️ استئناف من ' + formatDuration(lastWatchedData.currentTime));
+                player.removeEventListener('loadedmetadata', setTime);
+            };
+            player.addEventListener('loadedmetadata', setTime);
             dismissResume();
         }
 
-        // Dismiss the resume notification
         function dismissResume() {
             document.getElementById('resumeNotification').style.display = 'none';
         }
 
-        // Save progress periodically and on pause/close
         function setupProgressTracking() {
             const player = document.getElementById('videoPlayer');
             if (!player) return;
-
-            // Save every 5 seconds while playing
             setInterval(() => {
-                if (!player.paused && !player.ended) {
-                    saveVideoProgress();
-                }
+                if (!player.paused && !player.ended) saveVideoProgress();
             }, 5000);
-
-            // Save on pause
             player.addEventListener('pause', saveVideoProgress);
-
-            // Save on page unload
             window.addEventListener('beforeunload', saveVideoProgress);
-
-            // Clear saved data when video ends
-            player.addEventListener('ended', () => {
-                localStorage.removeItem(STORAGE_KEY);
-                console.log('🎬 Video finished, cleared saved progress');
-            });
+            player.addEventListener('ended', () => localStorage.removeItem(STORAGE_KEY));
         }
 
-        // ===== EVENT LISTENERS =====
+        document.addEventListener('visibilitychange', () => {
+            const player = document.getElementById('videoPlayer');
+            if (document.hidden && player && !player.paused) {
+                player.pause();
+                saveVideoProgress();
+            }
+        });
+
+        // ===== مشاركة الوقت =====
+        function shareCurrentTime() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src) return;
+            const currentVideo = videos.find(v => v.url === player.src);
+            if (!currentVideo) return;
+            const currentTime = Math.floor(player.currentTime);
+            const shareUrl = window.location.href.split('?')[0] + '?video=' + currentVideo.id + '&t=' + currentTime;
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => showToast('🔗 تم نسخ رابط المشاركة! أرسله لصديقك'))
+                .catch(() => showToast('⚠️ تعذر نسخ الرابط'));
+        }
+
+        function checkUrlForShare() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoId = urlParams.get('video');
+            const time = urlParams.get('t');
+            if (videoId && videos.length > 0) {
+                const video = videos.find(v => v.id === videoId);
+                if (video) {
+                    window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
+                    playVideo(videoId, parseInt(time) || 0);
+                } else {
+                    showToast('❌ الفيديو المطلوب غير موجود');
+                }
+            }
+        }
+
+        // ===== إغلاق المودالات عند النقر خارجها =====
         window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
@@ -991,7 +1076,6 @@
             }
         };
 
-        // إغلاق المودال بزر ESC
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
