@@ -1311,6 +1311,20 @@
             transition: all 0.3s;
         }
         .image-viewer-close:hover { background: rgba(239, 68, 68, 0.5); transform: rotate(90deg); }
+        
+        /* ===== وقت الرسالة ===== */
+        .message-time {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.5rem;
+            text-align: left;
+            direction: ltr;
+        }
+        .message.sent .message-time {
+            color: rgba(255,255,255,0.7);
+            text-align: right;
+        }
+        
         @media (max-width: 768px) {
             .chat-container { height: 100vh; max-width: 100%; border-radius: 0; }
             .chat-btn { bottom: 1rem; left: 1rem; width: 55px; height: 55px; }
@@ -1493,7 +1507,7 @@
                 </div>
                 <div class="form-group">
                     <label>وصف الفيديو <span id="descCharCount" style="color: #888; font-size: 0.85rem;">(0 / 5000 حرف)</span></label>
-                    <textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5242880"></textarea>
+                    <textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5000"></textarea>
                 </div>
                 <button class="btn btn-success" style="width: 100%;" onclick="saveVideoWithDescription()">
                     <i class="fas fa-save"></i> حفظ الفيديو
@@ -1536,7 +1550,7 @@
                     <div class="chat-avatar"><i class="fas fa-users"></i></div>
                     <div class="chat-header-text">
                         <h3>دردشة فلك العالمي</h3>
-                        <p><span class="online-dot"></span> <span id="onlineCount">متصل الآن</span></p>
+                        <p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p>
                     </div>
                 </div>
                 <div class="chat-actions">
@@ -2144,8 +2158,7 @@
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-            if (bytes < 1024 * 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-            return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + ' TB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
         }
 
         function showToast(msg) {
@@ -2324,16 +2337,163 @@
             }
         }
 
-        // ===== نظام الدردشة =====
-        let currentUser = null, chatUnsubscribe = null, mediaRecorder = null, audioChunks = [];
-        let recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0;
+        // ===== نظام العد الحقيقي للمتصلين =====
+        let currentUser = null;
+        let chatUnsubscribe = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingTimer = null;
+        let localStream = null;
+        let callTimer = null;
+        let callSeconds = 0;
+        let unreadMessages = 0;
         let isRecording = false;
         let currentAudio = null;
         let currentAudioBtn = null;
         
+        // ===== نظام الـ Presence الحقيقي =====
+        let userPresenceRef = null;
+        let onlineUsersRef = db.collection('online_users');
+        let onlineUnsubscribe = null;
+        let presenceInterval = null;
+
+        function initPresenceSystem() {
+            if (!currentUser) return;
+            
+            // إنشاء معرف فريد للمستخدم (يتم تخزينه في localStorage)
+            let userId = localStorage.getItem('falak_user_id');
+            if (!userId) {
+                userId = generateUserId();
+                localStorage.setItem('falak_user_id', userId);
+            }
+            
+            userPresenceRef = onlineUsersRef.doc(userId);
+            
+            // تحديث الحالة: متصل
+            userPresenceRef.set({
+                name: currentUser,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.error('Error setting presence:', err));
+            
+            // تحديث كل 20 ثانية إن المستخدم لسه موجود
+            presenceInterval = setInterval(() => {
+                if (userPresenceRef) {
+                    userPresenceRef.update({
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch(err => console.error('Error updating presence:', err));
+                }
+            }, 20000);
+            
+            // استمع للتغييرات في عدد المتصلين
+            listenToOnlineUsers();
+        }
+
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
+
+        function listenToOnlineUsers() {
+            if (onlineUnsubscribe) onlineUnsubscribe();
+            
+            // الاستماع للمستخدمين اللي اتحدثوا آخر 2 دقيقة
+            const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+            
+            onlineUnsubscribe = onlineUsersRef
+                .onSnapshot(snapshot => {
+                    // فلترة المستخدمين النشطين (تحدثوا آخر 2 دقيقة)
+                    const activeUsers = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.lastSeen) {
+                            const lastSeenTime = data.lastSeen.toDate ? data.lastSeen.toDate() : new Date(data.lastSeen);
+                            if (lastSeenTime > twoMinutesAgo) {
+                                activeUsers.push(data);
+                            }
+                        }
+                    });
+                    
+                    const count = activeUsers.length;
+                    
+                    // تحديث العدد في الواجهة
+                    let onlineText;
+                    if (count === 0) onlineText = 'لا أحد متصل';
+                    else if (count === 1) onlineText = 'متصل واحد';
+                    else if (count === 2) onlineText = 'متصلان';
+                    else if (count >= 3 && count <= 10) onlineText = count + ' متصلين';
+                    else onlineText = count + ' متصل';
+                    
+                    document.getElementById('onlineCount').textContent = onlineText;
+                    
+                }, error => {
+                    console.error('Error fetching online users:', error);
+                    document.getElementById('onlineCount').textContent = 'خطأ في التحميل';
+                });
+        }
+
+        function removePresence() {
+            // إيقاف التحديث الدوري
+            if (presenceInterval) {
+                clearInterval(presenceInterval);
+                presenceInterval = null;
+            }
+            
+            // حذف المستخدم من قائمة المتصلين
+            if (userPresenceRef) {
+                userPresenceRef.delete().catch(err => console.error('Error removing presence:', err));
+                userPresenceRef = null;
+            }
+            
+            // إيقاف الاستماع للتغييرات
+            if (onlineUnsubscribe) {
+                onlineUnsubscribe();
+                onlineUnsubscribe = null;
+            }
+        }
+
+        // نظف المستخدمين القدام (cleanup) كل دقيقة
+        setInterval(() => {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            onlineUsersRef
+                .where('lastSeen', '<', fiveMinutesAgo)
+                .get()
+                .then(snapshot => {
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                })
+                .catch(err => console.error('Cleanup error:', err));
+        }, 60000);
+
+        // ===== أحداث الصفحة =====
+        // لما يقفل الصفحة أو يغير التاب
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // المستخدم غادر الصفحة مؤقتاً
+                if (userPresenceRef) {
+                    userPresenceRef.delete().catch(() => {});
+                }
+            } else {
+                // المستخدم رجع للصفحة
+                if (currentUser && !userPresenceRef) {
+                    initPresenceSystem();
+                }
+            }
+        });
+
+        // لما يقفل الصفحة نهائياً
+        window.addEventListener('beforeunload', () => {
+            removePresence();
+        });
+
         function checkUserName() {
             const stored = localStorage.getItem('falak_username');
-            if (stored) { currentUser = stored; return true; }
+            if (stored) { 
+                currentUser = stored; 
+                return true; 
+            }
             return false;
         }
         
@@ -2347,6 +2507,8 @@
                 unreadMessages = 0;
                 loadMessages();
                 scrollToBottom();
+                // ===== بدء نظام الـ Presence =====
+                initPresenceSystem();
             }
         }
         
@@ -2362,18 +2524,30 @@
             document.getElementById('nameModal').classList.remove('active');
             document.getElementById('chatModal').classList.add('active');
             SoundEffects.join();
+            
+            // ===== بدء نظام العد الحقيقي =====
+            initPresenceSystem();
+            
             sendSystemMessage(name + ' انضم للدردشة');
             loadMessages();
         }
         
         function closeChat() {
             document.getElementById('chatModal').classList.remove('active');
+            
             // إيقاف أي صوت قيد التشغيل
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
             }
-            if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+            
+            // ===== إزالة المستخدم من قائمة المتصلين =====
+            removePresence();
+            
+            if (chatUnsubscribe) { 
+                chatUnsubscribe(); 
+                chatUnsubscribe = null; 
+            }
         }
         
         function sendSystemMessage(text) {
@@ -2388,7 +2562,6 @@
                 container.innerHTML = '';
                 snapshot.forEach(doc => displayMessage(doc.id, doc.data()));
                 scrollToBottom();
-                updateOnlineCount();
             }, error => { container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في التحميل</div>'; });
         }
         
@@ -2407,7 +2580,6 @@
                 if (!isSent) html += '<div class="message-sender">' + msg.sender + '</div>';
                 
                 // ===== أزرار الحذف =====
-                // المشرف يحذف أي رسالة، المستخدم يحذف رسائله فقط
                 const canDelete = isAdmin || (msg.sender === currentUser);
                 if (canDelete) {
                     const adminClass = isAdmin ? 'admin' : '';
@@ -2436,7 +2608,6 @@
                 html += '<div class="message-time">' + time + '</div>';
                 div.innerHTML = html;
                 
-                // صوت إشعار للرسائل الواردة
                 if (!isSent && !document.getElementById('chatModal').classList.contains('active')) {
                     unreadMessages++;
                     document.getElementById('chatBadge').textContent = unreadMessages;
@@ -2447,13 +2618,11 @@
             container.appendChild(div);
         }
         
-        // ===== تشغيل الرسالة الصوتية =====
         function playVoiceMessage(btn, url, id) {
             const audio = document.getElementById('audio-' + id);
             const progressBar = document.getElementById('progress-' + id);
             const timeDisplay = document.getElementById('time-' + id);
             
-            // إذا كان هناك صوت آخر قيد التشغيل، أوقفه
             if (currentAudio && currentAudio !== audio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
@@ -2464,14 +2633,12 @@
             }
             
             if (audio.paused) {
-                // تشغيل
                 audio.play().then(() => {
                     currentAudio = audio;
                     currentAudioBtn = btn;
                     btn.innerHTML = '<i class="fas fa-pause"></i>';
                     btn.classList.add('playing');
                     
-                    // تحديث شريط التقدم
                     audio.ontimeupdate = () => {
                         const percent = (audio.currentTime / audio.duration) * 100;
                         progressBar.style.width = percent + '%';
@@ -2481,7 +2648,6 @@
                         timeDisplay.textContent = mins + ':' + secs.toString().padStart(2, '0');
                     };
                     
-                    // عند الانتهاء
                     audio.onended = () => {
                         btn.innerHTML = '<i class="fas fa-play"></i>';
                         btn.classList.remove('playing');
@@ -2491,14 +2657,6 @@
                         currentAudioBtn = null;
                     };
                     
-                    // تحميل المدة الكلية
-                    audio.onloadedmetadata = () => {
-                        if (!isNaN(audio.duration)) {
-                            const mins = Math.floor(audio.duration / 60);
-                            const secs = Math.floor(audio.duration % 60);
-                        }
-                    };
-                    
                 }).catch(err => {
                     console.error('Error playing audio:', err);
                     SoundEffects.error();
@@ -2506,14 +2664,12 @@
                 });
                 
             } else {
-                // إيقاف
                 audio.pause();
                 btn.innerHTML = '<i class="fas fa-play"></i>';
                 btn.classList.remove('playing');
             }
         }
         
-        // ===== التقديم في الصوت =====
         function seekVoice(event, slider, id) {
             const audio = document.getElementById('audio-' + id);
             if (!audio || !audio.duration) return;
@@ -2523,9 +2679,7 @@
             audio.currentTime = percent * audio.duration;
         }
         
-        // ===== حذف الرسالة (المشرف أو صاحبها) =====
         function deleteMessage(messageId, sender) {
-            // التحقق من الصلاحية
             const canDelete = isAdmin || (sender === currentUser);
             if (!canDelete) {
                 SoundEffects.error();
@@ -2606,7 +2760,6 @@
             });
         }
         
-        // ===== تسجيل صوتي =====
         async function toggleRecording() {
             if (!isRecording) {
                 await startRecording();
@@ -2755,7 +2908,6 @@
         function closeImageViewer() { document.getElementById('imageViewer').classList.remove('active'); }
         function scrollToBottom() { const c = document.getElementById('chatMessages'); c.scrollTop = c.scrollHeight; }
         function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
-        function updateOnlineCount() { document.getElementById('onlineCount').textContent = (Math.floor(Math.random()*5)+1) + ' متصل'; }
         
         window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
