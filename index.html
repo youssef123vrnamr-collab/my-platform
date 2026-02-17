@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
+        /* جميع الأنماط السابقة كما هي دون تغيير */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -1516,21 +1517,24 @@
         </div>
     </div>
     
-    <!-- مودال تعديل عنوان الفيديو -->
-    <div class="modal" id="editTitleModal">
-        <div class="modal-content" style="max-width: 450px;">
+    <!-- ===== المودال الجديد لتعديل العنوان والوصف معاً ===== -->
+    <div class="modal" id="editVideoModal">
+        <div class="modal-content description-modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-edit"></i> تعديل عنوان الفيديو</h3>
-                <button class="modal-close" onclick="closeEditTitleModal()"><i class="fas fa-times"></i></button>
+                <h3><i class="fas fa-edit"></i> تعديل بيانات الفيديو</h3>
+                <button class="modal-close" onclick="closeEditVideoModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
                 <div class="form-group">
-                    <label>العنوان الجديد</label>
-                    <input type="text" id="editTitleInput" placeholder="أدخل العنوان الجديد..." 
-                           style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem;">
+                    <label>عنوان الفيديو</label>
+                    <input type="text" id="editVideoTitleInput" placeholder="أدخل عنوان الفيديو" style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem;">
                 </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="saveVideoTitleEdit()">
-                    <i class="fas fa-save"></i> حفظ التعديل
+                <div class="form-group">
+                    <label>وصف الفيديو <span id="editDescCharCount" style="color: #888; font-size: 0.85rem;">(0 / 5000 حرف)</span></label>
+                    <textarea id="editVideoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5000" style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem; min-height: 200px; resize: vertical;"></textarea>
+                </div>
+                <button class="btn btn-success" style="width: 100%;" onclick="saveVideoEdit()">
+                    <i class="fas fa-save"></i> حفظ التعديلات
                 </button>
             </div>
         </div>
@@ -1799,7 +1803,7 @@
         let uploadStartTime = 0;
         let lastUploadedBytes = 0;
         let lastTime = 0;
-        let currentEditVideoId = null;
+        let currentEditVideoId = null; // لتخزين id الفيديو الجاري تعديله
 
         document.addEventListener('DOMContentLoaded', function() {
             listenToVideos();
@@ -2040,49 +2044,58 @@
             pendingVideoInfo = null;
         }
 
-        // ====== تعديل عنوان الفيديو (المشرف فقط) ======
+        // ====== دوال تعديل الفيديو (العنوان والوصف معاً) ======
         function editVideoTitle(videoId) {
             if (!isAdmin) {
                 SoundEffects.error();
-                showToast('❌ المشرف فقط يستطيع تعديل العنوان');
+                showToast('❌ المشرف فقط يستطيع تعديل البيانات');
                 return;
             }
             const video = videos.find(v => v.id === videoId);
             if (!video) return;
-            
+
             currentEditVideoId = videoId;
-            document.getElementById('editTitleInput').value = video.title;
-            document.getElementById('editTitleModal').classList.add('active');
+            document.getElementById('editVideoTitleInput').value = video.title || '';
+            document.getElementById('editVideoDescriptionInput').value = video.description || '';
+
+            // تحديث عداد الأحرف
+            const descLength = (video.description || '').length;
+            document.getElementById('editDescCharCount').textContent = `(${descLength} / 5000 حرف)`;
+
+            document.getElementById('editVideoModal').classList.add('active');
         }
 
-        function closeEditTitleModal() {
-            document.getElementById('editTitleModal').classList.remove('active');
+        function closeEditVideoModal() {
+            document.getElementById('editVideoModal').classList.remove('active');
             currentEditVideoId = null;
         }
 
-        function saveVideoTitleEdit() {
+        function saveVideoEdit() {
             if (!currentEditVideoId || !isAdmin) return;
-            
-            const newTitle = document.getElementById('editTitleInput').value.trim();
+
+            const newTitle = document.getElementById('editVideoTitleInput').value.trim();
+            const newDescription = document.getElementById('editVideoDescriptionInput').value.trim();
+
             if (!newTitle) {
                 SoundEffects.error();
                 showToast('⚠️ العنوان لا يمكن أن يكون فارغاً');
                 return;
             }
-            
+
             db.collection('videos').doc(currentEditVideoId).update({
                 title: newTitle,
+                description: newDescription,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             })
             .then(() => {
                 SoundEffects.success();
-                showToast('✅ تم تعديل العنوان بنجاح!');
-                closeEditTitleModal();
+                showToast('✅ تم تعديل البيانات بنجاح!');
+                closeEditVideoModal();
             })
             .catch(err => {
-                console.error('Error updating title:', err);
+                console.error('Error updating video:', err);
                 SoundEffects.error();
-                showToast('❌ فشل تعديل العنوان');
+                showToast('❌ فشل تعديل البيانات');
             });
         }
 
@@ -2110,12 +2123,12 @@
                     if (match && match[1]) { bgSource = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + match[1] + '.gif'; isGif = true; }
                 }
                 
-                // أزرار المشرف: حذف وتعديل عنوان
+                // أزرار المشرف: حذف وتعديل (زر واحد يفتح تعديل العنوان والوصف)
                 const adminButtons = isAdmin ? `
                     <button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')">
                         <i class="fas fa-trash"></i> حذف
                     </button>
-                    <button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${video.id}')" title="تعديل العنوان">
+                    <button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${video.id}')" title="تعديل العنوان والوصف">
                         <i class="fas fa-edit"></i> تعديل
                     </button>
                 ` : '';
@@ -2914,7 +2927,7 @@
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
                 else if (e.target.id === 'descriptionModal') closeDescriptionModal();
-                else if (e.target.id === 'editTitleModal') closeEditTitleModal();
+                else if (e.target.id === 'editVideoModal') closeEditVideoModal(); // المودال الجديد
                 else if (e.target.id === 'chatModal') closeChat();
                 else if (e.target.id === 'imageViewer') closeImageViewer();
             }
@@ -2925,7 +2938,7 @@
                 closeModal();
                 closeLogin();
                 closeDescriptionModal();
-                closeEditTitleModal();
+                closeEditVideoModal(); // المودال الجديد
                 closeChat();
                 if (document.getElementById('callModal').classList.contains('active')) endCall();
                 closeImageViewer();
