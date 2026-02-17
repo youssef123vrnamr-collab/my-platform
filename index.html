@@ -902,7 +902,7 @@
                     مساحة التخزين
                 </div>
                 <div class="storage-stats">
-                    <span id="usedSpace">0 GB</span> / <span id="totalSpace">1 TB</span>
+                    <span id="usedSpace">0 GB</span> / <span id="totalSpace">5 GB</span>
                     (<span class="storage-percentage" id="percentage">0%</span>)
                 </div>
             </div>
@@ -910,7 +910,7 @@
                 <div class="storage-bar low" id="storageProgress" style="width: 0%;"></div>
             </div>
             <div class="storage-footer">
-                <span id="remainingText">المتبقي: 1 TB</span>
+                <span id="remainingText">المتبقي: 5 GB</span>
                 <span id="videosCount">0 فيديو</span>
             </div>
         </div>
@@ -942,9 +942,9 @@
             
             <div class="upload-info">
                 <i class="fas fa-info-circle"></i> 
-                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 20 جيجابايت (مثالية لفيديوهات 4K)
+                يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت
                 <div class="upload-speed-indicator">
-                    <i class="fas fa-bolt"></i> رفع سريع جداً (128MB/chunk + 5 اتصالات متوازية)
+                    <i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)
                 </div>
             </div>
             
@@ -1073,13 +1073,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // ===== APP CONFIG - تم التحديث لسرعة قصوى =====
+        // ===== APP CONFIG - تم التحديث =====
         const ADMIN_PASS = "@@@&&&((()))";
         
-        // ===== إعدادات فائقة السرعة لرفع فيديوهات 4GB+ =====
-        const MAX_VIDEO_SIZE = 20 * 1024 * 1024 * 1024; // 20 GB للملف الواحد (كافي لـ 4.18GB)
-        const CHUNK_SIZE = 128 * 1024 * 1024; // 128 MB لكل قطعة (ضعف السرعة)
-        const MAX_STORAGE = 1024 * 1024 * 1024 * 1024; // 1 TB = 1024 GB
+        // ===== إعدادات التخزين الجديدة: 5 GB تخزين، 100 MB للفيديو =====
+        const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB للملف الواحد
+        const CHUNK_SIZE = 10 * 1024 * 1024; // 10 MB لكل قطعة
+        const MAX_STORAGE = 5 * 1024 * 1024 * 1024; // 5 GB
         
         let isAdmin = false;
         let videos = [];
@@ -1132,17 +1132,12 @@
             const remaining = MAX_STORAGE - totalUsed;
             
             const usedGB = (totalUsed / (1024 * 1024 * 1024)).toFixed(2);
-            const usedTB = (totalUsed / (1024 * 1024 * 1024 * 1024)).toFixed(2);
-            const remainingTB = (remaining / (1024 * 1024 * 1024 * 1024)).toFixed(2);
-            const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(0);
+            const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(2);
             
-            const displayUsed = totalUsed > 100 * 1024 * 1024 * 1024 ? usedTB + ' TB' : usedGB + ' GB';
-            const displayRemaining = remaining > 100 * 1024 * 1024 * 1024 ? remainingTB + ' TB' : remainingGB + ' GB';
-            
-            document.getElementById('usedSpace').textContent = displayUsed;
-            document.getElementById('totalSpace').textContent = '1 TB';
+            document.getElementById('usedSpace').textContent = usedGB + ' GB';
+            document.getElementById('totalSpace').textContent = '5 GB';
             document.getElementById('percentage').textContent = percentage.toFixed(2) + '%';
-            document.getElementById('remainingText').textContent = 'المتبقي: ' + displayRemaining;
+            document.getElementById('remainingText').textContent = 'المتبقي: ' + remainingGB + ' GB';
             document.getElementById('videosCount').textContent = videos.length + ' فيديو';
             
             const progressBar = document.getElementById('storageProgress');
@@ -1162,7 +1157,7 @@
             }
         }
 
-        // ===== CLOUDINARY WIDGET INIT - سرعة قصوى =====
+        // ===== CLOUDINARY WIDGET INIT =====
         function initCloudinaryWidget() {
             if (typeof cloudinary === 'undefined') {
                 console.error('Cloudinary widget not loaded');
@@ -1175,9 +1170,9 @@
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
                 resourceType: 'video',
                 clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv', 'gif'],
-                maxFileSize: MAX_VIDEO_SIZE, // 20 GB
+                maxFileSize: MAX_VIDEO_SIZE, // 100 MB
                 maxVideoFileSize: MAX_VIDEO_SIZE,
-                chunkSize: CHUNK_SIZE, // 128 MB (سرعة فائقة)
+                chunkSize: CHUNK_SIZE, // 10 MB
                 maxChunkSize: CHUNK_SIZE,
                 sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
                 language: 'ar',
@@ -1200,9 +1195,9 @@
                 cropping: false,
                 multiple: false,
                 defaultSource: 'local',
-                // ===== إعدادات سرعة فائقة =====
-                parallelUploads: 5, // 5 اتصالات متوازية (زيادة كبيرة)
-                maxConcurrentUploads: 5,
+                // ===== إعدادات الرفع =====
+                parallelUploads: 3, // 3 اتصالات متوازية
+                maxConcurrentUploads: 3,
                 retryCount: 3, // إعادة المحاولة 3 مرات عند الفشل
                 eagerAsync: true,
                 prepareUploadParams: function(cb, params) {
@@ -1242,7 +1237,7 @@
                     document.getElementById('uploadProgressContainer').classList.remove('active');
                     console.error('Upload error:', error);
                     if (error.status === 413) {
-                        showToast('❌ الملف كبير جداً. الحد الأقصى هو 20 جيجابايت');
+                        showToast('❌ الملف كبير جداً. الحد الأقصى هو 100 ميجابايت');
                     } else {
                         showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
                     }
@@ -1251,7 +1246,7 @@
                     lastTime = Date.now();
                     lastUploadedBytes = 0;
                     document.getElementById('uploadProgressContainer').classList.add('active');
-                    showToast('🚀 جاري بدء الرفع بسرعة فائقة...');
+                    showToast('🚀 جاري بدء الرفع...');
                 } else if (result && result.event === "upload-progress") {
                     // تحديث شريط التقدم المخصص
                     updateUploadProgress(result.info);
@@ -1304,7 +1299,7 @@
             const remaining = MAX_STORAGE - totalUsed;
             
             if (remaining <= 0) {
-                showToast('❌ المساحة ممتلئة (1 TB)! احذف بعض الفيديوهات أولاً');
+                showToast('❌ المساحة ممتلئة (5 GB)! احذف بعض الفيديوهات أولاً');
                 return;
             }
             
@@ -1543,7 +1538,7 @@
                 updateStorageBar();
                 closeLogin();
                 renderVideos();
-                showToast('🔓 مرحباً أيها المشرف! 🚀 (سرعة رفع فائقة)');
+                showToast('🔓 مرحباً أيها المشرف!');
             } else {
                 showToast('❌ كلمة المرور خاطئة');
                 input.value = '';
