@@ -2382,7 +2382,7 @@
             
             userPresenceRef = onlineUsersRef.doc(userId);
             
-            // تحديث الحالة: متصل
+            // تحديث الحالة: متصل - (تم إضافة هذا السطر للتحديث الفوري)
             userPresenceRef.set({
                 name: currentUser,
                 joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2410,32 +2410,45 @@
             if (onlineUnsubscribe) onlineUnsubscribe();
             
             // الاستماع للمستخدمين اللي اتحدثوا آخر 2 دقيقة
-            const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-            
             onlineUnsubscribe = onlineUsersRef
                 .onSnapshot(snapshot => {
-                    // فلترة المستخدمين النشطين (تحدثوا آخر 2 دقيقة)
+                    const now = Date.now(); // وقت العميل بالمللي ثانية
+                    const twoMinutesAgo = now - 2 * 60 * 1000; // آخر دقيقتين
+
                     const activeUsers = [];
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         if (data.lastSeen) {
-                            const lastSeenTime = data.lastSeen.toDate ? data.lastSeen.toDate() : new Date(data.lastSeen);
-                            if (lastSeenTime > twoMinutesAgo) {
+                            let lastSeenTime;
+
+                            // محاولة استخراج الوقت بعدة صيغ محتملة
+                            if (typeof data.lastSeen.toDate === 'function') {
+                                // إذا كان كائن Timestamp من Firebase
+                                lastSeenTime = data.lastSeen.toDate().getTime();
+                            } else if (data.lastSeen.seconds) {
+                                // إذا كان كائن {seconds, nanoseconds}
+                                lastSeenTime = data.lastSeen.seconds * 1000;
+                            } else {
+                                // إذا كان نصاً أو تاريخاً عادياً
+                                lastSeenTime = new Date(data.lastSeen).getTime();
+                            }
+
+                            // مقارنة صحيحة مع تجنب NaN
+                            if (!isNaN(lastSeenTime) && lastSeenTime > twoMinutesAgo) {
                                 activeUsers.push(data);
                             }
                         }
                     });
-                    
+
                     const count = activeUsers.length;
-                    
-                    // تحديث العدد في الواجهة
                     let onlineText;
+
+                    // توليد النص المناسب بناءً على العدد
                     if (count === 0) onlineText = 'لا أحد متصل';
                     else if (count === 1) onlineText = 'متصل واحد';
                     else if (count === 2) onlineText = 'متصلان';
-                    else if (count >= 3 && count <= 10) onlineText = count + ' متصلين';
-                    else onlineText = count + ' متصل';
-                    
+                    else onlineText = count + ' متصلين';
+
                     document.getElementById('onlineCount').textContent = onlineText;
                     
                 }, error => {
@@ -2464,11 +2477,13 @@
             }
         }
 
-        // نظف المستخدمين القدام (cleanup) كل دقيقة
+        // نظف المستخدمين القدامى (cleanup) كل دقيقة - (تم تعديل الاستعلام)
         setInterval(() => {
-            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+            const threeMinutesAgoTimestamp = firebase.firestore.Timestamp.fromDate(threeMinutesAgo);
+
             onlineUsersRef
-                .where('lastSeen', '<', fiveMinutesAgo)
+                .where('lastSeen', '<', threeMinutesAgoTimestamp)
                 .get()
                 .then(snapshot => {
                     const batch = db.batch();
