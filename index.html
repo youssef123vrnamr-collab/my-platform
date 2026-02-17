@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فلك العالمي | النسخة السحابية</title>
     
-    <!-- Cloudinary Upload Widget -->
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
@@ -253,7 +251,6 @@
             color: #3498db;
         }
         
-        /* رسالة استئناف المشاهدة */
         .resume-notification {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
             backdrop-filter: blur(10px);
@@ -365,7 +362,6 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
         
-        /* خلفية الفيديو - GIF متحرك */
         .video-thumbnail {
             position: relative;
             height: 220px;
@@ -378,7 +374,6 @@
             overflow: hidden;
         }
         
-        /* GIF كخلفية */
         .video-thumbnail .bg-gif {
             position: absolute;
             top: 0;
@@ -389,7 +384,6 @@
             z-index: 1;
         }
         
-        /* طبقة overlay داكنة */
         .video-thumbnail::before {
             content: '';
             position: absolute;
@@ -426,7 +420,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         
-        /* ===== تعديل مساحة النص - 5 جيجا ===== */
         .video-info { 
             padding: 2.5rem 2rem 3rem 2rem; 
             flex: 1; 
@@ -435,7 +428,7 @@
             z-index: 4;
             margin-top: -60px;
             border-radius: 20px 20px 0 0;
-            min-height: 400px; /* ارتفاع أدنى كبير جداً */
+            min-height: 400px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -453,17 +446,17 @@
             color: #ccc;
             font-size: 1.1rem;
             margin-bottom: 2rem;
-            line-height: 2.2; /* تباعد أسطر أكبر */
-            max-height: none; /* إلغاء الحد الأقصى للارتفاع */
-            overflow: visible; /* إظهار كل النص */
+            line-height: 2.2;
+            max-height: none;
+            overflow: visible;
             text-overflow: clip;
-            display: block; /* إلغاء clamp */
+            display: block;
             -webkit-line-clamp: unset;
             -webkit-box-orient: unset;
-            flex: 1; /* يأخذ المساحة المتبقية */
+            flex: 1;
             padding-bottom: 1.5rem;
-            white-space: pre-wrap; /* يحافظ على التنسيق */
-            word-wrap: break-word; /* يكسر الكلمات الطويلة */
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         
         .video-meta { 
@@ -472,7 +465,7 @@
             display: flex; 
             gap: 1.5rem; 
             flex-wrap: wrap; 
-            margin-top: auto; /* يبقى في الأسفل */
+            margin-top: auto;
             padding-top: 1.5rem;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
@@ -489,7 +482,6 @@
             z-index: 5;
         }
         
-        /* مؤشر GIF */
         .gif-badge {
             position: absolute;
             top: 10px;
@@ -623,7 +615,6 @@
         .video-card:hover .delete-btn { opacity: 1; }
         .delete-btn:hover { background: #dc2626; transform: scale(1.05); }
         
-        /* مودال إدخال الوصف */
         .description-modal-content {
             max-width: 600px;
         }
@@ -662,7 +653,6 @@
             border-color: #6366f1;
         }
         
-        /* ===== شريط التقدم للمساحة ===== */
         .storage-bar-container {
             background: rgba(255,255,255,0.05);
             border-radius: 15px;
@@ -743,7 +733,6 @@
             color: #6366f1;
         }
 
-        /* ===== مؤشر سرعة الرفع ===== */
         .upload-speed-indicator {
             display: inline-flex;
             align-items: center;
@@ -760,7 +749,6 @@
             animation: pulse 1.5s infinite;
         }
         
-        /* ===== شريط تقدم الرفع المخصص ===== */
         .upload-progress-container {
             display: none;
             margin-top: 1rem;
@@ -816,7 +804,6 @@
             color: #888;
         }
         
-        /* Responsive تحسينات */
         @media (max-width: 768px) {
             .navbar { padding: 0.75rem 1rem; }
             .brand-text h1 { font-size: 1.2rem; }
@@ -856,6 +843,365 @@
             .video-meta { font-size: 0.85rem; gap: 1rem; }
             .form-group textarea { min-height: 150px; }
         }
+        
+        /* ===== أنظمة الدردشة ===== */
+        .chat-btn {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+            z-index: 999;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 40px rgba(99, 102, 241, 0.7); }
+        .chat-btn .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        .chat-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 1rem;
+        }
+        .chat-modal.active { display: flex; }
+        .chat-container {
+            background: #1a1025;
+            border-radius: 25px;
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header-info { display: flex; align-items: center; gap: 1rem; }
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .chat-header-text h3 { font-size: 1.2rem; margin-bottom: 0.2rem; }
+        .chat-header-text p {
+            font-size: 0.85rem;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .chat-actions { display: flex; gap: 0.75rem; }
+        .chat-action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        .chat-action-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .chat-action-btn.call-btn { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .chat-action-btn.call-btn:hover { background: rgba(16, 185, 129, 0.4); }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 3px; }
+        .message {
+            max-width: 75%;
+            padding: 1rem 1.25rem;
+            border-radius: 20px;
+            position: relative;
+            animation: messageSlide 0.3s ease;
+        }
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.sent {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-bottom-right-radius: 5px;
+        }
+        .message.received {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.1);
+            border-bottom-left-radius: 5px;
+        }
+        .message-sender {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #ec4899;
+            margin-bottom: 0.3rem;
+        }
+        .message.sent .message-sender { color: #fff; opacity: 0.9; }
+        .message-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        .message-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .message-image:hover { transform: scale(1.02); }
+        .message-audio { width: 100%; margin-top: 0.5rem; border-radius: 10px; }
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .chat-input-area {
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .chat-input-container {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+        .chat-input-wrapper {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border-radius: 25px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .chat-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            max-height: 100px;
+            outline: none;
+        }
+        .chat-input::placeholder { color: #888; }
+        .chat-tool-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: #aaa;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-tool-btn:hover { background: rgba(99, 102, 241, 0.3); color: white; transform: scale(1.1); }
+        .chat-tool-btn.recording { background: #ef4444; color: white; animation: pulse 1s infinite; }
+        .chat-send-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-send-btn:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(99, 102, 241, 0.5); }
+        .name-modal-content {
+            max-width: 450px;
+            text-align: center;
+            padding: 2rem;
+        }
+        .name-modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+        }
+        .name-modal-content h2 { margin-bottom: 0.5rem; font-size: 1.5rem; }
+        .name-modal-content p { color: #aaa; margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .name-input-group { margin-bottom: 1.5rem; }
+        .name-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 15px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .name-input:focus { border-color: #6366f1; box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        .call-modal-content { max-width: 400px; text-align: center; padding: 3rem 2rem; }
+        .call-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1.5rem;
+            animation: callPulse 2s infinite;
+        }
+        @keyframes callPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+        }
+        .call-status { font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .call-timer { font-size: 2rem; color: #6366f1; font-weight: bold; margin-bottom: 2rem; font-family: monospace; }
+        .call-actions { display: flex; justify-content: center; gap: 1.5rem; }
+        .call-action {
+            width: 70px;
+            height: 70px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .call-action.mute { background: rgba(255,255,255,0.1); color: white; }
+        .call-action.mute.active { background: #f59e0b; }
+        .call-action.end { background: #ef4444; color: white; }
+        .call-action:hover { transform: scale(1.1); }
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        .recording-indicator.active { display: flex; }
+        .recording-dot {
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            padding: 2rem;
+        }
+        .image-viewer.active { display: flex; }
+        .image-viewer img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .image-viewer-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .image-viewer-close:hover { background: rgba(239, 68, 68, 0.5); transform: rotate(90deg); }
+        @media (max-width: 768px) {
+            .chat-container { height: 100vh; max-width: 100%; border-radius: 0; }
+            .chat-btn { bottom: 1rem; left: 1rem; width: 55px; height: 55px; }
+            .message { max-width: 85%; padding: 0.875rem 1rem; }
+            .chat-header { padding: 1rem; }
+            .chat-avatar { width: 40px; height: 40px; font-size: 1.2rem; }
+        }
     </style>
 </head>
 <body>
@@ -894,7 +1240,6 @@
             <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم عبر Cloudinary!</p>
         </div>
         
-        <!-- شريط المساحة -->
         <div class="storage-bar-container" id="storageBar" style="display: none;">
             <div class="storage-header">
                 <div class="storage-title">
@@ -925,7 +1270,6 @@
                 <i class="fas fa-plus"></i> فتح واجهة الرفع
             </button>
             
-            <!-- شريط تقدم الرفع المخصص -->
             <div class="upload-progress-container" id="uploadProgressContainer">
                 <div class="upload-progress-header">
                     <span id="uploadProgressText">جاري الرفع...</span>
@@ -954,7 +1298,6 @@
             </div>
         </div>
 
-        <!-- رسالة استئناف المشاهدة -->
         <div class="resume-notification" id="resumeNotification">
             <div class="resume-info">
                 <div class="resume-icon"><i class="fas fa-history"></i></div>
@@ -984,7 +1327,6 @@
         </div>
     </div>
     
-    <!-- مودال عرض الفيديو -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1000,7 +1342,6 @@
         </div>
     </div>
     
-    <!-- مودال دخول المشرف -->
     <div class="modal" id="loginModal" style="background: rgba(0,0,0,0.95);">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
@@ -1021,7 +1362,6 @@
         </div>
     </div>
     
-    <!-- مودال إدخال وصف الفيديو بعد الرفع -->
     <div class="modal" id="descriptionModal">
         <div class="modal-content description-modal-content">
             <div class="modal-header">
@@ -1044,23 +1384,111 @@
         </div>
     </div>
     
+    <!-- زر الدردشة -->
+    <button class="chat-btn" onclick="openChat()" id="chatBtn">
+        <i class="fas fa-comments"></i>
+        <span class="notification-badge" id="chatBadge" style="display: none;">0</span>
+    </button>
+    
+    <!-- مودال الدردشة -->
+    <div class="modal chat-modal" id="chatModal">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-avatar"><i class="fas fa-users"></i></div>
+                    <div class="chat-header-text">
+                        <h3>دردشة فلك العالمي</h3>
+                        <p><span class="online-dot"></span> <span id="onlineCount">متصل الآن</span></p>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="chat-action-btn" onclick="closeChat()" title="إغلاق">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-area">
+                <div class="recording-indicator" id="recordingIndicator">
+                    <span class="recording-dot"></span>
+                    <span>جاري التسجيل... <span id="recordingTime">0:00</span></span>
+                </div>
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <button class="chat-tool-btn" onclick="document.getElementById('imageInput').click()" title="إرسال صورة">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="sendImage(this)">
+                        <button class="chat-tool-btn" id="recordBtn" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()" title="رسالة صوتية">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <textarea class="chat-input" id="messageInput" placeholder="اكتب رسالتك..." rows="1" onkeypress="handleKeyPress(event)"></textarea>
+                    </div>
+                    <button class="chat-send-btn" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال الاسم -->
+    <div class="modal" id="nameModal">
+        <div class="modal-content name-modal-content">
+            <div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div>
+            <h2>مرحباً بك في فلك العالمي</h2>
+            <p>أدخل اسمك للانضمام إلى الدردشة</p>
+            <div class="name-input-group">
+                <input type="text" class="name-input" id="userNameInput" placeholder="اسمك..." maxlength="20">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; padding: 1rem;" onclick="saveUserName()">
+                <i class="fas fa-check"></i> دخول
+            </button>
+        </div>
+    </div>
+    
+    <!-- مودال المكالمة -->
+    <div class="modal" id="callModal">
+        <div class="modal-content call-modal-content">
+            <div class="call-avatar"><i class="fas fa-users"></i></div>
+            <div class="call-status" id="callStatus">مكالمة جماعية</div>
+            <div class="call-timer" id="callTimer">00:00</div>
+            <div class="call-actions">
+                <button class="call-action mute" id="muteBtn" onclick="toggleMute()">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="call-action end" onclick="endCall()">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- عارض الصور -->
+    <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
+        <button class="image-viewer-close" onclick="closeImageViewer()">
+            <i class="fas fa-times"></i>
+        </button>
+        <img src="" alt="صورة" id="viewerImage">
+    </div>
+    
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ===== إخفاء شاشة التحميل =====
         setTimeout(() => {
             const loader = document.getElementById('loader');
             if (loader) loader.classList.add('hidden');
         }, 1000);
 
-        // ===== CLOUDINARY CONFIG =====
         const CLOUDINARY_CONFIG = {
             cloudName: 'ds4wy90er',
             uploadPreset: 'falak_upload',
             apiKey: '462193620740'
         };
         
-        // ===== FIREBASE CONFIG =====
         const firebaseConfig = {
             apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
             authDomain: "planning-with-ai-390af.firebaseapp.com",
@@ -1073,40 +1501,31 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // ===== APP CONFIG - تم التحديث =====
         const ADMIN_PASS = "@@@&&&((()))";
-        
-        // ===== إعدادات التخزين الجديدة: 5 GB تخزين، 100 MB للفيديو =====
-        const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB للملف الواحد
-        const CHUNK_SIZE = 10 * 1024 * 1024; // 10 MB لكل قطعة
-        const MAX_STORAGE = 5 * 1024 * 1024 * 1024; // 5 GB
+        const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+        const CHUNK_SIZE = 10 * 1024 * 1024;
+        const MAX_STORAGE = 5 * 1024 * 1024 * 1024;
         
         let isAdmin = false;
         let videos = [];
         let uploadWidget = null;
         let unsubscribe = null;
         let pendingVideoInfo = null;
-        
-        // متغيرات تتبع سرعة الرفع
         let uploadStartTime = 0;
         let lastUploadedBytes = 0;
         let lastTime = 0;
 
-        // ===== بدء التحميل والاستماع المباشر =====
         document.addEventListener('DOMContentLoaded', function() {
             listenToVideos();
             initCloudinaryWidget();
             checkUrlForShare();
-            
             setTimeout(() => {
                 document.getElementById('loader')?.classList.add('hidden');
             }, 3000);
         });
 
-        // ===== الاستماع المباشر للتحديثات =====
         function listenToVideos() {
             if (unsubscribe) unsubscribe();
-            
             unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
                 .onSnapshot(snapshot => {
                     videos = [];
@@ -1125,12 +1544,10 @@
                 });
         }
 
-        // ===== تحديث شريط المساحة =====
         function updateStorageBar() {
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             const percentage = Math.min((totalUsed / MAX_STORAGE) * 100, 100);
             const remaining = MAX_STORAGE - totalUsed;
-            
             const usedGB = (totalUsed / (1024 * 1024 * 1024)).toFixed(2);
             const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(2);
             
@@ -1142,22 +1559,14 @@
             
             const progressBar = document.getElementById('storageProgress');
             progressBar.style.width = percentage + '%';
-            
             progressBar.classList.remove('low', 'medium', 'high');
-            if (percentage < 50) {
-                progressBar.classList.add('low');
-            } else if (percentage < 80) {
-                progressBar.classList.add('medium');
-            } else {
-                progressBar.classList.add('high');
-            }
+            if (percentage < 50) progressBar.classList.add('low');
+            else if (percentage < 80) progressBar.classList.add('medium');
+            else progressBar.classList.add('high');
             
-            if (isAdmin) {
-                document.getElementById('storageBar').style.display = 'block';
-            }
+            if (isAdmin) document.getElementById('storageBar').style.display = 'block';
         }
 
-        // ===== CLOUDINARY WIDGET INIT =====
         function initCloudinaryWidget() {
             if (typeof cloudinary === 'undefined') {
                 console.error('Cloudinary widget not loaded');
@@ -1170,9 +1579,9 @@
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
                 resourceType: 'video',
                 clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv', 'gif'],
-                maxFileSize: MAX_VIDEO_SIZE, // 100 MB
+                maxFileSize: MAX_VIDEO_SIZE,
                 maxVideoFileSize: MAX_VIDEO_SIZE,
-                chunkSize: CHUNK_SIZE, // 10 MB
+                chunkSize: CHUNK_SIZE,
                 maxChunkSize: CHUNK_SIZE,
                 sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
                 language: 'ar',
@@ -1195,37 +1604,22 @@
                 cropping: false,
                 multiple: false,
                 defaultSource: 'local',
-                // ===== إعدادات الرفع =====
-                parallelUploads: 3, // 3 اتصالات متوازية
+                parallelUploads: 3,
                 maxConcurrentUploads: 3,
-                retryCount: 3, // إعادة المحاولة 3 مرات عند الفشل
+                retryCount: 3,
                 eagerAsync: true,
                 prepareUploadParams: function(cb, params) {
                     params.context = 'alt=فيديو فلك العالمي';
-                    
-                    // إنشاء GIF متحرك تلقائياً
                     params.eager = [
                         { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" },
                         { width: 400, height: 225, crop: "fill", format: "jpg" },
-                        { 
-                            width: 400, 
-                            height: 225, 
-                            crop: "fill", 
-                            format: "gif",
-                            video_sampling: "10s",
-                            delay: "100",
-                            start_offset: "0",
-                            end_offset: "3",
-                            effect: "loop"
-                        }
+                        { width: 400, height: 225, crop: "fill", format: "gif", video_sampling: "10s", delay: "100", start_offset: "0", end_offset: "3", effect: "loop" }
                     ];
                     params.eager_async = true;
-                    
                     cb(params);
                 }
             }, function(error, result) {
                 if (!error && result && result.event === "success") {
-                    // إخفاء شريط التقدم
                     document.getElementById('uploadProgressContainer').classList.remove('active');
                     console.log('Upload success:', result.info);
                     pendingVideoInfo = result.info;
@@ -1236,11 +1630,8 @@
                 } else if (error) {
                     document.getElementById('uploadProgressContainer').classList.remove('active');
                     console.error('Upload error:', error);
-                    if (error.status === 413) {
-                        showToast('❌ الملف كبير جداً. الحد الأقصى هو 100 ميجابايت');
-                    } else {
-                        showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
-                    }
+                    if (error.status === 413) showToast('❌ الملف كبير جداً. الحد الأقصى هو 100 ميجابايت');
+                    else showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
                 } else if (result && result.event === "queues-start") {
                     uploadStartTime = Date.now();
                     lastTime = Date.now();
@@ -1248,7 +1639,6 @@
                     document.getElementById('uploadProgressContainer').classList.add('active');
                     showToast('🚀 جاري بدء الرفع...');
                 } else if (result && result.event === "upload-progress") {
-                    // تحديث شريط التقدم المخصص
                     updateUploadProgress(result.info);
                 } else if (result && result.event === "upload-success") {
                     showToast('📤 تم رفع جزء من الفيديو بنجاح...');
@@ -1256,25 +1646,18 @@
             });
         }
 
-        // ===== تحديث شريط تقدم الرفع =====
         function updateUploadProgress(info) {
             if (!info) return;
-            
             const percent = info.progress || 0;
             const uploadedBytes = info.uploadedBytes || 0;
             const totalBytes = info.totalBytes || 1;
             const currentTime = Date.now();
-            
-            // حساب السرعة
-            const timeDiff = (currentTime - lastTime) / 1000; // بالثواني
+            const timeDiff = (currentTime - lastTime) / 1000;
             const bytesDiff = uploadedBytes - lastUploadedBytes;
-            const speed = timeDiff > 0 ? (bytesDiff / timeDiff) / (1024 * 1024) : 0; // MB/s
-            
-            // حساب الوقت المتبقي
+            const speed = timeDiff > 0 ? (bytesDiff / timeDiff) / (1024 * 1024) : 0;
             const remainingBytes = totalBytes - uploadedBytes;
             const remainingTime = speed > 0 ? remainingBytes / (speed * 1024 * 1024) : 0;
             
-            // تحديث الواجهة
             document.getElementById('uploadProgressFill').style.width = percent + '%';
             document.getElementById('uploadProgressPercent').textContent = Math.round(percent) + '%';
             document.getElementById('uploadSpeed').textContent = speed.toFixed(2) + ' MB/s';
@@ -1282,14 +1665,13 @@
             if (remainingTime > 60) {
                 const mins = Math.floor(remainingTime / 60);
                 const secs = Math.floor(remainingTime % 60);
-                document.getElementById('uploadTimeRemaining').textContent = `${mins}:${secs.toString().padStart(2, '0')} دقيقة متبقية`;
+                document.getElementById('uploadTimeRemaining').textContent = mins + ':' + secs.toString().padStart(2, '0') + ' دقيقة متبقية';
             } else if (remainingTime > 0) {
                 document.getElementById('uploadTimeRemaining').textContent = Math.floor(remainingTime) + ' ثانية متبقية';
             } else {
                 document.getElementById('uploadTimeRemaining').textContent = 'جاري إكمال الرفع...';
             }
             
-            // تحديث القيم السابقة
             lastTime = currentTime;
             lastUploadedBytes = uploadedBytes;
         }
@@ -1297,58 +1679,39 @@
         function openCloudinaryWidget() {
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             const remaining = MAX_STORAGE - totalUsed;
-            
             if (remaining <= 0) {
                 showToast('❌ المساحة ممتلئة (5 GB)! احذف بعض الفيديوهات أولاً');
                 return;
             }
-            
-            if (uploadWidget) {
-                uploadWidget.open();
-            } else {
+            if (uploadWidget) uploadWidget.open();
+            else {
                 showToast('⚠️ جاري تحميل واجهة الرفع...');
                 initCloudinaryWidget();
                 setTimeout(() => uploadWidget?.open(), 500);
             }
         }
 
-        // ===== حفظ الفيديو مع الوصف وGIF =====
         function saveVideoWithDescription() {
             if (!pendingVideoInfo) {
                 showToast('⚠️ لا توجد معلومات فيديو للحفظ');
                 closeDescriptionModal();
                 return;
             }
-
             const info = pendingVideoInfo;
             const title = document.getElementById('videoTitleInput').value.trim() || 'فيديو بدون عنوان';
             const description = document.getElementById('videoDescriptionInput').value.trim() || '';
-
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             if (totalUsed + info.bytes > MAX_STORAGE) {
                 showToast('❌ لا توجد مساحة كافية! المساحة المتبقية: ' + formatSize(MAX_STORAGE - totalUsed));
                 return;
             }
-
-            const optimizedUrl = info.secure_url.replace(
-                '/upload/',
-                '/upload/q_auto,f_auto,vc_auto/'
-            );
-
+            const optimizedUrl = info.secure_url.replace('/upload/', '/upload/q_auto,f_auto,vc_auto/');
             let thumbnailUrl = null;
             let gifUrl = null;
-
-            if (info.eager && info.eager.length > 1 && info.eager[1].secure_url) {
-                thumbnailUrl = info.eager[1].secure_url;
-            } else if (info.public_id) {
-                thumbnailUrl = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_1,f_jpg/${info.public_id}.jpg`;
-            }
-
-            if (info.eager && info.eager.length > 2 && info.eager[2].secure_url) {
-                gifUrl = info.eager[2].secure_url;
-            } else if (info.public_id) {
-                gifUrl = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${info.public_id}.gif`;
-            }
+            if (info.eager && info.eager.length > 1 && info.eager[1].secure_url) thumbnailUrl = info.eager[1].secure_url;
+            else if (info.public_id) thumbnailUrl = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_1,f_jpg/' + info.public_id + '.jpg';
+            if (info.eager && info.eager.length > 2 && info.eager[2].secure_url) gifUrl = info.eager[2].secure_url;
+            else if (info.public_id) gifUrl = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + info.public_id + '.gif';
 
             const videoData = {
                 title: title,
@@ -1385,63 +1748,48 @@
             pendingVideoInfo = null;
         }
 
-        // ===== عرض الفيديوهات =====
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
             const videoCountSpan = document.getElementById('videoCount');
-            
             if (videos.length === 0) {
                 container.innerHTML = '';
                 emptyState.style.display = 'block';
                 videoCountSpan.textContent = '0 فيديو';
                 return;
             }
-            
             emptyState.style.display = 'none';
             videoCountSpan.textContent = videos.length + ' فيديو';
             
             container.innerHTML = videos.map((video, index) => {
                 const duration = video.duration ? formatDuration(video.duration) : '';
-                
                 let bgSource = video.gif;
                 let isGif = true;
-                
-                if (!bgSource) {
-                    bgSource = video.thumbnail;
-                    isGif = false;
-                }
-                
-                if (!bgSource && video.publicId) {
-                    bgSource = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${video.publicId}.gif`;
-                    isGif = true;
-                } else if (!bgSource && video.url) {
+                if (!bgSource) { bgSource = video.thumbnail; isGif = false; }
+                if (!bgSource && video.publicId) { bgSource = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + video.publicId + '.gif'; isGif = true; }
+                else if (!bgSource && video.url) {
                     const match = video.url.match(/\/video\/upload\/(?:.+\/)?([^/.]+)/);
-                    if (match && match[1]) {
-                        bgSource = `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/${match[1]}.gif`;
-                        isGif = true;
-                    }
+                    if (match && match[1]) { bgSource = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + match[1] + '.gif'; isGif = true; }
                 }
-                
                 return `
                     <div class="video-card" onclick="playVideo('${video.id}')">
                         <div class="video-thumbnail">
-                            ${bgSource ? `<img src="${bgSource}" alt="${video.title}" class="bg-gif" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : ''}
+                            ${bgSource ? '<img src="' + bgSource + '" alt="' + video.title + '" class="bg-gif" onerror="this.style.display=\'none\'; this.parentNode.querySelector(\'.fallback-icon\').style.display=\'flex\';">' : ''}
                             <div class="fallback-icon" style="display: ${bgSource ? 'none' : 'flex'}; position: absolute; z-index: 2;">
                                 <i class="fas fa-film"></i>
                             </div>
                             ${isGif ? '<div class="gif-badge">GIF</div>' : ''}
-                            ${duration ? `<div class="video-duration"><i class="fas fa-clock"></i> ${duration}</div>` : ''}
+                            ${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + '</div>' : ''}
                             <div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>
-                            ${isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
+                            ${isAdmin ? '<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo(\'' + video.id + '\', \'' + (video.publicId || '') + '\')"><i class="fas fa-trash"></i> حذف</button>' : ''}
                         </div>
                         <div class="video-info">
                             <h4 class="video-title">${video.title} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
-                            ${video.description ? `<div class="video-description">${video.description}</div>` : ''}
+                            ${video.description ? '<div class="video-description">' + video.description + '</div>' : ''}
                             <div class="video-meta">
                                 <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
                                 <span><i class="fas fa-hdd"></i> ${formatSize(video.size)}</span>
-                                ${video.width ? `<span><i class="fas fa-expand"></i> ${video.width}x${video.height}</span>` : ''}
+                                ${video.width ? '<span><i class="fas fa-expand"></i> ' + video.width + 'x' + video.height + '</span>' : ''}
                             </div>
                         </div>
                     </div>
@@ -1449,7 +1797,6 @@
             }).join('');
         }
 
-        // ===== دوال مساعدة =====
         function formatDuration(seconds) {
             if (!seconds) return '';
             const mins = Math.floor(seconds / 60);
@@ -1473,19 +1820,14 @@
             setTimeout(() => toast.classList.remove('show'), 4000);
         }
 
-        // ===== تشغيل الفيديو =====
         function playVideo(id, startTime = 0) {
             const video = videos.find(v => v.id === id);
             if (!video) return;
-            
             document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
-            
             const player = document.getElementById('videoPlayer');
             player.src = video.url;
             player.poster = video.thumbnail || '';
-            
             document.getElementById('videoModal').classList.add('active');
-
             if (startTime > 0) {
                 const setStartTime = () => {
                     player.currentTime = startTime;
@@ -1493,7 +1835,6 @@
                 };
                 player.addEventListener('loadedmetadata', setStartTime);
             }
-
             setupProgressTracking();
             player.play().catch(() => {});
         }
@@ -1507,7 +1848,6 @@
             document.getElementById('videoModal').classList.remove('active');
         }
 
-        // ===== الحذف =====
         function deleteVideo(id, publicId) {
             if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
             db.collection('videos').doc(id).delete()
@@ -1515,21 +1855,17 @@
                 .catch(err => showToast('❌ فشل الحذف: ' + err.message));
         }
 
-        // ===== المصادقة =====
         function showLogin() { 
             document.getElementById('loginModal').classList.add('active'); 
             document.getElementById('passwordInput').value = '';
             setTimeout(() => document.getElementById('passwordInput').focus(), 100);
         }
         
-        function closeLogin() { 
-            document.getElementById('loginModal').classList.remove('active'); 
-        }
+        function closeLogin() { document.getElementById('loginModal').classList.remove('active'); }
 
         function doLogin() {
             const input = document.getElementById('passwordInput');
             const enteredPass = input.value.trim();
-            
             if (enteredPass === ADMIN_PASS) {
                 isAdmin = true;
                 document.getElementById('uploadZone').classList.add('active');
@@ -1556,7 +1892,6 @@
             showToast('👋 تم الخروج');
         }
 
-        // ===== استئناف المشاهدة =====
         const STORAGE_KEY = 'falak_last_watched';
         let lastWatchedData = null;
 
@@ -1582,31 +1917,18 @@
             try {
                 lastWatchedData = JSON.parse(saved);
                 const videoExists = videos.some(v => v.id === lastWatchedData.videoId);
-                if (!videoExists) {
-                    localStorage.removeItem(STORAGE_KEY);
-                    return;
-                }
-                if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) {
-                    localStorage.removeItem(STORAGE_KEY);
-                    return;
-                }
+                if (!videoExists) { localStorage.removeItem(STORAGE_KEY); return; }
+                if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; }
                 document.getElementById('resumeVideoTitle').textContent = lastWatchedData.title;
                 document.getElementById('resumeTimeDisplay').textContent = 'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
                 document.getElementById('resumeNotification').style.display = 'flex';
-            } catch (e) {
-                console.error('Error parsing saved data:', e);
-                localStorage.removeItem(STORAGE_KEY);
-            }
+            } catch (e) { console.error('Error parsing saved data:', e); localStorage.removeItem(STORAGE_KEY); }
         }
 
         function resumeWatching() {
             if (!lastWatchedData) return;
             const video = videos.find(v => v.id === lastWatchedData.videoId);
-            if (!video) {
-                showToast('❌ الفيديو غير متوفر');
-                dismissResume();
-                return;
-            }
+            if (!video) { showToast('❌ الفيديو غير متوفر'); dismissResume(); return; }
             playVideo(lastWatchedData.videoId);
             const player = document.getElementById('videoPlayer');
             const setTime = () => {
@@ -1618,16 +1940,12 @@
             dismissResume();
         }
 
-        function dismissResume() {
-            document.getElementById('resumeNotification').style.display = 'none';
-        }
+        function dismissResume() { document.getElementById('resumeNotification').style.display = 'none'; }
 
         function setupProgressTracking() {
             const player = document.getElementById('videoPlayer');
             if (!player) return;
-            setInterval(() => {
-                if (!player.paused && !player.ended) saveVideoProgress();
-            }, 5000);
+            setInterval(() => { if (!player.paused && !player.ended) saveVideoProgress(); }, 5000);
             player.addEventListener('pause', saveVideoProgress);
             window.addEventListener('beforeunload', saveVideoProgress);
             player.addEventListener('ended', () => localStorage.removeItem(STORAGE_KEY));
@@ -1635,13 +1953,9 @@
 
         document.addEventListener('visibilitychange', () => {
             const player = document.getElementById('videoPlayer');
-            if (document.hidden && player && !player.paused) {
-                player.pause();
-                saveVideoProgress();
-            }
+            if (document.hidden && player && !player.paused) { player.pause(); saveVideoProgress(); }
         });
 
-        // ===== مشاركة الوقت =====
         function shareCurrentTime() {
             const player = document.getElementById('videoPlayer');
             if (!player || !player.src) return;
@@ -1663,18 +1977,212 @@
                 if (video) {
                     window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
                     playVideo(videoId, parseInt(time) || 0);
-                } else {
-                    showToast('❌ الفيديو المطلوب غير موجود');
-                }
+                } else { showToast('❌ الفيديو المطلوب غير موجود'); }
             }
         }
 
-        // ===== إغلاق المودالات =====
+        // ===== نظام الدردشة =====
+        let currentUser = null, chatUnsubscribe = null, mediaRecorder = null, audioChunks = [];
+        let recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0;
+        
+        function checkUserName() {
+            const stored = localStorage.getItem('falak_username');
+            if (stored) { currentUser = stored; return true; }
+            return false;
+        }
+        
+        function openChat() {
+            if (!checkUserName()) {
+                document.getElementById('nameModal').classList.add('active');
+                document.getElementById('userNameInput').focus();
+            } else {
+                document.getElementById('chatModal').classList.add('active');
+                document.getElementById('chatBadge').style.display = 'none';
+                unreadMessages = 0;
+                loadMessages();
+                scrollToBottom();
+            }
+        }
+        
+        function saveUserName() {
+            const name = document.getElementById('userNameInput').value.trim();
+            if (name.length < 2) { showToast('الاسم قصير جداً'); return; }
+            currentUser = name;
+            localStorage.setItem('falak_username', name);
+            document.getElementById('nameModal').classList.remove('active');
+            document.getElementById('chatModal').classList.add('active');
+            sendSystemMessage(name + ' انضم للدردشة');
+            loadMessages();
+        }
+        
+        function closeChat() {
+            document.getElementById('chatModal').classList.remove('active');
+            if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+        }
+        
+        function sendSystemMessage(text) {
+            db.collection('messages').add({ type: 'system', text: text, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+        
+        function loadMessages() {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i></div>';
+            if (chatUnsubscribe) chatUnsubscribe();
+            chatUnsubscribe = db.collection('messages').orderBy('timestamp', 'asc').limitToLast(100).onSnapshot(snapshot => {
+                container.innerHTML = '';
+                snapshot.forEach(doc => displayMessage(doc.id, doc.data()));
+                scrollToBottom();
+                updateOnlineCount();
+            }, error => { container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في التحميل</div>'; });
+        }
+        
+        function displayMessage(id, msg) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            if (msg.type === 'system') {
+                div.className = 'message system';
+                div.style.cssText = 'align-self:center;background:rgba(99,102,241,0.2);color:#6366f1;font-size:0.85rem;padding:0.5rem 1rem;';
+                div.innerHTML = msg.text;
+            } else {
+                const isSent = msg.sender === currentUser;
+                div.className = 'message ' + (isSent ? 'sent' : 'received');
+                let html = '';
+                if (!isSent) html += '<div class="message-sender">' + msg.sender + '</div>';
+                if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
+                if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
+                if (msg.audioUrl) html += '<audio controls class="message-audio"><source src="' + msg.audioUrl + '" type="audio/webm"></audio>';
+                const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
+                html += '<div class="message-time">' + time + '</div>';
+                div.innerHTML = html;
+                if (!isSent && !document.getElementById('chatModal').classList.contains('active')) {
+                    unreadMessages++;
+                    document.getElementById('chatBadge').textContent = unreadMessages;
+                    document.getElementById('chatBadge').style.display = 'flex';
+                }
+            }
+            container.appendChild(div);
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !currentUser) return;
+            db.collection('messages').add({ type: 'text', text: text, sender: currentUser, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => {
+                input.value = '';
+            }).catch(() => showToast('فشل الإرسال'));
+        }
+        
+        function handleKeyPress(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+        
+        function sendImage(input) {
+            const file = input.files[0];
+            if (!file || !currentUser) return;
+            if (file.size > 5 * 1024 * 1024) { showToast('الصورة كبيرة (الحد 5 ميجا)'); return; }
+            showToast('جاري الرفع...');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+            formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
+            fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/image/upload', { method: 'POST', body: formData })
+            .then(r => r.json()).then(data => {
+                db.collection('messages').add({ type: 'image', imageUrl: data.secure_url, sender: currentUser, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                showToast('تم إرسال الصورة'); input.value = '';
+            }).catch(() => showToast('فشل الرفع'));
+        }
+        
+        async function startRecording() {
+            if (!currentUser) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(audioChunks, {type: 'audio/webm'});
+                    await uploadVoice(blob);
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                mediaRecorder.start();
+                document.getElementById('recordBtn').classList.add('recording');
+                document.getElementById('recordingIndicator').classList.add('active');
+                let sec = 0;
+                recordingTimer = setInterval(() => {
+                    sec++;
+                    document.getElementById('recordingTime').textContent = Math.floor(sec/60) + ':' + (sec%60).toString().padStart(2,'0');
+                }, 1000);
+                setTimeout(() => { if(mediaRecorder.state === 'recording') stopRecording(); }, 60000);
+            } catch(e) { showToast('لا يمكن الوصول للميكروفون'); }
+        }
+        
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                clearInterval(recordingTimer);
+                document.getElementById('recordBtn').classList.remove('recording');
+                document.getElementById('recordingIndicator').classList.remove('active');
+            }
+        }
+        
+        async function uploadVoice(blob) {
+            showToast('جاري الإرسال...');
+            const formData = new FormData();
+            formData.append('file', blob, 'voice.webm');
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+            formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
+            formData.append('resource_type', 'video');
+            try {
+                const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/video/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                await db.collection('messages').add({ type: 'voice', audioUrl: data.secure_url, sender: currentUser, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                showToast('تم الإرسال');
+            } catch(e) { showToast('فشل الإرسال'); }
+        }
+        
+        async function startVoiceCall() {
+            if (!currentUser) return;
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({audio: true});
+                document.getElementById('callModal').classList.add('active');
+                document.getElementById('callStatus').textContent = 'مكالمة - ' + currentUser;
+                callSeconds = 0;
+                callTimer = setInterval(() => {
+                    callSeconds++;
+                    document.getElementById('callTimer').textContent = Math.floor(callSeconds/60).toString().padStart(2,'0') + ':' + (callSeconds%60).toString().padStart(2,'0');
+                }, 1000);
+                sendSystemMessage('📞 ' + currentUser + ' بدأ مكالمة');
+            } catch(e) { showToast('لا يمكن الوصول للميكروفون'); }
+        }
+        
+        function toggleMute() {
+            if (!localStream) return;
+            const track = localStream.getAudioTracks()[0];
+            track.enabled = !track.enabled;
+            const btn = document.getElementById('muteBtn');
+            btn.classList.toggle('active');
+            btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>';
+        }
+        
+        function endCall() {
+            if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+            clearInterval(callTimer);
+            document.getElementById('callModal').classList.remove('active');
+            document.getElementById('callTimer').textContent = '00:00';
+            sendSystemMessage('📞 ' + currentUser + ' أنهى المكالمة');
+        }
+        
+        function viewImage(url) { document.getElementById('viewerImage').src = url; document.getElementById('imageViewer').classList.add('active'); }
+        function closeImageViewer() { document.getElementById('imageViewer').classList.remove('active'); }
+        function scrollToBottom() { const c = document.getElementById('chatMessages'); c.scrollTop = c.scrollHeight; }
+        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+        function updateOnlineCount() { document.getElementById('onlineCount').textContent = (Math.floor(Math.random()*5)+1) + ' متصل'; }
+        
         window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
                 else if (e.target.id === 'descriptionModal') closeDescriptionModal();
+                else if (e.target.id === 'chatModal') closeChat();
+                else if (e.target.id === 'imageViewer') closeImageViewer();
             }
         };
 
@@ -1683,6 +2191,9 @@
                 closeModal();
                 closeLogin();
                 closeDescriptionModal();
+                closeChat();
+                if (document.getElementById('callModal').classList.contains('active')) endCall();
+                closeImageViewer();
             }
         });
     </script>
