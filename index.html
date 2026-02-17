@@ -158,6 +158,7 @@
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
         .btn-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
         
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
         
@@ -354,6 +355,7 @@
             cursor: pointer;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
         
         .video-card:hover {
@@ -612,8 +614,29 @@
             z-index: 10;
         }
         
-        .video-card:hover .delete-btn { opacity: 1; }
+        .edit-title-btn {
+            position: absolute;
+            top: 10px;
+            right: 80px;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        
+        .video-card:hover .delete-btn,
+        .video-card:hover .edit-title-btn { opacity: 1; }
         .delete-btn:hover { background: #dc2626; transform: scale(1.05); }
+        .edit-title-btn:hover { background: #d97706; transform: scale(1.05); }
         
         .description-modal-content {
             max-width: 600px;
@@ -826,6 +849,8 @@
             .video-title { font-size: 1.3rem; }
             .video-description { font-size: 1rem; line-height: 2; }
             .storage-bar-container { padding: 1rem; }
+            .delete-btn, .edit-title-btn { opacity: 1; font-size: 0.75rem; padding: 0.4rem 0.8rem; }
+            .edit-title-btn { right: 70px; }
         }
         
         @media (max-width: 480px) {
@@ -988,6 +1013,13 @@
             background: rgba(255,255,255,0.1);
             border-bottom-left-radius: 5px;
         }
+        .message.system {
+            align-self: center;
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+        }
         .message-sender {
             font-size: 0.8rem;
             font-weight: 600;
@@ -1008,7 +1040,13 @@
             transition: transform 0.3s;
         }
         .message-image:hover { transform: scale(1.02); }
-        .message-audio { width: 100%; margin-top: 0.5rem; border-radius: 10px; }
+        .message-audio {
+            width: 100%;
+            margin-top: 0.5rem;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            padding: 0.5rem;
+        }
         .message-time {
             font-size: 0.7rem;
             opacity: 0.7;
@@ -1017,6 +1055,24 @@
             align-items: center;
             gap: 0.3rem;
         }
+        .message-delete-btn {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 24px;
+            height: 24px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .message:hover .message-delete-btn { display: flex; }
         .chat-input-area {
             padding: 1.5rem;
             background: rgba(0,0,0,0.3);
@@ -1201,6 +1257,7 @@
             .message { max-width: 85%; padding: 0.875rem 1rem; }
             .chat-header { padding: 1rem; }
             .chat-avatar { width: 40px; height: 40px; font-size: 1.2rem; }
+            .message-delete-btn { display: flex; opacity: 0.8; }
         }
     </style>
 </head>
@@ -1384,6 +1441,26 @@
         </div>
     </div>
     
+    <!-- مودال تعديل عنوان الفيديو -->
+    <div class="modal" id="editTitleModal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> تعديل عنوان الفيديو</h3>
+                <button class="modal-close" onclick="closeEditTitleModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="form-group">
+                    <label>العنوان الجديد</label>
+                    <input type="text" id="editTitleInput" placeholder="أدخل العنوان الجديد..." 
+                           style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem;">
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="saveVideoTitleEdit()">
+                    <i class="fas fa-save"></i> حفظ التعديل
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- زر الدردشة -->
     <button class="chat-btn" onclick="openChat()" id="chatBtn">
         <i class="fas fa-comments"></i>
@@ -1422,7 +1499,7 @@
                             <i class="fas fa-image"></i>
                         </button>
                         <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="sendImage(this)">
-                        <button class="chat-tool-btn" id="recordBtn" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()" title="رسالة صوتية">
+                        <button class="chat-tool-btn" id="recordBtn" onclick="toggleRecording()" title="رسالة صوتية">
                             <i class="fas fa-microphone"></i>
                         </button>
                         <textarea class="chat-input" id="messageInput" placeholder="اكتب رسالتك..." rows="1" onkeypress="handleKeyPress(event)"></textarea>
@@ -1514,6 +1591,7 @@
         let uploadStartTime = 0;
         let lastUploadedBytes = 0;
         let lastTime = 0;
+        let currentEditVideoId = null;
 
         document.addEventListener('DOMContentLoaded', function() {
             listenToVideos();
@@ -1748,6 +1826,48 @@
             pendingVideoInfo = null;
         }
 
+        // ====== تعديل عنوان الفيديو (المشرف فقط) ======
+        function editVideoTitle(videoId) {
+            if (!isAdmin) {
+                showToast('❌ المشرف فقط يستطيع تعديل العنوان');
+                return;
+            }
+            const video = videos.find(v => v.id === videoId);
+            if (!video) return;
+            
+            currentEditVideoId = videoId;
+            document.getElementById('editTitleInput').value = video.title;
+            document.getElementById('editTitleModal').classList.add('active');
+        }
+
+        function closeEditTitleModal() {
+            document.getElementById('editTitleModal').classList.remove('active');
+            currentEditVideoId = null;
+        }
+
+        function saveVideoTitleEdit() {
+            if (!currentEditVideoId || !isAdmin) return;
+            
+            const newTitle = document.getElementById('editTitleInput').value.trim();
+            if (!newTitle) {
+                showToast('⚠️ العنوان لا يمكن أن يكون فارغاً');
+                return;
+            }
+            
+            db.collection('videos').doc(currentEditVideoId).update({
+                title: newTitle,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                showToast('✅ تم تعديل العنوان بنجاح!');
+                closeEditTitleModal();
+            })
+            .catch(err => {
+                console.error('Error updating title:', err);
+                showToast('❌ فشل تعديل العنوان');
+            });
+        }
+
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
@@ -1771,6 +1891,17 @@
                     const match = video.url.match(/\/video\/upload\/(?:.+\/)?([^/.]+)/);
                     if (match && match[1]) { bgSource = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + match[1] + '.gif'; isGif = true; }
                 }
+                
+                // أزرار المشرف: حذف وتعديل عنوان
+                const adminButtons = isAdmin ? `
+                    <button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                    <button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${video.id}')" title="تعديل العنوان">
+                        <i class="fas fa-edit"></i> تعديل
+                    </button>
+                ` : '';
+                
                 return `
                     <div class="video-card" onclick="playVideo('${video.id}')">
                         <div class="video-thumbnail">
@@ -1781,7 +1912,7 @@
                             ${isGif ? '<div class="gif-badge">GIF</div>' : ''}
                             ${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + '</div>' : ''}
                             <div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>
-                            ${isAdmin ? '<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo(\'' + video.id + '\', \'' + (video.publicId || '') + '\')"><i class="fas fa-trash"></i> حذف</button>' : ''}
+                            ${adminButtons}
                         </div>
                         <div class="video-info">
                             <h4 class="video-title">${video.title} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
@@ -1874,7 +2005,7 @@
                 updateStorageBar();
                 closeLogin();
                 renderVideos();
-                showToast('🔓 مرحباً أيها المشرف!');
+                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن تعديل عناوين الفيديوهات');
             } else {
                 showToast('❌ كلمة المرور خاطئة');
                 input.value = '';
@@ -1984,6 +2115,7 @@
         // ===== نظام الدردشة =====
         let currentUser = null, chatUnsubscribe = null, mediaRecorder = null, audioChunks = [];
         let recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0;
+        let isRecording = false;
         
         function checkUserName() {
             const stored = localStorage.getItem('falak_username');
@@ -2041,16 +2173,30 @@
             const div = document.createElement('div');
             if (msg.type === 'system') {
                 div.className = 'message system';
-                div.style.cssText = 'align-self:center;background:rgba(99,102,241,0.2);color:#6366f1;font-size:0.85rem;padding:0.5rem 1rem;';
                 div.innerHTML = msg.text;
             } else {
                 const isSent = msg.sender === currentUser;
                 div.className = 'message ' + (isSent ? 'sent' : 'received');
+                div.id = 'msg-' + id;
+                
                 let html = '';
                 if (!isSent) html += '<div class="message-sender">' + msg.sender + '</div>';
+                
+                // زر حذف الرسالة للمشرف
+                if (isAdmin) {
+                    html += '<button class="message-delete-btn" onclick="deleteMessage(\'' + id + '\')" title="حذف الرسالة"><i class="fas fa-times"></i></button>';
+                }
+                
                 if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
                 if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
-                if (msg.audioUrl) html += '<audio controls class="message-audio"><source src="' + msg.audioUrl + '" type="audio/webm"></audio>';
+                if (msg.audioUrl) {
+                    html += '<div class="message-audio-container">';
+                    html += '<button class="audio-play-btn" onclick="playAudio(this, \'' + msg.audioUrl + '\')"><i class="fas fa-play"></i></button>';
+                    html += '<div class="audio-wave"><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div></div>';
+                    html += '<span class="audio-time">0:00</span>';
+                    html += '</div>';
+                    html += '<audio style="display:none;" preload="metadata"><source src="' + msg.audioUrl + '" type="audio/webm"></audio>';
+                }
                 const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
                 html += '<div class="message-time">' + time + '</div>';
                 div.innerHTML = html;
@@ -2061,6 +2207,26 @@
                 }
             }
             container.appendChild(div);
+        }
+        
+        // ===== حذف الرسالة (المشرف فقط) =====
+        function deleteMessage(messageId) {
+            if (!isAdmin) {
+                showToast('❌ المشرف فقط يستطيع حذف الرسائل');
+                return;
+            }
+            if (!confirm('هل أنت متأكد من حذف هذه الرسالة؟')) return;
+            
+            db.collection('messages').doc(messageId).delete()
+                .then(() => {
+                    showToast('🗑️ تم حذف الرسالة');
+                    const msgElement = document.getElementById('msg-' + messageId);
+                    if (msgElement) msgElement.remove();
+                })
+                .catch(err => {
+                    console.error('Error deleting message:', err);
+                    showToast('❌ فشل حذف الرسالة');
+                });
         }
         
         function sendMessage() {
@@ -2090,52 +2256,152 @@
             }).catch(() => showToast('فشل الرفع'));
         }
         
+        // ===== تسجيل صوتي محسن =====
+        async function toggleRecording() {
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+        
         async function startRecording() {
             if (!currentUser) return;
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-                mediaRecorder = new MediaRecorder(stream);
+                const stream = await navigator.mediaDevices.getUserMedia({audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    sampleRate: 44100,
+                    channelCount: 1
+                }});
+                
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+                });
+                
                 audioChunks = [];
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+                
                 mediaRecorder.onstop = async () => {
-                    const blob = new Blob(audioChunks, {type: 'audio/webm'});
-                    await uploadVoice(blob);
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    if (audioBlob.size > 0) {
+                        await uploadVoice(audioBlob);
+                    }
                     stream.getTracks().forEach(t => t.stop());
                 };
-                mediaRecorder.start();
+                
+                mediaRecorder.start(100); // تجميع البيانات كل 100ms
+                isRecording = true;
+                
                 document.getElementById('recordBtn').classList.add('recording');
                 document.getElementById('recordingIndicator').classList.add('active');
+                
                 let sec = 0;
                 recordingTimer = setInterval(() => {
                     sec++;
                     document.getElementById('recordingTime').textContent = Math.floor(sec/60) + ':' + (sec%60).toString().padStart(2,'0');
+                    if (sec >= 60) stopRecording(); // الحد الأقصى دقيقة
                 }, 1000);
-                setTimeout(() => { if(mediaRecorder.state === 'recording') stopRecording(); }, 60000);
-            } catch(e) { showToast('لا يمكن الوصول للميكروفون'); }
-        }
-        
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                clearInterval(recordingTimer);
-                document.getElementById('recordBtn').classList.remove('recording');
-                document.getElementById('recordingIndicator').classList.remove('active');
+                
+            } catch(e) {
+                console.error('Recording error:', e);
+                showToast('لا يمكن الوصول للميكروفون');
             }
         }
         
+        function stopRecording() {
+            if (!isRecording || !mediaRecorder) return;
+            
+            if (mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            
+            clearInterval(recordingTimer);
+            isRecording = false;
+            
+            document.getElementById('recordBtn').classList.remove('recording');
+            document.getElementById('recordingIndicator').classList.remove('active');
+            document.getElementById('recordingTime').textContent = '0:00';
+        }
+        
         async function uploadVoice(blob) {
-            showToast('جاري الإرسال...');
+            showToast('جاري إرسال الرسالة الصوتية...');
             const formData = new FormData();
             formData.append('file', blob, 'voice.webm');
             formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
             formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
             formData.append('resource_type', 'video');
+            
             try {
-                const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/video/upload', { method: 'POST', body: formData });
+                const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/video/upload', { 
+                    method: 'POST', 
+                    body: formData 
+                });
                 const data = await res.json();
-                await db.collection('messages').add({ type: 'voice', audioUrl: data.secure_url, sender: currentUser, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                showToast('تم الإرسال');
-            } catch(e) { showToast('فشل الإرسال'); }
+                
+                if (data.secure_url) {
+                    await db.collection('messages').add({ 
+                        type: 'voice', 
+                        audioUrl: data.secure_url, 
+                        sender: currentUser, 
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                    });
+                    showToast('✅ تم إرسال الرسالة الصوتية');
+                } else {
+                    throw new Error('No URL returned');
+                }
+            } catch(e) {
+                console.error('Upload error:', e);
+                showToast('❌ فشل إرسال الرسالة الصوتية');
+            }
+        }
+        
+        // ===== مشغل صوتي مخصص =====
+        function playAudio(btn, url) {
+            const container = btn.closest('.message-audio-container');
+            const audio = container.querySelector('audio');
+            const timeDisplay = container.querySelector('.audio-time');
+            const waveBars = container.querySelectorAll('.audio-bar');
+            
+            if (audio.paused) {
+                // إيقاف أي صوت آخر قيد التشغيل
+                document.querySelectorAll('audio').forEach(a => {
+                    if (a !== audio) {
+                        a.pause();
+                        a.currentTime = 0;
+                    }
+                });
+                document.querySelectorAll('.audio-play-btn').forEach(b => {
+                    if (b !== btn) b.innerHTML = '<i class="fas fa-play"></i>';
+                });
+                
+                audio.play();
+                btn.innerHTML = '<i class="fas fa-pause"></i>';
+                
+                // Animation for wave bars
+                waveBars.forEach((bar, i) => {
+                    bar.style.animation = 'wave 0.5s ease-in-out infinite alternate';
+                    bar.style.animationDelay = (i * 0.1) + 's';
+                });
+                
+                audio.onended = () => {
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                    waveBars.forEach(bar => bar.style.animation = 'none');
+                    timeDisplay.textContent = '0:00';
+                };
+                
+                audio.ontimeupdate = () => {
+                    const mins = Math.floor(audio.currentTime / 60);
+                    const secs = Math.floor(audio.currentTime % 60);
+                    timeDisplay.textContent = mins + ':' + secs.toString().padStart(2, '0');
+                };
+            } else {
+                audio.pause();
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+                waveBars.forEach(bar => bar.style.animation = 'none');
+            }
         }
         
         async function startVoiceCall() {
@@ -2181,6 +2447,7 @@
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
                 else if (e.target.id === 'descriptionModal') closeDescriptionModal();
+                else if (e.target.id === 'editTitleModal') closeEditTitleModal();
                 else if (e.target.id === 'chatModal') closeChat();
                 else if (e.target.id === 'imageViewer') closeImageViewer();
             }
@@ -2191,11 +2458,66 @@
                 closeModal();
                 closeLogin();
                 closeDescriptionModal();
+                closeEditTitleModal();
                 closeChat();
                 if (document.getElementById('callModal').classList.contains('active')) endCall();
                 closeImageViewer();
             }
         });
     </script>
+    
+    <style>
+        /* أنماط إضافية للمشغل الصوتي */
+        .message-audio-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 12px;
+            margin-top: 0.5rem;
+            min-width: 200px;
+        }
+        .audio-play-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .audio-wave {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+            flex: 1;
+            height: 20px;
+        }
+        .audio-bar {
+            width: 3px;
+            background: #6366f1;
+            border-radius: 2px;
+            height: 30%;
+            transition: height 0.3s;
+        }
+        .audio-bar:nth-child(2) { height: 60%; }
+        .audio-bar:nth-child(3) { height: 100%; }
+        .audio-bar:nth-child(4) { height: 60%; }
+        .audio-bar:nth-child(5) { height: 30%; }
+        @keyframes wave {
+            0% { height: 20%; }
+            100% { height: 100%; }
+        }
+        .audio-time {
+            font-size: 0.75rem;
+            color: #aaa;
+            min-width: 35px;
+        }
+    </style>
 </body>
 </html>
