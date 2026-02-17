@@ -1040,13 +1040,87 @@
             transition: transform 0.3s;
         }
         .message-image:hover { transform: scale(1.02); }
-        .message-audio {
-            width: 100%;
-            margin-top: 0.5rem;
-            border-radius: 10px;
+        
+        /* ===== مشغل الصوت المُصلح ===== */
+        .voice-message {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             background: rgba(0,0,0,0.3);
-            padding: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 15px;
+            margin-top: 0.5rem;
+            min-width: 250px;
+            direction: ltr;
         }
+        .voice-play-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .voice-play-btn:hover { transform: scale(1.1); }
+        .voice-play-btn.playing {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        .voice-slider {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .voice-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        .voice-time {
+            font-size: 0.75rem;
+            color: #aaa;
+            min-width: 40px;
+            text-align: center;
+            font-family: monospace;
+        }
+        .voice-wave {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+            height: 20px;
+        }
+        .v-wave-bar {
+            width: 3px;
+            background: #6366f1;
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+        .v-wave-bar:nth-child(1) { height: 40%; animation-delay: 0s; }
+        .v-wave-bar:nth-child(2) { height: 70%; animation-delay: 0.1s; }
+        .v-wave-bar:nth-child(3) { height: 100%; animation-delay: 0.2s; }
+        .v-wave-bar:nth-child(4) { height: 60%; animation-delay: 0.3s; }
+        .v-wave-bar:nth-child(5) { height: 30%; animation-delay: 0.4s; }
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+        .voice-play-btn.playing .v-wave-bar {
+            animation-duration: 0.5s;
+        }
+        
         .message-time {
             font-size: 0.7rem;
             opacity: 0.7;
@@ -1258,6 +1332,7 @@
             .chat-header { padding: 1rem; }
             .chat-avatar { width: 40px; height: 40px; font-size: 1.2rem; }
             .message-delete-btn { display: flex; opacity: 0.8; }
+            .voice-message { min-width: 200px; }
         }
     </style>
 </head>
@@ -2116,6 +2191,8 @@
         let currentUser = null, chatUnsubscribe = null, mediaRecorder = null, audioChunks = [];
         let recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0;
         let isRecording = false;
+        let currentAudio = null;
+        let currentAudioBtn = null;
         
         function checkUserName() {
             const stored = localStorage.getItem('falak_username');
@@ -2149,6 +2226,11 @@
         
         function closeChat() {
             document.getElementById('chatModal').classList.remove('active');
+            // إيقاف أي صوت قيد التشغيل
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
             if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
         }
         
@@ -2189,17 +2271,25 @@
                 
                 if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
                 if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
+                
+                // ===== رسالة صوتية مُصلحة =====
                 if (msg.audioUrl) {
-                    html += '<div class="message-audio-container">';
-                    html += '<button class="audio-play-btn" onclick="playAudio(this, \'' + msg.audioUrl + '\')"><i class="fas fa-play"></i></button>';
-                    html += '<div class="audio-wave"><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div></div>';
-                    html += '<span class="audio-time">0:00</span>';
+                    html += '<div class="voice-message" id="voice-' + id + '">';
+                    html += '<button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + msg.audioUrl + '\', \'' + id + '\')">';
+                    html += '<i class="fas fa-play"></i>';
+                    html += '</button>';
+                    html += '<div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')">';
+                    html += '<div class="voice-progress" id="progress-' + id + '"></div>';
                     html += '</div>';
-                    html += '<audio style="display:none;" preload="metadata"><source src="' + msg.audioUrl + '" type="audio/webm"></audio>';
+                    html += '<span class="voice-time" id="time-' + id + '">0:00</span>';
+                    html += '</div>';
+                    html += '<audio id="audio-' + id + '" src="' + msg.audioUrl + '" preload="metadata" style="display:none;"></audio>';
                 }
+                
                 const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
                 html += '<div class="message-time">' + time + '</div>';
                 div.innerHTML = html;
+                
                 if (!isSent && !document.getElementById('chatModal').classList.contains('active')) {
                     unreadMessages++;
                     document.getElementById('chatBadge').textContent = unreadMessages;
@@ -2207,6 +2297,82 @@
                 }
             }
             container.appendChild(div);
+        }
+        
+        // ===== تشغيل الرسالة الصوتية =====
+        function playVoiceMessage(btn, url, id) {
+            const audio = document.getElementById('audio-' + id);
+            const progressBar = document.getElementById('progress-' + id);
+            const timeDisplay = document.getElementById('time-' + id);
+            
+            // إذا كان هناك صوت آخر قيد التشغيل، أوقفه
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentAudioBtn) {
+                    currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    currentAudioBtn.classList.remove('playing');
+                }
+            }
+            
+            if (audio.paused) {
+                // تشغيل
+                audio.play().then(() => {
+                    currentAudio = audio;
+                    currentAudioBtn = btn;
+                    btn.innerHTML = '<i class="fas fa-pause"></i>';
+                    btn.classList.add('playing');
+                    
+                    // تحديث شريط التقدم
+                    audio.ontimeupdate = () => {
+                        const percent = (audio.currentTime / audio.duration) * 100;
+                        progressBar.style.width = percent + '%';
+                        
+                        const mins = Math.floor(audio.currentTime / 60);
+                        const secs = Math.floor(audio.currentTime % 60);
+                        timeDisplay.textContent = mins + ':' + secs.toString().padStart(2, '0');
+                    };
+                    
+                    // عند الانتهاء
+                    audio.onended = () => {
+                        btn.innerHTML = '<i class="fas fa-play"></i>';
+                        btn.classList.remove('playing');
+                        progressBar.style.width = '0%';
+                        timeDisplay.textContent = '0:00';
+                        currentAudio = null;
+                        currentAudioBtn = null;
+                    };
+                    
+                    // تحميل المدة الكلية
+                    audio.onloadedmetadata = () => {
+                        if (!isNaN(audio.duration)) {
+                            const mins = Math.floor(audio.duration / 60);
+                            const secs = Math.floor(audio.duration % 60);
+                            // يمكن عرض المدة الكلية هنا لو حابب
+                        }
+                    };
+                    
+                }).catch(err => {
+                    console.error('Error playing audio:', err);
+                    showToast('❌ لا يمكن تشغيل الصوت');
+                });
+                
+            } else {
+                // إيقاف
+                audio.pause();
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+                btn.classList.remove('playing');
+            }
+        }
+        
+        // ===== التقديم في الصوت =====
+        function seekVoice(event, slider, id) {
+            const audio = document.getElementById('audio-' + id);
+            if (!audio || !audio.duration) return;
+            
+            const rect = slider.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
         }
         
         // ===== حذف الرسالة (المشرف فقط) =====
@@ -2292,7 +2458,7 @@
                     stream.getTracks().forEach(t => t.stop());
                 };
                 
-                mediaRecorder.start(100); // تجميع البيانات كل 100ms
+                mediaRecorder.start(100);
                 isRecording = true;
                 
                 document.getElementById('recordBtn').classList.add('recording');
@@ -2302,7 +2468,7 @@
                 recordingTimer = setInterval(() => {
                     sec++;
                     document.getElementById('recordingTime').textContent = Math.floor(sec/60) + ':' + (sec%60).toString().padStart(2,'0');
-                    if (sec >= 60) stopRecording(); // الحد الأقصى دقيقة
+                    if (sec >= 60) stopRecording();
                 }, 1000);
                 
             } catch(e) {
@@ -2355,52 +2521,6 @@
             } catch(e) {
                 console.error('Upload error:', e);
                 showToast('❌ فشل إرسال الرسالة الصوتية');
-            }
-        }
-        
-        // ===== مشغل صوتي مخصص =====
-        function playAudio(btn, url) {
-            const container = btn.closest('.message-audio-container');
-            const audio = container.querySelector('audio');
-            const timeDisplay = container.querySelector('.audio-time');
-            const waveBars = container.querySelectorAll('.audio-bar');
-            
-            if (audio.paused) {
-                // إيقاف أي صوت آخر قيد التشغيل
-                document.querySelectorAll('audio').forEach(a => {
-                    if (a !== audio) {
-                        a.pause();
-                        a.currentTime = 0;
-                    }
-                });
-                document.querySelectorAll('.audio-play-btn').forEach(b => {
-                    if (b !== btn) b.innerHTML = '<i class="fas fa-play"></i>';
-                });
-                
-                audio.play();
-                btn.innerHTML = '<i class="fas fa-pause"></i>';
-                
-                // Animation for wave bars
-                waveBars.forEach((bar, i) => {
-                    bar.style.animation = 'wave 0.5s ease-in-out infinite alternate';
-                    bar.style.animationDelay = (i * 0.1) + 's';
-                });
-                
-                audio.onended = () => {
-                    btn.innerHTML = '<i class="fas fa-play"></i>';
-                    waveBars.forEach(bar => bar.style.animation = 'none');
-                    timeDisplay.textContent = '0:00';
-                };
-                
-                audio.ontimeupdate = () => {
-                    const mins = Math.floor(audio.currentTime / 60);
-                    const secs = Math.floor(audio.currentTime % 60);
-                    timeDisplay.textContent = mins + ':' + secs.toString().padStart(2, '0');
-                };
-            } else {
-                audio.pause();
-                btn.innerHTML = '<i class="fas fa-play"></i>';
-                waveBars.forEach(bar => bar.style.animation = 'none');
             }
         }
         
@@ -2465,59 +2585,5 @@
             }
         });
     </script>
-    
-    <style>
-        /* أنماط إضافية للمشغل الصوتي */
-        .message-audio-container {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: rgba(0,0,0,0.2);
-            padding: 0.75rem;
-            border-radius: 12px;
-            margin-top: 0.5rem;
-            min-width: 200px;
-        }
-        .audio-play-btn {
-            width: 36px;
-            height: 36px;
-            border: none;
-            background: linear-gradient(135deg, #6366f1, #ec4899);
-            color: white;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .audio-wave {
-            display: flex;
-            gap: 3px;
-            align-items: center;
-            flex: 1;
-            height: 20px;
-        }
-        .audio-bar {
-            width: 3px;
-            background: #6366f1;
-            border-radius: 2px;
-            height: 30%;
-            transition: height 0.3s;
-        }
-        .audio-bar:nth-child(2) { height: 60%; }
-        .audio-bar:nth-child(3) { height: 100%; }
-        .audio-bar:nth-child(4) { height: 60%; }
-        .audio-bar:nth-child(5) { height: 30%; }
-        @keyframes wave {
-            0% { height: 20%; }
-            100% { height: 100%; }
-        }
-        .audio-time {
-            font-size: 0.75rem;
-            color: #aaa;
-            min-width: 35px;
-        }
-    </style>
 </body>
 </html>
