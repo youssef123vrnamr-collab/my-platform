@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* جميع الأنماط السابقة كما هي دون تغيير */
+        /* جميع الأنماط السابقة كما هي (لم يتم تغييرها) */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -1698,7 +1698,7 @@
                 <button class="modal-close" onclick="closeMaintenanceModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
-                <p style="margin-bottom: 1.5rem; color: #aaa;">حدد المدة التي تريد تعطيل المنصة خلالها للتحديث. سيظهر للزوار عداد تنازلي.</p>
+                <p style="margin-bottom: 1.5rem; color: #aaa;">حدد المدة التي تريد تعطيل المنصة خلالها للتحديث. سيظهر للزوار عداد تنازلي مع صوت تكتكة.</p>
                 <div class="form-group">
                     <label>المدة (بالدقائق)</label>
                     <input type="number" id="maintenanceMinutes" min="1" max="60" value="5" style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem;">
@@ -1922,6 +1922,21 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
                 osc.start(this.audioContext.currentTime);
                 osc.stop(this.audioContext.currentTime + 0.1);
+            },
+            // صوت نقر للعداد
+            tick() {
+                this.init();
+                const ctx = this.audioContext;
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 600; // تردد منخفض قليلاً
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                osc.start(now);
+                osc.stop(now + 0.03);
             }
         };
 
@@ -1967,6 +1982,7 @@
         // متغيرات نظام الصيانة
         let maintenanceUnsubscribe = null;
         let maintenanceTimerInterval = null;
+        let tickInterval = null; // مؤقت الصوت
         let maintenanceEndTime = null;
 
         // ===== استماع لحالة الصيانة =====
@@ -2015,14 +2031,18 @@
                     // انتهى الوقت
                     clearInterval(maintenanceTimerInterval);
                     // نرسل طلب لإنهاء الصيانة (لكن نتركها تنتهي تلقائياً)
-                    // المستمع سوف يحدث الحالة عندما نغيرها في Firestore
-                    // يمكننا هنا إرسال تحديث إلى Firestore (لكن الأفضل أن نترك العداد ينتهي ويقوم النظام بإنهائها)
-                    // سنقوم بإنشاء دالة لإنهاء الصيانة من جهة الخادم عند انتهاء الوقت
                     autoEndMaintenance();
                     return;
                 }
                 updateTimerDisplay(distance);
             }, 1000);
+
+            // بدء صوت التكتكة كل ثانية
+            if (!tickInterval) {
+                tickInterval = setInterval(() => {
+                    SoundEffects.tick();
+                }, 1000);
+            }
 
             // عرض وقت الانتهاء
             if (endTime) {
@@ -2033,7 +2053,7 @@
 
         function autoEndMaintenance() {
             // يتم استدعاؤها عندما يصل العداد إلى الصفر
-            // نرسل تحديث إلى Firestore لإنهاء الصيانة
+            SoundEffects.success(); // صوت انتهاء التحديث
             db.collection('system').doc('maintenance').update({
                 status: 'active'
             }).catch(err => console.error('Error auto ending maintenance:', err));
@@ -2045,6 +2065,10 @@
             if (maintenanceTimerInterval) {
                 clearInterval(maintenanceTimerInterval);
                 maintenanceTimerInterval = null;
+            }
+            if (tickInterval) {
+                clearInterval(tickInterval);
+                tickInterval = null;
             }
         }
 
@@ -2086,7 +2110,7 @@
                 message: message,
                 startedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                SoundEffects.success();
+                SoundEffects.recordStart(); // صوت بدء التحديث
                 showToast('✅ تم بدء التحديث، سيظهر للزوار العداد');
                 closeMaintenanceModal();
             }).catch(err => {
@@ -2106,7 +2130,7 @@
             db.collection('system').doc('maintenance').update({
                 status: 'active'
             }).then(() => {
-                SoundEffects.success();
+                SoundEffects.success(); // صوت نجاح الإلغاء
                 showToast('✅ تم إلغاء التحديث');
             }).catch(err => {
                 SoundEffects.error();
