@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* جميع الأنماط السابقة كما هي، مع إضافة أنماط لنافذة محادثة الذكاء الاصطناعي */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -21,6 +20,7 @@
             --danger: #ef4444;
             --dark: #0f0a1a;
             --card: #1a1025;
+            --ai-color: #06b6d4;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1465,18 +1465,103 @@
         }
         .set-admins-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(100,116,139,0.4); }
 
-        /* أنماط خاصة بـ الذكاء الاصطناعي */
-        .ai-toggle-btn {
-            position: fixed;
-            bottom: 6rem; /* فوق زر الدردشة */
-            left: 2rem;
-            width: 50px;
-            height: 50px;
+        /* زرار تعليم الذكاء الاصطناعي - دائري (للمشرف فقط) */
+        .teach-ai-circle-btn {
+            width: 55px;
+            height: 55px;
             background: linear-gradient(135deg, #06b6d4, #0891b2);
             border-radius: 50%;
             border: none;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
+            transition: all 0.3s;
+            display: none; /* يظهر بالجافا سكريبت للمشرف */
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .teach-ai-circle-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6);
+        }
+
+        .teach-ai-circle-btn.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* أنماط نافذة تعليم الذكاء الاصطناعي الجديدة */
+        .ai-knowledge-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(6,182,212,0.2);
+            transition: all 0.3s;
+        }
+
+        .ai-knowledge-item:hover {
+            background: rgba(6,182,212,0.1);
+            border-color: rgba(6,182,212,0.4);
+        }
+
+        .ai-knowledge-content {
+            flex: 1;
+            padding-left: 1rem;
+        }
+
+        .ai-knowledge-question {
+            font-weight: 700;
+            color: #06b6d4;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ai-knowledge-answer {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .ai-knowledge-delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .ai-knowledge-delete:hover {
+            background: rgba(239, 68, 68, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* زرار محادثة الذكاء الاصطناعي (للجميع) */
+        .ai-chat-btn {
+            position: fixed;
+            bottom: 6rem;
+            left: 2rem;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
             cursor: pointer;
             box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
             z-index: 998;
@@ -1485,399 +1570,25 @@
             align-items: center;
             justify-content: center;
         }
-        .ai-toggle-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6); }
-        .ai-toggle-btn.active {
-            background: linear-gradient(135deg, #10b981, #059669);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-        }
-        
-        .ai-status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(6, 182, 212, 0.2);
-            border: 1px solid #06b6d4;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            color: #06b6d4;
-            margin-right: 0.5rem;
-        }
-        .ai-status-badge.active {
-            background: rgba(16, 185, 129, 0.2);
-            border-color: #10b981;
-            color: #10b981;
-        }
-        
-        .ai-correction-indicator {
-            display: none;
-            align-items: center;
-            gap: 0.5rem;
-            color: #06b6d4;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background: rgba(6, 182, 212, 0.1);
-            border-radius: 8px;
-            animation: fadeIn 0.3s;
-        }
-        .ai-correction-indicator.show { display: flex; }
-        .ai-correction-indicator i { animation: spin 1s linear infinite; }
-        
-        .correction-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            background: rgba(6, 182, 212, 0.2);
-            color: #06b6d4;
-            padding: 0.2rem 0.5rem;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-            cursor: help;
-        }
-        .correction-badge:hover {
-            background: rgba(6, 182, 212, 0.3);
-        }
-        
-        /* نافذة تعليم الذكاء الاصطناعي */
-        .ai-learning-modal-content {
-            max-width: 700px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .ai-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .ai-stat-card {
-            background: rgba(6, 182, 212, 0.1);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            border-radius: 15px;
-            padding: 1rem;
-            text-align: center;
-        }
-        
-        .ai-stat-value {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #06b6d4;
-        }
-        
-        .ai-stat-label {
-            font-size: 0.85rem;
-            color: #aaa;
-            margin-top: 0.25rem;
-        }
-        
-        .correction-list {
-            max-height: 300px;
-            overflow-y: auto;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .correction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            transition: all 0.3s;
-        }
-        
-        .correction-item:hover {
-            background: rgba(6, 182, 212, 0.1);
-        }
-        
-        .correction-text {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-        
-        .correction-wrong {
-            color: #ef4444;
-            text-decoration: line-through;
-        }
-        
-        .correction-arrow {
-            color: #06b6d4;
-        }
-        
-        .correction-right {
-            color: #10b981;
-            font-weight: 600;
-        }
-        
-        .correction-delete-btn {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .correction-delete-btn:hover {
-            background: rgba(239, 68, 68, 0.4);
-            transform: scale(1.1);
-        }
-        
-        .add-correction-form {
-            display: grid;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .correction-inputs {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        
-        .correction-inputs input {
-            width: 100%;
-            padding: 0.75rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            color: white;
-            font-family: 'Cairo', sans-serif;
-        }
-        
-        .correction-inputs i {
-            color: #06b6d4;
-        }
-        
-        .ai-toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-        
-        .ai-toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .ai-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255,255,255,0.1);
-            transition: .4s;
-            border-radius: 34px;
-        }
-        
-        .ai-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        
-        input:checked + .ai-slider {
-            background-color: #06b6d4;
-        }
-        
-        input:checked + .ai-slider:before {
-            transform: translateX(24px);
-        }
-        
-        .ai-toggle-label {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-        }
-        
-        .ai-toggle-label span {
-            font-weight: 600;
-        }
 
-        /* زر تعليم الذكاء الاصطناعي في الأعلى */
-        .teach-ai-btn {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-bottom: 1rem;
-            margin-right: 0.5rem;
+        .ai-chat-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6);
         }
-        .teach-ai-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4); }
-
-        /* أنماط نافذة محادثة الذكاء الاصطناعي */
-        .ai-chat-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10001;
-            padding: 1rem;
-        }
-        .ai-chat-modal.active { display: flex; }
-        .ai-chat-container {
-            background: #1a1025;
-            border-radius: 25px;
-            width: 100%;
-            max-width: 800px;
-            height: 70vh;
-            border: 2px solid #06b6d4;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .ai-chat-header {
-            padding: 1rem 1.5rem;
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .ai-chat-header h3 {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.2rem;
-        }
-        .ai-chat-close {
-            width: 36px;
-            height: 36px;
-            border: none;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .ai-chat-close:hover { background: rgba(239,68,68,0.5); transform: rotate(90deg); }
-        .ai-chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .ai-message {
-            max-width: 80%;
-            padding: 0.75rem 1rem;
-            border-radius: 18px;
-            position: relative;
-            animation: messageSlide 0.3s;
-        }
-        .ai-message.user {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-            border-bottom-right-radius: 5px;
-        }
-        .ai-message.ai {
-            align-self: flex-start;
-            background: rgba(255,255,255,0.1);
-            border-bottom-left-radius: 5px;
-        }
-        .ai-message-content {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            word-wrap: break-word;
-        }
-        .ai-message-time {
-            font-size: 0.7rem;
-            color: rgba(255,255,255,0.6);
-            margin-top: 0.25rem;
-            text-align: left;
-        }
-        .ai-chat-input-area {
-            padding: 1rem 1.5rem;
-            background: rgba(0,0,0,0.3);
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .ai-chat-input-wrapper {
-            display: flex;
-            gap: 0.75rem;
-        }
-        .ai-chat-input {
-            flex: 1;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(6,182,212,0.3);
-            border-radius: 25px;
-            padding: 0.75rem 1.25rem;
-            color: white;
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.95rem;
-            resize: none;
-            max-height: 100px;
-            outline: none;
-        }
-        .ai-chat-input:focus { border-color: #06b6d4; }
-        .ai-chat-send {
-            width: 50px;
-            height: 50px;
-            border: none;
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-            color: white;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .ai-chat-send:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(6,182,212,0.4); }
 
         @media (max-width: 768px) {
-            .ai-toggle-btn {
+            .ai-chat-btn {
                 bottom: 5.5rem;
                 left: 1rem;
-                width: 45px;
-                height: 45px;
-                font-size: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
             }
-            .chat-btn {
-                bottom: 1rem;
-                left: 1rem;
+            .teach-ai-circle-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
             }
-            .ai-chat-container { height: 80vh; max-width: 95%; }
         }
     </style>
 </head>
@@ -1945,12 +1656,14 @@
         </div>
         
         <!-- الأزرار العلوية للمشرف -->
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
             <button class="set-admins-btn" id="setAdminsBtn" onclick="openSetAdminsModal()" style="display: none;">
                 <i class="fas fa-users-cog"></i> تحديد المشرفين
             </button>
-            <button class="teach-ai-btn" id="teachAiBtn" onclick="openTeachAIModal()" style="display: none;" title="تعليم الذكاء الاصطناعي">
-                <i class="fas fa-brain"></i> تعليم الذكاء
+            
+            <!-- زرار تعليم الذكاء الاصطناعي - دائري (للمشرف فقط) -->
+            <button class="teach-ai-circle-btn" id="teachAICircleBtn" onclick="openTeachAICircleModal()" title="تعليم الذكاء الاصطناعي">
+                <i class="fas fa-robot"></i>
             </button>
         </div>
         
@@ -2041,34 +1754,45 @@
         </div>
     </div>
     
-    <!-- زر الذكاء الاصطناعي (ظاهر لجميع المستخدمين) -->
-    <button class="ai-toggle-btn" id="aiToggleBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي">
+    <!-- زرار محادثة الذكاء الاصطناعي (للجميع) -->
+    <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي">
         <i class="fas fa-robot"></i>
     </button>
     
-    <!-- زر الدردشة -->
+    <!-- زرار الدردشة -->
     <button class="chat-btn" onclick="openChat()" id="chatBtn">
         <i class="fas fa-comments"></i>
         <span class="notification-badge" id="chatBadge" style="display: none;">0</span>
     </button>
     
     <!-- نافذة محادثة الذكاء الاصطناعي -->
-    <div class="ai-chat-modal" id="aiChatModal">
-        <div class="ai-chat-container">
-            <div class="ai-chat-header">
-                <h3><i class="fas fa-robot"></i> مساعد فلك الذكي</h3>
-                <button class="ai-chat-close" onclick="closeAIChat()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="ai-chat-messages" id="aiChatMessages">
-                <div class="ai-message ai">
-                    <div class="ai-message-content">مرحباً! أنا مساعد فلك الذكي، كيف يمكنني مساعدتك؟</div>
-                    <div class="ai-message-time">الآن</div>
+    <div class="modal chat-modal" id="aiChatModal">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-avatar" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="chat-header-text">
+                        <h3>مساعد فلك الذكي</h3>
+                        <p><span class="online-dot"></span> متصل الآن</p>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
-            <div class="ai-chat-input-area">
-                <div class="ai-chat-input-wrapper">
-                    <textarea class="ai-chat-input" id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" onkeypress="handleAIKeyPress(event)"></textarea>
-                    <button class="ai-chat-send" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button>
+            <div class="chat-messages" id="aiChatMessages"></div>
+            <div class="chat-input-area">
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <textarea class="chat-input" id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" onkeypress="handleAIKeyPress(event)"></textarea>
+                    </div>
+                    <button class="chat-send-btn" onclick="sendAIMessage()" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -2095,10 +1819,6 @@
             </div>
             <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input-area">
-                <div class="ai-correction-indicator" id="aiCorrectionIndicator">
-                    <i class="fas fa-magic"></i>
-                    <span>جاري تصحيح النص...</span>
-                </div>
                 <div class="recording-indicator" id="recordingIndicator">
                     <span class="recording-dot"></span>
                     <span>جاري التسجيل... <span id="recordingTime">0:00</span></span>
@@ -2112,7 +1832,7 @@
                         <button class="chat-tool-btn" id="recordBtn" onclick="toggleRecording()" title="رسالة صوتية">
                             <i class="fas fa-microphone"></i>
                         </button>
-                        <textarea class="chat-input" id="messageInput" placeholder="اكتب رسالتك..." rows="1" onkeypress="handleKeyPress(event)" oninput="onMessageInput()"></textarea>
+                        <textarea class="chat-input" id="messageInput" placeholder="اكتب رسالتك..." rows="1" onkeypress="handleKeyPress(event)"></textarea>
                     </div>
                     <button class="chat-send-btn" onclick="sendMessage()">
                         <i class="fas fa-paper-plane"></i>
@@ -2193,48 +1913,39 @@
         </div>
     </div>
     
-    <!-- نافذة تعليم الذكاء الاصطناعي -->
-    <div class="modal" id="teachAIModal">
-        <div class="modal-content ai-learning-modal-content">
+    <!-- نافذة تعليم الذكاء الاصطناعي (للمشرف فقط) -->
+    <div class="modal" id="teachAICircleModal">
+        <div class="modal-content description-modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-brain"></i> تعليم الذكاء الاصطناعي</h3>
-                <button class="modal-close" onclick="closeTeachAIModal()"><i class="fas fa-times"></i></button>
+                <h3><i class="fas fa-robot" style="color: #06b6d4;"></i> تعليم الذكاء الاصطناعي</h3>
+                <button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
-                <div class="ai-stats-grid">
-                    <div class="ai-stat-card">
-                        <div class="ai-stat-value" id="aiRulesCount">0</div>
-                        <div class="ai-stat-label">قواعد التصحيح</div>
-                    </div>
-                    <div class="ai-stat-card">
-                        <div class="ai-stat-value" id="aiCorrectionsCount">0</div>
-                        <div class="ai-stat-label">تصحيحات اليوم</div>
-                    </div>
+                <p style="margin-bottom: 1.5rem; color: #aaa;">
+                    أضف أسئلة وأجوبة جديدة. عندما يسأل أحد الـ AI سؤالاً مشابهاً، سيرد بالإجابة المعلمة.
+                </p>
+                
+                <!-- إضافة معرفة جديدة -->
+                <div class="form-group">
+                    <label><i class="fas fa-question-circle" style="color: #06b6d4;"></i> السؤال</label>
+                    <input type="text" id="aiQuestionInput" placeholder="مثال: ما هي السوائل؟" dir="rtl">
                 </div>
                 
-                <div class="ai-toggle-label">
-                    <span><i class="fas fa-robot"></i> تفعيل الذكاء الاصطناعي للجميع</span>
-                    <label class="ai-toggle-switch">
-                        <input type="checkbox" id="aiGlobalToggle" onchange="toggleGlobalAI()">
-                        <span class="ai-slider"></span>
-                    </label>
+                <div class="form-group">
+                    <label><i class="fas fa-comment-dots" style="color: #10b981;"></i> الإجابة</label>
+                    <textarea id="aiAnswerInput" placeholder="اكتب الإجابة هنا..." rows="4" style="min-height: 120px;"></textarea>
                 </div>
                 
-                <h4 style="margin: 1.5rem 0 1rem 0; color: #fff;"><i class="fas fa-plus-circle" style="color: #06b6d4;"></i> إضافة قاعدة تصحيح جديدة</h4>
-                <div class="add-correction-form">
-                    <div class="correction-inputs">
-                        <input type="text" id="wrongWordInput" placeholder="الكلمة الخاطئة (مثال: احسن)" dir="rtl">
-                        <i class="fas fa-arrow-left"></i>
-                        <input type="text" id="correctWordInput" placeholder="التصحيح (مثال: أحسن)" dir="rtl">
-                    </div>
-                    <button class="btn btn-primary" onclick="addCorrectionRule()">
-                        <i class="fas fa-plus"></i> إضافة القاعدة
-                    </button>
-                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 1.5rem;" onclick="saveAIKnowledge()">
+                    <i class="fas fa-save"></i> حفظ المعرفة
+                </button>
                 
-                <h4 style="margin: 1.5rem 0 1rem 0; color: #fff;"><i class="fas fa-list" style="color: #8b5cf6;"></i> قائمة قواعد التصحيح</h4>
-                <div class="correction-list" id="correctionList">
-                    <p style="text-align: center; color: #888; padding: 2rem;">لا توجد قواعد بعد</p>
+                <!-- قائمة المعارف -->
+                <h4 style="margin: 1.5rem 0 1rem 0; color: #fff;">
+                    <i class="fas fa-list" style="color: #8b5cf6;"></i> المعارف المخزنة
+                </h4>
+                <div class="correction-list" id="aiKnowledgeList" style="max-height: 250px; overflow-y: auto;">
+                    <p style="text-align: center; color: #888; padding: 2rem;">جاري التحميل...</p>
                 </div>
             </div>
         </div>
@@ -2347,363 +2058,133 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ==================== نظام الذكاء الاصطناعي ====================
+        // ==================== نظام الذكاء الاصطناعي - معارف جديدة ====================
         
-        // قواعد التصحيح الافتراضية (مخزنة محلياً)
-        let aiCorrectionRules = JSON.parse(localStorage.getItem('falak_ai_rules')) || {
-            'احسن': 'أحسن',
-            'ان': 'أن',
-            'انه': 'أنه',
-            'انها': 'أنها',
-            'الي': 'إلى',
-            'الى': 'إلى',
-            'فيه': 'فيه',
-            'هذا': 'هذا',
-            'هذه': 'هذه',
-            'لكن': 'لكن',
-            'لان': 'لأن',
-            'كذا': 'كذا',
-            'كده': 'كذا',
-            'يعني': 'يعني',
-            'يعنى': 'يعني',
-            'ايوه': 'أيوة',
-            'تمام': 'تمام',
-            'مش': 'ليس',
-            'مفيش': 'لا يوجد',
-            'عشان': 'لأجل',
-            'علشان': 'لأجل',
-            'كده': 'هكذا',
-            'كدا': 'هكذا',
-            'طبعا': 'طبعاً',
-            'اكيد': 'أكيد',
-            'اكثر': 'أكثر',
-            'اقل': 'أقل',
-            'اول': 'أول',
-            'اخر': 'آخر',
-            'شي': 'شيء',
-            'شى': 'شيء',
-            'نفسه': 'نفسه',
-            'نفسها': 'نفسها',
-            'كلها': 'كلها',
-            'كله': 'كله',
-            'كلهم': 'كلهم',
-            'كلنا': 'كلنا',
-            'كل': 'كل',
-            'بس': 'لكن',
-            'عادي': 'عادي',
-            'تمام': 'تمام',
-            'ممتاز': 'ممتاز',
-            'جيد': 'جيد',
-            'سيئ': 'سيئ',
-            'صعب': 'صعب',
-            'سهل': 'سهل',
-            'كبير': 'كبير',
-            'صغير': 'صغير',
-            'جديد': 'جديد',
-            'قديم': 'قديم',
-            'جميل': 'جميل',
-            'قبيح': 'قبيح',
-            'سريع': 'سريع',
-            'بطيء': 'بطيء',
-            'قوي': 'قوي',
-            'ضعيف': 'ضعيف',
-            'غالي': 'غالي',
-            'رخيص': 'رخيص',
-            'نظيف': 'نظيف',
-            'وسخ': 'وسخ',
-            'ساخن': 'ساخن',
-            'بارد': 'بارد',
-            'طويل': 'طويل',
-            'قصير': 'قصير',
-            'عريض': 'عريض',
-            'ضيق': 'ضيق',
-            'ثقيل': 'ثقيل',
-            'خفيف': 'خفيف',
-            'عالي': 'عالي',
-            'منخفض': 'منخفض',
-            'قريب': 'قريب',
-            'بعيد': 'بعيد',
-            'يمين': 'يمين',
-            'شمال': 'شمال',
-            'فوق': 'فوق',
-            'تحت': 'تحت',
-            'قدام': 'أمام',
-            'ورا': 'خلف',
-            'جنب': 'بجانب',
-            'بين': 'بين',
-            'فى': 'في',
-            'علي': 'على',
-            'عن': 'عن',
-            'من': 'من',
-            'الي': 'إلى',
-            'الى': 'إلى',
-            'في': 'في',
-            'على': 'على',
-            'مع': 'مع',
-            'بدون': 'بدون',
-            'قبل': 'قبل',
-            'بعد': 'بعد',
-            'اثناء': 'أثناء',
-            'خلال': 'خلال',
-            'حتى': 'حتى',
-            'لما': 'عندما',
-            'لما': 'عندما',
-            'لو': 'إذا',
-            'لو': 'إذا',
-            'علشان': 'لأجل',
-            'عشان': 'لأجل',
-            'عشان': 'لأجل',
-            'علشان': 'لأجل',
-            'كدا': 'هكذا',
-            'كده': 'هكذا',
-            'كده': 'هكذا',
-            'كدا': 'هكذا',
-            'كدة': 'هكذا',
-            'كده': 'هكذا',
-            'كدا': 'هكذا',
-            'كده': 'هكذا',
-            'كدة': 'هكذا',
-            'كده': 'هكذا',
-            'كدا': 'هكذا',
-            'كده': 'هكذا',
-            'كدة': 'هكذا',
-            'كده': 'هكذا',
-            'كدا': 'هكذا',
-            'كده': 'هكذا',
-            'كدة': 'هكذا'
-        };
+        // معارف الـ AI (Q&A)
+        let aiKnowledgeBase = [];
+        let aiKnowledgeUnsubscribe = null;
 
-        // حالة الذكاء الاصطناعي
-        let aiEnabled = localStorage.getItem('falak_ai_enabled') === 'true';
-        let aiGlobalEnabled = false;
-        let aiUnsubscribe = null;
-
-        // محادثة الذكاء الاصطناعي
-        let aiMessages = [];
-
-        // تحميل قواعد الذكاء الاصطناعي من Firebase (للمشرف)
-        function loadAIRules() {
-            if (!isAdmin) return;
+        // تحميل معارف الـ AI من Firebase
+        function loadAIKnowledgeFromFirebase() {
+            if (aiKnowledgeUnsubscribe) aiKnowledgeUnsubscribe();
             
-            db.collection('ai_rules').doc('corrections').get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        if (data.rules) {
-                            aiCorrectionRules = { ...aiCorrectionRules, ...data.rules };
-                            localStorage.setItem('falak_ai_rules', JSON.stringify(aiCorrectionRules));
-                        }
-                        aiGlobalEnabled = data.globalEnabled || false;
-                        document.getElementById('aiGlobalToggle').checked = aiGlobalEnabled;
-                        updateAIStats();
-                    }
-                })
-                .catch(err => console.error('Error loading AI rules:', err));
-        }
-
-        // حفظ قواعد الذكاء الاصطناعي في Firebase
-        function saveAIRules() {
-            if (!isAdmin) return;
-            
-            db.collection('ai_rules').doc('corrections').set({
-                rules: aiCorrectionRules,
-                globalEnabled: aiGlobalEnabled,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedBy: currentUser || 'مشرف'
-            }).catch(err => console.error('Error saving AI rules:', err));
-        }
-
-        // تصحيح النص باستخدام القواعد
-        function correctText(text) {
-            if (!aiEnabled && !aiGlobalEnabled) return text;
-            
-            let corrected = text;
-            let hasCorrection = false;
-            const corrections = [];
-            
-            // تقسيم النص إلى كلمات
-            const words = text.split(/\s+/);
-            const correctedWords = words.map(word => {
-                // إزالة علامات الترقيم للمقارنة
-                const cleanWord = word.replace(/[.,!?;:،؟]/g, '');
-                const lowerWord = cleanWord.toLowerCase();
-                
-                if (aiCorrectionRules[cleanWord]) {
-                    hasCorrection = true;
-                    corrections.push({
-                        original: cleanWord,
-                        corrected: aiCorrectionRules[cleanWord]
+            aiKnowledgeUnsubscribe = db.collection('ai_knowledge')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    aiKnowledgeBase = [];
+                    snapshot.forEach(doc => {
+                        aiKnowledgeBase.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
                     });
-                    // الحفاظ على علامات الترقيم
-                    const punctuation = word.match(/[.,!?;:،؟]+$/);
-                    return aiCorrectionRules[cleanWord] + (punctuation ? punctuation[0] : '');
-                }
-                return word;
-            });
-            
-            return {
-                text: correctedWords.join(' '),
-                hasCorrection: hasCorrection,
-                corrections: corrections
-            };
+                    if (isAdmin) renderAIKnowledgeList();
+                }, err => console.error('Error loading AI knowledge:', err));
         }
 
-        // تفعيل/تعطيل الذكاء الاصطناعي للجميع (للمشرف)
-        function toggleGlobalAI() {
-            if (!isAdmin) {
-                showToast('❌ هذه الصلاحية للمشرف فقط');
-                document.getElementById('aiGlobalToggle').checked = aiGlobalEnabled;
+        // عرض قائمة المعارف (للمشرف)
+        function renderAIKnowledgeList() {
+            const list = document.getElementById('aiKnowledgeList');
+            if (!list) return;
+            
+            if (aiKnowledgeBase.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد معلومات بعد</p>';
                 return;
             }
             
-            aiGlobalEnabled = document.getElementById('aiGlobalToggle').checked;
-            saveAIRules();
-            
-            if (aiGlobalEnabled) {
-                showToast('✅ تم تفعيل الذكاء الاصطناعي للجميع');
-            } else {
-                showToast('❌ تم تعطيل الذكاء الاصطناعي للجميع');
-            }
-        }
-
-        // فتح نافذة تعليم الذكاء الاصطناعي
-        function openTeachAIModal() {
-            if (!isAdmin) {
-                showToast('❌ هذه الصلاحية للمشرف فقط');
-                return;
-            }
-            
-            document.getElementById('teachAIModal').classList.add('active');
-            loadAIRules();
-            renderCorrectionList();
-        }
-
-        // إغلاق نافذة تعليم الذكاء الاصطناعي
-        function closeTeachAIModal() {
-            document.getElementById('teachAIModal').classList.remove('active');
-        }
-
-        // إضافة قاعدة تصحيح جديدة
-        function addCorrectionRule() {
-            const wrong = document.getElementById('wrongWordInput').value.trim();
-            const correct = document.getElementById('correctWordInput').value.trim();
-            
-            if (!wrong || !correct) {
-                showToast('⚠️ أدخل الكلمة الخاطئة والتصحيح');
-                return;
-            }
-            
-            if (wrong === correct) {
-                showToast('⚠️ الكلمتان متطابقتان');
-                return;
-            }
-            
-            aiCorrectionRules[wrong] = correct;
-            localStorage.setItem('falak_ai_rules', JSON.stringify(aiCorrectionRules));
-            saveAIRules();
-            
-            document.getElementById('wrongWordInput').value = '';
-            document.getElementById('correctWordInput').value = '';
-            
-            renderCorrectionList();
-            updateAIStats();
-            
-            SoundEffects.success();
-            showToast('✅ تم إضافة القاعدة بنجاح');
-        }
-
-        // حذف قاعدة تصحيح
-        function deleteCorrectionRule(wrong) {
-            if (!confirm('هل أنت متأكد من حذف هذه القاعدة؟')) return;
-            
-            delete aiCorrectionRules[wrong];
-            localStorage.setItem('falak_ai_rules', JSON.stringify(aiCorrectionRules));
-            saveAIRules();
-            
-            renderCorrectionList();
-            updateAIStats();
-            
-            SoundEffects.delete();
-            showToast('🗑️ تم حذف القاعدة');
-        }
-
-        // عرض قائمة القواعد
-        function renderCorrectionList() {
-            const list = document.getElementById('correctionList');
-            const rules = Object.entries(aiCorrectionRules);
-            
-            if (rules.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد قواعد بعد</p>';
-                return;
-            }
-            
-            list.innerHTML = rules.map(([wrong, correct]) => `
-                <div class="correction-item">
-                    <div class="correction-text">
-                        <span class="correction-wrong">${wrong}</span>
-                        <i class="fas fa-arrow-left correction-arrow"></i>
-                        <span class="correction-right">${correct}</span>
+            list.innerHTML = aiKnowledgeBase.map(item => `
+                <div class="ai-knowledge-item">
+                    <div class="ai-knowledge-content">
+                        <div class="ai-knowledge-question">
+                            <i class="fas fa-question-circle"></i>
+                            ${escapeHtml(item.question)}
+                        </div>
+                        <div class="ai-knowledge-answer">
+                            ${escapeHtml(item.answer)}
+                        </div>
                     </div>
-                    <button class="correction-delete-btn" onclick="deleteCorrectionRule('${wrong}')" title="حذف">
+                    <button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${item.id}')" title="حذف">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             `).join('');
         }
 
-        // تحديث إحصائيات الذكاء الاصطناعي
-        function updateAIStats() {
-            document.getElementById('aiRulesCount').textContent = Object.keys(aiCorrectionRules).length;
-            
-            // حساب عدد التصحيحات اليوم (محاكاة)
-            const today = new Date().toDateString();
-            const todayCorrections = localStorage.getItem('falak_ai_corrections_' + today) || '0';
-            document.getElementById('aiCorrectionsCount').textContent = todayCorrections;
+        // فتح نافذة تعليم الذكاء الاصطناعي (الدائري)
+        function openTeachAICircleModal() {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+            document.getElementById('teachAICircleModal').classList.add('active');
+            renderAIKnowledgeList();
         }
 
-        // معالجة إدخال الرسالة
-        function onMessageInput() {
-            if (!aiEnabled && !aiGlobalEnabled) return;
+        // إغلاق نافذة تعليم الذكاء الاصطناعي (الدائري)
+        function closeTeachAICircleModal() {
+            document.getElementById('teachAICircleModal').classList.remove('active');
+        }
+
+        // حفظ معرفة جديدة
+        function saveAIKnowledge() {
+            const question = document.getElementById('aiQuestionInput').value.trim();
+            const answer = document.getElementById('aiAnswerInput').value.trim();
             
-            const input = document.getElementById('messageInput');
-            const text = input.value;
+            if (!question || !answer) {
+                showToast('⚠️ أدخل السؤال والإجابة');
+                return;
+            }
             
-            if (text.length < 2) return;
-            
-            // عرض مؤشر التصحيح
-            const indicator = document.getElementById('aiCorrectionIndicator');
-            
-            // التصحيح التلقائي بعد توقف الكتابة
-            clearTimeout(window.aiCorrectionTimeout);
-            window.aiCorrectionTimeout = setTimeout(() => {
-                const result = correctText(text);
+            // حفظ في Firebase
+            db.collection('ai_knowledge').add({
+                question: question,
+                answer: answer,
+                createdBy: currentUser || 'مشرف',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                SoundEffects.success();
+                showToast('✅ تم تعليم الذكاء الاصطناعي بنجاح!');
                 
-                if (result.hasCorrection) {
-                    indicator.classList.add('show');
-                    
-                    setTimeout(() => {
-                        input.value = result.text;
-                        indicator.classList.remove('show');
-                        
-                        // حفظ عدد التصحيحات
-                        const today = new Date().toDateString();
-                        const key = 'falak_ai_corrections_' + today;
-                        const count = parseInt(localStorage.getItem(key) || '0') + result.corrections.length;
-                        localStorage.setItem(key, count.toString());
-                        
-                    }, 500);
-                }
-            }, 1000);
+                // تفريغ الحقول
+                document.getElementById('aiQuestionInput').value = '';
+                document.getElementById('aiAnswerInput').value = '';
+                
+            }).catch(err => {
+                console.error('Error saving AI knowledge:', err);
+                SoundEffects.error();
+                showToast('❌ فشل الحفظ');
+            });
         }
 
-        // ==================== محادثة الذكاء الاصطناعي ====================
+        // حذف معرفة
+        function deleteAIKnowledge(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه المعلومة؟')) return;
+            
+            db.collection('ai_knowledge').doc(id).delete()
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('🗑️ تم الحذف');
+                })
+                .catch(err => {
+                    console.error('Error deleting:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل الحذف');
+                });
+        }
+
+        // ==================== محادثة الذكاء الاصطناعي (للجميع) ====================
         
         // فتح نافذة محادثة الذكاء الاصطناعي
         function openAIChat() {
             document.getElementById('aiChatModal').classList.add('active');
-            // تمرير إلى أسفل
+            
+            // رسالة ترحيبية لو فاضي
+            const messagesDiv = document.getElementById('aiChatMessages');
+            if (messagesDiv.children.length === 0) {
+                displayAIMessage('مرحباً! أنا مساعد فلك الذكي. اسألني أي شيء عن الفضاء أو اكتب "مساعدة" لمعرفة ما يمكنني فعله.', 'ai');
+            }
+            
             setTimeout(() => {
-                const messagesDiv = document.getElementById('aiChatMessages');
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }, 100);
         }
@@ -2723,62 +2204,103 @@
             displayAIMessage(text, 'user');
             input.value = '';
 
-            // إنشاء رد الذكاء الاصطناعي
+            // البحث في المعارف أولاً
+            const knowledge = findAIKnowledge(text);
+            if (knowledge) {
+                setTimeout(() => {
+                    displayAIMessage(knowledge, 'ai');
+                }, 500);
+                return;
+            }
+
+            // إنشاء رد الذكاء الاصطناعي الافتراضي
             setTimeout(() => {
                 const response = getAIResponse(text);
                 displayAIMessage(response, 'ai');
             }, 500);
         }
 
+        // البحث في المعارف
+        function findAIKnowledge(userMessage) {
+            const msg = userMessage.toLowerCase();
+            
+            for (const item of aiKnowledgeBase) {
+                const question = item.question.toLowerCase();
+                // مطابقة تامة أو جزئية
+                if (msg === question || msg.includes(question) || question.includes(msg)) {
+                    return item.answer;
+                }
+            }
+            return null;
+        }
+
         // عرض رسالة في نافذة المحادثة
         function displayAIMessage(text, sender) {
             const messagesDiv = document.getElementById('aiChatMessages');
             const messageDiv = document.createElement('div');
-            messageDiv.className = `ai-message ${sender}`;
+            messageDiv.className = 'message ' + (sender === 'user' ? 'sent' : 'received');
             
             const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             
-            messageDiv.innerHTML = `
-                <div class="ai-message-content">${escapeHtml(text)}</div>
-                <div class="ai-message-time">${time}</div>
-            `;
+            let html = '';
+            if (sender === 'received') {
+                html += '<div class="message-sender" style="color: #06b6d4;"><i class="fas fa-robot"></i> مساعد فلك</div>';
+            }
+            html += '<div class="message-content">' + escapeHtml(text) + '</div>';
+            html += '<div class="message-time">' + time + '</div>';
             
+            messageDiv.innerHTML = html;
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // توليد رد الذكاء الاصطناعي بناءً على الكلمات المفتاحية
+        // توليد رد الذكاء الاصطناعي الافتراضي
         function getAIResponse(userMessage) {
             const msg = userMessage.toLowerCase();
             
-            // ردود ذكية بسيطة
-            if (msg.includes('السلام عليكم') || msg.includes('مرحبا') || msg.includes('اهلا')) {
-                return 'وعليكم السلام! كيف يمكنني مساعدتك اليوم؟';
+            // ردود ذكية مدمجة
+            if (msg.includes('السلام عليكم') || msg.includes('مرحبا') || msg.includes('اهلا') || msg.includes('هلا')) {
+                return 'وعليكم السلام! كيف يمكنني مساعدتك اليوم في استكشاف عالم الفضاء؟';
             }
-            if (msg.includes('كيف حالك')) {
-                return 'أنا بخير، شكراً لسؤالك! ماذا تريد أن تعرف عن الفضاء؟';
+            if (msg.includes('كيف حالك') || msg.includes('اخبارك')) {
+                return 'أنا بخير، شكراً لسؤالك! جاهز لمساعدتك في أي استفسار عن الفضاء والكون.';
             }
-            if (msg.includes('الفضاء') || msg.includes('كون') || msg.includes('كوكب')) {
-                return 'الفضاء واسع ومليء بالأسرار! هل تعلم أن هناك أكثر من 100 مليار مجرة في الكون المرصود؟';
+            if (msg.includes('من انت') || msg.includes('مين انت') || msg.includes('اسمك')) {
+                return 'أنا مساعد فلك الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون والإجابة على أسئلتك الفضائية.';
             }
-            if (msg.includes('شكرا')) {
-                return 'العفو! دائماً هنا لمساعدتك.';
-            }
-            if (msg.includes('ما اسمك') || msg.includes('من انت')) {
-                return 'أنا مساعد فلك الذكي، تم إنشائي لمساعدتك في استكشاف عالم الفضاء والفيديوهات.';
-            }
-            if (msg.includes('فيسبوك') || msg.includes('تويتر')) {
-                return 'يمكنك متابعتنا على وسائل التواصل الاجتماعي للحصول على آخر الأخبار.';
+            if (msg.includes('مساعدة') || msg.includes('help')) {
+                return 'يمكنني مساعدتك في:\n• الإجابة على أسئلة عن الفضاء والكون\n• شرح الظواهر الفلكية\n• معلومات عن الكواكب والنجوم\n• المساعدة في استخدام المنصة\n\nجرب أن تسألني مثلاً: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"';
             }
             if (msg.includes('فيديو') || msg.includes('مقطع')) {
-                return 'لدينا مكتبة رائعة من الفيديوهات! يمكنك مشاهدتها من الصفحة الرئيسية.';
+                return 'يمكنك مشاهدة الفيديوهات المتاحة في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة من خلال زر "رفع فيديو".';
+            }
+            if (msg.includes('دردشة') || msg.includes('شات')) {
+                return 'يمكنك الدردشة مع الأعضاء الآخرين من خلال زر الدردشة في الأسفل. انضم للمحادثة وشارك أفكارك!';
             }
             if (msg.includes('مشرف') || msg.includes('ادارة')) {
-                return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات.';
+                return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف" في الأعلى.';
+            }
+            if (msg.includes('شكرا') || msg.includes('شكراً') || msg.includes('تسلم')) {
+                return 'العفو! دائماً هنا لمساعدتك. استمتع بوقتك في فلك العالمي! 🚀';
+            }
+            if (msg.includes('الكواكب') || msg.includes('مجموعة شمسية')) {
+                return 'المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون. كان هناك كوكب بلوتون لكنه أصبح كوكب قزم منذ 2006.';
+            }
+            if (msg.includes('الشمس')) {
+                return 'الشمس هي نجم يقع في مركز المجموعة الشمسية، وهي مصدر الضوء والحرارة للأرض. تبلغ درجة حرارة سطحها حوالي 5,500 درجة مئوية!';
+            }
+            if (msg.includes('القمر')) {
+                return 'القمر هو القمر الوحيد الطبيعي للأرض، ويبعد عنها حوالي 384,400 كم. يستغرق دورة واحدة حول الأرض حوالي 27.3 يوم.';
+            }
+            if (msg.includes('نجم') || msg.includes('نجوم')) {
+                return 'النجوم هي أجسام سماوية ضخمة تتألف من غازات ساخنة، خاصة الهيدروجين والهيليوم. أقرب نجم للأرض هو الشمس، والثاني هو Proxima Centauri على بعد 4.24 سنة ضوئية.';
+            }
+            if (msg.includes('ثقب اسود') || msg.includes('black hole')) {
+                return 'الثقب الأسود هو منطقة في الفضاء حيث تكون الجاذبية قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء! يتكون عندما تنهار نجوم ضخمة تحت تأثير جاذبيتها.';
             }
             
             // رد افتراضي
-            return 'شكراً لرسالتك. حالياً أنا تحت التطوير، لكن يمكنك تصفح الفيديوهات أو المشاركة في الدردشة!';
+            return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. يمكنك سؤال المشرفين أو البحث في الفيديوهات المتاحة. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".';
         }
 
         // معالجة ضغط Enter في حقل الإدخال
@@ -2975,13 +2497,11 @@
                 document.getElementById('logoutBtn').style.display = 'flex';
                 document.getElementById('maintenanceBtn').style.display = 'flex';
                 document.getElementById('setAdminsBtn').style.display = 'inline-flex';
-                document.getElementById('teachAiBtn').style.display = 'inline-flex';
+                document.getElementById('teachAICircleBtn').style.display = 'inline-flex';
                 updateStorageBar();
                 renderVideos();
-                loadAIRules();
+                loadAIKnowledgeFromFirebase();
             }
-            // زر الذكاء الاصطناعي يظهر دائماً لجميع المستخدمين
-            document.getElementById('aiToggleBtn').style.display = 'flex';
         })();
 
         function listenToMaintenance() {
@@ -3131,6 +2651,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             listenToVideos();
             listenToMaintenance();
+            loadAIKnowledgeFromFirebase();
             initCloudinaryWidget();
             checkUrlForShare();
             setTimeout(() => {
@@ -3562,16 +3083,16 @@
                 document.getElementById('logoutBtn').style.display = 'flex';
                 document.getElementById('maintenanceBtn').style.display = 'flex';
                 document.getElementById('setAdminsBtn').style.display = 'inline-flex';
-                document.getElementById('teachAiBtn').style.display = 'inline-flex';
+                document.getElementById('teachAICircleBtn').style.display = 'inline-flex';
                 updateStorageBar();
                 closeLogin();
                 renderVideos();
-                loadAIRules();
+                loadAIKnowledgeFromFirebase();
                 if (document.getElementById('maintenanceOverlay').classList.contains('active')) {
                     document.getElementById('cancelMaintenanceBtn').classList.add('active');
                 }
                 SoundEffects.success();
-                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن رفع الفيديوهات وتحديث المحتوى');
+                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن رفع الفيديوهات وتعليم الذكاء الاصطناعي');
             } else {
                 SoundEffects.error();
                 showToast('❌ كلمة المرور خاطئة');
@@ -3590,12 +3111,11 @@
             document.getElementById('logoutBtn').style.display = 'none';
             document.getElementById('maintenanceBtn').style.display = 'none';
             document.getElementById('setAdminsBtn').style.display = 'none';
-            document.getElementById('teachAiBtn').style.display = 'none';
+            document.getElementById('teachAICircleBtn').style.display = 'none';
             document.getElementById('cancelMaintenanceBtn').classList.remove('active');
-            // زر الذكاء الاصطناعي يبقى ظاهراً
             renderVideos();
             SoundEffects.recordStop();
-            showToast('👋 تم تسجيل الخروج، سجل دخولك مرة أخرى عند الحاجة');
+            showToast('👋 تم تسجيل الخروج');
         }
 
         function openSetAdminsModal() {
@@ -3965,15 +3485,7 @@
                     html += '<button class="message-delete-btn ' + adminClass + '" onclick="deleteMessage(\'' + id + '\', \'' + msg.sender + '\')" title="' + title + '"><i class="fas fa-times"></i></button>';
                 }
                 
-                if (msg.text) {
-                    // عرض شارة التصحيح إذا كانت الرسالة مصححة
-                    if (msg.corrected && msg.originalText) {
-                        html += '<div class="correction-badge" title="تم تصحيحها من: ' + msg.originalText + '">';
-                        html += '<i class="fas fa-magic"></i> مصحح';
-                        html += '</div>';
-                    }
-                    html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
-                }
+                if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
                 if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
                 
                 if (msg.audioUrl) {
@@ -4091,34 +3603,14 @@
         
         function sendMessage() {
             const input = document.getElementById('messageInput');
-            let text = input.value.trim();
+            const text = input.value.trim();
             if (!text || !currentUser) return;
-            
-            // تصحيح النص قبل الإرسال
-            const originalText = text;
-            let corrected = false;
-            
-            if (aiEnabled || aiGlobalEnabled) {
-                const result = correctText(text);
-                if (result.hasCorrection) {
-                    text = result.text;
-                    corrected = true;
-                    
-                    // حفظ عدد التصحيحات
-                    const today = new Date().toDateString();
-                    const key = 'falak_ai_corrections_' + today;
-                    const count = parseInt(localStorage.getItem(key) || '0') + result.corrections.length;
-                    localStorage.setItem(key, count.toString());
-                }
-            }
             
             const messageData = { 
                 type: 'text', 
                 text: text, 
                 sender: currentUser, 
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                corrected: corrected,
-                originalText: corrected ? originalText : null
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
             
             db.collection('messages').add(messageData).then(() => {
@@ -4322,7 +3814,7 @@
                 else if (e.target.id === 'loginModal') closeLogin();
                 else if (e.target.id === 'adminPasswordModal') closeAdminPasswordModal();
                 else if (e.target.id === 'setAdminsModal') closeSetAdminsModal();
-                else if (e.target.id === 'teachAIModal') closeTeachAIModal();
+                else if (e.target.id === 'teachAICircleModal') closeTeachAICircleModal();
                 else if (e.target.id === 'descriptionModal') closeDescriptionModal();
                 else if (e.target.id === 'editVideoModal') closeEditVideoModal();
                 else if (e.target.id === 'chatModal') closeChat();
@@ -4338,7 +3830,7 @@
                 closeLogin();
                 closeAdminPasswordModal();
                 closeSetAdminsModal();
-                closeTeachAIModal();
+                closeTeachAICircleModal();
                 closeDescriptionModal();
                 closeEditVideoModal();
                 closeChat();
