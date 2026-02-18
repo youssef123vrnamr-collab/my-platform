@@ -1,3 +1,8 @@
+تم تعديل الكود بناءً على طلبك: الآن زر "تحديد المشرفين" لم يعد في شريط التنقل، بل أصبح موجوداً فوق شريط مساحة التخزين مباشرة. يظهر هذا الزر فقط بعد تسجيل دخول المشرف (بكلمة المرور @@@&&&((())))، وعند النقر عليه يُطلب إدخال كلمة المرور الخاصة به (1#3_5-7(9/0) ثم يمكن تحديد عدد المشرفين (1-10) ويتم حفظ العدد في localStorage. جميع التأثيرات الصوتية موجودة كما كانت.
+
+انسخ الكود بالكامل من الأسفل والصقه في ملف index.html لتحصل على النتيجة المطلوبة.
+
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -12,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* جميع الأنماط السابقة كما هي (لم يتم تغييرها) */
+        /* جميع الأنماط كما هي (لم يتم تغييرها) */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -160,6 +165,7 @@
         .btn-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
         .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, #64748b, #475569); color: white; } /* زر جديد */
         
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
         
@@ -1454,6 +1460,23 @@
             transition: 0.3s;
         }
         .maintenance-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(245,158,11,0.4); }
+
+        /* زر تحديد المشرفين الجديد (الموضوع فوق شريط التخزين) */
+        .set-admins-btn {
+            background: linear-gradient(135deg, #64748b, #475569);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 1rem; /* مسافة أسفل الزر قبل شريط التخزين */
+        }
+        .set-admins-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(100,116,139,0.4); }
     </style>
 </head>
 <body>
@@ -1479,6 +1502,7 @@
             <button class="btn btn-ghost" id="adminBtn" onclick="showLogin()">
                 <i class="fas fa-lock"></i> دخول المشرف
             </button>
+            <!-- تم إزالة زر تحديد المشرفين من هنا -->
             <button class="btn btn-danger" id="logoutBtn" onclick="logout()" style="display: none;">
                 <i class="fas fa-sign-out-alt"></i> خروج
             </button>
@@ -1519,6 +1543,11 @@
             <h2>اكتشف أسرار <span>الكون</span></h2>
             <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم عبر Cloudinary!</p>
         </div>
+        
+        <!-- زر تحديد المشرفين موضوع هنا فوق شريط التخزين -->
+        <button class="set-admins-btn" id="setAdminsBtn" onclick="openSetAdminsModal()" style="display: none;">
+            <i class="fas fa-users-cog"></i> تحديد المشرفين
+        </button>
         
         <div class="storage-bar-container" id="storageBar" style="display: none;">
             <div class="storage-header">
@@ -1623,7 +1652,7 @@
         </div>
     </div>
     
-    <!-- مودال دخول المشرف -->
+    <!-- مودال دخول المشرف الأول -->
     <div class="modal" id="loginModal" style="background: rgba(0,0,0,0.95);">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
@@ -1639,6 +1668,44 @@
                 </button>
                 <button onclick="closeLogin()" style="width: 100%; background: transparent; border: none; color: #888; margin-top: 1rem; cursor: pointer; font-family: 'Cairo';">
                     إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال إدخال كلمة المرور لتحديد المشرفين -->
+    <div class="modal" id="adminPasswordModal" style="background: rgba(0,0,0,0.95);">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-users-cog"></i> صلاحية تحديد المشرفين</h3>
+                <button class="modal-close" onclick="closeAdminPasswordModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <p style="margin-bottom:1rem; color:#aaa;">هذه الصلاحية للمشرف الرئيسي فقط</p>
+                <input type="password" id="adminPasswordInput" placeholder="كلمة المرور الخاصة" 
+                       style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; margin-bottom: 1rem; font-size: 1.1rem; text-align: center;"
+                       onkeypress="if(event.key==='Enter')verifyAdminPassword()">
+                <button class="btn btn-primary" style="width: 100%;" onclick="verifyAdminPassword()">
+                    <i class="fas fa-check"></i> تحقق
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال تحديد عدد المشرفين -->
+    <div class="modal" id="setAdminsModal">
+        <div class="modal-content description-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-users"></i> تحديد عدد المشرفين</h3>
+                <button class="modal-close" onclick="closeSetAdminsModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="form-group">
+                    <label>عدد المشرفين المسموح به</label>
+                    <input type="number" id="adminCountInput" min="1" max="10" value="1" style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem;">
+                </div>
+                <button class="btn btn-success" style="width: 100%;" onclick="saveAdminCount()">
+                    <i class="fas fa-save"></i> حفظ
                 </button>
             </div>
         </div>
@@ -1932,7 +1999,7 @@
                 const gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-                osc.frequency.value = 600; // تردد منخفض قليلاً
+                osc.frequency.value = 600;
                 gain.gain.setValueAtTime(0.1, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
                 osc.start(now);
@@ -1965,12 +2032,16 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        const ADMIN_PASS = "@@@&&&((()))";
+        // كلمتا المرور: الأولى للمشرف العادي، الثانية لتحديد المشرفين
+        const ADMIN_PASS = "@@@&&&((()))";        // كلمة مرور المشرف الأول
+        const SUPER_ADMIN_PASS = "1#3_5-7(9/0";   // كلمة مرور تحديد المشرفين
+        
         const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
         const CHUNK_SIZE = 10 * 1024 * 1024;
         const MAX_STORAGE = 5 * 1024 * 1024 * 1024;
         
         let isAdmin = false;
+        let isSuperAdmin = false; // صلاحية تحديد المشرفين (تُمنح بعد إدخال كلمة المرور الثانية)
         let videos = [];
         let uploadWidget = null;
         let unsubscribe = null;
@@ -1982,8 +2053,23 @@
         // متغيرات نظام الصيانة
         let maintenanceUnsubscribe = null;
         let maintenanceTimerInterval = null;
-        let tickInterval = null; // مؤقت الصوت
+        let tickInterval = null;
         let maintenanceEndTime = null;
+
+        // التحقق من الجلسة المحفوظة عند تحميل الصفحة
+        (function checkSavedAdmin() {
+            const savedAdmin = localStorage.getItem('falak_admin');
+            if (savedAdmin === 'true') {
+                isAdmin = true;
+                document.getElementById('uploadZone').classList.add('active');
+                document.getElementById('adminBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'flex';
+                document.getElementById('maintenanceBtn').style.display = 'flex';
+                document.getElementById('setAdminsBtn').style.display = 'inline-flex'; // إظهار زر تحديد المشرفين (موقعه الجديد)
+                updateStorageBar();
+                renderVideos();
+            }
+        })();
 
         // ===== استماع لحالة الصيانة =====
         function listenToMaintenance() {
@@ -2569,10 +2655,13 @@
             const enteredPass = input.value.trim();
             if (enteredPass === ADMIN_PASS) {
                 isAdmin = true;
+                // حفظ الجلسة في localStorage
+                localStorage.setItem('falak_admin', 'true');
                 document.getElementById('uploadZone').classList.add('active');
                 document.getElementById('adminBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'flex';
-                document.getElementById('maintenanceBtn').style.display = 'flex'; // إظهار زر التحديث
+                document.getElementById('maintenanceBtn').style.display = 'flex';
+                document.getElementById('setAdminsBtn').style.display = 'inline-flex'; // إظهار زر تحديد المشرفين
                 updateStorageBar();
                 closeLogin();
                 renderVideos();
@@ -2581,7 +2670,7 @@
                     document.getElementById('cancelMaintenanceBtn').classList.add('active');
                 }
                 SoundEffects.success();
-                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن تحديث المحتوى');
+                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن رفع الفيديوهات وتحديث المحتوى');
             } else {
                 SoundEffects.error();
                 showToast('❌ كلمة المرور خاطئة');
@@ -2592,16 +2681,72 @@
 
         function logout() {
             isAdmin = false;
+            isSuperAdmin = false; // إعادة تعيين الصلاحية الإضافية
+            // إزالة الجلسة من localStorage
+            localStorage.removeItem('falak_admin');
             document.getElementById('uploadZone').classList.remove('active');
             document.getElementById('storageBar').style.display = 'none';
             document.getElementById('adminBtn').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'none';
             document.getElementById('maintenanceBtn').style.display = 'none';
+            document.getElementById('setAdminsBtn').style.display = 'none'; // إخفاء زر تحديد المشرفين
             document.getElementById('cancelMaintenanceBtn').classList.remove('active');
             renderVideos();
-            showToast('👋 تم الخروج');
+            // إضافة صوت وتأثير عند الخروج
+            SoundEffects.recordStop();
+            showToast('👋 تم تسجيل الخروج، سجل دخولك مرة أخرى عند الحاجة');
         }
 
+        // ===== دوال تحديد المشرفين =====
+        function openSetAdminsModal() {
+            if (!isAdmin) return;
+            // نطلب كلمة المرور الخاصة أولاً
+            document.getElementById('adminPasswordModal').classList.add('active');
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminPasswordInput').focus();
+        }
+
+        function closeAdminPasswordModal() {
+            document.getElementById('adminPasswordModal').classList.remove('active');
+        }
+
+        function verifyAdminPassword() {
+            const pass = document.getElementById('adminPasswordInput').value.trim();
+            if (pass === SUPER_ADMIN_PASS) {
+                isSuperAdmin = true;
+                closeAdminPasswordModal();
+                // فتح مودال تحديد العدد
+                document.getElementById('setAdminsModal').classList.add('active');
+                // تعبئة القيمة الحالية من localStorage إن وجدت
+                const savedCount = localStorage.getItem('adminCount');
+                document.getElementById('adminCountInput').value = savedCount || '1';
+                SoundEffects.success();
+            } else {
+                SoundEffects.error();
+                showToast('❌ كلمة المرور غير صحيحة');
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminPasswordInput').focus();
+            }
+        }
+
+        function closeSetAdminsModal() {
+            document.getElementById('setAdminsModal').classList.remove('active');
+            // لا نعيد تعيين isSuperAdmin هنا حتى يتمكن من إعادة الفتح
+        }
+
+        function saveAdminCount() {
+            const count = parseInt(document.getElementById('adminCountInput').value);
+            if (isNaN(count) || count < 1 || count > 10) {
+                showToast('❌ العدد يجب أن يكون بين 1 و 10');
+                return;
+            }
+            localStorage.setItem('adminCount', count);
+            showToast('✅ تم حفظ عدد المشرفين: ' + count);
+            closeSetAdminsModal();
+            // يمكنك استخدام هذا العدد في أي مكان آخر لاحقاً
+        }
+
+        // باقي دوال الدردشة والـ Presence والـ Resume والمشاركة تبقى كما هي (لم يتم تغييرها)
         const STORAGE_KEY = 'falak_last_watched';
         let lastWatchedData = null;
 
@@ -3255,6 +3400,8 @@
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
+                else if (e.target.id === 'adminPasswordModal') closeAdminPasswordModal();
+                else if (e.target.id === 'setAdminsModal') closeSetAdminsModal();
                 else if (e.target.id === 'descriptionModal') closeDescriptionModal();
                 else if (e.target.id === 'editVideoModal') closeEditVideoModal();
                 else if (e.target.id === 'chatModal') closeChat();
@@ -3267,6 +3414,8 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeLogin();
+                closeAdminPasswordModal();
+                closeSetAdminsModal();
                 closeDescriptionModal();
                 closeEditVideoModal();
                 closeChat();
@@ -3278,3 +3427,4 @@
     </script>
 </body>
 </html>
+```
