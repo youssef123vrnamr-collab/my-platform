@@ -131,7 +131,7 @@
         
         .brand-text p { font-size: 0.85rem; color: #888; }
         
-        .nav-actions { display: flex; gap: 0.75rem; }
+        .nav-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
         
         .btn {
             padding: 0.75rem 1.5rem;
@@ -1463,6 +1463,294 @@
             margin-bottom: 1rem;
         }
         .set-admins-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(100,116,139,0.4); }
+
+        /* أنماط خاصة بـ الذكاء الاصطناعي */
+        .ai-toggle-btn {
+            position: fixed;
+            bottom: 6rem; /* فوق زر الدردشة */
+            left: 2rem;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
+            z-index: 998;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ai-toggle-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6); }
+        .ai-toggle-btn.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .ai-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(6, 182, 212, 0.2);
+            border: 1px solid #06b6d4;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #06b6d4;
+            margin-right: 0.5rem;
+        }
+        .ai-status-badge.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            color: #10b981;
+        }
+        
+        .ai-correction-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: #06b6d4;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(6, 182, 212, 0.1);
+            border-radius: 8px;
+            animation: fadeIn 0.3s;
+        }
+        .ai-correction-indicator.show { display: flex; }
+        .ai-correction-indicator i { animation: spin 1s linear infinite; }
+        
+        .correction-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            cursor: help;
+        }
+        .correction-badge:hover {
+            background: rgba(6, 182, 212, 0.3);
+        }
+        
+        /* نافذة تعليم الذكاء الاصطناعي */
+        .ai-learning-modal-content {
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .ai-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .ai-stat-card {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .ai-stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #06b6d4;
+        }
+        
+        .ai-stat-label {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 0.25rem;
+        }
+        
+        .correction-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .correction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .correction-item:hover {
+            background: rgba(6, 182, 212, 0.1);
+        }
+        
+        .correction-text {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .correction-wrong {
+            color: #ef4444;
+            text-decoration: line-through;
+        }
+        
+        .correction-arrow {
+            color: #06b6d4;
+        }
+        
+        .correction-right {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .correction-delete-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .correction-delete-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+            transform: scale(1.1);
+        }
+        
+        .add-correction-form {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .correction-inputs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .correction-inputs input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .correction-inputs i {
+            color: #06b6d4;
+        }
+        
+        .ai-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .ai-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .ai-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .ai-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .ai-slider {
+            background-color: #06b6d4;
+        }
+        
+        input:checked + .ai-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .ai-toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        .ai-toggle-label span {
+            font-weight: 600;
+        }
+
+        /* زر تعليم الذكاء الاصطناعي في الأعلى */
+        .teach-ai-btn {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 1rem;
+            margin-right: 0.5rem;
+        }
+        .teach-ai-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4); }
+
+        @media (max-width: 768px) {
+            .ai-toggle-btn {
+                bottom: 5.5rem;
+                left: 1rem;
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+            .chat-btn {
+                bottom: 1rem;
+                left: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1528,9 +1816,15 @@
             <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم عبر Cloudinary!</p>
         </div>
         
-        <button class="set-admins-btn" id="setAdminsBtn" onclick="openSetAdminsModal()" style="display: none;">
-            <i class="fas fa-users-cog"></i> تحديد المشرفين
-        </button>
+        <!-- الأزرار العلوية للمشرف -->
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <button class="set-admins-btn" id="setAdminsBtn" onclick="openSetAdminsModal()" style="display: none;">
+                <i class="fas fa-users-cog"></i> تحديد المشرفين
+            </button>
+            <button class="teach-ai-btn" id="teachAiBtn" onclick="openTeachAIModal()" style="display: none;" title="تعليم الذكاء الاصطناعي">
+                <i class="fas fa-brain"></i> تعليم الذكاء
+            </button>
+        </div>
         
         <div class="storage-bar-container" id="storageBar" style="display: none;">
             <div class="storage-header">
@@ -1619,6 +1913,65 @@
         </div>
     </div>
     
+    <!-- زر الذكاء الاصطناعي (فوق زر الدردشة) -->
+    <button class="ai-toggle-btn" id="aiToggleBtn" onclick="toggleAI()" title="تفعيل/تعطيل الذكاء الاصطناعي">
+        <i class="fas fa-robot"></i>
+    </button>
+    
+    <!-- زر الدردشة -->
+    <button class="chat-btn" onclick="openChat()" id="chatBtn">
+        <i class="fas fa-comments"></i>
+        <span class="notification-badge" id="chatBadge" style="display: none;">0</span>
+    </button>
+    
+    <div class="modal chat-modal" id="chatModal">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-avatar"><i class="fas fa-users"></i></div>
+                    <div class="chat-header-text">
+                        <h3>دردشة فلك العالمي</h3>
+                        <p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="chat-action-btn" onclick="closeChat()" title="إغلاق">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-area">
+                <div class="ai-correction-indicator" id="aiCorrectionIndicator">
+                    <i class="fas fa-magic"></i>
+                    <span>جاري تصحيح النص...</span>
+                </div>
+                <div class="recording-indicator" id="recordingIndicator">
+                    <span class="recording-dot"></span>
+                    <span>جاري التسجيل... <span id="recordingTime">0:00</span></span>
+                </div>
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <button class="chat-tool-btn" onclick="document.getElementById('imageInput').click()" title="إرسال صورة">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="sendImage(this)">
+                        <button class="chat-tool-btn" id="recordBtn" onclick="toggleRecording()" title="رسالة صوتية">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <textarea class="chat-input" id="messageInput" placeholder="اكتب رسالتك..." rows="1" onkeypress="handleKeyPress(event)" oninput="onMessageInput()"></textarea>
+                    </div>
+                    <button class="chat-send-btn" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1690,6 +2043,53 @@
         </div>
     </div>
     
+    <!-- نافذة تعليم الذكاء الاصطناعي -->
+    <div class="modal" id="teachAIModal">
+        <div class="modal-content ai-learning-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-brain"></i> تعليم الذكاء الاصطناعي</h3>
+                <button class="modal-close" onclick="closeTeachAIModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div class="ai-stats-grid">
+                    <div class="ai-stat-card">
+                        <div class="ai-stat-value" id="aiRulesCount">0</div>
+                        <div class="ai-stat-label">قواعد التصحيح</div>
+                    </div>
+                    <div class="ai-stat-card">
+                        <div class="ai-stat-value" id="aiCorrectionsCount">0</div>
+                        <div class="ai-stat-label">تصحيحات اليوم</div>
+                    </div>
+                </div>
+                
+                <div class="ai-toggle-label">
+                    <span><i class="fas fa-robot"></i> تفعيل الذكاء الاصطناعي للجميع</span>
+                    <label class="ai-toggle-switch">
+                        <input type="checkbox" id="aiGlobalToggle" onchange="toggleGlobalAI()">
+                        <span class="ai-slider"></span>
+                    </label>
+                </div>
+                
+                <h4 style="margin: 1.5rem 0 1rem 0; color: #fff;"><i class="fas fa-plus-circle" style="color: #06b6d4;"></i> إضافة قاعدة تصحيح جديدة</h4>
+                <div class="add-correction-form">
+                    <div class="correction-inputs">
+                        <input type="text" id="wrongWordInput" placeholder="الكلمة الخاطئة (مثال: احسن)" dir="rtl">
+                        <i class="fas fa-arrow-left"></i>
+                        <input type="text" id="correctWordInput" placeholder="التصحيح (مثال: أحسن)" dir="rtl">
+                    </div>
+                    <button class="btn btn-primary" onclick="addCorrectionRule()">
+                        <i class="fas fa-plus"></i> إضافة القاعدة
+                    </button>
+                </div>
+                
+                <h4 style="margin: 1.5rem 0 1rem 0; color: #fff;"><i class="fas fa-list" style="color: #8b5cf6;"></i> قائمة قواعد التصحيح</h4>
+                <div class="correction-list" id="correctionList">
+                    <p style="text-align: center; color: #888; padding: 2rem;">لا توجد قواعد بعد</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="modal" id="descriptionModal">
         <div class="modal-content description-modal-content">
             <div class="modal-header">
@@ -1757,55 +2157,6 @@
         </div>
     </div>
     
-    <button class="chat-btn" onclick="openChat()" id="chatBtn">
-        <i class="fas fa-comments"></i>
-        <span class="notification-badge" id="chatBadge" style="display: none;">0</span>
-    </button>
-    
-    <div class="modal chat-modal" id="chatModal">
-        <div class="chat-container">
-            <div class="chat-header">
-                <div class="chat-header-info">
-                    <div class="chat-avatar"><i class="fas fa-users"></i></div>
-                    <div class="chat-header-text">
-                        <h3>دردشة فلك العالمي</h3>
-                        <p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p>
-                    </div>
-                </div>
-                <div class="chat-actions">
-                    <button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية">
-                        <i class="fas fa-phone"></i>
-                    </button>
-                    <button class="chat-action-btn" onclick="closeChat()" title="إغلاق">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chat-messages" id="chatMessages"></div>
-            <div class="chat-input-area">
-                <div class="recording-indicator" id="recordingIndicator">
-                    <span class="recording-dot"></span>
-                    <span>جاري التسجيل... <span id="recordingTime">0:00</span></span>
-                </div>
-                <div class="chat-input-container">
-                    <div class="chat-input-wrapper">
-                        <button class="chat-tool-btn" onclick="document.getElementById('imageInput').click()" title="إرسال صورة">
-                            <i class="fas fa-image"></i>
-                        </button>
-                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="sendImage(this)">
-                        <button class="chat-tool-btn" id="recordBtn" onclick="toggleRecording()" title="رسالة صوتية">
-                            <i class="fas fa-microphone"></i>
-                        </button>
-                        <textarea class="chat-input" id="messageInput" placeholder="اكتب رسالتك..." rows="1" onkeypress="handleKeyPress(event)"></textarea>
-                    </div>
-                    <button class="chat-send-btn" onclick="sendMessage()">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <div class="modal" id="nameModal">
         <div class="modal-content name-modal-content">
             <div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div>
@@ -1846,6 +2197,371 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
+        // ==================== نظام الذكاء الاصطناعي ====================
+        
+        // قواعد التصحيح الافتراضية (مخزنة محلياً)
+        let aiCorrectionRules = JSON.parse(localStorage.getItem('falak_ai_rules')) || {
+            'احسن': 'أحسن',
+            'ان': 'أن',
+            'انه': 'أنه',
+            'انها': 'أنها',
+            'الي': 'إلى',
+            'الى': 'إلى',
+            'فيه': 'فيه',
+            'هذا': 'هذا',
+            'هذه': 'هذه',
+            'لكن': 'لكن',
+            'لان': 'لأن',
+            'كذا': 'كذا',
+            'كده': 'كذا',
+            'يعني': 'يعني',
+            'يعنى': 'يعني',
+            'ايوه': 'أيوة',
+            'تمام': 'تمام',
+            'مش': 'ليس',
+            'مفيش': 'لا يوجد',
+            'عشان': 'لأجل',
+            'علشان': 'لأجل',
+            'كده': 'هكذا',
+            'كدا': 'هكذا',
+            'طبعا': 'طبعاً',
+            'اكيد': 'أكيد',
+            'اكثر': 'أكثر',
+            'اقل': 'أقل',
+            'اول': 'أول',
+            'اخر': 'آخر',
+            'شي': 'شيء',
+            'شى': 'شيء',
+            'نفسه': 'نفسه',
+            'نفسها': 'نفسها',
+            'كلها': 'كلها',
+            'كله': 'كله',
+            'كلهم': 'كلهم',
+            'كلنا': 'كلنا',
+            'كل': 'كل',
+            'بس': 'لكن',
+            'عادي': 'عادي',
+            'تمام': 'تمام',
+            'ممتاز': 'ممتاز',
+            'جيد': 'جيد',
+            'سيئ': 'سيئ',
+            'صعب': 'صعب',
+            'سهل': 'سهل',
+            'كبير': 'كبير',
+            'صغير': 'صغير',
+            'جديد': 'جديد',
+            'قديم': 'قديم',
+            'جميل': 'جميل',
+            'قبيح': 'قبيح',
+            'سريع': 'سريع',
+            'بطيء': 'بطيء',
+            'قوي': 'قوي',
+            'ضعيف': 'ضعيف',
+            'غالي': 'غالي',
+            'رخيص': 'رخيص',
+            'نظيف': 'نظيف',
+            'وسخ': 'وسخ',
+            'ساخن': 'ساخن',
+            'بارد': 'بارد',
+            'طويل': 'طويل',
+            'قصير': 'قصير',
+            'عريض': 'عريض',
+            'ضيق': 'ضيق',
+            'ثقيل': 'ثقيل',
+            'خفيف': 'خفيف',
+            'عالي': 'عالي',
+            'منخفض': 'منخفض',
+            'قريب': 'قريب',
+            'بعيد': 'بعيد',
+            'يمين': 'يمين',
+            'شمال': 'شمال',
+            'فوق': 'فوق',
+            'تحت': 'تحت',
+            'قدام': 'أمام',
+            'ورا': 'خلف',
+            'جنب': 'بجانب',
+            'بين': 'بين',
+            'فى': 'في',
+            'علي': 'على',
+            'عن': 'عن',
+            'من': 'من',
+            'الي': 'إلى',
+            'الى': 'إلى',
+            'في': 'في',
+            'على': 'على',
+            'مع': 'مع',
+            'بدون': 'بدون',
+            'قبل': 'قبل',
+            'بعد': 'بعد',
+            'اثناء': 'أثناء',
+            'خلال': 'خلال',
+            'حتى': 'حتى',
+            'لما': 'عندما',
+            'لما': 'عندما',
+            'لو': 'إذا',
+            'لو': 'إذا',
+            'علشان': 'لأجل',
+            'عشان': 'لأجل',
+            'عشان': 'لأجل',
+            'علشان': 'لأجل',
+            'كدا': 'هكذا',
+            'كده': 'هكذا',
+            'كده': 'هكذا',
+            'كدا': 'هكذا',
+            'كدة': 'هكذا',
+            'كده': 'هكذا',
+            'كدا': 'هكذا',
+            'كده': 'هكذا',
+            'كدة': 'هكذا',
+            'كده': 'هكذا',
+            'كدا': 'هكذا',
+            'كده': 'هكذا',
+            'كدة': 'هكذا',
+            'كده': 'هكذا',
+            'كدا': 'هكذا',
+            'كده': 'هكذا',
+            'كدة': 'هكذا'
+        };
+
+        // حالة الذكاء الاصطناعي
+        let aiEnabled = localStorage.getItem('falak_ai_enabled') === 'true';
+        let aiGlobalEnabled = false;
+        let aiUnsubscribe = null;
+
+        // تحميل قواعد الذكاء الاصطناعي من Firebase (للمشرف)
+        function loadAIRules() {
+            if (!isAdmin) return;
+            
+            db.collection('ai_rules').doc('corrections').get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        if (data.rules) {
+                            aiCorrectionRules = { ...aiCorrectionRules, ...data.rules };
+                            localStorage.setItem('falak_ai_rules', JSON.stringify(aiCorrectionRules));
+                        }
+                        aiGlobalEnabled = data.globalEnabled || false;
+                        document.getElementById('aiGlobalToggle').checked = aiGlobalEnabled;
+                        updateAIStats();
+                    }
+                })
+                .catch(err => console.error('Error loading AI rules:', err));
+        }
+
+        // حفظ قواعد الذكاء الاصطناعي في Firebase
+        function saveAIRules() {
+            if (!isAdmin) return;
+            
+            db.collection('ai_rules').doc('corrections').set({
+                rules: aiCorrectionRules,
+                globalEnabled: aiGlobalEnabled,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: currentUser || 'مشرف'
+            }).catch(err => console.error('Error saving AI rules:', err));
+        }
+
+        // تصحيح النص باستخدام القواعد
+        function correctText(text) {
+            if (!aiEnabled && !aiGlobalEnabled) return text;
+            
+            let corrected = text;
+            let hasCorrection = false;
+            const corrections = [];
+            
+            // تقسيم النص إلى كلمات
+            const words = text.split(/\s+/);
+            const correctedWords = words.map(word => {
+                // إزالة علامات الترقيم للمقارنة
+                const cleanWord = word.replace(/[.,!?;:،؟]/g, '');
+                const lowerWord = cleanWord.toLowerCase();
+                
+                if (aiCorrectionRules[cleanWord]) {
+                    hasCorrection = true;
+                    corrections.push({
+                        original: cleanWord,
+                        corrected: aiCorrectionRules[cleanWord]
+                    });
+                    // الحفاظ على علامات الترقيم
+                    const punctuation = word.match(/[.,!?;:،؟]+$/);
+                    return aiCorrectionRules[cleanWord] + (punctuation ? punctuation[0] : '');
+                }
+                return word;
+            });
+            
+            return {
+                text: correctedWords.join(' '),
+                hasCorrection: hasCorrection,
+                corrections: corrections
+            };
+        }
+
+        // تفعيل/تعطيل الذكاء الاصطناعي (للمستخدم)
+        function toggleAI() {
+            aiEnabled = !aiEnabled;
+            localStorage.setItem('falak_ai_enabled', aiEnabled.toString());
+            
+            const btn = document.getElementById('aiToggleBtn');
+            if (aiEnabled) {
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                showToast('✅ تم تفعيل الذكاء الاصطناعي');
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="fas fa-robot"></i>';
+                showToast('❌ تم تعطيل الذكاء الاصطناعي');
+            }
+        }
+
+        // تفعيل/تعطيل الذكاء الاصطناعي للجميع (للمشرف)
+        function toggleGlobalAI() {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                document.getElementById('aiGlobalToggle').checked = aiGlobalEnabled;
+                return;
+            }
+            
+            aiGlobalEnabled = document.getElementById('aiGlobalToggle').checked;
+            saveAIRules();
+            
+            if (aiGlobalEnabled) {
+                showToast('✅ تم تفعيل الذكاء الاصطناعي للجميع');
+            } else {
+                showToast('❌ تم تعطيل الذكاء الاصطناعي للجميع');
+            }
+        }
+
+        // فتح نافذة تعليم الذكاء الاصطناعي
+        function openTeachAIModal() {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+            
+            document.getElementById('teachAIModal').classList.add('active');
+            loadAIRules();
+            renderCorrectionList();
+        }
+
+        // إغلاق نافذة تعليم الذكاء الاصطناعي
+        function closeTeachAIModal() {
+            document.getElementById('teachAIModal').classList.remove('active');
+        }
+
+        // إضافة قاعدة تصحيح جديدة
+        function addCorrectionRule() {
+            const wrong = document.getElementById('wrongWordInput').value.trim();
+            const correct = document.getElementById('correctWordInput').value.trim();
+            
+            if (!wrong || !correct) {
+                showToast('⚠️ أدخل الكلمة الخاطئة والتصحيح');
+                return;
+            }
+            
+            if (wrong === correct) {
+                showToast('⚠️ الكلمتان متطابقتان');
+                return;
+            }
+            
+            aiCorrectionRules[wrong] = correct;
+            localStorage.setItem('falak_ai_rules', JSON.stringify(aiCorrectionRules));
+            saveAIRules();
+            
+            document.getElementById('wrongWordInput').value = '';
+            document.getElementById('correctWordInput').value = '';
+            
+            renderCorrectionList();
+            updateAIStats();
+            
+            SoundEffects.success();
+            showToast('✅ تم إضافة القاعدة بنجاح');
+        }
+
+        // حذف قاعدة تصحيح
+        function deleteCorrectionRule(wrong) {
+            if (!confirm('هل أنت متأكد من حذف هذه القاعدة؟')) return;
+            
+            delete aiCorrectionRules[wrong];
+            localStorage.setItem('falak_ai_rules', JSON.stringify(aiCorrectionRules));
+            saveAIRules();
+            
+            renderCorrectionList();
+            updateAIStats();
+            
+            SoundEffects.delete();
+            showToast('🗑️ تم حذف القاعدة');
+        }
+
+        // عرض قائمة القواعد
+        function renderCorrectionList() {
+            const list = document.getElementById('correctionList');
+            const rules = Object.entries(aiCorrectionRules);
+            
+            if (rules.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد قواعد بعد</p>';
+                return;
+            }
+            
+            list.innerHTML = rules.map(([wrong, correct]) => `
+                <div class="correction-item">
+                    <div class="correction-text">
+                        <span class="correction-wrong">${wrong}</span>
+                        <i class="fas fa-arrow-left correction-arrow"></i>
+                        <span class="correction-right">${correct}</span>
+                    </div>
+                    <button class="correction-delete-btn" onclick="deleteCorrectionRule('${wrong}')" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // تحديث إحصائيات الذكاء الاصطناعي
+        function updateAIStats() {
+            document.getElementById('aiRulesCount').textContent = Object.keys(aiCorrectionRules).length;
+            
+            // حساب عدد التصحيحات اليوم (محاكاة)
+            const today = new Date().toDateString();
+            const todayCorrections = localStorage.getItem('falak_ai_corrections_' + today) || '0';
+            document.getElementById('aiCorrectionsCount').textContent = todayCorrections;
+        }
+
+        // معالجة إدخال الرسالة
+        function onMessageInput() {
+            if (!aiEnabled && !aiGlobalEnabled) return;
+            
+            const input = document.getElementById('messageInput');
+            const text = input.value;
+            
+            if (text.length < 2) return;
+            
+            // عرض مؤشر التصحيح
+            const indicator = document.getElementById('aiCorrectionIndicator');
+            
+            // التصحيح التلقائي بعد توقف الكتابة
+            clearTimeout(window.aiCorrectionTimeout);
+            window.aiCorrectionTimeout = setTimeout(() => {
+                const result = correctText(text);
+                
+                if (result.hasCorrection) {
+                    indicator.classList.add('show');
+                    
+                    setTimeout(() => {
+                        input.value = result.text;
+                        indicator.classList.remove('show');
+                        
+                        // حفظ عدد التصحيحات
+                        const today = new Date().toDateString();
+                        const key = 'falak_ai_corrections_' + today;
+                        const count = parseInt(localStorage.getItem(key) || '0') + result.corrections.length;
+                        localStorage.setItem(key, count.toString());
+                        
+                    }, 500);
+                }
+            }, 1000);
+        }
+
+        // ==================== باقي الكود الأصلي ====================
+
         const SoundEffects = {
             audioContext: null,
             init() {
@@ -2030,8 +2746,24 @@
                 document.getElementById('logoutBtn').style.display = 'flex';
                 document.getElementById('maintenanceBtn').style.display = 'flex';
                 document.getElementById('setAdminsBtn').style.display = 'inline-flex';
+                document.getElementById('teachAiBtn').style.display = 'inline-flex';
+                document.getElementById('aiToggleBtn').style.display = 'flex';
                 updateStorageBar();
                 renderVideos();
+                loadAIRules();
+            } else {
+                document.getElementById('aiToggleBtn').style.display = 'none';
+            }
+        })();
+
+        // تهيئة زر الذكاء الاصطناعي
+        (function initAIButton() {
+            const btn = document.getElementById('aiToggleBtn');
+            if (aiEnabled) {
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+            } else {
+                btn.innerHTML = '<i class="fas fa-robot"></i>';
             }
         })();
 
@@ -2613,9 +3345,12 @@
                 document.getElementById('logoutBtn').style.display = 'flex';
                 document.getElementById('maintenanceBtn').style.display = 'flex';
                 document.getElementById('setAdminsBtn').style.display = 'inline-flex';
+                document.getElementById('teachAiBtn').style.display = 'inline-flex';
+                document.getElementById('aiToggleBtn').style.display = 'flex';
                 updateStorageBar();
                 closeLogin();
                 renderVideos();
+                loadAIRules();
                 if (document.getElementById('maintenanceOverlay').classList.contains('active')) {
                     document.getElementById('cancelMaintenanceBtn').classList.add('active');
                 }
@@ -2639,7 +3374,14 @@
             document.getElementById('logoutBtn').style.display = 'none';
             document.getElementById('maintenanceBtn').style.display = 'none';
             document.getElementById('setAdminsBtn').style.display = 'none';
+            document.getElementById('teachAiBtn').style.display = 'none';
             document.getElementById('cancelMaintenanceBtn').classList.remove('active');
+            document.getElementById('aiToggleBtn').style.display = 'none';
+            // تعطيل الذكاء الاصطناعي عند الخروج
+            aiEnabled = false;
+            localStorage.setItem('falak_ai_enabled', 'false');
+            document.getElementById('aiToggleBtn').classList.remove('active');
+            document.getElementById('aiToggleBtn').innerHTML = '<i class="fas fa-robot"></i>';
             renderVideos();
             SoundEffects.recordStop();
             showToast('👋 تم تسجيل الخروج، سجل دخولك مرة أخرى عند الحاجة');
@@ -3012,7 +3754,15 @@
                     html += '<button class="message-delete-btn ' + adminClass + '" onclick="deleteMessage(\'' + id + '\', \'' + msg.sender + '\')" title="' + title + '"><i class="fas fa-times"></i></button>';
                 }
                 
-                if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
+                if (msg.text) {
+                    // عرض شارة التصحيح إذا كانت الرسالة مصححة
+                    if (msg.corrected && msg.originalText) {
+                        html += '<div class="correction-badge" title="تم تصحيحها من: ' + msg.originalText + '">';
+                        html += '<i class="fas fa-magic"></i> مصحح';
+                        html += '</div>';
+                    }
+                    html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
+                }
                 if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
                 
                 if (msg.audioUrl) {
@@ -3130,15 +3880,37 @@
         
         function sendMessage() {
             const input = document.getElementById('messageInput');
-            const text = input.value.trim();
+            let text = input.value.trim();
             if (!text || !currentUser) return;
             
-            db.collection('messages').add({ 
+            // تصحيح النص قبل الإرسال
+            const originalText = text;
+            let corrected = false;
+            
+            if (aiEnabled || aiGlobalEnabled) {
+                const result = correctText(text);
+                if (result.hasCorrection) {
+                    text = result.text;
+                    corrected = true;
+                    
+                    // حفظ عدد التصحيحات
+                    const today = new Date().toDateString();
+                    const key = 'falak_ai_corrections_' + today;
+                    const count = parseInt(localStorage.getItem(key) || '0') + result.corrections.length;
+                    localStorage.setItem(key, count.toString());
+                }
+            }
+            
+            const messageData = { 
                 type: 'text', 
                 text: text, 
                 sender: currentUser, 
-                timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-            }).then(() => {
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                corrected: corrected,
+                originalText: corrected ? originalText : null
+            };
+            
+            db.collection('messages').add(messageData).then(() => {
                 SoundEffects.send();
                 input.value = '';
             }).catch(() => {
@@ -3339,6 +4111,7 @@
                 else if (e.target.id === 'loginModal') closeLogin();
                 else if (e.target.id === 'adminPasswordModal') closeAdminPasswordModal();
                 else if (e.target.id === 'setAdminsModal') closeSetAdminsModal();
+                else if (e.target.id === 'teachAIModal') closeTeachAIModal();
                 else if (e.target.id === 'descriptionModal') closeDescriptionModal();
                 else if (e.target.id === 'editVideoModal') closeEditVideoModal();
                 else if (e.target.id === 'chatModal') closeChat();
@@ -3353,6 +4126,7 @@
                 closeLogin();
                 closeAdminPasswordModal();
                 closeSetAdminsModal();
+                closeTeachAIModal();
                 closeDescriptionModal();
                 closeEditVideoModal();
                 closeChat();
