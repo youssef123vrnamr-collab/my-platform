@@ -1335,6 +1335,125 @@
             .message-delete-btn { display: flex; }
             .voice-message { min-width: 200px; }
         }
+        
+        /* ===== نظام التحديث (وضع الصيانة) ===== */
+        .maintenance-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(15px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            flex-direction: column;
+            text-align: center;
+            padding: 2rem;
+        }
+        .maintenance-overlay.active { display: flex; animation: fadeIn 0.5s; }
+        .maintenance-icon {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 60px rgba(99,102,241,0.4);
+            animation: glow 3s infinite;
+        }
+        .maintenance-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        .maintenance-message {
+            font-size: 1.2rem;
+            color: #ccc;
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
+        .maintenance-timer {
+            background: rgba(99,102,241,0.1);
+            border: 2px solid #6366f1;
+            border-radius: 60px;
+            padding: 1.5rem 3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .timer-item {
+            text-align: center;
+        }
+        .timer-value {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #6366f1;
+            line-height: 1;
+            font-family: monospace;
+        }
+        .timer-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 0.25rem;
+        }
+        .maintenance-cancel {
+            margin-top: 3rem;
+            background: rgba(239,68,68,0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 1rem 3rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .maintenance-cancel:hover {
+            background: rgba(239,68,68,0.4);
+            transform: scale(1.05);
+        }
+        .maintenance-cancel.active { display: inline-flex; }
+        .maintenance-datetime {
+            margin-top: 1.5rem;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .maintenance-title { font-size: 1.8rem; }
+            .maintenance-timer { padding: 1rem 1.5rem; gap: 1rem; }
+            .timer-value { font-size: 2rem; }
+            .maintenance-icon { width: 100px; height: 100px; font-size: 3rem; }
+        }
+        
+        /* زر التحديث الخاص بالمشرف */
+        .maintenance-btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .maintenance-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(245,158,11,0.4); }
     </style>
 </head>
 <body>
@@ -1363,8 +1482,36 @@
             <button class="btn btn-danger" id="logoutBtn" onclick="logout()" style="display: none;">
                 <i class="fas fa-sign-out-alt"></i> خروج
             </button>
+            <button class="maintenance-btn" id="maintenanceBtn" onclick="openMaintenanceModal()" style="display: none;" title="تحديث المحتوى">
+                <i class="fas fa-tools"></i> تحديث المحتوى
+            </button>
         </div>
     </nav>
+    
+    <!-- شاشة الصيانة (تظهر للجميع) -->
+    <div class="maintenance-overlay" id="maintenanceOverlay">
+        <div class="maintenance-icon"><i class="fas fa-tools"></i></div>
+        <div class="maintenance-title">تحديث المحتوى</div>
+        <div class="maintenance-message" id="maintenanceMessage">جاري تحديث المنصة، يرجى الانتظار قليلاً...</div>
+        <div class="maintenance-timer" id="maintenanceTimer">
+            <div class="timer-item">
+                <div class="timer-value" id="timerHours">00</div>
+                <div class="timer-label">ساعة</div>
+            </div>
+            <div class="timer-item">
+                <div class="timer-value" id="timerMinutes">00</div>
+                <div class="timer-label">دقيقة</div>
+            </div>
+            <div class="timer-item">
+                <div class="timer-value" id="timerSeconds">00</div>
+                <div class="timer-label">ثانية</div>
+            </div>
+        </div>
+        <div class="maintenance-datetime" id="maintenanceEndTime"></div>
+        <button class="maintenance-cancel" id="cancelMaintenanceBtn" onclick="cancelMaintenance()">
+            <i class="fas fa-times"></i> إلغاء التحديث
+        </button>
+    </div>
     
     <div class="container">
         <div class="hero">
@@ -1460,6 +1607,7 @@
         </div>
     </div>
     
+    <!-- مودال تشغيل الفيديو -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1475,6 +1623,7 @@
         </div>
     </div>
     
+    <!-- مودال دخول المشرف -->
     <div class="modal" id="loginModal" style="background: rgba(0,0,0,0.95);">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
@@ -1495,6 +1644,7 @@
         </div>
     </div>
     
+    <!-- مودال إدخال تفاصيل الفيديو بعد الرفع -->
     <div class="modal" id="descriptionModal">
         <div class="modal-content description-modal-content">
             <div class="modal-header">
@@ -1517,7 +1667,7 @@
         </div>
     </div>
     
-    <!-- ===== المودال الجديد لتعديل العنوان والوصف معاً ===== -->
+    <!-- مودال تعديل الفيديو -->
     <div class="modal" id="editVideoModal">
         <div class="modal-content description-modal-content">
             <div class="modal-header">
@@ -1535,6 +1685,30 @@
                 </div>
                 <button class="btn btn-success" style="width: 100%;" onclick="saveVideoEdit()">
                     <i class="fas fa-save"></i> حفظ التعديلات
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال تحديد وقت التحديث (للمشرف) -->
+    <div class="modal" id="maintenanceModal">
+        <div class="modal-content description-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-tools"></i> تحديث المحتوى</h3>
+                <button class="modal-close" onclick="closeMaintenanceModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <p style="margin-bottom: 1.5rem; color: #aaa;">حدد المدة التي تريد تعطيل المنصة خلالها للتحديث. سيظهر للزوار عداد تنازلي.</p>
+                <div class="form-group">
+                    <label>المدة (بالدقائق)</label>
+                    <input type="number" id="maintenanceMinutes" min="1" max="60" value="5" style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem;">
+                </div>
+                <div class="form-group">
+                    <label>رسالة التحديث (اختياري)</label>
+                    <textarea id="maintenanceMessageInput" placeholder="اكتب رسالة للزوار..." style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-family: 'Cairo'; font-size: 1.1rem; min-height: 100px;"></textarea>
+                </div>
+                <button class="btn btn-warning" style="width: 100%;" onclick="startMaintenance()">
+                    <i class="fas fa-play"></i> بدء التحديث
                 </button>
             </div>
         </div>
@@ -1591,7 +1765,7 @@
         </div>
     </div>
     
-    <!-- مودال الاسم -->
+    <!-- مودال الاسم للدردشة -->
     <div class="modal" id="nameModal">
         <div class="modal-content name-modal-content">
             <div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div>
@@ -1634,7 +1808,7 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ===== نظام التأثيرات الصوتية =====
+        // ===== التأثيرات الصوتية =====
         const SoundEffects = {
             audioContext: null,
             init() {
@@ -1642,8 +1816,6 @@
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
             },
-            
-            // صوت إرسال رسالة
             send() {
                 this.init();
                 const osc = this.audioContext.createOscillator();
@@ -1657,8 +1829,6 @@
                 osc.start(this.audioContext.currentTime);
                 osc.stop(this.audioContext.currentTime + 0.1);
             },
-            
-            // صوت استقبال رسالة
             receive() {
                 this.init();
                 const osc = this.audioContext.createOscillator();
@@ -1672,8 +1842,6 @@
                 osc.start(this.audioContext.currentTime);
                 osc.stop(this.audioContext.currentTime + 0.15);
             },
-            
-            // صوت حذف
             delete() {
                 this.init();
                 const osc = this.audioContext.createOscillator();
@@ -1687,24 +1855,20 @@
                 osc.start(this.audioContext.currentTime);
                 osc.stop(this.audioContext.currentTime + 0.2);
             },
-            
-            // صوت دخول/انضمام
             join() {
                 this.init();
                 const osc = this.audioContext.createOscillator();
                 const gain = this.audioContext.createGain();
                 osc.connect(gain);
                 gain.connect(this.audioContext.destination);
-                osc.frequency.setValueAtTime(523.25, this.audioContext.currentTime); // C5
-                osc.frequency.setValueAtTime(659.25, this.audioContext.currentTime + 0.1); // E5
-                osc.frequency.setValueAtTime(783.99, this.audioContext.currentTime + 0.2); // G5
+                osc.frequency.setValueAtTime(523.25, this.audioContext.currentTime);
+                osc.frequency.setValueAtTime(659.25, this.audioContext.currentTime + 0.1);
+                osc.frequency.setValueAtTime(783.99, this.audioContext.currentTime + 0.2);
                 gain.gain.setValueAtTime(0.2, this.audioContext.currentTime);
                 gain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.4);
                 osc.start(this.audioContext.currentTime);
                 osc.stop(this.audioContext.currentTime + 0.4);
             },
-            
-            // صوت خطأ/تحذير
             error() {
                 this.init();
                 const osc = this.audioContext.createOscillator();
@@ -1719,11 +1883,9 @@
                 osc.start(this.audioContext.currentTime);
                 osc.stop(this.audioContext.currentTime + 0.2);
             },
-            
-            // صوت نجاح
             success() {
                 this.init();
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                const notes = [523.25, 659.25, 783.99, 1046.50];
                 notes.forEach((freq, i) => {
                     const osc = this.audioContext.createOscillator();
                     const gain = this.audioContext.createGain();
@@ -1737,8 +1899,6 @@
                     osc.stop(this.audioContext.currentTime + i * 0.05 + 0.15);
                 });
             },
-            
-            // صوت بدء التسجيل
             recordStart() {
                 this.init();
                 const osc = this.audioContext.createOscillator();
@@ -1751,8 +1911,6 @@
                 osc.start(this.audioContext.currentTime);
                 osc.stop(this.audioContext.currentTime + 0.1);
             },
-            
-            // صوت إيقاف التسجيل
             recordStop() {
                 this.init();
                 const osc = this.audioContext.createOscillator();
@@ -1772,12 +1930,14 @@
             if (loader) loader.classList.add('hidden');
         }, 1000);
 
+        // ===== إعدادات Cloudinary =====
         const CLOUDINARY_CONFIG = {
             cloudName: 'ds4wy90er',
             uploadPreset: 'falak_upload',
             apiKey: '462193620740'
         };
         
+        // ===== إعدادات Firebase =====
         const firebaseConfig = {
             apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
             authDomain: "planning-with-ai-390af.firebaseapp.com",
@@ -1803,10 +1963,162 @@
         let uploadStartTime = 0;
         let lastUploadedBytes = 0;
         let lastTime = 0;
-        let currentEditVideoId = null; // لتخزين id الفيديو الجاري تعديله
+        let currentEditVideoId = null;
+        // متغيرات نظام الصيانة
+        let maintenanceUnsubscribe = null;
+        let maintenanceTimerInterval = null;
+        let maintenanceEndTime = null;
 
+        // ===== استماع لحالة الصيانة =====
+        function listenToMaintenance() {
+            maintenanceUnsubscribe = db.collection('system').doc('maintenance')
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const status = data.status; // 'active' أو 'maintenance'
+                        if (status === 'maintenance') {
+                            maintenanceEndTime = data.endTime ? data.endTime.toDate() : null;
+                            const message = data.message || 'جاري تحديث المنصة، يرجى الانتظار قليلاً...';
+                            showMaintenanceScreen(message, maintenanceEndTime);
+                        } else {
+                            hideMaintenanceScreen();
+                        }
+                    } else {
+                        // إذا لم يكن المستند موجوداً، نعتبر الحالة active
+                        hideMaintenanceScreen();
+                    }
+                }, error => {
+                    console.error('Error listening to maintenance:', error);
+                });
+        }
+
+        function showMaintenanceScreen(message, endTime) {
+            const overlay = document.getElementById('maintenanceOverlay');
+            document.getElementById('maintenanceMessage').textContent = message;
+            overlay.classList.add('active');
+
+            // إظهار زر الإلغاء للمشرف فقط
+            const cancelBtn = document.getElementById('cancelMaintenanceBtn');
+            if (isAdmin) {
+                cancelBtn.classList.add('active');
+            } else {
+                cancelBtn.classList.remove('active');
+            }
+
+            // بدء تحديث العداد كل ثانية
+            if (maintenanceTimerInterval) clearInterval(maintenanceTimerInterval);
+            maintenanceTimerInterval = setInterval(() => {
+                if (!endTime) return;
+                const now = new Date().getTime();
+                const distance = endTime.getTime() - now;
+                if (distance <= 0) {
+                    // انتهى الوقت
+                    clearInterval(maintenanceTimerInterval);
+                    // نرسل طلب لإنهاء الصيانة (لكن نتركها تنتهي تلقائياً)
+                    // المستمع سوف يحدث الحالة عندما نغيرها في Firestore
+                    // يمكننا هنا إرسال تحديث إلى Firestore (لكن الأفضل أن نترك العداد ينتهي ويقوم النظام بإنهائها)
+                    // سنقوم بإنشاء دالة لإنهاء الصيانة من جهة الخادم عند انتهاء الوقت
+                    autoEndMaintenance();
+                    return;
+                }
+                updateTimerDisplay(distance);
+            }, 1000);
+
+            // عرض وقت الانتهاء
+            if (endTime) {
+                const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                document.getElementById('maintenanceEndTime').textContent = 'ينتهي عند: ' + endTime.toLocaleTimeString('ar-EG', options);
+            }
+        }
+
+        function autoEndMaintenance() {
+            // يتم استدعاؤها عندما يصل العداد إلى الصفر
+            // نرسل تحديث إلى Firestore لإنهاء الصيانة
+            db.collection('system').doc('maintenance').update({
+                status: 'active'
+            }).catch(err => console.error('Error auto ending maintenance:', err));
+        }
+
+        function hideMaintenanceScreen() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.classList.remove('active');
+            if (maintenanceTimerInterval) {
+                clearInterval(maintenanceTimerInterval);
+                maintenanceTimerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay(distance) {
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('timerHours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('timerMinutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('timerSeconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        // دوال الصيانة للمشرف
+        function openMaintenanceModal() {
+            if (!isAdmin) return;
+            document.getElementById('maintenanceModal').classList.add('active');
+            document.getElementById('maintenanceMinutes').value = 5;
+            document.getElementById('maintenanceMessageInput').value = '';
+        }
+
+        function closeMaintenanceModal() {
+            document.getElementById('maintenanceModal').classList.remove('active');
+        }
+
+        function startMaintenance() {
+            const minutes = parseInt(document.getElementById('maintenanceMinutes').value) || 5;
+            if (minutes < 1 || minutes > 60) {
+                showToast('❌ المدة يجب أن تكون بين 1 و 60 دقيقة');
+                return;
+            }
+            const message = document.getElementById('maintenanceMessageInput').value.trim() || 'جاري تحديث المحتوى، يرجى الانتظار...';
+            
+            const endTime = new Date(Date.now() + minutes * 60 * 1000);
+            
+            db.collection('system').doc('maintenance').set({
+                status: 'maintenance',
+                endTime: firebase.firestore.Timestamp.fromDate(endTime),
+                message: message,
+                startedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                SoundEffects.success();
+                showToast('✅ تم بدء التحديث، سيظهر للزوار العداد');
+                closeMaintenanceModal();
+            }).catch(err => {
+                SoundEffects.error();
+                showToast('❌ فشل بدء التحديث');
+                console.error(err);
+            });
+        }
+
+        function cancelMaintenance() {
+            if (!isAdmin) {
+                showToast('❌ المشرف فقط يستطيع إلغاء التحديث');
+                return;
+            }
+            if (!confirm('هل أنت متأكد من إلغاء التحديث؟')) return;
+            
+            db.collection('system').doc('maintenance').update({
+                status: 'active'
+            }).then(() => {
+                SoundEffects.success();
+                showToast('✅ تم إلغاء التحديث');
+            }).catch(err => {
+                SoundEffects.error();
+                showToast('❌ فشل إلغاء التحديث');
+                console.error(err);
+            });
+        }
+
+        // ===== دوال إدارة الفيديوهات =====
         document.addEventListener('DOMContentLoaded', function() {
             listenToVideos();
+            listenToMaintenance(); // استماع لحالة الصيانة
             initCloudinaryWidget();
             checkUrlForShare();
             setTimeout(() => {
@@ -2044,7 +2356,7 @@
             pendingVideoInfo = null;
         }
 
-        // ====== دوال تعديل الفيديو (العنوان والوصف معاً) ======
+        // دوال تعديل الفيديو
         function editVideoTitle(videoId) {
             if (!isAdmin) {
                 SoundEffects.error();
@@ -2058,7 +2370,6 @@
             document.getElementById('editVideoTitleInput').value = video.title || '';
             document.getElementById('editVideoDescriptionInput').value = video.description || '';
 
-            // تحديث عداد الأحرف
             const descLength = (video.description || '').length;
             document.getElementById('editDescCharCount').textContent = `(${descLength} / 5000 حرف)`;
 
@@ -2123,7 +2434,6 @@
                     if (match && match[1]) { bgSource = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + match[1] + '.gif'; isGif = true; }
                 }
                 
-                // أزرار المشرف: حذف وتعديل (زر واحد يفتح تعديل العنوان والوصف)
                 const adminButtons = isAdmin ? `
                     <button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')">
                         <i class="fas fa-trash"></i> حذف
@@ -2238,11 +2548,16 @@
                 document.getElementById('uploadZone').classList.add('active');
                 document.getElementById('adminBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'flex';
+                document.getElementById('maintenanceBtn').style.display = 'flex'; // إظهار زر التحديث
                 updateStorageBar();
                 closeLogin();
                 renderVideos();
+                // إظهار زر الإلغاء في شاشة الصيانة إذا كانت نشطة
+                if (document.getElementById('maintenanceOverlay').classList.contains('active')) {
+                    document.getElementById('cancelMaintenanceBtn').classList.add('active');
+                }
                 SoundEffects.success();
-                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن تعديل عناوين الفيديوهات');
+                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن تحديث المحتوى');
             } else {
                 SoundEffects.error();
                 showToast('❌ كلمة المرور خاطئة');
@@ -2257,6 +2572,8 @@
             document.getElementById('storageBar').style.display = 'none';
             document.getElementById('adminBtn').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('maintenanceBtn').style.display = 'none';
+            document.getElementById('cancelMaintenanceBtn').classList.remove('active');
             renderVideos();
             showToast('👋 تم الخروج');
         }
@@ -2350,7 +2667,7 @@
             }
         }
 
-        // ===== نظام العد الحقيقي للمتصلين =====
+        // ===== أنظمة الدردشة والـ Presence =====
         let currentUser = null;
         let chatUnsubscribe = null;
         let mediaRecorder = null;
@@ -2364,7 +2681,7 @@
         let currentAudio = null;
         let currentAudioBtn = null;
         
-        // ===== نظام الـ Presence الحقيقي =====
+        // نظام الـ Presence
         let userPresenceRef = null;
         let onlineUsersRef = db.collection('online_users');
         let onlineUnsubscribe = null;
@@ -2373,7 +2690,6 @@
         function initPresenceSystem() {
             if (!currentUser) return;
             
-            // إنشاء معرف فريد للمستخدم (يتم تخزينه في localStorage)
             let userId = localStorage.getItem('falak_user_id');
             if (!userId) {
                 userId = generateUserId();
@@ -2382,14 +2698,12 @@
             
             userPresenceRef = onlineUsersRef.doc(userId);
             
-            // تحديث الحالة: متصل - (تم إضافة هذا السطر للتحديث الفوري)
             userPresenceRef.set({
                 name: currentUser,
                 joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastSeen: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(err => console.error('Error setting presence:', err));
             
-            // تحديث كل 20 ثانية إن المستخدم لسه موجود
             presenceInterval = setInterval(() => {
                 if (userPresenceRef) {
                     userPresenceRef.update({
@@ -2398,7 +2712,6 @@
                 }
             }, 20000);
             
-            // استمع للتغييرات في عدد المتصلين
             listenToOnlineUsers();
         }
 
@@ -2409,31 +2722,23 @@
         function listenToOnlineUsers() {
             if (onlineUnsubscribe) onlineUnsubscribe();
             
-            // الاستماع للمستخدمين اللي اتحدثوا آخر 2 دقيقة
             onlineUnsubscribe = onlineUsersRef
                 .onSnapshot(snapshot => {
-                    const now = Date.now(); // وقت العميل بالمللي ثانية
-                    const twoMinutesAgo = now - 2 * 60 * 1000; // آخر دقيقتين
+                    const now = Date.now();
+                    const twoMinutesAgo = now - 2 * 60 * 1000;
 
                     const activeUsers = [];
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         if (data.lastSeen) {
                             let lastSeenTime;
-
-                            // محاولة استخراج الوقت بعدة صيغ محتملة
                             if (typeof data.lastSeen.toDate === 'function') {
-                                // إذا كان كائن Timestamp من Firebase
                                 lastSeenTime = data.lastSeen.toDate().getTime();
                             } else if (data.lastSeen.seconds) {
-                                // إذا كان كائن {seconds, nanoseconds}
                                 lastSeenTime = data.lastSeen.seconds * 1000;
                             } else {
-                                // إذا كان نصاً أو تاريخاً عادياً
                                 lastSeenTime = new Date(data.lastSeen).getTime();
                             }
-
-                            // مقارنة صحيحة مع تجنب NaN
                             if (!isNaN(lastSeenTime) && lastSeenTime > twoMinutesAgo) {
                                 activeUsers.push(data);
                             }
@@ -2442,8 +2747,6 @@
 
                     const count = activeUsers.length;
                     let onlineText;
-
-                    // توليد النص المناسب بناءً على العدد
                     if (count === 0) onlineText = 'لا أحد متصل';
                     else if (count === 1) onlineText = 'متصل واحد';
                     else if (count === 2) onlineText = 'متصلان';
@@ -2458,26 +2761,23 @@
         }
 
         function removePresence() {
-            // إيقاف التحديث الدوري
             if (presenceInterval) {
                 clearInterval(presenceInterval);
                 presenceInterval = null;
             }
             
-            // حذف المستخدم من قائمة المتصلين
             if (userPresenceRef) {
                 userPresenceRef.delete().catch(err => console.error('Error removing presence:', err));
                 userPresenceRef = null;
             }
             
-            // إيقاف الاستماع للتغييرات
             if (onlineUnsubscribe) {
                 onlineUnsubscribe();
                 onlineUnsubscribe = null;
             }
         }
 
-        // نظف المستخدمين القدامى (cleanup) كل دقيقة - (تم تعديل الاستعلام)
+        // تنظيف المستخدمين غير النشطين كل دقيقة
         setInterval(() => {
             const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
             const threeMinutesAgoTimestamp = firebase.firestore.Timestamp.fromDate(threeMinutesAgo);
@@ -2495,23 +2795,19 @@
                 .catch(err => console.error('Cleanup error:', err));
         }, 60000);
 
-        // ===== أحداث الصفحة =====
-        // لما يقفل الصفحة أو يغير التاب
+        // أحداث الصفحة
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                // المستخدم غادر الصفحة مؤقتاً
                 if (userPresenceRef) {
                     userPresenceRef.delete().catch(() => {});
                 }
             } else {
-                // المستخدم رجع للصفحة
                 if (currentUser && !userPresenceRef) {
                     initPresenceSystem();
                 }
             }
         });
 
-        // لما يقفل الصفحة نهائياً
         window.addEventListener('beforeunload', () => {
             removePresence();
         });
@@ -2535,7 +2831,6 @@
                 unreadMessages = 0;
                 loadMessages();
                 scrollToBottom();
-                // ===== بدء نظام الـ Presence =====
                 initPresenceSystem();
             }
         }
@@ -2553,7 +2848,6 @@
             document.getElementById('chatModal').classList.add('active');
             SoundEffects.join();
             
-            // ===== بدء نظام العد الحقيقي =====
             initPresenceSystem();
             
             sendSystemMessage(name + ' انضم للدردشة');
@@ -2563,13 +2857,11 @@
         function closeChat() {
             document.getElementById('chatModal').classList.remove('active');
             
-            // إيقاف أي صوت قيد التشغيل
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
             }
             
-            // ===== إزالة المستخدم من قائمة المتصلين =====
             removePresence();
             
             if (chatUnsubscribe) { 
@@ -2607,7 +2899,6 @@
                 let html = '';
                 if (!isSent) html += '<div class="message-sender">' + msg.sender + '</div>';
                 
-                // ===== أزرار الحذف =====
                 const canDelete = isAdmin || (msg.sender === currentUser);
                 if (canDelete) {
                     const adminClass = isAdmin ? 'admin' : '';
@@ -2618,7 +2909,6 @@
                 if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
                 if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
                 
-                // ===== رسالة صوتية =====
                 if (msg.audioUrl) {
                     html += '<div class="voice-message" id="voice-' + id + '">';
                     html += '<button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + msg.audioUrl + '\', \'' + id + '\')">';
@@ -2942,9 +3232,10 @@
                 if (e.target.id === 'videoModal') closeModal();
                 else if (e.target.id === 'loginModal') closeLogin();
                 else if (e.target.id === 'descriptionModal') closeDescriptionModal();
-                else if (e.target.id === 'editVideoModal') closeEditVideoModal(); // المودال الجديد
+                else if (e.target.id === 'editVideoModal') closeEditVideoModal();
                 else if (e.target.id === 'chatModal') closeChat();
                 else if (e.target.id === 'imageViewer') closeImageViewer();
+                else if (e.target.id === 'maintenanceModal') closeMaintenanceModal();
             }
         };
 
@@ -2953,10 +3244,11 @@
                 closeModal();
                 closeLogin();
                 closeDescriptionModal();
-                closeEditVideoModal(); // المودال الجديد
+                closeEditVideoModal();
                 closeChat();
                 if (document.getElementById('callModal').classList.contains('active')) endCall();
                 closeImageViewer();
+                closeMaintenanceModal();
             }
         });
     </script>
