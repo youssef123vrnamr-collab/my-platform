@@ -1635,75 +1635,6 @@
                 font-size: 1.3rem;
             }
         }
-
-        /* أنماط تحليل الأسئلة الذكي */
-        .ai-analysis-box {
-            background: rgba(6, 182, 212, 0.1);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 0.5rem;
-            font-size: 0.85rem;
-            color: #06b6d4;
-        }
-
-        .ai-analysis-box strong {
-            color: #fff;
-        }
-
-        .inference-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            padding: 0.2rem 0.6rem;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .context-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            background: rgba(99, 102, 241, 0.2);
-            color: #6366f1;
-            padding: 0.2rem 0.6rem;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #888;
-            font-size: 0.9rem;
-            padding: 1rem;
-        }
-
-        .typing-dots {
-            display: flex;
-            gap: 0.3rem;
-        }
-
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            background: #06b6d4;
-            border-radius: 50%;
-            animation: typingBounce 1.4s infinite ease-in-out both;
-        }
-
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes typingBounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
     </style>
 </head>
 <body>
@@ -2172,446 +2103,6 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ==================== نظام تحليل الأسئلة الذكي ====================
-        
-        class SmartQuestionAnalyzer {
-            constructor(maxHistory = 20) {
-                this.history = [];
-                this.maxHistory = maxHistory;
-                this.currentTopic = null;
-                this.topicStack = [];
-                
-                // قاموس التصحيح الإملائي
-                this.spellingCorrections = {
-                    'عيز': 'عايز', 'عيزك': 'عايزك', 'عيزة': 'عايزة', 'عيزها': 'عايزها',
-                    'اقول': 'أقول', 'الي': 'اللي', 'الى': 'اللي', 'الىا': 'إلى',
-                    'فهم': 'يفهم', 'يفهمو': 'يفهموا', 'يعرفو': 'يعرفوا', 'يعرف': 'يعرف',
-                    'ربط': 'يربط', 'ربطها': 'يربطها', 'ربطهم': 'يربطهم',
-                    'اساله': 'أسئلة', 'اسئله': 'أسئلة', 'الاساله': 'الأسئلة', 'اسئلة': 'أسئلة',
-                    'سوائل': 'أسئلة', 'سوال': 'سؤال', 'السوال': 'السؤال', 'اسؤال': 'سؤال',
-                    'فضؤ': 'فضل', 'فضلا': 'فضل', 'فضلو': 'فضلوا',
-                    'صناعي': 'الصناعي', 'الزكاء': 'الذكاء', 'زكاء': 'ذكاء',
-                    'منصه': 'منصة', 'منصه دي': 'المنصة دي', 'منصات': 'منصات',
-                    'يقصر': 'يحلل', 'يكسر': 'يحلل', 'يحللها': 'يحللها',
-                    'بعلم': 'بأعلم', 'كون': 'أكون', 'هالو': 'له', 'هالوا': 'له',
-                    'كيفيه': 'كيفية', 'طريقه': 'طريقة', 'طريقته': 'طريقته',
-                    'شرح': 'شرح', 'اشرح': 'اشرح', 'اشرحلي': 'اشرح لي',
-                    'مش فاهم': 'لا أفهم', 'مش عارف': 'لا أعرف', 'مش فاهمه': 'لا أفهم',
-                    'يعني': 'يعني', 'يعنى': 'يعني', 'اى': 'أي', 'ايه': 'ما',
-                    'ازاي': 'كيف', 'ازاى': 'كيف', 'إزاي': 'كيف',
-                    'فين': 'أين', 'فينه': 'أين', 'فينها': 'أين',
-                    'امتى': 'متى', 'امتة': 'متى', 'امتا': 'متى',
-                    'ليه': 'لماذا', 'لي': 'لماذا', 'ليهم': 'لماذا',
-                    'كام': 'كم', 'قد ايه': 'كم', 'قد إيه': 'كم',
-                    'دول': 'هؤلاء', 'دي': 'هذه', 'دا': 'هذا', 'ده': 'هذا',
-                    'كده': 'هكذا', 'كدا': 'هكذا',
-                    'عشان': 'لأن', 'علشان': 'لأن', 'عش': 'لأن',
-                    'ممكن': 'يمكن', 'ممكنة': 'يمكن',
-                    'برضه': 'أيضاً', 'بردو': 'أيضاً', 'كمان': 'أيضاً',
-                    'شويه': 'قليلاً', 'شوية': 'قليلاً',
-                    'كتير': 'كثيراً', 'كثير': 'كثيراً',
-                    'قوي': 'جداً', 'جدا': 'جداً',
-                    'دلوقتي': 'الآن', 'دلوقتى': 'الآن', 'حاليا': 'حالياً',
-                    'اول': 'أول', 'اولاً': 'أولاً', 'أول': 'أول',
-                    'تاني': 'ثانٍ', 'ثاني': 'ثانٍ', 'ثانيا': 'ثانياً',
-                    'اخر': 'آخر', 'أخر': 'آخر', 'الاخر': 'الآخر',
-                    'كله': 'كل', 'كلها': 'كل', 'كلو': 'كل',
-                    'بعض': 'بعض', 'بعضها': 'بعضها', 'بعضهم': 'بعضهم',
-                    'غير': 'غير', 'غيره': 'غيره', 'غيرها': 'غيرها',
-                    'زي': 'مثل', 'زيه': 'مثله', 'زيها': 'مثلها',
-                    'قبل': 'قبل', 'قبله': 'قبله', 'قبلها': 'قبلها',
-                    'بعد': 'بعد', 'بعده': 'بعده', 'بعدها': 'بعدها',
-                    'معاه': 'معه', 'معاها': 'معها', 'معاهم': 'معهم',
-                    'عليه': 'عليه', 'عليها': 'عليها', 'عليهم': 'عليهم',
-                    'فيه': 'فيه', 'فيها': 'فيها', 'فيهم': 'فيهم',
-                    'منه': 'منه', 'منها': 'منها', 'منهم': 'منهم',
-                    'له': 'له', 'لها': 'لها', 'لهم': 'لهم',
-                    'علشانه': 'من أجله', 'علشانها': 'من أجلها',
-                };
-                
-                // المرادفات
-                this.synonyms = {
-                    'يعمل': ['يشتغل', 'يفعل', 'يقوم', 'ينفذ', 'يؤدي'],
-                    'شرح': ['توضيح', 'تفسير', 'بيان', 'تفصيل', 'تبيين'],
-                    'فهم': ['استيعاب', 'إدراك', 'تأمل', 'إحاطة', 'إلمام'],
-                    'حل': ['معالجة', 'معالجه', 'حلول', 'حلها', 'يحل'],
-                    'مشكلة': ['مشكله', 'مشاكل', 'مشكلات', 'عقبة', 'عقبات', 'صعوبة'],
-                    'طريقة': ['طريقه', 'أساليب', 'اسلوب', 'نهج', 'منهج', 'كيفية'],
-                    'مثال': ['مثال', 'أمثلة', 'امثلة', 'نموذج', 'نماذج', 'مثالاً'],
-                    'فكرة': ['فكره', 'أفكار', 'افكار', 'مفهوم', 'مفاهيم', 'فكر'],
-                };
-                
-                // أنماط النية
-                this.intentPatterns = {
-                    'explanation': ['اشرح', 'فسر', 'وضح', 'بين', 'عايز أفهم', 'عايز اعرف', 'إزاي', 'ازاي', 'كيف', 'كيفية', 'ازاي بي', 'كيف ي'],
-                    'comparison': ['قارن', 'فرق', 'الفرق بين', 'الاختلاف بين', 'أحسن من', 'أفضل من', 'أوحش من', 'أسوأ من', 'زي', 'مثل', 'شبه', 'نفس'],
-                    'information': ['إيه', 'ايه', 'مين', 'فين', 'امتى', 'كم', 'قد ايه', 'عايز أعرف', 'قولي', 'حدثني عن', 'اخبرني عن'],
-                    'action': ['اعمل', 'عمل', 'حل', 'اكتب', 'سوي', 'نفذ', 'عملي', 'ساعدني', 'ساعدني في', 'عايزك ت', 'عايز'],
-                    'clarification': ['يعني', 'قصدك', 'تقصد', 'مش فاهم', 'مش فاهمة', 'اوضح', 'وضح أكتر', 'أكثر', 'تفصيل'],
-                };
-                
-                // كلمات الربط
-                this.contextLinkers = {
-                    pronouns: ['هو', 'هي', 'هم', 'هؤلاء', 'هذا', 'هذه', 'ذلك', 'تلك', 'دا', 'دي', 'دول', 'ده', 'ديه'],
-                    demonstratives: ['فيها', 'عليها', 'لها', 'منها', 'عنها', 'عليه', 'فيه', 'منه', 'له', 'عنه', 'فيهم', 'عليهم', 'لهم', 'منهم'],
-                    adverbs: ['كمان', 'برضه', 'أيضاً', 'كذلك', 'وكمان', 'بردو', 'مثله', 'مثلها', 'مثلهم'],
-                    continuers: ['طيب', 'تمام', 'حسناً', 'ماشي', 'اوكي', 'okay', 'وبعدين', 'وبعدها', 'ثم', 'بعدين'],
-                    references: ['نفس', 'نفسه', 'نفسها', 'نفس الشيء', 'نفس الكلام', 'زي', 'زيه', 'زيها', 'شبه', 'شبهه', 'شبهها']
-                };
-                
-                // أنماط الأسئلة غير المكتملة
-                this.incompletePatterns = [
-                    /^(و|ف|ثم|بعدين|وبعدين)\s+/,
-                    /^(كمان|برضه|أيضاً)\s+/,
-                    /^(طيب|تمام|ماشي)\s*/,
-                    /^[؟?]$/,
-                    /^(ليه|ازاي|ايه|مين|فين|امتى)\s*$/,
-                    /^(عايز|ابغى|حابب|محتاج)\s*$/,
-                    /^(مش|لا|غلط)\s*$/,
-                ];
-            }
-            
-            // تطبيع النص
-            normalizeText(text) {
-                if (!text) return "";
-                text = text.trim().replace(/\s+/g, ' ');
-                text = this.unifyArabicChars(text);
-                text = this.correctSpelling(text);
-                text = this.unifySynonyms(text);
-                return text.toLowerCase();
-            }
-            
-            unifyArabicChars(text) {
-                const replacements = {
-                    'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا',
-                    'ة': 'ه', 'ؤ': 'و', 'ئ': 'ي', 'ى': 'ي',
-                };
-                for (let [old, new_] of Object.entries(replacements)) {
-                    text = text.replace(new RegExp(old, 'g'), new_);
-                }
-                return text;
-            }
-            
-            correctSpelling(text) {
-                const words = text.split(' ');
-                return words.map(word => {
-                    if (this.spellingCorrections[word]) return this.spellingCorrections[word];
-                    // البحث التقريبي
-                    for (let [wrong, correct] of Object.entries(this.spellingCorrections)) {
-                        if (this.similarity(word, wrong) > 0.8) return correct;
-                    }
-                    return word;
-                }).join(' ');
-            }
-            
-            similarity(s1, s2) {
-                if (s1.length !== s2.length) return 0;
-                let matches = 0;
-                for (let i = 0; i < s1.length; i++) {
-                    if (s1[i] === s2[i]) matches++;
-                }
-                return matches / s1.length;
-            }
-            
-            unifySynonyms(text) {
-                const words = text.split(' ');
-                return words.map(word => {
-                    for (let [main, synonyms] of Object.entries(this.synonyms)) {
-                        if (synonyms.includes(word) || word === main) return main;
-                    }
-                    return word;
-                }).join(' ');
-            }
-            
-            // التحقق من اكتمال السؤال
-            isQuestionIncomplete(text) {
-                let confidence = 0;
-                
-                for (let pattern of this.incompletePatterns) {
-                    if (pattern.test(text)) confidence += 0.4;
-                }
-                
-                const wordCount = text.split(' ').length;
-                if (wordCount <= 2) confidence += 0.3;
-                else if (wordCount <= 4) confidence += 0.1;
-                
-                const allLinkers = Object.values(this.contextLinkers).flat();
-                const linkerRatio = text.split(' ').filter(w => allLinkers.includes(w)).length / Math.max(text.split(' ').length, 1);
-                confidence += linkerRatio * 0.3;
-                
-                return { isIncomplete: confidence > 0.5, confidence: Math.min(confidence, 1) };
-            }
-            
-            // استخراج الكيانات
-            extractEntities(text) {
-                const entities = [];
-                const patterns = [
-                    { regex: /عن\s+([\w\s]+?)(?:\s+و\s+|\s+او\s+|$)/, type: 'topic' },
-                    { regex: /في\s+([\w\s]+?)(?:\s+و\s+|\s+او\s+|$)/, type: 'location' },
-                    { regex: /([\w\s]+?)\s+دي\b/, type: 'demonstrative' },
-                    { regex: /([\w\s]+?)\s+ده\b/, type: 'demonstrative' },
-                    { regex: /ال([\w\s]+?)\s+ال/, type: 'defined_topic' },
-                    { regex: /(?:شرح|تفسير|تحليل)\s+([\w\s]+)/, type: 'target' },
-                ];
-                
-                for (let { regex, type } of patterns) {
-                    const matches = text.match(regex);
-                    if (matches && matches[1].trim()) {
-                        entities.push({
-                            text: matches[1].trim(),
-                            type: type,
-                            position: text.indexOf(matches[1])
-                        });
-                    }
-                }
-                
-                // مصطلحات تقنية
-                const techTerms = ['ذكاء اصطناعي', 'برمجة', 'بايثون', 'جافا', 'جافاسكربت', 'قاعدة بيانات', 'خوارزمية'];
-                for (let term of techTerms) {
-                    if (text.toLowerCase().includes(term.toLowerCase())) {
-                        entities.push({
-                            text: term,
-                            type: 'technical_term',
-                            position: text.toLowerCase().indexOf(term.toLowerCase())
-                        });
-                    }
-                }
-                
-                return entities.sort((a, b) => a.position - b.position);
-            }
-            
-            // تحديد النية
-            detectIntent(text) {
-                const scores = {};
-                for (let [intent, keywords] of Object.entries(this.intentPatterns)) {
-                    let score = 0;
-                    for (let keyword of keywords) {
-                        if (text.includes(keyword)) score += text.split(keyword).length - 1;
-                    }
-                    if (score > 0) scores[intent] = score;
-                }
-                
-                if (Object.keys(scores).length === 0) return { intent: 'general', confidence: 0.3 };
-                
-                const bestIntent = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-                return { intent: bestIntent[0], confidence: Math.min(bestIntent[1] / 3, 1) };
-            }
-            
-            // التحقق من الحاجة للربط
-            needsContextLinking(question) {
-                let confidence = 0;
-                const allLinkers = Object.values(this.contextLinkers).flat();
-                
-                for (let word of question.split(' ')) {
-                    if (allLinkers.includes(word)) confidence += 0.2;
-                }
-                
-                const entities = this.extractEntities(question);
-                if (entities.length === 0) confidence += 0.3;
-                
-                if (question.split(' ').length <= 3) confidence += 0.2;
-                if (this.history.length > 0) confidence += 0.1;
-                
-                return { needsLinking: confidence > 0.3, confidence: Math.min(confidence, 1) };
-            }
-            
-            // حل الإشارات
-            resolveReferences(question, depth = 1) {
-                if (this.history.length === 0 || depth <= 0) return question;
-                
-                let resolved = question;
-                const recentContexts = this.history.slice(-depth);
-                const replacementMap = {};
-                
-                for (let ctx of recentContexts.reverse()) {
-                    if (ctx.entities && ctx.entities.length > 0) {
-                        const mainEntity = ctx.entities[0].text;
-                        Object.assign(replacementMap, {
-                            'هو': mainEntity, 'هي': mainEntity, 'ده': mainEntity, 'دي': mainEntity,
-                            'فيها': `في ${mainEntity}`, 'عليها': `على ${mainEntity}`,
-                            'منها': `من ${mainEntity}`, 'لها': `لـ ${mainEntity}`,
-                        });
-                    }
-                }
-                
-                for (let [old, new_] of Object.entries(replacementMap)) {
-                    resolved = resolved.replace(new RegExp(`\\b${old}\\b`, 'g'), new_);
-                }
-                
-                if (resolved.split(' ').length <= 3 && this.currentTopic) {
-                    const hasEntity = this.extractEntities(resolved).some(e => 
-                        this.history.some(h => h.entities && h.entities.some(he => he.text === e.text))
-                    );
-                    if (!hasEntity) {
-                        resolved = `بالنسبة لـ ${this.currentTopic}، ${resolved}`;
-                    }
-                }
-                
-                return resolved;
-            }
-            
-            // استنتاج السؤال
-            inferQuestion(partial) {
-                if (this.history.length === 0) return null;
-                
-                const { isIncomplete, confidence } = this.isQuestionIncomplete(partial);
-                if (!isIncomplete) return null;
-                
-                const lastCtx = this.history[this.history.length - 1];
-                const missing = [];
-                const inferredParts = [];
-                
-                // استنتاج الموضوع
-                const currentEntities = this.extractEntities(partial);
-                const hasTopic = currentEntities.some(e => 
-                    lastCtx.entities && lastCtx.entities.some(le => le.text === e.text)
-                );
-                
-                if (!hasTopic && lastCtx.entities && lastCtx.entities.length > 0) {
-                    const topic = lastCtx.entities[0].text;
-                    inferredParts.push(`عن ${topic}`);
-                    missing.push('الموضوع');
-                }
-                
-                // استنتاج النية
-                const { intent } = this.detectIntent(partial);
-                if (intent === 'general' && lastCtx.intent && lastCtx.intent !== 'general') {
-                    const verbs = {
-                        'explanation': 'اشرح', 'comparison': 'قارن',
-                        'information': 'أخبرني', 'action': 'ساعدني في'
-                    };
-                    inferredParts.unshift(verbs[lastCtx.intent] || 'أخبرني');
-                    missing.push('الفعل/النية');
-                }
-                
-                if (inferredParts.length === 0) return null;
-                
-                return {
-                    inferredQuestion: `${inferredParts.join(' ')} ${partial}`,
-                    missingInfo: missing,
-                    confidence: confidence
-                };
-            }
-            
-            // التحليل الرئيسي
-            analyze(question) {
-                const normalized = this.normalizeText(question);
-                const { isIncomplete, incompletenessScore } = this.isQuestionIncomplete(normalized);
-                
-                // الاستنتاج
-                let inference = null;
-                let workingQuestion = normalized;
-                
-                if (isIncomplete) {
-                    inference = this.inferQuestion(normalized);
-                    if (inference && inference.confidence > 0.6) {
-                        workingQuestion = inference.inferredQuestion;
-                    }
-                }
-                
-                // الربط السياقي
-                const { needsLinking, linkingConfidence } = this.needsContextLinking(workingQuestion);
-                const resolved = needsLinking ? this.resolveReferences(workingQuestion, 2) : workingQuestion;
-                
-                // استخراج البيانات
-                const entities = this.extractEntities(resolved);
-                const { intent, confidence: intentConfidence } = this.detectIntent(resolved);
-                
-                // تحديث السياق
-                const contextData = {
-                    original: question,
-                    normalized: normalized,
-                    resolved: resolved,
-                    entities: entities,
-                    intent: intent,
-                    timestamp: new Date().toISOString()
-                };
-                
-                this.history.push(contextData);
-                if (this.history.length > this.maxHistory) this.history.shift();
-                
-                if (entities.length > 0) {
-                    this.currentTopic = entities[0].text;
-                    this.topicStack.push(this.currentTopic);
-                }
-                
-                // حساب الثقة العامة
-                const overallConfidence = (
-                    intentConfidence * 0.4 +
-                    (1 - incompletenessScore) * 0.3 +
-                    (needsLinking ? linkingConfidence : 0.5) * 0.3
-                );
-                
-                // التحقق من الارتباط بالسابق
-                let relatedToPrevious = false;
-                if (this.history.length > 1) {
-                    const lastCtx = this.history[this.history.length - 2];
-                    if (lastCtx.entities && entities.some(e => 
-                        lastCtx.entities.some(le => le.text === e.text)
-                    )) {
-                        relatedToPrevious = true;
-                    } else if (lastCtx.intent === intent && intent !== 'general') {
-                        relatedToPrevious = true;
-                    }
-                }
-                
-                return {
-                    original: question,
-                    normalized: normalized,
-                    resolved: resolved,
-                    inference: {
-                        wasInferred: inference !== null,
-                        inferredQuestion: inference?.inferredQuestion || null,
-                        missingInfo: inference?.missingInfo || [],
-                        confidence: inference?.confidence || 0
-                    },
-                    analysis: {
-                        entities: entities,
-                        intent: intent,
-                        intentConfidence: intentConfidence,
-                        isComplete: !isIncomplete,
-                        completenessScore: 1 - incompletenessScore
-                    },
-                    context: {
-                        usedLinking: needsLinking,
-                        linkingConfidence: linkingConfidence,
-                        relatedToPrevious: relatedToPrevious,
-                        currentTopic: this.currentTopic
-                    },
-                    metadata: {
-                        overallConfidence: overallConfidence,
-                        historyLength: this.history.length
-                    }
-                };
-            }
-            
-            // الحصول على ملخص المحادثة
-            getSummary() {
-                if (this.history.length === 0) return null;
-                
-                const intents = {};
-                const topics = [];
-                
-                for (let ctx of this.history) {
-                    intents[ctx.intent] = (intents[ctx.intent] || 0) + 1;
-                    if (ctx.entities) {
-                        topics.push(...ctx.entities.map(e => e.text));
-                    }
-                }
-                
-                return {
-                    totalQuestions: this.history.length,
-                    uniqueTopics: [...new Set(topics)],
-                    intentDistribution: intents,
-                    currentTopic: this.currentTopic,
-                    topicStack: this.topicStack.slice(-5)
-                };
-            }
-        }
-
-        // إنشاء محلل أسئلة عالمي
-        const questionAnalyzer = new SmartQuestionAnalyzer();
-
         // ==================== نظام الذكاء الاصطناعي - معارف جديدة ====================
         
         // معارف الـ AI (Q&A)
@@ -2748,7 +2239,7 @@
             document.getElementById('aiChatModal').classList.remove('active');
         }
 
-        // إرسال رسالة إلى الذكاء الاصطناعي مع التحليل الذكي
+        // إرسال رسالة إلى الذكاء الاصطناعي
         function sendAIMessage() {
             const input = document.getElementById('aiChatInput');
             const text = input.value.trim();
@@ -2758,73 +2249,20 @@
             displayAIMessage(text, 'user');
             input.value = '';
 
-            // إظهار مؤشر الكتابة
-            showAITyping();
-
-            // تحليل السؤال
-            const analysis = questionAnalyzer.analyze(text);
-            
-            // تأخير للمحاكاة
-            setTimeout(() => {
-                hideAITyping();
-                
-                // عرض التحليل (للتصحيح/التطوير - يمكن إخفاؤه لاحقاً)
-                if (analysis.inference.wasInferred) {
-                    displayAIAnalysis(analysis);
-                }
-                
-                // البحث في المعارف أولاً
-                const knowledge = findAIKnowledge(analysis.resolved);
-                if (knowledge) {
+            // البحث في المعارف أولاً
+            const knowledge = findAIKnowledge(text);
+            if (knowledge) {
+                setTimeout(() => {
                     displayAIMessage(knowledge, 'ai');
-                    return;
-                }
+                }, 500);
+                return;
+            }
 
-                // إنشاء رد الذكاء الاصطناعي الافتراضي
-                const response = getAIResponse(analysis.resolved, analysis);
+            // إنشاء رد الذكاء الاصطناعي الافتراضي
+            setTimeout(() => {
+                const response = getAIResponse(text);
                 displayAIMessage(response, 'ai');
-                
-            }, 800 + Math.random() * 500);
-        }
-
-        // إظهار مؤشر الكتابة
-        function showAITyping() {
-            const messagesDiv = document.getElementById('aiChatMessages');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message received typing-indicator';
-            typingDiv.id = 'aiTyping';
-            typingDiv.innerHTML = `
-                <div class="typing-dots">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-                <span>جاري التحليل...</span>
-            `;
-            messagesDiv.appendChild(typingDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        // إخفاء مؤشر الكتابة
-        function hideAITyping() {
-            const typing = document.getElementById('aiTyping');
-            if (typing) typing.remove();
-        }
-
-        // عرض تحليل السؤال (للتطوير)
-        function displayAIAnalysis(analysis) {
-            const messagesDiv = document.getElementById('aiChatMessages');
-            const analysisDiv = document.createElement('div');
-            analysisDiv.className = 'ai-analysis-box';
-            analysisDiv.style.marginBottom = '0.5rem';
-            analysisDiv.innerHTML = `
-                <div class="inference-badge"><i class="fas fa-brain"></i> استنتاج ذكي</div>
-                <div>السؤال الأصلي: "${analysis.original}"</div>
-                <div>بعد التحليل: "${analysis.resolved}"</div>
-                ${analysis.context.usedLinking ? '<div class="context-badge"><i class="fas fa-link"></i> تم الربط بالسياق</div>' : ''}
-            `;
-            messagesDiv.appendChild(analysisDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 500);
         }
 
         // البحث في المعارف
@@ -2861,11 +2299,11 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // توليد رد الذكاء الاصطناعي الافتراضي مع التحليل
-        function getAIResponse(userMessage, analysis) {
+        // توليد رد الذكاء الاصطناعي الافتراضي
+        function getAIResponse(userMessage) {
             const msg = userMessage.toLowerCase();
             
-            // ردود ذكية مدمجة مع مراعاة السياق
+            // ردود ذكية مدمجة
             if (msg.includes('السلام عليكم') || msg.includes('مرحبا') || msg.includes('اهلا') || msg.includes('هلا')) {
                 return 'وعليكم السلام! كيف يمكنني مساعدتك اليوم في استكشاف عالم الفضاء؟';
             }
@@ -2873,10 +2311,10 @@
                 return 'أنا بخير، شكراً لسؤالك! جاهز لمساعدتك في أي استفسار عن الفضاء والكون.';
             }
             if (msg.includes('من انت') || msg.includes('مين انت') || msg.includes('اسمك')) {
-                return 'أنا مساعد فلك الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون والإجابة على أسئلتك الفضائية. أستخدم تحليلاً ذكياً لفهم أسئلتك حتى لو كانت غير مكتملة!';
+                return 'أنا مساعد فلك الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون والإجابة على أسئلتك الفضائية.';
             }
             if (msg.includes('مساعدة') || msg.includes('help')) {
-                return 'يمكنني مساعدتك في:\n• الإجابة على أسئلة عن الفضاء والكون\n• شرح الظواهر الفلكية\n• معلومات عن الكواكب والنجوم\n• المساعدة في استخدام المنصة\n\nجرب أن تسألني مثلاً: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"\n\n💡 ملاحظة: يمكنك سؤالي بشكل غير مكتمل وسأحاول فهم قصدك!';
+                return 'يمكنني مساعدتك في:\n• الإجابة على أسئلة عن الفضاء والكون\n• شرح الظواهر الفلكية\n• معلومات عن الكواكب والنجوم\n• المساعدة في استخدام المنصة\n\nجرب أن تسألني مثلاً: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"';
             }
             if (msg.includes('فيديو') || msg.includes('مقطع')) {
                 return 'يمكنك مشاهدة الفيديوهات المتاحة في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة من خلال زر "رفع فيديو".';
@@ -2906,16 +2344,8 @@
                 return 'الثقب الأسود هو منطقة في الفضاء حيث تكون الجاذبية قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء! يتكون عندما تنهار نجوم ضخمة تحت تأثير جاذبيتها.';
             }
             
-            // ردود ذكية بناءً على تحليل النية
-            if (analysis && analysis.analysis.intent === 'explanation') {
-                return `أفهم أنك تريد شرحاً عن "${analysis.context.currentTopic || 'هذا الموضوع'}". للأسف، ليس لدي معلومات كافية حالياً. يمكنك سؤال المشرفين أو البحث في الفيديوهات المتاحة.`;
-            }
-            if (analysis && analysis.analysis.intent === 'comparison') {
-                return `أرى أنك تريد مقارنة. للأسف، أحتاج لمزيد من المعلومات للإجابة بشكل دقيق. حاول أن تكون أكثر تحديداً في سؤالك.`;
-            }
-            
-            // رد افتراضي مع اقتراحات
-            return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. يمكنك:\n• سؤال المشرفين\n• البحث في الفيديوهات المتاحة\n• تجربة صياغة مختلفة للسؤال\n\nجرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".';
+            // رد افتراضي
+            return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. يمكنك سؤال المشرفين أو البحث في الفيديوهات المتاحة. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".';
         }
 
         // معالجة ضغط Enter في حقل الإدخال
