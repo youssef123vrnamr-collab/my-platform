@@ -5,16 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>فلك العالمي | النسخة السحابية</title>
     
-    <!-- PWA Meta Tags -->
+    <!-- PWA Meta Tags - هذه تخفي شريط العنوان عند التثبيت -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f0a1a">
     <meta name="apple-mobile-web-app-title" content="فلك العالمي">
     
+    <!-- Manifest للـ PWA -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- السكريبتات الخارجية -->
+    <!-- إخفاء شريط العنوان في iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -22,14 +26,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* ========== الأنماط الأساسية (كما هي مع إضافة أنماط جديدة للامتحانات) ========== */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
             --accent: #ec4899;
             --success: #10b981;
             --danger: #ef4444;
-            --warning: #f59e0b;
             --dark: #0f0a1a;
             --card: #1a1025;
             --ai-color: #06b6d4;
@@ -42,11 +44,12 @@
             background: linear-gradient(135deg, #050308 0%, #0f0a1a 50%, #1a1a3e 100%);
             color: #fff;
             min-height: 100vh;
+            /* منع ظهور شريط العنوان عند التمرير */
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
         }
         
-        /* إخفاء شريط العنوان */
+        /* إخفاء شريط العنوان في Android Chrome */
         body::before {
             content: '';
             position: fixed;
@@ -127,6 +130,7 @@
             position: sticky;
             top: 0;
             z-index: 1000;
+            /* إخفاء شريط العنوان */
             padding-top: max(1rem, env(safe-area-inset-top));
         }
         
@@ -175,8 +179,14 @@
             gap: 0.5rem;
         }
         
-        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4); }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+        }
+        
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6); }
+        
         .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
         .btn-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
@@ -290,17 +300,78 @@
             animation: slideDown 0.5s;
         }
         
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
-        .resume-info { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .resume-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        .resume-text h4 { font-size: 1.2rem; margin-bottom: 0.2rem; }
-        .resume-text p { color: #aaa; font-size: 0.9rem; }
-        .resume-actions { display: flex; gap: 0.75rem; }
-        .resume-btn { background: #6366f1; border: none; color: white; padding: 0.6rem 1.5rem; border-radius: 30px; font-family: 'Cairo', sans-serif; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 0.5rem; }
-        .resume-btn:hover { background: #4f52e0; transform: scale(1.05); }
-        .dismiss-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 0.6rem 1.2rem; border-radius: 30px; font-family: 'Cairo', sans-serif; cursor: pointer; transition: 0.3s; }
-        .dismiss-btn:hover { background: rgba(255,255,255,0.1); }
+        .resume-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .resume-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .resume-text h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .resume-text p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .resume-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .resume-btn {
+            background: #6366f1;
+            border: none;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .resume-btn:hover {
+            background: #4f52e0;
+            transform: scale(1.05);
+        }
+        
+        .dismiss-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #ccc;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .dismiss-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
         
         .videos-grid {
             display: grid;
@@ -496,7 +567,12 @@
             align-items: center;
         }
         
-        .modal-header-left { display: flex; align-items: center; gap: 1rem; }
+        .modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         .modal-close {
             width: 40px; height: 40px;
             border: none;
@@ -506,7 +582,9 @@
             cursor: pointer;
             transition: all 0.3s;
         }
+        
         .modal-close:hover { background: rgba(239, 68, 68, 0.4); transform: rotate(90deg); }
+        
         .modal-share {
             width: 40px; height: 40px;
             border: none;
@@ -517,7 +595,9 @@
             transition: all 0.3s;
             font-size: 1.2rem;
         }
+        
         .modal-share:hover { background: rgba(16, 185, 129, 0.4); transform: scale(1.1); }
+        
         .modal-body { padding: 0; }
         .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0 0 25px 25px; }
         
@@ -537,10 +617,19 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             animation: slideUp 0.3s;
         }
-        @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        
+        @keyframes slideUp { 
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; } 
+            to { transform: translateX(-50%) translateY(0); opacity: 1; } 
+        }
+        
         .toast.show { display: block; }
         
-        .cloudinary-thumbnail { width: 100%; height: 100%; object-fit: cover; }
+        .cloudinary-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         
         .delete-btn {
             position: absolute;
@@ -580,103 +669,961 @@
             z-index: 10;
         }
         
-        .exam-btn {
-            position: absolute;
-            top: 10px;
-            right: 150px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 10;
-        }
-        
-        /* زر حذف الامتحان (جديد) */
-        .delete-exam-btn {
-            position: absolute;
-            top: 10px;
-            right: 220px;
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 10;
-        }
-        
         .video-card:hover .delete-btn,
-        .video-card:hover .edit-title-btn,
-        .video-card:hover .exam-btn,
-        .video-card:hover .delete-exam-btn { opacity: 1; }
+        .video-card:hover .edit-title-btn { opacity: 1; }
+        .delete-btn:hover { background: #dc2626; transform: scale(1.05); }
+        .edit-title-btn:hover { background: #d97706; transform: scale(1.05); }
         
-        .delete-exam-btn:hover { background: #b91c1c; transform: scale(1.05); }
-        
-        /* أنماط تحسين حقول الإدخال في نموذج الامتحان */
-        .question-form input,
-        .question-form input[type="text"],
-        .option-input-group input {
-            background: #2a1a35 !important;
-            color: #fff !important;
-            border: 2px solid #6366f1 !important;
-            font-size: 1.1rem !important;
-            padding: 0.75rem !important;
-            border-radius: 10px !important;
-            width: 100%;
-            transition: 0.3s;
+        .description-modal-content {
+            max-width: 600px;
         }
-        .question-form input:focus,
-        .option-input-group input:focus {
-            border-color: #ec4899 !important;
-            box-shadow: 0 0 10px rgba(236,72,153,0.5);
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-weight: 600;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        .storage-bar-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        .storage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .storage-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .storage-stats {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .storage-bar-wrapper {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .storage-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .storage-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .storage-bar.low { background: linear-gradient(90deg, #10b981, #059669); }
+        .storage-bar.medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .storage-bar.high { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        
+        .storage-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        
+        .storage-percentage {
+            font-weight: 700;
+            color: #6366f1;
+        }
+
+        .upload-speed-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #10b981;
+        }
+        
+        .upload-speed-indicator i {
+            animation: pulse 1.5s infinite;
+        }
+        
+        .upload-progress-container {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        
+        .upload-progress-container.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        .upload-progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .upload-progress-bar {
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .upload-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            border-radius: 5px;
+            transition: width 0.3s;
+            position: relative;
+        }
+        
+        .upload-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1s infinite;
+        }
+        
+        .upload-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        @media (max-width: 768px) {
+            .navbar { padding: 0.75rem 1rem; }
+            .brand-text h1 { font-size: 1.2rem; }
+            .brand-text p { font-size: 0.7rem; }
+            .hero { padding: 2rem 1rem; }
+            .hero h2 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .container { padding: 1rem; }
+            .videos-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+            .upload-zone { padding: 1.5rem; }
+            .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; }
+            .resume-info { justify-content: center; }
+            .resume-actions { justify-content: center; }
+            .modal-content { max-width: 95%; }
+            .video-info { 
+                margin-top: -40px; 
+                min-height: 300px;
+                padding: 2rem 1.25rem 2.5rem 1.25rem;
+            }
+            .video-title { font-size: 1.3rem; }
+            .video-description { font-size: 1rem; line-height: 2; }
+            .storage-bar-container { padding: 1rem; }
+            .delete-btn, .edit-title-btn { opacity: 1; font-size: 0.75rem; padding: 0.4rem 0.8rem; }
+            .edit-title-btn { right: 70px; }
+        }
+        
+        @media (max-width: 480px) {
+            .btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
+            .brand-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+            .hero h2 { font-size: 1.5rem; }
+            .video-thumbnail { height: 180px; }
+            .video-info { 
+                margin-top: -30px; 
+                min-height: 250px;
+                padding: 1.5rem 1rem 2rem 1rem;
+            }
+            .video-title { font-size: 1.2rem; margin-bottom: 1rem; }
+            .video-description { font-size: 0.95rem; line-height: 1.9; margin-bottom: 1.5rem; }
+            .video-meta { font-size: 0.85rem; gap: 1rem; }
+            .form-group textarea { min-height: 150px; }
+        }
+        
+        .chat-btn {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+            z-index: 999;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 40px rgba(99, 102, 241, 0.7); }
+        .chat-btn .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        .chat-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 1rem;
+        }
+        .chat-modal.active { display: flex; }
+        .chat-container {
+            background: #1a1025;
+            border-radius: 25px;
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header-info { display: flex; align-items: center; gap: 1rem; }
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .chat-header-text h3 { font-size: 1.2rem; margin-bottom: 0.2rem; }
+        .chat-header-text p {
+            font-size: 0.85rem;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .chat-actions { display: flex; gap: 0.75rem; }
+        .chat-action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        .chat-action-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .chat-action-btn.call-btn { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .chat-action-btn.call-btn:hover { background: rgba(16, 185, 129, 0.4); }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 3px; }
+        .message {
+            max-width: 75%;
+            padding: 1rem 1.25rem;
+            border-radius: 20px;
+            position: relative;
+            animation: messageSlide 0.3s ease;
+        }
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.sent {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-bottom-right-radius: 5px;
+        }
+        .message.received {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.1);
+            border-bottom-left-radius: 5px;
+        }
+        .message.system {
+            align-self: center;
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+        }
+        .message-sender {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #ec4899;
+            margin-bottom: 0.3rem;
+        }
+        .message.sent .message-sender { color: #fff; opacity: 0.9; }
+        .message-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        .message-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .message-image:hover { transform: scale(1.02); }
+        
+        .voice-message {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(0,0,0,0.3);
+            padding: 0.75rem 1rem;
+            border-radius: 15px;
+            margin-top: 0.5rem;
+            min-width: 250px;
+            direction: ltr;
+        }
+        .voice-play-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .voice-play-btn:hover { transform: scale(1.1); }
+        .voice-play-btn.playing {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        .voice-slider {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .voice-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        .voice-time {
+            font-size: 0.75rem;
+            color: #aaa;
+            min-width: 40px;
+            text-align: center;
+            font-family: monospace;
+        }
+        
+        .message-delete-btn {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 22px;
+            height: 22px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.7rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0.9;
+            transition: all 0.2s;
+        }
+        .message-delete-btn:hover {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        .message:hover .message-delete-btn { display: flex; }
+        
+        .message-delete-btn.admin {
+            background: #dc2626;
+            width: 26px;
+            height: 26px;
+            font-size: 0.8rem;
+            top: -10px;
+            left: -10px;
+        }
+        
+        .chat-input-area {
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .chat-input-container {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+        .chat-input-wrapper {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border-radius: 25px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .chat-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            max-height: 100px;
             outline: none;
         }
-        .question-form input::placeholder,
-        .option-input-group input::placeholder {
+        .chat-input::placeholder { color: #888; }
+        .chat-tool-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(255,255,255,0.1);
             color: #aaa;
-            opacity: 0.8;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-tool-btn:hover { background: rgba(99, 102, 241, 0.3); color: white; transform: scale(1.1); }
+        .chat-tool-btn.recording { background: #ef4444; color: white; animation: pulse 1s infinite; }
+        .chat-send-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-send-btn:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(99, 102, 241, 0.5); }
+        .name-modal-content {
+            max-width: 450px;
+            text-align: center;
+            padding: 2rem;
+        }
+        .name-modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+        }
+        .name-modal-content h2 { margin-bottom: 0.5rem; font-size: 1.5rem; }
+        .name-modal-content p { color: #aaa; margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .name-input-group { margin-bottom: 1.5rem; }
+        .name-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 15px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .name-input:focus { border-color: #6366f1; box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        .call-modal-content { max-width: 400px; text-align: center; padding: 3rem 2rem; }
+        .call-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1.5rem;
+            animation: callPulse 2s infinite;
+        }
+        @keyframes callPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+        }
+        .call-status { font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .call-timer { font-size: 2rem; color: #6366f1; font-weight: bold; margin-bottom: 2rem; font-family: monospace; }
+        .call-actions { display: flex; justify-content: center; gap: 1.5rem; }
+        .call-action {
+            width: 70px;
+            height: 70px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .call-action.mute { background: rgba(255,255,255,0.1); color: white; }
+        .call-action.mute.active { background: #f59e0b; }
+        .call-action.end { background: #ef4444; color: white; }
+        .call-action:hover { transform: scale(1.1); }
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        .recording-indicator.active { display: flex; }
+        .recording-dot {
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            padding: 2rem;
+        }
+        .image-viewer.active { display: flex; }
+        .image-viewer img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .image-viewer-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .image-viewer-close:hover { background: rgba(239, 68, 68, 0.5); transform: rotate(90deg); }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.5rem;
+            text-align: left;
+            direction: ltr;
+        }
+        .message.sent .message-time {
+            color: rgba(255,255,255,0.7);
+            text-align: right;
         }
         
-        /* زر تصحيح الامتحان (للمشرف) */
-        .correction-btn-card {
+        @media (max-width: 768px) {
+            .chat-container { height: 100vh; max-width: 100%; border-radius: 0; }
+            .chat-btn { bottom: 1rem; left: 1rem; width: 55px; height: 55px; }
+            .message { max-width: 85%; padding: 0.875rem 1rem; }
+            .chat-header { padding: 1rem; }
+            .chat-avatar { width: 40px; height: 40px; font-size: 1.2rem; }
+            .message-delete-btn { display: flex; }
+            .voice-message { min-width: 200px; }
+        }
+        
+        .maintenance-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(15px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            flex-direction: column;
+            text-align: center;
+            padding: 2rem;
+        }
+        .maintenance-overlay.active { display: flex; animation: fadeIn 0.5s; }
+        .maintenance-icon {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 60px rgba(99,102,241,0.4);
+            animation: glow 3s infinite;
+        }
+        .maintenance-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        .maintenance-message {
+            font-size: 1.2rem;
+            color: #ccc;
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
+        .maintenance-timer {
+            background: rgba(99,102,241,0.1);
+            border: 2px solid #6366f1;
+            border-radius: 60px;
+            padding: 1.5rem 3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .timer-item {
+            text-align: center;
+        }
+        .timer-value {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #6366f1;
+            line-height: 1;
+            font-family: monospace;
+        }
+        .timer-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 0.25rem;
+        }
+        .maintenance-cancel {
+            margin-top: 3rem;
+            background: rgba(239,68,68,0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 1rem 3rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .maintenance-cancel:hover {
+            background: rgba(239,68,68,0.4);
+            transform: scale(1.05);
+        }
+        .maintenance-cancel.active { display: inline-flex; }
+        .maintenance-datetime {
+            margin-top: 1.5rem;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .maintenance-title { font-size: 1.8rem; }
+            .maintenance-timer { padding: 1rem 1.5rem; gap: 1rem; }
+            .timer-value { font-size: 2rem; }
+            .maintenance-icon { width: 100px; height: 100px; font-size: 3rem; }
+        }
+        
+        .maintenance-btn {
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
             border: none;
-            padding: 0.75rem 1.5rem;
             border-radius: 12px;
-            font-family: 'Cairo', sans-serif;
+            padding: 0.75rem 1.5rem;
             font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-top: 1rem;
-            width: 100%;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .maintenance-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(245,158,11,0.4); }
+
+        .set-admins-btn {
+            background: linear-gradient(135deg, #64748b, #475569);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 1rem;
+        }
+        .set-admins-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(100,116,139,0.4); }
+
+        /* زرار تعليم الذكاء الاصطناعي - دائري (للمشرف فقط) */
+        .teach-ai-circle-btn {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
+            transition: all 0.3s;
+            display: none; /* يظهر بالجافا سكريبت للمشرف */
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .teach-ai-circle-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6);
+        }
+
+        .teach-ai-circle-btn.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* أنماط نافذة تعليم الذكاء الاصطناعي الجديدة */
+        .ai-knowledge-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(6,182,212,0.2);
+            transition: all 0.3s;
+        }
+
+        .ai-knowledge-item:hover {
+            background: rgba(6,182,212,0.1);
+            border-color: rgba(6,182,212,0.4);
+        }
+
+        .ai-knowledge-content {
+            flex: 1;
+            padding-left: 1rem;
+        }
+
+        .ai-knowledge-question {
+            font-weight: 700;
+            color: #06b6d4;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ai-knowledge-answer {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .ai-knowledge-delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .ai-knowledge-delete:hover {
+            background: rgba(239, 68, 68, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* زرار محادثة الذكاء الاصطناعي (للجميع) */
+        .ai-chat-btn {
+            position: fixed;
+            bottom: 6rem;
+            left: 2rem;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
+            z-index: 998;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
             justify-content: center;
         }
-        .correction-btn-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(245,158,11,0.4);
+
+        .ai-chat-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6);
         }
-        
-        /* باقي الأنماط (كما هي من الكود الأصلي) */
-        /* ... (لن نكرر كل الأنماط لتقصير الرد، ولكن يجب تضمينها في الملف الفعلي) ... */
-        /* ملاحظة: في التطبيق الفعلي، يجب وضع جميع الأنماط السابقة هنا */
+
+        @media (max-width: 768px) {
+            .ai-chat-btn {
+                bottom: 5.5rem;
+                left: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+            .teach-ai-circle-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -747,11 +1694,10 @@
             <button class="set-admins-btn" id="setAdminsBtn" onclick="openSetAdminsModal()" style="display: none;">
                 <i class="fas fa-users-cog"></i> تحديد المشرفين
             </button>
-            <button class="teach-ai-circle-btn" id="teachAICircleBtn" onclick="openTeachAICircleModal()" title="تعليم الذكاء الاصطناعي" style="display: none;">
+            
+            <!-- زرار تعليم الذكاء الاصطناعي - دائري (للمشرف فقط) -->
+            <button class="teach-ai-circle-btn" id="teachAICircleBtn" onclick="openTeachAICircleModal()" title="تعليم الذكاء الاصطناعي">
                 <i class="fas fa-robot"></i>
-            </button>
-            <button class="btn btn-secondary" id="examResultsBtn" onclick="openExamResultsModal()" style="display: none;">
-                <i class="fas fa-clipboard-list"></i> نتائج الامتحانات
             </button>
         </div>
         
@@ -845,11 +1791,6 @@
     <!-- زرار محادثة الذكاء الاصطناعي (للجميع) -->
     <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي">
         <i class="fas fa-robot"></i>
-    </button>
-    
-    <!-- زرار معرفة النتيجة (للجميع) -->
-    <button class="check-result-btn" id="checkResultBtn" onclick="openCheckResultModal()" title="معرفة نتيجة الامتحان">
-        <i class="fas fa-poll"></i> معرفة النتيجة
     </button>
     
     <!-- زرار الدردشة -->
@@ -1017,129 +1958,29 @@
                 <p style="margin-bottom: 1.5rem; color: #aaa;">
                     أضف أسئلة وأجوبة جديدة. عندما يسأل أحد الـ AI سؤالاً مشابهاً، سيرد بالإجابة المعلمة.
                 </p>
+                
+                <!-- إضافة معرفة جديدة -->
                 <div class="form-group">
                     <label><i class="fas fa-question-circle" style="color: #06b6d4;"></i> السؤال</label>
                     <input type="text" id="aiQuestionInput" placeholder="مثال: ما هي السوائل؟" dir="rtl">
                 </div>
+                
                 <div class="form-group">
                     <label><i class="fas fa-comment-dots" style="color: #10b981;"></i> الإجابة</label>
                     <textarea id="aiAnswerInput" placeholder="اكتب الإجابة هنا..." rows="4" style="min-height: 120px;"></textarea>
                 </div>
+                
                 <button class="btn btn-primary" style="width: 100%; margin-bottom: 1.5rem;" onclick="saveAIKnowledge()">
                     <i class="fas fa-save"></i> حفظ المعرفة
                 </button>
+                
+                <!-- قائمة المعارف -->
                 <h4 style="margin: 1.5rem 0 1rem 0; color: #fff;">
                     <i class="fas fa-list" style="color: #8b5cf6;"></i> المعارف المخزنة
                 </h4>
                 <div class="correction-list" id="aiKnowledgeList" style="max-height: 250px; overflow-y: auto;">
                     <p style="text-align: center; color: #888; padding: 2rem;">جاري التحميل...</p>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- نافذة إنشاء الامتحان (للمشرف فقط) -->
-    <div class="modal" id="createExamModal">
-        <div class="modal-content exam-modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-clipboard-list" style="color: #10b981;"></i> إنشاء امتحان للفيديو</h3>
-                <button class="modal-close" onclick="closeCreateExamModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" style="padding: 1.5rem;">
-                <div id="examQuestionsContainer"></div>
-                <button class="add-question-btn" onclick="addQuestionForm()">
-                    <i class="fas fa-plus"></i> إضافة سؤال جديد
-                </button>
-                <button class="btn btn-success" style="width: 100%;" onclick="saveExam()">
-                    <i class="fas fa-save"></i> حفظ الامتحان
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- نافذة الامتحان للطلاب -->
-    <div class="modal" id="studentExamModal">
-        <div class="modal-content student-exam-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-edit" style="color: #6366f1;"></i> <span id="studentExamTitle">امتحان الفيديو</span></h3>
-                <button class="modal-close" onclick="closeStudentExamModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" style="padding: 1.5rem;">
-                <div id="studentNameEntry" class="name-entry-form">
-                    <h3>أدخل اسمك الكامل</h3>
-                    <input type="text" id="studentExamNameInput" placeholder="الاسم الكامل..." maxlength="50">
-                    <button class="btn btn-primary" onclick="startStudentExam()">
-                        <i class="fas fa-play"></i> بدء الامتحان
-                    </button>
-                </div>
-                <div id="studentExamQuestions" style="display: none;">
-                    <div class="exam-progress">
-                        <span id="currentQuestionNum">1</span>
-                        <div class="exam-progress-bar">
-                            <div class="exam-progress-fill" id="examProgressFill" style="width: 0%;"></div>
-                        </div>
-                        <span id="totalQuestionsNum">5</span>
-                    </div>
-                    <div id="examQuestionsList"></div>
-                    <button class="btn btn-success" style="width: 100%; margin-top: 1.5rem;" onclick="submitExam()">
-                        <i class="fas fa-paper-plane"></i> إرسال الامتحان
-                    </button>
-                </div>
-                <div id="studentExamResult" class="result-display" style="display: none;">
-                    <div class="result-score" id="resultScore">0/0</div>
-                    <div class="result-message" id="resultMessage"></div>
-                    <div class="result-details" id="resultDetails"></div>
-                    <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="closeStudentExamModal()">
-                        <i class="fas fa-check"></i> تم
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- نافذة نتائج الامتحانات (للمشرف) -->
-    <div class="modal" id="examResultsModal">
-        <div class="modal-content results-modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-chart-bar" style="color: #f59e0b;"></i> نتائج الامتحانات</h3>
-                <button class="modal-close" onclick="closeExamResultsModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" style="padding: 1.5rem;">
-                <div style="margin-bottom: 1rem;">
-                    <label style="color: #aaa; margin-bottom: 0.5rem; display: block;">اختر الفيديو:</label>
-                    <select id="resultsVideoSelect" onchange="loadExamResults()" style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo';">
-                        <option value="">-- اختر فيديو --</option>
-                    </select>
-                </div>
-                <div id="examResultsContainer">
-                    <p style="text-align: center; color: #888; padding: 3rem;">اختر فيديو لعرض نتائجه</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- نافذة معرفة النتيجة -->
-    <div class="modal" id="checkResultModal">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-search" style="color: #f59e0b;"></i> معرفة نتيجة الامتحان</h3>
-                <button class="modal-close" onclick="closeCheckResultModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" style="padding: 1.5rem;">
-                <div class="form-group">
-                    <label>اختر الفيديو:</label>
-                    <select id="checkResultVideoSelect" style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo'; margin-bottom: 1rem;">
-                        <option value="">-- اختر فيديو --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>أدخل اسمك كما أدخلته في الامتحان:</label>
-                    <input type="text" id="checkResultNameInput" placeholder="الاسم الكامل..." style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo'; margin-bottom: 1.5rem;">
-                </div>
-                <button class="btn btn-warning" style="width: 100%;" onclick="searchExamResult()">
-                    <i class="fas fa-search"></i> بحث عن النتيجة
-                </button>
-                <div id="checkResultDisplay" style="margin-top: 1.5rem; display: none;"></div>
             </div>
         </div>
     </div>
@@ -1251,28 +2092,402 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // ==================== بداية الكود المحسن مع تعديلات الامتحانات ====================
+        // ==================== نظام الذكاء الاصطناعي - معارف جديدة ====================
         
-        // ** حل طارئ: إخفاء شاشة التحميل بعد 5 ثواني مهما حدث **
+        // معارف الـ AI (Q&A)
+        let aiKnowledgeBase = [];
+        let aiKnowledgeUnsubscribe = null;
+
+        // تحميل معارف الـ AI من Firebase
+        function loadAIKnowledgeFromFirebase() {
+            if (aiKnowledgeUnsubscribe) aiKnowledgeUnsubscribe();
+            
+            aiKnowledgeUnsubscribe = db.collection('ai_knowledge')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    aiKnowledgeBase = [];
+                    snapshot.forEach(doc => {
+                        aiKnowledgeBase.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    if (isAdmin) renderAIKnowledgeList();
+                }, err => console.error('Error loading AI knowledge:', err));
+        }
+
+        // عرض قائمة المعارف (للمشرف)
+        function renderAIKnowledgeList() {
+            const list = document.getElementById('aiKnowledgeList');
+            if (!list) return;
+            
+            if (aiKnowledgeBase.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد معلومات بعد</p>';
+                return;
+            }
+            
+            list.innerHTML = aiKnowledgeBase.map(item => `
+                <div class="ai-knowledge-item">
+                    <div class="ai-knowledge-content">
+                        <div class="ai-knowledge-question">
+                            <i class="fas fa-question-circle"></i>
+                            ${escapeHtml(item.question)}
+                        </div>
+                        <div class="ai-knowledge-answer">
+                            ${escapeHtml(item.answer)}
+                        </div>
+                    </div>
+                    <button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${item.id}')" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // فتح نافذة تعليم الذكاء الاصطناعي (الدائري)
+        function openTeachAICircleModal() {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+            document.getElementById('teachAICircleModal').classList.add('active');
+            renderAIKnowledgeList();
+        }
+
+        // إغلاق نافذة تعليم الذكاء الاصطناعي (الدائري)
+        function closeTeachAICircleModal() {
+            document.getElementById('teachAICircleModal').classList.remove('active');
+        }
+
+        // حفظ معرفة جديدة
+        function saveAIKnowledge() {
+            const question = document.getElementById('aiQuestionInput').value.trim();
+            const answer = document.getElementById('aiAnswerInput').value.trim();
+            
+            if (!question || !answer) {
+                showToast('⚠️ أدخل السؤال والإجابة');
+                return;
+            }
+            
+            // حفظ في Firebase
+            db.collection('ai_knowledge').add({
+                question: question,
+                answer: answer,
+                createdBy: currentUser || 'مشرف',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                SoundEffects.success();
+                showToast('✅ تم تعليم الذكاء الاصطناعي بنجاح!');
+                
+                // تفريغ الحقول
+                document.getElementById('aiQuestionInput').value = '';
+                document.getElementById('aiAnswerInput').value = '';
+                
+            }).catch(err => {
+                console.error('Error saving AI knowledge:', err);
+                SoundEffects.error();
+                showToast('❌ فشل الحفظ');
+            });
+        }
+
+        // حذف معرفة
+        function deleteAIKnowledge(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه المعلومة؟')) return;
+            
+            db.collection('ai_knowledge').doc(id).delete()
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('🗑️ تم الحذف');
+                })
+                .catch(err => {
+                    console.error('Error deleting:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل الحذف');
+                });
+        }
+
+        // ==================== محادثة الذكاء الاصطناعي (للجميع) ====================
+        
+        // فتح نافذة محادثة الذكاء الاصطناعي
+        function openAIChat() {
+            document.getElementById('aiChatModal').classList.add('active');
+            
+            // رسالة ترحيبية لو فاضي
+            const messagesDiv = document.getElementById('aiChatMessages');
+            if (messagesDiv.children.length === 0) {
+                displayAIMessage('مرحباً! أنا مساعد فلك الذكي. اسألني أي شيء عن الفضاء أو اكتب "مساعدة" لمعرفة ما يمكنني فعله.', 'ai');
+            }
+            
+            setTimeout(() => {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 100);
+        }
+
+        // إغلاق نافذة محادثة الذكاء الاصطناعي
+        function closeAIChat() {
+            document.getElementById('aiChatModal').classList.remove('active');
+        }
+
+        // إرسال رسالة إلى الذكاء الاصطناعي
+        function sendAIMessage() {
+            const input = document.getElementById('aiChatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // عرض رسالة المستخدم
+            displayAIMessage(text, 'user');
+            input.value = '';
+
+            // البحث في المعارف أولاً
+            const knowledge = findAIKnowledge(text);
+            if (knowledge) {
+                setTimeout(() => {
+                    displayAIMessage(knowledge, 'ai');
+                }, 500);
+                return;
+            }
+
+            // إنشاء رد الذكاء الاصطناعي الافتراضي
+            setTimeout(() => {
+                const response = getAIResponse(text);
+                displayAIMessage(response, 'ai');
+            }, 500);
+        }
+
+        // البحث في المعارف
+        function findAIKnowledge(userMessage) {
+            const msg = userMessage.toLowerCase();
+            
+            for (const item of aiKnowledgeBase) {
+                const question = item.question.toLowerCase();
+                // مطابقة تامة أو جزئية
+                if (msg === question || msg.includes(question) || question.includes(msg)) {
+                    return item.answer;
+                }
+            }
+            return null;
+        }
+
+        // عرض رسالة في نافذة المحادثة
+        function displayAIMessage(text, sender) {
+            const messagesDiv = document.getElementById('aiChatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (sender === 'user' ? 'sent' : 'received');
+            
+            const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            
+            let html = '';
+            if (sender === 'received') {
+                html += '<div class="message-sender" style="color: #06b6d4;"><i class="fas fa-robot"></i> مساعد فلك</div>';
+            }
+            html += '<div class="message-content">' + escapeHtml(text) + '</div>';
+            html += '<div class="message-time">' + time + '</div>';
+            
+            messageDiv.innerHTML = html;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // توليد رد الذكاء الاصطناعي الافتراضي
+        function getAIResponse(userMessage) {
+            const msg = userMessage.toLowerCase();
+            
+            // ردود ذكية مدمجة
+            if (msg.includes('السلام عليكم') || msg.includes('مرحبا') || msg.includes('اهلا') || msg.includes('هلا')) {
+                return 'وعليكم السلام! كيف يمكنني مساعدتك اليوم في استكشاف عالم الفضاء؟';
+            }
+            if (msg.includes('كيف حالك') || msg.includes('اخبارك')) {
+                return 'أنا بخير، شكراً لسؤالك! جاهز لمساعدتك في أي استفسار عن الفضاء والكون.';
+            }
+            if (msg.includes('من انت') || msg.includes('مين انت') || msg.includes('اسمك')) {
+                return 'أنا مساعد فلك الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون والإجابة على أسئلتك الفضائية.';
+            }
+            if (msg.includes('مساعدة') || msg.includes('help')) {
+                return 'يمكنني مساعدتك في:\n• الإجابة على أسئلة عن الفضاء والكون\n• شرح الظواهر الفلكية\n• معلومات عن الكواكب والنجوم\n• المساعدة في استخدام المنصة\n\nجرب أن تسألني مثلاً: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"';
+            }
+            if (msg.includes('فيديو') || msg.includes('مقطع')) {
+                return 'يمكنك مشاهدة الفيديوهات المتاحة في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة من خلال زر "رفع فيديو".';
+            }
+            if (msg.includes('دردشة') || msg.includes('شات')) {
+                return 'يمكنك الدردشة مع الأعضاء الآخرين من خلال زر الدردشة في الأسفل. انضم للمحادثة وشارك أفكارك!';
+            }
+            if (msg.includes('مشرف') || msg.includes('ادارة')) {
+                return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف" في الأعلى.';
+            }
+            if (msg.includes('شكرا') || msg.includes('شكراً') || msg.includes('تسلم')) {
+                return 'العفو! دائماً هنا لمساعدتك. استمتع بوقتك في فلك العالمي! 🚀';
+            }
+            if (msg.includes('الكواكب') || msg.includes('مجموعة شمسية')) {
+                return 'المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون. كان هناك كوكب بلوتون لكنه أصبح كوكب قزم منذ 2006.';
+            }
+            if (msg.includes('الشمس')) {
+                return 'الشمس هي نجم يقع في مركز المجموعة الشمسية، وهي مصدر الضوء والحرارة للأرض. تبلغ درجة حرارة سطحها حوالي 5,500 درجة مئوية!';
+            }
+            if (msg.includes('القمر')) {
+                return 'القمر هو القمر الوحيد الطبيعي للأرض، ويبعد عنها حوالي 384,400 كم. يستغرق دورة واحدة حول الأرض حوالي 27.3 يوم.';
+            }
+            if (msg.includes('نجم') || msg.includes('نجوم')) {
+                return 'النجوم هي أجسام سماوية ضخمة تتألف من غازات ساخنة، خاصة الهيدروجين والهيليوم. أقرب نجم للأرض هو الشمس، والثاني هو Proxima Centauri على بعد 4.24 سنة ضوئية.';
+            }
+            if (msg.includes('ثقب اسود') || msg.includes('black hole')) {
+                return 'الثقب الأسود هو منطقة في الفضاء حيث تكون الجاذبية قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء! يتكون عندما تنهار نجوم ضخمة تحت تأثير جاذبيتها.';
+            }
+            
+            // رد افتراضي
+            return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. يمكنك سؤال المشرفين أو البحث في الفيديوهات المتاحة. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".';
+        }
+
+        // معالجة ضغط Enter في حقل الإدخال
+        function handleAIKeyPress(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAIMessage();
+            }
+        }
+
+        // ==================== باقي الكود الأصلي ====================
+
+        const SoundEffects = {
+            audioContext: null,
+            init() {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            send() {
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, this.audioContext.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.1);
+            },
+            receive() {
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(600, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.15);
+            },
+            delete() {
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(400, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.2);
+            },
+            join() {
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(523.25, this.audioContext.currentTime);
+                osc.frequency.setValueAtTime(659.25, this.audioContext.currentTime + 0.1);
+                osc.frequency.setValueAtTime(783.99, this.audioContext.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.4);
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.4);
+            },
+            error() {
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, this.audioContext.currentTime);
+                osc.frequency.linearRampToValueAtTime(150, this.audioContext.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.2);
+            },
+            success() {
+                this.init();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, this.audioContext.currentTime + i * 0.05);
+                    gain.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + i * 0.05 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + i * 0.05 + 0.15);
+                    osc.start(this.audioContext.currentTime + i * 0.05);
+                    osc.stop(this.audioContext.currentTime + i * 0.05 + 0.15);
+                });
+            },
+            recordStart() {
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(1000, this.audioContext.currentTime);
+                gain.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.1);
+            },
+            recordStop() {
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                gain.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + 0.1);
+            },
+            tick() {
+                this.init();
+                const ctx = this.audioContext;
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 600;
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                osc.start(now);
+                osc.stop(now + 0.03);
+            }
+        };
+
         setTimeout(() => {
             const loader = document.getElementById('loader');
             if (loader) loader.classList.add('hidden');
-        }, 5000);
+        }, 1000);
 
-        // عرض الأخطاء في console
-        window.onerror = function(msg, url, line, col, error) {
-            console.error('🔥 خطأ عام:', msg, 'at line', line);
-            return true;
-        };
-
-        // إعدادات Cloudinary
         const CLOUDINARY_CONFIG = {
             cloudName: 'ds4wy90er',
             uploadPreset: 'falak_upload',
             apiKey: '462193620740'
         };
-
-        // إعدادات Firebase
+        
         const firebaseConfig = {
             apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
             authDomain: "planning-with-ai-390af.firebaseapp.com",
@@ -1281,24 +2496,17 @@
             messagingSenderId: "601755857673",
             appId: "1:601755857673:web:b9d7d63e13035412a819d8"
         };
-
-        // تهيئة Firebase مع معالجة الأخطاء
-        let db;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            console.log('✅ Firebase initialized');
-        } catch (e) {
-            console.error('❌ فشل تهيئة Firebase:', e);
-            db = null;
-        }
-
-        // متغيرات عامة
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
         const ADMIN_PASS = "@@@&&&((()))";
         const SUPER_ADMIN_PASS = "1#3_5-7(9/0";
+        
         const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
         const CHUNK_SIZE = 10 * 1024 * 1024;
         const MAX_STORAGE = 25 * 1024 * 1024 * 1024;
+        
         let isAdmin = false;
         let isSuperAdmin = false;
         let videos = [];
@@ -1313,51 +2521,179 @@
         let maintenanceTimerInterval = null;
         let tickInterval = null;
         let maintenanceEndTime = null;
-        let currentUser = null;
-        let chatUnsubscribe = null;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let recordingTimer = null;
-        let localStream = null;
-        let callTimer = null;
-        let callSeconds = 0;
-        let unreadMessages = 0;
-        let isRecording = false;
-        let currentAudio = null;
-        let currentAudioBtn = null;
-        let userPresenceRef = null;
-        let onlineUsersRef = db ? db.collection('online_users') : null;
-        let onlineUnsubscribe = null;
-        let presenceInterval = null;
-        let aiKnowledgeBase = [];
-        let aiKnowledgeUnsubscribe = null;
 
-        // ========== متغيرات الامتحانات ==========
-        let currentExamVideoId = null;
-        let examQuestions = [];
-        let currentExamData = null;
-        let studentAnswers = {};
-        let currentQuestionIndex = 0;
-
-        // دالة لإخفاء شاشة التحميل يدوياً
-        function hideLoader() {
-            const loader = document.getElementById('loader');
-            if (loader) loader.classList.add('hidden');
-        }
-
-        // التحقق من وجود Firebase قبل استخدامه
-        function isFirebaseReady() {
-            return db !== null && typeof db !== 'undefined';
-        }
-
-        // دالة آمنة للاستماع إلى الفيديوهات
-        function listenToVideos() {
-            if (!isFirebaseReady()) {
-                console.warn('⚠️ Firebase غير متاح، لن يتم تحميل الفيديوهات');
+        (function checkSavedAdmin() {
+            const savedAdmin = localStorage.getItem('falak_admin');
+            if (savedAdmin === 'true') {
+                isAdmin = true;
+                document.getElementById('uploadZone').classList.add('active');
+                document.getElementById('adminBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'flex';
+                document.getElementById('maintenanceBtn').style.display = 'flex';
+                document.getElementById('setAdminsBtn').style.display = 'inline-flex';
+                document.getElementById('teachAICircleBtn').style.display = 'inline-flex';
+                updateStorageBar();
                 renderVideos();
-                hideLoader();
+                loadAIKnowledgeFromFirebase();
+            }
+        })();
+
+        function listenToMaintenance() {
+            maintenanceUnsubscribe = db.collection('system').doc('maintenance')
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const status = data.status;
+                        if (status === 'maintenance') {
+                            maintenanceEndTime = data.endTime ? data.endTime.toDate() : null;
+                            const message = data.message || 'جاري تحديث المنصة، يرجى الانتظار قليلاً...';
+                            showMaintenanceScreen(message, maintenanceEndTime);
+                        } else {
+                            hideMaintenanceScreen();
+                        }
+                    } else {
+                        hideMaintenanceScreen();
+                    }
+                }, error => {
+                    console.error('Error listening to maintenance:', error);
+                });
+        }
+
+        function showMaintenanceScreen(message, endTime) {
+            const overlay = document.getElementById('maintenanceOverlay');
+            document.getElementById('maintenanceMessage').textContent = message;
+            overlay.classList.add('active');
+
+            const cancelBtn = document.getElementById('cancelMaintenanceBtn');
+            if (isAdmin) {
+                cancelBtn.classList.add('active');
+            } else {
+                cancelBtn.classList.remove('active');
+            }
+
+            if (maintenanceTimerInterval) clearInterval(maintenanceTimerInterval);
+            maintenanceTimerInterval = setInterval(() => {
+                if (!endTime) return;
+                const now = new Date().getTime();
+                const distance = endTime.getTime() - now;
+                if (distance <= 0) {
+                    clearInterval(maintenanceTimerInterval);
+                    autoEndMaintenance();
+                    return;
+                }
+                updateTimerDisplay(distance);
+            }, 1000);
+
+            if (!tickInterval) {
+                tickInterval = setInterval(() => {
+                    SoundEffects.tick();
+                }, 1000);
+            }
+
+            if (endTime) {
+                const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                document.getElementById('maintenanceEndTime').textContent = 'ينتهي عند: ' + endTime.toLocaleTimeString('ar-EG', options);
+            }
+        }
+
+        function autoEndMaintenance() {
+            SoundEffects.success();
+            db.collection('system').doc('maintenance').update({
+                status: 'active'
+            }).catch(err => console.error('Error auto ending maintenance:', err));
+        }
+
+        function hideMaintenanceScreen() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.classList.remove('active');
+            if (maintenanceTimerInterval) {
+                clearInterval(maintenanceTimerInterval);
+                maintenanceTimerInterval = null;
+            }
+            if (tickInterval) {
+                clearInterval(tickInterval);
+                tickInterval = null;
+            }
+        }
+
+        function updateTimerDisplay(distance) {
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('timerHours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('timerMinutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('timerSeconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        function openMaintenanceModal() {
+            if (!isAdmin) return;
+            document.getElementById('maintenanceModal').classList.add('active');
+            document.getElementById('maintenanceMinutes').value = 5;
+            document.getElementById('maintenanceMessageInput').value = '';
+        }
+
+        function closeMaintenanceModal() {
+            document.getElementById('maintenanceModal').classList.remove('active');
+        }
+
+        function startMaintenance() {
+            const minutes = parseInt(document.getElementById('maintenanceMinutes').value) || 5;
+            if (minutes < 1 || minutes > 60) {
+                showToast('❌ المدة يجب أن تكون بين 1 و 60 دقيقة');
                 return;
             }
+            const message = document.getElementById('maintenanceMessageInput').value.trim() || 'جاري تحديث المحتوى، يرجى الانتظار...';
+            
+            const endTime = new Date(Date.now() + minutes * 60 * 1000);
+            
+            db.collection('system').doc('maintenance').set({
+                status: 'maintenance',
+                endTime: firebase.firestore.Timestamp.fromDate(endTime),
+                message: message,
+                startedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                SoundEffects.recordStart();
+                showToast('✅ تم بدء التحديث، سيظهر للزوار العداد');
+                closeMaintenanceModal();
+            }).catch(err => {
+                SoundEffects.error();
+                showToast('❌ فشل بدء التحديث');
+                console.error(err);
+            });
+        }
+
+        function cancelMaintenance() {
+            if (!isAdmin) {
+                showToast('❌ المشرف فقط يستطيع إلغاء التحديث');
+                return;
+            }
+            if (!confirm('هل أنت متأكد من إلغاء التحديث؟')) return;
+            
+            db.collection('system').doc('maintenance').update({
+                status: 'active'
+            }).then(() => {
+                SoundEffects.success();
+                showToast('✅ تم إلغاء التحديث');
+            }).catch(err => {
+                SoundEffects.error();
+                showToast('❌ فشل إلغاء التحديث');
+                console.error(err);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            listenToVideos();
+            listenToMaintenance();
+            loadAIKnowledgeFromFirebase();
+            initCloudinaryWidget();
+            checkUrlForShare();
+            setTimeout(() => {
+                document.getElementById('loader')?.classList.add('hidden');
+            }, 3000);
+        });
+
+        function listenToVideos() {
             if (unsubscribe) unsubscribe();
             unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
                 .onSnapshot(snapshot => {
@@ -1371,79 +2707,287 @@
                     updateStorageBar();
                     checkForResume();
                     checkUrlForShare();
-                    hideLoader();
                 }, error => {
-                    console.error('❌ خطأ في تحميل الفيديوهات:', error);
-                    hideLoader();
-                    showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام باقي الميزات');
+                    console.error('Error listening to videos:', error);
+                    showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام المنصة');
                 });
         }
 
-        // دالة آمنة للاستماع إلى حالة الصيانة
-        function listenToMaintenance() {
-            if (!isFirebaseReady()) return;
-            maintenanceUnsubscribe = db.collection('system').doc('maintenance')
-                .onSnapshot(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        if (data.status === 'maintenance') {
-                            maintenanceEndTime = data.endTime ? data.endTime.toDate() : null;
-                            showMaintenanceScreen(data.message || 'جاري التحديث...', maintenanceEndTime);
-                        } else {
-                            hideMaintenanceScreen();
-                        }
-                    } else {
-                        hideMaintenanceScreen();
+        function updateStorageBar() {
+            const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
+            const percentage = Math.min((totalUsed / MAX_STORAGE) * 100, 100);
+            const remaining = MAX_STORAGE - totalUsed;
+            const usedGB = (totalUsed / (1024 * 1024 * 1024)).toFixed(2);
+            const remainingGB = (remaining / (1024 * 1024 * 1024)).toFixed(2);
+            
+            document.getElementById('usedSpace').textContent = usedGB + ' GB';
+            document.getElementById('totalSpace').textContent = '25 GB';
+            document.getElementById('percentage').textContent = percentage.toFixed(2) + '%';
+            document.getElementById('remainingText').textContent = 'المتبقي: ' + remainingGB + ' GB';
+            document.getElementById('videosCount').textContent = videos.length + ' فيديو';
+            
+            const progressBar = document.getElementById('storageProgress');
+            progressBar.style.width = percentage + '%';
+            progressBar.classList.remove('low', 'medium', 'high');
+            if (percentage < 50) progressBar.classList.add('low');
+            else if (percentage < 80) progressBar.classList.add('medium');
+            else progressBar.classList.add('high');
+            
+            if (isAdmin) document.getElementById('storageBar').style.display = 'block';
+        }
+
+        function initCloudinaryWidget() {
+            if (typeof cloudinary === 'undefined') {
+                console.error('Cloudinary widget not loaded');
+                showToast('⚠️ فشل تحميل واجهة الرفع');
+                return;
+            }
+            
+            uploadWidget = cloudinary.createUploadWidget({
+                cloudName: CLOUDINARY_CONFIG.cloudName,
+                uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+                resourceType: 'video',
+                clientAllowedFormats: ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', '3gp', 'flv', 'gif'],
+                maxFileSize: MAX_VIDEO_SIZE,
+                maxVideoFileSize: MAX_VIDEO_SIZE,
+                chunkSize: CHUNK_SIZE,
+                maxChunkSize: CHUNK_SIZE,
+                sources: ['local', 'url', 'camera', 'dropbox', 'google_drive'],
+                language: 'ar',
+                text: {
+                    ar: {
+                        or: 'أو',
+                        local: { browse: 'اختر ملف', drop: 'اسحب الفيديو هنا' },
+                        menu: { files: 'ملفاتي', web: 'رابط الويب', camera: 'الكاميرا', gdrive: 'Google Drive', dropbox: 'Dropbox' }
                     }
-                }, error => {
-                    console.error('Error listening to maintenance:', error);
-                });
+                },
+                styles: {
+                    palette: {
+                        window: '#1a1025', windowBorder: '#6366f1', tabIcon: '#6366f1', menuIcons: '#6366f1',
+                        textDark: '#ffffff', textLight: '#ffffff', link: '#ec4899', action: '#6366f1',
+                        inactiveTabIcon: '#8b5cf6', error: '#ef4444', inProgress: '#6366f1', complete: '#10b981', sourceBg: '#0f0a1a'
+                    },
+                    fonts: { default: 'Cairo', active: 'Cairo' }
+                },
+                showAdvancedOptions: false,
+                cropping: false,
+                multiple: false,
+                defaultSource: 'local',
+                parallelUploads: 3,
+                maxConcurrentUploads: 3,
+                retryCount: 3,
+                eagerAsync: true,
+                prepareUploadParams: function(cb, params) {
+                    params.context = 'alt=فيديو فلك العالمي';
+                    params.eager = [
+                        { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" },
+                        { width: 400, height: 225, crop: "fill", format: "jpg" },
+                        { width: 400, height: 225, crop: "fill", format: "gif", video_sampling: "10s", delay: "100", start_offset: "0", end_offset: "3", effect: "loop" }
+                    ];
+                    params.eager_async = true;
+                    cb(params);
+                }
+            }, function(error, result) {
+                if (!error && result && result.event === "success") {
+                    document.getElementById('uploadProgressContainer').classList.remove('active');
+                    console.log('Upload success:', result.info);
+                    pendingVideoInfo = result.info;
+                    document.getElementById('videoTitleInput').value = result.info.original_filename || 'فيديو بدون عنوان';
+                    document.getElementById('videoDescriptionInput').value = '';
+                    document.getElementById('descriptionModal').classList.add('active');
+                    SoundEffects.success();
+                    showToast('✅ تم الرفع بنجاح! جاري المعالجة...');
+                } else if (error) {
+                    document.getElementById('uploadProgressContainer').classList.remove('active');
+                    console.error('Upload error:', error);
+                    SoundEffects.error();
+                    if (error.status === 413) showToast('❌ الملف كبير جداً. الحد الأقصى هو 100 ميجابايت');
+                    else showToast('❌ فشل الرفع: ' + (error.message || 'خطأ غير معروف'));
+                } else if (result && result.event === "queues-start") {
+                    uploadStartTime = Date.now();
+                    lastTime = Date.now();
+                    lastUploadedBytes = 0;
+                    document.getElementById('uploadProgressContainer').classList.add('active');
+                    showToast('🚀 جاري بدء الرفع...');
+                } else if (result && result.event === "upload-progress") {
+                    updateUploadProgress(result.info);
+                } else if (result && result.event === "upload-success") {
+                    showToast('📤 تم رفع جزء من الفيديو بنجاح...');
+                }
+            });
         }
 
-        // بدء التطبيق بعد تحميل الصفحة
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM جاهز');
-            listenToVideos();
-            listenToMaintenance();
-            loadAIKnowledgeFromFirebase();
-            initCloudinaryWidget();
-            checkUrlForShare();
-            checkSavedAdmin();
-            setTimeout(hideLoader, 3000);
-        });
+        function updateUploadProgress(info) {
+            if (!info) return;
+            const percent = info.progress || 0;
+            const uploadedBytes = info.uploadedBytes || 0;
+            const totalBytes = info.totalBytes || 1;
+            const currentTime = Date.now();
+            const timeDiff = (currentTime - lastTime) / 1000;
+            const bytesDiff = uploadedBytes - lastUploadedBytes;
+            const speed = timeDiff > 0 ? (bytesDiff / timeDiff) / (1024 * 1024) : 0;
+            const remainingBytes = totalBytes - uploadedBytes;
+            const remainingTime = speed > 0 ? remainingBytes / (speed * 1024 * 1024) : 0;
+            
+            document.getElementById('uploadProgressFill').style.width = percent + '%';
+            document.getElementById('uploadProgressPercent').textContent = Math.round(percent) + '%';
+            document.getElementById('uploadSpeed').textContent = speed.toFixed(2) + ' MB/s';
+            
+            if (remainingTime > 60) {
+                const mins = Math.floor(remainingTime / 60);
+                const secs = Math.floor(remainingTime % 60);
+                document.getElementById('uploadTimeRemaining').textContent = mins + ':' + secs.toString().padStart(2, '0') + ' دقيقة متبقية';
+            } else if (remainingTime > 0) {
+                document.getElementById('uploadTimeRemaining').textContent = Math.floor(remainingTime) + ' ثانية متبقية';
+            } else {
+                document.getElementById('uploadTimeRemaining').textContent = 'جاري إكمال الرفع...';
+            }
+            
+            lastTime = currentTime;
+            lastUploadedBytes = uploadedBytes;
+        }
 
-        // دالة التحقق من المشرف المخزن
-        function checkSavedAdmin() {
-            const savedAdmin = localStorage.getItem('falak_admin');
-            if (savedAdmin === 'true') {
-                isAdmin = true;
-                document.getElementById('uploadZone')?.classList.add('active');
-                document.getElementById('adminBtn').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'flex';
-                document.getElementById('maintenanceBtn').style.display = 'flex';
-                document.getElementById('setAdminsBtn').style.display = 'inline-flex';
-                document.getElementById('teachAICircleBtn').style.display = 'inline-flex';
-                document.getElementById('examResultsBtn').style.display = 'inline-flex';
-                updateStorageBar();
-                renderVideos();
-                loadAIKnowledgeFromFirebase();
+        function openCloudinaryWidget() {
+            const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
+            const remaining = MAX_STORAGE - totalUsed;
+            if (remaining <= 0) {
+                SoundEffects.error();
+                showToast('❌ المساحة ممتلئة (25 GB)! احذف بعض الفيديوهات أولاً');
+                return;
+            }
+            if (uploadWidget) uploadWidget.open();
+            else {
+                showToast('⚠️ جاري تحميل واجهة الرفع...');
+                initCloudinaryWidget();
+                setTimeout(() => uploadWidget?.open(), 500);
             }
         }
 
-        // ========== دالة renderVideos المعدلة (مع إضافة أزرار الامتحانات الجديدة) ==========
+        function saveVideoWithDescription() {
+            if (!pendingVideoInfo) {
+                showToast('⚠️ لا توجد معلومات فيديو للحفظ');
+                closeDescriptionModal();
+                return;
+            }
+            const info = pendingVideoInfo;
+            const title = document.getElementById('videoTitleInput').value.trim() || 'فيديو بدون عنوان';
+            const description = document.getElementById('videoDescriptionInput').value.trim() || '';
+            const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
+            if (totalUsed + info.bytes > MAX_STORAGE) {
+                SoundEffects.error();
+                showToast('❌ لا توجد مساحة كافية! المساحة المتبقية: ' + formatSize(MAX_STORAGE - totalUsed));
+                return;
+            }
+            const optimizedUrl = info.secure_url.replace('/upload/', '/upload/q_auto,f_auto,vc_auto/');
+            let thumbnailUrl = null;
+            let gifUrl = null;
+            if (info.eager && info.eager.length > 1 && info.eager[1].secure_url) thumbnailUrl = info.eager[1].secure_url;
+            else if (info.public_id) thumbnailUrl = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_1,f_jpg/' + info.public_id + '.jpg';
+            if (info.eager && info.eager.length > 2 && info.eager[2].secure_url) gifUrl = info.eager[2].secure_url;
+            else if (info.public_id) gifUrl = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + info.public_id + '.gif';
+
+            const videoData = {
+                title: title,
+                description: description,
+                url: optimizedUrl,
+                originalUrl: info.secure_url,
+                thumbnail: thumbnailUrl,
+                gif: gifUrl,
+                publicId: info.public_id || '',
+                format: info.format,
+                duration: info.duration,
+                width: info.width,
+                height: info.height,
+                size: info.bytes,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                cloudinaryData: { assetId: info.asset_id, version: info.version_id },
+                optimized: true
+            };
+
+            db.collection('videos').add(videoData)
+                .then(() => {
+                    SoundEffects.success();
+                    showToast('✅ تم الرفع والحفظ بنجاح! 🌟');
+                    closeDescriptionModal();
+                    pendingVideoInfo = null;
+                })
+                .catch(err => {
+                    console.error('Error saving to Firebase:', err);
+                    SoundEffects.error();
+                    showToast('⚠️ تم الرفع لكن فشل الحفظ في قاعدة البيانات');
+                });
+        }
+
+        function closeDescriptionModal() {
+            document.getElementById('descriptionModal').classList.remove('active');
+            pendingVideoInfo = null;
+        }
+
+        function editVideoTitle(videoId) {
+            if (!isAdmin) {
+                SoundEffects.error();
+                showToast('❌ المشرف فقط يستطيع تعديل البيانات');
+                return;
+            }
+            const video = videos.find(v => v.id === videoId);
+            if (!video) return;
+
+            currentEditVideoId = videoId;
+            document.getElementById('editVideoTitleInput').value = video.title || '';
+            document.getElementById('editVideoDescriptionInput').value = video.description || '';
+
+            const descLength = (video.description || '').length;
+            document.getElementById('editDescCharCount').textContent = `(${descLength} / 5000 حرف)`;
+
+            document.getElementById('editVideoModal').classList.add('active');
+        }
+
+        function closeEditVideoModal() {
+            document.getElementById('editVideoModal').classList.remove('active');
+            currentEditVideoId = null;
+        }
+
+        function saveVideoEdit() {
+            if (!currentEditVideoId || !isAdmin) return;
+
+            const newTitle = document.getElementById('editVideoTitleInput').value.trim();
+            const newDescription = document.getElementById('editVideoDescriptionInput').value.trim();
+
+            if (!newTitle) {
+                SoundEffects.error();
+                showToast('⚠️ العنوان لا يمكن أن يكون فارغاً');
+                return;
+            }
+
+            db.collection('videos').doc(currentEditVideoId).update({
+                title: newTitle,
+                description: newDescription,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                SoundEffects.success();
+                showToast('✅ تم تعديل البيانات بنجاح!');
+                closeEditVideoModal();
+            })
+            .catch(err => {
+                console.error('Error updating video:', err);
+                SoundEffects.error();
+                showToast('❌ فشل تعديل البيانات');
+            });
+        }
+
         function renderVideos() {
             const container = document.getElementById('videosContainer');
             const emptyState = document.getElementById('emptyState');
             const videoCountSpan = document.getElementById('videoCount');
-            if (!container) return;
             if (videos.length === 0) {
                 container.innerHTML = '';
-                if (emptyState) emptyState.style.display = 'block';
-                if (videoCountSpan) videoCountSpan.textContent = '0 فيديو';
+                emptyState.style.display = 'block';
+                videoCountSpan.textContent = '0 فيديو';
                 return;
             }
-            if (emptyState) emptyState.style.display = 'none';
-            if (videoCountSpan) videoCountSpan.textContent = videos.length + ' فيديو';
+            emptyState.style.display = 'none';
+            videoCountSpan.textContent = videos.length + ' فيديو';
             
             container.innerHTML = videos.map((video, index) => {
                 const duration = video.duration ? formatDuration(video.duration) : '';
@@ -1456,7 +3000,6 @@
                     if (match && match[1]) { bgSource = 'https://res.cloudinary.com/' + CLOUDINARY_CONFIG.cloudName + '/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/' + match[1] + '.gif'; isGif = true; }
                 }
                 
-                // أزرار المشرف (مع إضافة زر حذف الامتحان)
                 const adminButtons = isAdmin ? `
                     <button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId || ''}')">
                         <i class="fas fa-trash"></i> حذف
@@ -1464,28 +3007,7 @@
                     <button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${video.id}')" title="تعديل العنوان والوصف">
                         <i class="fas fa-edit"></i> تعديل
                     </button>
-                    <button class="exam-btn" onclick="event.stopPropagation(); openCreateExamModal('${video.id}')" title="إضافة امتحان">
-                        <i class="fas fa-clipboard-list"></i> امتحان
-                    </button>
-                    <button class="delete-exam-btn" onclick="event.stopPropagation(); deleteExam('${video.id}')" title="حذف الامتحان">
-                        <i class="fas fa-trash"></i> حذف الامتحان
-                    </button>
                 ` : '';
-                
-                // قسم الامتحان: للمشرف يظهر "تصحيح الامتحان"، للطالب "دخول الامتحان"
-                const examSection = `
-                    <div class="exam-section">
-                        ${isAdmin ? `
-                            <button class="correction-btn-card" onclick="event.stopPropagation(); openCorrectionPanel('${video.id}')">
-                                <i class="fas fa-check-double"></i> تصحيح الامتحان
-                            </button>
-                        ` : `
-                            <button class="exam-btn-card" onclick="event.stopPropagation(); openStudentExamModal('${video.id}')">
-                                <i class="fas fa-clipboard-check"></i> دخول الامتحان
-                            </button>
-                        `}
-                    </div>
-                `;
                 
                 return `
                     <div class="video-card" onclick="playVideo('${video.id}')">
@@ -1502,9 +3024,6 @@
                         <div class="video-info">
                             <h4 class="video-title">${video.title} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
                             ${video.description ? '<div class="video-description">' + video.description + '</div>' : ''}
-                            
-                            ${examSection}
-                            
                             <div class="video-meta">
                                 <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
                                 <span><i class="fas fa-hdd"></i> ${formatSize(video.size)}</span>
@@ -1516,479 +3035,13 @@
             }).join('');
         }
 
-        // ========== دوال الامتحانات المعدلة (بدون تصحيح تلقائي) ==========
-
-        // فتح نافذة إنشاء الامتحان
-        function openCreateExamModal(videoId) {
-            if (!isAdmin) { showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
-            currentExamVideoId = videoId;
-            examQuestions = [];
-            document.getElementById('examQuestionsContainer').innerHTML = '';
-            addQuestionForm();
-            document.getElementById('createExamModal').classList.add('active');
-        }
-
-        function closeCreateExamModal() {
-            document.getElementById('createExamModal').classList.remove('active');
-            currentExamVideoId = null;
-            examQuestions = [];
-        }
-
-        function addQuestionForm() {
-            const container = document.getElementById('examQuestionsContainer');
-            const questionIndex = examQuestions.length + 1;
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'question-form';
-            questionDiv.id = `question-form-${questionIndex}`;
-            questionDiv.innerHTML = `
-                <div class="question-header">
-                    <span class="question-number">سؤال ${questionIndex}</span>
-                    ${questionIndex > 1 ? `<button class="remove-question-btn" onclick="removeQuestion(${questionIndex})"><i class="fas fa-trash"></i></button>` : ''}
-                </div>
-                <div class="form-group">
-                    <label>نص السؤال</label>
-                    <input type="text" id="q-text-${questionIndex}" placeholder="اكتب السؤال هنا..." style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo';">
-                </div>
-                <div class="form-group">
-                    <label>صورة للسؤال (اختياري)</label>
-                    <input type="file" id="q-image-${questionIndex}" accept="image/*" style="display: none;" onchange="previewQuestionImage(${questionIndex}, this)">
-                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('q-image-${questionIndex}').click()" style="width: 100%; margin-bottom: 0.5rem;">
-                        <i class="fas fa-image"></i> اختيار صورة
-                    </button>
-                    <img id="q-image-preview-${questionIndex}" style="max-width: 100%; border-radius: 10px; display: none; margin-top: 0.5rem;">
-                </div>
-                <div class="form-group">
-                    <label>الاختيارات (حدد الإجابة الصحيحة)</label>
-                    <div class="option-input-group">
-                        <input type="radio" name="correct-${questionIndex}" value="0" class="option-radio" checked>
-                        <input type="text" id="q-opt-${questionIndex}-0" placeholder="الاختيار الأول" style="flex: 1; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo';">
-                    </div>
-                    <div class="option-input-group">
-                        <input type="radio" name="correct-${questionIndex}" value="1" class="option-radio">
-                        <input type="text" id="q-opt-${questionIndex}-1" placeholder="الاختيار الثاني" style="flex: 1; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo';">
-                    </div>
-                    <div class="option-input-group">
-                        <input type="radio" name="correct-${questionIndex}" value="2" class="option-radio">
-                        <input type="text" id="q-opt-${questionIndex}-2" placeholder="الاختيار الثالث" style="flex: 1; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo';">
-                    </div>
-                    <div class="option-input-group">
-                        <input type="radio" name="correct-${questionIndex}" value="3" class="option-radio">
-                        <input type="text" id="q-opt-${questionIndex}-3" placeholder="الاختيار الرابع" style="flex: 1; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-family: 'Cairo';">
-                    </div>
-                </div>
-            `;
-            container.appendChild(questionDiv);
-            examQuestions.push(questionIndex);
-        }
-
-        function previewQuestionImage(index, input) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) { 
-                    document.getElementById(`q-image-preview-${index}`).src = e.target.result; 
-                    document.getElementById(`q-image-preview-${index}`).style.display = 'block'; 
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function removeQuestion(index) {
-            const element = document.getElementById(`question-form-${index}`);
-            if (element) { 
-                element.remove(); 
-                examQuestions = examQuestions.filter(q => q !== index); 
-            }
-            const forms = document.querySelectorAll('.question-form');
-            forms.forEach((form, idx) => { 
-                form.querySelector('.question-number').textContent = `سؤال ${idx + 1}`; 
-            });
-        }
-
-        async function saveExam() {
-            if (!currentExamVideoId) return;
-            const questions = [];
-            const forms = document.querySelectorAll('.question-form');
-            for (let i = 0; i < forms.length; i++) {
-                const form = forms[i];
-                const questionNum = i + 1;
-                const text = form.querySelector(`#q-text-${examQuestions[i]}`).value.trim();
-                if (!text) { showToast(`⚠️ أدخل نص السؤال ${questionNum}`); return; }
-                const options = [];
-                for (let j = 0; j < 4; j++) {
-                    const optText = form.querySelector(`#q-opt-${examQuestions[i]}-${j}`).value.trim();
-                    if (!optText) { showToast(`⚠️ أدخل جميع الاختيارات للسؤال ${questionNum}`); return; }
-                    options.push(optText);
-                }
-                const correctIndex = parseInt(form.querySelector(`input[name="correct-${examQuestions[i]}"]:checked`).value);
-                let imageUrl = null;
-                const imageInput = form.querySelector(`#q-image-${examQuestions[i]}`);
-                if (imageInput && imageInput.files[0]) {
-                    try {
-                        const formData = new FormData();
-                        formData.append('file', imageInput.files[0]);
-                        formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
-                        formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
-                        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, { method: 'POST', body: formData });
-                        const data = await res.json();
-                        imageUrl = data.secure_url;
-                    } catch (err) { console.error('Error uploading question image:', err); }
-                }
-                questions.push({ 
-                    text: text, 
-                    options: options, 
-                    correctIndex: correctIndex, 
-                    imageUrl: imageUrl 
-                });
-            }
-            if (questions.length === 0) { showToast('⚠️ أضف سؤالاً واحداً على الأقل'); return; }
-            try {
-                await db.collection('exams').doc(currentExamVideoId).set({
-                    videoId: currentExamVideoId,
-                    questions: questions,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdBy: 'مشرف'
-                });
-                SoundEffects.success();
-                showToast('✅ تم حفظ الامتحان بنجاح!');
-                closeCreateExamModal();
-            } catch (err) { console.error('Error saving exam:', err); SoundEffects.error(); showToast('❌ فشل حفظ الامتحان'); }
-        }
-
-        async function openStudentExamModal(videoId) {
-            try {
-                const examDoc = await db.collection('exams').doc(videoId).get();
-                if (!examDoc.exists) { showToast('⚠️ لا يوجد امتحان لهذا الفيديو بعد'); return; }
-                currentExamData = examDoc.data();
-                currentExamVideoId = videoId;
-                studentAnswers = {};
-                currentQuestionIndex = 0;
-                const video = videos.find(v => v.id === videoId);
-                document.getElementById('studentExamTitle').textContent = `امتحان: ${video ? video.title : 'الفيديو'}`;
-                document.getElementById('studentNameEntry').style.display = 'block';
-                document.getElementById('studentExamQuestions').style.display = 'none';
-                document.getElementById('studentExamResult').style.display = 'none';
-                document.getElementById('studentExamNameInput').value = '';
-                document.getElementById('studentExamModal').classList.add('active');
-            } catch (err) { console.error('Error loading exam:', err); showToast('❌ فشل تحميل الامتحان'); }
-        }
-
-        function closeStudentExamModal() {
-            document.getElementById('studentExamModal').classList.remove('active');
-            currentExamData = null;
-            currentExamVideoId = null;
-            studentAnswers = {};
-        }
-
-        function startStudentExam() {
-            const name = document.getElementById('studentExamNameInput').value.trim();
-            if (!name) { showToast('⚠️ أدخل اسمك أولاً'); return; }
-            document.getElementById('studentNameEntry').style.display = 'none';
-            document.getElementById('studentExamQuestions').style.display = 'block';
-            renderExamQuestions();
-            updateExamProgress();
-        }
-
-        function renderExamQuestions() {
-            const container = document.getElementById('examQuestionsList');
-            const questions = currentExamData.questions;
-            container.innerHTML = questions.map((q, index) => `
-                <div class="exam-question" id="question-${index}" style="${index === 0 ? '' : 'display: none;'}">
-                    <div class="exam-question-text">${index + 1}. ${q.text}</div>
-                    ${q.imageUrl ? `<img src="${q.imageUrl}" class="exam-question-image" alt="صورة السؤال">` : ''}
-                    <div class="exam-options">
-                        ${q.options.map((opt, optIndex) => `
-                            <button class="exam-option-btn" onclick="selectAnswer(${index}, ${optIndex})" id="opt-${index}-${optIndex}">${opt}</button>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('totalQuestionsNum').textContent = questions.length;
-        }
-
-        function selectAnswer(questionIndex, optionIndex) {
-            studentAnswers[questionIndex] = optionIndex;
-            const buttons = document.querySelectorAll(`#question-${questionIndex} .exam-option-btn`);
-            buttons.forEach((btn, idx) => {
-                btn.classList.remove('selected');
-                if (idx === optionIndex) btn.classList.add('selected');
-            });
-            if (questionIndex < currentExamData.questions.length - 1) {
-                setTimeout(() => showQuestion(questionIndex + 1), 500);
-            }
-        }
-
-        function showQuestion(index) {
-            document.querySelectorAll('.exam-question').forEach((q, i) => { q.style.display = i === index ? 'block' : 'none'; });
-            currentQuestionIndex = index;
-            updateExamProgress();
-        }
-
-        function updateExamProgress() {
-            const total = currentExamData.questions.length;
-            const current = currentQuestionIndex + 1;
-            const percent = (current / total) * 100;
-            document.getElementById('currentQuestionNum').textContent = current;
-            document.getElementById('examProgressFill').style.width = percent + '%';
-        }
-
-        // دالة إرسال الامتحان (بدون حساب درجة)
-        async function submitExam() {
-            const name = document.getElementById('studentExamNameInput').value.trim();
-            const questions = currentExamData.questions;
-            const answers = [];
-            questions.forEach((q, index) => {
-                const studentAnswer = studentAnswers[index];
-                answers.push({
-                    question: q.text,
-                    questionImage: q.imageUrl || null,
-                    studentAnswer: studentAnswer !== undefined ? q.options[studentAnswer] : 'لم يتم الإجابة',
-                    selectedIndex: studentAnswer,
-                    correctAnswer: q.options[q.correctIndex], // نحتفظ بالإجابة الصحيحة للمشرف
-                    isCorrect: null // لم نحدد صح/خطأ
-                });
-            });
-            try {
-                await db.collection('exam_results').add({
-                    videoId: currentExamVideoId,
-                    studentName: name,
-                    answers: answers,
-                    corrected: false,      // لم يتم التصحيح بعد
-                    score: null,           // لا توجد درجة
-                    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                SoundEffects.success();
-                showExamSubmittedMessage();
-            } catch (err) { console.error('Error saving exam:', err); SoundEffects.error(); showToast('❌ فشل إرسال الامتحان'); }
-        }
-
-        // دالة عرض رسالة بعد التقديم
-        function showExamSubmittedMessage() {
-            document.getElementById('studentExamQuestions').style.display = 'none';
-            document.getElementById('studentExamResult').style.display = 'block';
-            document.getElementById('resultScore').textContent = '⏳';
-            document.getElementById('resultScore').style.color = '#f59e0b';
-            document.getElementById('resultMessage').textContent = 'تم استلام إجاباتك، بانتظار التصحيح من المشرف.';
-            document.getElementById('resultDetails').innerHTML = `
-                <div class="result-item">
-                    <span>شكراً لك!</span>
-                </div>
-                <div class="result-item">
-                    <span>سيتم إعلامك بالنتيجة فور تصحيحها.</span>
-                </div>
-            `;
-        }
-
-        // ========== دوال التصحيح (للمشرف) ==========
-        async function openCorrectionPanel(videoId) {
-            if (!isAdmin) return;
-            const video = videos.find(v => v.id === videoId);
-            const snapshot = await db.collection('exam_results')
-                .where('videoId', '==', videoId)
-                .orderBy('submittedAt', 'desc')
-                .get();
-            
-            const results = [];
-            snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
-
-            let html = `
-                <div style="max-height: 70vh; overflow-y: auto; padding: 1rem;">
-                    <h3 style="margin-bottom: 1rem;">تصحيح امتحان: ${video ? video.title : ''}</h3>
-                    ${results.length === 0 ? '<p>لا يوجد طلاب تقدموا بعد</p>' : ''}
-            `;
-            results.forEach(r => {
-                const submittedDate = r.submittedAt ? new Date(r.submittedAt.toDate()).toLocaleDateString('ar-EG') : '';
-                const corrected = r.corrected ? 'تم التصحيح' : 'بانتظار التصحيح';
-                html += `
-                    <div style="background: rgba(255,255,255,0.05); border-radius: 15px; padding: 1rem; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span style="font-weight: bold;">${escapeHtml(r.studentName)}</span>
-                            <span style="color: #888;">${submittedDate}</span>
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <strong>الحالة:</strong> 
-                            <span style="color: ${r.corrected ? '#10b981' : '#f59e0b'}">${corrected}</span>
-                            ${r.corrected ? ` | الدرجة: <strong style="color: ${r.score >= 80 ? '#10b981' : r.score >= 60 ? '#f59e0b' : '#ef4444'}">${r.score}%</strong>` : ''}
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <details>
-                                <summary style="cursor: pointer; color: #6366f1;">عرض إجابات الطالب</summary>
-                                <div style="margin-top: 0.5rem; padding-right: 1rem;">
-                                    ${r.answers.map((a, i) => `
-                                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 0.5rem; margin-bottom: 0.5rem;">
-                                            <div style="font-weight: 600;">${i+1}. ${a.question}</div>
-                                            <div style="color: #aaa;">إجابة الطالب: ${a.studentAnswer}</div>
-                                            <div style="color: #10b981;">الإجابة الصحيحة: ${a.correctAnswer}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </details>
-                        </div>
-                        ${!r.corrected ? `
-                            <div style="margin-bottom: 1rem;">
-                                <label>أدخل الدرجة (من 100):</label>
-                                <input type="number" id="grade-${r.id}" min="0" max="100" value="0" style="width: 80px; padding: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid #6366f1; border-radius: 8px; color: white; margin-left: 0.5rem;">
-                            </div>
-                            <button class="btn btn-success" style="width: 100%;" onclick="submitCorrection('${r.id}')">
-                                <i class="fas fa-save"></i> حفظ التصحيح
-                            </button>
-                        ` : `
-                            <button class="btn btn-warning" style="width: 100%;" onclick="reopenCorrection('${r.id}')">
-                                <i class="fas fa-undo"></i> إعادة التصحيح
-                            </button>
-                        `}
-                    </div>
-                `;
-            });
-            html += '</div>';
-
-            const modal = document.createElement('div');
-            modal.className = 'modal active';
-            modal.id = 'correctionModal';
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-check-double" style="color: #f59e0b;"></i> تصحيح الامتحانات</h3>
-                        <button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div class="modal-body" style="padding: 0;">
-                        ${html}
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        async function submitCorrection(resultId) {
-            const gradeInput = document.getElementById(`grade-${resultId}`);
-            if (!gradeInput) return;
-            const newScore = parseInt(gradeInput.value);
-            if (isNaN(newScore) || newScore < 0 || newScore > 100) {
-                showToast('❌ الدرجة يجب أن تكون بين 0 و 100');
-                return;
-            }
-            try {
-                await db.collection('exam_results').doc(resultId).update({
-                    score: newScore,
-                    corrected: true,
-                    correctedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                SoundEffects.success();
-                showToast('✅ تم تصحيح الامتحان');
-                document.getElementById('correctionModal').remove();
-            } catch (err) {
-                console.error(err);
-                SoundEffects.error();
-                showToast('❌ فشل حفظ التصحيح');
-            }
-        }
-
-        async function reopenCorrection(resultId) {
-            try {
-                await db.collection('exam_results').doc(resultId).update({
-                    corrected: false,
-                    score: null
-                });
-                showToast('🔄 يمكنك إعادة التصحيح');
-                document.getElementById('correctionModal').remove();
-            } catch (err) {
-                console.error(err);
-                SoundEffects.error();
-                showToast('❌ فشل إعادة التصحيح');
-            }
-        }
-
-        // ========== دالة حذف الامتحان ==========
-        async function deleteExam(videoId) {
-            if (!isAdmin) return;
-            if (!confirm('هل أنت متأكد من حذف هذا الامتحان؟ سيتم حذف جميع نتائجه أيضاً.')) return;
-            try {
-                await db.collection('exams').doc(videoId).delete();
-                const results = await db.collection('exam_results').where('videoId', '==', videoId).get();
-                const batch = db.batch();
-                results.docs.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                SoundEffects.delete();
-                showToast('✅ تم حذف الامتحان وجميع نتائجه');
-                renderVideos();
-            } catch (err) {
-                console.error(err);
-                SoundEffects.error();
-                showToast('❌ فشل حذف الامتحان');
-            }
-        }
-
-        // ========== دالة البحث عن النتيجة (لطلاب) ==========
-        async function searchExamResult() {
-            const videoId = document.getElementById('checkResultVideoSelect').value;
-            const name = document.getElementById('checkResultNameInput').value.trim();
-            const display = document.getElementById('checkResultDisplay');
-            if (!videoId || !name) {
-                showToast('⚠️ اختر الفيديو وأدخل اسمك');
-                return;
-            }
-            display.style.display = 'block';
-            display.innerHTML = '<p style="text-align: center; color: #888;"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</p>';
-            try {
-                const snapshot = await db.collection('exam_results')
-                    .where('videoId', '==', videoId)
-                    .orderBy('submittedAt', 'desc')
-                    .get();
-                
-                let found = null;
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.studentName.trim().toLowerCase() === name.trim().toLowerCase()) {
-                        found = { id: doc.id, ...data };
-                    }
-                });
-
-                if (!found) {
-                    display.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">❌ لم يتم العثور على نتيجة بهذا الاسم</p>';
-                    return;
-                }
-
-                if (!found.corrected || found.score === null) {
-                    // لم يتم التصحيح بعد
-                    display.innerHTML = `
-                        <div style="text-align: center; padding: 2rem;">
-                            <i class="fas fa-hourglass-half" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-                            <h3 style="color: #f59e0b;">بانتظار التصحيح</h3>
-                            <p style="color: #aaa;">لم يتم تصحيح إجاباتك بعد. يرجى التحقق لاحقاً.</p>
-                        </div>
-                    `;
-                } else {
-                    // تم التصحيح، نعرض الدرجة
-                    const score = found.score;
-                    const scoreColor = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
-                    display.innerHTML = `
-                        <div class="result-display" style="padding: 0;">
-                            <div class="result-score" style="font-size: 3rem; color: ${scoreColor};">${score}%</div>
-                            <div class="result-details" style="margin-top: 1rem;">
-                                <div class="result-item"><span>التقدير:</span><span style="color: ${scoreColor};">${score >= 80 ? 'ممتاز' : score >= 60 ? 'جيد' : 'راسب'}</span></div>
-                                <div class="result-item"><span>تاريخ التصحيح:</span><span>${found.correctedAt ? new Date(found.correctedAt.toDate()).toLocaleDateString('ar-EG') : '-'}</span></div>
-                            </div>
-                        </div>
-                    `;
-                }
-            } catch (err) {
-                console.error('Error searching result:', err);
-                display.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">❌ فشل البحث عن النتيجة</p>';
-            }
-        }
-
-        // ========== باقي الدوال (كما هي من الكود الأصلي مع الحفاظ عليها) ==========
-        // ملاحظة: يجب تضمين جميع الدوال الأخرى مثل formatDuration, formatSize, showToast, playVideo, deleteVideo, إلخ.
-        // نظراً لضيق المساحة، لم أكررها هنا، ولكن في الملف الفعلي يجب أن تبقى كما هي.
-        // سأضع دوالاً مختصرة للضرورة، ولكن في التطبيق الفعلي، انسخ بقية الدوال من الكود الأصلي.
-
-        // دوال مساعدة مختصرة (يجب استكمالها)
         function formatDuration(seconds) {
             if (!seconds) return '';
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return mins + ':' + (secs < 10 ? '0' : '') + secs;
         }
+
         function formatSize(bytes) {
             if (!bytes) return '0 B';
             if (bytes < 1024) return bytes + ' B';
@@ -1996,103 +3049,799 @@
             if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
             return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
         }
+
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 4000);
         }
-        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
-        // ========== صوتيات (مختصرة) ==========
-        const SoundEffects = {
-            audioContext: null,
-            init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
-            send() { this.init(); /* تنفيذ الصوت */ },
-            receive() { this.init(); },
-            delete() { this.init(); },
-            join() { this.init(); },
-            error() { this.init(); },
-            success() { this.init(); },
-            recordStart() { this.init(); },
-            recordStop() { this.init(); },
-            tick() { this.init(); }
-        };
+        function playVideo(id, startTime = 0) {
+            const video = videos.find(v => v.id === id);
+            if (!video) return;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
+            const player = document.getElementById('videoPlayer');
+            player.src = video.url;
+            player.poster = video.thumbnail || '';
+            document.getElementById('videoModal').classList.add('active');
+            if (startTime > 0) {
+                const setStartTime = () => {
+                    player.currentTime = startTime;
+                    player.removeEventListener('loadedmetadata', setStartTime);
+                };
+                player.addEventListener('loadedmetadata', setStartTime);
+            }
+            setupProgressTracking();
+            player.play().catch(() => {});
+        }
 
-        // ========== بدء تشغيل الواجهات ==========
-        function initCloudinaryWidget() { /* كما هي */ }
-        function openCloudinaryWidget() { /* كما هي */ }
-        function playVideo(id, startTime) { /* كما هي */ }
-        function deleteVideo(id, publicId) { /* كما هي */ }
-        function showLogin() { document.getElementById('loginModal').classList.add('active'); }
+        function closeModal() {
+            saveVideoProgress();
+            const player = document.getElementById('videoPlayer');
+            player.pause();
+            player.src = '';
+            player.poster = '';
+            document.getElementById('videoModal').classList.remove('active');
+        }
+
+        function deleteVideo(id, publicId) {
+            if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
+            db.collection('videos').doc(id).delete()
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('🗑️ تم الحذف من المكتبة');
+                })
+                .catch(err => {
+                    SoundEffects.error();
+                    showToast('❌ فشل الحذف: ' + err.message);
+                });
+        }
+
+        function showLogin() { 
+            document.getElementById('loginModal').classList.add('active'); 
+            document.getElementById('passwordInput').value = '';
+            setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+        }
+        
         function closeLogin() { document.getElementById('loginModal').classList.remove('active'); }
-        function doLogin() { /* كما هي */ }
-        function logout() { /* كما هي */ }
-        function openSetAdminsModal() { /* كما هي */ }
-        function closeAdminPasswordModal() { /* كما هي */ }
-        function verifyAdminPassword() { /* كما هي */ }
-        function closeSetAdminsModal() { /* كما هي */ }
-        function saveAdminCount() { /* كما هي */ }
-        function checkForResume() { /* كما هي */ }
-        function resumeWatching() { /* كما هي */ }
-        function dismissResume() { /* كما هي */ }
-        function setupProgressTracking() { /* كما هي */ }
-        function shareCurrentTime() { /* كما هي */ }
-        function checkUrlForShare() { /* كما هي */ }
-        function loadAIKnowledgeFromFirebase() { /* كما هي */ }
-        function renderAIKnowledgeList() { /* كما هي */ }
-        function openTeachAICircleModal() { /* كما هي */ }
-        function closeTeachAICircleModal() { /* كما هي */ }
-        function saveAIKnowledge() { /* كما هي */ }
-        function deleteAIKnowledge(id) { /* كما هي */ }
-        function openAIChat() { /* كما هي */ }
-        function closeAIChat() { /* كما هي */ }
-        function sendAIMessage() { /* كما هي */ }
-        function handleAIKeyPress(e) { /* كما هي */ }
-        function displayAIMessage(text, sender) { /* كما هي */ }
-        function getAIResponse(userMessage) { /* كما هي */ }
-        function findAIKnowledge(userMessage) { /* كما هي */ }
-        function openChat() { /* كما هي */ }
-        function saveUserName() { /* كما هي */ }
-        function closeChat() { /* كما هي */ }
-        function sendSystemMessage(text) { /* كما هي */ }
-        function loadMessages() { /* كما هي */ }
-        function displayMessage(id, msg) { /* كما هي */ }
-        function playVoiceMessage(btn, url, id) { /* كما هي */ }
-        function seekVoice(event, slider, id) { /* كما هي */ }
-        function deleteMessage(messageId, sender) { /* كما هي */ }
-        function sendMessage() { /* كما هي */ }
-        function handleKeyPress(e) { /* كما هي */ }
-        function sendImage(input) { /* كما هي */ }
-        function toggleRecording() { /* كما هي */ }
-        function startRecording() { /* كما هي */ }
-        function stopRecording() { /* كما هي */ }
-        function uploadVoice(blob) { /* كما هي */ }
-        function startVoiceCall() { /* كما هي */ }
-        function toggleMute() { /* كما هي */ }
-        function endCall() { /* كما هي */ }
-        function viewImage(url) { /* كما هي */ }
-        function closeImageViewer() { /* كما هي */ }
-        function scrollToBottom() { /* كما هي */ }
-        function initPresenceSystem() { /* كما هي */ }
-        function listenToOnlineUsers() { /* كما هي */ }
-        function removePresence() { /* كما هي */ }
-        function showMaintenanceScreen(message, endTime) { /* كما هي */ }
-        function hideMaintenanceScreen() { /* كما هي */ }
-        function updateTimerDisplay(distance) { /* كما هي */ }
-        function openMaintenanceModal() { /* كما هي */ }
-        function closeMaintenanceModal() { /* كما هي */ }
-        function startMaintenance() { /* كما هي */ }
-        function cancelMaintenance() { /* كما هي */ }
-        function updateStorageBar() { /* كما هي */ }
-        function closeDescriptionModal() { /* كما هي */ }
-        function saveVideoWithDescription() { /* كما هي */ }
-        function editVideoTitle(videoId) { /* كما هي */ }
-        function closeEditVideoModal() { /* كما هي */ }
-        function saveVideoEdit() { /* كما هي */ }
-        // ... الخ
 
-        // إغلاق النوافذ عند النقر خارجها
+        function doLogin() {
+            const input = document.getElementById('passwordInput');
+            const enteredPass = input.value.trim();
+            if (enteredPass === ADMIN_PASS) {
+                isAdmin = true;
+                localStorage.setItem('falak_admin', 'true');
+                document.getElementById('uploadZone').classList.add('active');
+                document.getElementById('adminBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'flex';
+                document.getElementById('maintenanceBtn').style.display = 'flex';
+                document.getElementById('setAdminsBtn').style.display = 'inline-flex';
+                document.getElementById('teachAICircleBtn').style.display = 'inline-flex';
+                updateStorageBar();
+                closeLogin();
+                renderVideos();
+                loadAIKnowledgeFromFirebase();
+                if (document.getElementById('maintenanceOverlay').classList.contains('active')) {
+                    document.getElementById('cancelMaintenanceBtn').classList.add('active');
+                }
+                SoundEffects.success();
+                showToast('🔓 مرحباً أيها المشرف! يمكنك الآن رفع الفيديوهات وتعليم الذكاء الاصطناعي');
+            } else {
+                SoundEffects.error();
+                showToast('❌ كلمة المرور خاطئة');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function logout() {
+            isAdmin = false;
+            isSuperAdmin = false;
+            localStorage.removeItem('falak_admin');
+            document.getElementById('uploadZone').classList.remove('active');
+            document.getElementById('storageBar').style.display = 'none';
+            document.getElementById('adminBtn').style.display = 'flex';
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('maintenanceBtn').style.display = 'none';
+            document.getElementById('setAdminsBtn').style.display = 'none';
+            document.getElementById('teachAICircleBtn').style.display = 'none';
+            document.getElementById('cancelMaintenanceBtn').classList.remove('active');
+            renderVideos();
+            SoundEffects.recordStop();
+            showToast('👋 تم تسجيل الخروج');
+        }
+
+        function openSetAdminsModal() {
+            if (!isAdmin) return;
+            document.getElementById('adminPasswordModal').classList.add('active');
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminPasswordInput').focus();
+        }
+
+        function closeAdminPasswordModal() {
+            document.getElementById('adminPasswordModal').classList.remove('active');
+        }
+
+        function verifyAdminPassword() {
+            const pass = document.getElementById('adminPasswordInput').value.trim();
+            if (pass === SUPER_ADMIN_PASS) {
+                isSuperAdmin = true;
+                closeAdminPasswordModal();
+                document.getElementById('setAdminsModal').classList.add('active');
+                const savedCount = localStorage.getItem('adminCount');
+                document.getElementById('adminCountInput').value = savedCount || '1';
+                SoundEffects.success();
+            } else {
+                SoundEffects.error();
+                showToast('❌ كلمة المرور غير صحيحة');
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminPasswordInput').focus();
+            }
+        }
+
+        function closeSetAdminsModal() {
+            document.getElementById('setAdminsModal').classList.remove('active');
+        }
+
+        function saveAdminCount() {
+            const count = parseInt(document.getElementById('adminCountInput').value);
+            if (isNaN(count) || count < 1 || count > 10) {
+                showToast('❌ العدد يجب أن يكون بين 1 و 10');
+                return;
+            }
+            localStorage.setItem('adminCount', count);
+            showToast('✅ تم حفظ عدد المشرفين: ' + count);
+            closeSetAdminsModal();
+        }
+
+        const STORAGE_KEY = 'falak_last_watched';
+        let lastWatchedData = null;
+
+        function saveVideoProgress() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src || player.paused) return;
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
+            if (!currentVideo) return;
+            const data = {
+                videoId: currentVideo.id,
+                title: currentVideo.title,
+                thumbnail: currentVideo.thumbnail || '',
+                currentTime: player.currentTime,
+                duration: player.duration || 0,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function checkForResume() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            try {
+                lastWatchedData = JSON.parse(saved);
+                const videoExists = videos.some(v => v.id === lastWatchedData.videoId);
+                if (!videoExists) { localStorage.removeItem(STORAGE_KEY); return; }
+                if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; }
+                document.getElementById('resumeVideoTitle').textContent = lastWatchedData.title;
+                document.getElementById('resumeTimeDisplay').textContent = 'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
+                document.getElementById('resumeNotification').style.display = 'flex';
+            } catch (e) { console.error('Error parsing saved data:', e); localStorage.removeItem(STORAGE_KEY); }
+        }
+
+        function resumeWatching() {
+            if (!lastWatchedData) return;
+            const video = videos.find(v => v.id === lastWatchedData.videoId);
+            if (!video) { showToast('❌ الفيديو غير متوفر'); dismissResume(); return; }
+            playVideo(lastWatchedData.videoId);
+            const player = document.getElementById('videoPlayer');
+            const setTime = () => {
+                player.currentTime = lastWatchedData.currentTime;
+                showToast('▶️ استئناف من ' + formatDuration(lastWatchedData.currentTime));
+                player.removeEventListener('loadedmetadata', setTime);
+            };
+            player.addEventListener('loadedmetadata', setTime);
+            dismissResume();
+        }
+
+        function dismissResume() { document.getElementById('resumeNotification').style.display = 'none'; }
+
+        function setupProgressTracking() {
+            const player = document.getElementById('videoPlayer');
+            if (!player) return;
+            setInterval(() => { if (!player.paused && !player.ended) saveVideoProgress(); }, 5000);
+            player.addEventListener('pause', saveVideoProgress);
+            window.addEventListener('beforeunload', saveVideoProgress);
+            player.addEventListener('ended', () => localStorage.removeItem(STORAGE_KEY));
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            const player = document.getElementById('videoPlayer');
+            if (document.hidden && player && !player.paused) { player.pause(); saveVideoProgress(); }
+        });
+
+        function shareCurrentTime() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src) return;
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
+            if (!currentVideo) return;
+            const currentTime = Math.floor(player.currentTime);
+            const shareUrl = window.location.href.split('?')[0] + '?video=' + currentVideo.id + '&t=' + currentTime;
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => showToast('🔗 تم نسخ رابط المشاركة! أرسله لصديقك'))
+                .catch(() => showToast('⚠️ تعذر نسخ الرابط'));
+        }
+
+        function checkUrlForShare() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoId = urlParams.get('video');
+            const time = urlParams.get('t');
+            if (videoId && videos.length > 0) {
+                const video = videos.find(v => v.id === videoId);
+                if (video) {
+                    window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
+                    playVideo(videoId, parseInt(time) || 0);
+                } else { showToast('❌ الفيديو المطلوب غير موجود'); }
+            }
+        }
+
+        let currentUser = null;
+        let chatUnsubscribe = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingTimer = null;
+        let localStream = null;
+        let callTimer = null;
+        let callSeconds = 0;
+        let unreadMessages = 0;
+        let isRecording = false;
+        let currentAudio = null;
+        let currentAudioBtn = null;
+        
+        let userPresenceRef = null;
+        let onlineUsersRef = db.collection('online_users');
+        let onlineUnsubscribe = null;
+        let presenceInterval = null;
+
+        function initPresenceSystem() {
+            if (!currentUser) return;
+            
+            let userId = localStorage.getItem('falak_user_id');
+            if (!userId) {
+                userId = generateUserId();
+                localStorage.setItem('falak_user_id', userId);
+            }
+            
+            userPresenceRef = onlineUsersRef.doc(userId);
+            
+            userPresenceRef.set({
+                name: currentUser,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.error('Error setting presence:', err));
+            
+            presenceInterval = setInterval(() => {
+                if (userPresenceRef) {
+                    userPresenceRef.update({
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch(err => console.error('Error updating presence:', err));
+                }
+            }, 20000);
+            
+            listenToOnlineUsers();
+        }
+
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
+
+        function listenToOnlineUsers() {
+            if (onlineUnsubscribe) onlineUnsubscribe();
+            
+            onlineUnsubscribe = onlineUsersRef
+                .onSnapshot(snapshot => {
+                    const now = Date.now();
+                    const twoMinutesAgo = now - 2 * 60 * 1000;
+
+                    const activeUsers = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.lastSeen) {
+                            let lastSeenTime;
+                            if (typeof data.lastSeen.toDate === 'function') {
+                                lastSeenTime = data.lastSeen.toDate().getTime();
+                            } else if (data.lastSeen.seconds) {
+                                lastSeenTime = data.lastSeen.seconds * 1000;
+                            } else {
+                                lastSeenTime = new Date(data.lastSeen).getTime();
+                            }
+                            if (!isNaN(lastSeenTime) && lastSeenTime > twoMinutesAgo) {
+                                activeUsers.push(data);
+                            }
+                        }
+                    });
+
+                    const count = activeUsers.length;
+                    let onlineText;
+                    if (count === 0) onlineText = 'لا أحد متصل';
+                    else if (count === 1) onlineText = 'متصل واحد';
+                    else if (count === 2) onlineText = 'متصلان';
+                    else onlineText = count + ' متصلين';
+
+                    document.getElementById('onlineCount').textContent = onlineText;
+                    
+                }, error => {
+                    console.error('Error fetching online users:', error);
+                    document.getElementById('onlineCount').textContent = 'خطأ في التحميل';
+                });
+        }
+
+        function removePresence() {
+            if (presenceInterval) {
+                clearInterval(presenceInterval);
+                presenceInterval = null;
+            }
+            
+            if (userPresenceRef) {
+                userPresenceRef.delete().catch(err => console.error('Error removing presence:', err));
+                userPresenceRef = null;
+            }
+            
+            if (onlineUnsubscribe) {
+                onlineUnsubscribe();
+                onlineUnsubscribe = null;
+            }
+        }
+
+        setInterval(() => {
+            const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+            const threeMinutesAgoTimestamp = firebase.firestore.Timestamp.fromDate(threeMinutesAgo);
+
+            onlineUsersRef
+                .where('lastSeen', '<', threeMinutesAgoTimestamp)
+                .get()
+                .then(snapshot => {
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                })
+                .catch(err => console.error('Cleanup error:', err));
+        }, 60000);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (userPresenceRef) {
+                    userPresenceRef.delete().catch(() => {});
+                }
+            } else {
+                if (currentUser && !userPresenceRef) {
+                    initPresenceSystem();
+                }
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            removePresence();
+        });
+
+        function checkUserName() {
+            const stored = localStorage.getItem('falak_username');
+            if (stored) { 
+                currentUser = stored; 
+                return true; 
+            }
+            return false;
+        }
+        
+        function openChat() {
+            if (!checkUserName()) {
+                document.getElementById('nameModal').classList.add('active');
+                document.getElementById('userNameInput').focus();
+            } else {
+                document.getElementById('chatModal').classList.add('active');
+                document.getElementById('chatBadge').style.display = 'none';
+                unreadMessages = 0;
+                loadMessages();
+                scrollToBottom();
+                initPresenceSystem();
+            }
+        }
+        
+        function saveUserName() {
+            const name = document.getElementById('userNameInput').value.trim();
+            if (name.length < 2) { 
+                SoundEffects.error();
+                showToast('الاسم قصير جداً'); 
+                return; 
+            }
+            currentUser = name;
+            localStorage.setItem('falak_username', name);
+            document.getElementById('nameModal').classList.remove('active');
+            document.getElementById('chatModal').classList.add('active');
+            SoundEffects.join();
+            
+            initPresenceSystem();
+            
+            sendSystemMessage(name + ' انضم للدردشة');
+            loadMessages();
+        }
+        
+        function closeChat() {
+            document.getElementById('chatModal').classList.remove('active');
+            
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
+            removePresence();
+            
+            if (chatUnsubscribe) { 
+                chatUnsubscribe(); 
+                chatUnsubscribe = null; 
+            }
+        }
+        
+        function sendSystemMessage(text) {
+            db.collection('messages').add({ type: 'system', text: text, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+        
+        function loadMessages() {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i></div>';
+            if (chatUnsubscribe) chatUnsubscribe();
+            chatUnsubscribe = db.collection('messages').orderBy('timestamp', 'asc').limitToLast(100).onSnapshot(snapshot => {
+                container.innerHTML = '';
+                snapshot.forEach(doc => displayMessage(doc.id, doc.data()));
+                scrollToBottom();
+            }, error => { container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في التحميل</div>'; });
+        }
+        
+        function displayMessage(id, msg) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            if (msg.type === 'system') {
+                div.className = 'message system';
+                div.innerHTML = msg.text;
+            } else {
+                const isSent = msg.sender === currentUser;
+                div.className = 'message ' + (isSent ? 'sent' : 'received');
+                div.id = 'msg-' + id;
+                
+                let html = '';
+                if (!isSent) html += '<div class="message-sender">' + msg.sender + '</div>';
+                
+                const canDelete = isAdmin || (msg.sender === currentUser);
+                if (canDelete) {
+                    const adminClass = isAdmin ? 'admin' : '';
+                    const title = isAdmin ? 'حذف (مشرف)' : 'حذف رسالتك';
+                    html += '<button class="message-delete-btn ' + adminClass + '" onclick="deleteMessage(\'' + id + '\', \'' + msg.sender + '\')" title="' + title + '"><i class="fas fa-times"></i></button>';
+                }
+                
+                if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
+                if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
+                
+                if (msg.audioUrl) {
+                    html += '<div class="voice-message" id="voice-' + id + '">';
+                    html += '<button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + msg.audioUrl + '\', \'' + id + '\')">';
+                    html += '<i class="fas fa-play"></i>';
+                    html += '</button>';
+                    html += '<div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')">';
+                    html += '<div class="voice-progress" id="progress-' + id + '"></div>';
+                    html += '</div>';
+                    html += '<span class="voice-time" id="time-' + id + '">0:00</span>';
+                    html += '</div>';
+                    html += '<audio id="audio-' + id + '" src="' + msg.audioUrl + '" preload="metadata" style="display:none;"></audio>';
+                }
+                
+                const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
+                html += '<div class="message-time">' + time + '</div>';
+                div.innerHTML = html;
+                
+                if (!isSent && !document.getElementById('chatModal').classList.contains('active')) {
+                    unreadMessages++;
+                    document.getElementById('chatBadge').textContent = unreadMessages;
+                    document.getElementById('chatBadge').style.display = 'flex';
+                    SoundEffects.receive();
+                }
+            }
+            container.appendChild(div);
+        }
+        
+        function playVoiceMessage(btn, url, id) {
+            const audio = document.getElementById('audio-' + id);
+            const progressBar = document.getElementById('progress-' + id);
+            const timeDisplay = document.getElementById('time-' + id);
+            
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentAudioBtn) {
+                    currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    currentAudioBtn.classList.remove('playing');
+                }
+            }
+            
+            if (audio.paused) {
+                audio.play().then(() => {
+                    currentAudio = audio;
+                    currentAudioBtn = btn;
+                    btn.innerHTML = '<i class="fas fa-pause"></i>';
+                    btn.classList.add('playing');
+                    
+                    audio.ontimeupdate = () => {
+                        const percent = (audio.currentTime / audio.duration) * 100;
+                        progressBar.style.width = percent + '%';
+                        
+                        const mins = Math.floor(audio.currentTime / 60);
+                        const secs = Math.floor(audio.currentTime % 60);
+                        timeDisplay.textContent = mins + ':' + secs.toString().padStart(2, '0');
+                    };
+                    
+                    audio.onended = () => {
+                        btn.innerHTML = '<i class="fas fa-play"></i>';
+                        btn.classList.remove('playing');
+                        progressBar.style.width = '0%';
+                        timeDisplay.textContent = '0:00';
+                        currentAudio = null;
+                        currentAudioBtn = null;
+                    };
+                    
+                }).catch(err => {
+                    console.error('Error playing audio:', err);
+                    SoundEffects.error();
+                    showToast('❌ لا يمكن تشغيل الصوت');
+                });
+                
+            } else {
+                audio.pause();
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+                btn.classList.remove('playing');
+            }
+        }
+        
+        function seekVoice(event, slider, id) {
+            const audio = document.getElementById('audio-' + id);
+            if (!audio || !audio.duration) return;
+            
+            const rect = slider.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
+        }
+        
+        function deleteMessage(messageId, sender) {
+            const canDelete = isAdmin || (sender === currentUser);
+            if (!canDelete) {
+                SoundEffects.error();
+                showToast('❌ لا يمكنك حذف هذه الرسالة');
+                return;
+            }
+            
+            const confirmMsg = isAdmin ? 'هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)' : 'هل أنت متأكد من حذف رسالتك؟';
+            if (!confirm(confirmMsg)) return;
+            
+            db.collection('messages').doc(messageId).delete()
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('🗑️ تم حذف الرسالة');
+                    const msgElement = document.getElementById('msg-' + messageId);
+                    if (msgElement) msgElement.remove();
+                })
+                .catch(err => {
+                    console.error('Error deleting message:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل حذف الرسالة');
+                });
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !currentUser) return;
+            
+            const messageData = { 
+                type: 'text', 
+                text: text, 
+                sender: currentUser, 
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            db.collection('messages').add(messageData).then(() => {
+                SoundEffects.send();
+                input.value = '';
+            }).catch(() => {
+                SoundEffects.error();
+                showToast('فشل الإرسال');
+            });
+        }
+        
+        function handleKeyPress(e) { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                sendMessage(); 
+            } 
+        }
+        
+        function sendImage(input) {
+            const file = input.files[0];
+            if (!file || !currentUser) return;
+            if (file.size > 5 * 1024 * 1024) { 
+                SoundEffects.error();
+                showToast('الصورة كبيرة (الحد 5 ميجا)'); 
+                return; 
+            }
+            showToast('جاري الرفع...');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+            formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
+            fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/image/upload', { method: 'POST', body: formData })
+            .then(r => r.json()).then(data => {
+                db.collection('messages').add({ 
+                    type: 'image', 
+                    imageUrl: data.secure_url, 
+                    sender: currentUser, 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                SoundEffects.send();
+                showToast('تم إرسال الصورة'); 
+                input.value = '';
+            }).catch(() => {
+                SoundEffects.error();
+                showToast('فشل الرفع');
+            });
+        }
+        
+        async function toggleRecording() {
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+        
+        async function startRecording() {
+            if (!currentUser) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    sampleRate: 44100,
+                    channelCount: 1
+                }});
+                
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+                });
+                
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    if (audioBlob.size > 0) {
+                        await uploadVoice(audioBlob);
+                    }
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                
+                mediaRecorder.start(100);
+                isRecording = true;
+                
+                document.getElementById('recordBtn').classList.add('recording');
+                document.getElementById('recordingIndicator').classList.add('active');
+                
+                SoundEffects.recordStart();
+                
+                let sec = 0;
+                recordingTimer = setInterval(() => {
+                    sec++;
+                    document.getElementById('recordingTime').textContent = Math.floor(sec/60) + ':' + (sec%60).toString().padStart(2,'0');
+                    if (sec >= 60) stopRecording();
+                }, 1000);
+                
+            } catch(e) {
+                console.error('Recording error:', e);
+                SoundEffects.error();
+                showToast('لا يمكن الوصول للميكروفون');
+            }
+        }
+        
+        function stopRecording() {
+            if (!isRecording || !mediaRecorder) return;
+            
+            if (mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            
+            clearInterval(recordingTimer);
+            isRecording = false;
+            
+            document.getElementById('recordBtn').classList.remove('recording');
+            document.getElementById('recordingIndicator').classList.remove('active');
+            document.getElementById('recordingTime').textContent = '0:00';
+            
+            SoundEffects.recordStop();
+        }
+        
+        async function uploadVoice(blob) {
+            showToast('جاري إرسال الرسالة الصوتية...');
+            const formData = new FormData();
+            formData.append('file', blob, 'voice.webm');
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+            formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
+            formData.append('resource_type', 'video');
+            
+            try {
+                const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/video/upload', { 
+                    method: 'POST', 
+                    body: formData 
+                });
+                const data = await res.json();
+                
+                if (data.secure_url) {
+                    await db.collection('messages').add({ 
+                        type: 'voice', 
+                        audioUrl: data.secure_url, 
+                        sender: currentUser, 
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                    });
+                    SoundEffects.send();
+                    showToast('✅ تم إرسال الرسالة الصوتية');
+                } else {
+                    throw new Error('No URL returned');
+                }
+            } catch(e) {
+                console.error('Upload error:', e);
+                SoundEffects.error();
+                showToast('❌ فشل إرسال الرسالة الصوتية');
+            }
+        }
+        
+        async function startVoiceCall() {
+            if (!currentUser) return;
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({audio: true});
+                document.getElementById('callModal').classList.add('active');
+                document.getElementById('callStatus').textContent = 'مكالمة - ' + currentUser;
+                callSeconds = 0;
+                callTimer = setInterval(() => {
+                    callSeconds++;
+                    document.getElementById('callTimer').textContent = Math.floor(callSeconds/60).toString().padStart(2,'0') + ':' + (callSeconds%60).toString().padStart(2,'0');
+                }, 1000);
+                SoundEffects.join();
+                sendSystemMessage('📞 ' + currentUser + ' بدأ مكالمة');
+            } catch(e) { 
+                SoundEffects.error();
+                showToast('لا يمكن الوصول للميكروفون'); 
+            }
+        }
+        
+        function toggleMute() {
+            if (!localStream) return;
+            const track = localStream.getAudioTracks()[0];
+            track.enabled = !track.enabled;
+            const btn = document.getElementById('muteBtn');
+            btn.classList.toggle('active');
+            btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>';
+        }
+        
+        function endCall() {
+            if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+            clearInterval(callTimer);
+            document.getElementById('callModal').classList.remove('active');
+            document.getElementById('callTimer').textContent = '00:00';
+            sendSystemMessage('📞 ' + currentUser + ' أنهى المكالمة');
+        }
+        
+        function viewImage(url) { document.getElementById('viewerImage').src = url; document.getElementById('imageViewer').classList.add('active'); }
+        function closeImageViewer() { document.getElementById('imageViewer').classList.remove('active'); }
+        function scrollToBottom() { const c = document.getElementById('chatMessages'); c.scrollTop = c.scrollHeight; }
+        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+        
         window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
@@ -2106,10 +3855,6 @@
                 else if (e.target.id === 'aiChatModal') closeAIChat();
                 else if (e.target.id === 'imageViewer') closeImageViewer();
                 else if (e.target.id === 'maintenanceModal') closeMaintenanceModal();
-                else if (e.target.id === 'createExamModal') closeCreateExamModal();
-                else if (e.target.id === 'studentExamModal') closeStudentExamModal();
-                else if (e.target.id === 'examResultsModal') closeExamResultsModal();
-                else if (e.target.id === 'checkResultModal') closeCheckResultModal();
             }
         };
 
@@ -2127,10 +3872,6 @@
                 if (document.getElementById('callModal').classList.contains('active')) endCall();
                 closeImageViewer();
                 closeMaintenanceModal();
-                closeCreateExamModal();
-                closeStudentExamModal();
-                closeExamResultsModal();
-                closeCheckResultModal();
             }
         });
     </script>
