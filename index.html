@@ -21,6 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
+        /* نفس الأنماط الموجودة في الكود الأصلي */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -43,7 +44,6 @@
             -webkit-overflow-scrolling: touch;
         }
         
-        /* وضع الهاتف - تصميم عمودي */
         body.mobile-mode {
             font-size: 14px;
         }
@@ -82,7 +82,6 @@
             padding: 1.5rem 1rem;
         }
         
-        /* زر تبديل الوضع - داخل شريط التنقل */
         .mode-toggle {
             background: linear-gradient(135deg, #6366f1, #ec4899);
             border: none;
@@ -98,7 +97,7 @@
             align-items: center;
             gap: 0.5rem;
             box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
-            margin-right: 0.5rem; /* مسافة بين الأزرار */
+            margin-right: 0.5rem;
         }
         
         .mode-toggle:hover {
@@ -3725,8 +3724,52 @@
             });
         }
 
+        // ========== التعديل: دالة استماع مع إعادة محاولة تلقائية ==========
+        function listenToVideosWithRetry(retries = 3) {
+            if (unsubscribe) unsubscribe();
+            let attempts = 0;
+            const attempt = () => {
+                attempts++;
+                unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
+                    .onSnapshot(snapshot => {
+                        // نجاح - إعادة تعيين عدد المحاولات
+                        videos = [];
+                        snapshot.forEach(doc => {
+                            let v = doc.data();
+                            v.id = doc.id;
+                            videos.push(v);
+                        });
+                        renderVideos();
+                        updateStorageBar();
+                        checkForResume();
+                        checkUrlForShare();
+                        // إذا كان هناك خطأ سابق ونجحنا الآن، نخفي أي رسالة خطأ
+                        if (attempts > 1) {
+                            showToast('✅ تم استعادة الاتصال بقاعدة البيانات');
+                        }
+                    }, error => {
+                        console.error('Error loading videos (attempt ' + attempts + '):', error);
+                        if (attempts < retries) {
+                            // انتظار متزايد: 3، 6، 9 ثوانٍ
+                            const delay = 3000 * attempts;
+                            setTimeout(attempt, delay);
+                            showToast(`⚠️ فشل تحميل الفيديوهات، إعادة محاولة (${attempts}/${retries})...`);
+                        } else {
+                            showToast('⚠️ فشل تحميل الفيديوهات بعد عدة محاولات. حاول تحديث الصفحة.');
+                            // عرض رسالة خطأ في واجهة الفيديوهات
+                            const container = document.getElementById('videosContainer');
+                            if (container) {
+                                container.innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات. تحقق من اتصالك بالإنترنت.</div>';
+                            }
+                        }
+                    });
+            };
+            attempt();
+        }
+
+        // استبدال الدالة الأصلية بـ listenToVideosWithRetry في التهيئة
         document.addEventListener('DOMContentLoaded', function() {
-            listenToVideos();
+            listenToVideosWithRetry(4); // استخدام الدالة الجديدة مع 4 محاولات
             listenToMaintenance();
             loadAIKnowledgeFromFirebase();
             loadQuizzesFromFirebase();
@@ -3739,24 +3782,9 @@
             }, 3000);
         });
 
+        // الاحتفاظ بالدالة القديمة للتوافق مع الكود الآخر (لكن لا نستخدمها)
         function listenToVideos() {
-            if (unsubscribe) unsubscribe();
-            unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
-                .onSnapshot(snapshot => {
-                    videos = [];
-                    snapshot.forEach(doc => {
-                        let v = doc.data();
-                        v.id = doc.id;
-                        videos.push(v);
-                    });
-                    renderVideos();
-                    updateStorageBar();
-                    checkForResume();
-                    checkUrlForShare();
-                }, error => {
-                    console.error('Error listening to videos:', error);
-                    showToast('⚠️ تعذر تحميل الفيديوهات، لكن يمكنك استخدام المنصة');
-                });
+            listenToVideosWithRetry(3);
         }
 
         function updateStorageBar() {
