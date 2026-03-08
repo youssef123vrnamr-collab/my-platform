@@ -9,61 +9,61 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/100.png",
+      "src": "/100.png",
       "sizes": "100x100",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/114.png",
+      "src": "/114.png",
       "sizes": "114x114",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/120.png",
+      "src": "/120.png",
       "sizes": "120x120",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/144.png",
+      "src": "/144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/152.png",
+      "src": "/152.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/167.png",
+      "src": "/167.png",
       "sizes": "167x167",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/180.png",
+      "src": "/180.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/192.png",
+      "src": "/192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/512.png",
+      "src": "/512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/1024.png",
+      "src": "/1024.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any maskable"
