@@ -1,27 +1,22 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>فلك العالمي | النسخة السحابية</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0f0a1a">
-    <meta name="apple-mobile-web-app-title" content="فلك العالمي">
-    
-    <link rel="manifest" href="manifest.json">
-    
-    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    
-    <style>
-        /* نفس الأنماط الموجودة في الكود الأصلي */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>فلك العالمي | النسخة السحابية</title>
+<!-- <link rel="manifest" href="manifest.json"> -->
+<meta name="theme-color" content="#0f0a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mweb-app-title" content="فلك العالمي">
+<script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -1547,7 +1542,6 @@
         }
         .set-admins-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(100,116,139,0.4); }
 
-        /* زرار تعليم الذكاء الاصطناعي - دائري (للمشرف فقط) */
         .teach-ai-circle-btn {
             width: 55px;
             height: 55px;
@@ -1559,7 +1553,7 @@
             cursor: pointer;
             box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
             transition: all 0.3s;
-            display: none; /* يظهر بالجافا سكريبت للمشرف */
+            display: none;
             align-items: center;
             justify-content: center;
             margin-left: 0.5rem;
@@ -1576,7 +1570,6 @@
             box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
         }
 
-        /* أنماط نافذة تعليم الذكاء الاصطناعي الجديدة */
         .ai-knowledge-item {
             display: flex;
             justify-content: space-between;
@@ -1632,7 +1625,6 @@
             transform: scale(1.1);
         }
 
-        /* زرار محادثة الذكاء الاصطناعي (للجميع) */
         .ai-chat-btn {
             position: fixed;
             bottom: 6rem;
@@ -1673,7 +1665,6 @@
             }
         }
 
-        /* أنماط الامتحان */
         .quiz-container {
             background: #1a1025;
             border-radius: 20px;
@@ -1999,7 +1990,6 @@
             gap: 0.5rem;
         }
         
-        /* زر حذف الامتحان */
         .delete-quiz-btn {
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
@@ -2553,808 +2543,108 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
+        // تعريفات المتغيرات العامة
+        let isMobileMode = false;
+        let isAdmin = false;
+        let isSuperAdmin = false;
+        let videos = [];
         let quizzes = [];
         let quizResults = [];
+        let aiKnowledgeBase = [];
+        let uploadWidget = null;
+        let unsubscribeVideos = null;
+        let unsubscribeQuizzes = null;
+        let unsubscribeQuizResults = null;
+        let unsubscribeAIKnowledge = null;
+        let unsubscribeMaintenance = null;
+        let pendingVideoInfo = null;
+        let currentEditVideoId = null;
         let currentQuiz = null;
+        let currentVideoIdForQuiz = null;
         let currentQuizAnswers = {};
         let quizTimer = null;
         let quizTimeRemaining = 0;
-        let currentVideoIdForQuiz = null;
         let progressInterval = null;
         let metadataListener = null;
+        let lastWatchedData = null;
+        let currentUser = null;
+        let chatUnsubscribe = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingTimer = null;
+        let localStream = null;
+        let callTimer = null;
+        let callSeconds = 0;
+        let unreadMessages = 0;
+        let isRecording = false;
+        let currentAudio = null;
+        let currentAudioBtn = null;
+        let userPresenceRef = null;
+        let onlineUnsubscribe = null;
+        let presenceInterval = null;
+        let maintenanceTimerInterval = null;
+        let tickInterval = null;
+        let maintenanceEndTime = null;
+        let uploadStartTime = 0;
+        let lastUploadedBytes = 0;
+        let lastTime = 0;
 
-        function loadQuizzesFromFirebase() {
-            db.collection('quizzes').onSnapshot(snapshot => {
-                quizzes = [];
-                snapshot.forEach(doc => {
-                    quizzes.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-                renderVideos();
-            }, err => console.error('Error loading quizzes:', err));
+        // إعدادات ثابتة
+        const CLOUDINARY_CONFIG = {
+            cloudName: 'ds4wy90er',
+            uploadPreset: 'falak_upload',
+            apiKey: '462193620740'
+        };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
+            authDomain: "planning-with-ai-390af.firebaseapp.com",
+            projectId: "planning-with-ai-390af",
+            storageBucket: "planning-with-ai-390af.firebasestorage.app",
+            messagingSenderId: "601755857673",
+            appId: "1:601755857673:web:b9d7d63e13035412a819d8"
+        };
+        const ADMIN_PASS = "@@@&&&((()))";
+        const SUPER_ADMIN_PASS = "1#3_5-7(9/0";
+        const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+        const CHUNK_SIZE = 10 * 1024 * 1024;
+        const MAX_STORAGE = 25 * 1024 * 1024 * 1024;
+        const STORAGE_KEY = 'falak_last_watched';
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const onlineUsersRef = db.collection('online_users');
+
+        // ======== دوال مساعدة ========
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
         }
 
-        function loadQuizResultsFromFirebase() {
-            db.collection('quiz_results').orderBy('submittedAt', 'desc').onSnapshot(snapshot => {
-                quizResults = [];
-                snapshot.forEach(doc => {
-                    quizResults.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-            }, err => console.error('Error loading quiz results:', err));
+        function formatDuration(seconds) {
+            if (!seconds) return '';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
         }
 
-        function openAddQuizModal(videoId) {
-            if (!isAdmin) {
-                showToast('❌ هذه الصلاحية للمشرف فقط');
-                return;
-            }
-            
-            const select = document.getElementById('quizVideoSelect');
-            select.innerHTML = '<option value="">-- اختر فيديو --</option>';
-            
-            videos.forEach(video => {
-                const option = document.createElement('option');
-                option.value = video.id;
-                option.textContent = video.title;
-                select.appendChild(option);
-            });
-            
-            if (videoId) {
-                select.value = videoId;
-                const existingQuiz = quizzes.find(q => q.videoId === videoId);
-                if (existingQuiz) {
-                    loadQuizForEditing(existingQuiz);
-                } else {
-                    document.getElementById('questionsContainer').innerHTML = '';
-                    addQuestion();
-                }
-            } else {
-                document.getElementById('questionsContainer').innerHTML = '';
-                addQuestion();
-            }
-            
-            document.getElementById('addQuizModal').classList.add('active');
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
         }
 
-        function closeAddQuizModal() {
-            document.getElementById('addQuizModal').classList.remove('active');
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
-        function loadQuizForEditing(quiz) {
-            const container = document.getElementById('questionsContainer');
-            container.innerHTML = '';
-            
-            quiz.questions.forEach((q, index) => {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'question-card';
-                questionDiv.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <span style="color: #6366f1; font-weight: 600;">السؤال ${index + 1}</span>
-                        ${index > 0 ? `<button onclick="this.closest('.question-card').remove()" style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"><i class="fas fa-times"></i></button>` : ''}
-                    </div>
-                    <input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-family: 'Cairo'; margin-bottom: 1rem;">
-                    
-                    <div class="options-container">
-                        ${q.options.map((opt, optIdx) => `
-                            <div class="quiz-option-input">
-                                <input type="radio" name="correct-${index}" value="${optIdx}" ${q.correctAnswer === optIdx ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #10b981;">
-                                <input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input">
-                            </div>
-                        `).join('')}
-                    </div>
-                    <p style="color: #888; font-size: 0.85rem; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>
-                `;
-                container.appendChild(questionDiv);
-            });
-        }
-
-        function addQuestion() {
-            const container = document.getElementById('questionsContainer');
-            const questionIndex = container.children.length;
-            
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'question-card';
-            questionDiv.style.cssText = 'background: rgba(255,255,255,0.05); border-radius: 15px; padding: 1.5rem; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1);';
-            questionDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <span style="color: #6366f1; font-weight: 600;">السؤال ${questionIndex + 1}</span>
-                    ${questionIndex > 0 ? `<button onclick="this.closest('.question-card').remove()" style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"><i class="fas fa-times"></i></button>` : ''}
-                </div>
-                <input type="text" class="question-input" placeholder="نص السؤال..." style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-family: 'Cairo'; margin-bottom: 1rem;">
-                
-                <div class="options-container">
-                    <div class="quiz-option-input">
-                        <input type="radio" name="correct-${questionIndex}" value="0" style="width: 20px; height: 20px; accent-color: #10b981;">
-                        <input type="text" placeholder="الخيار الأول" class="option-input">
-                    </div>
-                    <div class="quiz-option-input">
-                        <input type="radio" name="correct-${questionIndex}" value="1" style="width: 20px; height: 20px; accent-color: #10b981;">
-                        <input type="text" placeholder="الخيار الثاني" class="option-input">
-                    </div>
-                    <div class="quiz-option-input">
-                        <input type="radio" name="correct-${questionIndex}" value="2" style="width: 20px; height: 20px; accent-color: #10b981;">
-                        <input type="text" placeholder="الخيار الثالث" class="option-input">
-                    </div>
-                    <div class="quiz-option-input">
-                        <input type="radio" name="correct-${questionIndex}" value="3" style="width: 20px; height: 20px; accent-color: #10b981;">
-                        <input type="text" placeholder="الخيار الرابع" class="option-input">
-                    </div>
-                </div>
-                <p style="color: #888; font-size: 0.85rem; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>
-            `;
-            
-            container.appendChild(questionDiv);
-        }
-
-        function saveQuiz() {
-            const videoId = document.getElementById('quizVideoSelect').value;
-            if (!videoId) {
-                showToast('⚠️ اختر فيديو أولاً');
-                return;
-            }
-            
-            const questionCards = document.querySelectorAll('#questionsContainer .question-card');
-            const questions = [];
-            
-            for (let i = 0; i < questionCards.length; i++) {
-                const card = questionCards[i];
-                const questionText = card.querySelector('.question-input').value.trim();
-                if (!questionText) {
-                    showToast('⚠️ أكمل جميع الأسئلة');
-                    return;
-                }
-                
-                const optionInputs = card.querySelectorAll('.option-input');
-                const options = [];
-                let correctAnswer = -1;
-                
-                optionInputs.forEach((input, idx) => {
-                    const text = input.value.trim();
-                    if (text) options.push(text);
-                    const radio = card.querySelector(`input[name="correct-${i}"][value="${idx}"]`);
-                    if (radio && radio.checked) correctAnswer = idx;
-                });
-                
-                if (options.length < 2) {
-                    showToast('⚠️ كل سؤال يحتاج خيارين على الأقل');
-                    return;
-                }
-                
-                if (correctAnswer === -1) {
-                    showToast('⚠️ اختر الإجابة الصحيحة لكل سؤال');
-                    return;
-                }
-                
-                questions.push({
-                    question: questionText,
-                    options: options,
-                    correctAnswer: correctAnswer
-                });
-            }
-            
-            if (questions.length === 0) {
-                showToast('⚠️ أضف سؤالاً واحداً على الأقل');
-                return;
-            }
-            
-            const existingQuiz = quizzes.find(q => q.videoId === videoId);
-            
-            if (existingQuiz) {
-                db.collection('quizzes').doc(existingQuiz.id).update({
-                    questions: questions,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    SoundEffects.success();
-                    showToast('✅ تم تحديث الامتحان بنجاح!');
-                    closeAddQuizModal();
-                }).catch(err => {
-                    console.error('Error updating quiz:', err);
-                    SoundEffects.error();
-                    showToast('❌ فشل تحديث الامتحان');
-                });
-            } else {
-                db.collection('quizzes').add({
-                    videoId: videoId,
-                    questions: questions,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdBy: currentUser || 'مشرف'
-                }).then(() => {
-                    SoundEffects.success();
-                    showToast('✅ تم حفظ الامتحان بنجاح!');
-                    closeAddQuizModal();
-                }).catch(err => {
-                    console.error('Error saving quiz:', err);
-                    SoundEffects.error();
-                    showToast('❌ فشل حفظ الامتحان');
-                });
-            }
-        }
-
-        function deleteQuiz(videoId) {
-            if (!isAdmin) {
-                showToast('❌ هذه الصلاحية للمشرف فقط');
-                return;
-            }
-            
-            if (!confirm('⚠️ هل أنت متأكد؟ حذف الامتحان سيؤدي إلى حذف جميع نتائج الطلاب المرتبطة به بشكل نهائي!')) {
-                return;
-            }
-            
-            const quiz = quizzes.find(q => q.videoId === videoId);
-            if (!quiz) {
-                showToast('⚠️ لا يوجد امتحان لهذا الفيديو');
-                return;
-            }
-            
-            const batch = db.batch();
-            
-            db.collection('quiz_results').where('videoId', '==', videoId).get()
-                .then(snapshot => {
-                    snapshot.docs.forEach(doc => {
-                        batch.delete(doc.ref);
-                    });
-                    
-                    batch.delete(db.collection('quizzes').doc(quiz.id));
-                    
-                    return batch.commit();
-                })
-                .then(() => {
-                    SoundEffects.delete();
-                    showToast('✅ تم حذف الامتحان وجميع نتائج الطلاب');
-                })
-                .catch(err => {
-                    console.error('Error deleting quiz and results:', err);
-                    SoundEffects.error();
-                    showToast('❌ فشل في الحذف');
-                });
-        }
-
-        function openViewResultsModal(videoId) {
-            if (!isAdmin) {
-                showToast('❌ هذه الصلاحية للمشرف فقط');
-                return;
-            }
-            
-            const select = document.getElementById('resultsVideoSelect');
-            select.innerHTML = '<option value="">-- اختر فيديو --</option>';
-            
-            videos.forEach(video => {
-                const option = document.createElement('option');
-                option.value = video.id;
-                option.textContent = video.title;
-                select.appendChild(option);
-            });
-            
-            if (videoId) {
-                select.value = videoId;
-                loadResultsForVideo();
-            }
-            
-            document.getElementById('viewResultsModal').classList.add('active');
-        }
-
-        function closeViewResultsModal() {
-            document.getElementById('viewResultsModal').classList.remove('active');
-        }
-
-        function loadResultsForVideo() {
-            const videoId = document.getElementById('resultsVideoSelect').value;
-            const container = document.getElementById('resultsContainer');
-            
-            if (!videoId) {
-                container.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">اختر فيديو لعرض النتائج</p>';
-                return;
-            }
-            
-            const results = quizResults.filter(r => r.videoId === videoId);
-            
-            if (results.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد نتائج لهذا الفيديو بعد</p>';
-                return;
-            }
-            
-            const quiz = quizzes.find(q => q.videoId === videoId);
-            
-            container.innerHTML = results.map(result => {
-                const correctCount = result.answers.filter((a, idx) => {
-                    const question = quiz?.questions?.[idx];
-                    return question && a === question.correctAnswer;
-                }).length;
-                const totalQuestions = quiz?.questions?.length || result.answers.length;
-                const percentage = Math.round((correctCount / totalQuestions) * 100);
-                
-                return `
-                    <div class="result-item">
-                        <div class="result-student-name"><i class="fas fa-user-graduate"></i> ${result.studentName}</div>
-                        <div class="result-details">
-                            <span><i class="fas fa-calendar"></i> ${result.submittedAt ? new Date(result.submittedAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
-                            <span><i class="fas fa-check-circle" style="color: #10b981;"></i> ${correctCount}/${totalQuestions}</span>
-                            <span><i class="fas fa-percentage" style="color: #6366f1;"></i> ${percentage}%</span>
-                        </div>
-                        <div class="result-answers">
-                            ${result.answers.map((answer, idx) => {
-                                const question = quiz?.questions?.[idx];
-                                const isCorrect = question && answer === question.correctAnswer;
-                                return `
-                                    <div class="answer-item ${isCorrect ? 'correct' : 'incorrect'}">
-                                        <strong>س${idx + 1}:</strong> ${isCorrect ? '✓ صحيح' : '✗ خطأ'} 
-                                        ${question ? `(الإجابة: ${question.options[question.correctAnswer]})` : ''}
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        ${!result.gradeSent ? `
-                            <button class="send-grade-btn" onclick="sendGradeToStudent('${result.id}', '${result.studentName}', ${percentage})">
-                                <i class="fas fa-paper-plane"></i> إرسال الدرجة للطالب
-                            </button>
-                        ` : `
-                            <div class="grade-sent"><i class="fas fa-check-circle"></i> تم إرسال الدرجة</div>
-                        `}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function sendGradeToStudent(resultId, studentName, percentage) {
-            db.collection('quiz_results').doc(resultId).update({
-                gradeSent: true,
-                gradeSentAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                SoundEffects.success();
-                showToast(`✅ تم إرسال الدرجة للطالب ${studentName}: ${percentage}%`);
-                loadResultsForVideo();
-            }).catch(err => {
-                console.error('Error sending grade:', err);
-                SoundEffects.error();
-                showToast('❌ فشل إرسال الدرجة');
-            });
-        }
-
-        function openTakeQuizModal(videoId) {
-            const quiz = quizzes.find(q => q.videoId === videoId);
-            if (!quiz) {
-                showToast('⚠️ لا يوجد امتحان لهذا الفيديو');
-                return;
-            }
-            
-            currentQuiz = quiz;
-            currentVideoIdForQuiz = videoId;
-            currentQuizAnswers = {};
-            
-            document.getElementById('studentNameSection').style.display = 'block';
-            document.getElementById('quizSection').style.display = 'none';
-            document.getElementById('studentNameInput').value = '';
-            
-            document.getElementById('takeQuizModal').classList.add('active');
-        }
-
-        function closeTakeQuizModal() {
-            if (quizTimer) {
-                clearInterval(quizTimer);
-                quizTimer = null;
-            }
-            document.getElementById('takeQuizModal').classList.remove('active');
-            currentQuiz = null;
-            currentQuizAnswers = {};
-        }
-
-        function startQuiz() {
-            const studentName = document.getElementById('studentNameInput').value.trim();
-            if (!studentName) {
-                showToast('⚠️ أدخل اسمك أولاً');
-                return;
-            }
-            
-            currentQuizAnswers = {};
-            
-            const existingResult = quizResults.find(r => 
-                r.videoId === currentVideoIdForQuiz && 
-                r.studentName === studentName &&
-                r.submittedAt && (new Date().getTime() - r.submittedAt.toDate().getTime()) < 24 * 60 * 60 * 1000
-            );
-            
-            if (existingResult) {
-                showToast('⚠️ لقد قمت بهذا الامتحان مؤخراً، يمكنك إعادته بعد 24 ساعة');
-                return;
-            }
-            
-            document.getElementById('studentNameSection').style.display = 'none';
-            document.getElementById('quizSection').style.display = 'block';
-            
-            const quizSection = document.getElementById('quizSection');
-            quizSection.innerHTML = `
-                <div class="quiz-header">
-                    <div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div>
-                    <div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div>
-                </div>
-            `;
-            
-            currentQuiz.questions.forEach((q, idx) => {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'question-card';
-                questionDiv.innerHTML = `
-                    <div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>
-                    <div class="question-text">${q.question}</div>
-                    <div class="options-list">
-                        ${q.options.map((opt, optIdx) => `
-                            <label class="option-label" onclick="selectAnswer(${idx}, ${optIdx})">
-                                <input type="radio" name="q${idx}" value="${optIdx}">
-                                <span class="option-text">${opt}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                `;
-                quizSection.appendChild(questionDiv);
-            });
-            
-            const submitBtn = document.createElement('button');
-            submitBtn.className = 'quiz-submit-btn';
-            submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان';
-            submitBtn.onclick = submitQuiz;
-            quizSection.appendChild(submitBtn);
-            
-            quizTimeRemaining = 600;
-            updateQuizTimer();
-            if (quizTimer) clearInterval(quizTimer);
-            quizTimer = setInterval(() => {
-                quizTimeRemaining--;
-                updateQuizTimer();
-                if (quizTimeRemaining <= 0) {
-                    clearInterval(quizTimer);
-                    submitQuiz();
-                }
-            }, 1000);
-        }
-
-        function updateQuizTimer() {
-            const mins = Math.floor(quizTimeRemaining / 60);
-            const secs = quizTimeRemaining % 60;
-            const display = `${mins}:${secs.toString().padStart(2, '0')}`;
-            document.getElementById('timerDisplay').textContent = display;
-            
-            const timerDiv = document.getElementById('quizTimer');
-            if (quizTimeRemaining < 60) {
-                timerDiv.classList.add('warning');
-            }
-        }
-
-        function selectAnswer(questionIdx, answerIdx) {
-            currentQuizAnswers[questionIdx] = answerIdx;
-            const questionCard = document.querySelectorAll('.question-card')[questionIdx];
-            questionCard.querySelectorAll('.option-label').forEach((label, idx) => {
-                if (idx === answerIdx) {
-                    label.style.background = 'rgba(99, 102, 241, 0.3)';
-                    label.style.borderColor = '#6366f1';
-                } else {
-                    label.style.background = 'rgba(255,255,255,0.03)';
-                    label.style.borderColor = 'transparent';
-                }
-            });
-        }
-
-        function submitQuiz() {
-            if (quizTimer) {
-                clearInterval(quizTimer);
-                quizTimer = null;
-            }
-            
-            const studentName = document.getElementById('studentNameInput').value.trim();
-            
-            const totalQuestions = currentQuiz.questions.length;
-            const answeredQuestions = Object.keys(currentQuizAnswers).length;
-            
-            if (answeredQuestions < totalQuestions) {
-                if (!confirm(`لم تجب على ${totalQuestions - answeredQuestions} سؤال. هل تريد التسليم anyway؟`)) {
-                    quizTimeRemaining = Math.max(quizTimeRemaining, 1);
-                    quizTimer = setInterval(() => {
-                        quizTimeRemaining--;
-                        updateQuizTimer();
-                        if (quizTimeRemaining <= 0) {
-                            clearInterval(quizTimer);
-                            submitQuiz();
-                        }
-                    }, 1000);
-                    return;
-                }
-            }
-            
-            let correctCount = 0;
-            const answers = [];
-            for (let i = 0; i < totalQuestions; i++) {
-                const userAnswer = currentQuizAnswers[i] !== undefined ? currentQuizAnswers[i] : -1;
-                answers.push(userAnswer);
-                if (userAnswer === currentQuiz.questions[i].correctAnswer) {
-                    correctCount++;
-                }
-            }
-            
-            const percentage = Math.round((correctCount / totalQuestions) * 100);
-            
-            db.collection('quiz_results').add({
-                quizId: currentQuiz.id,
-                videoId: currentVideoIdForQuiz,
-                studentName: studentName,
-                answers: answers,
-                score: correctCount,
-                totalQuestions: totalQuestions,
-                percentage: percentage,
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                gradeSent: false
-            }).then(() => {
-                SoundEffects.success();
-                showResult(correctCount, totalQuestions, percentage);
-            }).catch(err => {
-                console.error('Error submitting quiz:', err);
-                SoundEffects.error();
-                showToast('❌ فشل تسليم الامتحان');
-            });
-        }
-
-        function showResult(correct, total, percentage) {
-            const quizSection = document.getElementById('quizSection');
-            let message = '';
-            let icon = '';
-            
-            if (percentage >= 90) {
-                message = 'ممتاز! أداء رائع جداً';
-                icon = '🏆';
-            } else if (percentage >= 75) {
-                message = 'جيد جداً! استمر في التقدم';
-                icon = '👏';
-            } else if (percentage >= 60) {
-                message = 'جيد، يمكنك تحسين أدائك';
-                icon = '👍';
-            } else {
-                message = 'حاول مرة أخرى، يمكنك التحسن';
-                icon = '💪';
-            }
-            
-            quizSection.innerHTML = `
-                <div class="quiz-result">
-                    <div class="result-icon">${icon}</div>
-                    <div class="result-score">${percentage}%</div>
-                    <div class="result-message">${message}</div>
-                    <p style="color: #aaa; margin-bottom: 1rem;">إجابات صحيحة: ${correct} من ${total}</p>
-                    <button class="quiz-btn" onclick="closeTakeQuizModal()">
-                        <i class="fas fa-times"></i> إغلاق
-                    </button>
-                </div>
-            `;
-        }
-
-        let aiKnowledgeBase = [];
-        let aiKnowledgeUnsubscribe = null;
-
-        function loadAIKnowledgeFromFirebase() {
-            if (aiKnowledgeUnsubscribe) aiKnowledgeUnsubscribe();
-            
-            aiKnowledgeUnsubscribe = db.collection('ai_knowledge')
-                .orderBy('createdAt', 'desc')
-                .onSnapshot(snapshot => {
-                    aiKnowledgeBase = [];
-                    snapshot.forEach(doc => {
-                        aiKnowledgeBase.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    if (isAdmin) renderAIKnowledgeList();
-                }, err => console.error('Error loading AI knowledge:', err));
-        }
-
-        function renderAIKnowledgeList() {
-            const list = document.getElementById('aiKnowledgeList');
-            if (!list) return;
-            
-            if (aiKnowledgeBase.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد معلومات بعد</p>';
-                return;
-            }
-            
-            list.innerHTML = aiKnowledgeBase.map(item => `
-                <div class="ai-knowledge-item">
-                    <div class="ai-knowledge-content">
-                        <div class="ai-knowledge-question">
-                            <i class="fas fa-question-circle"></i>
-                            ${escapeHtml(item.question)}
-                        </div>
-                        <div class="ai-knowledge-answer">
-                            ${escapeHtml(item.answer)}
-                        </div>
-                    </div>
-                    <button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${item.id}')" title="حذف">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function openTeachAICircleModal() {
-            if (!isAdmin) {
-                showToast('❌ هذه الصلاحية للمشرف فقط');
-                return;
-            }
-            document.getElementById('teachAICircleModal').classList.add('active');
-            renderAIKnowledgeList();
-        }
-
-        function closeTeachAICircleModal() {
-            document.getElementById('teachAICircleModal').classList.remove('active');
-        }
-
-        function saveAIKnowledge() {
-            const question = document.getElementById('aiQuestionInput').value.trim();
-            const answer = document.getElementById('aiAnswerInput').value.trim();
-            
-            if (!question || !answer) {
-                showToast('⚠️ أدخل السؤال والإجابة');
-                return;
-            }
-            
-            db.collection('ai_knowledge').add({
-                question: question,
-                answer: answer,
-                createdBy: currentUser || 'مشرف',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                SoundEffects.success();
-                showToast('✅ تم تعليم الذكاء الاصطناعي بنجاح!');
-                
-                document.getElementById('aiQuestionInput').value = '';
-                document.getElementById('aiAnswerInput').value = '';
-                
-            }).catch(err => {
-                console.error('Error saving AI knowledge:', err);
-                SoundEffects.error();
-                showToast('❌ فشل الحفظ');
-            });
-        }
-
-        function deleteAIKnowledge(id) {
-            if (!confirm('هل أنت متأكد من حذف هذه المعلومة؟')) return;
-            
-            db.collection('ai_knowledge').doc(id).delete()
-                .then(() => {
-                    SoundEffects.delete();
-                    showToast('🗑️ تم الحذف');
-                })
-                .catch(err => {
-                    console.error('Error deleting:', err);
-                    SoundEffects.error();
-                    showToast('❌ فشل الحذف');
-                });
-        }
-
-        function openAIChat() {
-            document.getElementById('aiChatModal').classList.add('active');
-            
-            const messagesDiv = document.getElementById('aiChatMessages');
-            if (messagesDiv.children.length === 0) {
-                displayAIMessage('مرحباً! أنا مساعد فلك الذكي. اسألني أي شيء عن الفضاء أو اكتب "مساعدة" لمعرفة ما يمكنني فعله.', 'ai');
-            }
-            
-            setTimeout(() => {
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }, 100);
-        }
-
-        function closeAIChat() {
-            document.getElementById('aiChatModal').classList.remove('active');
-        }
-
-        function sendAIMessage() {
-            const input = document.getElementById('aiChatInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            displayAIMessage(text, 'user');
-            input.value = '';
-
-            const knowledge = findAIKnowledge(text);
-            if (knowledge) {
-                setTimeout(() => {
-                    displayAIMessage(knowledge, 'ai');
-                }, 500);
-                return;
-            }
-
-            setTimeout(() => {
-                const response = getAIResponse(text);
-                displayAIMessage(response, 'ai');
-            }, 500);
-        }
-
-        function findAIKnowledge(userMessage) {
-            const msg = userMessage.toLowerCase();
-            
-            for (const item of aiKnowledgeBase) {
-                const question = item.question.toLowerCase();
-                if (msg === question || msg.includes(question) || question.includes(msg)) {
-                    return item.answer;
-                }
-            }
-            return null;
-        }
-
-        function displayAIMessage(text, sender) {
-            const messagesDiv = document.getElementById('aiChatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + (sender === 'user' ? 'sent' : 'received');
-            
-            const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            
-            let html = '';
-            if (sender === 'received') {
-                html += '<div class="message-sender" style="color: #06b6d4;"><i class="fas fa-robot"></i> مساعد فلك</div>';
-            }
-            html += '<div class="message-content">' + escapeHtml(text) + '</div>';
-            html += '<div class="message-time">' + time + '</div>';
-            
-            messageDiv.innerHTML = html;
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function getAIResponse(userMessage) {
-            const msg = userMessage.toLowerCase();
-            
-            if (msg.includes('السلام عليكم') || msg.includes('مرحبا') || msg.includes('اهلا') || msg.includes('هلا')) {
-                return 'وعليكم السلام! كيف يمكنني مساعدتك اليوم في استكشاف عالم الفضاء؟';
-            }
-            if (msg.includes('كيف حالك') || msg.includes('اخبارك')) {
-                return 'أنا بخير، شكراً لسؤالك! جاهز لمساعدتك في أي استفسار عن الفضاء والكون.';
-            }
-            if (msg.includes('من انت') || msg.includes('مين انت') || msg.includes('اسمك')) {
-                return 'أنا مساعد فلك الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون والإجابة على أسئلتك الفضائية.';
-            }
-            if (msg.includes('مساعدة') || msg.includes('help')) {
-                return 'يمكنني مساعدتك في:\n• الإجابة على أسئلة عن الفضاء والكون\n• شرح الظواهر الفلكية\n• معلومات عن الكواكب والنجوم\n• المساعدة في استخدام المنصة\n\nجرب أن تسألني مثلاً: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"';
-            }
-            if (msg.includes('فيديو') || msg.includes('مقطع')) {
-                return 'يمكنك مشاهدة الفيديوهات المتاحة في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة من خلال زر "رفع فيديو".';
-            }
-            if (msg.includes('دردشة') || msg.includes('شات')) {
-                return 'يمكنك الدردشة مع الأعضاء الآخرين من خلال زر الدردشة في الأسفل. انضم للمحادثة وشارك أفكارك!';
-            }
-            if (msg.includes('مشرف') || msg.includes('ادارة')) {
-                return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف" في الأعلى.';
-            }
-            if (msg.includes('شكرا') || msg.includes('شكراً') || msg.includes('تسلم')) {
-                return 'العفو! دائماً هنا لمساعدتك. استمتع بوقتك في فلك العالمي! 🚀';
-            }
-            if (msg.includes('الكواكب') || msg.includes('مجموعة شمسية')) {
-                return 'المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون. كان هناك كوكب بلوتون لكنه أصبح كوكب قزم منذ 2006.';
-            }
-            if (msg.includes('الشمس')) {
-                return 'الشمس هي نجم يقع في مركز المجموعة الشمسية، وهي مصدر الضوء والحرارة للأرض. تبلغ درجة حرارة سطحها حوالي 5,500 درجة مئوية!';
-            }
-            if (msg.includes('القمر')) {
-                return 'القمر هو القمر الوحيد الطبيعي للأرض، ويبعد عنها حوالي 384,400 كم. يستغرق دورة واحدة حول الأرض حوالي 27.3 يوم.';
-            }
-            if (msg.includes('نجم') || msg.includes('نجوم')) {
-                return 'النجوم هي أجسام سماوية ضخمة تتألف من غازات ساخنة، خاصة الهيدروجين والهيليوم. أقرب نجم للأرض هو الشمس، والثاني هو Proxima Centauri على بعد 4.24 سنة ضوئية.';
-            }
-            if (msg.includes('ثقب اسود') || msg.includes('black hole')) {
-                return 'الثقب الأسود هو منطقة في الفضاء حيث تكون الجاذبية قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء! يتكون عندما تنهار نجوم ضخمة تحت تأثير جاذبيتها.';
-            }
-            
-            return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. يمكنك سؤال المشرفين أو البحث في الفيديوهات المتاحة. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".';
-        }
-
-        function handleAIKeyPress(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendAIMessage();
-            }
-        }
-
-        let isMobileMode = false;
-        
+        // ======== إدارة وضع العرض (موبايل/كمبيوتر) ========
         function toggleMode() {
             isMobileMode = !isMobileMode;
             const body = document.body;
@@ -3374,10 +2664,9 @@
                 btn.title = 'وضع الهاتف';
                 showToast('💻 تم التبديل للوضع العادي');
             }
-            
             localStorage.setItem('falak_mobile_mode', isMobileMode);
         }
-        
+
         function loadMobileModePreference() {
             const saved = localStorage.getItem('falak_mobile_mode');
             if (saved === 'true') {
@@ -3389,6 +2678,7 @@
             }
         }
 
+        // ======== مؤثرات صوتية ========
         const SoundEffects = {
             audioContext: null,
             init() {
@@ -3519,74 +2809,84 @@
             }
         };
 
-        setTimeout(() => {
-            const loader = document.getElementById('loader');
-            if (loader) loader.classList.add('hidden');
-        }, 1000);
+        // ======== تحميل البيانات من Firebase مع إعادة محاولة ========
+        function listenToVideosWithRetry(retries = 4) {
+            if (unsubscribeVideos) unsubscribeVideos();
+            let attempts = 0;
+            const attempt = () => {
+                attempts++;
+                unsubscribeVideos = db.collection('videos').orderBy('createdAt', 'desc')
+                    .onSnapshot(snapshot => {
+                        videos = [];
+                        snapshot.forEach(doc => {
+                            let v = doc.data();
+                            v.id = doc.id;
+                            videos.push(v);
+                        });
+                        renderVideos();
+                        updateStorageBar();
+                        checkForResume();
+                        checkUrlForShare();
+                        if (attempts > 1) {
+                            showToast('✅ تم استعادة الاتصال بقاعدة البيانات');
+                        }
+                    }, error => {
+                        console.error('Error loading videos (attempt ' + attempts + '):', error);
+                        if (attempts < retries) {
+                            const delay = 3000 * attempts;
+                            setTimeout(attempt, delay);
+                            showToast(`⚠️ فشل تحميل الفيديوهات، إعادة محاولة (${attempts}/${retries})...`);
+                        } else {
+                            showToast('⚠️ فشل تحميل الفيديوهات بعد عدة محاولات. حاول تحديث الصفحة.');
+                            document.getElementById('videosContainer').innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات. تحقق من اتصالك بالإنترنت.</div>';
+                        }
+                    });
+            };
+            attempt();
+        }
 
-        const CLOUDINARY_CONFIG = {
-            cloudName: 'ds4wy90er',
-            uploadPreset: 'falak_upload',
-            apiKey: '462193620740'
-        };
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
-            authDomain: "planning-with-ai-390af.firebaseapp.com",
-            projectId: "planning-with-ai-390af",
-            storageBucket: "planning-with-ai-390af.firebasestorage.app",
-            messagingSenderId: "601755857673",
-            appId: "1:601755857673:web:b9d7d63e13035412a819d8"
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
-        const ADMIN_PASS = "@@@&&&((()))";
-        const SUPER_ADMIN_PASS = "1#3_5-7(9/0";
-        
-        const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
-        const CHUNK_SIZE = 10 * 1024 * 1024;
-        const MAX_STORAGE = 25 * 1024 * 1024 * 1024;
-        
-        let isAdmin = false;
-        let isSuperAdmin = false;
-        let videos = [];
-        let uploadWidget = null;
-        let unsubscribe = null;
-        let pendingVideoInfo = null;
-        let uploadStartTime = 0;
-        let lastUploadedBytes = 0;
-        let lastTime = 0;
-        let currentEditVideoId = null;
-        let maintenanceUnsubscribe = null;
-        let maintenanceTimerInterval = null;
-        let tickInterval = null;
-        let maintenanceEndTime = null;
-
-        (function checkSavedAdmin() {
-            const savedAdmin = localStorage.getItem('falak_admin');
-            if (savedAdmin === 'true') {
-                isAdmin = true;
-                document.getElementById('uploadZone').classList.add('active');
-                document.getElementById('adminBtn').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'flex';
-                document.getElementById('maintenanceBtn').style.display = 'flex';
-                document.getElementById('setAdminsBtn').style.display = 'inline-flex';
-                document.getElementById('teachAICircleBtn').style.display = 'inline-flex';
-                updateStorageBar();
+        function loadQuizzesFromFirebase() {
+            if (unsubscribeQuizzes) unsubscribeQuizzes();
+            unsubscribeQuizzes = db.collection('quizzes').onSnapshot(snapshot => {
+                quizzes = [];
+                snapshot.forEach(doc => {
+                    quizzes.push({ id: doc.id, ...doc.data() });
+                });
                 renderVideos();
-                loadAIKnowledgeFromFirebase();
-            }
-        })();
+            }, err => console.error('Error loading quizzes:', err));
+        }
+
+        function loadQuizResultsFromFirebase() {
+            if (unsubscribeQuizResults) unsubscribeQuizResults();
+            unsubscribeQuizResults = db.collection('quiz_results').orderBy('submittedAt', 'desc').onSnapshot(snapshot => {
+                quizResults = [];
+                snapshot.forEach(doc => {
+                    quizResults.push({ id: doc.id, ...doc.data() });
+                });
+            }, err => console.error('Error loading quiz results:', err));
+        }
+
+        function loadAIKnowledgeFromFirebase() {
+            if (unsubscribeAIKnowledge) unsubscribeAIKnowledge();
+            unsubscribeAIKnowledge = db.collection('ai_knowledge').orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    aiKnowledgeBase = [];
+                    snapshot.forEach(doc => {
+                        aiKnowledgeBase.push({ id: doc.id, ...doc.data() });
+                    });
+                    if (isAdmin && document.getElementById('teachAICircleModal').classList.contains('active')) {
+                        renderAIKnowledgeList();
+                    }
+                }, err => console.error('Error loading AI knowledge:', err));
+        }
 
         function listenToMaintenance() {
-            maintenanceUnsubscribe = db.collection('system').doc('maintenance')
+            if (unsubscribeMaintenance) unsubscribeMaintenance();
+            unsubscribeMaintenance = db.collection('system').doc('maintenance')
                 .onSnapshot(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        const status = data.status;
-                        if (status === 'maintenance') {
+                        if (data.status === 'maintenance') {
                             maintenanceEndTime = data.endTime ? data.endTime.toDate() : null;
                             const message = data.message || 'جاري تحديث المنصة، يرجى الانتظار قليلاً...';
                             showMaintenanceScreen(message, maintenanceEndTime);
@@ -3596,22 +2896,17 @@
                     } else {
                         hideMaintenanceScreen();
                     }
-                }, error => {
-                    console.error('Error listening to maintenance:', error);
-                });
+                }, error => console.error('Error listening to maintenance:', error));
         }
 
+        // ======== دوال التحديث (الصيانة) ========
         function showMaintenanceScreen(message, endTime) {
             const overlay = document.getElementById('maintenanceOverlay');
             document.getElementById('maintenanceMessage').textContent = message;
             overlay.classList.add('active');
 
             const cancelBtn = document.getElementById('cancelMaintenanceBtn');
-            if (isAdmin) {
-                cancelBtn.classList.add('active');
-            } else {
-                cancelBtn.classList.remove('active');
-            }
+            cancelBtn.classList.toggle('active', isAdmin);
 
             if (maintenanceTimerInterval) clearInterval(maintenanceTimerInterval);
             maintenanceTimerInterval = setInterval(() => {
@@ -3627,9 +2922,7 @@
             }, 1000);
 
             if (!tickInterval) {
-                tickInterval = setInterval(() => {
-                    SoundEffects.tick();
-                }, 1000);
+                tickInterval = setInterval(() => SoundEffects.tick(), 1000);
             }
 
             if (endTime) {
@@ -3638,16 +2931,8 @@
             }
         }
 
-        function autoEndMaintenance() {
-            SoundEffects.success();
-            db.collection('system').doc('maintenance').update({
-                status: 'active'
-            }).catch(err => console.error('Error auto ending maintenance:', err));
-        }
-
         function hideMaintenanceScreen() {
-            const overlay = document.getElementById('maintenanceOverlay');
-            overlay.classList.remove('active');
+            document.getElementById('maintenanceOverlay').classList.remove('active');
             if (maintenanceTimerInterval) {
                 clearInterval(maintenanceTimerInterval);
                 maintenanceTimerInterval = null;
@@ -3662,10 +2947,14 @@
             const hours = Math.floor(distance / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
             document.getElementById('timerHours').textContent = hours.toString().padStart(2, '0');
             document.getElementById('timerMinutes').textContent = minutes.toString().padStart(2, '0');
             document.getElementById('timerSeconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        function autoEndMaintenance() {
+            SoundEffects.success();
+            db.collection('system').doc('maintenance').update({ status: 'active' }).catch(err => console.error('Error auto ending maintenance:', err));
         }
 
         function openMaintenanceModal() {
@@ -3686,9 +2975,7 @@
                 return;
             }
             const message = document.getElementById('maintenanceMessageInput').value.trim() || 'جاري تحديث المحتوى، يرجى الانتظار...';
-            
             const endTime = new Date(Date.now() + minutes * 60 * 1000);
-            
             db.collection('system').doc('maintenance').set({
                 status: 'maintenance',
                 endTime: firebase.firestore.Timestamp.fromDate(endTime),
@@ -3711,83 +2998,21 @@
                 return;
             }
             if (!confirm('هل أنت متأكد من إلغاء التحديث؟')) return;
-            
-            db.collection('system').doc('maintenance').update({
-                status: 'active'
-            }).then(() => {
-                SoundEffects.success();
-                showToast('✅ تم إلغاء التحديث');
-            }).catch(err => {
-                SoundEffects.error();
-                showToast('❌ فشل إلغاء التحديث');
-                console.error(err);
-            });
+            db.collection('system').doc('maintenance').update({ status: 'active' })
+                .then(() => {
+                    SoundEffects.success();
+                    showToast('✅ تم إلغاء التحديث');
+                })
+                .catch(err => {
+                    SoundEffects.error();
+                    showToast('❌ فشل إلغاء التحديث');
+                    console.error(err);
+                });
         }
 
-        // ========== التعديل: دالة استماع مع إعادة محاولة تلقائية ==========
-        function listenToVideosWithRetry(retries = 3) {
-            if (unsubscribe) unsubscribe();
-            let attempts = 0;
-            const attempt = () => {
-                attempts++;
-                unsubscribe = db.collection('videos').orderBy('createdAt', 'desc')
-                    .onSnapshot(snapshot => {
-                        // نجاح - إعادة تعيين عدد المحاولات
-                        videos = [];
-                        snapshot.forEach(doc => {
-                            let v = doc.data();
-                            v.id = doc.id;
-                            videos.push(v);
-                        });
-                        renderVideos();
-                        updateStorageBar();
-                        checkForResume();
-                        checkUrlForShare();
-                        // إذا كان هناك خطأ سابق ونجحنا الآن، نخفي أي رسالة خطأ
-                        if (attempts > 1) {
-                            showToast('✅ تم استعادة الاتصال بقاعدة البيانات');
-                        }
-                    }, error => {
-                        console.error('Error loading videos (attempt ' + attempts + '):', error);
-                        if (attempts < retries) {
-                            // انتظار متزايد: 3، 6، 9 ثوانٍ
-                            const delay = 3000 * attempts;
-                            setTimeout(attempt, delay);
-                            showToast(`⚠️ فشل تحميل الفيديوهات، إعادة محاولة (${attempts}/${retries})...`);
-                        } else {
-                            showToast('⚠️ فشل تحميل الفيديوهات بعد عدة محاولات. حاول تحديث الصفحة.');
-                            // عرض رسالة خطأ في واجهة الفيديوهات
-                            const container = document.getElementById('videosContainer');
-                            if (container) {
-                                container.innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات. تحقق من اتصالك بالإنترنت.</div>';
-                            }
-                        }
-                    });
-            };
-            attempt();
-        }
-
-        // استبدال الدالة الأصلية بـ listenToVideosWithRetry في التهيئة
-        document.addEventListener('DOMContentLoaded', function() {
-            listenToVideosWithRetry(4); // استخدام الدالة الجديدة مع 4 محاولات
-            listenToMaintenance();
-            loadAIKnowledgeFromFirebase();
-            loadQuizzesFromFirebase();
-            loadQuizResultsFromFirebase();
-            initCloudinaryWidget();
-            checkUrlForShare();
-            loadMobileModePreference();
-            setTimeout(() => {
-                document.getElementById('loader')?.classList.add('hidden');
-            }, 3000);
-        });
-
-        // الاحتفاظ بالدالة القديمة للتوافق مع الكود الآخر (لكن لا نستخدمها)
-        function listenToVideos() {
-            listenToVideosWithRetry(3);
-        }
-
+        // ======== دوال الفيديو والتخزين ========
         function updateStorageBar() {
+            if (!isAdmin) return;
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             const percentage = Math.min((totalUsed / MAX_STORAGE) * 100, 100);
             const remaining = MAX_STORAGE - totalUsed;
@@ -3807,7 +3032,7 @@
             else if (percentage < 80) progressBar.classList.add('medium');
             else progressBar.classList.add('high');
             
-            if (isAdmin) document.getElementById('storageBar').style.display = 'block';
+            document.getElementById('storageBar').style.display = 'block';
         }
 
         function initCloudinaryWidget() {
@@ -3816,7 +3041,6 @@
                 showToast('⚠️ فشل تحميل واجهة الرفع');
                 return;
             }
-            
             uploadWidget = cloudinary.createUploadWidget({
                 cloudName: CLOUDINARY_CONFIG.cloudName,
                 uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
@@ -3922,6 +3146,10 @@
         }
 
         function openCloudinaryWidget() {
+            if (!isAdmin) {
+                showToast('❌ المشرف فقط يمكنه الرفع');
+                return;
+            }
             const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
             const remaining = MAX_STORAGE - totalUsed;
             if (remaining <= 0) {
@@ -4009,10 +3237,7 @@
             currentEditVideoId = videoId;
             document.getElementById('editVideoTitleInput').value = video.title || '';
             document.getElementById('editVideoDescriptionInput').value = video.description || '';
-
-            const descLength = (video.description || '').length;
-            document.getElementById('editDescCharCount').textContent = `(${descLength} / 5000 حرف)`;
-
+            document.getElementById('editDescCharCount').textContent = `(${(video.description || '').length} / 5000 حرف)`;
             document.getElementById('editVideoModal').classList.add('active');
         }
 
@@ -4023,27 +3248,22 @@
 
         function saveVideoEdit() {
             if (!currentEditVideoId || !isAdmin) return;
-
             const newTitle = document.getElementById('editVideoTitleInput').value.trim();
             const newDescription = document.getElementById('editVideoDescriptionInput').value.trim();
-
             if (!newTitle) {
                 SoundEffects.error();
                 showToast('⚠️ العنوان لا يمكن أن يكون فارغاً');
                 return;
             }
-
             db.collection('videos').doc(currentEditVideoId).update({
                 title: newTitle,
                 description: newDescription,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
+            }).then(() => {
                 SoundEffects.success();
                 showToast('✅ تم تعديل البيانات بنجاح!');
                 closeEditVideoModal();
-            })
-            .catch(err => {
+            }).catch(err => {
                 console.error('Error updating video:', err);
                 SoundEffects.error();
                 showToast('❌ فشل تعديل البيانات');
@@ -4063,7 +3283,7 @@
             emptyState.style.display = 'none';
             videoCountSpan.textContent = videos.length + ' فيديو';
             
-            container.innerHTML = videos.map((video, index) => {
+            container.innerHTML = videos.map(video => {
                 const duration = video.duration ? formatDuration(video.duration) : '';
                 let bgSource = video.gif;
                 let isGif = true;
@@ -4124,7 +3344,7 @@
                 return `
                     <div class="video-card" onclick="playVideo('${video.id}')">
                         <div class="video-thumbnail">
-                            ${bgSource ? '<img src="' + bgSource + '" alt="' + video.title + '" class="bg-gif" onerror="this.style.display=\'none\'; this.parentNode.querySelector(\'.fallback-icon\').style.display=\'flex\';">' : ''}
+                            ${bgSource ? '<img src="' + bgSource + '" alt="' + escapeHtml(video.title) + '" class="bg-gif" onerror="this.style.display=\'none\'; this.parentNode.querySelector(\'.fallback-icon\').style.display=\'flex\';">' : ''}
                             <div class="fallback-icon" style="display: ${bgSource ? 'none' : 'flex'}; position: absolute; z-index: 2;">
                                 <i class="fas fa-film"></i>
                             </div>
@@ -4135,8 +3355,8 @@
                             ${adminButtons}
                         </div>
                         <div class="video-info">
-                            <h4 class="video-title">${video.title} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
-                            ${video.description ? '<div class="video-description">' + video.description + '</div>' : ''}
+                            <h4 class="video-title">${escapeHtml(video.title)} ${video.size > 100 * 1024 * 1024 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>
+                            ${video.description ? '<div class="video-description">' + escapeHtml(video.description) + '</div>' : ''}
                             ${isAdmin ? adminQuizButtons : studentQuizButton}
                             <div class="video-meta">
                                 <span><i class="fas fa-calendar"></i> ${video.createdAt ? new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
@@ -4149,32 +3369,23 @@
             }).join('');
         }
 
-        function formatDuration(seconds) {
-            if (!seconds) return '';
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return mins + ':' + (secs < 10 ? '0' : '') + secs;
-        }
-
-        function formatSize(bytes) {
-            if (!bytes) return '0 B';
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 4000);
+        function deleteVideo(id, publicId) {
+            if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
+            db.collection('videos').doc(id).delete()
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('🗑️ تم الحذف من المكتبة');
+                })
+                .catch(err => {
+                    SoundEffects.error();
+                    showToast('❌ فشل الحذف: ' + err.message);
+                });
         }
 
         function playVideo(id, startTime = 0) {
             const video = videos.find(v => v.id === id);
             if (!video) return;
-            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + video.title + '</span>';
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-play-circle"></i> <span>' + escapeHtml(video.title) + '</span>';
             const player = document.getElementById('videoPlayer');
             player.src = video.url;
             player.poster = video.thumbnail || '';
@@ -4226,19 +3437,99 @@
             document.getElementById('videoQuizContainer').style.display = 'none';
         }
 
-        function deleteVideo(id, publicId) {
-            if (!confirm('هل أنت متأكد من حذف هذا الفيديو؟')) return;
-            db.collection('videos').doc(id).delete()
-                .then(() => {
-                    SoundEffects.delete();
-                    showToast('🗑️ تم الحذف من المكتبة');
-                })
-                .catch(err => {
-                    SoundEffects.error();
-                    showToast('❌ فشل الحذف: ' + err.message);
-                });
+        // ======== تتبع مشاهدة الفيديو واستئنافها ========
+        function saveVideoProgress() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src || player.paused) return;
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
+            if (!currentVideo) return;
+            const data = {
+                videoId: currentVideo.id,
+                title: currentVideo.title,
+                thumbnail: currentVideo.thumbnail || '',
+                currentTime: player.currentTime,
+                duration: player.duration || 0,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
 
+        function checkForResume() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            try {
+                lastWatchedData = JSON.parse(saved);
+                const videoExists = videos.some(v => v.id === lastWatchedData.videoId);
+                if (!videoExists) { localStorage.removeItem(STORAGE_KEY); return; }
+                if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; }
+                document.getElementById('resumeVideoTitle').textContent = lastWatchedData.title;
+                document.getElementById('resumeTimeDisplay').textContent = 'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
+                document.getElementById('resumeNotification').style.display = 'flex';
+            } catch (e) { console.error('Error parsing saved data:', e); localStorage.removeItem(STORAGE_KEY); }
+        }
+
+        function resumeWatching() {
+            if (!lastWatchedData) return;
+            const video = videos.find(v => v.id === lastWatchedData.videoId);
+            if (!video) { showToast('❌ الفيديو غير متوفر'); dismissResume(); return; }
+            playVideo(lastWatchedData.videoId);
+            const player = document.getElementById('videoPlayer');
+            const setTime = () => {
+                player.currentTime = lastWatchedData.currentTime;
+                showToast('▶️ استئناف من ' + formatDuration(lastWatchedData.currentTime));
+                player.removeEventListener('loadedmetadata', setTime);
+            };
+            player.addEventListener('loadedmetadata', setTime);
+            dismissResume();
+        }
+
+        function dismissResume() { document.getElementById('resumeNotification').style.display = 'none'; }
+
+        function setupProgressTracking() {
+            const player = document.getElementById('videoPlayer');
+            if (!player) return;
+            
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => { 
+                if (!player.paused && !player.ended) saveVideoProgress(); 
+            }, 5000);
+            
+            player.addEventListener('pause', saveVideoProgress);
+            window.addEventListener('beforeunload', saveVideoProgress);
+            player.addEventListener('ended', () => localStorage.removeItem(STORAGE_KEY));
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            const player = document.getElementById('videoPlayer');
+            if (document.hidden && player && !player.paused) { player.pause(); saveVideoProgress(); }
+        });
+
+        function shareCurrentTime() {
+            const player = document.getElementById('videoPlayer');
+            if (!player || !player.src) return;
+            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
+            if (!currentVideo) return;
+            const currentTime = Math.floor(player.currentTime);
+            const shareUrl = window.location.href.split('?')[0] + '?video=' + currentVideo.id + '&t=' + currentTime;
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => showToast('🔗 تم نسخ رابط المشاركة! أرسله لصديقك'))
+                .catch(() => showToast('⚠️ تعذر نسخ الرابط'));
+        }
+
+        function checkUrlForShare() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoId = urlParams.get('video');
+            const time = urlParams.get('t');
+            if (videoId && videos.length > 0) {
+                const video = videos.find(v => v.id === videoId);
+                if (video) {
+                    window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
+                    playVideo(videoId, parseInt(time) || 0);
+                } else { showToast('❌ الفيديو المطلوب غير موجود'); }
+            }
+        }
+
+        // ======== دوال تسجيل الدخول والإدارة ========
         function showLogin() { 
             document.getElementById('loginModal').classList.add('active'); 
             document.getElementById('passwordInput').value = '';
@@ -4342,244 +3633,685 @@
             closeSetAdminsModal();
         }
 
-        const STORAGE_KEY = 'falak_last_watched';
-        let lastWatchedData = null;
-
-        function saveVideoProgress() {
-            const player = document.getElementById('videoPlayer');
-            if (!player || !player.src || player.paused) return;
-            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
-            if (!currentVideo) return;
-            const data = {
-                videoId: currentVideo.id,
-                title: currentVideo.title,
-                thumbnail: currentVideo.thumbnail || '',
-                currentTime: player.currentTime,
-                duration: player.duration || 0,
-                timestamp: new Date().getTime()
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        }
-
-        function checkForResume() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (!saved) return;
-            try {
-                lastWatchedData = JSON.parse(saved);
-                const videoExists = videos.some(v => v.id === lastWatchedData.videoId);
-                if (!videoExists) { localStorage.removeItem(STORAGE_KEY); return; }
-                if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; }
-                document.getElementById('resumeVideoTitle').textContent = lastWatchedData.title;
-                document.getElementById('resumeTimeDisplay').textContent = 'توقفت عند: ' + formatDuration(lastWatchedData.currentTime);
-                document.getElementById('resumeNotification').style.display = 'flex';
-            } catch (e) { console.error('Error parsing saved data:', e); localStorage.removeItem(STORAGE_KEY); }
-        }
-
-        function resumeWatching() {
-            if (!lastWatchedData) return;
-            const video = videos.find(v => v.id === lastWatchedData.videoId);
-            if (!video) { showToast('❌ الفيديو غير متوفر'); dismissResume(); return; }
-            playVideo(lastWatchedData.videoId);
-            const player = document.getElementById('videoPlayer');
-            const setTime = () => {
-                player.currentTime = lastWatchedData.currentTime;
-                showToast('▶️ استئناف من ' + formatDuration(lastWatchedData.currentTime));
-                player.removeEventListener('loadedmetadata', setTime);
-            };
-            player.addEventListener('loadedmetadata', setTime);
-            dismissResume();
-        }
-
-        function dismissResume() { document.getElementById('resumeNotification').style.display = 'none'; }
-
-        function setupProgressTracking() {
-            const player = document.getElementById('videoPlayer');
-            if (!player) return;
-            
-            if (progressInterval) {
-                clearInterval(progressInterval);
+        // ======== دوال الامتحانات (quizzes) ========
+        function openAddQuizModal(videoId) {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
             }
-            
-            progressInterval = setInterval(() => { 
-                if (!player.paused && !player.ended) saveVideoProgress(); 
-            }, 5000);
-            
-            player.addEventListener('pause', saveVideoProgress);
-            window.addEventListener('beforeunload', saveVideoProgress);
-            player.addEventListener('ended', () => localStorage.removeItem(STORAGE_KEY));
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            const player = document.getElementById('videoPlayer');
-            if (document.hidden && player && !player.paused) { player.pause(); saveVideoProgress(); }
-        });
-
-        function shareCurrentTime() {
-            const player = document.getElementById('videoPlayer');
-            if (!player || !player.src) return;
-            const currentVideo = videos.find(v => v.url === player.src || v.originalUrl === player.src);
-            if (!currentVideo) return;
-            const currentTime = Math.floor(player.currentTime);
-            const shareUrl = window.location.href.split('?')[0] + '?video=' + currentVideo.id + '&t=' + currentTime;
-            navigator.clipboard.writeText(shareUrl)
-                .then(() => showToast('🔗 تم نسخ رابط المشاركة! أرسله لصديقك'))
-                .catch(() => showToast('⚠️ تعذر نسخ الرابط'));
-        }
-
-        function checkUrlForShare() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const videoId = urlParams.get('video');
-            const time = urlParams.get('t');
-            if (videoId && videos.length > 0) {
-                const video = videos.find(v => v.id === videoId);
-                if (video) {
-                    window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
-                    playVideo(videoId, parseInt(time) || 0);
-                } else { showToast('❌ الفيديو المطلوب غير موجود'); }
-            }
-        }
-
-        let currentUser = null;
-        let chatUnsubscribe = null;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let recordingTimer = null;
-        let localStream = null;
-        let callTimer = null;
-        let callSeconds = 0;
-        let unreadMessages = 0;
-        let isRecording = false;
-        let currentAudio = null;
-        let currentAudioBtn = null;
-        
-        let userPresenceRef = null;
-        let onlineUsersRef = db.collection('online_users');
-        let onlineUnsubscribe = null;
-        let presenceInterval = null;
-
-        function initPresenceSystem() {
-            if (!currentUser) return;
-            
-            let userId = localStorage.getItem('falak_user_id');
-            if (!userId) {
-                userId = generateUserId();
-                localStorage.setItem('falak_user_id', userId);
-            }
-            
-            userPresenceRef = onlineUsersRef.doc(userId);
-            
-            userPresenceRef.set({
-                name: currentUser,
-                joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(err => console.error('Error setting presence:', err));
-            
-            presenceInterval = setInterval(() => {
-                if (userPresenceRef) {
-                    userPresenceRef.update({
-                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                    }).catch(err => console.error('Error updating presence:', err));
+            const select = document.getElementById('quizVideoSelect');
+            select.innerHTML = '<option value="">-- اختر فيديو --</option>';
+            videos.forEach(video => {
+                const option = document.createElement('option');
+                option.value = video.id;
+                option.textContent = video.title;
+                select.appendChild(option);
+            });
+            if (videoId) {
+                select.value = videoId;
+                const existingQuiz = quizzes.find(q => q.videoId === videoId);
+                if (existingQuiz) {
+                    loadQuizForEditing(existingQuiz);
+                } else {
+                    document.getElementById('questionsContainer').innerHTML = '';
+                    addQuestion();
                 }
-            }, 20000);
-            
-            listenToOnlineUsers();
+            } else {
+                document.getElementById('questionsContainer').innerHTML = '';
+                addQuestion();
+            }
+            document.getElementById('addQuizModal').classList.add('active');
         }
 
-        function generateUserId() {
-            return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        function closeAddQuizModal() {
+            document.getElementById('addQuizModal').classList.remove('active');
         }
 
-        function listenToOnlineUsers() {
-            if (onlineUnsubscribe) onlineUnsubscribe();
-            
-            onlineUnsubscribe = onlineUsersRef
-                .onSnapshot(snapshot => {
-                    const now = Date.now();
-                    const twoMinutesAgo = now - 2 * 60 * 1000;
-
-                    const activeUsers = [];
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (data.lastSeen) {
-                            let lastSeenTime;
-                            if (typeof data.lastSeen.toDate === 'function') {
-                                lastSeenTime = data.lastSeen.toDate().getTime();
-                            } else if (data.lastSeen.seconds) {
-                                lastSeenTime = data.lastSeen.seconds * 1000;
-                            } else {
-                                lastSeenTime = new Date(data.lastSeen).getTime();
-                            }
-                            if (!isNaN(lastSeenTime) && lastSeenTime > twoMinutesAgo) {
-                                activeUsers.push(data);
-                            }
-                        }
-                    });
-
-                    const count = activeUsers.length;
-                    let onlineText;
-                    if (count === 0) onlineText = 'لا أحد متصل';
-                    else if (count === 1) onlineText = 'متصل واحد';
-                    else if (count === 2) onlineText = 'متصلان';
-                    else onlineText = count + ' متصلين';
-
-                    document.getElementById('onlineCount').textContent = onlineText;
+        function loadQuizForEditing(quiz) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            quiz.questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-card';
+                questionDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="color: #6366f1; font-weight: 600;">السؤال ${index + 1}</span>
+                        ${index > 0 ? `<button onclick="this.closest('.question-card').remove()" style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"><i class="fas fa-times"></i></button>` : ''}
+                    </div>
+                    <input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-family: 'Cairo'; margin-bottom: 1rem;">
                     
-                }, error => {
-                    console.error('Error fetching online users:', error);
-                    document.getElementById('onlineCount').textContent = 'خطأ في التحميل';
+                    <div class="options-container">
+                        ${q.options.map((opt, optIdx) => `
+                            <div class="quiz-option-input">
+                                <input type="radio" name="correct-${index}" value="${optIdx}" ${q.correctAnswer === optIdx ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #10b981;">
+                                <input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input">
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p style="color: #888; font-size: 0.85rem; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>
+                `;
+                container.appendChild(questionDiv);
+            });
+        }
+
+        function addQuestion() {
+            const container = document.getElementById('questionsContainer');
+            const questionIndex = container.children.length;
+            
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-card';
+            questionDiv.style.cssText = 'background: rgba(255,255,255,0.05); border-radius: 15px; padding: 1.5rem; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1);';
+            questionDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <span style="color: #6366f1; font-weight: 600;">السؤال ${questionIndex + 1}</span>
+                    ${questionIndex > 0 ? `<button onclick="this.closest('.question-card').remove()" style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"><i class="fas fa-times"></i></button>` : ''}
+                </div>
+                <input type="text" class="question-input" placeholder="نص السؤال..." style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-family: 'Cairo'; margin-bottom: 1rem;">
+                
+                <div class="options-container">
+                    <div class="quiz-option-input">
+                        <input type="radio" name="correct-${questionIndex}" value="0" style="width: 20px; height: 20px; accent-color: #10b981;">
+                        <input type="text" placeholder="الخيار الأول" class="option-input">
+                    </div>
+                    <div class="quiz-option-input">
+                        <input type="radio" name="correct-${questionIndex}" value="1" style="width: 20px; height: 20px; accent-color: #10b981;">
+                        <input type="text" placeholder="الخيار الثاني" class="option-input">
+                    </div>
+                    <div class="quiz-option-input">
+                        <input type="radio" name="correct-${questionIndex}" value="2" style="width: 20px; height: 20px; accent-color: #10b981;">
+                        <input type="text" placeholder="الخيار الثالث" class="option-input">
+                    </div>
+                    <div class="quiz-option-input">
+                        <input type="radio" name="correct-${questionIndex}" value="3" style="width: 20px; height: 20px; accent-color: #10b981;">
+                        <input type="text" placeholder="الخيار الرابع" class="option-input">
+                    </div>
+                </div>
+                <p style="color: #888; font-size: 0.85rem; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>
+            `;
+            container.appendChild(questionDiv);
+        }
+
+        function saveQuiz() {
+            const videoId = document.getElementById('quizVideoSelect').value;
+            if (!videoId) {
+                showToast('⚠️ اختر فيديو أولاً');
+                return;
+            }
+            
+            const questionCards = document.querySelectorAll('#questionsContainer .question-card');
+            const questions = [];
+            
+            for (let i = 0; i < questionCards.length; i++) {
+                const card = questionCards[i];
+                const questionText = card.querySelector('.question-input').value.trim();
+                if (!questionText) {
+                    showToast('⚠️ أكمل جميع الأسئلة');
+                    return;
+                }
+                
+                const optionInputs = card.querySelectorAll('.option-input');
+                const options = [];
+                let correctAnswer = -1;
+                
+                optionInputs.forEach((input, idx) => {
+                    const text = input.value.trim();
+                    if (text) options.push(text);
+                    const radio = card.querySelector(`input[name="correct-${i}"][value="${idx}"]`);
+                    if (radio && radio.checked) correctAnswer = idx;
+                });
+                
+                if (options.length < 2) {
+                    showToast('⚠️ كل سؤال يحتاج خيارين على الأقل');
+                    return;
+                }
+                
+                if (correctAnswer === -1) {
+                    showToast('⚠️ اختر الإجابة الصحيحة لكل سؤال');
+                    return;
+                }
+                
+                questions.push({
+                    question: questionText,
+                    options: options,
+                    correctAnswer: correctAnswer
+                });
+            }
+            
+            if (questions.length === 0) {
+                showToast('⚠️ أضف سؤالاً واحداً على الأقل');
+                return;
+            }
+            
+            const existingQuiz = quizzes.find(q => q.videoId === videoId);
+            
+            if (existingQuiz) {
+                db.collection('quizzes').doc(existingQuiz.id).update({
+                    questions: questions,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    SoundEffects.success();
+                    showToast('✅ تم تحديث الامتحان بنجاح!');
+                    closeAddQuizModal();
+                }).catch(err => {
+                    console.error('Error updating quiz:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل تحديث الامتحان');
+                });
+            } else {
+                db.collection('quizzes').add({
+                    videoId: videoId,
+                    questions: questions,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: currentUser || 'مشرف'
+                }).then(() => {
+                    SoundEffects.success();
+                    showToast('✅ تم حفظ الامتحان بنجاح!');
+                    closeAddQuizModal();
+                }).catch(err => {
+                    console.error('Error saving quiz:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل حفظ الامتحان');
+                });
+            }
+        }
+
+        function deleteQuiz(videoId) {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+            if (!confirm('⚠️ هل أنت متأكد؟ حذف الامتحان سيؤدي إلى حذف جميع نتائج الطلاب المرتبطة به بشكل نهائي!')) return;
+            
+            const quiz = quizzes.find(q => q.videoId === videoId);
+            if (!quiz) {
+                showToast('⚠️ لا يوجد امتحان لهذا الفيديو');
+                return;
+            }
+            
+            const batch = db.batch();
+            db.collection('quiz_results').where('videoId', '==', videoId).get()
+                .then(snapshot => {
+                    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    batch.delete(db.collection('quizzes').doc(quiz.id));
+                    return batch.commit();
+                })
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('✅ تم حذف الامتحان وجميع نتائج الطلاب');
+                })
+                .catch(err => {
+                    console.error('Error deleting quiz and results:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل في الحذف');
                 });
         }
 
-        function removePresence() {
-            if (presenceInterval) {
-                clearInterval(presenceInterval);
-                presenceInterval = null;
+        function openViewResultsModal(videoId) {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+            const select = document.getElementById('resultsVideoSelect');
+            select.innerHTML = '<option value="">-- اختر فيديو --</option>';
+            videos.forEach(video => {
+                const option = document.createElement('option');
+                option.value = video.id;
+                option.textContent = video.title;
+                select.appendChild(option);
+            });
+            if (videoId) {
+                select.value = videoId;
+                loadResultsForVideo();
+            }
+            document.getElementById('viewResultsModal').classList.add('active');
+        }
+
+        function closeViewResultsModal() {
+            document.getElementById('viewResultsModal').classList.remove('active');
+        }
+
+        function loadResultsForVideo() {
+            const videoId = document.getElementById('resultsVideoSelect').value;
+            const container = document.getElementById('resultsContainer');
+            if (!videoId) {
+                container.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">اختر فيديو لعرض النتائج</p>';
+                return;
+            }
+            const results = quizResults.filter(r => r.videoId === videoId);
+            if (results.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد نتائج لهذا الفيديو بعد</p>';
+                return;
+            }
+            const quiz = quizzes.find(q => q.videoId === videoId);
+            container.innerHTML = results.map(result => {
+                const correctCount = result.answers.filter((a, idx) => {
+                    const question = quiz?.questions?.[idx];
+                    return question && a === question.correctAnswer;
+                }).length;
+                const totalQuestions = quiz?.questions?.length || result.answers.length;
+                const percentage = Math.round((correctCount / totalQuestions) * 100);
+                return `
+                    <div class="result-item">
+                        <div class="result-student-name"><i class="fas fa-user-graduate"></i> ${escapeHtml(result.studentName)}</div>
+                        <div class="result-details">
+                            <span><i class="fas fa-calendar"></i> ${result.submittedAt ? new Date(result.submittedAt.toDate()).toLocaleDateString('ar-EG') : 'الآن'}</span>
+                            <span><i class="fas fa-check-circle" style="color: #10b981;"></i> ${correctCount}/${totalQuestions}</span>
+                            <span><i class="fas fa-percentage" style="color: #6366f1;"></i> ${percentage}%</span>
+                        </div>
+                        <div class="result-answers">
+                            ${result.answers.map((answer, idx) => {
+                                const question = quiz?.questions?.[idx];
+                                const isCorrect = question && answer === question.correctAnswer;
+                                return `
+                                    <div class="answer-item ${isCorrect ? 'correct' : 'incorrect'}">
+                                        <strong>س${idx + 1}:</strong> ${isCorrect ? '✓ صحيح' : '✗ خطأ'} 
+                                        ${question ? `(الإجابة: ${escapeHtml(question.options[question.correctAnswer])})` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        ${!result.gradeSent ? `
+                            <button class="send-grade-btn" onclick="sendGradeToStudent('${result.id}', '${escapeHtml(result.studentName)}', ${percentage})">
+                                <i class="fas fa-paper-plane"></i> إرسال الدرجة للطالب
+                            </button>
+                        ` : `
+                            <div class="grade-sent"><i class="fas fa-check-circle"></i> تم إرسال الدرجة</div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function sendGradeToStudent(resultId, studentName, percentage) {
+            db.collection('quiz_results').doc(resultId).update({
+                gradeSent: true,
+                gradeSentAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                SoundEffects.success();
+                showToast(`✅ تم إرسال الدرجة للطالب ${studentName}: ${percentage}%`);
+                loadResultsForVideo();
+            }).catch(err => {
+                console.error('Error sending grade:', err);
+                SoundEffects.error();
+                showToast('❌ فشل إرسال الدرجة');
+            });
+        }
+
+        function openTakeQuizModal(videoId) {
+            const quiz = quizzes.find(q => q.videoId === videoId);
+            if (!quiz) {
+                showToast('⚠️ لا يوجد امتحان لهذا الفيديو');
+                return;
+            }
+            currentQuiz = quiz;
+            currentVideoIdForQuiz = videoId;
+            currentQuizAnswers = {};
+            document.getElementById('studentNameSection').style.display = 'block';
+            document.getElementById('quizSection').style.display = 'none';
+            document.getElementById('studentNameInput').value = '';
+            document.getElementById('takeQuizModal').classList.add('active');
+        }
+
+        function closeTakeQuizModal() {
+            if (quizTimer) {
+                clearInterval(quizTimer);
+                quizTimer = null;
+            }
+            document.getElementById('takeQuizModal').classList.remove('active');
+            currentQuiz = null;
+            currentQuizAnswers = {};
+        }
+
+        function startQuiz() {
+            const studentName = document.getElementById('studentNameInput').value.trim();
+            if (!studentName) {
+                showToast('⚠️ أدخل اسمك أولاً');
+                return;
+            }
+            currentQuizAnswers = {};
+            
+            const existingResult = quizResults.find(r => 
+                r.videoId === currentVideoIdForQuiz && 
+                r.studentName === studentName &&
+                r.submittedAt && (new Date().getTime() - r.submittedAt.toDate().getTime()) < 24 * 60 * 60 * 1000
+            );
+            if (existingResult) {
+                showToast('⚠️ لقد قمت بهذا الامتحان مؤخراً، يمكنك إعادته بعد 24 ساعة');
+                return;
             }
             
-            if (userPresenceRef) {
-                userPresenceRef.delete().catch(err => console.error('Error removing presence:', err));
-                userPresenceRef = null;
+            document.getElementById('studentNameSection').style.display = 'none';
+            document.getElementById('quizSection').style.display = 'block';
+            
+            const quizSection = document.getElementById('quizSection');
+            quizSection.innerHTML = `
+                <div class="quiz-header">
+                    <div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div>
+                    <div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div>
+                </div>
+            `;
+            
+            currentQuiz.questions.forEach((q, idx) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-card';
+                questionDiv.innerHTML = `
+                    <div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>
+                    <div class="question-text">${escapeHtml(q.question)}</div>
+                    <div class="options-list">
+                        ${q.options.map((opt, optIdx) => `
+                            <label class="option-label" onclick="selectAnswer(${idx}, ${optIdx})">
+                                <input type="radio" name="q${idx}" value="${optIdx}">
+                                <span class="option-text">${escapeHtml(opt)}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                quizSection.appendChild(questionDiv);
+            });
+            
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'quiz-submit-btn';
+            submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان';
+            submitBtn.onclick = submitQuiz;
+            quizSection.appendChild(submitBtn);
+            
+            quizTimeRemaining = 600;
+            updateQuizTimer();
+            if (quizTimer) clearInterval(quizTimer);
+            quizTimer = setInterval(() => {
+                quizTimeRemaining--;
+                updateQuizTimer();
+                if (quizTimeRemaining <= 0) {
+                    clearInterval(quizTimer);
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function updateQuizTimer() {
+            const mins = Math.floor(quizTimeRemaining / 60);
+            const secs = quizTimeRemaining % 60;
+            const display = `${mins}:${secs.toString().padStart(2, '0')}`;
+            document.getElementById('timerDisplay').textContent = display;
+            const timerDiv = document.getElementById('quizTimer');
+            if (quizTimeRemaining < 60) timerDiv.classList.add('warning');
+        }
+
+        function selectAnswer(questionIdx, answerIdx) {
+            currentQuizAnswers[questionIdx] = answerIdx;
+            const questionCard = document.querySelectorAll('.question-card')[questionIdx];
+            questionCard.querySelectorAll('.option-label').forEach((label, idx) => {
+                if (idx === answerIdx) {
+                    label.style.background = 'rgba(99, 102, 241, 0.3)';
+                    label.style.borderColor = '#6366f1';
+                } else {
+                    label.style.background = 'rgba(255,255,255,0.03)';
+                    label.style.borderColor = 'transparent';
+                }
+            });
+        }
+
+        function submitQuiz() {
+            if (quizTimer) {
+                clearInterval(quizTimer);
+                quizTimer = null;
             }
             
-            if (onlineUnsubscribe) {
-                onlineUnsubscribe();
-                onlineUnsubscribe = null;
+            const studentName = document.getElementById('studentNameInput').value.trim();
+            const totalQuestions = currentQuiz.questions.length;
+            const answeredQuestions = Object.keys(currentQuizAnswers).length;
+            
+            if (answeredQuestions < totalQuestions) {
+                if (!confirm(`لم تجب على ${totalQuestions - answeredQuestions} سؤال. هل تريد التسليم anyway؟`)) {
+                    quizTimeRemaining = Math.max(quizTimeRemaining, 1);
+                    quizTimer = setInterval(() => {
+                        quizTimeRemaining--;
+                        updateQuizTimer();
+                        if (quizTimeRemaining <= 0) {
+                            clearInterval(quizTimer);
+                            submitQuiz();
+                        }
+                    }, 1000);
+                    return;
+                }
+            }
+            
+            let correctCount = 0;
+            const answers = [];
+            for (let i = 0; i < totalQuestions; i++) {
+                const userAnswer = currentQuizAnswers[i] !== undefined ? currentQuizAnswers[i] : -1;
+                answers.push(userAnswer);
+                if (userAnswer === currentQuiz.questions[i].correctAnswer) correctCount++;
+            }
+            
+            const percentage = Math.round((correctCount / totalQuestions) * 100);
+            
+            db.collection('quiz_results').add({
+                quizId: currentQuiz.id,
+                videoId: currentVideoIdForQuiz,
+                studentName: studentName,
+                answers: answers,
+                score: correctCount,
+                totalQuestions: totalQuestions,
+                percentage: percentage,
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                gradeSent: false
+            }).then(() => {
+                SoundEffects.success();
+                showResult(correctCount, totalQuestions, percentage);
+            }).catch(err => {
+                console.error('Error submitting quiz:', err);
+                SoundEffects.error();
+                showToast('❌ فشل تسليم الامتحان');
+            });
+        }
+
+        function showResult(correct, total, percentage) {
+            const quizSection = document.getElementById('quizSection');
+            let message = '';
+            let icon = '';
+            if (percentage >= 90) { message = 'ممتاز! أداء رائع جداً'; icon = '🏆'; }
+            else if (percentage >= 75) { message = 'جيد جداً! استمر في التقدم'; icon = '👏'; }
+            else if (percentage >= 60) { message = 'جيد، يمكنك تحسين أدائك'; icon = '👍'; }
+            else { message = 'حاول مرة أخرى، يمكنك التحسن'; icon = '💪'; }
+            
+            quizSection.innerHTML = `
+                <div class="quiz-result">
+                    <div class="result-icon">${icon}</div>
+                    <div class="result-score">${percentage}%</div>
+                    <div class="result-message">${message}</div>
+                    <p style="color: #aaa; margin-bottom: 1rem;">إجابات صحيحة: ${correct} من ${total}</p>
+                    <button class="quiz-btn" onclick="closeTakeQuizModal()">
+                        <i class="fas fa-times"></i> إغلاق
+                    </button>
+                </div>
+            `;
+        }
+
+        // ======== دوال الذكاء الاصطناعي والتعليم ========
+        function openTeachAICircleModal() {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+            document.getElementById('teachAICircleModal').classList.add('active');
+            renderAIKnowledgeList();
+        }
+
+        function closeTeachAICircleModal() {
+            document.getElementById('teachAICircleModal').classList.remove('active');
+        }
+
+        function renderAIKnowledgeList() {
+            const list = document.getElementById('aiKnowledgeList');
+            if (!list) return;
+            if (aiKnowledgeBase.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">لا توجد معلومات بعد</p>';
+                return;
+            }
+            list.innerHTML = aiKnowledgeBase.map(item => `
+                <div class="ai-knowledge-item">
+                    <div class="ai-knowledge-content">
+                        <div class="ai-knowledge-question">
+                            <i class="fas fa-question-circle"></i>
+                            ${escapeHtml(item.question)}
+                        </div>
+                        <div class="ai-knowledge-answer">
+                            ${escapeHtml(item.answer)}
+                        </div>
+                    </div>
+                    <button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${item.id}')" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function saveAIKnowledge() {
+            const question = document.getElementById('aiQuestionInput').value.trim();
+            const answer = document.getElementById('aiAnswerInput').value.trim();
+            if (!question || !answer) {
+                showToast('⚠️ أدخل السؤال والإجابة');
+                return;
+            }
+            db.collection('ai_knowledge').add({
+                question: question,
+                answer: answer,
+                createdBy: currentUser || 'مشرف',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                SoundEffects.success();
+                showToast('✅ تم تعليم الذكاء الاصطناعي بنجاح!');
+                document.getElementById('aiQuestionInput').value = '';
+                document.getElementById('aiAnswerInput').value = '';
+            }).catch(err => {
+                console.error('Error saving AI knowledge:', err);
+                SoundEffects.error();
+                showToast('❌ فشل الحفظ');
+            });
+        }
+
+        function deleteAIKnowledge(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه المعلومة؟')) return;
+            db.collection('ai_knowledge').doc(id).delete()
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('🗑️ تم الحذف');
+                })
+                .catch(err => {
+                    console.error('Error deleting:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل الحذف');
+                });
+        }
+
+        function openAIChat() {
+            document.getElementById('aiChatModal').classList.add('active');
+            const messagesDiv = document.getElementById('aiChatMessages');
+            if (messagesDiv.children.length === 0) {
+                displayAIMessage('مرحباً! أنا مساعد فلك الذكي. اسألني أي شيء عن الفضاء أو اكتب "مساعدة" لمعرفة ما يمكنني فعله.', 'ai');
+            }
+            setTimeout(() => messagesDiv.scrollTop = messagesDiv.scrollHeight, 100);
+        }
+
+        function closeAIChat() {
+            document.getElementById('aiChatModal').classList.remove('active');
+        }
+
+        function sendAIMessage() {
+            const input = document.getElementById('aiChatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            displayAIMessage(text, 'user');
+            input.value = '';
+
+            const knowledge = findAIKnowledge(text);
+            if (knowledge) {
+                setTimeout(() => displayAIMessage(knowledge, 'ai'), 500);
+                return;
+            }
+            setTimeout(() => displayAIMessage(getAIResponse(text), 'ai'), 500);
+        }
+
+        function findAIKnowledge(userMessage) {
+            const msg = userMessage.toLowerCase();
+            for (const item of aiKnowledgeBase) {
+                const question = item.question.toLowerCase();
+                if (msg === question || msg.includes(question) || question.includes(msg)) {
+                    return item.answer;
+                }
+            }
+            return null;
+        }
+
+        function displayAIMessage(text, sender) {
+            const messagesDiv = document.getElementById('aiChatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (sender === 'user' ? 'sent' : 'received');
+            const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            let html = '';
+            if (sender === 'received') {
+                html += '<div class="message-sender" style="color: #06b6d4;"><i class="fas fa-robot"></i> مساعد فلك</div>';
+            }
+            html += '<div class="message-content">' + escapeHtml(text) + '</div>';
+            html += '<div class="message-time">' + time + '</div>';
+            messageDiv.innerHTML = html;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function getAIResponse(userMessage) {
+            const msg = userMessage.toLowerCase();
+            if (msg.includes('السلام عليكم') || msg.includes('مرحبا') || msg.includes('اهلا') || msg.includes('هلا')) {
+                return 'وعليكم السلام! كيف يمكنني مساعدتك اليوم في استكشاف عالم الفضاء؟';
+            }
+            if (msg.includes('كيف حالك') || msg.includes('اخبارك')) {
+                return 'أنا بخير، شكراً لسؤالك! جاهز لمساعدتك في أي استفسار عن الفضاء والكون.';
+            }
+            if (msg.includes('من انت') || msg.includes('مين انت') || msg.includes('اسمك')) {
+                return 'أنا مساعد فلك الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون والإجابة على أسئلتك الفضائية.';
+            }
+            if (msg.includes('مساعدة') || msg.includes('help')) {
+                return 'يمكنني مساعدتك في:\n• الإجابة على أسئلة عن الفضاء والكون\n• شرح الظواهر الفلكية\n• معلومات عن الكواكب والنجوم\n• المساعدة في استخدام المنصة\n\nجرب أن تسألني مثلاً: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"';
+            }
+            if (msg.includes('فيديو') || msg.includes('مقطع')) {
+                return 'يمكنك مشاهدة الفيديوهات المتاحة في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة من خلال زر "رفع فيديو".';
+            }
+            if (msg.includes('دردشة') || msg.includes('شات')) {
+                return 'يمكنك الدردشة مع الأعضاء الآخرين من خلال زر الدردشة في الأسفل. انضم للمحادثة وشارك أفكارك!';
+            }
+            if (msg.includes('مشرف') || msg.includes('ادارة')) {
+                return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف" في الأعلى.';
+            }
+            if (msg.includes('شكرا') || msg.includes('شكراً') || msg.includes('تسلم')) {
+                return 'العفو! دائماً هنا لمساعدتك. استمتع بوقتك في فلك العالمي! 🚀';
+            }
+            if (msg.includes('الكواكب') || msg.includes('مجموعة شمسية')) {
+                return 'المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون. كان هناك كوكب بلوتون لكنه أصبح كوكب قزم منذ 2006.';
+            }
+            if (msg.includes('الشمس')) {
+                return 'الشمس هي نجم يقع في مركز المجموعة الشمسية، وهي مصدر الضوء والحرارة للأرض. تبلغ درجة حرارة سطحها حوالي 5,500 درجة مئوية!';
+            }
+            if (msg.includes('القمر')) {
+                return 'القمر هو القمر الوحيد الطبيعي للأرض، ويبعد عنها حوالي 384,400 كم. يستغرق دورة واحدة حول الأرض حوالي 27.3 يوم.';
+            }
+            if (msg.includes('نجم') || msg.includes('نجوم')) {
+                return 'النجوم هي أجسام سماوية ضخمة تتألف من غازات ساخنة، خاصة الهيدروجين والهيليوم. أقرب نجم للأرض هو الشمس، والثاني هو Proxima Centauri على بعد 4.24 سنة ضوئية.';
+            }
+            if (msg.includes('ثقب اسود') || msg.includes('black hole')) {
+                return 'الثقب الأسود هو منطقة في الفضاء حيث تكون الجاذبية قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء! يتكون عندما تنهار نجوم ضخمة تحت تأثير جاذبيتها.';
+            }
+            return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. يمكنك سؤال المشرفين أو البحث في الفيديوهات المتاحة. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".';
+        }
+
+        function handleAIKeyPress(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAIMessage();
             }
         }
 
-        setInterval(() => {
-            const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
-            const threeMinutesAgoTimestamp = firebase.firestore.Timestamp.fromDate(threeMinutesAgo);
-
-            onlineUsersRef
-                .where('lastSeen', '<', threeMinutesAgoTimestamp)
-                .get()
-                .then(snapshot => {
-                    const batch = db.batch();
-                    snapshot.docs.forEach(doc => {
-                        batch.delete(doc.ref);
-                    });
-                    return batch.commit();
-                })
-                .catch(err => console.error('Cleanup error:', err));
-        }, 60000);
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                if (userPresenceRef) {
-                    userPresenceRef.delete().catch(() => {});
-                }
-            } else {
-                if (currentUser && !userPresenceRef) {
-                    initPresenceSystem();
-                }
-            }
-        });
-
-        window.addEventListener('beforeunload', () => {
-            removePresence();
-        });
-
+        // ======== دوال الدردشة والحضور ========
         function checkUserName() {
             const stored = localStorage.getItem('falak_username');
             if (stored) { 
@@ -4588,7 +4320,7 @@
             }
             return false;
         }
-        
+
         function openChat() {
             if (!checkUserName()) {
                 document.getElementById('nameModal').classList.add('active');
@@ -4602,7 +4334,20 @@
                 initPresenceSystem();
             }
         }
-        
+
+        function closeChat() {
+            document.getElementById('chatModal').classList.remove('active');
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            removePresence();
+            if (chatUnsubscribe) { 
+                chatUnsubscribe(); 
+                chatUnsubscribe = null; 
+            }
+        }
+
         function saveUserName() {
             const name = document.getElementById('userNameInput').value.trim();
             if (name.length < 2) { 
@@ -4615,33 +4360,15 @@
             document.getElementById('nameModal').classList.remove('active');
             document.getElementById('chatModal').classList.add('active');
             SoundEffects.join();
-            
             initPresenceSystem();
-            
             sendSystemMessage(name + ' انضم للدردشة');
             loadMessages();
         }
-        
-        function closeChat() {
-            document.getElementById('chatModal').classList.remove('active');
-            
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
-            }
-            
-            removePresence();
-            
-            if (chatUnsubscribe) { 
-                chatUnsubscribe(); 
-                chatUnsubscribe = null; 
-            }
-        }
-        
+
         function sendSystemMessage(text) {
             db.collection('messages').add({ type: 'system', text: text, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
         }
-        
+
         function loadMessages() {
             const container = document.getElementById('chatMessages');
             container.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i></div>';
@@ -4652,7 +4379,7 @@
                 scrollToBottom();
             }, error => { container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في التحميل</div>'; });
         }
-        
+
         function displayMessage(id, msg) {
             const container = document.getElementById('chatMessages');
             const div = document.createElement('div');
@@ -4665,13 +4392,13 @@
                 div.id = 'msg-' + id;
                 
                 let html = '';
-                if (!isSent) html += '<div class="message-sender">' + msg.sender + '</div>';
+                if (!isSent) html += '<div class="message-sender">' + escapeHtml(msg.sender) + '</div>';
                 
                 const canDelete = isAdmin || (msg.sender === currentUser);
                 if (canDelete) {
                     const adminClass = isAdmin ? 'admin' : '';
                     const title = isAdmin ? 'حذف (مشرف)' : 'حذف رسالتك';
-                    html += '<button class="message-delete-btn ' + adminClass + '" onclick="deleteMessage(\'' + id + '\', \'' + msg.sender + '\')" title="' + title + '"><i class="fas fa-times"></i></button>';
+                    html += '<button class="message-delete-btn ' + adminClass + '" onclick="deleteMessage(\'' + id + '\', \'' + escapeHtml(msg.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>';
                 }
                 
                 if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
@@ -4703,7 +4430,30 @@
             }
             container.appendChild(div);
         }
-        
+
+        function deleteMessage(messageId, sender) {
+            const canDelete = isAdmin || (sender === currentUser);
+            if (!canDelete) {
+                SoundEffects.error();
+                showToast('❌ لا يمكنك حذف هذه الرسالة');
+                return;
+            }
+            const confirmMsg = isAdmin ? 'هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)' : 'هل أنت متأكد من حذف رسالتك؟';
+            if (!confirm(confirmMsg)) return;
+            db.collection('messages').doc(messageId).delete()
+                .then(() => {
+                    SoundEffects.delete();
+                    showToast('🗑️ تم حذف الرسالة');
+                    const msgElement = document.getElementById('msg-' + messageId);
+                    if (msgElement) msgElement.remove();
+                })
+                .catch(err => {
+                    console.error('Error deleting message:', err);
+                    SoundEffects.error();
+                    showToast('❌ فشل حذف الرسالة');
+                });
+        }
+
         function playVoiceMessage(btn, url, id) {
             const audio = document.getElementById('audio-' + id);
             const progressBar = document.getElementById('progress-' + id);
@@ -4728,7 +4478,6 @@
                     audio.ontimeupdate = () => {
                         const percent = (audio.currentTime / audio.duration) * 100;
                         progressBar.style.width = percent + '%';
-                        
                         const mins = Math.floor(audio.currentTime / 60);
                         const secs = Math.floor(audio.currentTime % 60);
                         timeDisplay.textContent = mins + ':' + secs.toString().padStart(2, '0');
@@ -4742,67 +4491,36 @@
                         currentAudio = null;
                         currentAudioBtn = null;
                     };
-                    
                 }).catch(err => {
                     console.error('Error playing audio:', err);
                     SoundEffects.error();
                     showToast('❌ لا يمكن تشغيل الصوت');
                 });
-                
             } else {
                 audio.pause();
                 btn.innerHTML = '<i class="fas fa-play"></i>';
                 btn.classList.remove('playing');
             }
         }
-        
+
         function seekVoice(event, slider, id) {
             const audio = document.getElementById('audio-' + id);
             if (!audio || !audio.duration) return;
-            
             const rect = slider.getBoundingClientRect();
             const percent = (event.clientX - rect.left) / rect.width;
             audio.currentTime = percent * audio.duration;
         }
-        
-        function deleteMessage(messageId, sender) {
-            const canDelete = isAdmin || (sender === currentUser);
-            if (!canDelete) {
-                SoundEffects.error();
-                showToast('❌ لا يمكنك حذف هذه الرسالة');
-                return;
-            }
-            
-            const confirmMsg = isAdmin ? 'هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)' : 'هل أنت متأكد من حذف رسالتك؟';
-            if (!confirm(confirmMsg)) return;
-            
-            db.collection('messages').doc(messageId).delete()
-                .then(() => {
-                    SoundEffects.delete();
-                    showToast('🗑️ تم حذف الرسالة');
-                    const msgElement = document.getElementById('msg-' + messageId);
-                    if (msgElement) msgElement.remove();
-                })
-                .catch(err => {
-                    console.error('Error deleting message:', err);
-                    SoundEffects.error();
-                    showToast('❌ فشل حذف الرسالة');
-                });
-        }
-        
+
         function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             if (!text || !currentUser) return;
-            
-            const messageData = { 
+            db.collection('messages').add({ 
                 type: 'text', 
                 text: text, 
                 sender: currentUser, 
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            db.collection('messages').add(messageData).then(() => {
+            }).then(() => {
                 SoundEffects.send();
                 input.value = '';
             }).catch(() => {
@@ -4810,14 +4528,14 @@
                 showToast('فشل الإرسال');
             });
         }
-        
+
         function handleKeyPress(e) { 
             if (e.key === 'Enter' && !e.shiftKey) { 
                 e.preventDefault(); 
                 sendMessage(); 
             } 
         }
-        
+
         function sendImage(input) {
             const file = input.files[0];
             if (!file || !currentUser) return;
@@ -4847,7 +4565,7 @@
                 showToast('فشل الرفع');
             });
         }
-        
+
         async function toggleRecording() {
             if (!isRecording) {
                 await startRecording();
@@ -4855,7 +4573,7 @@
                 stopRecording();
             }
         }
-        
+
         async function startRecording() {
             if (!currentUser) return;
             try {
@@ -4904,24 +4622,20 @@
                 showToast('لا يمكن الوصول للميكروفون');
             }
         }
-        
+
         function stopRecording() {
             if (!isRecording || !mediaRecorder) return;
-            
             if (mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
             }
-            
             clearInterval(recordingTimer);
             isRecording = false;
-            
             document.getElementById('recordBtn').classList.remove('recording');
             document.getElementById('recordingIndicator').classList.remove('active');
             document.getElementById('recordingTime').textContent = '0:00';
-            
             SoundEffects.recordStop();
         }
-        
+
         async function uploadVoice(blob) {
             showToast('جاري إرسال الرسالة الصوتية...');
             const formData = new FormData();
@@ -4929,14 +4643,9 @@
             formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
             formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
             formData.append('resource_type', 'video');
-            
             try {
-                const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/video/upload', { 
-                    method: 'POST', 
-                    body: formData 
-                });
+                const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/video/upload', { method: 'POST', body: formData });
                 const data = await res.json();
-                
                 if (data.secure_url) {
                     await db.collection('messages').add({ 
                         type: 'voice', 
@@ -4955,7 +4664,7 @@
                 showToast('❌ فشل إرسال الرسالة الصوتية');
             }
         }
-        
+
         async function startVoiceCall() {
             if (!currentUser) return;
             try {
@@ -4974,7 +4683,7 @@
                 showToast('لا يمكن الوصول للميكروفون'); 
             }
         }
-        
+
         function toggleMute() {
             if (!localStream) return;
             const track = localStream.getAudioTracks()[0];
@@ -4983,7 +4692,7 @@
             btn.classList.toggle('active');
             btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>';
         }
-        
+
         function endCall() {
             if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
             clearInterval(callTimer);
@@ -4991,12 +4700,131 @@
             document.getElementById('callTimer').textContent = '00:00';
             sendSystemMessage('📞 ' + currentUser + ' أنهى المكالمة');
         }
-        
+
         function viewImage(url) { document.getElementById('viewerImage').src = url; document.getElementById('imageViewer').classList.add('active'); }
         function closeImageViewer() { document.getElementById('imageViewer').classList.remove('active'); }
         function scrollToBottom() { const c = document.getElementById('chatMessages'); c.scrollTop = c.scrollHeight; }
-        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
-        
+
+        function initPresenceSystem() {
+            if (!currentUser) return;
+            let userId = localStorage.getItem('falak_user_id');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+                localStorage.setItem('falak_user_id', userId);
+            }
+            userPresenceRef = onlineUsersRef.doc(userId);
+            userPresenceRef.set({
+                name: currentUser,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => console.error('Error setting presence:', err));
+            
+            presenceInterval = setInterval(() => {
+                if (userPresenceRef) {
+                    userPresenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() })
+                        .catch(err => console.error('Error updating presence:', err));
+                }
+            }, 20000);
+            
+            listenToOnlineUsers();
+        }
+
+        function removePresence() {
+            if (presenceInterval) {
+                clearInterval(presenceInterval);
+                presenceInterval = null;
+            }
+            if (userPresenceRef) {
+                userPresenceRef.delete().catch(err => console.error('Error removing presence:', err));
+                userPresenceRef = null;
+            }
+            if (onlineUnsubscribe) {
+                onlineUnsubscribe();
+                onlineUnsubscribe = null;
+            }
+        }
+
+        function listenToOnlineUsers() {
+            if (onlineUnsubscribe) onlineUnsubscribe();
+            onlineUnsubscribe = onlineUsersRef.onSnapshot(snapshot => {
+                const now = Date.now();
+                const twoMinutesAgo = now - 2 * 60 * 1000;
+                const activeUsers = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.lastSeen) {
+                        let lastSeenTime;
+                        if (typeof data.lastSeen.toDate === 'function') {
+                            lastSeenTime = data.lastSeen.toDate().getTime();
+                        } else if (data.lastSeen.seconds) {
+                            lastSeenTime = data.lastSeen.seconds * 1000;
+                        } else {
+                            lastSeenTime = new Date(data.lastSeen).getTime();
+                        }
+                        if (!isNaN(lastSeenTime) && lastSeenTime > twoMinutesAgo) {
+                            activeUsers.push(data);
+                        }
+                    }
+                });
+                const count = activeUsers.length;
+                let onlineText;
+                if (count === 0) onlineText = 'لا أحد متصل';
+                else if (count === 1) onlineText = 'متصل واحد';
+                else if (count === 2) onlineText = 'متصلان';
+                else onlineText = count + ' متصلين';
+                document.getElementById('onlineCount').textContent = onlineText;
+            }, error => {
+                console.error('Error fetching online users:', error);
+                document.getElementById('onlineCount').textContent = 'خطأ في التحميل';
+            });
+        }
+
+        setInterval(() => {
+            const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+            const threeMinutesAgoTimestamp = firebase.firestore.Timestamp.fromDate(threeMinutesAgo);
+            onlineUsersRef.where('lastSeen', '<', threeMinutesAgoTimestamp).get()
+                .then(snapshot => {
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    return batch.commit();
+                })
+                .catch(err => console.error('Cleanup error:', err));
+        }, 60000);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (userPresenceRef) userPresenceRef.delete().catch(() => {});
+            } else {
+                if (currentUser && !userPresenceRef) initPresenceSystem();
+            }
+        });
+
+        window.addEventListener('beforeunload', () => removePresence());
+
+        // ======== تهيئة الصفحة ========
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMobileModePreference();
+            listenToVideosWithRetry(4);
+            listenToMaintenance();
+            loadAIKnowledgeFromFirebase();
+            loadQuizzesFromFirebase();
+            loadQuizResultsFromFirebase();
+            initCloudinaryWidget();
+            checkUrlForShare();
+            setTimeout(() => document.getElementById('loader')?.classList.add('hidden'), 3000);
+        });
+
+        // إلغاء الاشتراكات عند الخروج
+        window.addEventListener('unload', function() {
+            if (unsubscribeVideos) unsubscribeVideos();
+            if (unsubscribeQuizzes) unsubscribeQuizzes();
+            if (unsubscribeQuizResults) unsubscribeQuizResults();
+            if (unsubscribeAIKnowledge) unsubscribeAIKnowledge();
+            if (unsubscribeMaintenance) unsubscribeMaintenance();
+            removePresence();
+        });
+
+        // ======== إغلاق النوافذ بالنقر خارجها أو ESC ========
         window.onclick = function(e) {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id === 'videoModal') closeModal();
@@ -5038,3 +4866,4 @@
     </script>
 </body>
 </html>
+```
