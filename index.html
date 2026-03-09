@@ -16,6 +16,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <style>
+        /* (نفس الـ CSS السابق، لم يتغير) */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -4355,12 +4356,12 @@
                 return; 
             }
             currentUser = name;
-            localStorage.setItem('falak_username', name);
+            localStorage.setItem('falak_username', name);   // حفظ الاسم
             document.getElementById('nameModal').classList.remove('active');
             document.getElementById('chatModal').classList.add('active');
             SoundEffects.join();
             initPresenceSystem();
-            // sendSystemMessage(name + ' انضم للدردشة'); // تم تعطيل رسالة الانضمام
+            // sendSystemMessage(name + ' انضم للدردشة');   // معطل
             loadMessages();
         }
 
@@ -4382,51 +4383,53 @@
         function displayMessage(id, msg) {
             const container = document.getElementById('chatMessages');
             const div = document.createElement('div');
+            
+            // تجاهل رسائل النظام تماماً (عدم عرضها)
             if (msg.type === 'system') {
-                div.className = 'message system';
-                div.innerHTML = msg.text;
-            } else {
-                const isSent = msg.sender === currentUser;
-                div.className = 'message ' + (isSent ? 'sent' : 'received');
-                div.id = 'msg-' + id;
-                
-                let html = '';
-                if (!isSent) html += '<div class="message-sender">' + escapeHtml(msg.sender) + '</div>';
-                
-                const canDelete = isAdmin || (msg.sender === currentUser);
-                if (canDelete) {
-                    const adminClass = isAdmin ? 'admin' : '';
-                    const title = isAdmin ? 'حذف (مشرف)' : 'حذف رسالتك';
-                    html += '<button class="message-delete-btn ' + adminClass + '" onclick="deleteMessage(\'' + id + '\', \'' + escapeHtml(msg.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>';
-                }
-                
-                if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
-                if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
-                
-                if (msg.audioUrl) {
-                    html += '<div class="voice-message" id="voice-' + id + '">';
-                    html += '<button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + msg.audioUrl + '\', \'' + id + '\')">';
-                    html += '<i class="fas fa-play"></i>';
-                    html += '</button>';
-                    html += '<div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')">';
-                    html += '<div class="voice-progress" id="progress-' + id + '"></div>';
-                    html += '</div>';
-                    html += '<span class="voice-time" id="time-' + id + '">0:00</span>';
-                    html += '</div>';
-                    html += '<audio id="audio-' + id + '" src="' + msg.audioUrl + '" preload="metadata" style="display:none;"></audio>';
-                }
-                
-                const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
-                html += '<div class="message-time">' + time + '</div>';
-                div.innerHTML = html;
-                
-                if (!isSent && !document.getElementById('chatModal').classList.contains('active')) {
-                    unreadMessages++;
-                    document.getElementById('chatBadge').textContent = unreadMessages;
-                    document.getElementById('chatBadge').style.display = 'flex';
-                    SoundEffects.receive();
-                }
+                return;
             }
+            
+            const isSent = msg.sender === currentUser;
+            div.className = 'message ' + (isSent ? 'sent' : 'received');
+            div.id = 'msg-' + id;
+            
+            let html = '';
+            if (!isSent) html += '<div class="message-sender">' + escapeHtml(msg.sender) + '</div>';
+            
+            const canDelete = isAdmin || (msg.sender === currentUser);
+            if (canDelete) {
+                const adminClass = isAdmin ? 'admin' : '';
+                const title = isAdmin ? 'حذف (مشرف)' : 'حذف رسالتك';
+                html += '<button class="message-delete-btn ' + adminClass + '" onclick="deleteMessage(\'' + id + '\', \'' + escapeHtml(msg.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>';
+            }
+            
+            if (msg.text) html += '<div class="message-content">' + escapeHtml(msg.text) + '</div>';
+            if (msg.imageUrl) html += '<img src="' + msg.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
+            
+            if (msg.audioUrl) {
+                html += '<div class="voice-message" id="voice-' + id + '">';
+                html += '<button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + msg.audioUrl + '\', \'' + id + '\')">';
+                html += '<i class="fas fa-play"></i>';
+                html += '</button>';
+                html += '<div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')">';
+                html += '<div class="voice-progress" id="progress-' + id + '"></div>';
+                html += '</div>';
+                html += '<span class="voice-time" id="time-' + id + '">0:00</span>';
+                html += '</div>';
+                html += '<audio id="audio-' + id + '" src="' + msg.audioUrl + '" preload="metadata" style="display:none;"></audio>';
+            }
+            
+            const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '';
+            html += '<div class="message-time">' + time + '</div>';
+            div.innerHTML = html;
+            
+            if (!isSent && !document.getElementById('chatModal').classList.contains('active')) {
+                unreadMessages++;
+                document.getElementById('chatBadge').textContent = unreadMessages;
+                document.getElementById('chatBadge').style.display = 'flex';
+                SoundEffects.receive();
+            }
+            
             container.appendChild(div);
         }
 
@@ -4676,7 +4679,7 @@
                     document.getElementById('callTimer').textContent = Math.floor(callSeconds/60).toString().padStart(2,'0') + ':' + (callSeconds%60).toString().padStart(2,'0');
                 }, 1000);
                 SoundEffects.join();
-                sendSystemMessage('📞 ' + currentUser + ' بدأ مكالمة');
+                // sendSystemMessage('📞 ' + currentUser + ' بدأ مكالمة');   // معطل
             } catch(e) { 
                 SoundEffects.error();
                 showToast('لا يمكن الوصول للميكروفون'); 
@@ -4697,7 +4700,7 @@
             clearInterval(callTimer);
             document.getElementById('callModal').classList.remove('active');
             document.getElementById('callTimer').textContent = '00:00';
-            sendSystemMessage('📞 ' + currentUser + ' أنهى المكالمة');
+            // sendSystemMessage('📞 ' + currentUser + ' أنهى المكالمة');   // معطل
         }
 
         function viewImage(url) { document.getElementById('viewerImage').src = url; document.getElementById('imageViewer').classList.add('active'); }
