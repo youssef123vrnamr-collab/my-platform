@@ -2494,6 +2494,11 @@
         </div>
 
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+            <!-- الزر الجديد: حذف كل المحتوى (للمشرف فقط) -->
+            <button class="btn btn-danger" id="deleteAllDataBtn" onclick="deleteAllData()" style="display: none;" title="حذف جميع الفيديوهات والرسائل والصور والصوتيات">
+                <i class="fas fa-trash-alt"></i> حذف كل المحتوى
+            </button>
+
             <button class="set-admins-btn" id="setAdminsBtn" onclick="openSetAdminsModal()" style="display: none;"><i class="fas fa-users-cog"></i> تحديد المشرفين</button>
 
             <button class="teach-ai-circle-btn" id="teachAICircleBtn" onclick="openTeachAICircleModal()" title="تعليم الذكاء الاصطناعي">
@@ -3164,12 +3169,14 @@
                 const maintenanceBtn = document.getElementById('maintenanceBtn');
                 const setAdminsBtn = document.getElementById('setAdminsBtn');
                 const teachBtn = document.getElementById('teachAICircleBtn');
+                const deleteAllDataBtn = document.getElementById('deleteAllDataBtn');
                 if (uploadZone) uploadZone.classList.add('active');
                 if (adminBtn) adminBtn.style.display = 'none';
                 if (logoutBtn) logoutBtn.style.display = 'flex';
                 if (maintenanceBtn) maintenanceBtn.style.display = 'flex';
                 if (setAdminsBtn) setAdminsBtn.style.display = 'inline-flex';
                 if (teachBtn) teachBtn.style.display = 'inline-flex';
+                if (deleteAllDataBtn) deleteAllDataBtn.style.display = 'inline-flex';
                 updateStorageBar(); // تحديث شريط التخزين إذا كان متاحاً
                 loadAIKnowledgeFromFirebase(); // تحميل قاعدة معرفة الذكاء الاصطناعي للمشرف
                 const cancelBtn = document.getElementById('cancelMaintenanceBtn');
@@ -3781,7 +3788,6 @@
             if (fillEl) fillEl.style.width = percent + '%';
             if (percentEl) percentEl.textContent = Math.round(percent) + '%';
             if (speedEl) speedEl.textContent = speed.toFixed(2) + ' MB/s';
-
             if (timeEl) {
                 if (remainingTime > 60) {
                     const mins = Math.floor(remainingTime / 60);
@@ -4280,12 +4286,14 @@
                 const maintenanceBtn = document.getElementById('maintenanceBtn');
                 const setAdminsBtn = document.getElementById('setAdminsBtn');
                 const teachBtn = document.getElementById('teachAICircleBtn');
+                const deleteAllDataBtn = document.getElementById('deleteAllDataBtn');
                 if (uploadZone) uploadZone.classList.add('active');
                 if (adminBtn) adminBtn.style.display = 'none';
                 if (logoutBtn) logoutBtn.style.display = 'flex';
                 if (maintenanceBtn) maintenanceBtn.style.display = 'flex';
                 if (setAdminsBtn) setAdminsBtn.style.display = 'inline-flex';
                 if (teachBtn) teachBtn.style.display = 'inline-flex';
+                if (deleteAllDataBtn) deleteAllDataBtn.style.display = 'inline-flex';
                 updateStorageBar();
                 closeLogin();
                 renderVideos();
@@ -4315,6 +4323,7 @@
             const maintenanceBtn = document.getElementById('maintenanceBtn');
             const setAdminsBtn = document.getElementById('setAdminsBtn');
             const teachBtn = document.getElementById('teachAICircleBtn');
+            const deleteAllDataBtn = document.getElementById('deleteAllDataBtn');
             const cancelBtn = document.getElementById('cancelMaintenanceBtn');
             if (uploadZone) uploadZone.classList.remove('active');
             if (storageBar) storageBar.style.display = 'none';
@@ -4323,6 +4332,7 @@
             if (maintenanceBtn) maintenanceBtn.style.display = 'none';
             if (setAdminsBtn) setAdminsBtn.style.display = 'none';
             if (teachBtn) teachBtn.style.display = 'none';
+            if (deleteAllDataBtn) deleteAllDataBtn.style.display = 'none';
             if (cancelBtn) cancelBtn.classList.remove('active');
 
             if (currentAudio) {
@@ -5747,6 +5757,47 @@
         });
 
         window.addEventListener('beforeunload', () => removePresence());
+
+        // ======== دوال جديدة: حذف كل المحتوى ========
+        async function deleteAllData() {
+            if (!isAdmin) {
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+
+            if (!confirm('⚠️ أنت على وشك حذف جميع الفيديوهات والرسائل والصور والصوتيات نهائياً. هل أنت متأكد؟')) return;
+
+            const pass = prompt('للتأكيد، اكتب كلمة المرور: "حذف الكل"');
+            if (pass !== 'حذف الكل') {
+                showToast('❌ تم الإلغاء');
+                return;
+            }
+
+            showToast('🗑️ جاري حذف كل المحتوى... قد يستغرق هذا دقيقة.');
+
+            try {
+                // استدعاء Firebase Function
+                const response = await fetch('https://us-central1-planning-with-ai-390af.cloudfunctions.net/deleteAllContent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret: 'كلمة سر مؤقتة' }) // يمكنك تغييرها
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    SoundEffects.success();
+                    showToast('✅ تم حذف كل المحتوى بنجاح');
+                    // إعادة تحميل الصفحة لتعكس التغييرات
+                    location.reload();
+                } else {
+                    throw new Error(data.error || 'فشل الحذف');
+                }
+            } catch (err) {
+                console.error('Error deleting all content:', err);
+                SoundEffects.error();
+                showToast('❌ فشل الحذف: ' + err.message);
+            }
+        }
 
         // ======== تهيئة الصفحة ========
         document.addEventListener('DOMContentLoaded', function () {
