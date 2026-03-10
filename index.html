@@ -3058,13 +3058,12 @@
             let lastUploadedBytes = 0;
             let lastTime = 0;
 
-            // إعدادات ثابتة
+            // إعدادات ثابتة - تم تحديث cloud name وإزالة apiKey (Unsigned preset)
             const CLOUDINARY_CONFIG = {
-                cloudName: "dnns4na4il",  // تم التعديل إلى dnns4na4il
+                cloudName: "dnns4na4il",
                 uploadPreset: "falak_upload",
-                apiKey: "364194664384272",   // تم التحديث بالمفتاح الجديد
             };
-            // CLOUDINARY_URL=cloudinary://364194664384272:your_api_secret@dnns4na4il   // تعليق توضيحي
+            // CLOUDINARY_URL غير مطلوب للرفع عبر الـ widget مع Unsigned preset
 
             const firebaseConfig = {
                 apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
@@ -5554,4 +5553,3 @@
         </script>
     </body>
 </html>
-```
