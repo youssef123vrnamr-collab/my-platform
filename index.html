@@ -3152,6 +3152,33 @@
             }
         }
 
+        // ======== استعادة حالة المشرف من localStorage ========
+        function loadAdminPreference() {
+            const saved = localStorage.getItem('falak_admin');
+            if (saved === 'true') {
+                isAdmin = true;
+                // إظهار عناصر المشرف
+                const uploadZone = document.getElementById('uploadZone');
+                const adminBtn = document.getElementById('adminBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const maintenanceBtn = document.getElementById('maintenanceBtn');
+                const setAdminsBtn = document.getElementById('setAdminsBtn');
+                const teachBtn = document.getElementById('teachAICircleBtn');
+                if (uploadZone) uploadZone.classList.add('active');
+                if (adminBtn) adminBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = 'flex';
+                if (maintenanceBtn) maintenanceBtn.style.display = 'flex';
+                if (setAdminsBtn) setAdminsBtn.style.display = 'inline-flex';
+                if (teachBtn) teachBtn.style.display = 'inline-flex';
+                updateStorageBar(); // تحديث شريط التخزين إذا كان متاحاً
+                loadAIKnowledgeFromFirebase(); // تحميل قاعدة معرفة الذكاء الاصطناعي للمشرف
+                const cancelBtn = document.getElementById('cancelMaintenanceBtn');
+                if (cancelBtn && document.getElementById('maintenanceOverlay')?.classList.contains('active')) {
+                    cancelBtn.classList.add('active');
+                }
+            }
+        }
+
         // ======== مؤثرات صوتية ========
         const SoundEffects = {
             audioContext: null,
@@ -4246,7 +4273,7 @@
             const enteredPass = input.value.trim();
             if (enteredPass === ADMIN_PASS) {
                 isAdmin = true;
-                localStorage.setItem('falak_admin', 'true');
+                localStorage.setItem('falak_admin', 'true'); // حفظ حالة المشرف
                 const uploadZone = document.getElementById('uploadZone');
                 const adminBtn = document.getElementById('adminBtn');
                 const logoutBtn = document.getElementById('logoutBtn');
@@ -4280,7 +4307,7 @@
         function logout() {
             isAdmin = false;
             isSuperAdmin = false;
-            localStorage.removeItem('falak_admin');
+            localStorage.removeItem('falak_admin'); // إزالة حالة المشرف
             const uploadZone = document.getElementById('uploadZone');
             const storageBar = document.getElementById('storageBar');
             const adminBtn = document.getElementById('adminBtn');
@@ -5724,6 +5751,7 @@
         // ======== تهيئة الصفحة ========
         document.addEventListener('DOMContentLoaded', function () {
             loadMobileModePreference();
+            loadAdminPreference(); // استعادة حالة المشرف
             listenToVideosWithRetry(4);
             listenToMaintenance();
             loadAIKnowledgeFromFirebase();
