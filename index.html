@@ -16,7 +16,7 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
         <style>
-            /* (نفس الـ CSS السابق، لم يتغير) */
+            /* (نفس الـ CSS السابق - لم يتم تغييره) */
             :root {
                 --primary: #6366f1;
                 --secondary: #8b5cf6;
@@ -3012,7 +3012,7 @@
         <div class="toast" id="toast">تم بنجاح</div>
 
         <script>
-            // تعريفات المتغيرات العامة
+            // ========================= المتغيرات العامة =========================
             let isMobileMode = false;
             let isAdmin = false;
             let isSuperAdmin = false;
@@ -3058,11 +3058,11 @@
             let lastUploadedBytes = 0;
             let lastTime = 0;
 
-            // إعدادات ثابتة - تم التحديث إلى بيانات Cloudinary الجديدة
+            // إعدادات ثابتة
             const CLOUDINARY_CONFIG = {
-                cloudName: "dnnsna4il", // Cloud name الجديد
-                uploadPreset: "falak_upload", // يجب إنشاء Upload Preset بنفس الاسم في حساب Cloudinary
-                apiKey: "364194664384272", // API Key الجديد
+                cloudName: "dnnsna4il",
+                uploadPreset: "falak_upload",
+                apiKey: "364194664384272",
             };
             const firebaseConfig = {
                 apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
@@ -3278,7 +3278,7 @@
                 },
             };
 
-            // ======== تحميل البيانات من Firebase مع إعادة محاولة ========
+            // ======== تحميل البيانات من Firebase ========
             function listenToVideosWithRetry(retries = 4) {
                 if (unsubscribeVideos) unsubscribeVideos();
                 let attempts = 0;
@@ -3466,30 +3466,49 @@
             }
 
             function startMaintenance() {
-                const minutes = parseInt(document.getElementById("maintenanceMinutes").value) || 5;
+                if (!isAdmin) {
+                    SoundEffects.error();
+                    showToast("❌ هذه الصلاحية للمشرف فقط");
+                    return;
+                }
+                const minutesInput = document.getElementById("maintenanceMinutes");
+                const messageInput = document.getElementById("maintenanceMessageInput");
+                if (!minutesInput || !messageInput) {
+                    SoundEffects.error();
+                    showToast("❌ حدث خطأ في تحميل النموذج");
+                    return;
+                }
+                const minutes = parseInt(minutesInput.value) || 5;
                 if (minutes < 1 || minutes > 60) {
                     showToast("❌ المدة يجب أن تكون بين 1 و 60 دقيقة");
                     return;
                 }
-                const message = document.getElementById("maintenanceMessageInput").value.trim() || "جاري تحديث المحتوى، يرجى الانتظار...";
+                const message = messageInput.value.trim() || "جاري تحديث المحتوى، يرجى الانتظار...";
                 const endTime = new Date(Date.now() + minutes * 60 * 1000);
                 db.collection("system")
                     .doc("maintenance")
-                    .set({
-                        status: "maintenance",
-                        endTime: firebase.firestore.Timestamp.fromDate(endTime),
-                        message: message,
-                        startedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    })
+                    .set(
+                        {
+                            status: "maintenance",
+                            endTime: firebase.firestore.Timestamp.fromDate(endTime),
+                            message: message,
+                            startedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        },
+                        { merge: true }
+                    )
                     .then(() => {
                         SoundEffects.recordStart();
-                        showToast("✅ تم بدء التحديث، سيظهر للزوار العداد");
+                        showToast("✅ تم بدء التحديث بنجاح");
                         closeMaintenanceModal();
                     })
                     .catch((err) => {
+                        console.error("Error starting maintenance:", err);
                         SoundEffects.error();
-                        showToast("❌ فشل بدء التحديث");
-                        console.error(err);
+                        if (err.code === "permission-denied") {
+                            showToast("❌ ليس لديك صلاحية الكتابة في قاعدة البيانات");
+                        } else {
+                            showToast("❌ فشل بدء التحديث: " + (err.message || "خطأ غير معروف"));
+                        }
                     });
             }
 
@@ -3538,97 +3557,188 @@
                 document.getElementById("storageBar").style.display = "block";
             }
 
+            // ======== دالة محسنة لتهيئة Widget Cloudinary (تتجنب خطأ focus) ========
             function initCloudinaryWidget() {
-                if (typeof cloudinary === "undefined") {
-                    console.error("Cloudinary widget not loaded");
-                    showToast("⚠️ فشل تحميل واجهة الرفع");
-                    return;
-                }
-                uploadWidget = cloudinary.createUploadWidget(
-                    {
-                        cloudName: CLOUDINARY_CONFIG.cloudName,
-                        uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-                        resourceType: "video",
-                        clientAllowedFormats: ["mp4", "webm", "mov", "mkv", "avi", "m4v", "3gp", "flv", "gif"],
-                        maxFileSize: MAX_VIDEO_SIZE,
-                        maxVideoFileSize: MAX_VIDEO_SIZE,
-                        chunkSize: CHUNK_SIZE,
-                        maxChunkSize: CHUNK_SIZE,
-                        sources: ["local", "url", "camera", "dropbox", "google_drive"],
-                        language: "ar",
-                        text: {
-                            ar: {
-                                or: "أو",
-                                local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" },
-                                menu: { files: "ملفاتي", web: "رابط الويب", camera: "الكاميرا", gdrive: "Google Drive", dropbox: "Dropbox" },
+                return new Promise((resolve, reject) => {
+                    // التحقق من وجود المكتبة
+                    if (typeof cloudinary === "undefined" || typeof cloudinary.createUploadWidget !== "function") {
+                        console.warn("Cloudinary widget not loaded yet, will retry...");
+                        setTimeout(() => initCloudinaryWidget().then(resolve).catch(reject), 500);
+                        return;
+                    }
+
+                    try {
+                        uploadWidget = cloudinary.createUploadWidget(
+                            {
+                                cloudName: CLOUDINARY_CONFIG.cloudName,
+                                uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+                                resourceType: "video",
+                                clientAllowedFormats: ["mp4", "webm", "mov", "mkv", "avi", "m4v", "3gp", "flv", "gif"],
+                                maxFileSize: MAX_VIDEO_SIZE,
+                                maxVideoFileSize: MAX_VIDEO_SIZE,
+                                chunkSize: CHUNK_SIZE,
+                                maxChunkSize: CHUNK_SIZE,
+                                sources: ["local", "url", "camera", "dropbox", "google_drive"],
+                                language: "ar",
+                                text: {
+                                    ar: {
+                                        or: "أو",
+                                        local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" },
+                                        menu: { files: "ملفاتي", web: "رابط الويب", camera: "الكاميرا", gdrive: "Google Drive", dropbox: "Dropbox" },
+                                    },
+                                },
+                                styles: {
+                                    palette: {
+                                        window: "#1a1025",
+                                        windowBorder: "#6366f1",
+                                        tabIcon: "#6366f1",
+                                        menuIcons: "#6366f1",
+                                        textDark: "#ffffff",
+                                        textLight: "#ffffff",
+                                        link: "#ec4899",
+                                        action: "#6366f1",
+                                        inactiveTabIcon: "#8b5cf6",
+                                        error: "#ef4444",
+                                        inProgress: "#6366f1",
+                                        complete: "#10b981",
+                                        sourceBg: "#0f0a1a",
+                                    },
+                                    fonts: { default: "Cairo", active: "Cairo" },
+                                },
+                                showAdvancedOptions: false,
+                                cropping: false,
+                                multiple: false,
+                                defaultSource: "local",
+                                parallelUploads: 3,
+                                maxConcurrentUploads: 3,
+                                retryCount: 3,
+                                eagerAsync: true,
+                                prepareUploadParams: function (cb, params) {
+                                    params.context = "alt=فيديو فلك العالمي";
+                                    params.eager = [
+                                        { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" },
+                                        { width: 400, height: 225, crop: "fill", format: "jpg" },
+                                        { width: 400, height: 225, crop: "fill", format: "gif", video_sampling: "10s", delay: "100", start_offset: "0", end_offset: "3", effect: "loop" },
+                                    ];
+                                    params.eager_async = true;
+                                    cb(params);
+                                },
                             },
-                        },
-                        styles: {
-                            palette: {
-                                window: "#1a1025",
-                                windowBorder: "#6366f1",
-                                tabIcon: "#6366f1",
-                                menuIcons: "#6366f1",
-                                textDark: "#ffffff",
-                                textLight: "#ffffff",
-                                link: "#ec4899",
-                                action: "#6366f1",
-                                inactiveTabIcon: "#8b5cf6",
-                                error: "#ef4444",
-                                inProgress: "#6366f1",
-                                complete: "#10b981",
-                                sourceBg: "#0f0a1a",
-                            },
-                            fonts: { default: "Cairo", active: "Cairo" },
-                        },
-                        showAdvancedOptions: false,
-                        cropping: false,
-                        multiple: false,
-                        defaultSource: "local",
-                        parallelUploads: 3,
-                        maxConcurrentUploads: 3,
-                        retryCount: 3,
-                        eagerAsync: true,
-                        prepareUploadParams: function (cb, params) {
-                            params.context = "alt=فيديو فلك العالمي";
-                            params.eager = [
-                                { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" },
-                                { width: 400, height: 225, crop: "fill", format: "jpg" },
-                                { width: 400, height: 225, crop: "fill", format: "gif", video_sampling: "10s", delay: "100", start_offset: "0", end_offset: "3", effect: "loop" },
-                            ];
-                            params.eager_async = true;
-                            cb(params);
-                        },
-                    },
-                    function (error, result) {
-                        if (!error && result && result.event === "success") {
-                            document.getElementById("uploadProgressContainer").classList.remove("active");
-                            console.log("Upload success:", result.info);
-                            pendingVideoInfo = result.info;
-                            document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان";
-                            document.getElementById("videoDescriptionInput").value = "";
-                            document.getElementById("descriptionModal").classList.add("active");
-                            SoundEffects.success();
-                            showToast("✅ تم الرفع بنجاح! جاري المعالجة...");
-                        } else if (error) {
-                            document.getElementById("uploadProgressContainer").classList.remove("active");
-                            console.error("Upload error:", error);
-                            SoundEffects.error();
-                            if (error.status === 413) showToast("❌ الملف كبير جداً. الحد الأقصى هو 100 ميجابايت");
-                            else showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف"));
-                        } else if (result && result.event === "queues-start") {
-                            uploadStartTime = Date.now();
-                            lastTime = Date.now();
-                            lastUploadedBytes = 0;
-                            document.getElementById("uploadProgressContainer").classList.add("active");
-                            showToast("🚀 جاري بدء الرفع...");
-                        } else if (result && result.event === "upload-progress") {
-                            updateUploadProgress(result.info);
-                        } else if (result && result.event === "upload-success") {
-                            showToast("📤 تم رفع جزء من الفيديو بنجاح...");
+                            function (error, result) {
+                                // تجاهل أخطاء focus نهائياً
+                                if (error) {
+                                    if (error.message && error.message.includes("focus")) {
+                                        console.warn("Ignored focus error from Cloudinary");
+                                        return;
+                                    }
+                                    console.error("Upload widget error:", error);
+                                    document.getElementById("uploadProgressContainer")?.classList.remove("active");
+                                    SoundEffects.error();
+                                    showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف"));
+                                    reject(error);
+                                    return;
+                                }
+
+                                if (!result) return;
+
+                                switch (result.event) {
+                                    case "success":
+                                        document.getElementById("uploadProgressContainer")?.classList.remove("active");
+                                        pendingVideoInfo = result.info;
+                                        const titleInput = document.getElementById("videoTitleInput");
+                                        const descInput = document.getElementById("videoDescriptionInput");
+                                        if (titleInput) titleInput.value = result.info.original_filename || "فيديو بدون عنوان";
+                                        if (descInput) descInput.value = "";
+                                        document.getElementById("descriptionModal")?.classList.add("active");
+                                        SoundEffects.success();
+                                        showToast("✅ تم الرفع بنجاح! جاري المعالجة...");
+                                        resolve(result.info);
+                                        break;
+
+                                    case "queues-start":
+                                        uploadStartTime = Date.now();
+                                        lastTime = Date.now();
+                                        lastUploadedBytes = 0;
+                                        document.getElementById("uploadProgressContainer")?.classList.add("active");
+                                        showToast("🚀 جاري بدء الرفع...");
+                                        break;
+
+                                    case "upload-progress":
+                                        updateUploadProgress(result.info);
+                                        break;
+
+                                    case "upload-success":
+                                        showToast("📤 تم رفع جزء من الفيديو بنجاح...");
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+                            }
+                        );
+
+                        if (uploadWidget) {
+                            console.log("Upload widget initialized successfully");
+                            resolve(uploadWidget);
+                        } else {
+                            reject(new Error("فشل إنشاء widget"));
+                        }
+                    } catch (e) {
+                        if (e.message && e.message.includes("focus")) {
+                            console.warn("Ignored focus error during init");
+                            resolve(null); // نكمل وكأنه نجح
+                        } else {
+                            console.error("Exception in initCloudinaryWidget:", e);
+                            reject(e);
                         }
                     }
-                );
+                });
+            }
+
+            // ======== دالة محسنة لفتح widget ========
+            function openCloudinaryWidget() {
+                if (!isAdmin) {
+                    showToast("❌ المشرف فقط يمكنه الرفع");
+                    return;
+                }
+
+                const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
+                const remaining = MAX_STORAGE - totalUsed;
+                if (remaining <= 0) {
+                    SoundEffects.error();
+                    showToast("❌ المساحة ممتلئة (25 GB)! احذف بعض الفيديوهات أولاً");
+                    return;
+                }
+
+                if (uploadWidget && typeof uploadWidget.open === "function") {
+                    try {
+                        uploadWidget.open();
+                        return;
+                    } catch (e) {
+                        if (!e.message || !e.message.includes("focus")) {
+                            console.warn("Error opening existing widget, reinitializing...", e);
+                        }
+                        uploadWidget = null;
+                    }
+                }
+
+                showToast("⚠️ جاري تحميل واجهة الرفع...");
+                initCloudinaryWidget()
+                    .then((widget) => {
+                        if (widget) {
+                            widget.open();
+                        } else {
+                            // إذا رجع null معناها أنه تجاهل خطأ focus، نحاول مرة واحدة تانية
+                            setTimeout(() => {
+                                if (uploadWidget) uploadWidget.open();
+                            }, 300);
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Failed to initialize upload widget:", err);
+                        SoundEffects.error();
+                        showToast("❌ تعذر تحميل واجهة الرفع. حاول تحديث الصفحة.");
+                    });
             }
 
             function updateUploadProgress(info) {
@@ -3643,42 +3753,29 @@
                 const remainingBytes = totalBytes - uploadedBytes;
                 const remainingTime = speed > 0 ? remainingBytes / (speed * 1024 * 1024) : 0;
 
-                document.getElementById("uploadProgressFill").style.width = percent + "%";
-                document.getElementById("uploadProgressPercent").textContent = Math.round(percent) + "%";
-                document.getElementById("uploadSpeed").textContent = speed.toFixed(2) + " MB/s";
+                const fillEl = document.getElementById("uploadProgressFill");
+                const percentEl = document.getElementById("uploadProgressPercent");
+                const speedEl = document.getElementById("uploadSpeed");
+                const timeEl = document.getElementById("uploadTimeRemaining");
 
-                if (remainingTime > 60) {
-                    const mins = Math.floor(remainingTime / 60);
-                    const secs = Math.floor(remainingTime % 60);
-                    document.getElementById("uploadTimeRemaining").textContent = mins + ":" + secs.toString().padStart(2, "0") + " دقيقة متبقية";
-                } else if (remainingTime > 0) {
-                    document.getElementById("uploadTimeRemaining").textContent = Math.floor(remainingTime) + " ثانية متبقية";
-                } else {
-                    document.getElementById("uploadTimeRemaining").textContent = "جاري إكمال الرفع...";
+                if (fillEl) fillEl.style.width = percent + "%";
+                if (percentEl) percentEl.textContent = Math.round(percent) + "%";
+                if (speedEl) speedEl.textContent = speed.toFixed(2) + " MB/s";
+
+                if (timeEl) {
+                    if (remainingTime > 60) {
+                        const mins = Math.floor(remainingTime / 60);
+                        const secs = Math.floor(remainingTime % 60);
+                        timeEl.textContent = mins + ":" + secs.toString().padStart(2, "0") + " دقيقة متبقية";
+                    } else if (remainingTime > 0) {
+                        timeEl.textContent = Math.floor(remainingTime) + " ثانية متبقية";
+                    } else {
+                        timeEl.textContent = "جاري إكمال الرفع...";
+                    }
                 }
 
                 lastTime = currentTime;
                 lastUploadedBytes = uploadedBytes;
-            }
-
-            function openCloudinaryWidget() {
-                if (!isAdmin) {
-                    showToast("❌ المشرف فقط يمكنه الرفع");
-                    return;
-                }
-                const totalUsed = videos.reduce((sum, v) => sum + (v.size || 0), 0);
-                const remaining = MAX_STORAGE - totalUsed;
-                if (remaining <= 0) {
-                    SoundEffects.error();
-                    showToast("❌ المساحة ممتلئة (25 GB)! احذف بعض الفيديوهات أولاً");
-                    return;
-                }
-                if (uploadWidget) uploadWidget.open();
-                else {
-                    showToast("⚠️ جاري تحميل واجهة الرفع...");
-                    initCloudinaryWidget();
-                    setTimeout(() => uploadWidget?.open(), 500);
-                }
             }
 
             function saveVideoWithDescription() {
@@ -4096,7 +4193,7 @@
             function showLogin() {
                 document.getElementById("loginModal").classList.add("active");
                 document.getElementById("passwordInput").value = "";
-                setTimeout(() => document.getElementById("passwordInput").focus(), 100);
+                setTimeout(() => document.getElementById("passwordInput").focus(), 150);
             }
 
             function closeLogin() {
@@ -5009,7 +5106,7 @@
                 const container = document.getElementById("chatMessages");
                 const div = document.createElement("div");
 
-                // تجاهل رسائل النظام تماماً (عدم عرضها)
+                // تجاهل رسائل النظام
                 if (msg.type === "system") {
                     return;
                 }
@@ -5058,28 +5155,42 @@
                 container.appendChild(div);
             }
 
+            // ======== دالة محسنة لحذف الرسالة ========
             function deleteMessage(messageId, sender) {
-                const canDelete = isAdmin || sender === currentUser;
+                const canDelete = isAdmin || (currentUser && sender && sender.trim() === currentUser.trim());
                 if (!canDelete) {
                     SoundEffects.error();
-                    showToast("❌ لا يمكنك حذف هذه الرسالة");
+                    showToast("❌ لا يمكنك حذف هذه الرسالة (غير مصرح لك)");
                     return;
                 }
                 const confirmMsg = isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟";
                 if (!confirm(confirmMsg)) return;
+
+                if (!messageId) {
+                    SoundEffects.error();
+                    showToast("❌ معرف الرسالة غير صالح");
+                    return;
+                }
+
                 db.collection("messages")
                     .doc(messageId)
                     .delete()
                     .then(() => {
                         SoundEffects.delete();
-                        showToast("🗑️ تم حذف الرسالة");
+                        showToast("🗑️ تم حذف الرسالة بنجاح");
                         const msgElement = document.getElementById("msg-" + messageId);
                         if (msgElement) msgElement.remove();
                     })
                     .catch((err) => {
                         console.error("Error deleting message:", err);
                         SoundEffects.error();
-                        showToast("❌ فشل حذف الرسالة");
+                        if (err.code === "permission-denied") {
+                            showToast("❌ صلاحية الحذف غير كافية (تحقق من قواعد الأمان)");
+                        } else if (err.code === "not-found") {
+                            showToast("❌ الرسالة غير موجودة (ربما حذفت بالفعل)");
+                        } else {
+                            showToast("❌ فشل حذف الرسالة: " + (err.message || "خطأ غير معروف"));
+                        }
                     });
             }
 
@@ -5467,7 +5578,8 @@
                 loadAIKnowledgeFromFirebase();
                 loadQuizzesFromFirebase();
                 loadQuizResultsFromFirebase();
-                initCloudinaryWidget();
+                // تهيئة widget بشكل غير متزامن (لا ننتظرها)
+                initCloudinaryWidget().catch((err) => console.warn("Initial widget init failed, will retry on demand", err));
                 checkUrlForShare();
                 setTimeout(() => document.getElementById("loader")?.classList.add("hidden"), 3000);
             });
@@ -5524,4 +5636,3 @@
         </script>
     </body>
 </html>
-```
