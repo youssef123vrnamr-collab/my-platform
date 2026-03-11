@@ -1979,6 +1979,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .ai-chat-btn:hover {
@@ -2545,7 +2547,7 @@
         </div>
     </div>
 
-    <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي">
+    <button class="ai-chat-btn" id="aiChatBtn" title="تحدث مع الذكاء الاصطناعي (اضغط مطولاً للإعدادات)">
         <i class="fas fa-robot"></i>
     </button>
 
@@ -2583,6 +2585,31 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إعدادات الصوت للذكاء الاصطناعي (جديدة) -->
+    <div class="modal" id="voiceSettingsModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-microphone-alt" style="color: #06b6d4;"></i> إعدادات الصوت</h3>
+                <button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <div class="form-group">
+                    <label>اختر الصوت</label>
+                    <select id="voiceSelect" style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white;"></select>
+                </div>
+                <div class="form-group">
+                    <label>سرعة الكلام: <span id="rateValue">1</span></label>
+                    <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1" style="width:100%;">
+                </div>
+                <div class="form-group">
+                    <label>طبقة الصوت: <span id="pitchValue">1</span></label>
+                    <input type="range" id="pitchRange" min="0" max="2" step="0.1" value="1" style="width:100%;">
+                </div>
+                <button class="btn btn-success" style="width:100%;" onclick="saveVoiceSettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
             </div>
         </div>
     </div>
@@ -2902,6 +2929,15 @@
         let lastUploadedBytes = 0;
         let lastTime = 0;
 
+        // متغيرات الضغط المطول وإعدادات الصوت
+        let longPressTimer = null;
+        const LONG_PRESS_DURATION = 500; // 500ms
+        let voiceSettings = {
+            voiceURI: null,
+            rate: 1,
+            pitch: 1
+        };
+
         // إعدادات ثابتة
         const CLOUDINARY_CONFIG = {
             cloudName: "dnnsna4il",
@@ -3036,6 +3072,122 @@
             recordStop() { this.init(); const osc = this.audioContext.createOscillator(); const gain = this.audioContext.createGain(); osc.connect(gain); gain.connect(this.audioContext.destination); osc.frequency.setValueAtTime(800, this.audioContext.currentTime); gain.gain.setValueAtTime(0.2, this.audioContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime+0.1); osc.start(this.audioContext.currentTime); osc.stop(this.audioContext.currentTime+0.1); },
             tick() { this.init(); const ctx = this.audioContext; const now = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 600; gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now+0.03); osc.start(now); osc.stop(now+0.03); },
         };
+
+        // ======== دوال النطق الصوتي ========
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) {
+                console.warn('المتصفح لا يدعم خاصية النطق');
+                return;
+            }
+            
+            // إيقاف أي نطق سابق
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ar-SA';
+            utterance.rate = voiceSettings.rate;
+            utterance.pitch = voiceSettings.pitch;
+            
+            // اختيار الصوت المحفوظ
+            if (voiceSettings.voiceURI) {
+                const voices = window.speechSynthesis.getVoices();
+                const selectedVoice = voices.find(v => v.voiceURI === voiceSettings.voiceURI);
+                if (selectedVoice) utterance.voice = selectedVoice;
+            }
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // تهيئة قائمة الأصوات
+        function populateVoiceList() {
+            const voices = window.speechSynthesis.getVoices();
+            const select = document.getElementById('voiceSelect');
+            if (!select) return;
+            
+            select.innerHTML = '';
+            voices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.voiceURI;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                select.appendChild(option);
+            });
+            
+            // استعادة الصوت المحفوظ
+            if (voiceSettings.voiceURI) {
+                select.value = voiceSettings.voiceURI;
+            }
+        }
+
+        // تحديث عرض القيم
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'rateRange') {
+                document.getElementById('rateValue').textContent = e.target.value;
+            } else if (e.target.id === 'pitchRange') {
+                document.getElementById('pitchValue').textContent = e.target.value;
+            }
+        });
+
+        // حفظ الإعدادات
+        function saveVoiceSettings() {
+            voiceSettings.voiceURI = document.getElementById('voiceSelect').value;
+            voiceSettings.rate = parseFloat(document.getElementById('rateRange').value);
+            voiceSettings.pitch = parseFloat(document.getElementById('pitchRange').value);
+            localStorage.setItem('falak_voice_settings', JSON.stringify(voiceSettings));
+            closeVoiceSettings();
+            showToast('✅ تم حفظ إعدادات الصوت');
+        }
+
+        // تحميل الإعدادات من localStorage
+        function loadVoiceSettings() {
+            const saved = localStorage.getItem('falak_voice_settings');
+            if (saved) {
+                try {
+                    voiceSettings = JSON.parse(saved);
+                    document.getElementById('rateRange').value = voiceSettings.rate;
+                    document.getElementById('pitchRange').value = voiceSettings.pitch;
+                    document.getElementById('rateValue').textContent = voiceSettings.rate;
+                    document.getElementById('pitchValue').textContent = voiceSettings.pitch;
+                } catch (e) {}
+            }
+        }
+
+        // فتح نافذة الإعدادات
+        function openVoiceSettings() {
+            populateVoiceList();
+            loadVoiceSettings();
+            document.getElementById('voiceSettingsModal').classList.add('active');
+        }
+
+        function closeVoiceSettings() {
+            document.getElementById('voiceSettingsModal').classList.remove('active');
+        }
+
+        // ======== أحداث الضغط المطول على زر الذكاء الاصطناعي ========
+        const aiChatBtn = document.getElementById('aiChatBtn');
+        if (aiChatBtn) {
+            aiChatBtn.addEventListener('mousedown', startLongPress);
+            aiChatBtn.addEventListener('touchstart', startLongPress);
+            aiChatBtn.addEventListener('mouseup', cancelLongPress);
+            aiChatBtn.addEventListener('touchend', cancelLongPress);
+            aiChatBtn.addEventListener('mouseleave', cancelLongPress);
+        }
+
+        function startLongPress(e) {
+            e.preventDefault();
+            longPressTimer = setTimeout(() => {
+                openVoiceSettings();
+                longPressTimer = null;
+            }, LONG_PRESS_DURATION);
+        }
+
+        function cancelLongPress(e) {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+                // إذا لم يكن ضغط مطول، نفتح المحادثة كالمعتاد
+                openAIChat();
+            }
+        }
 
         // ======== تحميل البيانات من Firebase ========
         function listenToVideosWithRetry(retries = 4) {
@@ -3749,8 +3901,18 @@
             const text = input.value.trim(); if (!text) return;
             displayAIMessage(text,'user'); input.value='';
             const knowledge = findAIKnowledge(text);
-            if (knowledge) { setTimeout(()=>displayAIMessage(knowledge,'ai'),500); return; }
-            setTimeout(()=>displayAIMessage(getAIResponse(text),'ai'),500);
+            if (knowledge) {
+                setTimeout(() => {
+                    displayAIMessage(knowledge,'ai');
+                    speakText(knowledge); // نطق الرد
+                }, 500);
+                return;
+            }
+            setTimeout(() => {
+                const response = getAIResponse(text);
+                displayAIMessage(response,'ai');
+                speakText(response); // نطق الرد
+            }, 500);
         }
         function findAIKnowledge(userMessage) {
             const msg = userMessage.toLowerCase();
@@ -3974,6 +4136,13 @@
             initCloudinaryWidget().catch(err => console.warn('Initial widget init failed, will retry on demand', err));
             checkUrlForShare();
             setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 3000);
+            
+            // تحميل إعدادات الصوت
+            loadVoiceSettings();
+            // إضافة مستمع لتحميل قائمة الأصوات
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = populateVoiceList;
+            }
         });
 
         window.addEventListener('unload', function () {
@@ -4001,13 +4170,15 @@
                 else if (e.target.id === 'addQuizModal') closeAddExamModal();
                 else if (e.target.id === 'viewResultsModal') closeViewResultsModal();
                 else if (e.target.id === 'takeQuizModal') closeTakeExamModal();
+                else if (e.target.id === 'voiceSettingsModal') closeVoiceSettings(); // إضافة إغلاق لنافذة إعدادات الصوت
             }
         };
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
-                closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById('callModal')?.classList.contains('active')) endCall(); closeImageViewer(); closeMaintenanceModal();
+                closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById('callModal')?.classList.contains('active')) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings();
             }
         });
     </script>
 </body>
 </html>
+```
