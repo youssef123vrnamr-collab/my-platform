@@ -710,6 +710,30 @@
             color: #666;
         }
 
+        /* حركة القمر الصناعي في حالة عدم وجود فيديوهات */
+        .empty-state i.fa-satellite {
+            animation: orbit 6s infinite ease-in-out;
+            filter: drop-shadow(0 0 10px #6366f1);
+        }
+
+        @keyframes orbit {
+            0% {
+                transform: rotate(0deg) translateX(0) translateY(0);
+            }
+            25% {
+                transform: rotate(90deg) translateX(15px) translateY(-15px);
+            }
+            50% {
+                transform: rotate(180deg) translateX(0) translateY(0);
+            }
+            75% {
+                transform: rotate(270deg) translateX(-15px) translateY(15px);
+            }
+            100% {
+                transform: rotate(360deg) translateX(0) translateY(0);
+            }
+        }
+
         .modal {
             position: fixed;
             top: 0;
@@ -2381,7 +2405,8 @@
 
     <div class="loader" id="loader">
         <div class="loader-ring"></div>
-        <div class="loader-text">اهلا بيك</div>
+        <!-- تم تعديل النص هنا -->
+        <div class="loader-text">مرحباً بك في عالم الفلك 🌌</div>
     </div>
 
     <nav class="navbar">
@@ -2514,7 +2539,7 @@
         <div class="videos-grid" id="videosContainer"></div>
 
         <div class="empty-state" id="emptyState">
-            <i class="fas fa-satellite" style="font-size: 6rem; margin-bottom: 2rem;"></i>
+            <i class="fas fa-satellite"></i>
             <h3>المكتبة فارغة</h3>
             <p>ادخل كمشرف لرفع أول فيديو!</p>
         </div>
