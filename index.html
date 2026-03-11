@@ -2589,7 +2589,7 @@
         </div>
     </div>
 
-    <!-- نافذة إعدادات الصوت للذكاء الاصطناعي (جديدة) -->
+    <!-- نافذة إعدادات الصوت للذكاء الاصطناعي -->
     <div class="modal" id="voiceSettingsModal">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
@@ -2730,6 +2730,7 @@
         </div>
     </div>
 
+    <!-- ========== نافذة تعليم الذكاء الاصطناعي (معدلة مع زر إغلاق إضافي) ========== -->
     <div class="modal" id="teachAICircleModal">
         <div class="modal-content description-modal-content">
             <div class="modal-header">
@@ -2743,6 +2744,11 @@
                 <button class="btn btn-primary" style="width:100%; margin-bottom:1.5rem;" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button>
                 <h4 style="margin:1.5rem 0 1rem 0; color:#fff;"><i class="fas fa-list" style="color:#8b5cf6;"></i> المعارف المخزنة</h4>
                 <div class="correction-list" id="aiKnowledgeList" style="max-height:250px; overflow-y:auto;"><p style="text-align:center; color:#888; padding:2rem;">جاري التحميل...</p></div>
+                
+                <!-- زر إغلاق إضافي في الأسفل -->
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button class="btn btn-danger" onclick="closeTeachAICircleModal()" style="width: 50%;"><i class="fas fa-times"></i> إغلاق</button>
+                </div>
             </div>
         </div>
     </div>
@@ -3904,14 +3910,14 @@
             if (knowledge) {
                 setTimeout(() => {
                     displayAIMessage(knowledge,'ai');
-                    speakText(knowledge); // نطق الرد
+                    speakText(knowledge);
                 }, 500);
                 return;
             }
             setTimeout(() => {
                 const response = getAIResponse(text);
                 displayAIMessage(response,'ai');
-                speakText(response); // نطق الرد
+                speakText(response);
             }, 500);
         }
         function findAIKnowledge(userMessage) {
@@ -4170,7 +4176,7 @@
                 else if (e.target.id === 'addQuizModal') closeAddExamModal();
                 else if (e.target.id === 'viewResultsModal') closeViewResultsModal();
                 else if (e.target.id === 'takeQuizModal') closeTakeExamModal();
-                else if (e.target.id === 'voiceSettingsModal') closeVoiceSettings(); // إضافة إغلاق لنافذة إعدادات الصوت
+                else if (e.target.id === 'voiceSettingsModal') closeVoiceSettings();
             }
         };
         document.addEventListener('keydown', function (e) {
@@ -4181,4 +4187,3 @@
     </script>
 </body>
 </html>
-```
