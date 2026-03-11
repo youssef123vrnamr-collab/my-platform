@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>فلك العالمي | النسخة السحابية</title>
+    <title>Astronomy and space | Cloud Version</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f0a1a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mweb-app-title" content="فلك العالمي">
+    <meta name="apple-mweb-app-title" content="Astronomy and space">
     <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -2381,15 +2381,15 @@
 
     <div class="loader" id="loader">
         <div class="loader-ring"></div>
-        <div class="loader-text">جاري الاتصال...</div>
+        <div class="loader-text">اهلا بيك</div>
     </div>
 
     <nav class="navbar">
         <div class="brand">
             <div class="brand-icon"><i class="fas fa-planet-ringed"></i></div>
             <div class="brand-text">
-                <h1>فلك العالمي</h1>
-                <p>النسخة السحابية ☁️</p>
+                <h1>Astronomy and space</h1>
+                <p>Cloud Version ☁️</p>
             </div>
         </div>
         <div class="nav-actions">
@@ -2427,9 +2427,9 @@
 
     <div class="container">
         <div class="hero">
-            <div class="hero-badge"><i class="fas fa-cloud"></i> متصل بـ Cloudinary</div>
+            <div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div>
             <h2>اكتشف أسرار <span>الكون</span></h2>
-            <p>أي فيديو ترفعه يظهر فوراً لجميع الزوار حول العالم عبر Cloudinary!</p>
+            <p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
         </div>
 
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
@@ -2538,7 +2538,7 @@
                         <i class="fas fa-robot"></i>
                     </div>
                     <div class="chat-header-text">
-                        <h3>مساعد فلك الذكي</h3>
+                        <h3>Astronomy AI</h3>
                         <p><span class="online-dot"></span> متصل الآن</p>
                     </div>
                 </div>
@@ -2569,7 +2569,7 @@
                 <div class="chat-header-info">
                     <div class="chat-avatar"><i class="fas fa-users"></i></div>
                     <div class="chat-header-text">
-                        <h3>دردشة فلك العالمي</h3>
+                        <h3>دردشة Astronomy and space</h3>
                         <p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p>
                     </div>
                 </div>
@@ -3715,7 +3715,7 @@
         function openAIChat() {
             document.getElementById('aiChatModal').classList.add('active');
             const messagesDiv = document.getElementById('aiChatMessages');
-            if (messagesDiv.children.length === 0) displayAIMessage('مرحباً! أنا مساعد فلك الذكي. اسألي أي شيء عن الفضاء أو اكتب "مساعدة" لمعرفة ما يمكنني فعله.','ai');
+            if (messagesDiv.children.length === 0) displayAIMessage('مرحباً! أنا مساعد Astronomy.', 'ai');
             setTimeout(()=>messagesDiv.scrollTop=messagesDiv.scrollHeight,100);
         }
         function closeAIChat() { document.getElementById('aiChatModal').classList.remove('active'); }
@@ -3738,7 +3738,7 @@
             const messagesDiv = document.getElementById('aiChatMessages'); if (!messagesDiv) return;
             const messageDiv = document.createElement('div'); messageDiv.className = 'message '+(sender==='user'?'sent':'received');
             const time = new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-            let html = ''; if (sender==='received') html += '<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد فلك</div>';
+            let html = ''; if (sender==='received') html += '<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>';
             html += '<div class="message-content">'+escapeHtml(text)+'</div><div class="message-time">'+time+'</div>';
             messageDiv.innerHTML = html; messagesDiv.appendChild(messageDiv); messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
@@ -3746,7 +3746,7 @@
             const msg = userMessage.toLowerCase();
             if (msg.includes('السلام عليكم')||msg.includes('مرحبا')||msg.includes('اهلا')) return 'وعليكم السلام! كيف يمكنني مساعدتك اليوم؟';
             if (msg.includes('كيف حالك')) return 'أنا بخير، شكراً! جاهز لمساعدتك.';
-            if (msg.includes('من انت')||msg.includes('اسمك')) return 'أنا مساعد فلك الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون.';
+            if (msg.includes('من انت')||msg.includes('اسمك')) return 'أنا مساعد Astronomy الذكي، تم تطويري لمساعدتك في استكشاف أسرار الكون.';
             if (msg.includes('مساعدة')) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"';
             if (msg.includes('فيديو')||msg.includes('مقطع')) return 'يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة.';
             if (msg.includes('دردشة')||msg.includes('شات')) return 'يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل.';
