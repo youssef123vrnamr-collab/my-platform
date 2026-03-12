@@ -2489,6 +2489,21 @@
                 <i class="fas fa-cloud-upload-alt"></i>
             </div>
             <h3>رفع فيديو جديد</h3>
+
+            <!-- شريط أدوات المصادر المتعددة -->
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0;">
+                <button class="btn btn-ghost" onclick="openCloudinarySource('local')"><i class="fas fa-folder-open"></i> ملفاتي</button>
+                <button class="btn btn-ghost" onclick="openCloudinarySource('url')"><i class="fas fa-link"></i> رابط الويب</button>
+                <button class="btn btn-ghost" onclick="window.open('https://unsplash.com/s/photos/astronomy','_blank')"><i class="fas fa-search"></i> بحث صور</button>
+                <button class="btn btn-ghost" onclick="openCloudinarySource('dropbox')"><i class="fab fa-dropbox"></i> Dropbox</button>
+                <button class="btn btn-ghost" onclick="openCloudinarySource('google_drive')"><i class="fab fa-google-drive"></i> Google Drive</button>
+                <button class="btn btn-ghost" onclick="window.open('https://www.shutterstock.com/search/astronomy','_blank')"><i class="fas fa-camera"></i> Shutterstock</button>
+                <button class="btn btn-ghost" onclick="window.open('https://www.istockphoto.com/search/2/image?phrase=astronomy','_blank')"><i class="fas fa-camera-retro"></i> iStock</button>
+                <button class="btn btn-ghost" onclick="window.open('https://www.gettyimages.com/photos/astronomy','_blank')"><i class="fas fa-image"></i> Getty Images</button>
+                <button class="btn btn-ghost" onclick="window.open('https://unsplash.com/s/photos/astronomy','_blank')"><i class="fas fa-camera"></i> Unsplash</button>
+                <button class="btn btn-primary" onclick="openCloudinaryWidget()"><i class="fas fa-cog"></i> Advanced</button>
+            </div>
+
             <p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p>
             <button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button>
 
@@ -3325,19 +3340,69 @@
 
         // ======== دوال Cloudinary ========
         function initCloudinaryWidget() {
+            return initCloudinaryWidgetWithSource('local');
+        }
+
+        function openCloudinarySource(source) {
+            if (!isAdmin) {
+                showToast('❌ المشرف فقط يمكنه الرفع');
+                return;
+            }
+            if (uploadWidget && typeof uploadWidget.open === 'function') {
+                // يمكننا محاولة ضبط المصدر الافتراضي، لكن widget لا يدعم تغييره بعد الإنشاء بسهولة
+                // لذلك سنعيد إنشاء widget مع المصدر المطلوب
+                uploadWidget = null;
+            }
+            showToast('⏳ جاري تجهيز واجهة الرفع...');
+            // تهيئة widget جديد مع المصدر المحدد كأولوية
+            initCloudinaryWidgetWithSource(source).then(widget => {
+                if (widget) widget.open();
+            }).catch(err => {
+                console.error('Failed to init widget:', err);
+                SoundEffects.error();
+                showToast('❌ تعذر فتح واجهة الرفع');
+            });
+        }
+
+        // دالة تهيئة widget مع خيارات مخصصة
+        function initCloudinaryWidgetWithSource(defaultSource = 'local') {
             return new Promise((resolve, reject) => {
                 if (typeof cloudinary === 'undefined' || typeof cloudinary.createUploadWidget !== 'function') {
-                    setTimeout(() => initCloudinaryWidget().then(resolve).catch(reject), 500); return;
+                    setTimeout(() => initCloudinaryWidgetWithSource(defaultSource).then(resolve).catch(reject), 500);
+                    return;
                 }
                 try {
-                    uploadWidget = cloudinary.createUploadWidget({
-                        cloudName: CLOUDINARY_CONFIG.cloudName, uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-                        resourceType: 'video', clientAllowedFormats: ['mp4','webm','mov','mkv','avi','m4v','3gp','flv','gif'],
-                        maxFileSize: MAX_VIDEO_SIZE, maxVideoFileSize: MAX_VIDEO_SIZE, chunkSize: CHUNK_SIZE,
-                        sources: ['local','url','camera','dropbox','google_drive'], language: 'ar',
-                        text: { ar: { or:'أو', local: { browse:'اختر ملف', drop:'اسحب الفيديو هنا' }, menu: { files:'ملفاتي', web:'رابط الويب', camera:'الكاميرا', gdrive:'Google Drive', dropbox:'Dropbox' } } },
-                        styles: { palette: { window:'#1a1025', windowBorder:'#6366f1', tabIcon:'#6366f1', menuIcons:'#6366f1', textDark:'#ffffff', textLight:'#ffffff', link:'#ec4899', action:'#6366f1', inactiveTabIcon:'#8b5cf6', error:'#ef4444', inProgress:'#6366f1', complete:'#10b981', sourceBg:'#0f0a1a' }, fonts: { default:'Cairo', active:'Cairo' } },
-                        showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: 'local', eagerAsync: true,
+                    const widget = cloudinary.createUploadWidget({
+                        cloudName: CLOUDINARY_CONFIG.cloudName,
+                        uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+                        resourceType: 'video',
+                        clientAllowedFormats: ['mp4','webm','mov','mkv','avi','m4v','3gp','flv','gif'],
+                        maxFileSize: MAX_VIDEO_SIZE,
+                        maxVideoFileSize: MAX_VIDEO_SIZE,
+                        chunkSize: CHUNK_SIZE,
+                        sources: ['local','url','camera','dropbox','google_drive'], // جميع المصادر متاحة
+                        defaultSource: defaultSource, // المصدر الافتراضي
+                        language: 'ar',
+                        text: {
+                            ar: {
+                                or:'أو',
+                                local: { browse:'اختر ملف', drop:'اسحب الفيديو هنا' },
+                                menu: { files:'ملفاتي', web:'رابط الويب', camera:'الكاميرا', gdrive:'Google Drive', dropbox:'Dropbox' }
+                            }
+                        },
+                        styles: {
+                            palette: {
+                                window:'#1a1025', windowBorder:'#6366f1', tabIcon:'#6366f1',
+                                menuIcons:'#6366f1', textDark:'#ffffff', textLight:'#ffffff',
+                                link:'#ec4899', action:'#6366f1', inactiveTabIcon:'#8b5cf6',
+                                error:'#ef4444', inProgress:'#6366f1', complete:'#10b981', sourceBg:'#0f0a1a'
+                            },
+                            fonts: { default:'Cairo', active:'Cairo' }
+                        },
+                        showAdvancedOptions: false,
+                        cropping: false,
+                        multiple: false,
+                        eagerAsync: true,
                         prepareUploadParams: function (cb, params) {
                             params.context = 'alt=فيديو فلك العالمي';
                             params.eager = [
@@ -3350,10 +3415,16 @@
                         }
                     }, function (error, result) {
                         if (error) {
-                            if (error.message && error.message.includes('focus')) { console.warn('Ignored focus error'); return; }
+                            if (error.message && error.message.includes('focus')) {
+                                console.warn('Ignored focus error');
+                                return;
+                            }
                             console.error('Upload widget error:', error);
                             document.getElementById('uploadProgressContainer')?.classList.remove('active');
-                            SoundEffects.error(); showToast('❌ فشل الرفع: '+(error.message||'خطأ غير معروف')); reject(error); return;
+                            SoundEffects.error();
+                            showToast('❌ فشل الرفع: '+(error.message||'خطأ غير معروف'));
+                            reject(error);
+                            return;
                         }
                         if (!result) return;
                         switch (result.event) {
@@ -3363,17 +3434,35 @@
                                 document.getElementById('videoTitleInput').value = result.info.original_filename||'فيديو بدون عنوان';
                                 document.getElementById('videoDescriptionInput').value = '';
                                 document.getElementById('descriptionModal').classList.add('active');
-                                SoundEffects.success(); showToast('✅ تم الرفع! أكمل بيانات الفيديو'); resolve(result.info); break;
+                                SoundEffects.success();
+                                showToast('✅ تم الرفع! أكمل بيانات الفيديو');
+                                resolve(result.info);
+                                break;
                             case 'queues-start':
-                                uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0;
-                                document.getElementById('uploadProgressContainer')?.classList.add('active'); showToast('🚀 جاري الرفع...'); break;
-                            case 'upload-progress': updateUploadProgress(result.info); break;
-                            case 'upload-success': showToast('📤 تم رفع جزء...'); break;
-                            default: break;
+                                uploadStartTime = Date.now();
+                                lastTime = Date.now();
+                                lastUploadedBytes = 0;
+                                document.getElementById('uploadProgressContainer')?.classList.add('active');
+                                showToast('🚀 جاري الرفع...');
+                                break;
+                            case 'upload-progress':
+                                updateUploadProgress(result.info);
+                                break;
+                            case 'upload-success':
+                                showToast('📤 تم رفع جزء...');
+                                break;
+                            default:
+                                break;
                         }
                     });
-                    resolve(uploadWidget);
-                } catch (e) { if (e.message && e.message.includes('focus')) { console.warn('Ignored focus error'); resolve(null); } else reject(e); }
+                    uploadWidget = widget;
+                    resolve(widget);
+                } catch (e) {
+                    if (e.message && e.message.includes('focus')) {
+                        console.warn('Ignored focus error');
+                        resolve(null);
+                    } else reject(e);
+                }
             });
         }
 
