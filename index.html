@@ -18,7 +18,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* ========== CSS الأساسي (مع التعديلات) ========== */
+        /* ========== CSS الأساسي (نفس الكود السابق مع إضافة أنماط للنافذة الجديدة) ========== */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -2399,6 +2399,82 @@
         .remove-image-btn:hover {
             background: rgba(239, 68, 68, 0.4);
         }
+
+        /* أنماط جديدة لنافذة نتيجة الامتحان */
+        .exam-result-modal-content {
+            max-width: 400px;
+        }
+        .exam-result-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: "Cairo", sans-serif;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .exam-result-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+        }
+        .exam-result-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* تعديل نافذة الدردشة لإضافة حقل الهاتف */
+        .name-modal-content {
+            max-width: 400px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .name-modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+        }
+        .name-input-group {
+            margin-bottom: 1.5rem;
+        }
+        .name-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: "Cairo", sans-serif;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .phone-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: "Cairo", sans-serif;
+            font-size: 1rem;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -2538,6 +2614,8 @@
             <i class="fas fa-play-circle" style="color: #ec4899;"></i>
             مكتبة الفيديوهات المشتركة
             <span id="videoCount" style="margin-right: auto; background: rgba(99, 102, 241, 0.2); padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem;">0 فيديو</span>
+            <!-- زر نتيجة الامتحان الجديد -->
+            <button id="examResultBtn" class="btn btn-info" onclick="openExamResultModal()" style="margin-right: 1rem;"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button>
         </h3>
 
         <div class="videos-grid" id="videosContainer"></div>
@@ -2557,6 +2635,22 @@
         <i class="fas fa-comments"></i>
         <span class="notification-badge" id="chatBadge" style="display: none;">0</span>
     </button>
+
+    <!-- ========== نافذة نتيجة الامتحان الجديدة ========== -->
+    <div class="modal" id="examResultModal">
+        <div class="modal-content exam-result-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-alt" style="color: #6366f1;"></i> استعلام عن نتيجة الامتحان</h3>
+                <button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <p style="margin-bottom: 1.5rem; color: #aaa;">أدخل بياناتك لمعرفة نتيجتك</p>
+                <input type="text" id="examResultName" class="exam-result-input" placeholder="الاسم الكامل" maxlength="50">
+                <input type="tel" id="examResultPhone" class="exam-result-input" placeholder="رقم الهاتف" maxlength="20">
+                <button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ========== نافذة دردشة الذكاء الاصطناعي (AI) ========== -->
     <div class="modal chat-modal" id="aiChatModal">
@@ -2616,7 +2710,7 @@
         </div>
     </div>
 
-    <!-- ========== نافذة الدردشة الجماعية ========== -->
+    <!-- ========== نافذة الدردشة الجماعية (معدلة لتطلب الاسم والهاتف) ========== -->
     <div class="modal chat-modal" id="chatModal">
         <div class="chat-container">
             <div class="chat-header">
@@ -2659,7 +2753,7 @@
         </div>
     </div>
 
-    <!-- باقي النوافذ -->
+    <!-- باقي النوافذ (لم يتم تغييرها) -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -2732,7 +2826,7 @@
         </div>
     </div>
 
-    <!-- ========== نافذة تعليم الذكاء الاصطناعي (معدلة مع زر إغلاق إضافي) ========== -->
+    <!-- نافذة تعليم الذكاء الاصطناعي -->
     <div class="modal" id="teachAICircleModal">
         <div class="modal-content description-modal-content">
             <div class="modal-header">
@@ -2746,8 +2840,6 @@
                 <button class="btn btn-primary" style="width:100%; margin-bottom:1.5rem;" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button>
                 <h4 style="margin:1.5rem 0 1rem 0; color:#fff;"><i class="fas fa-list" style="color:#8b5cf6;"></i> المعارف المخزنة</h4>
                 <div class="correction-list" id="aiKnowledgeList" style="max-height:250px; overflow-y:auto;"><p style="text-align:center; color:#888; padding:2rem;">جاري التحميل...</p></div>
-                
-                <!-- زر إغلاق إضافي في الأسفل -->
                 <div style="text-align: center; margin-top: 1.5rem;">
                     <button class="btn btn-danger" onclick="closeTeachAICircleModal()" style="width: 50%;"><i class="fas fa-times"></i> إغلاق</button>
                 </div>
@@ -2798,7 +2890,7 @@
         </div>
     </div>
 
-    <!-- ========== نافذة إضافة الامتحان (مع الصور) ========== -->
+    <!-- نافذة إضافة الامتحان -->
     <div class="modal" id="addQuizModal">
         <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
@@ -2807,24 +2899,20 @@
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
                 <p style="margin-bottom: 1.5rem; color: #aaa;">اختر الفيديو ثم أضف الأسئلة والإجابات (يمكن إضافة صورة اختيارية لكل سؤال)</p>
-
                 <div class="form-group">
                     <label>اختر الفيديو</label>
                     <select id="quizVideoSelect" style="width:100%; padding:1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:white; font-family:'Cairo'; font-size:1rem;">
                         <option value="">-- اختر فيديو --</option>
                     </select>
                 </div>
-
                 <div id="questionsContainer"></div>
-
                 <button class="btn btn-secondary" style="width:100%; margin:1rem 0;" onclick="addQuestion()"><i class="fas fa-plus"></i> إضافة سؤال جديد</button>
-
                 <button class="btn btn-success" style="width:100%;" onclick="saveExam()"><i class="fas fa-save"></i> حفظ الامتحان</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة عرض النتائج -->
+    <!-- نافذة عرض النتائج (معدلة) -->
     <div class="modal" id="viewResultsModal">
         <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
@@ -2843,7 +2931,7 @@
         </div>
     </div>
 
-    <!-- نافذة أداء الامتحان للطالب -->
+    <!-- نافذة أداء الامتحان للطالب (معدلة لتطلب الهاتف) -->
     <div class="modal" id="takeQuizModal">
         <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
@@ -2852,8 +2940,9 @@
             </div>
             <div class="modal-body" style="padding:1.5rem;">
                 <div id="studentNameSection">
-                    <p style="margin-bottom:1rem; color:#aaa;">أدخل اسمك الكامل قبل بدء الامتحان</p>
-                    <input type="text" id="studentNameInput" class="student-name-input" placeholder="اسمك الكامل..." maxlength="50" />
+                    <p style="margin-bottom:1rem; color:#aaa;">أدخل بياناتك قبل بدء الامتحان</p>
+                    <input type="text" id="studentNameInput" class="student-name-input" placeholder="الاسم الكامل..." maxlength="50" />
+                    <input type="tel" id="studentPhoneInput" class="student-name-input" placeholder="رقم الهاتف..." maxlength="20" style="margin-top:0.5rem;" />
                     <button class="btn btn-primary" style="width:100%;" onclick="startExam()"><i class="fas fa-play"></i> بدء الامتحان</button>
                 </div>
                 <div id="quizSection" style="display: none;"></div>
@@ -2861,12 +2950,16 @@
         </div>
     </div>
 
+    <!-- نافذة إدخال الاسم والهاتف للدردشة (معدلة) -->
     <div class="modal" id="nameModal">
         <div class="modal-content name-modal-content">
             <div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div>
-            <h2>مرحباً بك في فلك العالمي</h2>
-            <p>أدخل اسمك للانضمام إلى الدردشة</p>
-            <div class="name-input-group"><input type="text" class="name-input" id="userNameInput" placeholder="اسمك..." maxlength="20" /></div>
+            <h2 style="margin-bottom: 1rem;">مرحباً بك في فلك العالمي</h2>
+            <p style="margin-bottom: 1.5rem; color: #aaa;">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p>
+            <div class="name-input-group">
+                <input type="text" class="name-input" id="userNameInput" placeholder="الاسم..." maxlength="20" />
+                <input type="tel" class="phone-input" id="userPhoneInput" placeholder="رقم الهاتف..." maxlength="20" />
+            </div>
             <button class="btn btn-primary" style="width:100%; padding:1rem;" onclick="saveUserName()"><i class="fas fa-check"></i> دخول</button>
         </div>
     </div>
@@ -2916,6 +3009,7 @@
         let metadataListener = null;
         let lastWatchedData = null;
         let currentUser = null;
+        let currentUserPhone = null; // إضافة لتخزين الهاتف
         let chatUnsubscribe = null;
         let mediaRecorder = null;
         let audioChunks = [];
@@ -3775,6 +3869,7 @@
             }).then(() => { SoundEffects.delete(); showToast('✅ تم الحذف'); }).catch(err => { console.error(err); SoundEffects.error(); showToast('❌ فشل الحذف'); });
         }
 
+        // دالة عرض نتائج الامتحان للمشرف (معدلة)
         function openViewResultsModal(videoId) {
             if (!isAdmin) { showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
             const select = document.getElementById('resultsVideoSelect');
@@ -3784,6 +3879,8 @@
             document.getElementById('viewResultsModal').classList.add('active');
         }
         function closeViewResultsModal() { document.getElementById('viewResultsModal').classList.remove('active'); }
+
+        // دالة تحميل وعرض النتائج مع زر إرسال النتيجة للطالب
         function loadResultsForVideo() {
             const videoId = document.getElementById('resultsVideoSelect').value;
             const container = document.getElementById('resultsContainer');
@@ -3796,13 +3893,46 @@
                 const correctCount = result.answers.filter((a,idx) => { const q = exam?.questions?.[idx]; return q && a === q.correctAnswer; }).length;
                 const total = exam?.questions?.length || result.answers.length;
                 const percentage = Math.round((correctCount/total)*100);
-                return `<div class="result-item"><div class="result-student-name"><i class="fas fa-user-graduate"></i> ${escapeHtml(result.studentName)}</div><div class="result-details"><span><i class="fas fa-calendar"></i> ${result.submittedAt?new Date(result.submittedAt.toDate()).toLocaleDateString('ar-EG'):'الآن'}</span><span><i class="fas fa-check-circle" style="color:#10b981;"></i> ${correctCount}/${total}</span><span><i class="fas fa-percentage" style="color:#6366f1;"></i> ${percentage}%</span></div><div class="result-answers">${result.answers.map((answer,idx)=>{ const q = exam?.questions?.[idx]; const isCorrect = q && answer === q.correctAnswer; return `<div class="answer-item ${isCorrect?'correct':'incorrect'}"><strong>س${idx+1}:</strong> ${isCorrect?'✓ صحيح':'✗ خطأ'} ${q ? '(الإجابة: '+escapeHtml(q.options[q.correctAnswer])+')' : ''}</div>`; }).join('')}</div>${!result.gradeSent?`<button class="send-grade-btn" onclick="sendGradeToStudent('${result.id}', '${escapeHtml(result.studentName)}', ${percentage})"><i class="fas fa-paper-plane"></i> إرسال الدرجة للطالب</button>`:`<div class="grade-sent"><i class="fas fa-check-circle"></i> تم إرسال الدرجة</div>`}</div>`;
+                const resultVisible = result.resultVisible || false;
+                return `<div class="result-item">
+                    <div class="result-student-name"><i class="fas fa-user-graduate"></i> ${escapeHtml(result.studentName)}</div>
+                    <div class="result-details">
+                        <span><i class="fas fa-phone"></i> ${escapeHtml(result.studentPhone)}</span>
+                        <span><i class="fas fa-calendar"></i> ${result.submittedAt?new Date(result.submittedAt.toDate()).toLocaleDateString('ar-EG'):'الآن'}</span>
+                        <span><i class="fas fa-check-circle" style="color:#10b981;"></i> ${correctCount}/${total}</span>
+                        <span><i class="fas fa-percentage" style="color:#6366f1;"></i> ${percentage}%</span>
+                    </div>
+                    <div class="result-answers">
+                        ${result.answers.map((answer,idx)=>{ const q = exam?.questions?.[idx]; const isCorrect = q && answer === q.correctAnswer; return `<div class="answer-item ${isCorrect?'correct':'incorrect'}"><strong>س${idx+1}:</strong> ${isCorrect?'✓ صحيح':'✗ خطأ'} ${q ? '(الإجابة: '+escapeHtml(q.options[q.correctAnswer])+')' : ''}</div>`; }).join('')}
+                    </div>
+                    ${!resultVisible ? 
+                        `<button class="send-grade-btn" onclick="sendResultToStudent('${result.id}')">
+                            <i class="fas fa-paper-plane"></i> إرسال النتيجة للطالب
+                        </button>` : 
+                        `<div class="grade-sent"><i class="fas fa-check-circle"></i> تم إرسال النتيجة</div>`
+                    }
+                </div>`;
             }).join('');
         }
-        function sendGradeToStudent(resultId, studentName, percentage) {
-            db.collection('exam_results').doc(resultId).update({ gradeSent: true, gradeSentAt: firebase.firestore.FieldValue.serverTimestamp() })
-                .then(() => { SoundEffects.success(); showToast(`✅ تم إرسال الدرجة للطالب ${studentName}: ${percentage}%`); loadResultsForVideo(); })
-                .catch(err => { console.error(err); SoundEffects.error(); showToast('❌ فشل إرسال الدرجة'); });
+
+        // دالة إرسال النتيجة للطالب (تحديث resultVisible إلى true)
+        function sendResultToStudent(resultId) {
+            if (!isAdmin) {
+                SoundEffects.error();
+                showToast('❌ هذه الصلاحية للمشرف فقط');
+                return;
+            }
+            db.collection('exam_results').doc(resultId).update({ resultVisible: true })
+                .then(() => {
+                    SoundEffects.success();
+                    showToast('✅ تم إرسال النتيجة للطالب');
+                    loadResultsForVideo(); // إعادة تحميل النتائج لتحديث الواجهة
+                })
+                .catch(err => {
+                    console.error(err);
+                    SoundEffects.error();
+                    showToast('❌ فشل إرسال النتيجة');
+                });
         }
 
         function openTakeExamModal(videoId) {
@@ -3812,6 +3942,7 @@
             document.getElementById('studentNameSection').style.display = 'block';
             document.getElementById('quizSection').style.display = 'none';
             document.getElementById('studentNameInput').value = '';
+            document.getElementById('studentPhoneInput').value = '';
             document.getElementById('takeQuizModal').classList.add('active');
         }
         function closeTakeExamModal() {
@@ -3820,9 +3951,12 @@
         }
         function startExam() {
             const studentName = document.getElementById('studentNameInput').value.trim();
+            const studentPhone = document.getElementById('studentPhoneInput').value.trim();
             if (!studentName) { showToast('⚠️ أدخل اسمك أولاً'); return; }
+            if (!studentPhone) { showToast('⚠️ أدخل رقم هاتفك'); return; }
             currentExamAnswers = {};
-            const existingResult = examResults.find(r => r.videoId===currentVideoIdForExam && r.studentName===studentName && r.submittedAt && (Date.now()-r.submittedAt.toDate().getTime())<24*60*60*1000);
+            // التحقق من وجود نتيجة حديثة (خلال 24 ساعة) - اختياري
+            const existingResult = examResults.find(r => r.videoId===currentVideoIdForExam && r.studentName===studentName && r.studentPhone===studentPhone && r.submittedAt && (Date.now()-r.submittedAt.toDate().getTime())<24*60*60*1000);
             if (existingResult) { showToast('⚠️ لقد قمت بهذا الامتحان مؤخراً'); return; }
 
             document.getElementById('studentNameSection').style.display = 'none';
@@ -3852,6 +3986,7 @@
         function submitExam() {
             if (examTimer) { clearInterval(examTimer); examTimer=null; }
             const studentName = document.getElementById('studentNameInput').value.trim();
+            const studentPhone = document.getElementById('studentPhoneInput').value.trim();
             const totalQuestions = currentExam.questions.length;
             const answered = Object.keys(currentExamAnswers).length;
             if (answered < totalQuestions && !confirm(`لم تجب على ${totalQuestions-answered} سؤال. هل تريد التسليم؟`)) {
@@ -3866,7 +4001,19 @@
                 if (ans === currentExam.questions[i].correctAnswer) correctCount++;
             }
             const percentage = Math.round((correctCount/totalQuestions)*100);
-            db.collection('exam_results').add({ examId: currentExam.id, videoId: currentVideoIdForExam, studentName, answers, score: correctCount, totalQuestions, percentage, submittedAt: firebase.firestore.FieldValue.serverTimestamp(), gradeSent: false })
+            db.collection('exam_results').add({ 
+                examId: currentExam.id, 
+                videoId: currentVideoIdForExam, 
+                studentName, 
+                studentPhone, 
+                answers, 
+                score: correctCount, 
+                totalQuestions, 
+                percentage, 
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                gradeSent: false,
+                resultVisible: false  // النتيجة غير ظاهرة حتى يوافق المشرف
+            })
                 .then(() => { SoundEffects.success(); showExamResult(correctCount,totalQuestions,percentage); })
                 .catch(err => { console.error(err); SoundEffects.error(); showToast('❌ فشل التسليم'); });
         }
@@ -3957,7 +4104,16 @@
         function handleAIKeyPress(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
         // ======== دوال الدردشة والحضور ========
-        function checkUserName() { const stored = localStorage.getItem('falak_username'); if (stored) { currentUser = stored; return true; } return false; }
+        function checkUserName() {
+            const stored = localStorage.getItem('falak_username');
+            const storedPhone = localStorage.getItem('falak_userphone');
+            if (stored && storedPhone) {
+                currentUser = stored;
+                currentUserPhone = storedPhone;
+                return true;
+            }
+            return false;
+        }
         function openChat() {
             if (!checkUserName()) { document.getElementById('nameModal').classList.add('active'); document.getElementById('userNameInput').focus(); }
             else { document.getElementById('chatModal').classList.add('active'); document.getElementById('chatBadge').style.display='none'; unreadMessages=0; loadMessages(); scrollToBottom(); initPresenceSystem(); }
@@ -3965,11 +4121,18 @@
         function closeChat() { document.getElementById('chatModal').classList.remove('active'); if (currentAudio) { currentAudio.pause(); currentAudio=null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe=null; } }
         function saveUserName() {
             const name = document.getElementById('userNameInput').value.trim();
+            const phone = document.getElementById('userPhoneInput').value.trim();
             if (name.length<2) { SoundEffects.error(); showToast('الاسم قصير جداً'); return; }
-            currentUser = name; localStorage.setItem('falak_username', name);
+            if (!phone) { SoundEffects.error(); showToast('رقم الهاتف مطلوب'); return; }
+            currentUser = name;
+            currentUserPhone = phone;
+            localStorage.setItem('falak_username', name);
+            localStorage.setItem('falak_userphone', phone);
             document.getElementById('nameModal').classList.remove('active');
             document.getElementById('chatModal').classList.add('active');
             SoundEffects.join(); initPresenceSystem(); loadMessages();
+            // حفظ في قاعدة بيانات (اختياري)
+            db.collection('chat_users').add({ name, phone, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error);
         }
         function loadMessages() {
             const container = document.getElementById('chatMessages'); if (!container) return;
@@ -4132,6 +4295,55 @@
         document.addEventListener('visibilitychange', () => { if (document.hidden) { if (userPresenceRef) userPresenceRef.delete().catch(()=>{}); } else { if (currentUser && !userPresenceRef) initPresenceSystem(); } });
         window.addEventListener('beforeunload', () => removePresence());
 
+        // ======== دوال نتيجة الامتحان الجديدة ========
+        function openExamResultModal() {
+            document.getElementById('examResultModal').classList.add('active');
+            document.getElementById('examResultName').value = '';
+            document.getElementById('examResultPhone').value = '';
+        }
+        function closeExamResultModal() {
+            document.getElementById('examResultModal').classList.remove('active');
+        }
+
+        // دالة التحقق من نتيجة الامتحان (تبحث في قاعدة البيانات عن نتيجة حيث resultVisible === true)
+        function checkExamResult() {
+            const name = document.getElementById('examResultName').value.trim();
+            const phone = document.getElementById('examResultPhone').value.trim();
+            if (!name || !phone) {
+                showToast('⚠️ أدخل الاسم ورقم الهاتف');
+                return;
+            }
+
+            // حفظ الطلب في قاعدة البيانات (للإحصاء)
+            db.collection('exam-result-queries').add({
+                name,
+                phone,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(console.error);
+
+            // البحث عن نتيجة مطابقة مع resultVisible = true
+            db.collection('exam_results')
+                .where('studentName', '==', name)
+                .where('studentPhone', '==', phone)
+                .where('resultVisible', '==', true)
+                .orderBy('submittedAt', 'desc')
+                .limit(1)
+                .get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        alert('لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف.');
+                    } else {
+                        const result = snapshot.docs[0].data();
+                        alert(`نتيجة الامتحان: ${result.score} من ${result.totalQuestions} (${result.percentage}%) - تهانينا ${name}!`);
+                    }
+                    closeExamResultModal();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('حدث خطأ أثناء البحث عن النتيجة. حاول مرة أخرى.');
+                });
+        }
+
         // ======== تهيئة الصفحة ========
         document.addEventListener('DOMContentLoaded', function () {
             loadMobileModePreference();
@@ -4179,11 +4391,12 @@
                 else if (e.target.id === 'viewResultsModal') closeViewResultsModal();
                 else if (e.target.id === 'takeQuizModal') closeTakeExamModal();
                 else if (e.target.id === 'voiceSettingsModal') closeVoiceSettings();
+                else if (e.target.id === 'examResultModal') closeExamResultModal();
             }
         };
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
-                closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById('callModal')?.classList.contains('active')) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings();
+                closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById('callModal')?.classList.contains('active')) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal();
             }
         });
     </script>
