@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mweb-app-title" content="Astronomy and space">
-    <!-- Google site verification -->
     <meta name="google-site-verification" content="DcXA5F9NnxKp0fdPA98b6Tmkx5jMfm9N_IztqxOP7Ck" />
     <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -18,7 +17,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* ========== CSS الأساسي (نفس الكود السابق مع إضافة أنماط للنافذة الجديدة) ========== */
+        /* ========== CSS الأساسي (نفس الكود السابق) ========== */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -2485,7 +2484,6 @@
 
     <div class="loader" id="loader">
         <div class="loader-ring"></div>
-        <!-- تم تعديل النص هنا -->
         <div class="loader-text">مرحباً بك في عالم الفلك 🌌</div>
     </div>
 
@@ -2636,7 +2634,7 @@
         <span class="notification-badge" id="chatBadge" style="display: none;">0</span>
     </button>
 
-    <!-- ========== نافذة نتيجة الامتحان الجديدة ========== -->
+    <!-- نافذة نتيجة الامتحان الجديدة -->
     <div class="modal" id="examResultModal">
         <div class="modal-content exam-result-modal-content">
             <div class="modal-header">
@@ -2652,7 +2650,7 @@
         </div>
     </div>
 
-    <!-- ========== نافذة دردشة الذكاء الاصطناعي (AI) ========== -->
+    <!-- نافذة دردشة الذكاء الاصطناعي (AI) -->
     <div class="modal chat-modal" id="aiChatModal">
         <div class="chat-container">
             <div class="chat-header">
@@ -2710,7 +2708,7 @@
         </div>
     </div>
 
-    <!-- ========== نافذة الدردشة الجماعية (معدلة لتطلب الاسم والهاتف) ========== -->
+    <!-- نافذة الدردشة الجماعية (معدلة لتطلب الاسم والهاتف) -->
     <div class="modal chat-modal" id="chatModal">
         <div class="chat-container">
             <div class="chat-header">
@@ -2753,7 +2751,7 @@
         </div>
     </div>
 
-    <!-- باقي النوافذ (لم يتم تغييرها) -->
+    <!-- باقي النوافذ -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -2984,7 +2982,7 @@
     <div class="toast" id="toast">تم بنجاح</div>
 
     <script>
-        // تعريفات المتغيرات العامة
+        // ========== التعريفات العامة والثوابت ==========
         let isMobileMode = false;
         let isAdmin = false;
         let isSuperAdmin = false;
@@ -3009,7 +3007,7 @@
         let metadataListener = null;
         let lastWatchedData = null;
         let currentUser = null;
-        let currentUserPhone = null; // إضافة لتخزين الهاتف
+        let currentUserPhone = null;
         let chatUnsubscribe = null;
         let mediaRecorder = null;
         let audioChunks = [];
@@ -3030,17 +3028,10 @@
         let uploadStartTime = 0;
         let lastUploadedBytes = 0;
         let lastTime = 0;
-
-        // متغيرات الضغط المطول وإعدادات الصوت
         let longPressTimer = null;
-        const LONG_PRESS_DURATION = 500; // 500ms
-        let voiceSettings = {
-            voiceURI: null,
-            rate: 1,
-            pitch: 1
-        };
+        const LONG_PRESS_DURATION = 500;
+        let voiceSettings = { voiceURI: null, rate: 1, pitch: 1 };
 
-        // إعدادات ثابتة
         const CLOUDINARY_CONFIG = {
             cloudName: "dnnsna4il",
             uploadPreset: "falak_upload",
@@ -3066,7 +3057,7 @@
         const db = firebase.firestore();
         const onlineUsersRef = db.collection("online_users");
 
-        // ======== دوال مساعدة ========
+        // ========== دوال مساعدة ==========
         function showToast(msg) {
             const toast = document.getElementById('toast');
             if (!toast) return;
@@ -3096,14 +3087,13 @@
             return div.innerHTML;
         }
 
-        // ======== إدارة وضع العرض ========
+        // ========== إدارة وضع العرض ==========
         function toggleMode() {
             isMobileMode = !isMobileMode;
             const body = document.body;
             const btn = document.getElementById('modeToggle');
             if (!btn) return;
             const icon = btn.querySelector('i');
-
             if (isMobileMode) {
                 body.classList.add('mobile-mode');
                 btn.classList.add('mobile');
@@ -3134,7 +3124,7 @@
             }
         }
 
-        // ======== استعادة حالة المشرف من localStorage ========
+        // ========== استعادة حالة المشرف ==========
         function loadAdminPreference() {
             const saved = localStorage.getItem('falak_admin');
             if (saved === 'true') {
@@ -3160,7 +3150,7 @@
             }
         }
 
-        // ======== مؤثرات صوتية ========
+        // ========== مؤثرات صوتية ==========
         const SoundEffects = {
             audioContext: null,
             init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -3175,37 +3165,26 @@
             tick() { this.init(); const ctx = this.audioContext; const now = ctx.currentTime; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 600; gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now+0.03); osc.start(now); osc.stop(now+0.03); },
         };
 
-        // ======== دوال النطق الصوتي ========
+        // ========== دوال النطق الصوتي ==========
         function speakText(text) {
-            if (!('speechSynthesis' in window)) {
-                console.warn('المتصفح لا يدعم خاصية النطق');
-                return;
-            }
-            
-            // إيقاف أي نطق سابق
+            if (!('speechSynthesis' in window)) { console.warn('المتصفح لا يدعم خاصية النطق'); return; }
             window.speechSynthesis.cancel();
-            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'ar-SA';
             utterance.rate = voiceSettings.rate;
             utterance.pitch = voiceSettings.pitch;
-            
-            // اختيار الصوت المحفوظ
             if (voiceSettings.voiceURI) {
                 const voices = window.speechSynthesis.getVoices();
                 const selectedVoice = voices.find(v => v.voiceURI === voiceSettings.voiceURI);
                 if (selectedVoice) utterance.voice = selectedVoice;
             }
-            
             window.speechSynthesis.speak(utterance);
         }
 
-        // تهيئة قائمة الأصوات
         function populateVoiceList() {
             const voices = window.speechSynthesis.getVoices();
             const select = document.getElementById('voiceSelect');
             if (!select) return;
-            
             select.innerHTML = '';
             voices.forEach(voice => {
                 const option = document.createElement('option');
@@ -3213,23 +3192,14 @@
                 option.textContent = `${voice.name} (${voice.lang})`;
                 select.appendChild(option);
             });
-            
-            // استعادة الصوت المحفوظ
-            if (voiceSettings.voiceURI) {
-                select.value = voiceSettings.voiceURI;
-            }
+            if (voiceSettings.voiceURI) { select.value = voiceSettings.voiceURI; }
         }
 
-        // تحديث عرض القيم
         document.addEventListener('input', function(e) {
-            if (e.target.id === 'rateRange') {
-                document.getElementById('rateValue').textContent = e.target.value;
-            } else if (e.target.id === 'pitchRange') {
-                document.getElementById('pitchValue').textContent = e.target.value;
-            }
+            if (e.target.id === 'rateRange') { document.getElementById('rateValue').textContent = e.target.value; }
+            else if (e.target.id === 'pitchRange') { document.getElementById('pitchValue').textContent = e.target.value; }
         });
 
-        // حفظ الإعدادات
         function saveVoiceSettings() {
             voiceSettings.voiceURI = document.getElementById('voiceSelect').value;
             voiceSettings.rate = parseFloat(document.getElementById('rateRange').value);
@@ -3239,7 +3209,6 @@
             showToast('✅ تم حفظ إعدادات الصوت');
         }
 
-        // تحميل الإعدادات من localStorage
         function loadVoiceSettings() {
             const saved = localStorage.getItem('falak_voice_settings');
             if (saved) {
@@ -3253,18 +3222,10 @@
             }
         }
 
-        // فتح نافذة الإعدادات
-        function openVoiceSettings() {
-            populateVoiceList();
-            loadVoiceSettings();
-            document.getElementById('voiceSettingsModal').classList.add('active');
-        }
+        function openVoiceSettings() { populateVoiceList(); loadVoiceSettings(); document.getElementById('voiceSettingsModal').classList.add('active'); }
+        function closeVoiceSettings() { document.getElementById('voiceSettingsModal').classList.remove('active'); }
 
-        function closeVoiceSettings() {
-            document.getElementById('voiceSettingsModal').classList.remove('active');
-        }
-
-        // ======== أحداث الضغط المطول على زر الذكاء الاصطناعي ========
+        // ========== أحداث الضغط المطول على زر الذكاء الاصطناعي ==========
         const aiChatBtn = document.getElementById('aiChatBtn');
         if (aiChatBtn) {
             aiChatBtn.addEventListener('mousedown', startLongPress);
@@ -3273,25 +3234,15 @@
             aiChatBtn.addEventListener('touchend', cancelLongPress);
             aiChatBtn.addEventListener('mouseleave', cancelLongPress);
         }
-
         function startLongPress(e) {
             e.preventDefault();
-            longPressTimer = setTimeout(() => {
-                openVoiceSettings();
-                longPressTimer = null;
-            }, LONG_PRESS_DURATION);
+            longPressTimer = setTimeout(() => { openVoiceSettings(); longPressTimer = null; }, LONG_PRESS_DURATION);
         }
-
         function cancelLongPress(e) {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-                // إذا لم يكن ضغط مطول، نفتح المحادثة كالمعتاد
-                openAIChat();
-            }
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; openAIChat(); }
         }
 
-        // ======== تحميل البيانات من Firebase ========
+        // ========== تحميل البيانات من Firebase ==========
         function listenToVideosWithRetry(retries = 4) {
             if (unsubscribeVideos) unsubscribeVideos();
             let attempts = 0;
@@ -3324,6 +3275,7 @@
             if (unsubscribeExamResults) unsubscribeExamResults();
             unsubscribeExamResults = db.collection('exam_results').orderBy('submittedAt','desc').onSnapshot(snapshot => {
                 examResults = []; snapshot.forEach(doc => examResults.push({ id: doc.id, ...doc.data() }));
+                console.log('Exam results loaded:', examResults); // للتتبع
             }, err => console.error('Error loading exam results:', err));
         }
 
@@ -3345,7 +3297,7 @@
             }, error => console.error('Error listening to maintenance:', error));
         }
 
-        // ======== دوال التحديث (الصيانة) ========
+        // ========== دوال التحديث (الصيانة) ==========
         function showMaintenanceScreen(message, endTime) {
             const overlay = document.getElementById('maintenanceOverlay');
             const msgEl = document.getElementById('maintenanceMessage');
@@ -3377,12 +3329,9 @@
             const hours = Math.floor(distance / (1000*60*60));
             const minutes = Math.floor((distance % (1000*60*60)) / (1000*60));
             const seconds = Math.floor((distance % (1000*60)) / 1000);
-            const hoursEl = document.getElementById('timerHours');
-            const minsEl = document.getElementById('timerMinutes');
-            const secsEl = document.getElementById('timerSeconds');
-            if (hoursEl) hoursEl.textContent = hours.toString().padStart(2,'0');
-            if (minsEl) minsEl.textContent = minutes.toString().padStart(2,'0');
-            if (secsEl) secsEl.textContent = seconds.toString().padStart(2,'0');
+            const hoursEl = document.getElementById('timerHours'); if (hoursEl) hoursEl.textContent = hours.toString().padStart(2,'0');
+            const minsEl = document.getElementById('timerMinutes'); if (minsEl) minsEl.textContent = minutes.toString().padStart(2,'0');
+            const secsEl = document.getElementById('timerSeconds'); if (secsEl) secsEl.textContent = seconds.toString().padStart(2,'0');
         }
 
         function autoEndMaintenance() { SoundEffects.success(); db.collection('system').doc('maintenance').update({status:'active'}).catch(console.error); }
@@ -3399,7 +3348,7 @@
         }
         function cancelMaintenance() { if (!isAdmin) { showToast('❌ المشرف فقط يستطيع إلغاء التحديث'); return; } if (!confirm('هل أنت متأكد؟')) return; db.collection('system').doc('maintenance').update({status:'active'}).then(() => { SoundEffects.success(); showToast('✅ تم إلغاء التحديث'); }).catch(err => { SoundEffects.error(); showToast('❌ فشل إلغاء التحديث'); }); }
 
-        // ======== دوال الفيديو والتخزين ========
+        // ========== دوال الفيديو والتخزين ==========
         function updateStorageBar() {
             if (!isAdmin) return;
             const totalUsed = videos.reduce((sum,v)=> sum+(v.size||0),0);
@@ -3419,7 +3368,7 @@
             document.getElementById('storageBar').style.display = 'block';
         }
 
-        // ======== دوال Cloudinary ========
+        // ========== دوال Cloudinary ==========
         function initCloudinaryWidget() {
             return new Promise((resolve, reject) => {
                 if (typeof cloudinary === 'undefined' || typeof cloudinary.createUploadWidget !== 'function') {
@@ -3493,7 +3442,6 @@
             const speed = timeDiff > 0 ? bytesDiff / timeDiff / (1024*1024) : 0;
             const remainingBytes = totalBytes - uploadedBytes;
             const remainingTime = speed > 0 ? remainingBytes / (speed*1024*1024) : 0;
-
             const fillEl = document.getElementById('uploadProgressFill'); if (fillEl) fillEl.style.width = percent+'%';
             const percentEl = document.getElementById('uploadProgressPercent'); if (percentEl) percentEl.textContent = Math.round(percent)+'%';
             const speedEl = document.getElementById('uploadSpeed'); if (speedEl) speedEl.textContent = speed.toFixed(2)+' MB/s';
@@ -3519,7 +3467,6 @@
             else if (info.public_id) thumbnailUrl = 'https://res.cloudinary.com/'+CLOUDINARY_CONFIG.cloudName+'/video/upload/so_1,f_jpg/'+info.public_id+'.jpg';
             if (info.eager && info.eager.length > 2 && info.eager[2].secure_url) gifUrl = info.eager[2].secure_url;
             else if (info.public_id) gifUrl = 'https://res.cloudinary.com/'+CLOUDINARY_CONFIG.cloudName+'/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/'+info.public_id+'.gif';
-
             const videoData = {
                 title, description, url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnailUrl, gif: gifUrl,
                 publicId: info.public_id||'', format: info.format, duration: info.duration, width: info.width, height: info.height,
@@ -3557,21 +3504,17 @@
             const emptyState = document.getElementById('emptyState');
             const videoCountSpan = document.getElementById('videoCount');
             if (!container || !emptyState || !videoCountSpan) return;
-
             if (videos.length === 0) { container.innerHTML = ''; emptyState.style.display = 'block'; videoCountSpan.textContent = '0 فيديو'; return; }
             emptyState.style.display = 'none';
             videoCountSpan.textContent = videos.length + ' فيديو';
-
             container.innerHTML = videos.map(video => {
                 const duration = video.duration ? formatDuration(video.duration) : '';
                 let bgSource = video.gif; let isGif = true;
                 if (!bgSource) { bgSource = video.thumbnail; isGif = false; }
                 if (!bgSource && video.publicId) { bgSource = 'https://res.cloudinary.com/'+CLOUDINARY_CONFIG.cloudName+'/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/'+video.publicId+'.gif'; isGif = true; }
                 else if (!bgSource && video.url) { const match = video.url.match(/\/video\/upload\/(?:.+\/)?([^/.]+)/); if (match && match[1]) { bgSource = 'https://res.cloudinary.com/'+CLOUDINARY_CONFIG.cloudName+'/video/upload/so_0,eo_3,w_400,h_225,c_fill,f_gif/'+match[1]+'.gif'; isGif = true; } }
-
                 const hasExam = exams.some(e => e.videoId === video.id);
                 const adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${video.id}', '${video.publicId||''}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${video.id}')"><i class="fas fa-edit"></i> تعديل</button>` : '';
-
                 let adminExamButtons = '';
                 if (isAdmin) {
                     if (hasExam) {
@@ -3581,7 +3524,6 @@
                     }
                 }
                 const studentExamButton = (hasExam && !isAdmin) ? `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${video.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>` : '';
-
                 return `<div class="video-card" onclick="playVideo('${video.id}')"><div class="video-thumbnail">${bgSource ? '<img src="'+bgSource+'" alt="'+escapeHtml(video.title)+'" class="bg-gif" onerror="this.style.display=\'none\'; this.parentNode.querySelector(\'.fallback-icon\').style.display=\'flex\';">' : ''}<div class="fallback-icon" style="display:${bgSource?'none':'flex'}; position:absolute; z-index:2;"><i class="fas fa-film"></i></div>${isGif?'<div class="gif-badge">GIF</div>':''}${duration?'<div class="video-duration"><i class="fas fa-clock"></i> '+duration+'</div>':''}${hasExam?'<div class="gif-badge" style="background:#10b981; top:40px;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>':''}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(video.title)} ${video.size>100*1024*1024?'<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>':''}</h4>${video.description?'<div class="video-description">'+escapeHtml(video.description)+'</div>':''}${isAdmin?adminExamButtons:studentExamButton}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${video.createdAt?new Date(video.createdAt.toDate()).toLocaleDateString('ar-EG'):'الآن'}</span><span><i class="fas fa-hdd"></i> ${formatSize(video.size)}</span>${video.width?'<span><i class="fas fa-expand"></i> '+video.width+'x'+video.height+'</span>':''}</div></div></div>`;
             }).join('');
         }
@@ -3608,7 +3550,7 @@
         }
         function closeModal() { saveVideoProgress(); const player = document.getElementById('videoPlayer'); if(player) { player.pause(); player.src=''; player.poster=''; } document.getElementById('videoModal').classList.remove('active'); document.getElementById('videoQuizContainer').style.display='none'; }
 
-        // ======== تتبع المشاهدة ========
+        // ========== تتبع المشاهدة ==========
         function saveVideoProgress() {
             const player = document.getElementById('videoPlayer');
             if (!player || !player.src || player.paused) return;
@@ -3664,7 +3606,7 @@
             }
         }
 
-        // ======== دوال تسجيل الدخول والإدارة ========
+        // ========== دوال تسجيل الدخول والإدارة ==========
         function showLogin() { document.getElementById('loginModal').classList.add('active'); document.getElementById('passwordInput').value=''; setTimeout(()=>document.getElementById('passwordInput').focus(),150); }
         function closeLogin() { document.getElementById('loginModal').classList.remove('active'); }
         function doLogin() {
@@ -3713,7 +3655,7 @@
             localStorage.setItem('adminCount', count); showToast('✅ تم حفظ عدد المشرفين: '+count); closeSetAdminsModal();
         }
 
-        // ======== دوال الامتحانات مع الصور ========
+        // ========== دوال الامتحانات مع الصور ==========
         function openAddExamModal(videoId) {
             if (!isAdmin) { showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
             const select = document.getElementById('quizVideoSelect');
@@ -3869,7 +3811,6 @@
             }).then(() => { SoundEffects.delete(); showToast('✅ تم الحذف'); }).catch(err => { console.error(err); SoundEffects.error(); showToast('❌ فشل الحذف'); });
         }
 
-        // دالة عرض نتائج الامتحان للمشرف (معدلة)
         function openViewResultsModal(videoId) {
             if (!isAdmin) { showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
             const select = document.getElementById('resultsVideoSelect');
@@ -3880,7 +3821,7 @@
         }
         function closeViewResultsModal() { document.getElementById('viewResultsModal').classList.remove('active'); }
 
-        // دالة تحميل وعرض النتائج مع زر إرسال النتيجة للطالب
+        // دالة عرض نتائج الامتحان للمشرف (معدلة لعرض الهاتف بشكل بارز)
         function loadResultsForVideo() {
             const videoId = document.getElementById('resultsVideoSelect').value;
             const container = document.getElementById('resultsContainer');
@@ -3895,9 +3836,13 @@
                 const percentage = Math.round((correctCount/total)*100);
                 const resultVisible = result.resultVisible || false;
                 return `<div class="result-item">
-                    <div class="result-student-name"><i class="fas fa-user-graduate"></i> ${escapeHtml(result.studentName)}</div>
+                    <div class="result-student-name">
+                        <i class="fas fa-user-graduate"></i> ${escapeHtml(result.studentName)}
+                        <span class="result-phone" style="background:rgba(99,102,241,0.2); padding:0.3rem 0.8rem; border-radius:20px; display:inline-block; font-size:0.9rem; direction:ltr; margin-right:0.5rem; border:1px solid #6366f1;">
+                            <i class="fas fa-phone"></i> ${escapeHtml(result.studentPhone)}
+                        </span>
+                    </div>
                     <div class="result-details">
-                        <span><i class="fas fa-phone"></i> ${escapeHtml(result.studentPhone)}</span>
                         <span><i class="fas fa-calendar"></i> ${result.submittedAt?new Date(result.submittedAt.toDate()).toLocaleDateString('ar-EG'):'الآن'}</span>
                         <span><i class="fas fa-check-circle" style="color:#10b981;"></i> ${correctCount}/${total}</span>
                         <span><i class="fas fa-percentage" style="color:#6366f1;"></i> ${percentage}%</span>
@@ -3915,7 +3860,6 @@
             }).join('');
         }
 
-        // دالة إرسال النتيجة للطالب (تحديث resultVisible إلى true)
         function sendResultToStudent(resultId) {
             if (!isAdmin) {
                 SoundEffects.error();
@@ -3926,7 +3870,7 @@
                 .then(() => {
                     SoundEffects.success();
                     showToast('✅ تم إرسال النتيجة للطالب');
-                    loadResultsForVideo(); // إعادة تحميل النتائج لتحديث الواجهة
+                    loadResultsForVideo();
                 })
                 .catch(err => {
                     console.error(err);
@@ -3949,14 +3893,20 @@
             if (examTimer) { clearInterval(examTimer); examTimer=null; }
             document.getElementById('takeQuizModal').classList.remove('active'); currentExam=null; currentExamAnswers={};
         }
+
+        // دالة بدء الامتحان (معدلة لتخزين رقم الهاتف بدون مسافات)
         function startExam() {
             const studentName = document.getElementById('studentNameInput').value.trim();
             const studentPhone = document.getElementById('studentPhoneInput').value.trim();
             if (!studentName) { showToast('⚠️ أدخل اسمك أولاً'); return; }
             if (!studentPhone) { showToast('⚠️ أدخل رقم هاتفك'); return; }
+            
+            // تنظيف رقم الهاتف من المسافات
+            const cleanPhone = studentPhone.replace(/\s+/g, '');
+            
             currentExamAnswers = {};
             // التحقق من وجود نتيجة حديثة (خلال 24 ساعة) - اختياري
-            const existingResult = examResults.find(r => r.videoId===currentVideoIdForExam && r.studentName===studentName && r.studentPhone===studentPhone && r.submittedAt && (Date.now()-r.submittedAt.toDate().getTime())<24*60*60*1000);
+            const existingResult = examResults.find(r => r.videoId===currentVideoIdForExam && r.studentName===studentName && r.studentPhone===cleanPhone && r.submittedAt && (Date.now()-r.submittedAt.toDate().getTime())<24*60*60*1000);
             if (existingResult) { showToast('⚠️ لقد قمت بهذا الامتحان مؤخراً'); return; }
 
             document.getElementById('studentNameSection').style.display = 'none';
@@ -3977,16 +3927,20 @@
             if (examTimer) clearInterval(examTimer);
             examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining<=0) { clearInterval(examTimer); submitExam(); } },1000);
         }
+
         function updateExamTimer() {
             const mins = Math.floor(examTimeRemaining/60); const secs = examTimeRemaining%60; const display = mins+':'+secs.toString().padStart(2,'0');
             const timerDisplay = document.getElementById('timerDisplay'); if (timerDisplay) timerDisplay.textContent = display;
             const timerDiv = document.getElementById('quizTimer'); if (timerDiv) { if (examTimeRemaining<60) timerDiv.classList.add('warning'); else timerDiv.classList.remove('warning'); }
         }
         function selectExamAnswer(questionIdx, answerIdx) { currentExamAnswers[questionIdx] = answerIdx; }
+
+        // دالة تسليم الامتحان (معدلة لتخزين رقم الهاتف النظيف)
         function submitExam() {
             if (examTimer) { clearInterval(examTimer); examTimer=null; }
             const studentName = document.getElementById('studentNameInput').value.trim();
             const studentPhone = document.getElementById('studentPhoneInput').value.trim();
+            const cleanPhone = studentPhone.replace(/\s+/g, '');
             const totalQuestions = currentExam.questions.length;
             const answered = Object.keys(currentExamAnswers).length;
             if (answered < totalQuestions && !confirm(`لم تجب على ${totalQuestions-answered} سؤال. هل تريد التسليم؟`)) {
@@ -4005,18 +3959,19 @@
                 examId: currentExam.id, 
                 videoId: currentVideoIdForExam, 
                 studentName, 
-                studentPhone, 
+                studentPhone: cleanPhone, 
                 answers, 
                 score: correctCount, 
                 totalQuestions, 
                 percentage, 
                 submittedAt: firebase.firestore.FieldValue.serverTimestamp(), 
                 gradeSent: false,
-                resultVisible: false  // النتيجة غير ظاهرة حتى يوافق المشرف
+                resultVisible: false
             })
                 .then(() => { SoundEffects.success(); showExamResult(correctCount,totalQuestions,percentage); })
                 .catch(err => { console.error(err); SoundEffects.error(); showToast('❌ فشل التسليم'); });
         }
+
         function showExamResult(correct,total,percentage) {
             const quizSection = document.getElementById('quizSection');
             if (!quizSection) return;
@@ -4025,7 +3980,7 @@
             quizSection.innerHTML = `<div class="quiz-result"><div class="result-icon">${icon}</div><div class="result-score">${percentage}%</div><div class="result-message">${message}</div><p style="color:#aaa; margin-bottom:1rem;">إجابات صحيحة: ${correct} من ${total}</p><button class="quiz-btn" onclick="closeTakeExamModal()"><i class="fas fa-times"></i> إغلاق</button></div>`;
         }
 
-        // ======== دوال الذكاء الاصطناعي ========
+        // ========== دوال الذكاء الاصطناعي ==========
         function openTeachAICircleModal() { if (!isAdmin) { showToast('❌ هذه الصلاحية للمشرف فقط'); return; } document.getElementById('teachAICircleModal').classList.add('active'); renderAIKnowledgeList(); }
         function closeTeachAICircleModal() { document.getElementById('teachAICircleModal').classList.remove('active'); }
         function renderAIKnowledgeList() {
@@ -4103,7 +4058,7 @@
         }
         function handleAIKeyPress(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-        // ======== دوال الدردشة والحضور ========
+        // ========== دوال الدردشة والحضور ==========
         function checkUserName() {
             const stored = localStorage.getItem('falak_username');
             const storedPhone = localStorage.getItem('falak_userphone');
@@ -4131,7 +4086,6 @@
             document.getElementById('nameModal').classList.remove('active');
             document.getElementById('chatModal').classList.add('active');
             SoundEffects.join(); initPresenceSystem(); loadMessages();
-            // حفظ في قاعدة بيانات (اختياري)
             db.collection('chat_users').add({ name, phone, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error);
         }
         function loadMessages() {
@@ -4295,7 +4249,7 @@
         document.addEventListener('visibilitychange', () => { if (document.hidden) { if (userPresenceRef) userPresenceRef.delete().catch(()=>{}); } else { if (currentUser && !userPresenceRef) initPresenceSystem(); } });
         window.addEventListener('beforeunload', () => removePresence());
 
-        // ======== دوال نتيجة الامتحان الجديدة ========
+        // ========== دوال نتيجة الامتحان الجديدة ==========
         function openExamResultModal() {
             document.getElementById('examResultModal').classList.add('active');
             document.getElementById('examResultName').value = '';
@@ -4305,7 +4259,7 @@
             document.getElementById('examResultModal').classList.remove('active');
         }
 
-        // دالة التحقق من نتيجة الامتحان (تبحث في قاعدة البيانات عن نتيجة حيث resultVisible === true)
+        // دالة استعلام الطالب عن النتيجة (معدلة لتنظيف الرقم ومعالجة الأخطاء)
         function checkExamResult() {
             const name = document.getElementById('examResultName').value.trim();
             const phone = document.getElementById('examResultPhone').value.trim();
@@ -4314,17 +4268,20 @@
                 return;
             }
 
+            // تنظيف رقم الهاتف من المسافات
+            const cleanPhone = phone.replace(/\s+/g, '');
+
             // حفظ الطلب في قاعدة البيانات (للإحصاء)
             db.collection('exam-result-queries').add({
                 name,
-                phone,
+                phone: cleanPhone,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(console.error);
 
             // البحث عن نتيجة مطابقة مع resultVisible = true
             db.collection('exam_results')
                 .where('studentName', '==', name)
-                .where('studentPhone', '==', phone)
+                .where('studentPhone', '==', cleanPhone)
                 .where('resultVisible', '==', true)
                 .orderBy('submittedAt', 'desc')
                 .limit(1)
@@ -4339,12 +4296,12 @@
                     closeExamResultModal();
                 })
                 .catch(err => {
-                    console.error(err);
-                    alert('حدث خطأ أثناء البحث عن النتيجة. حاول مرة أخرى.');
+                    console.error('Error fetching exam result:', err);
+                    alert('حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً.');
                 });
         }
 
-        // ======== تهيئة الصفحة ========
+        // ========== تهيئة الصفحة ==========
         document.addEventListener('DOMContentLoaded', function () {
             loadMobileModePreference();
             loadAdminPreference();
@@ -4359,7 +4316,6 @@
             
             // تحميل إعدادات الصوت
             loadVoiceSettings();
-            // إضافة مستمع لتحميل قائمة الأصوات
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.onvoiceschanged = populateVoiceList;
             }
