@@ -17,7 +17,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* ========== CSS الأساسي (نفس الكود السابق) ========== */
+        /* ========== CSS الأساسي (كما هو سابقاً) ========== */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -711,7 +711,6 @@
             color: #666;
         }
 
-        /* حركة القمر الصناعي في حالة عدم وجود فيديوهات */
         .empty-state i.fa-satellite {
             animation: orbit 6s infinite ease-in-out;
             filter: drop-shadow(0 0 10px #6366f1);
@@ -1540,7 +1539,6 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* ========== منطقة الإدخال المُعاد تصميمها ========== */
         .chat-input-wrapper {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 30px;
@@ -2355,7 +2353,6 @@
             box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
         }
 
-        /* أنماط جديدة للصورة في السؤال */
         .question-image-preview {
             max-width: 100%;
             max-height: 200px;
@@ -2399,7 +2396,6 @@
             background: rgba(239, 68, 68, 0.4);
         }
 
-        /* أنماط جديدة لنافذة نتيجة الامتحان */
         .exam-result-modal-content {
             max-width: 400px;
         }
@@ -2431,7 +2427,6 @@
             box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
         }
 
-        /* تعديل نافذة الدردشة لإضافة حقل الهاتف */
         .name-modal-content {
             max-width: 400px;
             padding: 2rem;
@@ -3275,7 +3270,7 @@
             if (unsubscribeExamResults) unsubscribeExamResults();
             unsubscribeExamResults = db.collection('exam_results').orderBy('submittedAt','desc').onSnapshot(snapshot => {
                 examResults = []; snapshot.forEach(doc => examResults.push({ id: doc.id, ...doc.data() }));
-                console.log('Exam results loaded:', examResults); // للتتبع
+                console.log('Exam results loaded:', examResults);
             }, err => console.error('Error loading exam results:', err));
         }
 
@@ -4249,7 +4244,7 @@
         document.addEventListener('visibilitychange', () => { if (document.hidden) { if (userPresenceRef) userPresenceRef.delete().catch(()=>{}); } else { if (currentUser && !userPresenceRef) initPresenceSystem(); } });
         window.addEventListener('beforeunload', () => removePresence());
 
-        // ========== دوال نتيجة الامتحان الجديدة ==========
+        // ========== دوال نتيجة الامتحان الجديدة (معدلة لحل مشكلة الفهرس) ==========
         function openExamResultModal() {
             document.getElementById('examResultModal').classList.add('active');
             document.getElementById('examResultName').value = '';
@@ -4259,7 +4254,7 @@
             document.getElementById('examResultModal').classList.remove('active');
         }
 
-        // دالة استعلام الطالب عن النتيجة (معدلة لتنظيف الرقم ومعالجة الأخطاء)
+        // دالة استعلام الطالب عن النتيجة (معدلة بدون orderBy لتجنب الحاجة إلى فهرس)
         function checkExamResult() {
             const name = document.getElementById('examResultName').value.trim();
             const phone = document.getElementById('examResultPhone').value.trim();
@@ -4278,21 +4273,32 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(console.error);
 
-            // البحث عن نتيجة مطابقة مع resultVisible = true
+            // البحث عن نتائج مطابقة (بدون orderBy لتجنب الحاجة إلى فهرس)
             db.collection('exam_results')
                 .where('studentName', '==', name)
                 .where('studentPhone', '==', cleanPhone)
                 .where('resultVisible', '==', true)
-                .orderBy('submittedAt', 'desc')
-                .limit(1)
                 .get()
                 .then(snapshot => {
                     if (snapshot.empty) {
                         alert('لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف.');
-                    } else {
-                        const result = snapshot.docs[0].data();
-                        alert(`نتيجة الامتحان: ${result.score} من ${result.totalQuestions} (${result.percentage}%) - تهانينا ${name}!`);
+                        closeExamResultModal();
+                        return;
                     }
+                    
+                    // تحويل النتائج إلى مصفوفة وترتيبها حسب submittedAt تنازلياً يدوياً
+                    const results = [];
+                    snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
+                    
+                    // ترتيب حسب submittedAt (الأحدث أولاً)
+                    results.sort((a, b) => {
+                        const timeA = a.submittedAt ? a.submittedAt.toDate().getTime() : 0;
+                        const timeB = b.submittedAt ? b.submittedAt.toDate().getTime() : 0;
+                        return timeB - timeA;
+                    });
+                    
+                    const latestResult = results[0];
+                    alert(`نتيجة الامتحان: ${latestResult.score} من ${latestResult.totalQuestions} (${latestResult.percentage}%) - تهانينا ${name}!`);
                     closeExamResultModal();
                 })
                 .catch(err => {
