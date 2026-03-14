@@ -19,18 +19,18 @@
     <!-- السكربتات غير الأساسية تؤجل (مثل Cloudinary) -->
     <script src="https://upload-widget.cloudinary.com/global/all.js" defer></script>
 
-    <!-- سكربتات Firebase الأساسية (بدون defer لأن الكود يحتاجها فوراً) -->
+    <!-- سكربتات Firebase الأساسية (بدون defer) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <!-- أيقونات FontAwesome (نسخة CSS أسرع) -->
+    <!-- أيقونات FontAwesome (نسخة CSS) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <!-- خط Cairo -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* جميع الأنماط كما هي دون تغيير */
+        /* ========== جميع الأنماط (كما هي في ملفك الأصلي) ========== */
         :root {
             --primary: #6366f1;
             --secondary: #8b5cf6;
@@ -3048,7 +3048,11 @@
         const STORAGE_KEY = "falak_last_watched";
 
         // تهيئة Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (e) {
+            console.error("Firebase initialization error:", e);
+        }
         const db = firebase.firestore();
         const onlineUsersRef = db.collection("online_users");
 
@@ -3558,8 +3562,7 @@
                 player.addEventListener('loadedmetadata', metadataListener);
             }
             setupProgressTracking();
-            // لا نقوم بتشغيل الفيديو تلقائياً، بل نترك المستخدم يضغط على زر التشغيل
-            // player.play().catch(()=>{});
+            // لا نقوم بتشغيل الفيديو تلقائياً
         }
 
         function closeModal() { saveVideoProgress(); const player = document.getElementById('videoPlayer'); if(player) { player.pause(); player.src=''; player.poster=''; } document.getElementById('videoModal').classList.remove('active'); document.getElementById('videoQuizContainer').style.display='none'; }
@@ -4326,28 +4329,36 @@
                 });
         }
 
-        // ========== تهيئة الصفحة مع تحسين الأداء ==========
+        // ========== تهيئة الصفحة مع تحسين الأداء وإخفاء loader ==========
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) loader.classList.add('hidden');
+        }
+
+        // نضمن إخفاء loader حتى في حالة وجود أخطاء
         window.addEventListener('load', function() {
             console.log('Page fully loaded, now we can load non-critical resources');
-            // يمكن إضافة أي عمليات غير ضرورية هنا
+            hideLoader();
         });
 
+        // إذا حدث خطأ في أي مكان، نخفي loader بعد 5 ثوان كحد أقصى
+        setTimeout(hideLoader, 5000);
+
         document.addEventListener('DOMContentLoaded', function () {
-            loadMobileModePreference();
-            loadAdminPreference();
-            listenToVideosWithRetry(4);
-            listenToMaintenance();
-            loadAIKnowledgeFromFirebase();
-            loadExamsFromFirebase();
-            loadExamResultsFromFirebase();
-            initCloudinaryWidget().catch(err => console.warn('Initial widget init failed, will retry on demand', err));
-            checkUrlForShare();
-            setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 3000);
-            
-            // تحميل إعدادات الصوت
-            loadVoiceSettings();
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.onvoiceschanged = populateVoiceList;
+            try {
+                loadMobileModePreference();
+                loadAdminPreference();
+                listenToVideosWithRetry(4);
+                listenToMaintenance();
+                loadAIKnowledgeFromFirebase();
+                loadExamsFromFirebase();
+                loadExamResultsFromFirebase();
+                initCloudinaryWidget().catch(err => console.warn('Initial widget init failed, will retry on demand', err));
+                checkUrlForShare();
+                // لن نخفي loader هنا بل ننتظر load أو timeout
+            } catch (e) {
+                console.error('Initialization error:', e);
+                hideLoader(); // نخفي loader في حالة الخطأ
             }
         });
 
@@ -4386,24 +4397,5 @@
             }
         });
     </script>
-
-    <!-- تعليمات إضافة vercel.json لتحسين الكاش -->
-    <!-- 
-    ⚡ لتحسين التخزين المؤقت (Cache)، أنشئ ملفاً باسم vercel.json في المجلد الرئيسي لمشروعك، وضع فيه:
-    {
-      "headers": [
-        {
-          "source": "/(.*)",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "public, max-age=31536000, immutable"
-            }
-          ]
-        }
-      ]
-    }
-    هذا سيجعل الملفات الثابتة تُخزن في متصفح المستخدم لمدة عام كامل.
-    -->
 </body>
 </html>
