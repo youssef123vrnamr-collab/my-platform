@@ -34,32 +34,6 @@
       margin-bottom: 1rem;
       animation: spin 1s linear infinite;
     }
-
-    /* تعديل للشاشات الكبيرة جداً: جعل الحاوية تمتد لكامل العرض */
-    @media (min-width: 1400px) {
-      .container {
-        max-width: 100%;
-        width: 100%;
-        padding: 2rem 3rem;
-      }
-      .videos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-        gap: 2.5rem;
-      }
-      .hero h2 {
-        font-size: 3.5rem;
-      }
-      .hero p {
-        max-width: 800px;
-        font-size: 1.3rem;
-      }
-      .video-info {
-        padding: 2.5rem 2.5rem 3rem 2.5rem;
-      }
-      .chat-container {
-        max-width: 1200px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -81,6 +55,7 @@
       </div>
     </div>
     <div class="nav-actions">
+      <!-- تم إزالة زر تبديل وضع الهاتف/الكمبيوتر نهائياً -->
       <button class="btn btn-ghost" onclick="showLogin()" id="adminBtn"><i class="fas fa-lock"></i> دخول المشرف</button>
       <button class="btn btn-danger" onclick="logout()" style="display:none" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> خروج</button>
       <button class="maintenance-btn" onclick="openMaintenanceModal()" style="display:none" id="maintenanceBtn" title="تحديث المحتوى"><i class="fas fa-tools"></i> تحديث المحتوى</button>
@@ -645,9 +620,104 @@
     function initPresenceSystem() { if (!currentUser) return; let uid = localStorage.getItem("falak_user_id"); if (!uid) { uid = "user_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now(); localStorage.setItem("falak_user_id", uid); } userPresenceRef = onlineUsersRef.doc(uid); userPresenceRef.set({ name: currentUser, joinedAt: firebase.firestore.FieldValue.serverTimestamp(), lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); presenceInterval = setInterval(() => { userPresenceRef && userPresenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); }, 20000); listenToOnlineUsers(); }
     function removePresence() { if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; } if (userPresenceRef) { userPresenceRef.delete().catch(console.error); userPresenceRef = null; } if (onlineUnsubscribe) { onlineUnsubscribe(); onlineUnsubscribe = null; } }
     function listenToOnlineUsers() { if (onlineUnsubscribe) onlineUnsubscribe(); onlineUnsubscribe = onlineUsersRef.onSnapshot(snap => { let cutoff = Date.now() - 120000; let online = []; snap.forEach(d => { let data = d.data(); if (data.lastSeen) { let time = (typeof data.lastSeen.toDate === "function") ? data.lastSeen.toDate().getTime() : data.lastSeen.seconds ? data.lastSeen.seconds * 1000 : new Date(data.lastSeen).getTime(); if (!isNaN(time) && time > cutoff) online.push(data); } }); let count = online.length; let text = count === 0 ? "لا أحد متصل" : count === 1 ? "متصل واحد" : count === 2 ? "متصلان" : count + " متصلين"; document.getElementById("onlineCount").textContent = text; }, err => { document.getElementById("onlineCount").textContent = "خطأ في التحميل"; }); }
+
+    // دالة التحقق الجديدة من البيانات (الاسم ورقم الهاتف)
+    function validateExamInput(name, phone) {
+        // تنظيف البيانات من المسافات الزائدة في البداية والنهاية
+        name = name.trim();
+        phone = phone.trim();
+
+        // 1. التحقق من الاسم
+        if (name === "") {
+            showToast("⚠️ أدخل اسمك أولاً.");
+            return false;
+        }
+        if (name.length < 3) {
+            showToast("⚠️ الاسم يجب أن يتكون من 3 أحرف على الأقل.");
+            return false;
+        }
+        // التحقق من أن الاسم ليس مجرد أرقام
+        if (/^\d+$/.test(name)) {
+            showToast("⚠️ الاسم لا يمكن أن يكون أرقامًا فقط.");
+            return false;
+        }
+        // التحقق من أن الاسم لا يحتوي على رموز غير عادية (اختياري، لكنه مفيد)
+        if (/[^a-zA-Z\u0600-\u06FF\s]/u.test(name)) {
+            showToast("⚠️ الاسم يجب أن يحتوي على أحرف عربية أو إنجليزية فقط.");
+            return false;
+        }
+
+        // 2. التحقق من رقم الهاتف
+        if (phone === "") {
+            showToast("⚠️ أدخل رقم الهاتف أولاً.");
+            return false;
+        }
+        // إزالة أي أحرف ليست أرقامًا (مثل +, -, مسافات) قبل التحقق من الطول
+        const cleanPhone = phone.replace(/\D/g, '');
+        if (cleanPhone.length < 9 || cleanPhone.length > 15) {
+            showToast("⚠️ رقم الهاتف يجب أن يكون بين 9 و 15 رقمًا.");
+            return false;
+        }
+        if (!/^\d+$/.test(cleanPhone)) {
+            showToast("⚠️ رقم الهاتف يجب أن يحتوي على أرقام فقط.");
+            return false;
+        }
+
+        // إذا وصلنا إلى هنا، البيانات صحيحة
+        return true;
+    }
+
+    // تعديل دالة checkExamResult لإضافة التحقق الجديد
+    function checkExamResult() {
+        let name = document.getElementById("examResultName").value.trim();
+        let phone = document.getElementById("examResultPhone").value.trim();
+
+        // استخدام دالة التحقق الجديدة
+        if (!validateExamInput(name, phone)) {
+            return; // إيقاف التنفيذ إذا كانت البيانات غير صحيحة
+        }
+
+        // تنظيف رقم الهاتف من الأحرف غير الرقمية (للتخزين والاستعلام)
+        const cleanPhone = phone.replace(/\D/g, '');
+
+        // تسجيل طلب البحث (كما هو موجود في الكود الأصلي)
+        db.collection("exam-result-queries").add({
+            name: name,
+            phone: cleanPhone,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(console.error);
+
+        // البحث في قاعدة البيانات بالاسم ورقم الهاتف المنظف
+        db.collection("exam_results")
+            .where("studentName", "==", name)
+            .where("studentPhone", "==", cleanPhone) // تأكد أن رقم الهاتف في قاعدة البيانات مخزن بهذا التنسيق (بدون أحرف)
+            .where("resultVisible", "==", true)
+            .get()
+            .then(snap => {
+                if (snap.empty) {
+                    alert("لم يتم العثور على نتيجة لك بعد. يرجى التأكد من صحة البيانات أو التواصل مع المشرف.");
+                    closeExamResultModal();
+                    return;
+                }
+                let results = [];
+                snap.forEach(d => results.push({ id: d.id, ...d.data() }));
+                results.sort((a, b) => {
+                    let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0;
+                    let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0;
+                    return tb - ta;
+                });
+                let r = results[0];
+                alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`);
+                closeExamResultModal();
+            })
+            .catch(e => {
+                console.error("Error fetching exam result:", e);
+                alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً.");
+            });
+    }
+
     function openExamResultModal() { document.getElementById("examResultModal").classList.add("active"); document.getElementById("examResultName").value = ""; document.getElementById("examResultPhone").value = ""; }
     function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
-    function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
 
     function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
 
