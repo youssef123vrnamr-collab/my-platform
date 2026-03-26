@@ -419,7 +419,7 @@
     <div class="empty-state" id="emptyState" style="display: none;"><i class="fas fa-satellite"></i><h3>المكتبة فارغة</h3><p>ادخل كمشرف لرفع أول فيديو!</p></div>
   </div>
 
-  <button class="ai-chat-btn" id="aiChatBtn" title="تحدث مع الذكاء الاصطناعي (اضغط مطولاً للإعدادات)"><i class="fas fa-robot"></i></button>
+  <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
   <!-- النماذج (modals) -->
@@ -600,7 +600,24 @@
   function checkUserName() { let n = localStorage.getItem("falak_username"), p = localStorage.getItem("falak_userphone"); return !(!n || !p) && (currentUser = n, currentUserPhone = p, true); }
   function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").focus(); } }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
-  function saveUserName() { let n = document.getElementById("userNameInput").value.trim(); let p = document.getElementById("userPhoneInput").value.trim(); if (n.length < 2) { SoundEffects.error(); showToast("الاسم قصير جداً"); return; } if (!p) { SoundEffects.error(); showToast("رقم الهاتف مطلوب"); return; } currentUser = n; currentUserPhone = p; localStorage.setItem("falak_username", n); localStorage.setItem("falak_userphone", p); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: n, phone: p, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); }
+  function saveUserName() { 
+    let n = document.getElementById("userNameInput").value.trim(); 
+    let p = document.getElementById("userPhoneInput").value.trim(); 
+    if (n.length < 2) { SoundEffects.error(); showToast("الاسم قصير جداً"); return; } 
+    if (!p) { SoundEffects.error(); showToast("رقم الهاتف مطلوب"); return; } 
+    currentUser = n; 
+    currentUserPhone = p; 
+    localStorage.setItem("falak_username", n); 
+    localStorage.setItem("falak_userphone", p); 
+    document.getElementById("nameModal").classList.remove("active"); 
+    document.getElementById("chatModal").classList.add("active"); 
+    SoundEffects.join(); 
+    initPresenceSystem(); 
+    loadMessages(); 
+    // Try to save user to chat_users but don't block if fails
+    db.collection("chat_users").add({ name: n, phone: p, joinedAt: firebase.firestore.FieldValue.serverTimestamp() })
+      .catch(err => { console.warn("Could not save chat user:", err); showToast("تم حفظ بياناتك محليًا، يمكنك الدردشة الآن"); });
+  }
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i></div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في التحميل</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) html += '<div class="message-sender">' + escapeHtml(data.sender) + "</div>"; if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
