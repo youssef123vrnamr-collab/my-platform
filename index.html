@@ -475,14 +475,18 @@
   const db = firebase.firestore();
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
+  
+  // تعريف المتغيرات المفقودة
+  const onlineUsersRef = db.collection("online_users");
 
+  // باقي المتغيرات
   let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null;
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null;
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
   let progressInterval = null, metadataListener = null, lastWatchedData = null, currentUser = null, currentUserPhone = null, chatUnsubscribe = null;
   let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false;
   let currentAudio = null, currentAudioBtn = null, userPresenceRef = null, onlineUnsubscribe = null, presenceInterval = null, maintenanceTimerInterval = null, tickInterval = null;
-  let maintenanceEndTime = null, uploadStartTime = 0, lastUploadedBytes = 0, lastTime = 0, longPressTimer = null;
+  let maintenanceEndTime = null, uploadStartTime = 0, lastUploadedBytes = 0, lastTime = 0;
   let voiceSettings = { voiceURI: null, rate: 1, pitch: 1 };
   let isLoadingVideos = true;
   let googleUser = null;
@@ -496,7 +500,7 @@
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
 
-  // SoundEffects (مختصر)
+  // SoundEffects
   const SoundEffects = {
     audioContext: null,
     init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -505,7 +509,10 @@
     delete() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.setValueAtTime(400, this.audioContext.currentTime); o.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.2); g.gain.setValueAtTime(0.3, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); },
     success() { this.init(); [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => { const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = f; g.gain.setValueAtTime(0, this.audioContext.currentTime + 0.05 * i); g.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + 0.05 * i + 0.02); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05 * i + 0.15); o.start(this.audioContext.currentTime + 0.05 * i); o.stop(this.audioContext.currentTime + 0.05 * i + 0.15); }); },
     error() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.type = "sawtooth"; o.frequency.setValueAtTime(200, this.audioContext.currentTime); o.frequency.linearRampToValueAtTime(150, this.audioContext.currentTime + 0.1); g.gain.setValueAtTime(0.3, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); },
-    tick() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 600; g.gain.setValueAtTime(0.1, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.03); o.start(); o.stop(this.audioContext.currentTime + 0.03); }
+    tick() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 600; g.gain.setValueAtTime(0.1, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.03); o.start(); o.stop(this.audioContext.currentTime + 0.03); },
+    recordStart() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 1000; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1); o.start(); o.stop(this.audioContext.currentTime + 0.1); },
+    recordStop() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 500; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1); o.start(); o.stop(this.audioContext.currentTime + 0.1); },
+    join() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); }
   };
 
   // Voice functions
@@ -618,7 +625,20 @@
     db.collection("chat_users").add({ name: n, phone: p, joinedAt: firebase.firestore.FieldValue.serverTimestamp() })
       .catch(err => { console.warn("Could not save chat user:", err); showToast("تم حفظ بياناتك محليًا، يمكنك الدردشة الآن"); });
   }
-  function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i></div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في التحميل</div>'; }); }
+  function loadMessages() { 
+    let cont = document.getElementById("chatMessages"); 
+    if (!cont) return; 
+    cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; 
+    if (chatUnsubscribe) chatUnsubscribe(); 
+    chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { 
+      cont.innerHTML = ""; 
+      snap.forEach(d => displayMessage(d.id, d.data())); 
+      scrollToBottom(); 
+    }, err => { 
+      console.error("Error loading messages:", err); 
+      cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; 
+    }); 
+  }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) html += '<div class="message-sender">' + escapeHtml(data.sender) + "</div>"; if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
