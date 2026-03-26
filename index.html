@@ -20,7 +20,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* --- إعادة تعيين الهوامش وجعل الصفحة تملأ الشاشة --- */
     * {
       margin: 0;
       padding: 0;
@@ -77,11 +76,13 @@
     .loader-text{margin-top:2rem;font-size:1.3rem;color:#6366f1;animation:pulse 2s infinite}
     @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
     .navbar{background:rgba(26,16,37,.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(99,102,241,.3);padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1000;padding-top:max(1rem,env(safe-area-inset-top))}
-    .brand{display:flex;align-items:center;gap:1rem}
-    .brand-icon{width:50px;height:50px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 10px 30px rgba(99,102,241,.4);animation:glow 3s infinite}
-    @keyframes glow{0%,100%{box-shadow:0 10px 30px rgba(99,102,241,.4)}50%{box-shadow:0 10px 40px rgba(236,72,153,.6)}}
+    .brand{display:flex;flex-direction:column;align-items:center;gap:0.5rem}
+    .brand-logo{width:70px;height:70px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(99,102,241,.4);animation:glow 3s infinite;padding:0.5rem}
+    .brand-logo img{width:100%;height:100%;object-fit:contain;border-radius:50%}
+    .brand-text{text-align:center}
     .brand-text h1{font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#fff,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     .brand-text p{font-size:.85rem;color:#888}
+    @keyframes glow{0%,100%{box-shadow:0 10px 30px rgba(99,102,241,.4)}50%{box-shadow:0 10px 40px rgba(236,72,153,.6)}}
     .nav-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
     .btn{padding:.75rem 1.5rem;border:none;border-radius:12px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:600;font-size:.95rem;transition:all .3s;display:flex;align-items:center;gap:.5rem}
     .btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 5px 20px rgba(99,102,241,.4)}
@@ -135,7 +136,6 @@
     .empty-state{text-align:center;padding:6rem 2rem;color:#666}
     .empty-state i.fa-satellite{animation:orbit 6s infinite ease-in-out;filter:drop-shadow(0 0 10px #6366f1)}
     @keyframes orbit{0%{transform:rotate(0) translateX(0) translateY(0)}25%{transform:rotate(90deg) translateX(15px) translateY(-15px)}50%{transform:rotate(180deg) translateX(0) translateY(0)}75%{transform:rotate(270deg) translateX(-15px) translateY(15px)}100%{transform:rotate(360deg) translateX(0) translateY(0)}}
-    /* تعديلات النماذج لجعلها بملء الشاشة */
     .modal {
       position: fixed;
       top: 0;
@@ -444,11 +444,24 @@
       animation: fadeInUp 0.6s ease;
     }
     .landing-icon {
-      font-size: 4rem;
-      margin-bottom: 1.5rem;
+      width: 120px;
+      height: 120px;
       background: linear-gradient(135deg, #6366f1, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 10px 40px rgba(99,102,241,.4);
+      animation: glow 3s infinite;
+      overflow: hidden;
+      padding: 0.5rem;
+    }
+    .landing-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
     }
     .landing-title {
       font-size: 2rem;
@@ -487,47 +500,6 @@
     .google-btn i {
       font-size: 1.3rem;
     }
-    .admin-landing-btn {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
-      width: 100%;
-      padding: 0.9rem;
-      border-radius: 60px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      transition: 0.3s;
-      margin-top: 1rem;
-      font-family: Cairo, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-    .admin-landing-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(99,102,241,0.4);
-    }
-    .logout-google-btn {
-      background: rgba(239,68,68,0.2);
-      border: 1px solid #ef4444;
-      color: #ef4444;
-      width: 100%;
-      padding: 0.9rem;
-      border-radius: 60px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-      margin-top: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-    .logout-google-btn:hover {
-      background: rgba(239,68,68,0.4);
-      transform: translateY(-3px);
-    }
     .user-info {
       background: rgba(255,255,255,0.05);
       border-radius: 20px;
@@ -542,19 +514,21 @@
     @media (max-width:768px){
       .landing-card{padding: 2rem 1.5rem;}
       .landing-title{font-size: 1.6rem;}
+      .landing-icon{width: 90px;height: 90px;}
     }
   </style>
 </head>
 <body>
 <div class="landing-page" id="landingPage">
   <div class="landing-card">
-    <div class="landing-icon"><i class="fas fa-planet-ringed"></i></div>
+    <div class="landing-icon">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%236366f1'/%3E%3Cpath fill='white' d='M50 20 L65 35 L50 50 L35 35 Z M30 40 L45 55 L30 70 L15 55 Z M70 40 L85 55 L70 70 L55 55 Z M50 60 L65 75 L50 90 L35 75 Z'/%3E%3C/svg%3E" alt="Astronomy and space logo">
+    </div>
     <div class="landing-title">Astronomy and space</div>
     <div class="landing-sub">سجل الدخول لاستكشاف الكون</div>
     <button class="google-btn" id="googleSignInBtn"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>
-    <button class="admin-landing-btn" id="adminLandingBtn"><i class="fas fa-lock"></i> دخول المشرف</button>
     <div id="googleUserInfo" style="display: none;" class="user-info"></div>
-    <button class="logout-google-btn" id="googleLogoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من Google</button>
+    <button class="google-btn" id="googleLogoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من Google</button>
   </div>
 </div>
 
@@ -570,7 +544,9 @@
 
   <nav class="navbar">
     <div class="brand">
-      <div class="brand-icon"><i class="fas fa-planet-ringed"></i></div>
+      <div class="brand-logo">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%236366f1'/%3E%3Cpath fill='white' d='M50 20 L65 35 L50 50 L35 35 Z M30 40 L45 55 L30 70 L15 55 Z M70 40 L85 55 L70 70 L55 55 Z M50 60 L65 75 L50 90 L35 75 Z'/%3E%3C/svg%3E" alt="Astronomy and space logo">
+      </div>
       <div class="brand-text">
         <h1>Astronomy and space</h1>
         <p>Cloud Version ☁️</p>
@@ -711,7 +687,7 @@
   const LONG_PRESS_DURATION = 500;
   let voiceSettings = { voiceURI: null, rate: 1, pitch: 1 };
   let isLoadingVideos = true;
-  let googleUser = null; // حفظ معلومات مستخدم جوجل
+  let googleUser = null;
 
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
   const firebaseConfig = { apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU", authDomain: "planning-with-ai-390af.firebaseapp.com", projectId: "planning-with-ai-390af", storageBucket: "planning-with-ai-390af.firebasestorage.app", messagingSenderId: "601755857673", appId: "1:601755857673:web:b9d7d63e13035412a819d8" };
@@ -852,7 +828,6 @@
   function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
 
-  // Google Auth functions
   const provider = new firebase.auth.GoogleAuthProvider();
   function googleLogin() {
     firebase.auth().signInWithPopup(provider).then(result => {
@@ -926,7 +901,6 @@
         initCloudinaryWidget();
         checkUrlForShare();
       } else if (!user && !isAdmin) {
-        // غير مسجل دخول، اعرض landing
         document.getElementById("landingPage").style.display = "flex";
         document.getElementById("appWrapper").style.display = "none";
         googleUser = null;
@@ -953,16 +927,14 @@
     hideLoader();
     requestFullscreenAutomatically();
     setTimeout(requestFullscreenAutomatically, 1000);
-    initAuthState(); // بدء مراقبة حالة تسجيل الدخول
+    initAuthState();
     document.getElementById("googleSignInBtn").onclick = googleLogin;
     document.getElementById("googleLogoutBtn").onclick = googleLogout;
     document.getElementById("googleLogoutNavBtn").onclick = googleLogout;
-    document.getElementById("adminLandingBtn").onclick = showLogin;
   });
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() {
     try {
-      // No need to load content directly, auth state will handle it
     } catch (e) { console.error("Initialization error:", e); hideLoader(); }
   });
   window.addEventListener("unload", function() {
