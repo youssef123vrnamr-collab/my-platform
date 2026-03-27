@@ -38,8 +38,8 @@
     @keyframes pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
     .navbar { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(99,102,241,.3); padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; padding-top: max(0.75rem, env(safe-area-inset-top)); }
     .brand { display: flex; align-items: center; gap: 1rem; }
-    .brand-logo { width: 70px; height: 70px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; padding: 0.25rem; text-align: center; font-weight: 900; font-size: 0.7rem; color: #fff; line-height: 1.2; text-transform: uppercase; }
-    .brand-logo span { display: block; font-size: 0.65rem; }
+    .brand-logo { width: 70px; height: 70px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
+    .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .brand-text p { font-size: .85rem; color: #888; }
@@ -305,8 +305,8 @@
     .landing-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); display: flex; align-items: center; justify-content: center; z-index: 100000; backdrop-filter: blur(8px); }
     .landing-card { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-radius: 40px; padding: 3rem 2rem; text-align: center; max-width: 500px; width: 90%; border: 1px solid rgba(99,102,241,.5); box-shadow: 0 25px 50px rgba(0,0,0,.5); animation: fadeInUp 0.6s ease; }
     .landing-header { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .landing-icon { width: 90px; height: 90px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(99,102,241,.4); animation: glow 3s infinite; padding: 0.25rem; font-weight: 900; font-size: 0.7rem; color: #fff; text-align: center; line-height: 1.2; text-transform: uppercase; }
-    .landing-icon span { display: block; font-size: 0.65rem; }
+    .landing-icon { width: 90px; height: 90px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
+    .landing-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .landing-title { font-size: 2rem; font-weight: 900; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
     .landing-sub { color: #aaa; margin-bottom: 2rem; }
     .google-btn { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; padding: 0.9rem; border-radius: 60px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; transition: 0.3s; margin-bottom: 1rem; font-family: 'Cairo', sans-serif; }
@@ -319,7 +319,7 @@
 <div class="landing-page" id="landingPage">
   <div class="landing-card">
     <div class="landing-header">
-      <div class="landing-icon"><span>ASTRONOMY<br>AND<br>SPACE</span></div>
+      <div class="landing-icon"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
       <div class="landing-title">Astronomy and space</div>
     </div>
     <div class="landing-sub">سجل الدخول لاستكشاف الكون</div>
@@ -335,7 +335,7 @@
 
   <nav class="navbar">
     <div class="brand">
-      <div class="brand-logo"><span>ASTRONOMY<br>AND<br>SPACE</span></div>
+      <div class="brand-logo"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
       <div class="brand-text"><h1>Astronomy and space</h1><p>Cloud Version ☁️</p></div>
     </div>
     <div class="nav-actions">
@@ -525,7 +525,13 @@
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
   // Admin & UI
-  function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; updateStorageBar(); loadAIKnowledgeFromFirebase(); const a = document.getElementById("cancelMaintenanceBtn"); a && document.getElementById("maintenanceOverlay")?.classList.contains("active") && a.classList.add("active"); } }
+  function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; updateStorageBar(); loadAIKnowledgeFromFirebase(); const a = document.getElementById("cancelMaintenanceBtn"); a && document.getElementById("maintenanceOverlay")?.classList.contains("active") && a.classList.add("active"); updateGoogleLogoutButtonsVisibility(); } }
+  function updateGoogleLogoutButtonsVisibility() {
+    const googleLogoutLanding = document.getElementById("googleLogoutBtn");
+    const googleLogoutNav = document.getElementById("googleLogoutNavBtn");
+    if (googleLogoutLanding) googleLogoutLanding.style.display = (!isAdmin && googleUser) ? "block" : "none";
+    if (googleLogoutNav) googleLogoutNav.style.display = (!isAdmin && googleUser) ? "flex" : "none";
+  }
   function listenToVideosWithRetry(maxAttempts = 4) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "desc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
@@ -564,8 +570,8 @@
   function checkUrlForShare() { let params = new URLSearchParams(window.location.search); let vid = params.get("video"); let t = params.get("t"); if (vid && videos.length > 0) { if (videos.find(v => v.id === vid)) { window.history.replaceState({}, document.title, window.location.href.split("?")[0]); playVideo(vid, parseInt(t) || 0); } else showToast("❌ الفيديو غير موجود"); } }
   function showLogin() { document.getElementById("loginModal").classList.add("active"); document.getElementById("passwordInput").value = ""; setTimeout(() => document.getElementById("passwordInput").focus(), 150); }
   function closeLogin() { document.getElementById("loginModal").classList.remove("active"); }
-  function doLogin() { if (document.getElementById("passwordInput").value.trim() === ADMIN_PASS) { isAdmin = true; localStorage.setItem("falak_admin", "true"); document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; updateStorageBar(); closeLogin(); renderVideos(); loadAIKnowledgeFromFirebase(); if (document.getElementById("maintenanceOverlay").classList.contains("active")) document.getElementById("cancelMaintenanceBtn").classList.add("active"); SoundEffects.success(); showToast("🔓 مرحباً أيها المشرف!"); } else { SoundEffects.error(); showToast("❌ كلمة المرور خاطئة"); document.getElementById("passwordInput").value = ""; document.getElementById("passwordInput").focus(); } }
-  function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); document.getElementById("uploadZone").classList.remove("active"); document.getElementById("storageBar").style.display = "none"; document.getElementById("adminBtn").style.display = "flex"; document.getElementById("logoutBtn").style.display = "none"; document.getElementById("maintenanceBtn").style.display = "none"; document.getElementById("setAdminsBtn").style.display = "none"; document.getElementById("teachAICircleBtn").style.display = "none"; document.getElementById("cancelMaintenanceBtn").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); }
+  function doLogin() { if (document.getElementById("passwordInput").value.trim() === ADMIN_PASS) { isAdmin = true; localStorage.setItem("falak_admin", "true"); document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; updateStorageBar(); closeLogin(); renderVideos(); loadAIKnowledgeFromFirebase(); if (document.getElementById("maintenanceOverlay").classList.contains("active")) document.getElementById("cancelMaintenanceBtn").classList.add("active"); SoundEffects.success(); showToast("🔓 مرحباً أيها المشرف!"); updateGoogleLogoutButtonsVisibility(); } else { SoundEffects.error(); showToast("❌ كلمة المرور خاطئة"); document.getElementById("passwordInput").value = ""; document.getElementById("passwordInput").focus(); } }
+  function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); document.getElementById("uploadZone").classList.remove("active"); document.getElementById("storageBar").style.display = "none"; document.getElementById("adminBtn").style.display = "flex"; document.getElementById("logoutBtn").style.display = "none"; document.getElementById("maintenanceBtn").style.display = "none"; document.getElementById("setAdminsBtn").style.display = "none"; document.getElementById("teachAICircleBtn").style.display = "none"; document.getElementById("cancelMaintenanceBtn").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); updateGoogleLogoutButtonsVisibility(); }
   function openSetAdminsModal() { isAdmin && (document.getElementById("adminPasswordModal").classList.add("active"), document.getElementById("adminPasswordInput").value = "", document.getElementById("adminPasswordInput").focus()); }
   function closeAdminPasswordModal() { document.getElementById("adminPasswordModal").classList.remove("active"); }
   function verifyAdminPassword() { if (document.getElementById("adminPasswordInput").value.trim() === SUPER_ADMIN_PASS) { isSuperAdmin = true; closeAdminPasswordModal(); document.getElementById("setAdminsModal").classList.add("active"); let c = localStorage.getItem("adminCount"); c && (document.getElementById("adminCountInput").value = c); SoundEffects.success(); } else { SoundEffects.error(); showToast("❌ كلمة المرور غير صحيحة"); document.getElementById("adminPasswordInput").value = ""; document.getElementById("adminPasswordInput").focus(); } }
@@ -678,6 +684,7 @@
       document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`;
       document.getElementById("googleLogoutBtn").style.display = "block";
       document.getElementById("googleLogoutNavBtn").style.display = "flex";
+      updateGoogleLogoutButtonsVisibility();
       SoundEffects.join();
       loadAdminPreference();
       listenToVideosWithRetry();
@@ -708,6 +715,7 @@
       if (isAdmin) logout();
       SoundEffects.recordStop();
       showToast("👋 تم تسجيل الخروج من Google");
+      updateGoogleLogoutButtonsVisibility();
     }).catch(e => {
       console.error(e);
       SoundEffects.error();
@@ -728,6 +736,7 @@
         document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`;
         document.getElementById("googleLogoutBtn").style.display = "block";
         document.getElementById("googleLogoutNavBtn").style.display = "flex";
+        updateGoogleLogoutButtonsVisibility();
         loadAdminPreference();
         listenToVideosWithRetry();
         listenToMaintenance();
@@ -744,6 +753,7 @@
         currentUserPhone = null;
         localStorage.removeItem("falak_username");
         localStorage.removeItem("falak_userphone");
+        updateGoogleLogoutButtonsVisibility();
       }
     });
   }
