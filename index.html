@@ -108,7 +108,6 @@
     .modal-share:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
     .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0; background: #000; }
-    /* Video custom controls */
     .video-controls-bar { display: flex; gap: 1rem; align-items: center; justify-content: flex-start; flex-wrap: wrap; background: rgba(0,0,0,0.6); padding: 0.75rem 1rem; border-radius: 50px; margin-top: 1rem; backdrop-filter: blur(8px); }
     .video-controls-bar button, .video-speed-select { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 30px; padding: 0.4rem 1rem; font-family: 'Cairo', sans-serif; font-size: 0.9rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
     .video-controls-bar button:hover, .video-speed-select:hover { background: #6366f1; border-color: #6366f1; transform: scale(1.02); }
@@ -752,14 +751,37 @@
         initCloudinaryWidget();
         checkUrlForShare();
       } else if (!user && !isAdmin) {
-        document.getElementById("landingPage").style.display = "flex";
-        document.getElementById("appWrapper").style.display = "none";
-        googleUser = null;
-        currentUser = null;
-        currentUserPhone = null;
-        localStorage.removeItem("falak_username");
-        localStorage.removeItem("falak_userphone");
-        updateGoogleLogoutButtonsVisibility();
+        // If no Google user, check local storage for name/phone
+        let localName = localStorage.getItem("falak_username");
+        let localPhone = localStorage.getItem("falak_userphone");
+        if (localName && localPhone) {
+          currentUser = localName;
+          currentUserPhone = localPhone;
+          document.getElementById("landingPage").style.display = "none";
+          document.getElementById("appWrapper").style.display = "flex";
+          // No need to show google user info because not logged in via Google
+          document.getElementById("googleUserInfo").style.display = "none";
+          document.getElementById("googleLogoutBtn").style.display = "none";
+          document.getElementById("googleLogoutNavBtn").style.display = "none";
+          loadAdminPreference();
+          listenToVideosWithRetry();
+          listenToMaintenance();
+          loadAIKnowledgeFromFirebase();
+          loadExamsFromFirebase();
+          loadExamResultsFromFirebase();
+          initCloudinaryWidget();
+          checkUrlForShare();
+        } else {
+          // No local data either, show landing page
+          document.getElementById("landingPage").style.display = "flex";
+          document.getElementById("appWrapper").style.display = "none";
+          googleUser = null;
+          currentUser = null;
+          currentUserPhone = null;
+          localStorage.removeItem("falak_username");
+          localStorage.removeItem("falak_userphone");
+          updateGoogleLogoutButtonsVisibility();
+        }
       }
     });
   }
