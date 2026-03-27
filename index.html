@@ -107,7 +107,7 @@
     .modal-share { width: 40px; height: 40px; border: none; background: rgba(16,185,129,.2); color: #10b981; border-radius: 10px; cursor: pointer; transition: all .3s; font-size: 1.2rem; }
     .modal-share:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
-    .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); background: #000; margin-bottom: 1rem; }
+    .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 0; }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
     .toast.show { display: block; }
@@ -313,11 +313,6 @@
     .google-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .user-info { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 0.75rem 1rem; margin-top: 1rem; font-size: 0.9rem; color: #ccc; display: inline-flex; align-items: center; gap: 0.5rem; }
     @media (max-width:768px) { .landing-card { padding: 2rem 1.5rem; } .landing-title { font-size: 1.6rem; } .landing-icon { width: 70px; height: 70px; } .landing-header { gap: 1rem; } }
-
-    /* Video speed control styles */
-    .video-controls-container { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0 1rem 0; flex-wrap: wrap; }
-    .speed-select { background: rgba(0,0,0,0.6); border: 1px solid #6366f1; border-radius: 20px; padding: 0.4rem 1rem; color: #fff; font-family: 'Cairo', sans-serif; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
-    .speed-select:hover { background: #6366f1; border-color: #fff; }
   </style>
 </head>
 <body>
@@ -436,7 +431,7 @@
 
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video><div class="video-controls-container"><label for="speedControl" style="color:#ccc;">السرعة: </label><select id="speedControl" class="speed-select" onchange="changeVideoSpeed(this.value)"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
+  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video><div id="videoQuizContainer" style="display:none"></div></div></div></div>
 
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-lock"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body"><input id="passwordInput" placeholder="اكتب كلمة المرور هنا..." type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)doLogin()"><button class="btn btn-primary" onclick="doLogin()" style="width:100%"><i class="fas fa-sign-in-alt"></i> دخول</button><button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button></div></div></div>
 
@@ -476,23 +471,10 @@
     messagingSenderId: "601755857673",
     appId: "1:601755857673:web:b9d7d63e13035412a819d8"
   };
-  // Initialize Firebase
-  let firebaseApp;
-  try {
-    if (!firebase.apps.length) {
-      firebaseApp = firebase.initializeApp(firebaseConfig);
-      console.log("Firebase initialized");
-    } else {
-      firebaseApp = firebase.app();
-    }
-  } catch(e) { 
-    console.error("Firebase init error:", e);
-    alert("⚠️ حدث خطأ في تهيئة قاعدة البيانات. الرجاء تحديث الصفحة.");
-  }
+  try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error(e); }
   const db = firebase.firestore();
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
   
   // تعريف المتغيرات المفقودة
   const onlineUsersRef = db.collection("online_users");
@@ -577,7 +559,7 @@
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
   function renderVideos() { let container = document.getElementById("videosContainer"); let empty = document.getElementById("emptyState"); let loading = document.getElementById("loadingIndicator"); let countSpan = document.getElementById("videoCount"); if (!container || !empty || !countSpan || !loading) return; if (isLoadingVideos) { container.innerHTML = ""; empty.style.display = "none"; loading.style.display = "block"; countSpan.textContent = "0 فيديو"; return; } loading.style.display = "none"; if (videos.length === 0) { container.innerHTML = ""; empty.style.display = "block"; countSpan.textContent = "0 فيديو"; return; } empty.style.display = "none"; countSpan.textContent = videos.length + " فيديو"; container.innerHTML = videos.map(v => { let duration = v.duration ? formatDuration(v.duration) : ""; let thumb = v.thumbnail; if (!thumb && v.publicId) thumb = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + v.publicId + ".jpg"; let hasExam = exams.some(e => e.videoId === v.id); let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button>` : ""; let privateBadge = v.private ? '<div class="private-badge"><i class="fas fa-lock"></i> خاص</div>' : ""; let examButtons = ""; if (isAdmin) { if (hasExam) examButtons = `<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"><button class="quiz-btn" onclick="event.stopPropagation(); openAddExamModal('${v.id}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="fas fa-edit"></i> تعديل الامتحان</button><button class="delete-quiz-btn" onclick="event.stopPropagation(); deleteExam('${v.id}')"><i class="fas fa-trash"></i> حذف الامتحان</button><button class="view-results-btn" onclick="event.stopPropagation(); openViewResultsModal('${v.id}')"><i class="fas fa-chart-bar"></i> نتائج الامتحانات</button></div>`; else examButtons = `<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"><button class="quiz-btn" onclick="event.stopPropagation(); openAddExamModal('${v.id}')" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fas fa-plus-circle"></i> إضافة امتحان</button><button class="view-results-btn" onclick="event.stopPropagation(); openViewResultsModal('${v.id}')"><i class="fas fa-chart-bar"></i> نتائج الامتحانات</button></div>`; } else { if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; } } let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : ""; return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas fa-film"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ""}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span><span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`; }).join(""); }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
-  function playVideo(id, startTime = 0) { let v = videos.find(v => v.id === id); if (!v) return; if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; } document.getElementById("modalTitle").innerHTML = '<i class="fas fa-play-circle"></i> <span>' + escapeHtml(v.title) + "</span>"; let player = document.getElementById("videoPlayer"); player.preload = "none"; player.poster = v.thumbnail || ""; player.src = v.url; document.getElementById("videoModal").classList.add("active"); let quizContainer = document.getElementById("videoQuizContainer"); if (exams.some(e => e.videoId === id)) { quizContainer.style.display = "block"; quizContainer.innerHTML = `<div style="padding:2rem; text-align:center; background:rgba(16,185,129,0.1); border-top:1px solid rgba(16,185,129,0.3);"><h3 style="color:#10b981; margin-bottom:1rem;"><i class="fas fa-clipboard-check"></i> يوجد امتحان لهذا الفيديو</h3><p style="color:#aaa; margin-bottom:1.5rem;">اختبر فهمك لمشاهدتك من خلال امتحان تفاعلي</p><button class="quiz-btn" onclick="closeModal(); setTimeout(()=>openTakeExamModal('${id}'),300);"><i class="fas fa-play-circle"></i> دخول الامتحان الآن</button></div>`; } else { quizContainer.style.display = "none"; quizContainer.innerHTML = ""; } if (metadataListener && player) player.removeEventListener("loadedmetadata", metadataListener); if (startTime > 0 && player) { metadataListener = function () { player.currentTime = startTime; player.removeEventListener("loadedmetadata", metadataListener); metadataListener = null; }; player.addEventListener("loadedmetadata", metadataListener); } setupProgressTracking(); // Reset speed selection to normal when new video loads player.onloadedmetadata = () => { document.getElementById("speedControl").value = "1"; player.playbackRate = 1; }; }
+  function playVideo(id, startTime = 0) { let v = videos.find(v => v.id === id); if (!v) return; if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; } document.getElementById("modalTitle").innerHTML = '<i class="fas fa-play-circle"></i> <span>' + escapeHtml(v.title) + "</span>"; let player = document.getElementById("videoPlayer"); player.preload = "none"; player.poster = v.thumbnail || ""; player.src = v.url; document.getElementById("videoModal").classList.add("active"); let quizContainer = document.getElementById("videoQuizContainer"); if (exams.some(e => e.videoId === id)) { quizContainer.style.display = "block"; quizContainer.innerHTML = `<div style="padding:2rem; text-align:center; background:rgba(16,185,129,0.1); border-top:1px solid rgba(16,185,129,0.3);"><h3 style="color:#10b981; margin-bottom:1rem;"><i class="fas fa-clipboard-check"></i> يوجد امتحان لهذا الفيديو</h3><p style="color:#aaa; margin-bottom:1.5rem;">اختبر فهمك لمشاهدتك من خلال امتحان تفاعلي</p><button class="quiz-btn" onclick="closeModal(); setTimeout(()=>openTakeExamModal('${id}'),300);"><i class="fas fa-play-circle"></i> دخول الامتحان الآن</button></div>`; } else { quizContainer.style.display = "none"; quizContainer.innerHTML = ""; } if (metadataListener && player) player.removeEventListener("loadedmetadata", metadataListener); if (startTime > 0 && player) { metadataListener = function () { player.currentTime = startTime; player.removeEventListener("loadedmetadata", metadataListener); metadataListener = null; }; player.addEventListener("loadedmetadata", metadataListener); } setupProgressTracking(); }
   function closeModal() { saveVideoProgress(); let p = document.getElementById("videoPlayer"); p && (p.pause(), p.src = "", p.poster = ""); document.getElementById("videoModal").classList.remove("active"); document.getElementById("videoQuizContainer").style.display = "none"; }
   function saveVideoProgress() { let p = document.getElementById("videoPlayer"); if (!p || !p.src || p.paused) return; let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); v && localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() })); }
   function checkForResume() { let d = localStorage.getItem(STORAGE_KEY); if (!d) return; try { lastWatchedData = JSON.parse(d); if (!videos.some(v => v.id === lastWatchedData.videoId)) { localStorage.removeItem(STORAGE_KEY); return; } if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; } document.getElementById("resumeVideoTitle").textContent = lastWatchedData.title; document.getElementById("resumeTimeDisplay").textContent = "توقفت عند: " + formatDuration(lastWatchedData.currentTime); document.getElementById("resumeNotification").style.display = "flex"; } catch (e) { localStorage.removeItem(STORAGE_KEY); } }
@@ -688,14 +670,9 @@
   function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
 
-  // Video speed control function
-  function changeVideoSpeed(speed) { let video = document.getElementById("videoPlayer"); if (video) { video.playbackRate = parseFloat(speed); } }
-
   // Google Auth functions
   function googleLogin() {
-    console.log("Google login clicked");
     auth.signInWithPopup(provider).then(result => {
-      console.log("Google sign-in success", result.user);
       googleUser = result.user;
       currentUser = googleUser.displayName;
       currentUserPhone = googleUser.phoneNumber || "";
@@ -718,13 +695,9 @@
       initCloudinaryWidget();
       checkUrlForShare();
     }).catch(error => {
-      console.error("Google sign-in error:", error);
-      if (error.code === "auth/popup-blocked") {
-        showToast("⚠️ تم حظر النافذة المنبثقة. الرجاء السماح بالنوافذ المنبثقة لهذا الموقع.");
-      } else {
-        SoundEffects.error();
-        showToast("❌ فشل تسجيل الدخول بحساب Google: " + (error.message || "خطأ غير معروف"));
-      }
+      console.error(error);
+      SoundEffects.error();
+      showToast("❌ فشل تسجيل الدخول بحساب Google");
     });
   }
   function googleLogout() {
@@ -801,13 +774,7 @@
     requestFullscreenAutomatically();
     setTimeout(requestFullscreenAutomatically, 1000);
     initAuthState();
-    const signInBtn = document.getElementById("googleSignInBtn");
-    if (signInBtn) {
-      signInBtn.onclick = googleLogin;
-      console.log("Google sign-in button attached");
-    } else {
-      console.error("Google sign-in button not found");
-    }
+    document.getElementById("googleSignInBtn").onclick = googleLogin;
     document.getElementById("googleLogoutBtn").onclick = googleLogout;
     document.getElementById("googleLogoutNavBtn").onclick = googleLogout;
   });
