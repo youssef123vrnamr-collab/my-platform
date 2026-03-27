@@ -313,6 +313,47 @@
     .google-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .user-info { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 0.75rem 1rem; margin-top: 1rem; font-size: 0.9rem; color: #ccc; display: inline-flex; align-items: center; gap: 0.5rem; }
     @media (max-width:768px) { .landing-card { padding: 2rem 1.5rem; } .landing-title { font-size: 1.6rem; } .landing-icon { width: 70px; height: 70px; } .landing-header { gap: 1rem; } }
+
+    /* ===== Landing page - saved info badge ===== */
+    .landing-saved-badge { color:#10b981; font-size:.82rem; margin-bottom:.5rem; text-align:center; display:none; }
+
+    /* ===== مشغل الفيديو المحسّن ===== */
+    .video-modal-full { background:#070412 !important; }
+    .video-modal-header { background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(236,72,153,.15)) !important; border-bottom:1px solid rgba(99,102,241,.4) !important; }
+    .video-modal-body { padding:0 !important; display:flex; flex-direction:column; background:#070412; }
+    .video-player-wrapper { width:100%; display:flex; flex-direction:column; align-items:center; background:#000; padding:1.2rem 1.2rem 0 1.2rem; }
+    .video-glow-border { width:100%; border-radius:18px; overflow:hidden; background:#000; position:relative;
+      box-shadow:0 0 0 3px rgba(99,102,241,.6), 0 0 50px rgba(99,102,241,.3), 0 0 100px rgba(236,72,153,.15);
+      animation:videoGlow 4s ease-in-out infinite; }
+    @keyframes videoGlow { 0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.6),0 0 50px rgba(99,102,241,.3),0 0 100px rgba(236,72,153,.15);}
+      50%{box-shadow:0 0 0 3px rgba(236,72,153,.7),0 0 50px rgba(236,72,153,.35),0 0 100px rgba(99,102,241,.2);} }
+    .video-glow-border video { width:100%; max-height:62vh; display:block; background:#000; border-radius:16px; }
+    /* شريط التحكم */
+    .video-controls-bar { width:100%; display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+      padding:.9rem 1.2rem 1.2rem; flex-wrap:wrap; background:linear-gradient(to bottom,#000,#070412); }
+    .vc-group { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+    .vc-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.15rem;
+      padding:.5rem .7rem; background:rgba(99,102,241,.15); border:1px solid rgba(99,102,241,.35);
+      border-radius:10px; color:#c4b5fd; font-size:.75rem; font-family:'Cairo',sans-serif; cursor:pointer; transition:all .2s; }
+    .vc-btn:hover { background:rgba(99,102,241,.35); color:#fff; transform:translateY(-2px); }
+    .vc-btn i { font-size:1rem; }
+    .vc-btn span { font-size:.68rem; color:#888; }
+    .vc-fullscreen-btn { background:rgba(236,72,153,.15); border-color:rgba(236,72,153,.35); color:#f9a8d4; }
+    .vc-fullscreen-btn:hover { background:rgba(236,72,153,.35); color:#fff; }
+    .vc-speed-group { flex-direction:column; align-items:flex-start; gap:.35rem; }
+    .vc-label { font-size:.78rem; color:#888; display:flex; align-items:center; gap:.3rem; }
+    .vc-label i { color:#6366f1; }
+    .vc-speed-btns { display:flex; gap:.3rem; flex-wrap:wrap; }
+    .vc-speed-btn { padding:.35rem .65rem; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+      border-radius:20px; color:#aaa; font-size:.78rem; font-family:'Cairo',sans-serif; cursor:pointer; transition:all .2s; }
+    .vc-speed-btn:hover { background:rgba(99,102,241,.3); color:#fff; border-color:rgba(99,102,241,.5); }
+    .vc-speed-btn.active { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border-color:#6366f1; font-weight:700; }
+    @media (max-width:768px) {
+      .video-glow-border video { max-height:45vw; }
+      .video-controls-bar { padding:.6rem .75rem .9rem; gap:.5rem; }
+      .vc-speed-btn { padding:.28rem .5rem; font-size:.72rem; }
+      .vc-btn { padding:.45rem .55rem; }
+    }
   </style>
 </head>
 <body>
@@ -323,6 +364,13 @@
       <div class="landing-title">Astronomy and space</div>
     </div>
     <div class="landing-sub">سجل الدخول لاستكشاف الكون</div>
+    <div class="name-input-group" style="margin-bottom:1.2rem;">
+      <input class="name-input" id="landingNameInput" placeholder="🙍 اسمك الكامل" maxlength="50" autocomplete="name"
+        oninput="saveLandingUserInfo()" style="margin-bottom:.6rem; font-size:1rem;">
+      <input class="phone-input" id="landingPhoneInput" placeholder="📞 رقم هاتفك" maxlength="20" type="tel" autocomplete="tel"
+        oninput="saveLandingUserInfo()" style="font-size:1rem;">
+      <div id="landingSavedBadge" class="landing-saved-badge"><i class="fas fa-check-circle"></i> تم حفظ بياناتك تلقائياً</div>
+    </div>
     <button class="google-btn" id="googleSignInBtn"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>
     <div id="googleUserInfo" style="display: none;" class="user-info"></div>
     <button class="google-btn" id="googleLogoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من Google</button>
@@ -431,7 +479,58 @@
 
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video><div id="videoQuizContainer" style="display:none"></div></div></div></div>
+  <div class="modal video-modal-full" id="videoModal">
+    <div class="modal-content video-modal-full" style="display:flex;flex-direction:column;">
+      <div class="modal-header video-modal-header">
+        <div class="modal-header-left">
+          <h3 id="modalTitle"><i class="fas fa-play-circle" style="color:#6366f1"></i> <span>عنوان الفيديو</span></h3>
+          <button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button>
+        </div>
+        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body video-modal-body">
+        <div class="video-player-wrapper">
+          <div class="video-glow-border">
+            <video class="video-player" id="videoPlayer" playsinline preload="none" controls></video>
+          </div>
+          <!-- شريط التحكم المخصص -->
+          <div class="video-controls-bar">
+            <div class="vc-group">
+              <button class="vc-btn" onclick="seekVideo(-10)" title="رجوع 10 ثواني">
+                <i class="fas fa-backward"></i><span>10s</span>
+              </button>
+              <button class="vc-btn" onclick="seekVideo(-5)" title="رجوع 5 ثواني">
+                <i class="fas fa-step-backward"></i><span>5s</span>
+              </button>
+            </div>
+            <div class="vc-group vc-speed-group">
+              <span class="vc-label"><i class="fas fa-tachometer-alt"></i> سرعة التشغيل</span>
+              <div class="vc-speed-btns">
+                <button class="vc-speed-btn" onclick="setSpeed(0.5)">0.5x</button>
+                <button class="vc-speed-btn" onclick="setSpeed(0.75)">0.75x</button>
+                <button class="vc-speed-btn active" id="vcSpeedActive" onclick="setSpeed(1)">1x</button>
+                <button class="vc-speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+                <button class="vc-speed-btn" onclick="setSpeed(1.5)">1.5x</button>
+                <button class="vc-speed-btn" onclick="setSpeed(2)">2x</button>
+              </div>
+            </div>
+            <div class="vc-group">
+              <button class="vc-btn" onclick="seekVideo(5)" title="تقديم 5 ثواني">
+                <i class="fas fa-step-forward"></i><span>5s</span>
+              </button>
+              <button class="vc-btn" onclick="seekVideo(10)" title="تقديم 10 ثواني">
+                <i class="fas fa-forward"></i><span>10s</span>
+              </button>
+              <button class="vc-btn vc-fullscreen-btn" onclick="toggleVideoFullscreen()" title="ملء الشاشة">
+                <i class="fas fa-expand"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="videoQuizContainer" style="display:none"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-lock"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body"><input id="passwordInput" placeholder="اكتب كلمة المرور هنا..." type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)doLogin()"><button class="btn btn-primary" onclick="doLogin()" style="width:100%"><i class="fas fa-sign-in-alt"></i> دخول</button><button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button></div></div></div>
 
@@ -672,10 +771,17 @@
 
   // Google Auth functions
   function googleLogin() {
+    // قبل الدخول: احفظ الاسم والهاتف اللي كتبهم المستخدم في الـ landing
+    let landingName = (document.getElementById("landingNameInput")?.value || "").trim();
+    let landingPhone = (document.getElementById("landingPhoneInput")?.value || "").trim();
+    if (landingName) localStorage.setItem("falak_username", landingName);
+    if (landingPhone) localStorage.setItem("falak_userphone", landingPhone);
+
     auth.signInWithPopup(provider).then(result => {
       googleUser = result.user;
-      currentUser = googleUser.displayName;
-      currentUserPhone = googleUser.phoneNumber || "";
+      // استخدم اسم Google أو الاسم اللي كتبه
+      currentUser = landingName || googleUser.displayName;
+      currentUserPhone = landingPhone || googleUser.phoneNumber || "";
       localStorage.setItem("falak_username", currentUser);
       localStorage.setItem("falak_userphone", currentUserPhone);
       document.getElementById("landingPage").style.display = "none";
@@ -777,6 +883,8 @@
     document.getElementById("googleSignInBtn").onclick = googleLogin;
     document.getElementById("googleLogoutBtn").onclick = googleLogout;
     document.getElementById("googleLogoutNavBtn").onclick = googleLogout;
+    // استرجاع الاسم والهاتف المحفوظين
+    loadLandingUserInfo();
   });
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() {
@@ -818,6 +926,76 @@
       if (document.getElementById("callModal")?.classList.contains("active")) endCall();
       closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal();
     }
+  });
+
+  // ===== حفظ واسترجاع بيانات Landing page =====
+  function saveLandingUserInfo() {
+    let n = (document.getElementById("landingNameInput")?.value || "").trim();
+    let p = (document.getElementById("landingPhoneInput")?.value || "").trim();
+    if (n) localStorage.setItem("falak_username", n);
+    if (p) localStorage.setItem("falak_userphone", p);
+    let badge = document.getElementById("landingSavedBadge");
+    if (badge) badge.style.display = (n || p) ? "block" : "none";
+    // sync to chat as well
+    if (n) currentUser = n;
+    if (p) currentUserPhone = p;
+  }
+  function loadLandingUserInfo() {
+    let n = localStorage.getItem("falak_username") || "";
+    let p = localStorage.getItem("falak_userphone") || "";
+    let nameEl = document.getElementById("landingNameInput");
+    let phoneEl = document.getElementById("landingPhoneInput");
+    let badge = document.getElementById("landingSavedBadge");
+    if (nameEl) nameEl.value = n;
+    if (phoneEl) phoneEl.value = p;
+    if (badge && (n || p)) badge.style.display = "block";
+    if (n) currentUser = n;
+    if (p) currentUserPhone = p;
+  }
+
+  // ===== وظائف مشغل الفيديو المحسّن =====
+  function seekVideo(seconds) {
+    let p = document.getElementById("videoPlayer");
+    if (!p) return;
+    let newTime = Math.max(0, Math.min(p.currentTime + seconds, p.duration || 0));
+    p.currentTime = newTime;
+    let dir = seconds > 0 ? "⏩ +" : "⏪ ";
+    showToast(dir + Math.abs(seconds) + " ثانية");
+  }
+
+  function setSpeed(speed) {
+    let p = document.getElementById("videoPlayer");
+    if (!p) return;
+    p.playbackRate = speed;
+    // تحديث الأزرار
+    document.querySelectorAll(".vc-speed-btn").forEach(btn => {
+      btn.classList.toggle("active", parseFloat(btn.textContent) === speed);
+    });
+    showToast("⚡ سرعة التشغيل: " + speed + "x");
+  }
+
+  function toggleVideoFullscreen() {
+    let wrapper = document.querySelector(".video-glow-border");
+    let p = document.getElementById("videoPlayer");
+    let btn = document.querySelector(".vc-fullscreen-btn i");
+    if (!wrapper || !p) return;
+    let fs = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!fs) {
+      let req = p.requestFullscreen || p.webkitRequestFullscreen || p.msRequestFullscreen;
+      if (req) req.call(p);
+      if (btn) { btn.classList.remove("fa-expand"); btn.classList.add("fa-compress"); }
+    } else {
+      let ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if (ex) ex.call(document);
+      if (btn) { btn.classList.remove("fa-compress"); btn.classList.add("fa-expand"); }
+    }
+  }
+  document.addEventListener("fullscreenchange", () => {
+    let btn = document.querySelector(".vc-fullscreen-btn i");
+    if (!btn) return;
+    let fs = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fs) { btn.classList.remove("fa-expand"); btn.classList.add("fa-compress"); }
+    else { btn.classList.remove("fa-compress"); btn.classList.add("fa-expand"); }
   });
 </script>
 </body>
