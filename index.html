@@ -481,10 +481,8 @@
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
   
-  // تعريف المتغيرات المفقودة
   const onlineUsersRef = db.collection("online_users");
 
-  // باقي المتغيرات
   let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null;
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null;
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
@@ -505,7 +503,7 @@
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
 
-  // SoundEffects
+  // SoundEffects (نفس السابق - تم حذفه للاختصار)
   const SoundEffects = {
     audioContext: null,
     init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -520,7 +518,7 @@
     join() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); }
   };
 
-  // Voice functions
+  // Voice functions (نفس السابق)
   function speakText(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "ar-SA"; u.rate = voiceSettings.rate; u.pitch = voiceSettings.pitch; if (voiceSettings.voiceURI) { const v = window.speechSynthesis.getVoices().find(v => v.voiceURI === voiceSettings.voiceURI); v && (u.voice = v); } window.speechSynthesis.speak(u); }
   function populateVoiceList() { const v = window.speechSynthesis.getVoices(), sel = document.getElementById("voiceSelect"); if (!sel) return; sel.innerHTML = ""; v.forEach(v => { const o = document.createElement("option"); o.value = v.voiceURI; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }); voiceSettings.voiceURI && (sel.value = voiceSettings.voiceURI); }
   function saveVoiceSettings() { voiceSettings.voiceURI = document.getElementById("voiceSelect").value; voiceSettings.rate = parseFloat(document.getElementById("rateRange").value); voiceSettings.pitch = parseFloat(document.getElementById("pitchRange").value); localStorage.setItem("falak_voice_settings", JSON.stringify(voiceSettings)); closeVoiceSettings(); showToast("✅ تم حفظ إعدادات الصوت"); }
@@ -529,14 +527,9 @@
   function closeVoiceSettings() { document.getElementById("voiceSettingsModal").classList.remove("active"); }
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
-  // Admin & UI
+  // Admin & UI (نفس السابق)
   function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; updateStorageBar(); loadAIKnowledgeFromFirebase(); const a = document.getElementById("cancelMaintenanceBtn"); a && document.getElementById("maintenanceOverlay")?.classList.contains("active") && a.classList.add("active"); updateGoogleLogoutButtonsVisibility(); } }
-  function updateGoogleLogoutButtonsVisibility() {
-    const googleLogoutLanding = document.getElementById("googleLogoutBtn");
-    const googleLogoutNav = document.getElementById("googleLogoutNavBtn");
-    if (googleLogoutLanding) googleLogoutLanding.style.display = (!isAdmin && googleUser) ? "block" : "none";
-    if (googleLogoutNav) googleLogoutNav.style.display = (!isAdmin && googleUser) ? "flex" : "none";
-  }
+  function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"), g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
   function listenToVideosWithRetry(maxAttempts = 4) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "desc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
@@ -552,7 +545,7 @@
   function cancelMaintenance() { isAdmin ? (confirm("هل أنت متأكد؟") && db.collection("system").doc("maintenance").update({ status: "active" }).then(() => { SoundEffects.success(); showToast("✅ تم إلغاء التحديث"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل إلغاء التحديث"); })) : showToast("❌ المشرف فقط يستطيع إلغاء التحديث"); }
   function updateStorageBar() { if (!isAdmin) return; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); let percent = Math.min(used / MAX_STORAGE * 100, 100); let remaining = MAX_STORAGE - used; document.getElementById("usedSpace").textContent = (used / 1073741824).toFixed(2) + " GB"; document.getElementById("percentage").textContent = percent.toFixed(2) + "%"; document.getElementById("remainingText").textContent = "المتبقي: " + (remaining / 1073741824).toFixed(2) + " GB"; document.getElementById("videosCount").textContent = videos.length + " فيديو"; let bar = document.getElementById("storageProgress"); bar.style.width = percent + "%"; bar.classList.remove("low", "medium", "high"); if (percent < 50) bar.classList.add("low"); else if (percent < 80) bar.classList.add("medium"); else bar.classList.add("high"); document.getElementById("storageBar").style.display = "block"; }
 
-  // Cloudinary widget
+  // Cloudinary widget (نفس السابق)
   function initCloudinaryWidget() { return new Promise((resolve, reject) => { if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") { try { uploadWidget = cloudinary.createUploadWidget({ cloudName: CLOUDINARY_CONFIG.cloudName, uploadPreset: CLOUDINARY_CONFIG.uploadPreset, resourceType: "video", clientAllowedFormats: ["mp4","webm","mov","mkv","avi","m4v","3gp","flv","gif"], maxFileSize: MAX_VIDEO_SIZE, maxVideoFileSize: MAX_VIDEO_SIZE, chunkSize: CHUNK_SIZE, sources: ["local","url","camera","dropbox","google_drive"], language: "ar", text: { ar: { or: "أو", local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" }, menu: { files: "ملفاتي", web: "رابط الويب", camera: "الكاميرا", gdrive: "Google Drive", dropbox: "Dropbox" } } }, styles: { palette: { window: "#1a1025", windowBorder: "#6366f1", tabIcon: "#6366f1", menuIcons: "#6366f1", textDark: "#ffffff", textLight: "#ffffff", link: "#ec4899", action: "#6366f1", inactiveTabIcon: "#8b5cf6", error: "#ef4444", inProgress: "#6366f1", complete: "#10b981", sourceBg: "#0f0a1a" }, fonts: { default: "Cairo", active: "Cairo" } }, showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: "local", eagerAsync: true, prepareUploadParams: function (params, data) { data.context = "alt=فيديو فلك العالمي"; data.eager = [ { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, { width: 400, height: 225, crop: "fill", format: "jpg" } ]; data.eager_async = true; params(data); } }, function (error, result) { if (error) { if (error.message && error.message.includes("focus")) { console.warn("Ignored focus error"); } else { console.error("Upload widget error:", error); document.getElementById("uploadProgressContainer")?.classList.remove("active"); SoundEffects.error(); showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف")); reject(error); } } else if (result) { switch (result.event) { case "success": document.getElementById("uploadProgressContainer")?.classList.remove("active"); pendingVideoInfo = result.info; document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان"; document.getElementById("videoDescriptionInput").value = ""; document.getElementById("descriptionModal").classList.add("active"); SoundEffects.success(); showToast("✅ تم الرفع! أكمل بيانات الفيديو"); resolve(result.info); break; case "queues-start": uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0; document.getElementById("uploadProgressContainer")?.classList.add("active"); showToast("🚀 جاري الرفع..."); break; case "upload-progress": updateUploadProgress(result.info); break; case "upload-success": showToast("📤 تم رفع جزء..."); break; } } }); resolve(uploadWidget); } catch (err) { if (err.message && err.message.includes("focus")) { console.warn("Ignored focus error"); resolve(null); } else reject(err); } } else { setTimeout(() => initCloudinaryWidget().then(resolve).catch(reject), 500); } }); }
   function openCloudinaryWidget() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الرفع"); return; } if (uploadWidget && typeof uploadWidget.open === "function") { try { uploadWidget.open(); } catch (e) { if (!e.message?.includes("focus")) console.warn("Error opening widget, reinitializing...", e); uploadWidget = null; } } if (!uploadWidget) { showToast("⏳ جاري تجهيز واجهة الرفع..."); initCloudinaryWidget().then(w => { if (w) w.open(); else setTimeout(() => { if (uploadWidget) uploadWidget.open(); }, 300); }).catch(e => { console.error("Failed to init widget:", e); SoundEffects.error(); showToast("❌ تعذر فتح واجهة الرفع"); }); } }
   function updateUploadProgress(info) { if (!info) return; let prog = info.progress || 0, uploaded = info.uploadedBytes || 0, total = info.totalBytes || 1; let now = Date.now(), dt = (now - lastTime) / 1000; let speed = dt > 0 ? (uploaded - lastUploadedBytes) / dt / 1048576 : 0; let remaining = speed > 0 ? (total - uploaded) / (speed * 1024 * 1024) : 0; let fill = document.getElementById("uploadProgressFill"); fill && (fill.style.width = prog + "%"); let pct = document.getElementById("uploadProgressPercent"); pct && (pct.textContent = Math.round(prog) + "%"); let sp = document.getElementById("uploadSpeed"); sp && (sp.textContent = speed.toFixed(2) + " MB/s"); let tr = document.getElementById("uploadTimeRemaining"); if (tr) { if (remaining > 60) { let m = Math.floor(remaining / 60), s = Math.floor(remaining % 60); tr.textContent = m + ":" + s.toString().padStart(2, "0") + " دقيقة متبقية"; } else tr.textContent = remaining > 0 ? Math.floor(remaining) + " ثانية متبقية" : "جاري إكمال الرفع..."; } lastTime = now; lastUploadedBytes = uploaded; }
@@ -614,28 +607,65 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat & user name saving - PERSISTENT
-  function checkUserName() { let n = localStorage.getItem("falak_username"); let p = localStorage.getItem("falak_userphone"); if (n && p) { currentUser = n; currentUserPhone = p; return true; } return false; }
-  function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").focus(); } }
-  function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
-  function saveUserName() { 
-    let n = document.getElementById("userNameInput").value.trim(); 
-    let p = document.getElementById("userPhoneInput").value.trim(); 
-    if (n.length < 2) { SoundEffects.error(); showToast("الاسم قصير جداً"); return; } 
-    if (!p) { SoundEffects.error(); showToast("رقم الهاتف مطلوب"); return; } 
-    currentUser = n; 
-    currentUserPhone = p; 
-    localStorage.setItem("falak_username", n); 
-    localStorage.setItem("falak_userphone", p); 
-    document.getElementById("nameModal").classList.remove("active"); 
-    document.getElementById("chatModal").classList.add("active"); 
-    SoundEffects.join(); 
-    initPresenceSystem(); 
-    loadMessages(); 
-    // Try to save user to chat_users but don't block if fails
+  // Chat & user name saving - PERSISTENT (المعدل)
+  function checkUserName() {
+    let n = localStorage.getItem("falak_username");
+    let p = localStorage.getItem("falak_userphone");
+    if (n && p) {
+      currentUser = n;
+      currentUserPhone = p;
+      console.log("✅ تم استرجاع الاسم والهاتف من localStorage:", n, p);
+      return true;
+    }
+    console.log("⚠️ لا توجد بيانات مخزنة في localStorage");
+    return false;
+  }
+
+  function openChat() {
+    if (checkUserName()) {
+      document.getElementById("chatModal").classList.add("active");
+      document.getElementById("chatBadge").style.display = "none";
+      unreadMessages = 0;
+      loadMessages();
+      scrollToBottom();
+      initPresenceSystem();
+    } else {
+      document.getElementById("nameModal").classList.add("active");
+      document.getElementById("userNameInput").focus();
+    }
+  }
+
+  function closeChat() {
+    document.getElementById("chatModal").classList.remove("active");
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    removePresence();
+    if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+  }
+
+  function saveUserName() {
+    let n = document.getElementById("userNameInput").value.trim();
+    let p = document.getElementById("userPhoneInput").value.trim();
+    if (n.length < 2) { SoundEffects.error(); showToast("الاسم قصير جداً"); return; }
+    if (!p) { SoundEffects.error(); showToast("رقم الهاتف مطلوب"); return; }
+    localStorage.setItem("falak_username", n);
+    localStorage.setItem("falak_userphone", p);
+    currentUser = n;
+    currentUserPhone = p;
+    console.log("✅ تم حفظ الاسم والهاتف في localStorage:", n, p);
+    document.getElementById("nameModal").classList.remove("active");
+    document.getElementById("chatModal").classList.add("active");
+    SoundEffects.join();
+    initPresenceSystem();
+    loadMessages();
+    // محاولة حفظ في قاعدة البيانات (اختياري)
     db.collection("chat_users").add({ name: n, phone: p, joinedAt: firebase.firestore.FieldValue.serverTimestamp() })
       .catch(err => { console.warn("Could not save chat user:", err); showToast("تم حفظ بياناتك محليًا، يمكنك الدردشة الآن"); });
   }
+
+  // باقي دوال الدردشة (loadMessages, displayMessage, deleteMessage, playVoiceMessage, seekVoice, sendMessage, handleKeyPress, sendImage, toggleRecording, startRecording, stopRecording, uploadVoice, startVoiceCall, toggleMute, endCall, viewImage, closeImageViewer, scrollToBottom, initPresenceSystem, removePresence, listenToOnlineUsers)
+  // يجب إضافتها هنا ولكن تم حذفها للاختصار. في الكود النهائي يجب أن تكون موجودة كما في النسخة الأصلية.
+  // سيتم إضافة دوال الدردشة الأساسية لتكتمل الوظائف.
+
   function loadMessages() { 
     let cont = document.getElementById("chatMessages"); 
     if (!cont) return; 
@@ -650,32 +680,53 @@
       cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; 
     }); 
   }
+
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) html += '<div class="message-sender">' + escapeHtml(data.sender) + "</div>"; if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
+
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
+
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
+
   function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
+
   function sendMessage() { let inp = document.getElementById("messageInput"); if (!inp) return; let text = inp.value.trim(); if (!text || !currentUser) return; db.collection("messages").add({ type: "text", text: text, sender: currentUser, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.send(); inp.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الإرسال"); }); }
+
   function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+
   function sendImage(input) { let file = input.files[0]; if (!file || !currentUser) return; if (file.size > 5 * 1024 * 1024) { SoundEffects.error(); showToast("الصورة كبيرة (الحد 5 ميجا)"); return; } showToast("جاري الرفع..."); let fd = new FormData(); fd.append("file", file); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", { method: "POST", body: fd }).then(r => r.json()).then(d => { db.collection("messages").add({ type: "image", imageUrl: d.secure_url, sender: currentUser, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("تم إرسال الصورة"); input.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الرفع"); }); }
+
   async function toggleRecording() { if (isRecording) stopRecording(); else await startRecording(); }
+
   async function startRecording() { if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; } try { let stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = e => e.data.size && audioChunks.push(e.data); mediaRecorder.onstop = () => { uploadVoice(new Blob(audioChunks, { type: "audio/webm" })); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; document.getElementById("recordBtn").classList.add("recording"); document.getElementById("recordingIndicator").classList.add("active"); SoundEffects.recordStart(); let sec = 0; recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000); } catch (e) { showToast("❌ لا يمكن الوصول للميكروفون"); } }
+
   function stopRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); clearInterval(recordingTimer); isRecording = false; document.getElementById("recordBtn").classList.remove("recording"); document.getElementById("recordingIndicator").classList.remove("active"); document.getElementById("recordingTime").textContent = "0:00"; } }
+
   async function uploadVoice(blob) { if (!currentUser) { showToast("❌ يجب تسجيل الدخول أولاً"); return; } showToast("📤 جاري رفع الرسالة الصوتية..."); let fd = new FormData(); fd.append("file", blob, "voice.webm"); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); try { let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, { method: "POST", body: fd }); if (!res.ok) throw new Error(`HTTP ${res.status}`); let data = await res.json(); if (!data.secure_url) throw new Error("لم يتم استلام الرابط"); await db.collection("messages").add({ type: "voice", audioUrl: data.secure_url, sender: currentUser, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("✅ تم إرسال الرسالة الصوتية"); } catch (e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إرسال الصوت"); } }
+
   async function startVoiceCall() { if (!currentUser) return; try { localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); document.getElementById("callModal").classList.add("active"); document.getElementById("callStatus").textContent = "مكالمة - " + currentUser; callSeconds = 0; callTimer = setInterval(() => { callSeconds++; let el = document.getElementById("callTimer"); if (el) el.textContent = Math.floor(callSeconds / 60).toString().padStart(2, "0") + ":" + (callSeconds % 60).toString().padStart(2, "0"); }, 1000); SoundEffects.join(); } catch (e) { SoundEffects.error(); showToast("لا يمكن الوصول للميكروفون"); } }
+
   function toggleMute() { if (!localStream) return; let track = localStream.getAudioTracks()[0]; track.enabled = !track.enabled; let btn = document.getElementById("muteBtn"); btn && (btn.classList.toggle("active"), btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'); }
+
   function endCall() { if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } clearInterval(callTimer); document.getElementById("callModal").classList.remove("active"); document.getElementById("callTimer").textContent = "00:00"; }
+
   function viewImage(src) { let viewer = document.getElementById("imageViewer"); let img = document.getElementById("viewerImage"); viewer && img && (img.src = src, viewer.classList.add("active")); }
+
   function closeImageViewer() { document.getElementById("imageViewer").classList.remove("active"); }
+
   function scrollToBottom() { let c = document.getElementById("chatMessages"); c && (c.scrollTop = c.scrollHeight); }
+
   function initPresenceSystem() { if (!currentUser) return; let uid = localStorage.getItem("falak_user_id"); if (!uid) { uid = "user_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now(); localStorage.setItem("falak_user_id", uid); } userPresenceRef = onlineUsersRef.doc(uid); userPresenceRef.set({ name: currentUser, joinedAt: firebase.firestore.FieldValue.serverTimestamp(), lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); presenceInterval = setInterval(() => { userPresenceRef && userPresenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); }, 20000); listenToOnlineUsers(); }
+
   function removePresence() { if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; } if (userPresenceRef) { userPresenceRef.delete().catch(console.error); userPresenceRef = null; } if (onlineUnsubscribe) { onlineUnsubscribe(); onlineUnsubscribe = null; } }
+
   function listenToOnlineUsers() { if (onlineUnsubscribe) onlineUnsubscribe(); onlineUnsubscribe = onlineUsersRef.onSnapshot(snap => { let cutoff = Date.now() - 120000; let online = []; snap.forEach(d => { let data = d.data(); if (data.lastSeen) { let time = (typeof data.lastSeen.toDate === "function") ? data.lastSeen.toDate().getTime() : data.lastSeen.seconds ? data.lastSeen.seconds * 1000 : new Date(data.lastSeen).getTime(); if (!isNaN(time) && time > cutoff) online.push(data); } }); let count = online.length; let text = count === 0 ? "لا أحد متصل" : count === 1 ? "متصل واحد" : count === 2 ? "متصلان" : count + " متصلين"; document.getElementById("onlineCount").textContent = text; }, err => { document.getElementById("onlineCount").textContent = "خطأ في التحميل"; }); }
+
+  // Exam result query
   function openExamResultModal() { document.getElementById("examResultModal").classList.add("active"); document.getElementById("examResultName").value = ""; document.getElementById("examResultPhone").value = ""; }
   function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
   function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
-  function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
 
-  // Video controls: seek backward/forward, speed select
+  // Video controls initialization
   function initVideoControls() {
     const video = document.getElementById("videoPlayer");
     const seekBackwardBtn = document.getElementById("seekBackwardBtn");
@@ -687,9 +738,10 @@
     if (seekForwardBtn) seekForwardBtn.onclick = () => { video.currentTime = Math.min(video.duration, video.currentTime + 10); showToast("⏩ تقدّم 10 ثوانٍ"); };
     if (speedSelect) speedSelect.onchange = () => { video.playbackRate = parseFloat(speedSelect.value); showToast(`السرعة: ${speedSelect.value}x`); };
     if (fullscreenBtn) fullscreenBtn.onclick = () => { if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); };
-    // Ensure speed select shows current rate if changed elsewhere
     video.addEventListener("ratechange", () => { if (speedSelect) speedSelect.value = video.playbackRate.toString(); });
   }
+
+  function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
 
   // Google Auth functions
   function googleLogin() {
@@ -699,6 +751,7 @@
       currentUserPhone = googleUser.phoneNumber || "";
       localStorage.setItem("falak_username", currentUser);
       localStorage.setItem("falak_userphone", currentUserPhone);
+      console.log("✅ Google login - تم حفظ البيانات:", currentUser, currentUserPhone);
       document.getElementById("landingPage").style.display = "none";
       document.getElementById("appWrapper").style.display = "flex";
       document.getElementById("googleUserInfo").style.display = "flex";
@@ -721,6 +774,7 @@
       showToast("❌ فشل تسجيل الدخول بحساب Google");
     });
   }
+
   function googleLogout() {
     auth.signOut().then(() => {
       googleUser = null;
@@ -728,6 +782,7 @@
       currentUserPhone = null;
       localStorage.removeItem("falak_username");
       localStorage.removeItem("falak_userphone");
+      console.log("✅ تم تسجيل الخروج من Google ومسح البيانات");
       document.getElementById("landingPage").style.display = "flex";
       document.getElementById("appWrapper").style.display = "none";
       document.getElementById("googleUserInfo").style.display = "none";
@@ -743,6 +798,7 @@
       showToast("❌ فشل تسجيل الخروج");
     });
   }
+
   function initAuthState() {
     auth.onAuthStateChanged(user => {
       if (user && !isAdmin) {
@@ -751,6 +807,7 @@
         currentUserPhone = user.phoneNumber || "";
         localStorage.setItem("falak_username", currentUser);
         localStorage.setItem("falak_userphone", currentUserPhone);
+        console.log("🔥 Auth state: Google user - تم حفظ البيانات:", currentUser, currentUserPhone);
         document.getElementById("landingPage").style.display = "none";
         document.getElementById("appWrapper").style.display = "flex";
         document.getElementById("googleUserInfo").style.display = "flex";
@@ -767,15 +824,14 @@
         initCloudinaryWidget();
         checkUrlForShare();
       } else if (!user && !isAdmin) {
-        // If no Google user, check local storage for name/phone
         let localName = localStorage.getItem("falak_username");
         let localPhone = localStorage.getItem("falak_userphone");
         if (localName && localPhone) {
           currentUser = localName;
           currentUserPhone = localPhone;
+          console.log("✅ No Google user, but local data found:", localName, localPhone);
           document.getElementById("landingPage").style.display = "none";
           document.getElementById("appWrapper").style.display = "flex";
-          // No need to show google user info because not logged in via Google
           document.getElementById("googleUserInfo").style.display = "none";
           document.getElementById("googleLogoutBtn").style.display = "none";
           document.getElementById("googleLogoutNavBtn").style.display = "none";
@@ -788,7 +844,7 @@
           initCloudinaryWidget();
           checkUrlForShare();
         } else {
-          // No local data either, show landing page
+          console.log("❌ No Google user and no local data, showing landing page");
           document.getElementById("landingPage").style.display = "flex";
           document.getElementById("appWrapper").style.display = "none";
           googleUser = null;
@@ -806,9 +862,7 @@
     const elem = document.documentElement;
     const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
     if (requestFullscreen) {
-      requestFullscreen.call(elem).catch(err => {
-        console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err);
-      });
+      requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); });
     }
   }
 
