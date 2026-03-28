@@ -436,7 +436,7 @@
 
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video><div class="video-controls-bar" id="videoControlsBar"><button id="speedControlBtn" class="video-speed-select"><i class="fas fa-tachometer-alt"></i> السرعة <span id="currentSpeedDisplay">1x</span></button><button id="fullscreenBtn" class="fullscreen-btn"><i class="fas fa-expand"></i> ملء الشاشة</button></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
+  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video><div class="video-controls-bar" id="videoControlsBar"><button id="seekBackwardBtn" class="video-speed-select"><i class="fas fa-backward"></i> 10-</button><button id="seekForwardBtn" class="video-speed-select"><i class="fas fa-forward"></i> +10</button><select id="speedSelect" class="video-speed-select"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select><button id="fullscreenBtn" class="fullscreen-btn"><i class="fas fa-expand"></i> ملء الشاشة</button></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
 
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-lock"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body"><input id="passwordInput" placeholder="اكتب كلمة المرور هنا..." type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)doLogin()"><button class="btn btn-primary" onclick="doLogin()" style="width:100%"><i class="fas fa-sign-in-alt"></i> دخول</button><button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button></div></div></div>
 
@@ -614,8 +614,8 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat & user name saving
-  function checkUserName() { let n = localStorage.getItem("falak_username"), p = localStorage.getItem("falak_userphone"); return !(!n || !p) && (currentUser = n, currentUserPhone = p, true); }
+  // Chat & user name saving - PERSISTENT
+  function checkUserName() { let n = localStorage.getItem("falak_username"); let p = localStorage.getItem("falak_userphone"); if (n && p) { currentUser = n; currentUserPhone = p; return true; } return false; }
   function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").focus(); } }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
   function saveUserName() { 
@@ -674,6 +674,22 @@
   function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
   function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
+
+  // Video controls: seek backward/forward, speed select
+  function initVideoControls() {
+    const video = document.getElementById("videoPlayer");
+    const seekBackwardBtn = document.getElementById("seekBackwardBtn");
+    const seekForwardBtn = document.getElementById("seekForwardBtn");
+    const speedSelect = document.getElementById("speedSelect");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    if (!video) return;
+    if (seekBackwardBtn) seekBackwardBtn.onclick = () => { video.currentTime = Math.max(0, video.currentTime - 10); showToast("⏪ تراجع 10 ثوانٍ"); };
+    if (seekForwardBtn) seekForwardBtn.onclick = () => { video.currentTime = Math.min(video.duration, video.currentTime + 10); showToast("⏩ تقدّم 10 ثوانٍ"); };
+    if (speedSelect) speedSelect.onchange = () => { video.playbackRate = parseFloat(speedSelect.value); showToast(`السرعة: ${speedSelect.value}x`); };
+    if (fullscreenBtn) fullscreenBtn.onclick = () => { if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); };
+    // Ensure speed select shows current rate if changed elsewhere
+    video.addEventListener("ratechange", () => { if (speedSelect) speedSelect.value = video.playbackRate.toString(); });
+  }
 
   // Google Auth functions
   function googleLogin() {
@@ -794,35 +810,6 @@
         console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err);
       });
     }
-  }
-
-  // Video controls extra: speed & fullscreen
-  function initVideoControls() {
-    const video = document.getElementById("videoPlayer");
-    const speedBtn = document.getElementById("speedControlBtn");
-    const fullscreenBtn = document.getElementById("fullscreenBtn");
-    const speedDisplay = document.getElementById("currentSpeedDisplay");
-    if (!video || !speedBtn || !fullscreenBtn) return;
-    // Speed selection menu
-    speedBtn.addEventListener("click", () => {
-      let speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-      let current = video.playbackRate;
-      let nextIdx = (speeds.indexOf(current) + 1) % speeds.length;
-      let newRate = speeds[nextIdx];
-      video.playbackRate = newRate;
-      speedDisplay.textContent = newRate + "x";
-      showToast(`السرعة: ${newRate}x`);
-    });
-    // Fullscreen
-    fullscreenBtn.addEventListener("click", () => {
-      if (video.requestFullscreen) {
-        video.requestFullscreen();
-      } else if (video.webkitRequestFullscreen) {
-        video.webkitRequestFullscreen();
-      } else if (video.msRequestFullscreen) {
-        video.msRequestFullscreen();
-      }
-    });
   }
 
   window.addEventListener("load", function() {
