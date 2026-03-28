@@ -107,8 +107,7 @@
     .modal-share { width: 40px; height: 40px; border: none; background: rgba(16,185,129,.2); color: #10b981; border-radius: 10px; cursor: pointer; transition: all .3s; font-size: 1.2rem; }
     .modal-share:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
-
-    /* إطار الفيديو الجديد - جميل ومحسّن */
+    /* إطار الفيديو المحسن */
     .video-player-container {
       background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8));
       backdrop-filter: blur(12px);
@@ -162,7 +161,6 @@
       transform: scale(1.05);
     }
     .fullscreen-btn { background: rgba(99,102,241,0.5); }
-
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
     .toast.show { display: block; }
@@ -547,7 +545,7 @@
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
   const ADMIN_PASS = "@@@&&&((()))", SUPER_ADMIN_PASS = "1#3_5-7(9/0", MAX_VIDEO_SIZE = 104857600, CHUNK_SIZE = 10485760, MAX_STORAGE = 26843545600, STORAGE_KEY = "falak_last_watched";
 
-  // Helper functions
+  // Helper functions (نفس السابق)
   function showToast(msg) { const t = document.getElementById("toast"); t && (t.textContent = msg, t.classList.add("show"), setTimeout(() => t.classList.remove("show"), 4000)); }
   function formatDuration(sec) { if (!sec) return ""; const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ":" + (s < 10 ? "0" : "") + s; }
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
@@ -657,22 +655,39 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat & user name saving - PERSISTENT (المعدل)
-  function checkUserName() {
-    let n = localStorage.getItem("falak_username");
-    let p = localStorage.getItem("falak_userphone");
-    if (n && p) {
-      currentUser = n;
-      currentUserPhone = p;
-      console.log("✅ تم استرجاع الاسم والهاتف من localStorage:", n, p);
+  // ========== دوال حفظ واسترجاع الاسم والهاتف بشكل مضمون ==========
+  function loadUserDataFromStorage() {
+    let savedName = localStorage.getItem("falak_username");
+    let savedPhone = localStorage.getItem("falak_userphone");
+    if (savedName && savedPhone) {
+      currentUser = savedName;
+      currentUserPhone = savedPhone;
+      console.log("✅ [loadUserData] تم استرجاع البيانات: اسم =", currentUser, "هاتف =", currentUserPhone);
       return true;
+    } else {
+      console.log("⚠️ [loadUserData] لا توجد بيانات في localStorage");
+      return false;
     }
-    console.log("⚠️ لا توجد بيانات مخزنة في localStorage");
-    return false;
+  }
+
+  function saveUserDataToStorage(name, phone) {
+    if (!name || !phone) return false;
+    localStorage.setItem("falak_username", name);
+    localStorage.setItem("falak_userphone", phone);
+    currentUser = name;
+    currentUserPhone = phone;
+    console.log("✅ [saveUserData] تم حفظ البيانات: اسم =", name, "هاتف =", phone);
+    return true;
+  }
+
+  // Chat functions مع استخدام البيانات المسترجعة
+  function checkUserName() {
+    return loadUserDataFromStorage(); // تستدعي نفس الدالة وتحدث المتغيرات
   }
 
   function openChat() {
     if (checkUserName()) {
+      // لدينا بيانات، افتح الدردشة
       document.getElementById("chatModal").classList.add("active");
       document.getElementById("chatBadge").style.display = "none";
       unreadMessages = 0;
@@ -680,6 +695,7 @@
       scrollToBottom();
       initPresenceSystem();
     } else {
+      // لا توجد بيانات، اعرض نافذة إدخال الاسم والهاتف
       document.getElementById("nameModal").classList.add("active");
       document.getElementById("userNameInput").focus();
     }
@@ -693,25 +709,23 @@
   }
 
   function saveUserName() {
-    let n = document.getElementById("userNameInput").value.trim();
-    let p = document.getElementById("userPhoneInput").value.trim();
-    if (n.length < 2) { SoundEffects.error(); showToast("الاسم قصير جداً"); return; }
-    if (!p) { SoundEffects.error(); showToast("رقم الهاتف مطلوب"); return; }
-    localStorage.setItem("falak_username", n);
-    localStorage.setItem("falak_userphone", p);
-    currentUser = n;
-    currentUserPhone = p;
-    console.log("✅ تم حفظ الاسم والهاتف في localStorage:", n, p);
+    let name = document.getElementById("userNameInput").value.trim();
+    let phone = document.getElementById("userPhoneInput").value.trim();
+    if (name.length < 2) { SoundEffects.error(); showToast("الاسم قصير جداً"); return; }
+    if (!phone) { SoundEffects.error(); showToast("رقم الهاتف مطلوب"); return; }
+    // حفظ
+    saveUserDataToStorage(name, phone);
     document.getElementById("nameModal").classList.remove("active");
     document.getElementById("chatModal").classList.add("active");
     SoundEffects.join();
     initPresenceSystem();
     loadMessages();
-    db.collection("chat_users").add({ name: n, phone: p, joinedAt: firebase.firestore.FieldValue.serverTimestamp() })
+    // حفظ اختياري في قاعدة البيانات
+    db.collection("chat_users").add({ name: name, phone: phone, joinedAt: firebase.firestore.FieldValue.serverTimestamp() })
       .catch(err => { console.warn("Could not save chat user:", err); showToast("تم حفظ بياناتك محليًا، يمكنك الدردشة الآن"); });
   }
 
-  // دوال الدردشة الأساسية
+  // باقي دوال الدردشة (يجب أن تكون موجودة في الكود الأصلي، نضيفها للتأكيد)
   function loadMessages() { 
     let cont = document.getElementById("chatMessages"); 
     if (!cont) return; 
@@ -786,16 +800,22 @@
   }
 
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
+  function requestFullscreenAutomatically() {
+    const elem = document.documentElement;
+    const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
+    if (requestFullscreen) {
+      requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); });
+    }
+  }
 
   // Google Auth functions
   function googleLogin() {
     auth.signInWithPopup(provider).then(result => {
       googleUser = result.user;
-      currentUser = googleUser.displayName;
-      currentUserPhone = googleUser.phoneNumber || "";
-      localStorage.setItem("falak_username", currentUser);
-      localStorage.setItem("falak_userphone", currentUserPhone);
-      console.log("✅ Google login - تم حفظ البيانات:", currentUser, currentUserPhone);
+      let name = googleUser.displayName;
+      let phone = googleUser.phoneNumber || "";
+      saveUserDataToStorage(name, phone);
+      console.log("✅ Google login - تم حفظ البيانات:", name, phone);
       document.getElementById("landingPage").style.display = "none";
       document.getElementById("appWrapper").style.display = "flex";
       document.getElementById("googleUserInfo").style.display = "flex";
@@ -822,10 +842,10 @@
   function googleLogout() {
     auth.signOut().then(() => {
       googleUser = null;
-      currentUser = null;
-      currentUserPhone = null;
       localStorage.removeItem("falak_username");
       localStorage.removeItem("falak_userphone");
+      currentUser = null;
+      currentUserPhone = null;
       console.log("✅ تم تسجيل الخروج من Google ومسح البيانات");
       document.getElementById("landingPage").style.display = "flex";
       document.getElementById("appWrapper").style.display = "none";
@@ -847,11 +867,10 @@
     auth.onAuthStateChanged(user => {
       if (user && !isAdmin) {
         googleUser = user;
-        currentUser = user.displayName;
-        currentUserPhone = user.phoneNumber || "";
-        localStorage.setItem("falak_username", currentUser);
-        localStorage.setItem("falak_userphone", currentUserPhone);
-        console.log("🔥 Auth state: Google user - تم حفظ البيانات:", currentUser, currentUserPhone);
+        let name = user.displayName;
+        let phone = user.phoneNumber || "";
+        saveUserDataToStorage(name, phone);
+        console.log("🔥 Auth state: Google user - تم حفظ البيانات:", name, phone);
         document.getElementById("landingPage").style.display = "none";
         document.getElementById("appWrapper").style.display = "flex";
         document.getElementById("googleUserInfo").style.display = "flex";
@@ -868,12 +887,9 @@
         initCloudinaryWidget();
         checkUrlForShare();
       } else if (!user && !isAdmin) {
-        let localName = localStorage.getItem("falak_username");
-        let localPhone = localStorage.getItem("falak_userphone");
-        if (localName && localPhone) {
-          currentUser = localName;
-          currentUserPhone = localPhone;
-          console.log("✅ No Google user, but local data found:", localName, localPhone);
+        let hasLocal = loadUserDataFromStorage();
+        if (hasLocal) {
+          console.log("✅ No Google user, but local data found. Loading app.");
           document.getElementById("landingPage").style.display = "none";
           document.getElementById("appWrapper").style.display = "flex";
           document.getElementById("googleUserInfo").style.display = "none";
@@ -902,16 +918,9 @@
     });
   }
 
-  function requestFullscreenAutomatically() {
-    const elem = document.documentElement;
-    const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
-    if (requestFullscreen) {
-      requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); });
-    }
-  }
-
   window.addEventListener("load", function() {
     console.log("Page fully loaded");
+    loadUserDataFromStorage();
     hideLoader();
     requestFullscreenAutomatically();
     setTimeout(requestFullscreenAutomatically, 1000);
