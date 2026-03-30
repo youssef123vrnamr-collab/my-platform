@@ -164,14 +164,16 @@
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
     .toast.show { display: block; }
     .cloudinary-thumbnail { width: 100%; height: 100%; object-fit: cover; }
-    .delete-btn { position: absolute; top: 10px; right: 10px; background: #ef4444; color: #fff; border: none; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
-    .edit-title-btn { position: absolute; top: 10px; right: 80px; background: #f59e0b; color: #fff; border: none; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
-    .private-toggle-btn { position: absolute; top: 10px; right: 150px; background: rgba(99,102,241,.2); color: #6366f1; border: 1px solid #6366f1; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
-    .video-card:hover .delete-btn, .video-card:hover .edit-title-btn, .video-card:hover .private-toggle-btn { opacity: 1; }
+    .delete-btn, .edit-title-btn, .private-toggle-btn, .change-thumbnail-btn { position: absolute; top: 10px; background: #ef4444; color: #fff; border: none; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
+    .delete-btn { right: 10px; background: #ef4444; }
+    .edit-title-btn { right: 80px; background: #f59e0b; }
+    .private-toggle-btn { right: 150px; background: rgba(99,102,241,.2); color: #6366f1; border: 1px solid #6366f1; }
+    .change-thumbnail-btn { right: 220px; background: #06b6d4; color: #fff; }
+    .video-card:hover .delete-btn, .video-card:hover .edit-title-btn, .video-card:hover .private-toggle-btn, .video-card:hover .change-thumbnail-btn { opacity: 1; }
     .private-toggle-btn:hover { background: rgba(99,102,241,.4); transform: scale(1.05); }
     .private-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.6); color: #fff; padding: .3rem .8rem; border-radius: 20px; font-size: .8rem; z-index: 6; backdrop-filter: blur(5px); border: 1px solid #6366f1; }
     .private-badge i { color: #6366f1; }
-    @media (max-width:768px) { .delete-btn, .edit-title-btn, .private-toggle-btn { opacity: 1; font-size: .75rem; padding: .4rem .8rem; } .edit-title-btn { right: 70px; } .private-toggle-btn { right: 130px; } }
+    @media (max-width:768px) { .delete-btn, .edit-title-btn, .private-toggle-btn, .change-thumbnail-btn { opacity: 1; font-size: .75rem; padding: .4rem .8rem; } .edit-title-btn { right: 70px; } .private-toggle-btn { right: 130px; } .change-thumbnail-btn { right: 190px; } }
     .description-modal-content { max-width: 600px; }
     .form-group { margin-bottom: 1.5rem; }
     .form-group label { display: block; margin-bottom: .5rem; color: #aaa; font-weight: 600; }
@@ -564,7 +566,7 @@
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
 
-  // SoundEffects (مختصر للحفاظ على المساحة، نفس الكود الأصلي لكن بشكل مبسط)
+  // SoundEffects (مختصر للحفاظ على المساحة)
   const SoundEffects = {
     audioContext: null,
     init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -610,12 +612,42 @@
   function initCloudinaryWidget() { return new Promise((resolve, reject) => { if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") { try { uploadWidget = cloudinary.createUploadWidget({ cloudName: CLOUDINARY_CONFIG.cloudName, uploadPreset: CLOUDINARY_CONFIG.uploadPreset, resourceType: "video", clientAllowedFormats: ["mp4","webm","mov","mkv","avi","m4v","3gp","flv","gif"], maxFileSize: MAX_VIDEO_SIZE, maxVideoFileSize: MAX_VIDEO_SIZE, chunkSize: CHUNK_SIZE, sources: ["local","url","camera","dropbox","google_drive"], language: "ar", text: { ar: { or: "أو", local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" }, menu: { files: "ملفاتي", web: "رابط الويب", camera: "الكاميرا", gdrive: "Google Drive", dropbox: "Dropbox" } } }, styles: { palette: { window: "#1a1025", windowBorder: "#6366f1", tabIcon: "#6366f1", menuIcons: "#6366f1", textDark: "#ffffff", textLight: "#ffffff", link: "#ec4899", action: "#6366f1", inactiveTabIcon: "#8b5cf6", error: "#ef4444", inProgress: "#6366f1", complete: "#10b981", sourceBg: "#0f0a1a" }, fonts: { default: "Cairo", active: "Cairo" } }, showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: "local", eagerAsync: true, prepareUploadParams: function (params, data) { data.context = "alt=فيديو فلك العالمي"; data.eager = [ { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, { width: 400, height: 225, crop: "fill", format: "jpg" } ]; data.eager_async = true; params(data); } }, function (error, result) { if (error) { if (error.message && error.message.includes("focus")) { console.warn("Ignored focus error"); } else { console.error("Upload widget error:", error); document.getElementById("uploadProgressContainer")?.classList.remove("active"); SoundEffects.error(); showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف")); reject(error); } } else if (result) { switch (result.event) { case "success": document.getElementById("uploadProgressContainer")?.classList.remove("active"); pendingVideoInfo = result.info; document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان"; document.getElementById("videoDescriptionInput").value = ""; document.getElementById("descriptionModal").classList.add("active"); SoundEffects.success(); showToast("✅ تم الرفع! أكمل بيانات الفيديو"); resolve(result.info); break; case "queues-start": uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0; document.getElementById("uploadProgressContainer")?.classList.add("active"); showToast("🚀 جاري الرفع..."); break; case "upload-progress": updateUploadProgress(result.info); break; case "upload-success": showToast("📤 تم رفع جزء..."); break; } } }); resolve(uploadWidget); } catch (err) { if (err.message && err.message.includes("focus")) { console.warn("Ignored focus error"); resolve(null); } else reject(err); } } else { setTimeout(() => initCloudinaryWidget().then(resolve).catch(reject), 500); } }); }
   function openCloudinaryWidget() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الرفع"); return; } if (uploadWidget && typeof uploadWidget.open === "function") { try { uploadWidget.open(); } catch (e) { if (!e.message?.includes("focus")) console.warn("Error opening widget, reinitializing...", e); uploadWidget = null; } } if (!uploadWidget) { showToast("⏳ جاري تجهيز واجهة الرفع..."); initCloudinaryWidget().then(w => { if (w) w.open(); else setTimeout(() => { if (uploadWidget) uploadWidget.open(); }, 300); }).catch(e => { console.error("Failed to init widget:", e); SoundEffects.error(); showToast("❌ تعذر فتح واجهة الرفع"); }); } }
   function updateUploadProgress(info) { if (!info) return; let prog = info.progress || 0, uploaded = info.uploadedBytes || 0, total = info.totalBytes || 1; let now = Date.now(), dt = (now - lastTime) / 1000; let speed = dt > 0 ? (uploaded - lastUploadedBytes) / dt / 1048576 : 0; let remaining = speed > 0 ? (total - uploaded) / (speed * 1024 * 1024) : 0; let fill = document.getElementById("uploadProgressFill"); fill && (fill.style.width = prog + "%"); let pct = document.getElementById("uploadProgressPercent"); pct && (pct.textContent = Math.round(prog) + "%"); let sp = document.getElementById("uploadSpeed"); sp && (sp.textContent = speed.toFixed(2) + " MB/s"); let tr = document.getElementById("uploadTimeRemaining"); if (tr) { if (remaining > 60) { let m = Math.floor(remaining / 60), s = Math.floor(remaining % 60); tr.textContent = m + ":" + s.toString().padStart(2, "0") + " دقيقة متبقية"; } else tr.textContent = remaining > 0 ? Math.floor(remaining) + " ثانية متبقية" : "جاري إكمال الرفع..."; } lastTime = now; lastUploadedBytes = uploaded; }
-  function saveVideoWithDescription() { if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; } let info = pendingVideoInfo; let title = document.getElementById("videoTitleInput").value.trim() || "فيديو بدون عنوان"; let desc = document.getElementById("videoDescriptionInput").value.trim() || ""; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); if (used + info.bytes > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; } let optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/"); let thumbnail = null; if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url; else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg"; let videoData = { title: title, description: desc, type: "cloudinary", url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnail, publicId: info.public_id || "", format: info.format, duration: info.duration, width: info.width, height: info.height, size: info.bytes, createdAt: firebase.firestore.FieldValue.serverTimestamp(), cloudinaryData: { assetId: info.asset_id, version: info.version_id }, optimized: true, private: false }; db.collection("videos").add(videoData).then(() => { SoundEffects.success(); showToast("✅ تم الرفع والحفظ بنجاح!"); closeDescriptionModal(); pendingVideoInfo = null; }).catch(e => { console.error("Error saving to Firebase:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); }); }
+  function saveVideoWithDescription() { if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; } let info = pendingVideoInfo; let title = document.getElementById("videoTitleInput").value.trim() || "فيديو بدون عنوان"; let desc = document.getElementById("videoDescriptionInput").value.trim() || ""; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); if (used + info.bytes > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; } let optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/"); let thumbnail = null; // استخدام صورة مصغرة من الفيديو إذا توفرت
+  if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url;
+  else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg";
+    let videoData = { title: title, description: desc, type: "cloudinary", url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnail, publicId: info.public_id || "", format: info.format, duration: info.duration, width: info.width, height: info.height, size: info.bytes, createdAt: firebase.firestore.FieldValue.serverTimestamp(), cloudinaryData: { assetId: info.asset_id, version: info.version_id }, optimized: true, private: false }; db.collection("videos").add(videoData).then(() => { SoundEffects.success(); showToast("✅ تم الرفع والحفظ بنجاح!"); closeDescriptionModal(); pendingVideoInfo = null; }).catch(e => { console.error("Error saving to Firebase:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); }); }
   function closeDescriptionModal() { document.getElementById("descriptionModal").classList.remove("active"); pendingVideoInfo = null; }
   function editVideoTitle(id) { if (!isAdmin) { SoundEffects.error(); showToast("❌ المشرف فقط يستطيع التعديل"); return; } let v = videos.find(v => v.id === id); if (v) { currentEditVideoId = id; document.getElementById("editVideoTitleInput").value = v.title || ""; document.getElementById("editVideoDescriptionInput").value = v.description || ""; document.getElementById("editDescCharCount").textContent = "(" + (v.description || "").length + " / 5000 حرف)"; document.getElementById("editVideoModal").classList.add("active"); } }
   function closeEditVideoModal() { document.getElementById("editVideoModal").classList.remove("active"); currentEditVideoId = null; }
   function saveVideoEdit() { if (!currentEditVideoId || !isAdmin) return; let title = document.getElementById("editVideoTitleInput").value.trim(); let desc = document.getElementById("editVideoDescriptionInput").value.trim(); if (!title) { SoundEffects.error(); showToast("⚠️ العنوان لا يمكن أن يكون فارغاً"); return; } db.collection("videos").doc(currentEditVideoId).update({ title: title, description: desc, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم التعديل"); closeEditVideoModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); }
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
+  
+  // دالة تغيير صورة الغلاف
+  async function openThumbnailUploader(videoId) {
+    if (!isAdmin) { showToast("❌ المشرف فقط يمكنه تغيير الغلاف"); return; }
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showToast("⚠️ حجم الصورة يجب أن أقل من 5 ميجا"); return; }
+      showToast("⏳ جاري رفع الصورة...");
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
+      fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, { method: "POST", body: fd });
+        const data = await res.json();
+        if (!data.secure_url) throw new Error("فشل الرفع");
+        await db.collection("videos").doc(videoId).update({ customThumbnail: data.secure_url, thumbnail: data.secure_url });
+        showToast("✅ تم تغيير صورة الغلاف");
+      } catch (err) { console.error(err); showToast("❌ فشل رفع الصورة"); }
+    };
+    fileInput.click();
+  }
+  
   function renderVideos() {
     let container = document.getElementById("videosContainer");
     let empty = document.getElementById("emptyState");
@@ -629,10 +661,10 @@
     countSpan.textContent = videos.length + " فيديو";
     container.innerHTML = videos.map(v => {
       let duration = v.duration ? formatDuration(v.duration) : "";
-      let thumb = v.thumbnail;
+      let thumb = v.thumbnail || v.customThumbnail;
       if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
       let hasExam = exams.some(e => e.videoId === v.id);
-      let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button>` : "";
+      let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button><button class="change-thumbnail-btn" onclick="event.stopPropagation(); openThumbnailUploader('${v.id}')"><i class="fas fa-image"></i> تغيير الغلاف</button>` : "";
       let privateBadge = v.private ? '<div class="private-badge"><i class="fas fa-lock"></i> خاص</div>' : "";
       let examButtons = "";
       if (isAdmin) {
@@ -667,7 +699,6 @@
       container.innerHTML = "";
       container.appendChild(iframe);
       document.getElementById("videoControlsBar").style.display = "flex";
-      // إخفاء أزرار التحكم الخاصة بالفيديو العادي لأنها لا تعمل مع iframe
       const btns = document.querySelectorAll("#videoControlsBar button, #videoControlsBar select");
       btns.forEach(btn => { if (btn.id !== "fullscreenBtn") btn.style.opacity = "0.5"; btn.disabled = true; });
       document.getElementById("fullscreenBtn").disabled = false;
@@ -677,7 +708,7 @@
       let video = document.createElement("video");
       video.controls = true;
       video.src = v.url;
-      video.poster = v.thumbnail || "";
+      video.poster = v.thumbnail || v.customThumbnail || "";
       video.className = "video-player";
       video.id = "videoPlayer";
       video.playsInline = true;
@@ -685,7 +716,6 @@
       container.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
       setupProgressTracking();
-      // تفعيل الأزرار
       const btns = document.querySelectorAll("#videoControlsBar button, #videoControlsBar select");
       btns.forEach(btn => { btn.disabled = false; btn.style.opacity = "1"; });
       initVideoControls();
@@ -850,7 +880,6 @@
   function initVideoControls() {
     const video = document.getElementById("videoPlayer");
     if (!video || video.tagName !== "VIDEO") {
-      // إذا كان الفيديو من نوع iframe، نعالج فقط زر fullscreen (تم معالجته في playVideo)
       return;
     }
     const seekBackwardBtn = document.getElementById("seekBackwardBtn");
@@ -858,13 +887,11 @@
     const speedSelect = document.getElementById("speedSelect");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
     
-    // إزالة المستمعات القديمة لمنع التكرار
     if (videoControlsListeners.seekBackward && seekBackwardBtn) seekBackwardBtn.removeEventListener("click", videoControlsListeners.seekBackward);
     if (videoControlsListeners.seekForward && seekForwardBtn) seekForwardBtn.removeEventListener("click", videoControlsListeners.seekForward);
     if (videoControlsListeners.speedChange && speedSelect) speedSelect.removeEventListener("change", videoControlsListeners.speedChange);
     if (videoControlsListeners.fullscreen && fullscreenBtn) fullscreenBtn.removeEventListener("click", videoControlsListeners.fullscreen);
     
-    // تعريف المستمعات الجديدة
     videoControlsListeners.seekBackward = () => { if (video) video.currentTime = Math.max(0, video.currentTime - 10); };
     videoControlsListeners.seekForward = () => { if (video) video.currentTime = Math.min(video.duration, video.currentTime + 10); };
     videoControlsListeners.speedChange = () => { if (video) video.playbackRate = parseFloat(speedSelect.value); };
@@ -876,16 +903,13 @@
       }
     };
     
-    // ربط المستمعات
     if (seekBackwardBtn) seekBackwardBtn.addEventListener("click", videoControlsListeners.seekBackward);
     if (seekForwardBtn) seekForwardBtn.addEventListener("click", videoControlsListeners.seekForward);
     if (speedSelect) speedSelect.addEventListener("change", videoControlsListeners.speedChange);
     if (fullscreenBtn) fullscreenBtn.addEventListener("click", videoControlsListeners.fullscreen);
     
-    // مزامنة قيمة سرعة التشغيل مع الفيديو
     video.removeEventListener("ratechange", null);
     video.addEventListener("ratechange", () => { if (speedSelect) speedSelect.value = video.playbackRate.toString(); });
-    // تعيين السرعة الحالية
     if (speedSelect) video.playbackRate = parseFloat(speedSelect.value);
   }
 
