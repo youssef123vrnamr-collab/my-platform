@@ -616,9 +616,82 @@
   function closeEditVideoModal() { document.getElementById("editVideoModal").classList.remove("active"); currentEditVideoId = null; }
   function saveVideoEdit() { if (!currentEditVideoId || !isAdmin) return; let title = document.getElementById("editVideoTitleInput").value.trim(); let desc = document.getElementById("editVideoDescriptionInput").value.trim(); if (!title) { SoundEffects.error(); showToast("⚠️ العنوان لا يمكن أن يكون فارغاً"); return; } db.collection("videos").doc(currentEditVideoId).update({ title: title, description: desc, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم التعديل"); closeEditVideoModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); }
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
-  function renderVideos() { let container = document.getElementById("videosContainer"); let empty = document.getElementById("emptyState"); let loading = document.getElementById("loadingIndicator"); let countSpan = document.getElementById("videoCount"); if (!container || !empty || !countSpan || !loading) return; if (isLoadingVideos) { container.innerHTML = ""; empty.style.display = "none"; loading.style.display = "block"; countSpan.textContent = "0 فيديو"; return; } loading.style.display = "none"; if (videos.length === 0) { container.innerHTML = ""; empty.style.display = "block"; countSpan.textContent = "0 فيديو"; return; } empty.style.display = "none"; countSpan.textContent = videos.length + " فيديو"; container.innerHTML = videos.map(v => { let duration = v.duration ? formatDuration(v.duration) : ""; let thumb = v.thumbnail; if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`; let hasExam = exams.some(e => e.videoId === v.id); let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button>` : ""; let privateBadge = v.private ? '<div class="private-badge"><i class="fas fa-lock"></i> خاص</div>' : ""; let examButtons = ""; if (isAdmin) { if (hasExam) examButtons = `<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"><button class="quiz-btn" onclick="event.stopPropagation(); openAddExamModal('${v.id}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="fas fa-edit"></i> تعديل الامتحان</button><button class="delete-quiz-btn" onclick="event.stopPropagation(); deleteExam('${v.id}')"><i class="fas fa-trash"></i> حذف الامتحان</button><button class="view-results-btn" onclick="event.stopPropagation(); openViewResultsModal('${v.id}')"><i class="fas fa-chart-bar"></i> نتائج الامتحانات</button></div>`; else examButtons = `<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"><button class="quiz-btn" onclick="event.stopPropagation(); openAddExamModal('${v.id}')" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fas fa-plus-circle"></i> إضافة امتحان</button><button class="view-results-btn" onclick="event.stopPropagation(); openViewResultsModal('${v.id}')"><i class="fas fa-chart-bar"></i> نتائج الامتحانات</button></div>`; } else { if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; } } let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : ""; let youtubeIcon = v.type === "youtube" ? '<span style="position:absolute; top:10px; left:10px; background:#ff0000; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; z-index:7;"><i class="fab fa-youtube"></i></span>' : ""; return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}${youtubeIcon}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.type === 'youtube' ? '<span style="color:#ff0000; font-size:0.8rem;"><i class="fab fa-youtube"></i> يوتيوب</span>' : (v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : '')}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`; }).join(""); }
+  function renderVideos() {
+    let container = document.getElementById("videosContainer");
+    let empty = document.getElementById("emptyState");
+    let loading = document.getElementById("loadingIndicator");
+    let countSpan = document.getElementById("videoCount");
+    if (!container || !empty || !countSpan || !loading) return;
+    if (isLoadingVideos) { container.innerHTML = ""; empty.style.display = "none"; loading.style.display = "block"; countSpan.textContent = "0 فيديو"; return; }
+    loading.style.display = "none";
+    if (videos.length === 0) { container.innerHTML = ""; empty.style.display = "block"; countSpan.textContent = "0 فيديو"; return; }
+    empty.style.display = "none";
+    countSpan.textContent = videos.length + " فيديو";
+    container.innerHTML = videos.map(v => {
+      let duration = v.duration ? formatDuration(v.duration) : "";
+      let thumb = v.thumbnail;
+      if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
+      let hasExam = exams.some(e => e.videoId === v.id);
+      let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button>` : "";
+      let privateBadge = v.private ? '<div class="private-badge"><i class="fas fa-lock"></i> خاص</div>' : "";
+      let examButtons = "";
+      if (isAdmin) {
+        if (hasExam) examButtons = `<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"><button class="quiz-btn" onclick="event.stopPropagation(); openAddExamModal('${v.id}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="fas fa-edit"></i> تعديل الامتحان</button><button class="delete-quiz-btn" onclick="event.stopPropagation(); deleteExam('${v.id}')"><i class="fas fa-trash"></i> حذف الامتحان</button><button class="view-results-btn" onclick="event.stopPropagation(); openViewResultsModal('${v.id}')"><i class="fas fa-chart-bar"></i> نتائج الامتحانات</button></div>`; else examButtons = `<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"><button class="quiz-btn" onclick="event.stopPropagation(); openAddExamModal('${v.id}')" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fas fa-plus-circle"></i> إضافة امتحان</button><button class="view-results-btn" onclick="event.stopPropagation(); openViewResultsModal('${v.id}')"><i class="fas fa-chart-bar"></i> نتائج الامتحانات</button></div>`;
+      } else {
+        if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; }
+      }
+      let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : "";
+      // Removed YouTube icon and "يوتيوب" text
+      return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
+    }).join("");
+  }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
-  function playVideo(id, startTime = 0) { let v = videos.find(v => v.id === id); if (!v) return; if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; } document.getElementById("modalTitle").innerHTML = '<i class="fas ' + (v.type === 'youtube' ? 'fa-youtube' : 'fa-play-circle') + '"></i> <span>' + escapeHtml(v.title) + "</span>"; let container = document.getElementById("videoPlayerContainer"); let oldVideo = document.getElementById("videoPlayer"); if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause(); if (v.type === "youtube") { let iframe = document.createElement("iframe"); iframe.classList.add("youtube-iframe"); iframe.width = "100%"; iframe.height = "100%"; iframe.style.aspectRatio = "16 / 9"; iframe.style.border = "none"; iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1`; iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"; iframe.allowFullscreen = true; iframe.id = "videoPlayer"; container.innerHTML = ""; container.appendChild(iframe); document.getElementById("videoControlsBar").style.display = "flex"; } else { let video = document.createElement("video"); video.controls = true; video.src = v.url; video.poster = v.thumbnail || ""; video.className = "video-player"; video.id = "videoPlayer"; video.playsInline = true; container.innerHTML = ""; container.appendChild(video); if (startTime > 0) video.currentTime = startTime; setupProgressTracking(); initVideoControls(); } document.getElementById("videoModal").classList.add("active"); let quizContainer = document.getElementById("videoQuizContainer"); if (exams.some(e => e.videoId === id)) { quizContainer.style.display = "block"; quizContainer.innerHTML = `<div style="padding:2rem; text-align:center; background:rgba(16,185,129,0.1); border-top:1px solid rgba(16,185,129,0.3);"><h3 style="color:#10b981; margin-bottom:1rem;"><i class="fas fa-clipboard-check"></i> يوجد امتحان لهذا الفيديو</h3><p style="color:#aaa; margin-bottom:1.5rem;">اختبر فهمك لمشاهدتك من خلال امتحان تفاعلي</p><button class="quiz-btn" onclick="closeModal(); setTimeout(()=>openTakeExamModal('${id}'),300);"><i class="fas fa-play-circle"></i> دخول الامتحان الآن</button></div>`; } else { quizContainer.style.display = "none"; quizContainer.innerHTML = ""; } }
+  function playVideo(id, startTime = 0) {
+    let v = videos.find(v => v.id === id);
+    if (!v) return;
+    if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; }
+    document.getElementById("modalTitle").innerHTML = '<i class="fas ' + (v.type === 'youtube' ? 'fa-youtube' : 'fa-play-circle') + '"></i> <span>' + escapeHtml(v.title) + "</span>";
+    let container = document.getElementById("videoPlayerContainer");
+    let oldVideo = document.getElementById("videoPlayer");
+    if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause();
+    if (v.type === "youtube") {
+      let iframe = document.createElement("iframe");
+      iframe.classList.add("youtube-iframe");
+      iframe.width = "100%";
+      iframe.height = "100%";
+      iframe.style.aspectRatio = "16 / 9";
+      iframe.style.border = "none";
+      iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1`;
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      iframe.id = "videoPlayer";
+      container.innerHTML = "";
+      container.appendChild(iframe);
+      document.getElementById("videoControlsBar").style.display = "flex";
+    } else {
+      let video = document.createElement("video");
+      video.controls = true;
+      video.src = v.url;
+      video.poster = v.thumbnail || "";
+      video.className = "video-player";
+      video.id = "videoPlayer";
+      video.playsInline = true;
+      container.innerHTML = "";
+      container.appendChild(video);
+      if (startTime > 0) video.currentTime = startTime;
+      setupProgressTracking();
+      initVideoControls(); // ربط الأزرار بعد إنشاء الفيديو
+    }
+    document.getElementById("videoModal").classList.add("active");
+    let quizContainer = document.getElementById("videoQuizContainer");
+    if (exams.some(e => e.videoId === id)) {
+      quizContainer.style.display = "block";
+      quizContainer.innerHTML = `<div style="padding:2rem; text-align:center; background:rgba(16,185,129,0.1); border-top:1px solid rgba(16,185,129,0.3);"><h3 style="color:#10b981; margin-bottom:1rem;"><i class="fas fa-clipboard-check"></i> يوجد امتحان لهذا الفيديو</h3><p style="color:#aaa; margin-bottom:1.5rem;">اختبر فهمك لمشاهدتك من خلال امتحان تفاعلي</p><button class="quiz-btn" onclick="closeModal(); setTimeout(()=>openTakeExamModal('${id}'),300);"><i class="fas fa-play-circle"></i> دخول الامتحان الآن</button></div>`;
+    } else {
+      quizContainer.style.display = "none";
+      quizContainer.innerHTML = "";
+    }
+  }
   function closeModal() { saveVideoProgress(); let p = document.getElementById("videoPlayer"); if (p && p.tagName === "VIDEO") p.pause(); document.getElementById("videoModal").classList.remove("active"); document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>'; document.getElementById("videoQuizContainer").style.display = "none"; }
   function saveVideoProgress() { let p = document.getElementById("videoPlayer"); if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); v && localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() })); }
   function checkForResume() { let d = localStorage.getItem(STORAGE_KEY); if (!d) return; try { lastWatchedData = JSON.parse(d); if (!videos.some(v => v.id === lastWatchedData.videoId)) { localStorage.removeItem(STORAGE_KEY); return; } if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; } document.getElementById("resumeVideoTitle").textContent = lastWatchedData.title; document.getElementById("resumeTimeDisplay").textContent = "توقفت عند: " + formatDuration(lastWatchedData.currentTime); document.getElementById("resumeNotification").style.display = "flex"; } catch (e) { localStorage.removeItem(STORAGE_KEY); } }
@@ -763,19 +836,24 @@
   function openExamResultModal() { document.getElementById("examResultModal").classList.add("active"); document.getElementById("examResultName").value = ""; document.getElementById("examResultPhone").value = ""; }
   function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
   function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
+  
+  // إصلاح أزرار التحكم في الفيديو
   function initVideoControls() {
     const video = document.getElementById("videoPlayer");
+    if (!video || video.tagName !== "VIDEO") return;
     const seekBackwardBtn = document.getElementById("seekBackwardBtn");
     const seekForwardBtn = document.getElementById("seekForwardBtn");
     const speedSelect = document.getElementById("speedSelect");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
-    if (!video || video.tagName !== "VIDEO") return;
-    if (seekBackwardBtn) seekBackwardBtn.onclick = () => { video.currentTime = Math.max(0, video.currentTime - 10); showToast("⏪ تراجع 10 ثوانٍ"); };
-    if (seekForwardBtn) seekForwardBtn.onclick = () => { video.currentTime = Math.min(video.duration, video.currentTime + 10); showToast("⏩ تقدّم 10 ثوانٍ"); };
-    if (speedSelect) speedSelect.onchange = () => { video.playbackRate = parseFloat(speedSelect.value); showToast(`السرعة: ${speedSelect.value}x`); };
-    if (fullscreenBtn) fullscreenBtn.onclick = () => { if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); };
+    if (seekBackwardBtn) seekBackwardBtn.onclick = () => { if (video) video.currentTime = Math.max(0, video.currentTime - 10); };
+    if (seekForwardBtn) seekForwardBtn.onclick = () => { if (video) video.currentTime = Math.min(video.duration, video.currentTime + 10); };
+    if (speedSelect) speedSelect.onchange = () => { if (video) video.playbackRate = parseFloat(speedSelect.value); };
+    if (fullscreenBtn) fullscreenBtn.onclick = () => { if (video) { if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); } };
+    // إزالة أي مستمعين سابقين لمنع التكرار
+    video.removeEventListener("ratechange", null);
     video.addEventListener("ratechange", () => { if (speedSelect) speedSelect.value = video.playbackRate.toString(); });
   }
+
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() {
     const elem = document.documentElement;
