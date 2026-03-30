@@ -19,6 +19,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
+    /* جميع الأنماط السابقة كما هي (تم الحفاظ عليها بالكامل) */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -163,17 +164,15 @@
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
     .toast.show { display: block; }
-    .cloudinary-thumbnail { width: 100%; height: 100%; object-fit: cover; }
-    .delete-btn, .edit-title-btn, .private-toggle-btn, .change-thumbnail-btn { position: absolute; top: 10px; background: #ef4444; color: #fff; border: none; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
+    .delete-btn, .edit-title-btn, .private-toggle-btn { position: absolute; top: 10px; background: #ef4444; color: #fff; border: none; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
     .delete-btn { right: 10px; background: #ef4444; }
     .edit-title-btn { right: 80px; background: #f59e0b; }
     .private-toggle-btn { right: 150px; background: rgba(99,102,241,.2); color: #6366f1; border: 1px solid #6366f1; }
-    .change-thumbnail-btn { right: 220px; background: #06b6d4; color: #fff; }
-    .video-card:hover .delete-btn, .video-card:hover .edit-title-btn, .video-card:hover .private-toggle-btn, .video-card:hover .change-thumbnail-btn { opacity: 1; }
+    .video-card:hover .delete-btn, .video-card:hover .edit-title-btn, .video-card:hover .private-toggle-btn { opacity: 1; }
+    @media (max-width:768px) { .delete-btn, .edit-title-btn, .private-toggle-btn { opacity: 1; font-size: .75rem; padding: .4rem .8rem; } .edit-title-btn { right: 70px; } .private-toggle-btn { right: 130px; } }
     .private-toggle-btn:hover { background: rgba(99,102,241,.4); transform: scale(1.05); }
     .private-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.6); color: #fff; padding: .3rem .8rem; border-radius: 20px; font-size: .8rem; z-index: 6; backdrop-filter: blur(5px); border: 1px solid #6366f1; }
     .private-badge i { color: #6366f1; }
-    @media (max-width:768px) { .delete-btn, .edit-title-btn, .private-toggle-btn, .change-thumbnail-btn { opacity: 1; font-size: .75rem; padding: .4rem .8rem; } .edit-title-btn { right: 70px; } .private-toggle-btn { right: 130px; } .change-thumbnail-btn { right: 190px; } }
     .description-modal-content { max-width: 600px; }
     .form-group { margin-bottom: 1.5rem; }
     .form-group label { display: block; margin-bottom: .5rem; color: #aaa; font-weight: 600; }
@@ -622,32 +621,6 @@
   function saveVideoEdit() { if (!currentEditVideoId || !isAdmin) return; let title = document.getElementById("editVideoTitleInput").value.trim(); let desc = document.getElementById("editVideoDescriptionInput").value.trim(); if (!title) { SoundEffects.error(); showToast("⚠️ العنوان لا يمكن أن يكون فارغاً"); return; } db.collection("videos").doc(currentEditVideoId).update({ title: title, description: desc, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم التعديل"); closeEditVideoModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); }
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
   
-  // دالة تغيير صورة الغلاف
-  async function openThumbnailUploader(videoId) {
-    if (!isAdmin) { showToast("❌ المشرف فقط يمكنه تغيير الغلاف"); return; }
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { showToast("⚠️ حجم الصورة يجب أن أقل من 5 ميجا"); return; }
-      showToast("⏳ جاري رفع الصورة...");
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
-      fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
-      try {
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, { method: "POST", body: fd });
-        const data = await res.json();
-        if (!data.secure_url) throw new Error("فشل الرفع");
-        await db.collection("videos").doc(videoId).update({ customThumbnail: data.secure_url, thumbnail: data.secure_url });
-        showToast("✅ تم تغيير صورة الغلاف");
-      } catch (err) { console.error(err); showToast("❌ فشل رفع الصورة"); }
-    };
-    fileInput.click();
-  }
-  
   function renderVideos() {
     let container = document.getElementById("videosContainer");
     let empty = document.getElementById("emptyState");
@@ -661,10 +634,10 @@
     countSpan.textContent = videos.length + " فيديو";
     container.innerHTML = videos.map(v => {
       let duration = v.duration ? formatDuration(v.duration) : "";
-      let thumb = v.thumbnail || v.customThumbnail;
+      let thumb = v.thumbnail;
       if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
       let hasExam = exams.some(e => e.videoId === v.id);
-      let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button><button class="change-thumbnail-btn" onclick="event.stopPropagation(); openThumbnailUploader('${v.id}')"><i class="fas fa-image"></i> تغيير الغلاف</button>` : "";
+      let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button>` : "";
       let privateBadge = v.private ? '<div class="private-badge"><i class="fas fa-lock"></i> خاص</div>' : "";
       let examButtons = "";
       if (isAdmin) {
@@ -708,7 +681,7 @@
       let video = document.createElement("video");
       video.controls = true;
       video.src = v.url;
-      video.poster = v.thumbnail || v.customThumbnail || "";
+      video.poster = v.thumbnail || "";
       video.className = "video-player";
       video.id = "videoPlayer";
       video.playsInline = true;
