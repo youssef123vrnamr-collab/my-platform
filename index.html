@@ -591,7 +591,7 @@
   // Admin & UI
   function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; updateStorageBar(); loadAIKnowledgeFromFirebase(); const a = document.getElementById("cancelMaintenanceBtn"); a && document.getElementById("maintenanceOverlay")?.classList.contains("active") && a.classList.add("active"); updateGoogleLogoutButtonsVisibility(); } }
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"), g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
-  function listenToVideosWithRetry(maxAttempts = 4) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "desc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
+  function listenToVideosWithRetry(maxAttempts = 5) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "desc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
   function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); }
@@ -641,7 +641,6 @@
         if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; }
       }
       let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : "";
-      // Removed YouTube icon and "يوتيوب" text
       return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
     }).join("");
   }
@@ -668,6 +667,12 @@
       container.innerHTML = "";
       container.appendChild(iframe);
       document.getElementById("videoControlsBar").style.display = "flex";
+      // إخفاء أزرار التحكم الخاصة بالفيديو العادي لأنها لا تعمل مع iframe
+      const btns = document.querySelectorAll("#videoControlsBar button, #videoControlsBar select");
+      btns.forEach(btn => { if (btn.id !== "fullscreenBtn") btn.style.opacity = "0.5"; btn.disabled = true; });
+      document.getElementById("fullscreenBtn").disabled = false;
+      document.getElementById("fullscreenBtn").style.opacity = "1";
+      document.getElementById("fullscreenBtn").onclick = () => { if (iframe.requestFullscreen) iframe.requestFullscreen(); else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen(); else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen(); };
     } else {
       let video = document.createElement("video");
       video.controls = true;
@@ -680,7 +685,10 @@
       container.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
       setupProgressTracking();
-      initVideoControls(); // ربط الأزرار بعد إنشاء الفيديو
+      // تفعيل الأزرار
+      const btns = document.querySelectorAll("#videoControlsBar button, #videoControlsBar select");
+      btns.forEach(btn => { btn.disabled = false; btn.style.opacity = "1"; });
+      initVideoControls();
     }
     document.getElementById("videoModal").classList.add("active");
     let quizContainer = document.getElementById("videoQuizContainer");
@@ -837,21 +845,48 @@
   function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
   function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
   
-  // إصلاح أزرار التحكم في الفيديو
+  // إصلاح أزرار التحكم في الفيديو (تقديم +10، تأخير -10، تكبير الشاشة)
+  let videoControlsListeners = { seekBackward: null, seekForward: null, speedChange: null, fullscreen: null };
   function initVideoControls() {
     const video = document.getElementById("videoPlayer");
-    if (!video || video.tagName !== "VIDEO") return;
+    if (!video || video.tagName !== "VIDEO") {
+      // إذا كان الفيديو من نوع iframe، نعالج فقط زر fullscreen (تم معالجته في playVideo)
+      return;
+    }
     const seekBackwardBtn = document.getElementById("seekBackwardBtn");
     const seekForwardBtn = document.getElementById("seekForwardBtn");
     const speedSelect = document.getElementById("speedSelect");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
-    if (seekBackwardBtn) seekBackwardBtn.onclick = () => { if (video) video.currentTime = Math.max(0, video.currentTime - 10); };
-    if (seekForwardBtn) seekForwardBtn.onclick = () => { if (video) video.currentTime = Math.min(video.duration, video.currentTime + 10); };
-    if (speedSelect) speedSelect.onchange = () => { if (video) video.playbackRate = parseFloat(speedSelect.value); };
-    if (fullscreenBtn) fullscreenBtn.onclick = () => { if (video) { if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); } };
-    // إزالة أي مستمعين سابقين لمنع التكرار
+    
+    // إزالة المستمعات القديمة لمنع التكرار
+    if (videoControlsListeners.seekBackward && seekBackwardBtn) seekBackwardBtn.removeEventListener("click", videoControlsListeners.seekBackward);
+    if (videoControlsListeners.seekForward && seekForwardBtn) seekForwardBtn.removeEventListener("click", videoControlsListeners.seekForward);
+    if (videoControlsListeners.speedChange && speedSelect) speedSelect.removeEventListener("change", videoControlsListeners.speedChange);
+    if (videoControlsListeners.fullscreen && fullscreenBtn) fullscreenBtn.removeEventListener("click", videoControlsListeners.fullscreen);
+    
+    // تعريف المستمعات الجديدة
+    videoControlsListeners.seekBackward = () => { if (video) video.currentTime = Math.max(0, video.currentTime - 10); };
+    videoControlsListeners.seekForward = () => { if (video) video.currentTime = Math.min(video.duration, video.currentTime + 10); };
+    videoControlsListeners.speedChange = () => { if (video) video.playbackRate = parseFloat(speedSelect.value); };
+    videoControlsListeners.fullscreen = () => { 
+      if (video) {
+        if (video.requestFullscreen) video.requestFullscreen();
+        else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+        else if (video.msRequestFullscreen) video.msRequestFullscreen();
+      }
+    };
+    
+    // ربط المستمعات
+    if (seekBackwardBtn) seekBackwardBtn.addEventListener("click", videoControlsListeners.seekBackward);
+    if (seekForwardBtn) seekForwardBtn.addEventListener("click", videoControlsListeners.seekForward);
+    if (speedSelect) speedSelect.addEventListener("change", videoControlsListeners.speedChange);
+    if (fullscreenBtn) fullscreenBtn.addEventListener("click", videoControlsListeners.fullscreen);
+    
+    // مزامنة قيمة سرعة التشغيل مع الفيديو
     video.removeEventListener("ratechange", null);
     video.addEventListener("ratechange", () => { if (speedSelect) speedSelect.value = video.playbackRate.toString(); });
+    // تعيين السرعة الحالية
+    if (speedSelect) video.playbackRate = parseFloat(speedSelect.value);
   }
 
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
