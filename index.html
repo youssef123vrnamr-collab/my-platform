@@ -112,10 +112,38 @@
     .modal-share:hover, .modal-fullscreen:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
     .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
-    .video-player-container { background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8)); backdrop-filter: blur(12px); border-radius: 32px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2); transition: all 0.3s ease; margin-bottom: 1rem; }
-    .video-player-container:hover { box-shadow: 0 25px 45px rgba(99,102,241,0.3), 0 0 0 1px #6366f1, 0 0 0 4px rgba(236,72,153,0.4); }
-    .video-player, .youtube-iframe { width: 100%; height: auto; max-height: 70vh; border-radius: 24px; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); aspect-ratio: 16 / 9; }
-    /* تحسين كامل لوضع ملء الشاشة */
+    /* ==== إصلاح عرض الفيديو: إلغاء padding عند تشغيل الفيديو ==== */
+    .video-player-container {
+      background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8));
+      backdrop-filter: blur(12px);
+      border-radius: 32px;
+      padding: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2);
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
+    }
+    /* عند فتح الفيديو، نزيل الـ padding ليملأ العرض بالكامل */
+    .video-player-container.video-playing {
+      padding: 0 !important;
+      background: #000 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      margin-bottom: 0 !important;
+    }
+    /* إزالة padding من الـ modal-body أثناء تشغيل الفيديو */
+    .modal.video-active .modal-body {
+      padding: 0 !important;
+    }
+    .video-player, .youtube-iframe { 
+      width: 100%; 
+      height: auto; 
+      max-height: 70vh; 
+      border-radius: 24px; 
+      background: #000; 
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
+      aspect-ratio: 16 / 9;
+    }
+    /* في وضع ملء الشاشة */
     .video-player:fullscreen,
     .video-player:-webkit-full-screen {
       width: 100% !important;
@@ -732,11 +760,22 @@
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   
+  // ========== إصلاح عرض الفيديو: إضافة كلاس video-playing وإزالة padding ==========
   function playVideo(id, startTime = 0) {
     let v = videos.find(v => v.id === id);
     if (!v) return;
     if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; }
-    let container = document.getElementById("videoPlayerContainer");
+    
+    // إضافة كلاس video-playing للـ container وإزالة padding
+    const playerContainer = document.getElementById("videoPlayerContainer");
+    const modal = document.getElementById("videoModal");
+    if (playerContainer) {
+      playerContainer.classList.add("video-playing");
+    }
+    if (modal) {
+      modal.classList.add("video-active");
+    }
+    
     let oldVideo = document.getElementById("videoPlayer");
     if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause();
     if (v.type === "youtube") {
@@ -750,8 +789,8 @@
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
       iframe.allowFullscreen = true;
       iframe.id = "videoPlayer";
-      container.innerHTML = "";
-      container.appendChild(iframe);
+      playerContainer.innerHTML = "";
+      playerContainer.appendChild(iframe);
     } else {
       let video = document.createElement("video");
       video.controls = true;
@@ -760,8 +799,8 @@
       video.className = "video-player";
       video.id = "videoPlayer";
       video.playsInline = true;
-      container.innerHTML = "";
-      container.appendChild(video);
+      playerContainer.innerHTML = "";
+      playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
       setupProgressTracking();
     }
@@ -776,7 +815,26 @@
     }
   }
   
-  function closeModal() { saveVideoProgress(); let p = document.getElementById("videoPlayer"); if (p && p.tagName === "VIDEO") p.pause(); document.getElementById("videoModal").classList.remove("active"); document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>'; document.getElementById("videoQuizContainer").style.display = "none"; }
+  function closeModal() { 
+    saveVideoProgress(); 
+    let p = document.getElementById("videoPlayer"); 
+    if (p && p.tagName === "VIDEO") p.pause(); 
+    
+    // إزالة الكلاسات التي تضيفها عند تشغيل الفيديو لإعادة padding
+    const playerContainer = document.getElementById("videoPlayerContainer");
+    const modal = document.getElementById("videoModal");
+    if (playerContainer) {
+      playerContainer.classList.remove("video-playing");
+    }
+    if (modal) {
+      modal.classList.remove("video-active");
+    }
+    
+    document.getElementById("videoModal").classList.remove("active"); 
+    document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>'; 
+    document.getElementById("videoQuizContainer").style.display = "none"; 
+  }
+  
   function saveVideoProgress() { let p = document.getElementById("videoPlayer"); if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); v && localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() })); }
   function checkForResume() { let d = localStorage.getItem(STORAGE_KEY); if (!d) return; try { lastWatchedData = JSON.parse(d); if (!videos.some(v => v.id === lastWatchedData.videoId)) { localStorage.removeItem(STORAGE_KEY); return; } if (lastWatchedData.duration > 0 && lastWatchedData.currentTime / lastWatchedData.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; } document.getElementById("resumeVideoTitle").textContent = lastWatchedData.title; document.getElementById("resumeTimeDisplay").textContent = "توقفت عند: " + formatDuration(lastWatchedData.currentTime); document.getElementById("resumeNotification").style.display = "flex"; } catch (e) { localStorage.removeItem(STORAGE_KEY); } }
   function resumeWatching() { if (!lastWatchedData) return; if (!videos.find(v => v.id === lastWatchedData.videoId)) { showToast("❌ الفيديو غير متوفر"); dismissResume(); return; } playVideo(lastWatchedData.videoId, lastWatchedData.currentTime); dismissResume(); }
