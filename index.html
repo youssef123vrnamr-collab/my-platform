@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Astronomy and space | YouTube + Cloudinary</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
@@ -21,8 +21,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow-x: hidden; }
+    html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    /* السماح بالدوران التلقائي للشاشة */
+    @media screen and (orientation: landscape) {
+      body { background: #000; }
+      .hero, .navbar, .container > :not(.video-modal-container) { display: none; }
+      /* عند التصفح في الوضع الأفقي، نخفي العناصر غير الضرورية مؤقتًا */
+      .video-modal-container { display: block !important; }
+    }
     .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; }
@@ -114,23 +121,23 @@
     .video-player-container { background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8)); backdrop-filter: blur(12px); border-radius: 32px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2); transition: all 0.3s ease; margin-bottom: 1rem; }
     .video-player-container:hover { box-shadow: 0 25px 45px rgba(99,102,241,0.3), 0 0 0 1px #6366f1, 0 0 0 4px rgba(236,72,153,0.4); }
     .video-player, .youtube-iframe { width: 100%; height: auto; max-height: 70vh; border-radius: 24px; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); aspect-ratio: 16 / 9; }
-    /* تحسين عرض الفيديو في وضع ملء الشاشة */
+    /* تحسين كامل لوضع ملء الشاشة */
     .video-player:fullscreen,
     .video-player:-webkit-full-screen {
       width: 100% !important;
       height: 100% !important;
-      max-height: none !important;
-      object-fit: contain;
-      border-radius: 0;
+      max-height: 100vh !important;
+      object-fit: contain !important;
+      border-radius: 0 !important;
+      background: #000;
     }
     .youtube-iframe:fullscreen,
     .youtube-iframe:-webkit-full-screen {
       width: 100% !important;
       height: 100% !important;
-      max-height: none !important;
-      border-radius: 0;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
     }
-    /* إزالة تأثيرات الحاوية أثناء ملء الشاشة */
     .video-player-container:fullscreen,
     .video-player-container:-webkit-full-screen {
       padding: 0 !important;
@@ -138,6 +145,17 @@
       border-radius: 0 !important;
       box-shadow: none !important;
       backdrop-filter: none !important;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* منع أي ميلان */
+    .modal.active .video-player-container:fullscreen,
+    .modal.active .video-player-container:-webkit-full-screen {
+      transform: none;
+      rotate: 0deg;
     }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
