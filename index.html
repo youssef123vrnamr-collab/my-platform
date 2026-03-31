@@ -23,13 +23,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-    /* السماح بالدوران التلقائي للشاشة */
-    @media screen and (orientation: landscape) {
-      body { background: #000; }
-      .hero, .navbar, .container > :not(.video-modal-container) { display: none; }
-      /* عند التصفح في الوضع الأفقي، نخفي العناصر غير الضرورية مؤقتًا */
-      .video-modal-container { display: block !important; }
-    }
     .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; }
@@ -115,8 +108,9 @@
     .modal-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
     .modal-close { width: 40px; height: 40px; border: none; background: rgba(239,68,68,.2); color: #ef4444; border-radius: 10px; cursor: pointer; transition: all .3s; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
     .modal-close:hover { background: rgba(239,68,68,.4); transform: rotate(90deg); }
-    .modal-share { width: 40px; height: 40px; border: none; background: rgba(16,185,129,.2); color: #10b981; border-radius: 10px; cursor: pointer; transition: all .3s; font-size: 1.2rem; }
-    .modal-share:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
+    .modal-share, .modal-fullscreen { width: 40px; height: 40px; border: none; background: rgba(16,185,129,.2); color: #10b981; border-radius: 10px; cursor: pointer; transition: all .3s; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+    .modal-share:hover, .modal-fullscreen:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
+    .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
     .video-player-container { background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8)); backdrop-filter: blur(12px); border-radius: 32px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2); transition: all 0.3s ease; margin-bottom: 1rem; }
     .video-player-container:hover { box-shadow: 0 25px 45px rgba(99,102,241,0.3), 0 0 0 1px #6366f1, 0 0 0 4px rgba(236,72,153,0.4); }
@@ -150,12 +144,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    /* منع أي ميلان */
-    .modal.active .video-player-container:fullscreen,
-    .modal.active .video-player-container:-webkit-full-screen {
-      transform: none;
-      rotate: 0deg;
     }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
@@ -493,7 +481,7 @@
 
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
+  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
 
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-lock"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body"><input id="passwordInput" placeholder="اكتب كلمة المرور هنا..." type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)doLogin()"><button class="btn btn-primary" onclick="doLogin()" style="width:100%"><i class="fas fa-sign-in-alt"></i> دخول</button><button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button></div></div></div>
 
@@ -794,6 +782,18 @@
   function resumeWatching() { if (!lastWatchedData) return; if (!videos.find(v => v.id === lastWatchedData.videoId)) { showToast("❌ الفيديو غير متوفر"); dismissResume(); return; } playVideo(lastWatchedData.videoId, lastWatchedData.currentTime); dismissResume(); }
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => localStorage.removeItem(STORAGE_KEY)); }
+  
+  function toggleFullscreenVideo() {
+    const video = document.getElementById("videoPlayer");
+    if (!video) return;
+    if (video.requestFullscreen) {
+      video.requestFullscreen();
+    } else if (video.webkitRequestFullscreen) {
+      video.webkitRequestFullscreen();
+    } else if (video.msRequestFullscreen) {
+      video.msRequestFullscreen();
+    }
+  }
   
   function shareCurrentTime() {
     let currentTime = 0;
