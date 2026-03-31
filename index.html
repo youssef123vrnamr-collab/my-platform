@@ -114,6 +114,28 @@
     .video-player-container { background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8)); backdrop-filter: blur(12px); border-radius: 32px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2); transition: all 0.3s ease; margin-bottom: 1rem; }
     .video-player-container:hover { box-shadow: 0 25px 45px rgba(99,102,241,0.3), 0 0 0 1px #6366f1, 0 0 0 4px rgba(236,72,153,0.4); }
     .video-player, .youtube-iframe { width: 100%; height: auto; max-height: 70vh; border-radius: 24px; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); aspect-ratio: 16 / 9; }
+    /* تحسين عرض الفيديو في وضع ملء الشاشة */
+    .video-player-container:-webkit-full-screen, .video-player-container:fullscreen {
+      background: #000;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    .video-player-container:-webkit-full-screen .video-player,
+    .video-player-container:-webkit-full-screen .youtube-iframe,
+    .video-player-container:fullscreen .video-player,
+    .video-player-container:fullscreen .youtube-iframe {
+      max-height: 100vh;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 0;
+    }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
     .toast.show { display: block; }
@@ -450,7 +472,7 @@
 
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
 
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><h3 id="modalTitle"><i class="fas fa-play-circle"></i> <span>عنوان الفيديو</span></h3><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
+  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
 
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-lock"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body"><input id="passwordInput" placeholder="اكتب كلمة المرور هنا..." type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)doLogin()"><button class="btn btn-primary" onclick="doLogin()" style="width:100%"><i class="fas fa-sign-in-alt"></i> دخول</button><button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button></div></div></div>
 
@@ -705,7 +727,6 @@
     let v = videos.find(v => v.id === id);
     if (!v) return;
     if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; }
-    document.getElementById("modalTitle").innerHTML = '<i class="fas ' + (v.type === 'youtube' ? 'fa-youtube' : 'fa-play-circle') + '"></i> <span>' + escapeHtml(v.title) + "</span>";
     let container = document.getElementById("videoPlayerContainer");
     let oldVideo = document.getElementById("videoPlayer");
     if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause();
