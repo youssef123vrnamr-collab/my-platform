@@ -54,6 +54,22 @@
     .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
     .btn-secondary { background: linear-gradient(135deg, #64748b, #475569); color: #fff; }
     .btn-info { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; }
+    /* زر التحديث (سهمين يدوران) */
+    .refresh-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(99,102,241,0.6);
+      transition: all 0.3s ease;
+    }
+    .refresh-btn i {
+      transition: transform 0.5s ease;
+    }
+    .refresh-btn:hover i {
+      transform: rotate(360deg);
+    }
+    .refresh-btn:active i {
+      transform: rotate(720deg);
+      transition: transform 0.2s ease;
+    }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
@@ -349,6 +365,8 @@
       <div class="brand-text"><h1>Astronomy and space</h1><p>YouTube + Cloudinary ☁️</p></div>
     </div>
     <div class="nav-actions">
+      <!-- زر التحديث الجديد (سهمين بيلفوا ورا بعض) -->
+      <button class="btn btn-ghost refresh-btn" onclick="refreshPage()" title="تحديث الصفحة"><i class="fas fa-sync-alt"></i> تحديث</button>
       <button class="btn btn-ghost" onclick="showLogin()" id="adminBtn"><i class="fas fa-lock"></i> دخول المشرف</button>
       <button class="btn btn-danger" onclick="logout()" style="display:none" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> خروج المشرف</button>
       <button class="btn btn-danger" onclick="googleLogout()" style="display:none" id="googleLogoutNavBtn"><i class="fab fa-google"></i> خروج جوجل</button>
@@ -917,6 +935,20 @@
   function googleLogin() { auth.signInWithPopup(provider).then(result => { googleUser = result.user; let name = googleUser.displayName; let phone = googleUser.phoneNumber || ""; saveUserDataToStorage(name, phone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; document.getElementById("googleLogoutNavBtn").style.display = "flex"; updateGoogleLogoutButtonsVisibility(); SoundEffects.join(); loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); }).catch(error => { console.error(error); SoundEffects.error(); showToast("❌ فشل تسجيل الدخول بحساب Google"); }); }
   function googleLogout() { auth.signOut().then(() => { googleUser = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; document.getElementById("googleLogoutNavBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function initAuthState() { auth.onAuthStateChanged(user => { if (user && !isAdmin) { googleUser = user; let name = user.displayName; let phone = user.phoneNumber || ""; saveUserDataToStorage(name, phone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; document.getElementById("googleLogoutNavBtn").style.display = "flex"; updateGoogleLogoutButtonsVisibility(); loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal) { document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; document.getElementById("googleLogoutNavBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); } } }); }
+
+  // وظيفة تحديث الصفحة (Refresh)
+  function refreshPage() {
+    // تأثير صوتي نجاح
+    SoundEffects.success();
+    // إضافة تأثير دوران للزر (اختياري)
+    const refreshBtn = document.querySelector('.refresh-btn i');
+    if (refreshBtn) {
+      refreshBtn.style.transform = 'rotate(360deg)';
+      setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500);
+    }
+    // إعادة تحميل الصفحة
+    location.reload();
+  }
 
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
