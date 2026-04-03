@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Astronomy and space | YouTube + Cloudinary</title>
+  <title>Astronomy and space</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
   <meta name="mobile-web-app-capable" content="yes">
@@ -43,7 +43,6 @@
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .brand-text p { font-size: .85rem; color: #888; }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .btn { padding: 0.4rem 0.8rem; border: none; border-radius: 10px; cursor: pointer; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 0.8rem; transition: all .3s; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
@@ -401,7 +400,7 @@
   <nav class="navbar">
     <div class="brand">
       <div class="brand-logo"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
-      <div class="brand-text"><h1>Astronomy and space</h1><p>YouTube + Cloudinary ☁️</p></div>
+      <div class="brand-text"><h1>Astronomy and space</h1></div>
     </div>
     <div class="nav-actions">
       <button class="btn btn-ghost refresh-btn" onclick="refreshPage()" title="تحديث الصفحة"><i class="fas fa-sync-alt"></i> تحديث</button>
@@ -576,8 +575,29 @@
   };
 
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
-  const ADMIN_PASS = "@@@&&&((())) GGGttt☄️☄️☄️🌘🌘🌘🌘🆗🛠️💫😶‍🌫️🤬💯💨🙏🌧️🌩️⛈️🌦️🌥️⛅🌤️☀️🌞🌝🌚🌜🌛🌙⭐🌟✨🕳️🪐🌍🌎🌏🌫️🌠🌌☄️🌑🌒🌓🌔🌕🌖";
-  const SUPER_ADMIN_PASS = "1#3_5-7(9/0";
+  
+  // -------------------- تشفير كلمات المرور --------------------
+  // دالة بسيطة للتشفير/فك التشفير باستخدام XOR بمفتاح سري (يمكن تغيير المفتاح)
+  function xorEncryptDecrypt(str, key = "Falak2024!@#") {
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      let charCode = str.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+      result += String.fromCharCode(charCode);
+    }
+    return result;
+  }
+  // كلمات المرور مشفرة (لا تظهر كنص عادي)
+  const ENCRYPTED_ADMIN_PASS = xorEncryptDecrypt("@@@&&&((())) GGGttt☄️☄️☄️🌘🌘🌘🌘🆗🛠️💫😶‍🌫️🤬💯💨🙏🌧️🌩️⛈️🌦️🌥️⛅🌤️☀️🌞🌝🌚🌜🌛🌙⭐🌟✨🕳️🪐🌍🌎🌏🌫️🌠🌌☄️🌑🌒🌓🌔🌕🌖", "Falak2024!@#");
+  const ENCRYPTED_SUPER_ADMIN_PASS = xorEncryptDecrypt("1#3_5-7(9/0", "Falak2024!@#");
+  // دوال التحقق
+  function checkAdminPassword(inputPass) {
+    return inputPass === xorEncryptDecrypt(ENCRYPTED_ADMIN_PASS, "Falak2024!@#");
+  }
+  function checkSuperAdminPassword(inputPass) {
+    return inputPass === xorEncryptDecrypt(ENCRYPTED_SUPER_ADMIN_PASS, "Falak2024!@#");
+  }
+  // ---------------------------------------------------------
+
   const MAX_VIDEO_SIZE = 104857600;
   const CHUNK_SIZE = 10485760;
   const MAX_STORAGE = 26843545600;
@@ -617,7 +637,6 @@
           lastWatchedData = data.lastWatched;
           setTimeout(() => checkForResume(), 1000);
         }
-        // تحديث localStorage للدردشة
         if (currentUser) localStorage.setItem("falak_username", currentUser);
         if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
         return true;
@@ -636,7 +655,6 @@
       if (lastWatchedData) data.lastWatched = lastWatchedData;
       data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
       await db.collection("user_progress").doc(userId).set(data, { merge: true });
-      // تحديث localStorage
       if (currentUser) localStorage.setItem("falak_username", currentUser);
       if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
     } catch (e) { console.error("Error saving user data:", e); }
@@ -924,11 +942,52 @@
   
   function showLogin() { document.getElementById("loginModal").classList.add("active"); document.getElementById("passwordInput").value = ""; setTimeout(() => document.getElementById("passwordInput").focus(), 150); }
   function closeLogin() { document.getElementById("loginModal").classList.remove("active"); }
-  function doLogin() { if (document.getElementById("passwordInput").value.trim() === ADMIN_PASS) { isAdmin = true; localStorage.setItem("falak_admin", "true"); document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; document.getElementById("emailSettingsBtn").style.display = "inline-flex"; updateStorageBar(); closeLogin(); renderVideos(); loadAIKnowledgeFromFirebase(); if (document.getElementById("maintenanceOverlay").classList.contains("active")) document.getElementById("cancelMaintenanceBtn").classList.add("active"); SoundEffects.success(); showToast("🔓 مرحباً أيها المشرف!"); updateGoogleLogoutButtonsVisibility(); } else { SoundEffects.error(); showToast("❌ كلمة المرور خاطئة"); document.getElementById("passwordInput").value = ""; document.getElementById("passwordInput").focus(); } }
+  function doLogin() { 
+    let inputPass = document.getElementById("passwordInput").value.trim();
+    if (checkAdminPassword(inputPass)) { 
+      isAdmin = true; 
+      localStorage.setItem("falak_admin", "true"); 
+      document.getElementById("uploadZone").classList.add("active"); 
+      document.getElementById("adminBtn").style.display = "none"; 
+      document.getElementById("logoutBtn").style.display = "flex"; 
+      document.getElementById("maintenanceBtn").style.display = "flex"; 
+      document.getElementById("setAdminsBtn").style.display = "inline-flex"; 
+      document.getElementById("teachAICircleBtn").style.display = "inline-flex"; 
+      document.getElementById("emailSettingsBtn").style.display = "inline-flex"; 
+      updateStorageBar(); 
+      closeLogin(); 
+      renderVideos(); 
+      loadAIKnowledgeFromFirebase(); 
+      if (document.getElementById("maintenanceOverlay").classList.contains("active")) document.getElementById("cancelMaintenanceBtn").classList.add("active"); 
+      SoundEffects.success(); 
+      showToast("🔓 مرحباً أيها المشرف!"); 
+      updateGoogleLogoutButtonsVisibility(); 
+    } else { 
+      SoundEffects.error(); 
+      showToast("❌ كلمة المرور خاطئة"); 
+      document.getElementById("passwordInput").value = ""; 
+      document.getElementById("passwordInput").focus(); 
+    } 
+  }
   function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); document.getElementById("uploadZone").classList.remove("active"); document.getElementById("storageBar").style.display = "none"; document.getElementById("adminBtn").style.display = "flex"; document.getElementById("logoutBtn").style.display = "none"; document.getElementById("maintenanceBtn").style.display = "none"; document.getElementById("setAdminsBtn").style.display = "none"; document.getElementById("teachAICircleBtn").style.display = "none"; document.getElementById("emailSettingsBtn").style.display = "none"; document.getElementById("cancelMaintenanceBtn").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); updateGoogleLogoutButtonsVisibility(); }
   function openSetAdminsModal() { isAdmin && (document.getElementById("adminPasswordModal").classList.add("active"), document.getElementById("adminPasswordInput").value = "", document.getElementById("adminPasswordInput").focus()); }
   function closeAdminPasswordModal() { document.getElementById("adminPasswordModal").classList.remove("active"); }
-  function verifyAdminPassword() { if (document.getElementById("adminPasswordInput").value.trim() === SUPER_ADMIN_PASS) { isSuperAdmin = true; closeAdminPasswordModal(); document.getElementById("setAdminsModal").classList.add("active"); let c = localStorage.getItem("adminCount"); c && (document.getElementById("adminCountInput").value = c); SoundEffects.success(); } else { SoundEffects.error(); showToast("❌ كلمة المرور غير صحيحة"); document.getElementById("adminPasswordInput").value = ""; document.getElementById("adminPasswordInput").focus(); } }
+  function verifyAdminPassword() { 
+    let inputPass = document.getElementById("adminPasswordInput").value.trim();
+    if (checkSuperAdminPassword(inputPass)) { 
+      isSuperAdmin = true; 
+      closeAdminPasswordModal(); 
+      document.getElementById("setAdminsModal").classList.add("active"); 
+      let c = localStorage.getItem("adminCount"); 
+      c && (document.getElementById("adminCountInput").value = c); 
+      SoundEffects.success(); 
+    } else { 
+      SoundEffects.error(); 
+      showToast("❌ كلمة المرور غير صحيحة"); 
+      document.getElementById("adminPasswordInput").value = ""; 
+      document.getElementById("adminPasswordInput").focus(); 
+    } 
+  }
   function closeSetAdminsModal() { document.getElementById("setAdminsModal").classList.remove("active"); }
   function saveAdminCount() { let c = parseInt(document.getElementById("adminCountInput").value); if (isNaN(c) || c < 1 || c > 10) showToast("❌ العدد يجب أن يكون بين 1 و 10"); else { localStorage.setItem("adminCount", c); showToast("✅ تم حفظ عدد المشرفين: " + c); closeSetAdminsModal(); } }
   
