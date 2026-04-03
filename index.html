@@ -576,8 +576,6 @@
 
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
   
-  // -------------------- تشفير كلمات المرور --------------------
-  // دالة بسيطة للتشفير/فك التشفير باستخدام XOR بمفتاح سري (يمكن تغيير المفتاح)
   function xorEncryptDecrypt(str, key = "Falak2024!@#") {
     let result = "";
     for (let i = 0; i < str.length; i++) {
@@ -586,7 +584,7 @@
     }
     return result;
   }
-  // كلمات المرور مشفرة (لا تظهر كنص عادي)
+ 
   const ENCRYPTED_ADMIN_PASS = xorEncryptDecrypt("@@@&&&((())) GGGttt☄️☄️☄️🌘🌘🌘🌘🆗🛠️💫😶‍🌫️🤬💯💨🙏🌧️🌩️⛈️🌦️🌥️⛅🌤️☀️🌞🌝🌚🌜🌛🌙⭐🌟✨🕳️🪐🌍🌎🌏🌫️🌠🌌☄️🌑🌒🌓🌔🌕🌖", "Falak2024!@#");
   const ENCRYPTED_SUPER_ADMIN_PASS = xorEncryptDecrypt("1#3_5-7(9/0", "Falak2024!@#");
   // دوال التحقق
