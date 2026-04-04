@@ -393,6 +393,7 @@
     @media screen and (orientation: landscape) {
       body {
         transform: rotate(0deg);
+        overflow-x: hidden;
       }
 
       .container {
@@ -402,14 +403,19 @@
 
       .hero {
         padding: 2rem 1rem;
+        margin-bottom: 2rem;
       }
 
       .hero h2 {
-        font-size: 2rem;
+        font-size: 2.2rem;
+      }
+
+      .hero p {
+        font-size: 1rem;
       }
 
       .videos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 1.5rem;
       }
 
@@ -420,6 +426,11 @@
       .video-info {
         min-height: 280px;
         padding: 1.5rem;
+        margin-top: -50px;
+      }
+
+      .video-title {
+        font-size: 1.3rem;
       }
 
       .navbar {
@@ -427,12 +438,12 @@
       }
 
       .brand-logo {
-        width: 50px;
-        height: 50px;
+        width: 55px;
+        height: 55px;
       }
 
       .brand-text h1 {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
       }
 
       .modal-content {
@@ -451,6 +462,14 @@
         max-width: 600px;
         padding: 2rem;
       }
+
+      .upload-zone {
+        padding: 2rem;
+      }
+
+      .storage-bar-container {
+        padding: 1rem;
+      }
     }
 
     /* دعم الشاشات الصغيرة في الوضع الأفقي */
@@ -461,7 +480,7 @@
       }
 
       .hero h2 {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
       }
 
       .hero p {
@@ -469,12 +488,12 @@
       }
 
       .videos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 1rem;
       }
 
       .video-thumbnail {
-        height: 140px;
+        height: 130px;
       }
 
       .video-info {
@@ -519,6 +538,16 @@
       .landing-icon {
         width: 60px;
         height: 60px;
+      }
+
+      .upload-zone {
+        padding: 1.5rem;
+      }
+
+      .upload-icon {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
       }
     }
   </style>
