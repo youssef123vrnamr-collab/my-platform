@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="screen-orientation" content="auto">
+  <meta name="x5-orientation" content="auto">
+  <meta name="full-screen" content="yes">
+  <meta name="x5-fullscreen" content="true">
+  <meta name="browsermode" content="application">
+  <meta name="x5-page-mode" content="app">
   <title>Astronomy and space</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
@@ -482,6 +488,33 @@
       .hero h2 {
         font-size: 1.6rem;
       }
+    /* ========== إجبار دعم دوران الشاشة في PWA ========== */
+    html, body {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* منع أي قيود على الدوران */
+    @supports (orientation: landscape) {
+      body {
+        orientation: auto;
+      }
+    }
+
+    /* دعم جميع الاتجاهات */
+    @media all and (orientation: portrait) {
+      body {
+        /* الوضع الرأسي */
+      }
+    }
+
+    @media all and (orientation: landscape) {
+      body {
+        /* الوضع الأفقي */
+      }
+    }
+
 
       .hero p {
         font-size: 0.9rem;
@@ -1925,34 +1958,67 @@
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); } };
   document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); } });
 
-  // ========== دعم دوران الشاشة (Orientation) ==========
-  window.addEventListener("orientationchange", function() {
-    const orientation = window.orientation;
-    if (orientation === 90 || orientation === -90) {
-      console.log("الوضع: أفقي (Landscape)");
-      document.body.classList.add('landscape-mode');
-    } else {
-      console.log("الوضع: رأسي (Portrait)");
-      document.body.classList.remove('landscape-mode');
+  
+  // ========== دعم دوران الشاشة في PWA ==========
+  (function() {
+    // فتح قفل الاتجاه إذا كان موجود
+    if (screen.orientation && screen.orientation.unlock) {
+      try {
+        screen.orientation.unlock();
+        console.log("✅ Screen orientation unlocked");
+      } catch(e) {
+        console.log("Could not unlock orientation:", e);
+      }
     }
-    // إعادة حساب الأحجام بعد تغيير الاتجاه
-    setTimeout(function() {
-      window.dispatchEvent(new Event('resize'));
-    }, 300);
-  });
 
-  // التحقق من الاتجاه الحالي عند التحميل
-  if (window.orientation === 90 || window.orientation === -90) {
-    document.body.classList.add('landscape-mode');
-  }
+    // الاستماع لتغيير الاتجاه
+    function handleOrientationChange() {
+      const angle = screen.orientation ? screen.orientation.angle : window.orientation;
+      const type = screen.orientation ? screen.orientation.type : (Math.abs(window.orientation) === 90 ? 'landscape' : 'portrait');
 
-  // دعم Screen Orientation API (الأحدث)
-  if (screen.orientation) {
-    screen.orientation.addEventListener('change', function() {
-      console.log("تغيير الاتجاه:", screen.orientation.type);
+      console.log("Orientation changed:", type, "angle:", angle);
+
+      if (type.includes('landscape') || Math.abs(angle) === 90 || Math.abs(window.orientation) === 90) {
+        document.body.classList.add('landscape-mode');
+        document.body.classList.remove('portrait-mode');
+      } else {
+        document.body.classList.add('portrait-mode');
+        document.body.classList.remove('landscape-mode');
+      }
+
+      // إعادة حساب الأحجام
       setTimeout(function() {
         window.dispatchEvent(new Event('resize'));
-      }, 300);
+        if (typeof renderVideos === 'function') renderVideos();
+      }, 100);
+    }
+
+    // الاستماع للأحداث
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    // التحقق الأولي
+    handleOrientationChange();
+
+    // إعادة التحقق بعد تحميل الصفحة
+    window.addEventListener('load', handleOrientationChange);
+    setTimeout(handleOrientationChange, 500);
+    setTimeout(handleOrientationChange, 1000);
+  })();
+
+
+  // ========== تسجيل Service Worker ==========
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js')
+        .then(function(registration) {
+          console.log('✅ ServiceWorker registered:', registration.scope);
+        })
+        .catch(function(error) {
+          console.log('❌ ServiceWorker registration failed:', error);
+        });
     });
   }
 
