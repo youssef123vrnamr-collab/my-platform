@@ -1,45 +1,29 @@
-// Service Worker for Astronomy and Space PWA
-const CACHE_NAME = 'astronomy-pwa-v2';
+const CACHE_NAME = 'astronomy-pwa-v4';
 const urlsToCache = [
   './',
   './index.html',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/my-icon-192.png',
+  './icons/my-icon-512.png'
 ];
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(function(cache) {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then(keys => Promise.all(
+      keys.map(key => key !== CACHE_NAME && caches.delete(key))
+    ))
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', function(event) {
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
+    caches.match(event.request).then(res => res || fetch(event.request))
   );
 });
