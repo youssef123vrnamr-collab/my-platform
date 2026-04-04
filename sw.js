@@ -1,8 +1,10 @@
 // Service Worker for Astronomy and Space PWA
-const CACHE_NAME = 'astronomy-pwa-v1';
+const CACHE_NAME = 'astronomy-pwa-v2';
 const urlsToCache = [
   './',
-  './index.html'
+  './index.html',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', function(event) {
