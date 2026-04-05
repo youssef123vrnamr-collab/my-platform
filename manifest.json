@@ -1,28 +1,73 @@
 {
-  "name": "Astronomy and Space",
+  "name": "Astronomy and space",
   "short_name": "Astronomy",
   "description": "منصة متكاملة لتعليم علم الفلك بشكل مجاني",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f0a1a",
   "theme_color": "#0f0a1a",
-  "scope": ".",
-  "lang": "ar",
-  "dir": "rtl",
+  "background_color": "#0f0a1a",
+  "orientation": "portrait-primary",
+  "scope": "/",
   "icons": [
     {
-      "src": "icons/my-icon-192.png",
-      "sizes": "192x192",
+      "src": "16.png",
+      "sizes": "16x16",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/my-icon-512.png",
+      "src": "100.png",
+      "sizes": "100x100",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "114.png",
+      "sizes": "114x114",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "120.png",
+      "sizes": "120x120",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "167.png",
+      "sizes": "167x167",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "1772470322482.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
-  ],
-  "categories": ["education", "science"],
-  "prefer_related_applications": false
+  ]
 }
