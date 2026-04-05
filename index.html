@@ -2,13 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="screen-orientation" content="auto">
-  <meta name="x5-orientation" content="auto">
-  <meta name="full-screen" content="yes">
-  <meta name="x5-fullscreen" content="true">
-  <meta name="browsermode" content="application">
-  <meta name="x5-page-mode" content="app">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Astronomy and space</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
@@ -26,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط الأصلية مع إضافات تحسين ملء الشاشة ========== */
+    /* ========== جميع الأنماط الأصلية موجودة هنا ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -146,30 +140,6 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
       aspect-ratio: 16 / 9;
     }
-    /* تحسينات ملء الشاشة - PWA */
-    .video-player-container:fullscreen,
-    .video-player-container:-webkit-full-screen {
-      width: 100vw !important;
-      height: 100vh !important;
-      background: #000 !important;
-      padding: 0 !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      backdrop-filter: none !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .video-player-container:fullscreen video,
-    .video-player-container:-webkit-full-screen video,
-    .video-player-container:fullscreen .youtube-iframe,
-    .video-player-container:-webkit-full-screen .youtube-iframe {
-      width: 100% !important;
-      height: 100% !important;
-      max-height: 100vh !important;
-      object-fit: contain;
-      border-radius: 0 !important;
-    }
     .video-player:fullscreen,
     .video-player:-webkit-full-screen {
       width: 100% !important;
@@ -185,6 +155,19 @@
       height: 100% !important;
       max-height: 100vh !important;
       border-radius: 0 !important;
+    }
+    .video-player-container:fullscreen,
+    .video-player-container:-webkit-full-screen {
+      padding: 0 !important;
+      background: #000 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
@@ -394,195 +377,6 @@
     .email-settings-btn { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; border-radius: 12px; padding: .75rem 1.5rem; font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; transition: .3s; }
     .email-settings-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(16,185,129,.4); }
     @media (max-width:768px) { .landing-card { padding: 2rem 1.5rem; } .landing-title { font-size: 1.6rem; } .landing-icon { width: 70px; height: 70px; } .landing-header { gap: 1rem; } }
-
-    /* ========== دعم دوران الشاشة (Orientation) ========== */
-    @media screen and (orientation: landscape) {
-      body {
-        transform: rotate(0deg);
-        overflow-x: hidden;
-      }
-
-      .container {
-        padding: 1rem;
-        max-width: 100%;
-      }
-
-      .hero {
-        padding: 2rem 1rem;
-        margin-bottom: 2rem;
-      }
-
-      .hero h2 {
-        font-size: 2.2rem;
-      }
-
-      .hero p {
-        font-size: 1rem;
-      }
-
-      .videos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.5rem;
-      }
-
-      .video-thumbnail {
-        height: 180px;
-      }
-
-      .video-info {
-        min-height: 280px;
-        padding: 1.5rem;
-        margin-top: -50px;
-      }
-
-      .video-title {
-        font-size: 1.3rem;
-      }
-
-      .navbar {
-        padding: 0.5rem 1rem;
-      }
-
-      .brand-logo {
-        width: 55px;
-        height: 55px;
-      }
-
-      .brand-text h1 {
-        font-size: 1.3rem;
-      }
-
-      .modal-content {
-        max-height: 95vh;
-      }
-
-      .video-player, .youtube-iframe {
-        max-height: 80vh;
-      }
-
-      .chat-container {
-        height: 100vh;
-      }
-
-      .landing-card {
-        max-width: 600px;
-        padding: 2rem;
-      }
-
-      .upload-zone {
-        padding: 2rem;
-      }
-
-      .storage-bar-container {
-        padding: 1rem;
-      }
-    }
-
-    /* دعم الشاشات الصغيرة في الوضع الأفقي */
-    @media screen and (max-height: 500px) and (orientation: landscape) {
-      .hero {
-        padding: 1rem;
-        margin-bottom: 1rem;
-      }
-
-      .hero h2 {
-        font-size: 1.6rem;
-      }
-    /* ========== إجبار دعم دوران الشاشة في PWA ========== */
-    html, body {
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
-
-    /* منع أي قيود على الدوران */
-    @supports (orientation: landscape) {
-      body {
-        orientation: auto;
-      }
-    }
-
-    /* دعم جميع الاتجاهات */
-    @media all and (orientation: portrait) {
-      body {
-        /* الوضع الرأسي */
-      }
-    }
-
-    @media all and (orientation: landscape) {
-      body {
-        /* الوضع الأفقي */
-      }
-    }
-
-
-      .hero p {
-        font-size: 0.9rem;
-      }
-
-      .videos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 1rem;
-      }
-
-      .video-thumbnail {
-        height: 130px;
-      }
-
-      .video-info {
-        min-height: 200px;
-        padding: 1rem;
-        margin-top: -30px;
-      }
-
-      .video-title {
-        font-size: 1.1rem;
-      }
-
-      .video-description {
-        font-size: 0.85rem;
-        max-height: 80px;
-      }
-
-      .navbar {
-        padding: 0.4rem 0.75rem;
-      }
-
-      .btn {
-        padding: 0.3rem 0.6rem;
-        font-size: 0.75rem;
-      }
-
-      .chat-btn, .ai-chat-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.2rem;
-      }
-
-      .landing-card {
-        padding: 1.5rem;
-        max-width: 500px;
-      }
-
-      .landing-title {
-        font-size: 1.4rem;
-      }
-
-      .landing-icon {
-        width: 60px;
-        height: 60px;
-      }
-
-      .upload-zone {
-        padding: 1.5rem;
-      }
-
-      .upload-icon {
-        width: 80px;
-        height: 80px;
-        font-size: 2rem;
-      }
-    }
   </style>
 </head>
 <body>
@@ -793,12 +587,14 @@
  
   const ENCRYPTED_ADMIN_PASS = xorEncryptDecrypt("@@@&&&((())) GGGttt☄️☄️☄️🌘🌘🌘🌘🆗🛠️💫😶‍🌫️🤬💯💨🙏🌧️🌩️⛈️🌦️🌥️⛅🌤️☀️🌞🌝🌚🌜🌛🌙⭐🌟✨🕳️🪐🌍🌎🌏🌫️🌠🌌☄️🌑🌒🌓🌔🌕🌖", "Falak2024!@#");
   const ENCRYPTED_SUPER_ADMIN_PASS = xorEncryptDecrypt("1#3_5-7(9/0", "Falak2024!@#");
+  // دوال التحقق
   function checkAdminPassword(inputPass) {
     return inputPass === xorEncryptDecrypt(ENCRYPTED_ADMIN_PASS, "Falak2024!@#");
   }
   function checkSuperAdminPassword(inputPass) {
     return inputPass === xorEncryptDecrypt(ENCRYPTED_SUPER_ADMIN_PASS, "Falak2024!@#");
   }
+  // ---------------------------------------------------------
 
   const MAX_VIDEO_SIZE = 104857600;
   const CHUNK_SIZE = 10485760;
@@ -826,7 +622,7 @@
     join() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); }
   };
 
-  // ========== User Data Management with Firebase ==========
+  // ========== User Data Management with Firebase (per Google Account) ==========
   async function loadUserDataFromFirebase(userId) {
     try {
       const userDoc = await db.collection("user_progress").doc(userId).get();
@@ -1020,10 +816,6 @@
     if (playerContainer) playerContainer.classList.add("video-playing");
     if (modal) modal.classList.add("video-active");
     
-    // إزالة أي padding أو تأثيرات سابقة
-    playerContainer.style.padding = "0";
-    playerContainer.style.background = "black";
-    
     let oldVideo = document.getElementById("videoPlayer");
     if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause();
     if (v.type === "youtube") {
@@ -1112,29 +904,12 @@
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => { if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); }); }
   
-  // ========== تحسين ملء الشاشة لـ PWA ==========
   function toggleFullscreenVideo() {
-    const container = document.getElementById("videoPlayerContainer");
-    if (!container) return;
-
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      // دخول وضع ملء الشاشة
-      const requestFullscreen = container.requestFullscreen || container.webkitRequestFullscreen || container.msRequestFullscreen;
-      if (requestFullscreen) {
-        requestFullscreen.call(container).catch(err => {
-          console.warn("Fullscreen error:", err);
-          // حل بديل: محاولة تكبير الفيديو مباشرة
-          const video = document.getElementById("videoPlayer");
-          if (video && (video.requestFullscreen || video.webkitRequestFullscreen)) {
-            (video.requestFullscreen || video.webkitRequestFullscreen).call(video);
-          }
-        });
-      }
-    } else {
-      // الخروج من ملء الشاشة
-      const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
-      if (exitFullscreen) exitFullscreen.call(document);
-    }
+    const video = document.getElementById("videoPlayer");
+    if (!video) return;
+    if (video.requestFullscreen) video.requestFullscreen();
+    else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+    else if (video.msRequestFullscreen) video.msRequestFullscreen();
   }
   
   function shareCurrentTime() {
@@ -1249,7 +1024,7 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat Functions
+  // Chat Functions - MODIFIED to use Firebase user data
   function loadUserDataFromStorage() { 
     let savedName = localStorage.getItem("falak_username"); 
     let savedPhone = localStorage.getItem("falak_userphone"); 
@@ -1788,7 +1563,7 @@
     } 
   }
   
-  // Google Auth Functions
+  // Google Auth Functions - MODIFIED to save user data to Firebase and load chat data
   async function googleLogin() { 
     try {
       const result = await auth.signInWithPopup(provider);
@@ -1957,71 +1732,6 @@
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); removePresence(); });
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); } };
   document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); } });
-
-  
-  // ========== دعم دوران الشاشة في PWA ==========
-  (function() {
-    // فتح قفل الاتجاه إذا كان موجود
-    if (screen.orientation && screen.orientation.unlock) {
-      try {
-        screen.orientation.unlock();
-        console.log("✅ Screen orientation unlocked");
-      } catch(e) {
-        console.log("Could not unlock orientation:", e);
-      }
-    }
-
-    // الاستماع لتغيير الاتجاه
-    function handleOrientationChange() {
-      const angle = screen.orientation ? screen.orientation.angle : window.orientation;
-      const type = screen.orientation ? screen.orientation.type : (Math.abs(window.orientation) === 90 ? 'landscape' : 'portrait');
-
-      console.log("Orientation changed:", type, "angle:", angle);
-
-      if (type.includes('landscape') || Math.abs(angle) === 90 || Math.abs(window.orientation) === 90) {
-        document.body.classList.add('landscape-mode');
-        document.body.classList.remove('portrait-mode');
-      } else {
-        document.body.classList.add('portrait-mode');
-        document.body.classList.remove('landscape-mode');
-      }
-
-      // إعادة حساب الأحجام
-      setTimeout(function() {
-        window.dispatchEvent(new Event('resize'));
-        if (typeof renderVideos === 'function') renderVideos();
-      }, 100);
-    }
-
-    // الاستماع للأحداث
-    if (screen.orientation) {
-      screen.orientation.addEventListener('change', handleOrientationChange);
-    }
-    window.addEventListener('orientationchange', handleOrientationChange);
-
-    // التحقق الأولي
-    handleOrientationChange();
-
-    // إعادة التحقق بعد تحميل الصفحة
-    window.addEventListener('load', handleOrientationChange);
-    setTimeout(handleOrientationChange, 500);
-    setTimeout(handleOrientationChange, 1000);
-  })();
-
-
-  // ========== تسجيل Service Worker ==========
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js')
-        .then(function(registration) {
-          console.log('✅ ServiceWorker registered:', registration.scope);
-        })
-        .catch(function(error) {
-          console.log('❌ ServiceWorker registration failed:', error);
-        });
-    });
-  }
-
 </script>
 </body>
 </html>
