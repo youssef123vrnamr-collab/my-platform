@@ -24,7 +24,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-    .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+    .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; overflow-x: hidden; }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; }
     .nebula { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,.15) 0, transparent 70%); border-radius: 50%; filter: blur(60px); animation: float 20s infinite ease-in-out; }
@@ -139,22 +139,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
       aspect-ratio: 16 / 9;
     }
-    .video-player:fullscreen,
-    .video-player:-webkit-full-screen {
-      width: 100% !important;
-      height: 100% !important;
-      max-height: 100vh !important;
-      object-fit: contain !important;
-      border-radius: 0 !important;
-      background: #000;
-    }
-    .youtube-iframe:fullscreen,
-    .youtube-iframe:-webkit-full-screen {
-      width: 100% !important;
-      height: 100% !important;
-      max-height: 100vh !important;
-      border-radius: 0 !important;
-    }
+    /* جعل الفيديو يغطي الشاشة بالكامل في وضع ملء الشاشة */
     .video-player-container:fullscreen,
     .video-player-container:-webkit-full-screen {
       padding: 0 !important;
@@ -167,6 +152,22 @@
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+    .video-player-container:fullscreen video,
+    .video-player-container:-webkit-full-screen video {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      object-fit: cover !important; /* تغطية كاملة مع قص الأجزاء الزائدة */
+      border-radius: 0 !important;
+    }
+    .youtube-iframe:fullscreen,
+    .youtube-iframe:-webkit-full-screen {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
     }
     /* إصلاحات PWA */
     @media all and (display-mode: standalone) {
@@ -399,6 +400,10 @@
     .email-settings-btn { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; border-radius: 12px; padding: .75rem 1.5rem; font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; transition: .3s; }
     .email-settings-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(16,185,129,.4); }
     @media (max-width:768px) { .landing-card { padding: 2rem 1.5rem; } .landing-title { font-size: 1.6rem; } .landing-icon { width: 70px; height: 70px; } .landing-header { gap: 1rem; } }
+    img, video, iframe, .video-card, .modal-content, .container {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -826,7 +831,7 @@
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   
-  // ========== Video Playback with PWA Orientation Fix ==========
+  // ========== Video Playback with Fullscreen Fill Fix ==========
   function forceVideoResizeOnPWA() {
     const modal = document.getElementById('videoModal');
     const isVideoActive = modal && modal.classList.contains('active');
@@ -867,6 +872,7 @@
   const originalToggleFullscreenVideo = window.toggleFullscreenVideo;
   window.toggleFullscreenVideo = function() {
     const container = document.querySelector('.video-player-container');
+    const video = document.getElementById('videoPlayer');
     if (!container) return;
     
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -875,6 +881,12 @@
         req.call(container).then(() => {
           if (screen.orientation && screen.orientation.lock) {
             screen.orientation.lock('landscape').catch(e => console.warn(e));
+          }
+          // جعل الفيديو يغطي الشاشة بالكامل
+          if (video && video.tagName === 'VIDEO') {
+            video.style.objectFit = 'cover';
+            video.style.width = '100%';
+            video.style.height = '100%';
           }
           setTimeout(forceVideoResizeOnPWA, 50);
         }).catch(e => console.warn(e));
@@ -886,11 +898,32 @@
           if (screen.orientation && screen.orientation.unlock) {
             screen.orientation.unlock();
           }
+          if (video && video.tagName === 'VIDEO') {
+            video.style.objectFit = 'contain';
+            video.style.width = '';
+            video.style.height = '';
+          }
           setTimeout(forceVideoResizeOnPWA, 50);
         }).catch(e => console.warn(e));
       }
     }
   };
+
+  function handleOrientationChange() {
+    const modal = document.getElementById('videoModal');
+    const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const video = document.getElementById('videoPlayer');
+    
+    if (modal && modal.classList.contains('active') && isFullscreen && video && video.tagName === 'VIDEO') {
+      setTimeout(() => {
+        video.style.objectFit = 'cover';
+        video.style.width = '100%';
+        video.style.height = '100%';
+      }, 50);
+    }
+  }
+  window.addEventListener('orientationchange', handleOrientationChange);
+  window.addEventListener('resize', handleOrientationChange);
 
   const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
@@ -940,6 +973,7 @@
       video.playsInline = true;
       video.setAttribute('playsinline', 'true');
       video.setAttribute('webkit-playsinline', 'true');
+      video.style.objectFit = 'contain';
       playerContainer.innerHTML = "";
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
@@ -1808,13 +1842,26 @@
   }
 
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
-  function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
+  
+  // Fullscreen on first user interaction (to comply with browser policies)
+  function enableFullscreenOnFirstClick() {
+    const enable = () => {
+      const elem = document.documentElement;
+      const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
+      if (requestFullscreen) {
+        requestFullscreen.call(elem).catch(err => console.warn("تعذر الدخول إلى وضع ملء الشاشة: ", err));
+      }
+      document.removeEventListener('click', enable);
+      document.removeEventListener('touchstart', enable);
+    };
+    document.addEventListener('click', enable);
+    document.addEventListener('touchstart', enable);
+  }
 
   window.addEventListener("load", function() { 
     loadUserDataFromStorage(); 
     hideLoader(); 
-    requestFullscreenAutomatically(); 
-    setTimeout(requestFullscreenAutomatically, 1000); 
+    enableFullscreenOnFirstClick(); 
     initAuthState(); 
     loadEmailSettings(); 
     document.getElementById("googleSignInBtn").onclick = googleLogin; 
