@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط الأصلية موجودة هنا ========== */
+    /* ========== جميع الأنماط الأصلية ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -113,13 +113,12 @@
     .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
     .video-player-container {
+      transition: all 0.3s ease;
       background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8));
       backdrop-filter: blur(12px);
       border-radius: 32px;
       padding: 16px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2);
-      transition: all 0.3s ease;
-      margin-bottom: 1rem;
     }
     .video-player-container.video-playing {
       padding: 0 !important;
@@ -168,6 +167,29 @@
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+    /* إصلاحات PWA */
+    @media all and (display-mode: standalone) {
+      .video-player-container {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 300px;
+      }
+      .video-player-container:fullscreen,
+      .video-player-container:-webkit-full-screen {
+        width: 100% !important;
+        height: 100% !important;
+      }
+      .video-player, .youtube-iframe {
+        width: 100% !important;
+        height: auto !important;
+      }
+      body {
+        overflow-x: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+      }
     }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
@@ -587,14 +609,12 @@
  
   const ENCRYPTED_ADMIN_PASS = xorEncryptDecrypt("@@@&&&((())) GGGttt☄️☄️☄️🌘🌘🌘🌘🆗🛠️💫😶‍🌫️🤬💯💨🙏🌧️🌩️⛈️🌦️🌥️⛅🌤️☀️🌞🌝🌚🌜🌛🌙⭐🌟✨🕳️🪐🌍🌎🌏🌫️🌠🌌☄️🌑🌒🌓🌔🌕🌖", "Falak2024!@#");
   const ENCRYPTED_SUPER_ADMIN_PASS = xorEncryptDecrypt("1#3_5-7(9/0", "Falak2024!@#");
-  // دوال التحقق
   function checkAdminPassword(inputPass) {
     return inputPass === xorEncryptDecrypt(ENCRYPTED_ADMIN_PASS, "Falak2024!@#");
   }
   function checkSuperAdminPassword(inputPass) {
     return inputPass === xorEncryptDecrypt(ENCRYPTED_SUPER_ADMIN_PASS, "Falak2024!@#");
   }
-  // ---------------------------------------------------------
 
   const MAX_VIDEO_SIZE = 104857600;
   const CHUNK_SIZE = 10485760;
@@ -622,7 +642,7 @@
     join() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); }
   };
 
-  // ========== User Data Management with Firebase (per Google Account) ==========
+  // ========== User Data Management ==========
   async function loadUserDataFromFirebase(userId) {
     try {
       const userDoc = await db.collection("user_progress").doc(userId).get();
@@ -806,6 +826,85 @@
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   
+  // ========== Video Playback with PWA Orientation Fix ==========
+  function forceVideoResizeOnPWA() {
+    const modal = document.getElementById('videoModal');
+    const isVideoActive = modal && modal.classList.contains('active');
+    if (!isVideoActive) return;
+    
+    const video = document.getElementById('videoPlayer');
+    const container = document.querySelector('.video-player-container');
+    if (!video || !container) return;
+    
+    if (video.tagName === 'VIDEO') {
+      video.style.width = '100%';
+      video.style.height = 'auto';
+      container.style.width = '100%';
+      container.style.height = 'auto';
+      
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        setTimeout(() => {
+          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const req = container.requestFullscreen || container.webkitRequestFullscreen;
+            if (req) req.call(container).catch(e => console.warn(e));
+          }
+        }, 100);
+      }
+    } else if (video.tagName === 'IFRAME') {
+      video.style.width = '100%';
+      video.style.height = '100%';
+      container.style.width = '100%';
+      container.style.height = '100%';
+    }
+  }
+
+  window.addEventListener('orientationchange', function() { setTimeout(forceVideoResizeOnPWA, 50); });
+  window.addEventListener('resize', function() { setTimeout(forceVideoResizeOnPWA, 50); });
+  document.addEventListener('fullscreenchange', forceVideoResizeOnPWA);
+  document.addEventListener('webkitfullscreenchange', forceVideoResizeOnPWA);
+  document.addEventListener('visibilitychange', function() { if (!document.hidden) setTimeout(forceVideoResizeOnPWA, 100); });
+
+  const originalToggleFullscreenVideo = window.toggleFullscreenVideo;
+  window.toggleFullscreenVideo = function() {
+    const container = document.querySelector('.video-player-container');
+    if (!container) return;
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      const req = container.requestFullscreen || container.webkitRequestFullscreen;
+      if (req) {
+        req.call(container).then(() => {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(e => console.warn(e));
+          }
+          setTimeout(forceVideoResizeOnPWA, 50);
+        }).catch(e => console.warn(e));
+      }
+    } else {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) {
+        exit.call(document).then(() => {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+          setTimeout(forceVideoResizeOnPWA, 50);
+        }).catch(e => console.warn(e));
+      }
+    }
+  };
+
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.attributeName === 'class') {
+        const modal = document.getElementById('videoModal');
+        if (modal && modal.classList.contains('active')) {
+          setTimeout(forceVideoResizeOnPWA, 100);
+        }
+      }
+    });
+  });
+  const modalElement = document.getElementById('videoModal');
+  if (modalElement) observer.observe(modalElement, { attributes: true });
+
   function playVideo(id, startTime = 0) {
     let v = videos.find(v => v.id === id);
     if (!v) return;
@@ -839,6 +938,8 @@
       video.className = "video-player";
       video.id = "videoPlayer";
       video.playsInline = true;
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
       playerContainer.innerHTML = "";
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
@@ -853,6 +954,7 @@
       quizContainer.style.display = "none";
       quizContainer.innerHTML = "";
     }
+    setTimeout(forceVideoResizeOnPWA, 100);
   }
   
   function closeModal() { 
@@ -903,14 +1005,6 @@
   }
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => { if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); }); }
-  
-  function toggleFullscreenVideo() {
-    const video = document.getElementById("videoPlayer");
-    if (!video) return;
-    if (video.requestFullscreen) video.requestFullscreen();
-    else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
-    else if (video.msRequestFullscreen) video.msRequestFullscreen();
-  }
   
   function shareCurrentTime() {
     let currentTime = 0;
@@ -989,7 +1083,7 @@
   function closeSetAdminsModal() { document.getElementById("setAdminsModal").classList.remove("active"); }
   function saveAdminCount() { let c = parseInt(document.getElementById("adminCountInput").value); if (isNaN(c) || c < 1 || c > 10) showToast("❌ العدد يجب أن يكون بين 1 و 10"); else { localStorage.setItem("adminCount", c); showToast("✅ تم حفظ عدد المشرفين: " + c); closeSetAdminsModal(); } }
   
-  // Exam Functions (simplified for brevity, same as previous)
+  // Exam Functions (as before, kept same for brevity)
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
   function closeAddExamModal() { document.getElementById("addQuizModal").classList.remove("active"); }
   function loadExamForEditing(exam) { let cont = document.getElementById("questionsContainer"); cont.innerHTML = ""; exam.questions.forEach((q, idx) => { let card = document.createElement("div"); card.className = "question-card"; card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><span style="color:#6366f1; font-weight:600;">السؤال ${idx + 1}</span>${idx > 0 ? '<button onclick="this.closest(\'.question-card\').remove()" style="background:#ef4444; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="fas fa-times"></i></button>' : ""}</div><input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-family:'Cairo'; margin-bottom:1rem;">${q.imageUrl ? `<div class="question-image-preview-container"><img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0; border:2px solid rgba(99,102,241,0.5);"><button class="remove-image-btn" onclick="removeQuestionImage(this)"><i class="fas fa-times"></i> إزالة الصورة</button></div>` : ""}<input type="file" accept="image/*" class="question-image-upload" style="display:none;" data-question-index="${idx}" onchange="uploadImageForQuestion(this)"><button class="upload-image-btn" onclick="document.querySelectorAll('.question-image-upload')[${idx}].click()"><i class="fas fa-image"></i> إضافة صورة (اختياري)</button><div class="options-container">${q.options.map((opt, optIdx) => `<div class="quiz-option-input"><input type="radio" name="correct-${idx}" value="${optIdx}" ${q.correctAnswer === optIdx ? "checked" : ""} style="width:20px; height:20px; accent-color:#10b981;"><input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input"></div>`).join("")}</div><p style="color:#888; font-size:0.85rem; margin-top:0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>`; cont.appendChild(card); }); }
@@ -1024,7 +1118,7 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat Functions - MODIFIED to use Firebase user data
+  // Chat Functions
   function loadUserDataFromStorage() { 
     let savedName = localStorage.getItem("falak_username"); 
     let savedPhone = localStorage.getItem("falak_userphone"); 
@@ -1563,7 +1657,7 @@
     } 
   }
   
-  // Google Auth Functions - MODIFIED to save user data to Firebase and load chat data
+  // Google Auth Functions
   async function googleLogin() { 
     try {
       const result = await auth.signInWithPopup(provider);
