@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes, viewport-fit=cover">
   <title>Astronomy and space</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط الأصلية ========== */
+    /* ========== جميع الأنماط الأصلية + إضافات تكيف الشعار ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -39,7 +39,7 @@
     @keyframes pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
     .navbar { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(99,102,241,.3); padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; padding-top: max(0.75rem, env(safe-area-inset-top)); flex-wrap: wrap; gap: 1rem; }
     .brand { display: flex; align-items: center; gap: 1rem; }
-    .brand-logo { width: 70px; height: 70px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
+    .brand-logo { width: 70px; height: 70px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; transition: all 0.3s ease; }
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -113,12 +113,13 @@
     .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
     .video-player-container {
-      transition: all 0.3s ease;
       background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8));
       backdrop-filter: blur(12px);
       border-radius: 32px;
       padding: 16px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2);
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
     }
     .video-player-container.video-playing {
       padding: 0 !important;
@@ -167,29 +168,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    /* إصلاحات PWA */
-    @media all and (display-mode: standalone) {
-      .video-player-container {
-        width: 100% !important;
-        height: auto !important;
-        min-height: 300px;
-      }
-      .video-player-container:fullscreen,
-      .video-player-container:-webkit-full-screen {
-        width: 100% !important;
-        height: 100% !important;
-      }
-      .video-player, .youtube-iframe {
-        width: 100% !important;
-        height: auto !important;
-      }
-      body {
-        overflow-x: hidden;
-        position: fixed;
-        width: 100%;
-        height: 100%;
-      }
     }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
@@ -384,7 +362,7 @@
     .landing-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); display: flex; align-items: center; justify-content: center; z-index: 100000; backdrop-filter: blur(8px); }
     .landing-card { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-radius: 40px; padding: 3rem 2rem; text-align: center; max-width: 500px; width: 90%; border: 1px solid rgba(99,102,241,.5); box-shadow: 0 25px 50px rgba(0,0,0,.5); animation: fadeInUp 0.6s ease; }
     .landing-header { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .landing-icon { width: 90px; height: 90px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
+    .landing-icon { width: 90px; height: 90px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; transition: all 0.3s ease; }
     .landing-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .landing-title { font-size: 2rem; font-weight: 900; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
     .landing-sub { color: #aaa; margin-bottom: 2rem; }
@@ -399,6 +377,21 @@
     .email-settings-btn { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; border-radius: 12px; padding: .75rem 1.5rem; font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; transition: .3s; }
     .email-settings-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(16,185,129,.4); }
     @media (max-width:768px) { .landing-card { padding: 2rem 1.5rem; } .landing-title { font-size: 1.6rem; } .landing-icon { width: 70px; height: 70px; } .landing-header { gap: 1rem; } }
+
+    /* ========== إضافات تكيف الشعار النهائية ========== */
+    .brand-logo { transition: all 0.3s ease; }
+    @media (max-width: 768px) {
+      .brand-logo { width: 50px !important; height: 50px !important; }
+      .landing-icon { width: 65px !important; height: 65px !important; }
+      .brand-text h1 { font-size: 1.2rem; }
+    }
+    @media (max-width: 480px) {
+      .brand-logo { width: 45px !important; height: 45px !important; }
+      .landing-icon { width: 55px !important; height: 55px !important; }
+    }
+    @media all and (display-mode: standalone) {
+      .brand-logo { width: 60px !important; height: 60px !important; }
+    }
   </style>
 </head>
 <body>
@@ -621,13 +614,11 @@
   const MAX_STORAGE = 26843545600;
   const STORAGE_KEY = "falak_last_watched";
 
-  // ========== Helper Functions ==========
   function showToast(msg) { const t = document.getElementById("toast"); t && (t.textContent = msg, t.classList.add("show"), setTimeout(() => t.classList.remove("show"), 4000)); }
   function formatDuration(sec) { if (!sec && sec !== 0) return "0:00"; const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ":" + (s < 10 ? "0" : "") + s; }
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
 
-  // ========== Sound Effects ==========
   const SoundEffects = {
     audioContext: null,
     init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -642,7 +633,6 @@
     join() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); }
   };
 
-  // ========== User Data Management ==========
   async function loadUserDataFromFirebase(userId) {
     try {
       const userDoc = await db.collection("user_progress").doc(userId).get();
@@ -696,7 +686,6 @@
     } catch (e) { console.error("Error saving watch progress:", e); }
   }
 
-  // ========== EmailJS Functions ==========
   function loadEmailSettings() {
     const saved = localStorage.getItem("falak_email_settings");
     if (saved) {
@@ -756,7 +745,6 @@
     });
   }
 
-  // ========== Voice Functions ==========
   function speakText(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "ar-SA"; u.rate = voiceSettings.rate; u.pitch = voiceSettings.pitch; if (voiceSettings.voiceURI) { const v = window.speechSynthesis.getVoices().find(v => v.voiceURI === voiceSettings.voiceURI); v && (u.voice = v); } window.speechSynthesis.speak(u); }
   function populateVoiceList() { const v = window.speechSynthesis.getVoices(), sel = document.getElementById("voiceSelect"); if (!sel) return; sel.innerHTML = ""; v.forEach(v => { const o = document.createElement("option"); o.value = v.voiceURI; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }); voiceSettings.voiceURI && (sel.value = voiceSettings.voiceURI); }
   function saveVoiceSettings() { voiceSettings.voiceURI = document.getElementById("voiceSelect").value; voiceSettings.rate = parseFloat(document.getElementById("rateRange").value); voiceSettings.pitch = parseFloat(document.getElementById("pitchRange").value); localStorage.setItem("falak_voice_settings", JSON.stringify(voiceSettings)); if (currentUserId) saveUserDataToFirebase(currentUserId); closeVoiceSettings(); showToast("✅ تم حفظ إعدادات الصوت"); }
@@ -765,7 +753,6 @@
   function closeVoiceSettings() { document.getElementById("voiceSettingsModal").classList.remove("active"); }
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
-  // ========== Admin & UI ==========
   function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; document.getElementById("emailSettingsBtn").style.display = "inline-flex"; updateStorageBar(); loadAIKnowledgeFromFirebase(); const a = document.getElementById("cancelMaintenanceBtn"); a && document.getElementById("maintenanceOverlay")?.classList.contains("active") && a.classList.add("active"); updateGoogleLogoutButtonsVisibility(); } }
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"), g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
   
@@ -784,7 +771,6 @@
   function cancelMaintenance() { isAdmin ? (confirm("هل أنت متأكد؟") && db.collection("system").doc("maintenance").update({ status: "active" }).then(() => { SoundEffects.success(); showToast("✅ تم إلغاء التحديث"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل إلغاء التحديث"); })) : showToast("❌ المشرف فقط يستطيع إلغاء التحديث"); }
   function updateStorageBar() { if (!isAdmin) return; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); let percent = Math.min(used / MAX_STORAGE * 100, 100); let remaining = MAX_STORAGE - used; document.getElementById("usedSpace").textContent = (used / 1073741824).toFixed(2) + " GB"; document.getElementById("percentage").textContent = percent.toFixed(2) + "%"; document.getElementById("remainingText").textContent = "المتبقي: " + (remaining / 1073741824).toFixed(2) + " GB"; document.getElementById("videosCount").textContent = videos.length + " فيديو"; let bar = document.getElementById("storageProgress"); bar.style.width = percent + "%"; bar.classList.remove("low", "medium", "high"); if (percent < 50) bar.classList.add("low"); else if (percent < 80) bar.classList.add("medium"); else bar.classList.add("high"); document.getElementById("storageBar").style.display = "block"; }
 
-  // ========== Cloudinary Widget ==========
   function initCloudinaryWidget() { return new Promise((resolve, reject) => { if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") { try { uploadWidget = cloudinary.createUploadWidget({ cloudName: CLOUDINARY_CONFIG.cloudName, uploadPreset: CLOUDINARY_CONFIG.uploadPreset, resourceType: "video", clientAllowedFormats: ["mp4","webm","mov","mkv","avi","m4v","3gp","flv","gif"], maxFileSize: MAX_VIDEO_SIZE, maxVideoFileSize: MAX_VIDEO_SIZE, chunkSize: CHUNK_SIZE, sources: ["local","url","camera","dropbox","google_drive"], language: "ar", text: { ar: { or: "أو", local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" }, menu: { files: "ملفاتي", web: "رابط الويب", camera: "الكاميرا", gdrive: "Google Drive", dropbox: "Dropbox" } } }, styles: { palette: { window: "#1a1025", windowBorder: "#6366f1", tabIcon: "#6366f1", menuIcons: "#6366f1", textDark: "#ffffff", textLight: "#ffffff", link: "#ec4899", action: "#6366f1", inactiveTabIcon: "#8b5cf6", error: "#ef4444", inProgress: "#6366f1", complete: "#10b981", sourceBg: "#0f0a1a" }, fonts: { default: "Cairo", active: "Cairo" } }, showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: "local", eagerAsync: true, prepareUploadParams: function (params, data) { data.context = "alt=فيديو فلك العالمي"; data.eager = [ { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, { width: 400, height: 225, crop: "fill", format: "jpg" } ]; data.eager_async = true; params(data); } }, function (error, result) { if (error) { if (error.message && error.message.includes("focus")) { console.warn("Ignored focus error"); } else { console.error("Upload widget error:", error); document.getElementById("uploadProgressContainer")?.classList.remove("active"); SoundEffects.error(); showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف")); reject(error); } } else if (result) { switch (result.event) { case "success": document.getElementById("uploadProgressContainer")?.classList.remove("active"); pendingVideoInfo = result.info; document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان"; document.getElementById("videoDescriptionInput").value = ""; document.getElementById("descriptionModal").classList.add("active"); SoundEffects.success(); showToast("✅ تم الرفع! أكمل بيانات الفيديو"); resolve(result.info); break; case "queues-start": uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0; document.getElementById("uploadProgressContainer")?.classList.add("active"); showToast("🚀 جاري الرفع..."); break; case "upload-progress": updateUploadProgress(result.info); break; case "upload-success": showToast("📤 تم رفع جزء..."); break; } } }); resolve(uploadWidget); } catch (err) { if (err.message && err.message.includes("focus")) { console.warn("Ignored focus error"); resolve(null); } else reject(err); } } else { setTimeout(() => initCloudinaryWidget().then(resolve).catch(reject), 500); } }); }
   function openCloudinaryWidget() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الرفع"); return; } if (uploadWidget && typeof uploadWidget.open === "function") { try { uploadWidget.open(); } catch (e) { if (!e.message?.includes("focus")) console.warn("Error opening widget, reinitializing...", e); uploadWidget = null; } } if (!uploadWidget) { showToast("⏳ جاري تجهيز واجهة الرفع..."); initCloudinaryWidget().then(w => { if (w) w.open(); else setTimeout(() => { if (uploadWidget) uploadWidget.open(); }, 300); }).catch(e => { console.error("Failed to init widget:", e); SoundEffects.error(); showToast("❌ تعذر فتح واجهة الرفع"); }); } }
   function updateUploadProgress(info) { if (!info) return; let prog = info.progress || 0, uploaded = info.uploadedBytes || 0, total = info.totalBytes || 1; let now = Date.now(), dt = (now - lastTime) / 1000; let speed = dt > 0 ? (uploaded - lastUploadedBytes) / dt / 1048576 : 0; let remaining = speed > 0 ? (total - uploaded) / (speed * 1024 * 1024) : 0; let fill = document.getElementById("uploadProgressFill"); fill && (fill.style.width = prog + "%"); let pct = document.getElementById("uploadProgressPercent"); pct && (pct.textContent = Math.round(prog) + "%"); let sp = document.getElementById("uploadSpeed"); sp && (sp.textContent = speed.toFixed(2) + " MB/s"); let tr = document.getElementById("uploadTimeRemaining"); if (tr) { if (remaining > 60) { let m = Math.floor(remaining / 60), s = Math.floor(remaining % 60); tr.textContent = m + ":" + s.toString().padStart(2, "0") + " دقيقة متبقية"; } else tr.textContent = remaining > 0 ? Math.floor(remaining) + " ثانية متبقية" : "جاري إكمال الرفع..."; } lastTime = now; lastUploadedBytes = uploaded; }
@@ -826,85 +812,6 @@
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   
-  // ========== Video Playback with PWA Orientation Fix ==========
-  function forceVideoResizeOnPWA() {
-    const modal = document.getElementById('videoModal');
-    const isVideoActive = modal && modal.classList.contains('active');
-    if (!isVideoActive) return;
-    
-    const video = document.getElementById('videoPlayer');
-    const container = document.querySelector('.video-player-container');
-    if (!video || !container) return;
-    
-    if (video.tagName === 'VIDEO') {
-      video.style.width = '100%';
-      video.style.height = 'auto';
-      container.style.width = '100%';
-      container.style.height = 'auto';
-      
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        setTimeout(() => {
-          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            const req = container.requestFullscreen || container.webkitRequestFullscreen;
-            if (req) req.call(container).catch(e => console.warn(e));
-          }
-        }, 100);
-      }
-    } else if (video.tagName === 'IFRAME') {
-      video.style.width = '100%';
-      video.style.height = '100%';
-      container.style.width = '100%';
-      container.style.height = '100%';
-    }
-  }
-
-  window.addEventListener('orientationchange', function() { setTimeout(forceVideoResizeOnPWA, 50); });
-  window.addEventListener('resize', function() { setTimeout(forceVideoResizeOnPWA, 50); });
-  document.addEventListener('fullscreenchange', forceVideoResizeOnPWA);
-  document.addEventListener('webkitfullscreenchange', forceVideoResizeOnPWA);
-  document.addEventListener('visibilitychange', function() { if (!document.hidden) setTimeout(forceVideoResizeOnPWA, 100); });
-
-  const originalToggleFullscreenVideo = window.toggleFullscreenVideo;
-  window.toggleFullscreenVideo = function() {
-    const container = document.querySelector('.video-player-container');
-    if (!container) return;
-    
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      const req = container.requestFullscreen || container.webkitRequestFullscreen;
-      if (req) {
-        req.call(container).then(() => {
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(e => console.warn(e));
-          }
-          setTimeout(forceVideoResizeOnPWA, 50);
-        }).catch(e => console.warn(e));
-      }
-    } else {
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (exit) {
-        exit.call(document).then(() => {
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
-          setTimeout(forceVideoResizeOnPWA, 50);
-        }).catch(e => console.warn(e));
-      }
-    }
-  };
-
-  const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (mutation.attributeName === 'class') {
-        const modal = document.getElementById('videoModal');
-        if (modal && modal.classList.contains('active')) {
-          setTimeout(forceVideoResizeOnPWA, 100);
-        }
-      }
-    });
-  });
-  const modalElement = document.getElementById('videoModal');
-  if (modalElement) observer.observe(modalElement, { attributes: true });
-
   function playVideo(id, startTime = 0) {
     let v = videos.find(v => v.id === id);
     if (!v) return;
@@ -938,8 +845,6 @@
       video.className = "video-player";
       video.id = "videoPlayer";
       video.playsInline = true;
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('webkit-playsinline', 'true');
       playerContainer.innerHTML = "";
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
@@ -954,7 +859,6 @@
       quizContainer.style.display = "none";
       quizContainer.innerHTML = "";
     }
-    setTimeout(forceVideoResizeOnPWA, 100);
   }
   
   function closeModal() { 
@@ -1005,6 +909,14 @@
   }
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => { if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); }); }
+  
+  function toggleFullscreenVideo() {
+    const video = document.getElementById("videoPlayer");
+    if (!video) return;
+    if (video.requestFullscreen) video.requestFullscreen();
+    else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+    else if (video.msRequestFullscreen) video.msRequestFullscreen();
+  }
   
   function shareCurrentTime() {
     let currentTime = 0;
@@ -1083,7 +995,6 @@
   function closeSetAdminsModal() { document.getElementById("setAdminsModal").classList.remove("active"); }
   function saveAdminCount() { let c = parseInt(document.getElementById("adminCountInput").value); if (isNaN(c) || c < 1 || c > 10) showToast("❌ العدد يجب أن يكون بين 1 و 10"); else { localStorage.setItem("adminCount", c); showToast("✅ تم حفظ عدد المشرفين: " + c); closeSetAdminsModal(); } }
   
-  // Exam Functions (as before, kept same for brevity)
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
   function closeAddExamModal() { document.getElementById("addQuizModal").classList.remove("active"); }
   function loadExamForEditing(exam) { let cont = document.getElementById("questionsContainer"); cont.innerHTML = ""; exam.questions.forEach((q, idx) => { let card = document.createElement("div"); card.className = "question-card"; card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><span style="color:#6366f1; font-weight:600;">السؤال ${idx + 1}</span>${idx > 0 ? '<button onclick="this.closest(\'.question-card\').remove()" style="background:#ef4444; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="fas fa-times"></i></button>' : ""}</div><input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-family:'Cairo'; margin-bottom:1rem;">${q.imageUrl ? `<div class="question-image-preview-container"><img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0; border:2px solid rgba(99,102,241,0.5);"><button class="remove-image-btn" onclick="removeQuestionImage(this)"><i class="fas fa-times"></i> إزالة الصورة</button></div>` : ""}<input type="file" accept="image/*" class="question-image-upload" style="display:none;" data-question-index="${idx}" onchange="uploadImageForQuestion(this)"><button class="upload-image-btn" onclick="document.querySelectorAll('.question-image-upload')[${idx}].click()"><i class="fas fa-image"></i> إضافة صورة (اختياري)</button><div class="options-container">${q.options.map((opt, optIdx) => `<div class="quiz-option-input"><input type="radio" name="correct-${idx}" value="${optIdx}" ${q.correctAnswer === optIdx ? "checked" : ""} style="width:20px; height:20px; accent-color:#10b981;"><input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input"></div>`).join("")}</div><p style="color:#888; font-size:0.85rem; margin-top:0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>`; cont.appendChild(card); }); }
@@ -1104,7 +1015,6 @@
   function submitExam() { if (examTimer) { clearInterval(examTimer); examTimer = null; } let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim().replace(/\s+/g, ""); let total = currentExam.questions.length; let answered = Object.keys(currentExamAnswers).length; if (answered < total && !confirm(`لم تجب على ${total - answered} سؤال. هل تريد التسليم؟`)) { examTimeRemaining = Math.max(examTimeRemaining, 1); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); return; } let correct = 0; let ansList = []; for (let i = 0; i < total; i++) { let a = currentExamAnswers[i] !== undefined ? currentExamAnswers[i] : -1; ansList.push(a); if (a === currentExam.questions[i].correctAnswer) correct++; } let percent = Math.round(correct / total * 100); db.collection("exam_results").add({ examId: currentExam.id, videoId: currentVideoIdForExam, studentName: name, studentPhone: phone, answers: ansList, score: correct, totalQuestions: total, percentage: percent, submittedAt: firebase.firestore.FieldValue.serverTimestamp(), gradeSent: false, resultVisible: false }).then(() => { SoundEffects.success(); showExamResult(correct, total, percent); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التسليم"); }); }
   function showExamResult(correct, total, percent) { let qSec = document.getElementById("quizSection"); if (!qSec) return; let msg = "", icon = ""; if (percent >= 90) { msg = "ممتاز! أداء رائع جداً"; icon = "🏆"; } else if (percent >= 75) { msg = "جيد جداً! استمر في التقدم"; icon = "👏"; } else if (percent >= 60) { msg = "جيد، يمكنك تحسين أدائك"; icon = "👍"; } else { msg = "حاول مرة أخرى، يمكنك التحسن"; icon = "💪"; } qSec.innerHTML = `<div class="quiz-result"><div class="result-icon">${icon}</div><div class="result-score">${percent}%</div><div class="result-message">${msg}</div><p style="color:#aaa; margin-bottom:1rem;">إجابات صحيحة: ${correct} من ${total}</p><button class="quiz-btn" onclick="closeTakeExamModal()"><i class="fas fa-times"></i> إغلاق</button></div>`; }
   
-  // AI Functions
   function openTeachAICircleModal() { isAdmin ? (document.getElementById("teachAICircleModal").classList.add("active"), renderAIKnowledgeList()) : showToast("❌ هذه الصلاحية للمشرف فقط"); }
   function closeTeachAICircleModal() { document.getElementById("teachAICircleModal").classList.remove("active"); }
   function renderAIKnowledgeList() { let list = document.getElementById("aiKnowledgeList"); if (!list) return; if (aiKnowledgeBase.length === 0) list.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">لا توجد معلومات بعد</p>'; else list.innerHTML = aiKnowledgeBase.map(k => `<div class="ai-knowledge-item"><div class="ai-knowledge-content"><div class="ai-knowledge-question"><i class="fas fa-question-circle"></i> ${escapeHtml(k.question)}</div><div class="ai-knowledge-answer">${escapeHtml(k.answer)}</div></div><button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${k.id}')" title="حذف"><i class="fas fa-trash"></i></button></div>`).join(""); }
@@ -1118,7 +1028,6 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat Functions
   function loadUserDataFromStorage() { 
     let savedName = localStorage.getItem("falak_username"); 
     let savedPhone = localStorage.getItem("falak_userphone"); 
@@ -1569,7 +1478,6 @@
     }); 
   }
   
-  // Exam Result Functions
   function openExamResultModal() { 
     document.getElementById("examResultModal").classList.add("active"); 
     document.getElementById("examResultName").value = ""; 
@@ -1611,7 +1519,6 @@
     }); 
   }
   
-  // YouTube Functions
   function extractYouTubeId(url) { 
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; 
     const match = url.match(regExp); 
@@ -1657,7 +1564,6 @@
     } 
   }
   
-  // Google Auth Functions
   async function googleLogin() { 
     try {
       const result = await auth.signInWithPopup(provider);
