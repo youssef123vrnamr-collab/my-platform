@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes, viewport-fit=cover">
   <title>Astronomy and space</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
@@ -37,9 +37,11 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loader-text { margin-top: 2rem; font-size: 1.3rem; color: #6366f1; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
+    /* ========== شريط العلوي مع شعار أكبر ========== */
     .navbar { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(99,102,241,.3); padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; padding-top: max(0.75rem, env(safe-area-inset-top)); flex-wrap: wrap; gap: 1rem; }
     .brand { display: flex; align-items: center; gap: 0.5rem; }
-    .brand-logo { width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
+    /* شعار أكبر في شريط العلوي فقط */
+    .brand-logo { width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
@@ -131,10 +133,32 @@
         left: 0;
         min-width: 180px;
       }
-      .brand-logo { width: 45px; height: 45px; }
+      /* شعار أكبر على الموبايل أيضاً في الشريط العلوي */
+      .brand-logo { width: 60px; height: 60px; }
       .brand-text h1 { font-size: 1.1rem; }
       .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; }
     }
+    /* ========== تحسينات الوضع الأفقي (Landscape) ========== */
+    @media (orientation: landscape) {
+      .container { padding: 1rem 2rem; }
+      .hero { padding: 1rem 1rem; margin-bottom: 1rem; }
+      .hero h2 { font-size: 2rem; }
+      .videos-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+      .video-card .video-thumbnail { height: 180px; }
+      .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; }
+      .video-title { font-size: 1.2rem; }
+      .video-description { font-size: 0.85rem; max-height: 80px; }
+      .navbar { padding: 0.5rem 1rem; }
+      .brand-logo { width: 60px; height: 60px; }
+      .chat-container { height: 100vh; }
+      .message { max-width: 70%; }
+      .modal-content { max-height: 100vh; overflow-y: auto; }
+      .video-player-container { padding: 8px; }
+      .video-player { max-height: 65vh; }
+      .upload-zone { padding: 1.5rem; }
+      .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; }
+    }
+    /* باقي الأنماط كما هي (لم تتغير) */
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
@@ -442,16 +466,12 @@
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
-            <!-- عناصر المستخدم العادي (تظهر للمستخدمين المسجلين غير المشرفين) -->
             <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
             <div class="settings-menu-item user-only" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
-            <!-- عناصر المشرف -->
             <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item admin-only" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد</div>
-            <!-- عنصر تسجيل الخروج المحلي (للمستخدم المحلي فقط) -->
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
-            <!-- عنصر عام للجميع -->
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
         </div>
@@ -546,7 +566,7 @@
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
-  <!-- جميع المودالات (نفس الكود السابق) -->
+  <!-- جميع المودالات -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
@@ -744,7 +764,6 @@
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
   // ========== Admin & UI ==========
-  // Improved updateAdminUI function to correctly show/hide user buttons
   function updateAdminUI() {
     const adminOnlyItems = document.querySelectorAll('.admin-only');
     const userOnlyItems = document.querySelectorAll('.user-only');
@@ -754,15 +773,11 @@
     const uploadZone = document.getElementById("uploadZone");
     const storageBar = document.getElementById("storageBar");
     
-    // Check if user is logged in (either Google or local)
     const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
-    // Check if logged in locally only (not Google)
     const isLocalOnly = (currentUser && currentUserPhone) && !googleUser;
-    // Check if logged in with Google
     const isGoogleUser = !!googleUser;
     
     if (isAdmin) {
-      // Admin mode: hide user-only and local-only, show admin-only
       userOnlyItems.forEach(el => el.style.display = "none");
       if(localOnlyItem) localOnlyItem.style.display = "none";
       adminOnlyItems.forEach(el => el.style.display = "flex");
@@ -775,29 +790,22 @@
       const cancelBtn = document.getElementById("cancelMaintenanceBtn");
       if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
     } else {
-      // Not admin: hide admin-only items
       adminOnlyItems.forEach(el => el.style.display = "none");
-      // Show user-only items only if user is logged in (any type)
       if (isUserLoggedIn) {
         userOnlyItems.forEach(el => el.style.display = "flex");
-        // For Google logout button: show only if logged in with Google
         const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
         if (googleLogoutItem) googleLogoutItem.style.display = isGoogleUser ? "flex" : "none";
-        // For local logout button: show only if local only
         if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
       } else {
         userOnlyItems.forEach(el => el.style.display = "none");
         if(localOnlyItem) localOnlyItem.style.display = "none";
       }
-      // Hide admin-specific UI elements
       if (setAdminsBtn) setAdminsBtn.style.display = "none";
       if (teachAICircleBtn) teachAICircleBtn.style.display = "none";
       if (uploadZone) uploadZone.classList.remove("active");
       if (storageBar) storageBar.style.display = "none";
     }
-    // Also update the separate Google logout button on landing page (if visible)
     updateGoogleLogoutButtonsVisibility();
-    // Log for debugging (optional)
     console.log("updateAdminUI called", { isAdmin, isUserLoggedIn, isGoogleUser, isLocalOnly });
   }
 
@@ -1145,7 +1153,6 @@
     initPresenceSystem(); 
     loadMessages(); 
     db.collection("chat_users").add({ name: name, phone: phone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); 
-    // بعد تسجيل الدخول المحلي، يجب تحديث واجهة المستخدم لإظهار أزرار المستخدم في الترس
     updateAdminUI();
   }
   function loadMessages() { 
@@ -1503,7 +1510,6 @@
       initCloudinaryWidget();
       checkUrlForShare();
       loadEmailSettings();
-      // تحديث واجهة المستخدم لإظهار الأزرار في الترس
       updateAdminUI();
       showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
     } catch(error) {
@@ -1663,7 +1669,6 @@
     const appsMenuItem = document.getElementById("appsMenuItem");
     if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); });
     
-    // NEW: local logout listener
     const localLogoutMenuItem = document.getElementById("localLogoutMenuItem");
     if (localLogoutMenuItem) localLogoutMenuItem.addEventListener("click", localLogout);
   });
@@ -1677,7 +1682,6 @@
     loadEmailSettings(); 
     document.getElementById("googleSignInBtn").onclick = googleLogin; 
     document.getElementById("googleLogoutBtn").onclick = googleLogout; 
-    // تحديث واجهة المستخدم بعد تحميل البيانات المخزنة
     setTimeout(() => updateAdminUI(), 500);
   });
   setTimeout(hideLoader, 5000);
