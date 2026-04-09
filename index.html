@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* جميع الأنماط الأصلية مع تعديلات إخفاء الأزرار */
+    /* ========== جميع الأنماط مع تعديل موضع القائمة ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -78,11 +78,15 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .refresh-btn:active i { transform: rotate(720deg); transition: transform 0.2s ease; }
-    .settings-dropdown { position: relative; display: inline-block; }
+    /* قائمة الإعدادات - تفتح على الجهة اليسرى (في RTL تعني تنفتح نحو اليمين) */
+    .settings-dropdown {
+      position: relative;
+      display: inline-block;
+    }
     .settings-menu {
       position: absolute;
       top: calc(100% + 8px);
-      right: 0;
+      left: 0;  /* تفتح على اليسار بدلاً من اليمين لتظهر كاملة */
       background: rgba(26,16,37,.98);
       backdrop-filter: blur(16px);
       border-radius: 16px;
@@ -94,9 +98,10 @@
       flex-direction: column;
       overflow: hidden;
       animation: fadeInUp 0.2s ease;
-      margin-right: 8px;
     }
-    .settings-menu.active { display: flex; }
+    .settings-menu.active {
+      display: flex;
+    }
     .settings-menu-item {
       padding: 0.75rem 1rem;
       display: flex;
@@ -109,16 +114,28 @@
       transition: all 0.2s;
       border-bottom: 1px solid rgba(255,255,255,.05);
     }
-    .settings-menu-item:last-child { border-bottom: none; }
-    .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
-    .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
+    .settings-menu-item:last-child {
+      border-bottom: none;
+    }
+    .settings-menu-item:hover {
+      background: rgba(99,102,241,0.3);
+      padding-right: 1.25rem;
+    }
+    .settings-menu-item i {
+      width: 24px;
+      text-align: center;
+      color: #6366f1;
+    }
     @media (max-width:768px) {
-      .settings-menu { right: 0; min-width: 180px; margin-right: 4px; }
+      .settings-menu {
+        left: 0;
+        min-width: 180px;
+      }
       .brand-logo { width: 45px; height: 45px; }
       .brand-text h1 { font-size: 1.1rem; }
       .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; }
     }
-    /* باقي الأنماط كما هي (مختصرة للعرض) */
+    /* باقي الأنماط كما هي (تم اختصارها للعرض) */
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
@@ -426,7 +443,7 @@
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
-            <!-- عناصر المستخدم العادي -->
+            <!-- عناصر المستخدم العادي (تظهر فقط عند وجود مستخدم مسجل دخول) -->
             <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
             <div class="settings-menu-item user-only" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
             <!-- عناصر المشرف -->
@@ -439,11 +456,10 @@
         </div>
       </div>
     </div>
-    <!-- زر التحديث في المنتصف -->
     <div class="center-action">
       <button class="btn btn-ghost refresh-btn" onclick="refreshPage()" title="تحديث الصفحة"><i class="fas fa-sync-alt"></i> تحديث</button>
     </div>
-    <!-- الأزرار القديمة تم إخفاؤها نهائياً، لم نعد نحتاجها -->
+    <!-- الأزرار القديمة تم إخفاؤها -->
     <div class="nav-actions" style="display: none;"></div>
   </nav>
 
@@ -736,6 +752,9 @@
     const uploadZone = document.getElementById("uploadZone");
     const storageBar = document.getElementById("storageBar");
     
+    // تحديد ما إذا كان هناك مستخدم مسجل دخول (سواء بجوجل أو محلي)
+    const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
+    
     if (isAdmin) {
       userOnlyItems.forEach(el => el.style.display = "none");
       adminOnlyItems.forEach(el => el.style.display = "flex");
@@ -748,8 +767,13 @@
       const cancelBtn = document.getElementById("cancelMaintenanceBtn");
       if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
     } else {
-      userOnlyItems.forEach(el => el.style.display = "flex");
       adminOnlyItems.forEach(el => el.style.display = "none");
+      // عناصر المستخدم العادي تظهر فقط إذا كان هناك مستخدم مسجل
+      if (isUserLoggedIn) {
+        userOnlyItems.forEach(el => el.style.display = "flex");
+      } else {
+        userOnlyItems.forEach(el => el.style.display = "none");
+      }
       if (setAdminsBtn) setAdminsBtn.style.display = "none";
       if (teachAICircleBtn) teachAICircleBtn.style.display = "none";
       if (uploadZone) uploadZone.classList.remove("active");
