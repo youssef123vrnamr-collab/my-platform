@@ -78,7 +78,7 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .refresh-btn:active i { transform: rotate(720deg); transition: transform 0.2s ease; }
-    /* قائمة الإعدادات - تفتح على اليسار (في RTL تعني تنفتح نحو اليمين) */
+    /* قائمة الإعدادات */
     .settings-dropdown {
       position: relative;
       display: inline-block;
@@ -442,13 +442,15 @@
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
-            <!-- عناصر المستخدم العادي (تظهر فقط عند وجود مستخدم مسجل دخول) -->
+            <!-- عناصر المستخدم العادي -->
             <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
             <div class="settings-menu-item user-only" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
             <!-- عناصر المشرف -->
             <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item admin-only" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد</div>
+            <!-- عنصر تسجيل الخروج المحلي (جديد) -->
+            <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <!-- عنصر عام للجميع -->
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
@@ -458,7 +460,6 @@
     <div class="center-action">
       <button class="btn btn-ghost refresh-btn" onclick="refreshPage()" title="تحديث الصفحة"><i class="fas fa-sync-alt"></i> تحديث</button>
     </div>
-    <!-- الأزرار القديمة تم إخفاؤها -->
     <div class="nav-actions" style="display: none;"></div>
   </nav>
 
@@ -545,7 +546,7 @@
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
-  <!-- جميع المودالات كما هي (تم اختصارها في العرض ولكنها موجودة كاملة) -->
+  <!-- جميع المودالات -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
@@ -743,19 +744,22 @@
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
   // ========== Admin & UI ==========
+  // NEW: Improved updateAdminUI to handle local-only users
   function updateAdminUI() {
     const adminOnlyItems = document.querySelectorAll('.admin-only');
     const userOnlyItems = document.querySelectorAll('.user-only');
+    const localOnlyItem = document.getElementById('localLogoutMenuItem');
     const setAdminsBtn = document.getElementById("setAdminsBtn");
     const teachAICircleBtn = document.getElementById("teachAICircleBtn");
     const uploadZone = document.getElementById("uploadZone");
     const storageBar = document.getElementById("storageBar");
     
-    // تحديد ما إذا كان هناك مستخدم مسجل دخول (سواء بجوجل أو محلي)
     const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
+    const isLocalOnly = (currentUser && currentUserPhone) && !googleUser;
     
     if (isAdmin) {
       userOnlyItems.forEach(el => el.style.display = "none");
+      if(localOnlyItem) localOnlyItem.style.display = "none";
       adminOnlyItems.forEach(el => el.style.display = "flex");
       if (setAdminsBtn) setAdminsBtn.style.display = "inline-flex";
       if (teachAICircleBtn) teachAICircleBtn.style.display = "inline-flex";
@@ -767,11 +771,12 @@
       if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
     } else {
       adminOnlyItems.forEach(el => el.style.display = "none");
-      // عناصر المستخدم العادي تظهر فقط إذا كان هناك مستخدم مسجل
       if (isUserLoggedIn) {
         userOnlyItems.forEach(el => el.style.display = "flex");
+        if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
       } else {
         userOnlyItems.forEach(el => el.style.display = "none");
+        if(localOnlyItem) localOnlyItem.style.display = "none";
       }
       if (setAdminsBtn) setAdminsBtn.style.display = "none";
       if (teachAICircleBtn) teachAICircleBtn.style.display = "none";
@@ -1469,7 +1474,7 @@
       document.getElementById("googleUserInfo").style.display = "flex";
       document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`;
       document.getElementById("googleLogoutBtn").style.display = "block";
-      document.getElementById("googleLogoutNavBtn").style.display = "flex";
+      // no googleLogoutNavBtn, we use menu item
       updateGoogleLogoutButtonsVisibility();
       SoundEffects.join();
       loadAdminPreference();
@@ -1501,13 +1506,27 @@
       document.getElementById("appWrapper").style.display = "none";
       document.getElementById("googleUserInfo").style.display = "none";
       document.getElementById("googleLogoutBtn").style.display = "none";
-      document.getElementById("googleLogoutNavBtn").style.display = "none";
       if (isAdmin) logout();
       SoundEffects.recordStop();
       showToast("👋 تم تسجيل الخروج من Google");
       updateGoogleLogoutButtonsVisibility();
     }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); });
   }
+  
+  // NEW: Local logout function
+  function localLogout() {
+    if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) {
+      localStorage.removeItem("falak_username");
+      localStorage.removeItem("falak_userphone");
+      currentUser = null;
+      currentUserPhone = null;
+      if (currentUserId) {
+        // we can also remove from firebase but keep for history
+      }
+      location.reload();
+    }
+  }
+  
   function initAuthState() { 
     auth.onAuthStateChanged(async user => {
       if (user && !isAdmin) {
@@ -1530,7 +1549,6 @@
         document.getElementById("googleUserInfo").style.display = "flex";
         document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`;
         document.getElementById("googleLogoutBtn").style.display = "block";
-        document.getElementById("googleLogoutNavBtn").style.display = "flex";
         updateGoogleLogoutButtonsVisibility();
         loadAdminPreference();
         listenToVideosWithRetry();
@@ -1548,7 +1566,6 @@
           document.getElementById("appWrapper").style.display = "flex";
           document.getElementById("googleUserInfo").style.display = "none";
           document.getElementById("googleLogoutBtn").style.display = "none";
-          document.getElementById("googleLogoutNavBtn").style.display = "none";
           loadAdminPreference();
           listenToVideosWithRetry();
           listenToMaintenance();
@@ -1621,6 +1638,10 @@
     if (emailSettingsMenuItem) emailSettingsMenuItem.addEventListener("click", function() { openEmailSettingsModal(); });
     const appsMenuItem = document.getElementById("appsMenuItem");
     if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); });
+    
+    // NEW: local logout listener
+    const localLogoutMenuItem = document.getElementById("localLogoutMenuItem");
+    if (localLogoutMenuItem) localLogoutMenuItem.addEventListener("click", localLogout);
   });
 
   window.addEventListener("load", function() { 
@@ -1632,7 +1653,7 @@
     loadEmailSettings(); 
     document.getElementById("googleSignInBtn").onclick = googleLogin; 
     document.getElementById("googleLogoutBtn").onclick = googleLogout; 
-    document.getElementById("googleLogoutNavBtn").onclick = googleLogout; 
+    // googleLogoutNavBtn doesn't exist, we use menu item
   });
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() { try { } catch (e) { console.error("Initialization error:", e); hideLoader(); } });
