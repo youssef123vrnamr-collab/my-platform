@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط الأصلية موجودة هنا مع تعديلات الترتيب ========== */
+    /* ========== جميع الأنماط الأصلية موجودة هنا مع تعديلات القائمة المنسدلة ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -43,8 +43,26 @@
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
-    .settings-icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.5); border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #fff; font-size: 1.2rem; }
-    .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
+    /* زر الترس - يظهر للجميع */
+    .settings-icon-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(99,102,241,0.5);
+      border-radius: 40px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: #fff;
+      font-size: 1.2rem;
+      margin-left: 8px; /* تحريكه ناحية الشمال قليلاً */
+    }
+    .settings-icon-btn:hover {
+      background: rgba(99,102,241,0.3);
+      transform: rotate(30deg);
+    }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; position: relative; }
     .center-action { flex: 1; display: flex; justify-content: center; }
@@ -61,7 +79,7 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .refresh-btn:active i { transform: rotate(720deg); transition: transform 0.2s ease; }
-    /* قائمة الإعدادات المنسدلة */
+    /* قائمة الإعدادات المنسدلة - تفتح على اليمين */
     .settings-dropdown {
       position: relative;
       display: inline-block;
@@ -69,7 +87,7 @@
     .settings-menu {
       position: absolute;
       top: calc(100% + 8px);
-      left: 0;
+      right: 0; /* تفتح على اليمين */
       background: rgba(26,16,37,.98);
       backdrop-filter: blur(16px);
       border-radius: 16px;
@@ -111,13 +129,12 @@
     }
     @media (max-width:768px) {
       .settings-menu {
-        left: auto;
         right: 0;
         min-width: 180px;
       }
       .brand-logo { width: 45px; height: 45px; }
       .brand-text h1 { font-size: 1.1rem; }
-      .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; }
+      .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; }
     }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
@@ -525,13 +542,15 @@
       <div class="brand-logo"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
       <div class="brand-text">
         <h1>Astronomy and space</h1>
-        <!-- زر الترس بجانب الاسم -->
+        <!-- زر الترس يظهر للجميع -->
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
-            <div class="settings-menu-item" id="logoutMenuItem"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
-            <div class="settings-menu-item" id="maintenanceMenuItem"><i class="fas fa-tools"></i> تحديث المحتوى</div>
-            <div class="settings-menu-item" id="emailSettingsMenuItem"><i class="fas fa-envelope"></i> إعدادات البريد</div>
+            <!-- عناصر خاصة بالمشرف فقط (تظهر فقط إذا isAdmin == true) -->
+            <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
+            <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
+            <div class="settings-menu-item admin-only" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد</div>
+            <!-- عنصر عام للجميع -->
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
         </div>
@@ -636,7 +655,7 @@
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
-  <!-- باقي المودالات كما هي (تم اختصارها في العرض لكن موجودة كاملة في الكود الأصلي) -->
+  <!-- باقي المودالات (تم اختصارها في العرض لكنها موجودة كاملة في الكود الأصلي) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
 
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
@@ -917,7 +936,10 @@
     const uploadZone = document.getElementById("uploadZone");
     const storageBar = document.getElementById("storageBar");
     
+    // التحكم في ظهور عناصر القائمة الخاصة بالمشرف
+    const adminOnlyItems = document.querySelectorAll('.admin-only');
     if (isAdmin) {
+      adminOnlyItems.forEach(el => el.style.display = "flex");
       if (settingsDropdown) settingsDropdown.style.display = "inline-block";
       if (logoutBtn) logoutBtn.style.display = "none";
       if (maintenanceBtn) maintenanceBtn.style.display = "none";
@@ -932,7 +954,8 @@
       const cancelBtn = document.getElementById("cancelMaintenanceBtn");
       if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
     } else {
-      if (settingsDropdown) settingsDropdown.style.display = "none";
+      adminOnlyItems.forEach(el => el.style.display = "none");
+      if (settingsDropdown) settingsDropdown.style.display = "inline-block"; // يظهر للجميع
       if (logoutBtn) logoutBtn.style.display = "none";
       if (maintenanceBtn) maintenanceBtn.style.display = "none";
       if (emailSettingsBtn) emailSettingsBtn.style.display = "none";
