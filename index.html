@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط الأصلية ========== */
+    /* ========== جميع الأنماط الأصلية موجودة هنا مع إضافات القائمة المنسدلة ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -44,7 +44,7 @@
     .brand-text { text-align: right; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
-    .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; position: relative; }
     .btn { padding: 0.4rem 0.8rem; border: none; border-radius: 10px; cursor: pointer; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 0.8rem; transition: all .3s; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
     .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; box-shadow: 0 5px 20px rgba(99,102,241,.4); }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,.6); }
@@ -58,6 +58,60 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .refresh-btn:active i { transform: rotate(720deg); transition: transform 0.2s ease; }
+    /* قائمة الإعدادات المنسدلة */
+    .settings-dropdown {
+      position: relative;
+    }
+    .settings-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: rgba(26,16,37,.98);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      border: 1px solid rgba(99,102,241,.5);
+      min-width: 200px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+      z-index: 1100;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeInUp 0.2s ease;
+    }
+    .settings-menu.active {
+      display: flex;
+    }
+    .settings-menu-item {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .settings-menu-item:last-child {
+      border-bottom: none;
+    }
+    .settings-menu-item:hover {
+      background: rgba(99,102,241,0.3);
+      padding-right: 1.25rem;
+    }
+    .settings-menu-item i {
+      width: 24px;
+      text-align: center;
+      color: #6366f1;
+    }
+    @media (max-width:768px) {
+      .settings-menu {
+        left: auto;
+        right: 0;
+        min-width: 180px;
+      }
+    }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
@@ -113,12 +167,13 @@
     .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
     .video-player-container {
-      transition: all 0.3s ease;
       background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8));
       backdrop-filter: blur(12px);
       border-radius: 32px;
       padding: 16px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2);
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
     }
     .video-player-container.video-playing {
       padding: 0 !important;
@@ -167,29 +222,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    /* إصلاحات PWA */
-    @media all and (display-mode: standalone) {
-      .video-player-container {
-        width: 100% !important;
-        height: auto !important;
-        min-height: 300px;
-      }
-      .video-player-container:fullscreen,
-      .video-player-container:-webkit-full-screen {
-        width: 100% !important;
-        height: 100% !important;
-      }
-      .video-player, .youtube-iframe {
-        width: 100% !important;
-        height: auto !important;
-      }
-      body {
-        overflow-x: hidden;
-        position: fixed;
-        width: 100%;
-        height: 100%;
-      }
     }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
@@ -399,6 +431,68 @@
     .email-settings-btn { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; border-radius: 12px; padding: .75rem 1.5rem; font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; transition: .3s; }
     .email-settings-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(16,185,129,.4); }
     @media (max-width:768px) { .landing-card { padding: 2rem 1.5rem; } .landing-title { font-size: 1.6rem; } .landing-icon { width: 70px; height: 70px; } .landing-header { gap: 1rem; } }
+    /* مودال التطبيقات */
+    .apps-modal-content {
+      max-width: 500px;
+      background: #1a1025;
+      border-radius: 28px;
+      margin: auto;
+      padding: 0;
+      overflow: hidden;
+    }
+    .apps-list {
+      padding: 1.5rem;
+    }
+    .app-item {
+      background: rgba(255,255,255,.05);
+      border-radius: 20px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s;
+      border: 1px solid rgba(99,102,241,.3);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .app-item:hover {
+      background: rgba(99,102,241,.2);
+      transform: translateX(-5px);
+    }
+    .app-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .app-info {
+      flex: 1;
+    }
+    .app-name {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .app-desc {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .app-link {
+      background: #6366f1;
+      border: none;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .app-link:hover {
+      background: #4f52e0;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body>
@@ -427,6 +521,18 @@
     <div class="nav-actions">
       <button class="btn btn-ghost refresh-btn" onclick="refreshPage()" title="تحديث الصفحة"><i class="fas fa-sync-alt"></i> تحديث</button>
       <button class="btn btn-ghost" onclick="showLogin()" id="adminBtn"><i class="fas fa-lock"></i> دخول المشرف</button>
+      
+      <!-- زر الترس الجديد + القائمة المنسدلة -->
+      <div class="settings-dropdown" id="settingsDropdown" style="display: none;">
+        <button class="btn btn-ghost" id="settingsDropdownBtn"><i class="fas fa-cog"></i> <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i></button>
+        <div class="settings-menu" id="settingsMenu">
+          <div class="settings-menu-item" id="logoutMenuItem"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
+          <div class="settings-menu-item" id="maintenanceMenuItem"><i class="fas fa-tools"></i> تحديث المحتوى</div>
+          <div class="settings-menu-item" id="emailSettingsMenuItem"><i class="fas fa-envelope"></i> إعدادات البريد</div>
+          <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
+        </div>
+      </div>
+      
       <button class="btn btn-danger" onclick="logout()" style="display:none" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> خروج المشرف</button>
       <button class="btn btn-danger" onclick="googleLogout()" style="display:none" id="googleLogoutNavBtn"><i class="fab fa-google"></i> خروج جوجل</button>
       <button class="maintenance-btn" onclick="openMaintenanceModal()" style="display:none" id="maintenanceBtn"><i class="fas fa-tools"></i> تحديث المحتوى</button>
@@ -555,6 +661,27 @@
 
   <div class="modal" id="callModal"><div class="modal-content call-modal-content"><div class="call-avatar"><i class="fas fa-users"></i></div><div class="call-status" id="callStatus">مكالمة جماعية</div><div class="call-timer" id="callTimer">00:00</div><div class="call-actions"><button class="call-action mute" onclick="toggleMute()" id="muteBtn"><i class="fas fa-microphone"></i></button><button class="call-action end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div></div></div>
 
+  <!-- مودال تطبيقات المنصة -->
+  <div class="modal" id="appsModal">
+    <div class="modal-content apps-modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-th-large" style="color:#6366f1"></i> تطبيقات المنصة</h3>
+        <button class="modal-close" onclick="closeAppsModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="apps-list">
+        <div class="app-item">
+          <div class="app-icon"><i class="fas fa-rocket"></i></div>
+          <div class="app-info">
+            <div class="app-name">منصة البداية التعليمية</div>
+            <div class="app-desc">تطبيق متكامل للتعليم التفاعلي</div>
+          </div>
+          <button class="app-link" onclick="openApp('https://next-platform-starter-x7y1.vercel.app/')">فتح <i class="fas fa-external-link-alt"></i></button>
+        </div>
+        <!-- يمكن إضافة تطبيقات أخرى هنا مستقبلاً -->
+      </div>
+    </div>
+  </div>
+
   <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()"><button class="image-viewer-close" onclick="closeImageViewer()"><i class="fas fa-times"></i></button><img alt="صورة" id="viewerImage" src=""></div>
   <div class="toast" id="toast">تم بنجاح</div>
 </div>
@@ -609,12 +736,14 @@
  
   const ENCRYPTED_ADMIN_PASS = xorEncryptDecrypt("@@@&&&((())) GGGttt☄️☄️☄️🌘🌘🌘🌘🆗🛠️💫😶‍🌫️🤬💯💨🙏🌧️🌩️⛈️🌦️🌥️⛅🌤️☀️🌞🌝🌚🌜🌛🌙⭐🌟✨🕳️🪐🌍🌎🌏🌫️🌠🌌☄️🌑🌒🌓🌔🌕🌖", "Falak2024!@#");
   const ENCRYPTED_SUPER_ADMIN_PASS = xorEncryptDecrypt("1#3_5-7(9/0", "Falak2024!@#");
+  // دوال التحقق
   function checkAdminPassword(inputPass) {
     return inputPass === xorEncryptDecrypt(ENCRYPTED_ADMIN_PASS, "Falak2024!@#");
   }
   function checkSuperAdminPassword(inputPass) {
     return inputPass === xorEncryptDecrypt(ENCRYPTED_SUPER_ADMIN_PASS, "Falak2024!@#");
   }
+  // ---------------------------------------------------------
 
   const MAX_VIDEO_SIZE = 104857600;
   const CHUNK_SIZE = 10485760;
@@ -642,7 +771,7 @@
     join() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); }
   };
 
-  // ========== User Data Management ==========
+  // ========== User Data Management with Firebase (per Google Account) ==========
   async function loadUserDataFromFirebase(userId) {
     try {
       const userDoc = await db.collection("user_progress").doc(userId).get();
@@ -766,8 +895,57 @@
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
   // ========== Admin & UI ==========
-  function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; document.getElementById("emailSettingsBtn").style.display = "inline-flex"; updateStorageBar(); loadAIKnowledgeFromFirebase(); const a = document.getElementById("cancelMaintenanceBtn"); a && document.getElementById("maintenanceOverlay")?.classList.contains("active") && a.classList.add("active"); updateGoogleLogoutButtonsVisibility(); } }
-  function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"), g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
+  function updateAdminUI() {
+    const settingsDropdown = document.getElementById("settingsDropdown");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const maintenanceBtn = document.getElementById("maintenanceBtn");
+    const setAdminsBtn = document.getElementById("setAdminsBtn");
+    const teachAICircleBtn = document.getElementById("teachAICircleBtn");
+    const emailSettingsBtn = document.getElementById("emailSettingsBtn");
+    const adminBtn = document.getElementById("adminBtn");
+    const uploadZone = document.getElementById("uploadZone");
+    const storageBar = document.getElementById("storageBar");
+    
+    if (isAdmin) {
+      if (settingsDropdown) settingsDropdown.style.display = "block";
+      if (logoutBtn) logoutBtn.style.display = "none";
+      if (maintenanceBtn) maintenanceBtn.style.display = "none";
+      if (emailSettingsBtn) emailSettingsBtn.style.display = "none";
+      if (adminBtn) adminBtn.style.display = "none";
+      if (setAdminsBtn) setAdminsBtn.style.display = "inline-flex";
+      if (teachAICircleBtn) teachAICircleBtn.style.display = "inline-flex";
+      if (uploadZone) uploadZone.classList.add("active");
+      if (storageBar) storageBar.style.display = "block";
+      updateStorageBar();
+      loadAIKnowledgeFromFirebase();
+      const cancelBtn = document.getElementById("cancelMaintenanceBtn");
+      if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
+    } else {
+      if (settingsDropdown) settingsDropdown.style.display = "none";
+      if (logoutBtn) logoutBtn.style.display = "none";
+      if (maintenanceBtn) maintenanceBtn.style.display = "none";
+      if (emailSettingsBtn) emailSettingsBtn.style.display = "none";
+      if (adminBtn) adminBtn.style.display = "flex";
+      if (setAdminsBtn) setAdminsBtn.style.display = "none";
+      if (teachAICircleBtn) teachAICircleBtn.style.display = "none";
+      if (uploadZone) uploadZone.classList.remove("active");
+      if (storageBar) storageBar.style.display = "none";
+    }
+    updateGoogleLogoutButtonsVisibility();
+  }
+
+  function loadAdminPreference() { 
+    if ("true" === localStorage.getItem("falak_admin")) { 
+      isAdmin = true; 
+      updateAdminUI();
+    } 
+  }
+  
+  function updateGoogleLogoutButtonsVisibility() { 
+    const g1 = document.getElementById("googleLogoutBtn"), g2 = document.getElementById("googleLogoutNavBtn"); 
+    if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; 
+    if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; 
+  }
   
   function listenToVideosWithRetry(maxAttempts = 5) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "asc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
@@ -826,85 +1004,6 @@
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   
-  // ========== Video Playback with PWA Orientation Fix ==========
-  function forceVideoResizeOnPWA() {
-    const modal = document.getElementById('videoModal');
-    const isVideoActive = modal && modal.classList.contains('active');
-    if (!isVideoActive) return;
-    
-    const video = document.getElementById('videoPlayer');
-    const container = document.querySelector('.video-player-container');
-    if (!video || !container) return;
-    
-    if (video.tagName === 'VIDEO') {
-      video.style.width = '100%';
-      video.style.height = 'auto';
-      container.style.width = '100%';
-      container.style.height = 'auto';
-      
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        setTimeout(() => {
-          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            const req = container.requestFullscreen || container.webkitRequestFullscreen;
-            if (req) req.call(container).catch(e => console.warn(e));
-          }
-        }, 100);
-      }
-    } else if (video.tagName === 'IFRAME') {
-      video.style.width = '100%';
-      video.style.height = '100%';
-      container.style.width = '100%';
-      container.style.height = '100%';
-    }
-  }
-
-  window.addEventListener('orientationchange', function() { setTimeout(forceVideoResizeOnPWA, 50); });
-  window.addEventListener('resize', function() { setTimeout(forceVideoResizeOnPWA, 50); });
-  document.addEventListener('fullscreenchange', forceVideoResizeOnPWA);
-  document.addEventListener('webkitfullscreenchange', forceVideoResizeOnPWA);
-  document.addEventListener('visibilitychange', function() { if (!document.hidden) setTimeout(forceVideoResizeOnPWA, 100); });
-
-  const originalToggleFullscreenVideo = window.toggleFullscreenVideo;
-  window.toggleFullscreenVideo = function() {
-    const container = document.querySelector('.video-player-container');
-    if (!container) return;
-    
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      const req = container.requestFullscreen || container.webkitRequestFullscreen;
-      if (req) {
-        req.call(container).then(() => {
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(e => console.warn(e));
-          }
-          setTimeout(forceVideoResizeOnPWA, 50);
-        }).catch(e => console.warn(e));
-      }
-    } else {
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (exit) {
-        exit.call(document).then(() => {
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
-          setTimeout(forceVideoResizeOnPWA, 50);
-        }).catch(e => console.warn(e));
-      }
-    }
-  };
-
-  const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (mutation.attributeName === 'class') {
-        const modal = document.getElementById('videoModal');
-        if (modal && modal.classList.contains('active')) {
-          setTimeout(forceVideoResizeOnPWA, 100);
-        }
-      }
-    });
-  });
-  const modalElement = document.getElementById('videoModal');
-  if (modalElement) observer.observe(modalElement, { attributes: true });
-
   function playVideo(id, startTime = 0) {
     let v = videos.find(v => v.id === id);
     if (!v) return;
@@ -938,8 +1037,6 @@
       video.className = "video-player";
       video.id = "videoPlayer";
       video.playsInline = true;
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('webkit-playsinline', 'true');
       playerContainer.innerHTML = "";
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
@@ -954,7 +1051,6 @@
       quizContainer.style.display = "none";
       quizContainer.innerHTML = "";
     }
-    setTimeout(forceVideoResizeOnPWA, 100);
   }
   
   function closeModal() { 
@@ -1006,6 +1102,14 @@
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => { if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); }); }
   
+  function toggleFullscreenVideo() {
+    const video = document.getElementById("videoPlayer");
+    if (!video) return;
+    if (video.requestFullscreen) video.requestFullscreen();
+    else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+    else if (video.msRequestFullscreen) video.msRequestFullscreen();
+  }
+  
   function shareCurrentTime() {
     let currentTime = 0;
     let videoId = null;
@@ -1039,14 +1143,7 @@
     if (checkAdminPassword(inputPass)) { 
       isAdmin = true; 
       localStorage.setItem("falak_admin", "true"); 
-      document.getElementById("uploadZone").classList.add("active"); 
-      document.getElementById("adminBtn").style.display = "none"; 
-      document.getElementById("logoutBtn").style.display = "flex"; 
-      document.getElementById("maintenanceBtn").style.display = "flex"; 
-      document.getElementById("setAdminsBtn").style.display = "inline-flex"; 
-      document.getElementById("teachAICircleBtn").style.display = "inline-flex"; 
-      document.getElementById("emailSettingsBtn").style.display = "inline-flex"; 
-      updateStorageBar(); 
+      updateAdminUI();
       closeLogin(); 
       renderVideos(); 
       loadAIKnowledgeFromFirebase(); 
@@ -1061,7 +1158,7 @@
       document.getElementById("passwordInput").focus(); 
     } 
   }
-  function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); document.getElementById("uploadZone").classList.remove("active"); document.getElementById("storageBar").style.display = "none"; document.getElementById("adminBtn").style.display = "flex"; document.getElementById("logoutBtn").style.display = "none"; document.getElementById("maintenanceBtn").style.display = "none"; document.getElementById("setAdminsBtn").style.display = "none"; document.getElementById("teachAICircleBtn").style.display = "none"; document.getElementById("emailSettingsBtn").style.display = "none"; document.getElementById("cancelMaintenanceBtn").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); updateGoogleLogoutButtonsVisibility(); }
+  function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); updateAdminUI(); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); updateGoogleLogoutButtonsVisibility(); }
   function openSetAdminsModal() { isAdmin && (document.getElementById("adminPasswordModal").classList.add("active"), document.getElementById("adminPasswordInput").value = "", document.getElementById("adminPasswordInput").focus()); }
   function closeAdminPasswordModal() { document.getElementById("adminPasswordModal").classList.remove("active"); }
   function verifyAdminPassword() { 
@@ -1083,7 +1180,7 @@
   function closeSetAdminsModal() { document.getElementById("setAdminsModal").classList.remove("active"); }
   function saveAdminCount() { let c = parseInt(document.getElementById("adminCountInput").value); if (isNaN(c) || c < 1 || c > 10) showToast("❌ العدد يجب أن يكون بين 1 و 10"); else { localStorage.setItem("adminCount", c); showToast("✅ تم حفظ عدد المشرفين: " + c); closeSetAdminsModal(); } }
   
-  // Exam Functions (as before, kept same for brevity)
+  // Exam Functions (simplified for brevity, same as previous)
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
   function closeAddExamModal() { document.getElementById("addQuizModal").classList.remove("active"); }
   function loadExamForEditing(exam) { let cont = document.getElementById("questionsContainer"); cont.innerHTML = ""; exam.questions.forEach((q, idx) => { let card = document.createElement("div"); card.className = "question-card"; card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><span style="color:#6366f1; font-weight:600;">السؤال ${idx + 1}</span>${idx > 0 ? '<button onclick="this.closest(\'.question-card\').remove()" style="background:#ef4444; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="fas fa-times"></i></button>' : ""}</div><input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-family:'Cairo'; margin-bottom:1rem;">${q.imageUrl ? `<div class="question-image-preview-container"><img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0; border:2px solid rgba(99,102,241,0.5);"><button class="remove-image-btn" onclick="removeQuestionImage(this)"><i class="fas fa-times"></i> إزالة الصورة</button></div>` : ""}<input type="file" accept="image/*" class="question-image-upload" style="display:none;" data-question-index="${idx}" onchange="uploadImageForQuestion(this)"><button class="upload-image-btn" onclick="document.querySelectorAll('.question-image-upload')[${idx}].click()"><i class="fas fa-image"></i> إضافة صورة (اختياري)</button><div class="options-container">${q.options.map((opt, optIdx) => `<div class="quiz-option-input"><input type="radio" name="correct-${idx}" value="${optIdx}" ${q.correctAnswer === optIdx ? "checked" : ""} style="width:20px; height:20px; accent-color:#10b981;"><input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input"></div>`).join("")}</div><p style="color:#888; font-size:0.85rem; margin-top:0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>`; cont.appendChild(card); }); }
@@ -1118,7 +1215,7 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat Functions
+  // Chat Functions - MODIFIED to use Firebase user data
   function loadUserDataFromStorage() { 
     let savedName = localStorage.getItem("falak_username"); 
     let savedPhone = localStorage.getItem("falak_userphone"); 
@@ -1657,7 +1754,7 @@
     } 
   }
   
-  // Google Auth Functions
+  // Google Auth Functions - MODIFIED to save user data to Firebase and load chat data
   async function googleLogin() { 
     try {
       const result = await auth.signInWithPopup(provider);
@@ -1810,6 +1907,51 @@
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
+  // ========== القائمة المنسدلة (Settings Dropdown) ==========
+  function toggleSettingsMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById("settingsMenu");
+    if (menu) menu.classList.toggle("active");
+  }
+  
+  function closeSettingsMenuOnClickOutside(e) {
+    const dropdown = document.getElementById("settingsDropdown");
+    const menu = document.getElementById("settingsMenu");
+    if (dropdown && menu && !dropdown.contains(e.target)) {
+      menu.classList.remove("active");
+    }
+  }
+  
+  function openAppsModal() {
+    document.getElementById("appsModal").classList.add("active");
+  }
+  
+  function closeAppsModal() {
+    document.getElementById("appsModal").classList.remove("active");
+  }
+  
+  function openApp(url) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+  
+  // ربط أحداث القائمة المنسدلة
+  document.addEventListener("DOMContentLoaded", function() {
+    const dropdownBtn = document.getElementById("settingsDropdownBtn");
+    if (dropdownBtn) {
+      dropdownBtn.addEventListener("click", toggleSettingsMenu);
+    }
+    document.addEventListener("click", closeSettingsMenuOnClickOutside);
+    
+    const logoutMenuItem = document.getElementById("logoutMenuItem");
+    if (logoutMenuItem) logoutMenuItem.addEventListener("click", function() { logout(); });
+    const maintenanceMenuItem = document.getElementById("maintenanceMenuItem");
+    if (maintenanceMenuItem) maintenanceMenuItem.addEventListener("click", function() { openMaintenanceModal(); });
+    const emailSettingsMenuItem = document.getElementById("emailSettingsMenuItem");
+    if (emailSettingsMenuItem) emailSettingsMenuItem.addEventListener("click", function() { openEmailSettingsModal(); });
+    const appsMenuItem = document.getElementById("appsMenuItem");
+    if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); });
+  });
+
   window.addEventListener("load", function() { 
     loadUserDataFromStorage(); 
     hideLoader(); 
@@ -1824,8 +1966,8 @@
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() { try { } catch (e) { console.error("Initialization error:", e); hideLoader(); } });
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); removePresence(); });
-  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); } };
-  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); } });
+  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "appsModal") closeAppsModal(); } };
+  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); } });
 </script>
 </body>
 </html>
