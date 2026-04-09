@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط الأصلية موجودة هنا مع تعديلات القائمة المنسدلة ========== */
+    /* ========== جميع الأنماط الأصلية مع تعديلات القائمة ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -43,7 +43,7 @@
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
-    /* زر الترس - يظهر للجميع */
+    /* زر الترس */
     .settings-icon-btn {
       background: rgba(255,255,255,0.1);
       border: 1px solid rgba(99,102,241,0.5);
@@ -57,7 +57,7 @@
       transition: all 0.3s;
       color: #fff;
       font-size: 1.2rem;
-      margin-left: 8px; /* تحريكه ناحية الشمال قليلاً */
+      margin-left: 8px;
     }
     .settings-icon-btn:hover {
       background: rgba(99,102,241,0.3);
@@ -79,7 +79,7 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .refresh-btn:active i { transform: rotate(720deg); transition: transform 0.2s ease; }
-    /* قائمة الإعدادات المنسدلة - تفتح على اليمين */
+    /* قائمة الإعدادات المنسدلة - تفتح على اليمين مع إزاحة */
     .settings-dropdown {
       position: relative;
       display: inline-block;
@@ -87,7 +87,7 @@
     .settings-menu {
       position: absolute;
       top: calc(100% + 8px);
-      right: 0; /* تفتح على اليمين */
+      right: 0;
       background: rgba(26,16,37,.98);
       backdrop-filter: blur(16px);
       border-radius: 16px;
@@ -99,6 +99,7 @@
       flex-direction: column;
       overflow: hidden;
       animation: fadeInUp 0.2s ease;
+      margin-right: 8px; /* تحريكها قليلاً نحو اليمين (أي نحو المنتصف) */
     }
     .settings-menu.active {
       display: flex;
@@ -131,11 +132,13 @@
       .settings-menu {
         right: 0;
         min-width: 180px;
+        margin-right: 4px;
       }
       .brand-logo { width: 45px; height: 45px; }
       .brand-text h1 { font-size: 1.1rem; }
       .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; }
     }
+    /* باقي الأنماط كما هي (مختصرة للعرض ولكنها موجودة كاملة في الكود الأصلي) */
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
@@ -546,7 +549,10 @@
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
-            <!-- عناصر خاصة بالمشرف فقط (تظهر فقط إذا isAdmin == true) -->
+            <!-- عناصر للمستخدم العادي (غير مشرف) -->
+            <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
+            <div class="settings-menu-item user-only" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
+            <!-- عناصر للمشرف فقط -->
             <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item admin-only" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد</div>
@@ -655,7 +661,7 @@
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
-  <!-- باقي المودالات (تم اختصارها في العرض لكنها موجودة كاملة في الكود الأصلي) -->
+  <!-- باقي المودالات (مختصرة للعرض، لكنها موجودة كاملة في الكود الأصلي) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
 
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
@@ -936,9 +942,14 @@
     const uploadZone = document.getElementById("uploadZone");
     const storageBar = document.getElementById("storageBar");
     
-    // التحكم في ظهور عناصر القائمة الخاصة بالمشرف
+    // عناصر القائمة الخاصة بالمشرف والعادي
     const adminOnlyItems = document.querySelectorAll('.admin-only');
+    const userOnlyItems = document.querySelectorAll('.user-only');
+    
     if (isAdmin) {
+      // إخفاء عناصر المستخدم العادي
+      userOnlyItems.forEach(el => el.style.display = "none");
+      // إظهار عناصر المشرف
       adminOnlyItems.forEach(el => el.style.display = "flex");
       if (settingsDropdown) settingsDropdown.style.display = "inline-block";
       if (logoutBtn) logoutBtn.style.display = "none";
@@ -954,8 +965,11 @@
       const cancelBtn = document.getElementById("cancelMaintenanceBtn");
       if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
     } else {
+      // إظهار عناصر المستخدم العادي
+      userOnlyItems.forEach(el => el.style.display = "flex");
+      // إخفاء عناصر المشرف
       adminOnlyItems.forEach(el => el.style.display = "none");
-      if (settingsDropdown) settingsDropdown.style.display = "inline-block"; // يظهر للجميع
+      if (settingsDropdown) settingsDropdown.style.display = "inline-block";
       if (logoutBtn) logoutBtn.style.display = "none";
       if (maintenanceBtn) maintenanceBtn.style.display = "none";
       if (emailSettingsBtn) emailSettingsBtn.style.display = "none";
@@ -1214,7 +1228,7 @@
   function closeSetAdminsModal() { document.getElementById("setAdminsModal").classList.remove("active"); }
   function saveAdminCount() { let c = parseInt(document.getElementById("adminCountInput").value); if (isNaN(c) || c < 1 || c > 10) showToast("❌ العدد يجب أن يكون بين 1 و 10"); else { localStorage.setItem("adminCount", c); showToast("✅ تم حفظ عدد المشرفين: " + c); closeSetAdminsModal(); } }
   
-  // Exam Functions (simplified for brevity, same as previous)
+  // Exam Functions (مختصرة للعرض، موجودة كاملة في الكود الأصلي)
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
   function closeAddExamModal() { document.getElementById("addQuizModal").classList.remove("active"); }
   function loadExamForEditing(exam) { let cont = document.getElementById("questionsContainer"); cont.innerHTML = ""; exam.questions.forEach((q, idx) => { let card = document.createElement("div"); card.className = "question-card"; card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><span style="color:#6366f1; font-weight:600;">السؤال ${idx + 1}</span>${idx > 0 ? '<button onclick="this.closest(\'.question-card\').remove()" style="background:#ef4444; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="fas fa-times"></i></button>' : ""}</div><input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-family:'Cairo'; margin-bottom:1rem;">${q.imageUrl ? `<div class="question-image-preview-container"><img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0; border:2px solid rgba(99,102,241,0.5);"><button class="remove-image-btn" onclick="removeQuestionImage(this)"><i class="fas fa-times"></i> إزالة الصورة</button></div>` : ""}<input type="file" accept="image/*" class="question-image-upload" style="display:none;" data-question-index="${idx}" onchange="uploadImageForQuestion(this)"><button class="upload-image-btn" onclick="document.querySelectorAll('.question-image-upload')[${idx}].click()"><i class="fas fa-image"></i> إضافة صورة (اختياري)</button><div class="options-container">${q.options.map((opt, optIdx) => `<div class="quiz-option-input"><input type="radio" name="correct-${idx}" value="${optIdx}" ${q.correctAnswer === optIdx ? "checked" : ""} style="width:20px; height:20px; accent-color:#10b981;"><input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input"></div>`).join("")}</div><p style="color:#888; font-size:0.85rem; margin-top:0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>`; cont.appendChild(card); }); }
@@ -1249,7 +1263,7 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat Functions - MODIFIED to use Firebase user data
+  // Chat Functions (مختصرة، موجودة كاملة)
   function loadUserDataFromStorage() { 
     let savedName = localStorage.getItem("falak_username"); 
     let savedPhone = localStorage.getItem("falak_userphone"); 
@@ -1260,7 +1274,6 @@
     } 
     return false; 
   }
-  
   function saveUserDataToStorage(name, phone) { 
     if (!name || !phone) return false; 
     localStorage.setItem("falak_username", name); 
@@ -1270,12 +1283,10 @@
     if (currentUserId) saveUserDataToFirebase(currentUserId);
     return true; 
   }
-  
   function checkUserName() { 
     if (currentUser && currentUserPhone) return true;
     return loadUserDataFromStorage(); 
   }
-  
   function openChat() { 
     if (checkUserName()) { 
       document.getElementById("chatModal").classList.add("active"); 
@@ -1291,7 +1302,6 @@
       document.getElementById("userNameInput").focus(); 
     } 
   }
-  
   function closeChat() { 
     document.getElementById("chatModal").classList.remove("active"); 
     if (currentAudio) { 
@@ -1304,7 +1314,6 @@
       chatUnsubscribe = null; 
     } 
   }
-  
   async function saveUserName() { 
     let name = document.getElementById("userNameInput").value.trim(); 
     let phone = document.getElementById("userPhoneInput").value.trim(); 
@@ -1334,7 +1343,6 @@
       joinedAt: firebase.firestore.FieldValue.serverTimestamp() 
     }).catch(err => console.warn("Could not save chat user:", err)); 
   }
-  
   function loadMessages() { 
     let cont = document.getElementById("chatMessages"); 
     if (!cont) return; 
@@ -1349,7 +1357,6 @@
       cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; 
     }); 
   }
-  
   function displayMessage(id, data) { 
     if (data.type === "system") return; 
     let cont = document.getElementById("chatMessages"); 
@@ -1380,7 +1387,6 @@
     } 
     cont.appendChild(msgDiv); 
   }
-  
   function deleteMessage(id, sender) { 
     if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { 
       SoundEffects.error(); 
@@ -1406,7 +1412,6 @@
       else showToast("❌ فشل الحذف"); 
     }); 
   }
-  
   function playVoiceMessage(btn, url, id) { 
     let audio = document.getElementById("audio-" + id); 
     let prog = document.getElementById("progress-" + id); 
@@ -1452,7 +1457,6 @@
       btn.classList.remove("playing"); 
     } 
   }
-  
   function seekVoice(e, slider, id) { 
     let audio = document.getElementById("audio-" + id); 
     if (!audio || !audio.duration) return; 
@@ -1460,7 +1464,6 @@
     let pos = (e.clientX - rect.left) / rect.width; 
     audio.currentTime = pos * audio.duration; 
   }
-  
   function sendMessage() { 
     let inp = document.getElementById("messageInput"); 
     if (!inp) return; 
@@ -1479,14 +1482,12 @@
       showToast("فشل الإرسال"); 
     }); 
   }
-  
   function handleKeyPress(e) { 
     if (e.key === "Enter" && !e.shiftKey) { 
       e.preventDefault(); 
       sendMessage(); 
     } 
   }
-  
   function sendImage(input) { 
     let file = input.files[0]; 
     if (!file || !currentUser) return; 
@@ -1515,12 +1516,10 @@
       showToast("فشل الرفع"); 
     }); 
   }
-  
   async function toggleRecording() { 
     if (isRecording) stopRecording(); 
     else await startRecording(); 
   }
-  
   async function startRecording() { 
     if (!currentUser) { 
       showToast("❌ سجل دخولك أولاً"); 
@@ -1551,7 +1550,6 @@
       showToast("❌ لا يمكن الوصول للميكروفون"); 
     } 
   }
-  
   function stopRecording() { 
     if (mediaRecorder && isRecording) { 
       mediaRecorder.stop(); 
@@ -1562,7 +1560,6 @@
       document.getElementById("recordingTime").textContent = "0:00"; 
     } 
   }
-  
   async function uploadVoice(blob) { 
     if (!currentUser) { 
       showToast("❌ يجب تسجيل الدخول أولاً"); 
@@ -1592,7 +1589,6 @@
       showToast("❌ فشل إرسال الصوت"); 
     } 
   }
-  
   async function startVoiceCall() { 
     if (!currentUser) return; 
     try { 
@@ -1611,7 +1607,6 @@
       showToast("لا يمكن الوصول للميكروفون"); 
     } 
   }
-  
   function toggleMute() { 
     if (!localStream) return; 
     let track = localStream.getAudioTracks()[0]; 
@@ -1619,7 +1614,6 @@
     let btn = document.getElementById("muteBtn"); 
     btn && (btn.classList.toggle("active"), btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'); 
   }
-  
   function endCall() { 
     if (localStream) { 
       localStream.getTracks().forEach(t => t.stop()); 
@@ -1629,22 +1623,18 @@
     document.getElementById("callModal").classList.remove("active"); 
     document.getElementById("callTimer").textContent = "00:00"; 
   }
-  
   function viewImage(src) { 
     let viewer = document.getElementById("imageViewer"); 
     let img = document.getElementById("viewerImage"); 
     viewer && img && (img.src = src, viewer.classList.add("active")); 
   }
-  
   function closeImageViewer() { 
     document.getElementById("imageViewer").classList.remove("active"); 
   }
-  
   function scrollToBottom() { 
     let c = document.getElementById("chatMessages"); 
     c && (c.scrollTop = c.scrollHeight); 
   }
-  
   function initPresenceSystem() { 
     if (!currentUser) return; 
     let uid = localStorage.getItem("falak_user_id"); 
@@ -1664,7 +1654,6 @@
     }, 20000); 
     listenToOnlineUsers(); 
   }
-  
   function removePresence() { 
     if (presenceInterval) { 
       clearInterval(presenceInterval); 
@@ -1679,7 +1668,6 @@
       onlineUnsubscribe = null; 
     } 
   }
-  
   function listenToOnlineUsers() { 
     if (onlineUnsubscribe) onlineUnsubscribe(); 
     onlineUnsubscribe = onlineUsersRef.onSnapshot(snap => { 
@@ -1706,11 +1694,9 @@
     document.getElementById("examResultName").value = ""; 
     document.getElementById("examResultPhone").value = ""; 
   }
-  
   function closeExamResultModal() { 
     document.getElementById("examResultModal").classList.remove("active"); 
   }
-  
   function checkExamResult() { 
     let name = document.getElementById("examResultName").value.trim(); 
     let phone = document.getElementById("examResultPhone").value.trim(); 
@@ -1748,7 +1734,6 @@
     const match = url.match(regExp); 
     return (match && match[2].length === 11) ? match[2] : null; 
   }
-  
   async function addYouTubeVideo() { 
     if (!isAdmin) { 
       showToast("❌ المشرف فقط يمكنه الإضافة"); 
@@ -1788,7 +1773,7 @@
     } 
   }
   
-  // Google Auth Functions - MODIFIED to save user data to Firebase and load chat data
+  // Google Auth Functions
   async function googleLogin() { 
     try {
       const result = await auth.signInWithPopup(provider);
@@ -1941,13 +1926,12 @@
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
-  // ========== القائمة المنسدلة (Settings Dropdown) ==========
+  // ========== القائمة المنسدلة ==========
   function toggleSettingsMenu(e) {
     e.stopPropagation();
     const menu = document.getElementById("settingsMenu");
     if (menu) menu.classList.toggle("active");
   }
-  
   function closeSettingsMenuOnClickOutside(e) {
     const dropdown = document.getElementById("settingsDropdown");
     const menu = document.getElementById("settingsMenu");
@@ -1955,27 +1939,29 @@
       menu.classList.remove("active");
     }
   }
-  
   function openAppsModal() {
     document.getElementById("appsModal").classList.add("active");
   }
-  
   function closeAppsModal() {
     document.getElementById("appsModal").classList.remove("active");
   }
-  
   function openApp(url) {
     window.open(url, "_blank", "noopener,noreferrer");
   }
   
-  // ربط أحداث القائمة المنسدلة
+  // ربط الأحداث
   document.addEventListener("DOMContentLoaded", function() {
     const dropdownBtn = document.getElementById("settingsDropdownBtn");
-    if (dropdownBtn) {
-      dropdownBtn.addEventListener("click", toggleSettingsMenu);
-    }
+    if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu);
     document.addEventListener("click", closeSettingsMenuOnClickOutside);
     
+    // عناصر القائمة الجديدة للمستخدم العادي
+    const googleLogoutMenuItem = document.getElementById("googleLogoutMenuItem");
+    if (googleLogoutMenuItem) googleLogoutMenuItem.addEventListener("click", function() { googleLogout(); });
+    const adminLoginMenuItem = document.getElementById("adminLoginMenuItem");
+    if (adminLoginMenuItem) adminLoginMenuItem.addEventListener("click", function() { showLogin(); });
+    
+    // عناصر المشرف
     const logoutMenuItem = document.getElementById("logoutMenuItem");
     if (logoutMenuItem) logoutMenuItem.addEventListener("click", function() { logout(); });
     const maintenanceMenuItem = document.getElementById("maintenanceMenuItem");
