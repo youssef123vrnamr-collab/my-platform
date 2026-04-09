@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط مع تعديل موضع القائمة ========== */
+    /* ========== الأنماط الأساسية ========== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
@@ -78,7 +78,7 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .refresh-btn:active i { transform: rotate(720deg); transition: transform 0.2s ease; }
-    /* قائمة الإعدادات - تفتح على الجهة اليسرى (في RTL تعني تنفتح نحو اليمين) */
+    /* قائمة الإعدادات - تفتح على اليسار (في RTL تعني تنفتح نحو اليمين) */
     .settings-dropdown {
       position: relative;
       display: inline-block;
@@ -86,7 +86,7 @@
     .settings-menu {
       position: absolute;
       top: calc(100% + 8px);
-      left: 0;  /* تفتح على اليسار بدلاً من اليمين لتظهر كاملة */
+      left: 0;
       background: rgba(26,16,37,.98);
       backdrop-filter: blur(16px);
       border-radius: 16px;
@@ -135,7 +135,6 @@
       .brand-text h1 { font-size: 1.1rem; }
       .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; }
     }
-    /* باقي الأنماط كما هي (تم اختصارها للعرض) */
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
