@@ -461,6 +461,29 @@
   <div class="modal" id="nameModal"><div class="modal-content name-modal-content"><div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div><h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2><p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p><div class="name-input-group"><input id="userNameInput" placeholder="الاسم..." class="name-input" maxlength="20"><input id="userPhoneInput" placeholder="رقم الهاتف..." class="phone-input" maxlength="20" type="tel"></div><button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button></div></div>
   <div class="modal" id="callModal"><div class="modal-content call-modal-content"><div class="call-avatar"><i class="fas fa-users"></i></div><div class="call-status" id="callStatus">مكالمة جماعية</div><div class="call-timer" id="callTimer">00:00</div><div class="call-actions"><button class="call-action mute" onclick="toggleMute()" id="muteBtn"><i class="fas fa-microphone"></i></button><button class="call-action end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div></div></div>
   <div class="modal" id="appsModal"><div class="modal-content apps-modal-content"><div class="modal-header"><h3><i class="fas fa-th-large" style="color:#6366f1"></i> تطبيقات المنصة</h3><button class="modal-close" onclick="closeAppsModal()"><i class="fas fa-times"></i></button></div><div class="apps-list" id="appsList"></div></div></div>
+  
+  <!-- المودال الخاص بتعليم الذكاء الاصطناعي (تم إصلاحه) -->
+  <div class="modal" id="teachAICircleModal">
+    <div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto">
+      <div class="modal-header">
+        <h3><i class="fas fa-robot" style="color:#06b6d4"></i> تعليم الذكاء الاصطناعي</h3>
+        <button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:2rem;">
+          <h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle"></i> إضافة معلومة جديدة</h4>
+          <div class="form-group"><label>السؤال</label><input type="text" id="aiQuestionInput" placeholder="مثال: ما هي سرعة الضوء؟" class="student-name-input"></div>
+          <div class="form-group"><label>الإجابة</label><textarea id="aiAnswerInput" placeholder="اكتب الإجابة..." class="student-name-input" rows="3"></textarea></div>
+          <button class="btn btn-primary" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button>
+        </div>
+        <div>
+          <h4><i class="fas fa-database"></i> قاعدة المعرفة الحالية</h4>
+          <div id="aiKnowledgeList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()"><button class="image-viewer-close" onclick="closeImageViewer()"><i class="fas fa-times"></i></button><img alt="صورة" id="viewerImage" src=""></div>
   <div class="toast" id="toast">تم بنجاح</div>
 </div>
