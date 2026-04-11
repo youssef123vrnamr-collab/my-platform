@@ -42,7 +42,25 @@
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
-    .settings-icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.5); border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #fff; font-size: 1.2rem; margin-left: 8px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .settings-icon-btn { 
+  background: rgba(255,255,255,0.1); 
+  border: 1px solid rgba(99,102,241,0.5); 
+  border-radius: 40px; 
+  width: 40px; 
+  height: 40px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  cursor: pointer; 
+  transition: all 0.3s; 
+  color: #fff; 
+  font-size: 1.2rem; 
+  margin-left: 8px; 
+  -webkit-tap-highlight-color: transparent; 
+  touch-action: manipulation;
+  position: relative;
+  z-index: 100;
+}
     .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
@@ -59,8 +77,29 @@
     .refresh-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(99,102,241,0.6); transition: all 0.3s ease; }
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
-    .settings-dropdown { position: relative; display: inline-block; }
-    .settings-menu { position: absolute; top: calc(100% + 8px); right: 0; left: auto; background: rgba(26,16,37,.98); backdrop-filter: blur(16px); border-radius: 16px; border: 1px solid rgba(99,102,241,.5); min-width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 1100; display: none; flex-direction: column; overflow: hidden; animation: fadeInUp 0.2s ease; direction: rtl; }
+    .settings-dropdown { 
+  position: relative; 
+  display: inline-block; 
+  z-index: 9999;
+}
+    .settings-menu { 
+  position: absolute; 
+  top: calc(100% + 8px); 
+  right: 0; 
+  left: auto; 
+  background: rgba(26,16,37,.98); 
+  backdrop-filter: blur(16px); 
+  border-radius: 16px; 
+  border: 1px solid rgba(99,102,241,.5); 
+  min-width: 220px; 
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5); 
+  z-index: 9999; 
+  display: none; 
+  flex-direction: column; 
+  overflow: visible; 
+  animation: fadeInUp 0.2s ease; 
+  direction: rtl; 
+}
     .settings-menu.active { display: flex; }
     .settings-menu-item { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,.05); white-space: nowrap; }
     .settings-menu-item:last-child { border-bottom: none; }
@@ -356,7 +395,6 @@
     .icon-preview { margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: center; }
     .icon-preview img { max-width: 64px; max-height: 64px; border-radius: 12px; }
   </style>
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -1654,6 +1692,7 @@
     const menu = document.getElementById("settingsMenu");
     if (!menu) return;
     menu.classList.toggle("active");
+    console.log("Settings menu toggled:", menu.classList.contains("active"));
   }
 
   function closeSettingsMenuOnClickOutside(e) {
@@ -1662,6 +1701,13 @@
     if (menu && dropdown && !dropdown.contains(e.target)) {
       menu.classList.remove("active");
     }
+  }
+
+  // Touch support for mobile
+  function handleSettingsTouch(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSettingsMenu(e);
   }
 
   function openAppsModal() {
@@ -1682,8 +1728,21 @@
     
     const dropdownBtn = document.getElementById("settingsDropdownBtn"); 
     if (dropdownBtn) {
-      dropdownBtn.removeEventListener("click", toggleSettingsMenu);
-      dropdownBtn.addEventListener("click", toggleSettingsMenu);
+      // Remove any existing listeners first
+      const newBtn = dropdownBtn.cloneNode(true);
+      dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
+      // Add click listener
+      newBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSettingsMenu(e);
+      });
+      // Add touch listener for mobile
+      newBtn.addEventListener("touchstart", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSettingsMenu(e);
+      }, { passive: false });
     }
     document.addEventListener("click", closeSettingsMenuOnClickOutside); 
     
