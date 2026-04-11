@@ -355,10 +355,8 @@
     .manage-apps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .icon-preview { margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: center; }
     .icon-preview img { max-width: 64px; max-height: 64px; border-radius: 12px; }
-    .screenshot-helper { position: fixed; bottom: 20px; right: 20px; background: rgba(99,102,241,0.9); color: white; border: none; border-radius: 50px; padding: 12px 20px; font-size: 14px; cursor: pointer; z-index: 1000; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: all 0.3s ease; font-family: 'Cairo', sans-serif; }
-    .screenshot-helper:hover { transform: scale(1.05); background: #6366f1; }
-    @media (max-width:768px) { .screenshot-helper { bottom: 80px; right: 10px; padding: 8px 12px; font-size: 11px; } }
   </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -425,11 +423,6 @@
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
-
-  <!-- Screenshot Helper Button -->
-  <button class="screenshot-helper" onclick="takeScreenshot()" title="التقاط صورة للشاشة">
-    <i class="fas fa-camera"></i> التقاط شاشة
-  </button>
 
   <!-- المودالات -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
@@ -516,35 +509,37 @@
 </div>
 
 <script>
-  // ========== Screenshot Function ==========
-  function takeScreenshot() {
-    // استخدام html2canvas لالتقاط الشاشة
-    if (typeof html2canvas !== 'undefined') {
-      html2canvas(document.querySelector('.app-wrapper'), {
-        scale: 2,
-        backgroundColor: '#0f0a1a',
-        logging: false,
-        useCORS: true,
-        allowTaint: false
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'astronomy-screenshot.png';
-        link.href = canvas.toDataURL();
-        link.click();
-        showToast('✅ تم التقاط الشاشة وحفظها!');
-      }).catch(err => {
-        console.error('Screenshot error:', err);
-        showToast('⚠️ فشل التقاط الشاشة، حاول مرة أخرى');
-      });
-    } else {
-      showToast('⚠️ جاري تحميل أداة التصوير...');
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      script.onload = () => {
-        setTimeout(() => takeScreenshot(), 100);
-      };
-      document.head.appendChild(script);
+  // ========== Screen Orientation Fix for PWA ==========
+  // This code forces the app to rotate with the device on Android
+  function initScreenOrientation() {
+    // Unlock screen orientation to allow all rotations
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock().catch(err => console.log('Orientation unlock failed:', err));
     }
+    
+    // Listen for orientation changes
+    window.addEventListener('orientationchange', function() {
+      // Force a reflow to ensure the app rotates properly
+      document.body.style.display = 'none';
+      setTimeout(() => {
+        document.body.style.display = '';
+      }, 50);
+      
+      // Update viewport height for mobile browsers
+      updateViewportHeight();
+    });
+    
+    // Handle resize events
+    window.addEventListener('resize', updateViewportHeight);
+    
+    // Initial viewport height update
+    updateViewportHeight();
+  }
+  
+  function updateViewportHeight() {
+    // Fix for mobile browsers where 100vh doesn't account for browser chrome
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
 
   // ========== Firebase Config ==========
@@ -567,13 +562,14 @@
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
   let progressInterval = null, metadataListener = null, lastWatchedData = null, currentUser = null, currentUserPhone = null, currentUserId = null, chatUnsubscribe = null;
-  let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false;
+  let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, isRecording = false;
   let currentAudio = null, currentAudioBtn = null, userPresenceRef = null, onlineUnsubscribe = null, presenceInterval = null, maintenanceTimerInterval = null, tickInterval = null;
   let maintenanceEndTime = null, uploadStartTime = 0, lastUploadedBytes = 0, lastTime = 0;
   let voiceSettings = { voiceURI: null, rate: 1, pitch: 1 };
   let isLoadingVideos = true;
   let googleUser = null;
   let deferredPrompt = null;
+  let unreadMessages = 0;
 
   // EmailJS settings (optional, not required)
   let emailSettings = { publicKey: "", serviceId: "", videoTemplateId: "", messageTemplateId: "", adminEmail: "" };
@@ -595,7 +591,7 @@
   function checkSuperAdminPassword(inputPass) { return inputPass === xorEncryptDecrypt(ENCRYPTED_SUPER_ADMIN_PASS, "Falak2024!@#"); }
 
   const MAX_VIDEO_SIZE = 104857600;
-  const CHUNK_SIZE = 10485760;
+  const CHUNK_SIZE = 10485710;
   const MAX_STORAGE = 26843545600;
   const STORAGE_KEY = "falak_last_watched";
 
@@ -1658,9 +1654,43 @@
   function openAppsModal() { document.getElementById("appsModal").classList.add("active"); renderAppsList(); }
   function closeAppsModal() { document.getElementById("appsModal").classList.remove("active"); }
 
-  document.addEventListener("DOMContentLoaded", function() { const dropdownBtn = document.getElementById("settingsDropdownBtn"); if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu); document.addEventListener("click", closeSettingsMenuOnClickOutside); const googleLogoutMenuItem = document.getElementById("googleLogoutMenuItem"); if (googleLogoutMenuItem) googleLogoutMenuItem.addEventListener("click", function() { googleLogout(); }); const adminLoginMenuItem = document.getElementById("adminLoginMenuItem"); if (adminLoginMenuItem) adminLoginMenuItem.addEventListener("click", function() { showLogin(); }); const logoutMenuItem = document.getElementById("logoutMenuItem"); if (logoutMenuItem) logoutMenuItem.addEventListener("click", function() { logout(); }); const maintenanceMenuItem = document.getElementById("maintenanceMenuItem"); if (maintenanceMenuItem) maintenanceMenuItem.addEventListener("click", function() { openMaintenanceModal(); }); const appsMenuItem = document.getElementById("appsMenuItem"); if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); }); const manageAppsMenuItem = document.getElementById("manageAppsMenuItem"); if (manageAppsMenuItem) manageAppsMenuItem.addEventListener("click", function() { openManageAppsModal(); }); const installAppMenuItem = document.getElementById("installAppMenuItem"); if (installAppMenuItem) installAppMenuItem.addEventListener("click", function() { installApp(); }); const localLogoutMenuItem = document.getElementById("localLogoutMenuItem"); if (localLogoutMenuItem) localLogoutMenuItem.addEventListener("click", localLogout); });
+  document.addEventListener("DOMContentLoaded", function() { 
+    // Initialize screen orientation fix
+    initScreenOrientation();
+    
+    const dropdownBtn = document.getElementById("settingsDropdownBtn"); 
+    if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu); 
+    document.addEventListener("click", closeSettingsMenuOnClickOutside); 
+    const googleLogoutMenuItem = document.getElementById("googleLogoutMenuItem"); 
+    if (googleLogoutMenuItem) googleLogoutMenuItem.addEventListener("click", function() { googleLogout(); }); 
+    const adminLoginMenuItem = document.getElementById("adminLoginMenuItem"); 
+    if (adminLoginMenuItem) adminLoginMenuItem.addEventListener("click", function() { showLogin(); }); 
+    const logoutMenuItem = document.getElementById("logoutMenuItem"); 
+    if (logoutMenuItem) logoutMenuItem.addEventListener("click", function() { logout(); }); 
+    const maintenanceMenuItem = document.getElementById("maintenanceMenuItem"); 
+    if (maintenanceMenuItem) maintenanceMenuItem.addEventListener("click", function() { openMaintenanceModal(); }); 
+    const appsMenuItem = document.getElementById("appsMenuItem"); 
+    if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); }); 
+    const manageAppsMenuItem = document.getElementById("manageAppsMenuItem"); 
+    if (manageAppsMenuItem) manageAppsMenuItem.addEventListener("click", function() { openManageAppsModal(); }); 
+    const installAppMenuItem = document.getElementById("installAppMenuItem"); 
+    if (installAppMenuItem) installAppMenuItem.addEventListener("click", function() { installApp(); }); 
+    const localLogoutMenuItem = document.getElementById("localLogoutMenuItem"); 
+    if (localLogoutMenuItem) localLogoutMenuItem.addEventListener("click", localLogout); 
+  });
 
-  window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettings(); document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
+  window.addEventListener("load", function() { 
+    loadUserDataFromStorage(); 
+    hideLoader(); 
+    requestFullscreenAutomatically(); 
+    setTimeout(requestFullscreenAutomatically, 1000); 
+    initAuthState(); 
+    loadEmailSettings(); 
+    document.getElementById("googleSignInBtn").onclick = googleLogin; 
+    document.getElementById("googleLogoutBtn").onclick = googleLogout; 
+    setTimeout(() => updateAdminUI(), 500); 
+    setInterval(cleanupOldSessions, 60 * 60 * 1000); 
+  });
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() { try { } catch (e) { console.error("Initialization error:", e); hideLoader(); } });
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); removePresence(); });
