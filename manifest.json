@@ -10,151 +10,22 @@
   "scope": "/",
   "lang": "ar",
   "dir": "rtl",
-  "categories": ["education", "science"],
   "icons": [
-    {
-      "src": "icons/16.png",
-      "sizes": "16x16",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/32.png",
-      "sizes": "32x32",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/100.png",
-      "sizes": "100x100",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/114.png",
-      "sizes": "114x114",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/120.png",
-      "sizes": "120x120",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/167.png",
-      "sizes": "167x167",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/1024.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshots/screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "مكتبة الفيديوهات في Astronomy and space"
-    },
-    {
-      "src": "screenshots/screenshot2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "مشغل الفيديو مع الامتحانات"
-    },
-    {
-      "src": "screenshots/mobile1.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "واجهة المستخدم على الجوال"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "مكتبة الفيديوهات",
-      "short_name": "الفيديوهات",
-      "description": "استعرض مكتبة الفيديوهات التعليمية",
-      "url": "/#videos",
-      "icons": [{ "src": "icons/96.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "الدردشة",
-      "short_name": "دردشة",
-      "description": "تحدث مع الطلاب والمشرفين",
-      "url": "/#chat",
-      "icons": [{ "src": "icons/96.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "الذكاء الاصطناعي",
-      "short_name": "AI",
-      "description": "تحدث مع مساعد الفلك الذكي",
-      "url": "/#ai",
-      "icons": [{ "src": "icons/96.png", "sizes": "96x96" }]
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false
+    { "src": "16.png", "sizes": "16x16", "type": "image/png" },
+    { "src": "32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "72.png", "sizes": "72x72", "type": "image/png", "purpose": "any maskable" },
+    { "src": "96.png", "sizes": "96x96", "type": "image/png", "purpose": "any maskable" },
+    { "src": "100.png", "sizes": "100x100", "type": "image/png", "purpose": "any maskable" },
+    { "src": "114.png", "sizes": "114x114", "type": "image/png", "purpose": "any maskable" },
+    { "src": "120.png", "sizes": "120x120", "type": "image/png", "purpose": "any maskable" },
+    { "src": "128.png", "sizes": "128x128", "type": "image/png", "purpose": "any maskable" },
+    { "src": "144.png", "sizes": "144x144", "type": "image/png", "purpose": "any maskable" },
+    { "src": "152.png", "sizes": "152x152", "type": "image/png", "purpose": "any maskable" },
+    { "src": "167.png", "sizes": "167x167", "type": "image/png", "purpose": "any maskable" },
+    { "src": "180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
+    { "src": "192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "384.png", "sizes": "384x384", "type": "image/png", "purpose": "any maskable" },
+    { "src": "512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }
+  ]
 }
