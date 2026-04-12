@@ -355,9 +355,6 @@
     .manage-apps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .icon-preview { margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: center; }
     .icon-preview img { max-width: 64px; max-height: 64px; border-radius: 12px; }
-    .screenshot-helper { position: fixed; bottom: 20px; right: 20px; background: rgba(99,102,241,0.9); color: white; border: none; border-radius: 50px; padding: 12px 20px; font-size: 14px; cursor: pointer; z-index: 1000; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: all 0.3s ease; font-family: 'Cairo', sans-serif; }
-    .screenshot-helper:hover { transform: scale(1.05); background: #6366f1; }
-    @media (max-width:768px) { .screenshot-helper { bottom: 80px; right: 10px; padding: 8px 12px; font-size: 11px; } }
   </style>
 </head>
 <body>
@@ -425,11 +422,6 @@
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
-
-  <!-- Screenshot Helper Button -->
-  <button class="screenshot-helper" onclick="takeScreenshot()" title="التقاط صورة للشاشة">
-    <i class="fas fa-camera"></i> التقاط شاشة
-  </button>
 
   <!-- المودالات -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
@@ -516,37 +508,6 @@
 </div>
 
 <script>
-  // ========== Screenshot Function ==========
-  function takeScreenshot() {
-    // استخدام html2canvas لالتقاط الشاشة
-    if (typeof html2canvas !== 'undefined') {
-      html2canvas(document.querySelector('.app-wrapper'), {
-        scale: 2,
-        backgroundColor: '#0f0a1a',
-        logging: false,
-        useCORS: true,
-        allowTaint: false
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'astronomy-screenshot.png';
-        link.href = canvas.toDataURL();
-        link.click();
-        showToast('✅ تم التقاط الشاشة وحفظها!');
-      }).catch(err => {
-        console.error('Screenshot error:', err);
-        showToast('⚠️ فشل التقاط الشاشة، حاول مرة أخرى');
-      });
-    } else {
-      showToast('⚠️ جاري تحميل أداة التصوير...');
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      script.onload = () => {
-        setTimeout(() => takeScreenshot(), 100);
-      };
-      document.head.appendChild(script);
-    }
-  }
-
   // ========== Firebase Config ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
@@ -1153,7 +1114,7 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // ========== منع الاشتراكات المتعددة ==========
+  // ========== منع الاشتراكات المتعددة (محسّن: حذف الجلسات القديمة تلقائياً) ==========
   async function checkIfUserAlreadyActive(name, phone) {
     try {
       const activeUserQuery = await db.collection("active_sessions")
@@ -1163,13 +1124,23 @@
         .get();
       
       if (!activeUserQuery.empty) {
-        const session = activeUserQuery.docs[0].data();
         const currentDeviceId = localStorage.getItem("falak_device_id");
+        // إذا لم يكن هناك deviceId مخزن (حدث مسح للبيانات)، أو كان مختلفاً:
+        // نقوم بحذف جميع الجلسات القديمة لهذا المستخدم والسماح بالدخول.
+        if (!currentDeviceId) {
+          // مسح كل الجلسات النشطة لهذا المستخدم
+          for (const doc of activeUserQuery.docs) {
+            await db.collection("active_sessions").doc(doc.id).delete();
+          }
+          return { allowed: true };
+        }
+        const session = activeUserQuery.docs[0].data();
         if (session.deviceId !== currentDeviceId) {
-          return { 
-            allowed: false, 
-            message: `⚠️ هذا الحساب (${name} - ${phone}) مسجل الدخول بالفعل من جهاز آخر. لا يمكن التسجيل من جهازين بنفس البيانات.` 
-          };
+          // جهاز مختلف -> حذف الجلسات القديمة والسماح بالجديد
+          for (const doc of activeUserQuery.docs) {
+            await db.collection("active_sessions").doc(doc.id).delete();
+          }
+          return { allowed: true };
         }
       }
       return { allowed: true };
@@ -1187,21 +1158,13 @@
         localStorage.setItem("falak_device_id", deviceId);
       }
       
+      // حذف أي جلسات سابقة لنفس المستخدم (تأكيد)
       const existingSessions = await db.collection("active_sessions")
         .where("name", "==", name)
         .where("phone", "==", phone)
-        .where("active", "==", true)
         .get();
-      
       for (const doc of existingSessions.docs) {
-        const sessionData = doc.data();
-        if (sessionData.deviceId === deviceId) {
-          await db.collection("active_sessions").doc(doc.id).update({
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          startSessionHeartbeat(name, phone, deviceId);
-          return;
-        }
+        await db.collection("active_sessions").doc(doc.id).delete();
       }
       
       await db.collection("active_sessions").add({
@@ -1289,7 +1252,7 @@
     }
   }
 
-  // ========== Google Auth Functions with multi-device prevention ==========
+  // ========== Google Auth Functions with multi-device prevention (محسّن) ==========
   async function checkIfUserAlreadyActiveGoogle(email, phone) {
     try {
       const activeUserQuery = await db.collection("active_sessions")
@@ -1298,13 +1261,19 @@
         .get();
       
       if (!activeUserQuery.empty) {
-        const session = activeUserQuery.docs[0].data();
         const currentDeviceId = localStorage.getItem("falak_device_id");
+        if (!currentDeviceId) {
+          for (const doc of activeUserQuery.docs) {
+            await db.collection("active_sessions").doc(doc.id).delete();
+          }
+          return { allowed: true };
+        }
+        const session = activeUserQuery.docs[0].data();
         if (session.deviceId !== currentDeviceId) {
-          return { 
-            allowed: false, 
-            message: `⚠️ هذا الحساب (${email}) مسجل الدخول بالفعل من جهاز آخر. لا يمكن التسجيل من جهازين بنفس البيانات.` 
-          };
+          for (const doc of activeUserQuery.docs) {
+            await db.collection("active_sessions").doc(doc.id).delete();
+          }
+          return { allowed: true };
         }
       }
       return { allowed: true };
@@ -1324,20 +1293,9 @@
       
       const existingSessions = await db.collection("active_sessions")
         .where("email", "==", email)
-        .where("active", "==", true)
         .get();
-      
       for (const doc of existingSessions.docs) {
-        const sessionData = doc.data();
-        if (sessionData.deviceId === deviceId) {
-          await db.collection("active_sessions").doc(doc.id).update({
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-            name: name,
-            phone: phone
-          });
-          startGoogleSessionHeartbeat(email, deviceId);
-          return;
-        }
+        await db.collection("active_sessions").doc(doc.id).delete();
       }
       
       await db.collection("active_sessions").add({
