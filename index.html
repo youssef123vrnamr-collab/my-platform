@@ -1,500 +1,175 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html dir="rtl" lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>صاروخ فضائي - النار قدامي والوش ورا</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; background: #000; }
-        .info-panel {
-            position: absolute; top: 20px; left: 20px;
-            background: rgba(0,0,0,0.8); padding: 12px 20px; border-radius: 15px;
-            color: #0ff; font-family: monospace; font-size: 14px; font-weight: bold;
-            z-index: 20; backdrop-filter: blur(10px); border: 1px solid rgba(0,200,255,0.3);
-        }
-        .info-panel span { display: block; margin: 4px 0; }
-        .info-panel .warning { color: #ff4444; animation: blink 0.5s infinite; }
-        .info-panel .ready { color: #ffff44; }
-        .info-panel .landed { color: #44ff44; }
-        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-
-        .joystick-container {
-            position: absolute; bottom: 30px; left: 30px;
-            width: 150px; height: 150px; z-index: 20;
-        }
-        .joystick-base {
-            position: absolute; width: 150px; height: 150px;
-            background: radial-gradient(circle, rgba(30,50,80,0.9) 0%, rgba(10,20,40,0.95) 100%);
-            border: 3px solid rgba(0,200,255,0.5); border-radius: 50%;
-        }
-        .joystick-handle {
-            position: absolute; width: 60px; height: 60px;
-            background: radial-gradient(circle, #0cf 0%, #0088cc 100%);
-            border: 2px solid #fff; border-radius: 50%; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); box-shadow: 0 0 20px rgba(0,200,255,0.8);
-            cursor: pointer;
-        }
-        .joystick-handle.active { background: radial-gradient(circle, #ff6600 0%, #cc4400 100%); }
-
-        .side-controls {
-            position: absolute; bottom: 30px; right: 30px;
-            display: flex; flex-direction: column; gap: 15px; z-index: 20;
-        }
-        .control-btn {
-            width: 70px; height: 70px;
-            background: radial-gradient(circle, rgba(40,60,100,0.9) 0%, rgba(15,25,50,0.95) 100%);
-            border: 2px solid rgba(0,200,255,0.5); border-radius: 50%;
-            color: white; font-size: 28px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; user-select: none; position: relative;
-        }
-        .control-btn.boost { background: radial-gradient(circle, rgba(255,150,0,0.9) 0%, rgba(200,80,0,0.95) 100%); border-color: #ff8800; }
-        .control-btn.brake { background: radial-gradient(circle, rgba(255,50,50,0.9) 0%, rgba(180,30,30,0.95) 100%); border-color: #ff4444; }
-        .control-btn.landing { background: radial-gradient(circle, rgba(50,255,50,0.9) 0%, rgba(30,180,30,0.95) 100%); border-color: #44ff44; }
-        .control-btn.landing.can-land { animation: pulse 1s infinite; }
-        @keyframes pulse { 0%,100%{box-shadow:0 0 20px rgba(80,255,80,0.4);} 50%{box-shadow:0 0 40px rgba(80,255,80,0.9);} }
-        .btn-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #0cf; white-space: nowrap; }
-
-        .explosion-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #ff6600 0%, #ff0000 50%, #000000 100%);
-            z-index: 1000; display: none; justify-content: center; align-items: center; flex-direction: column;
-        }
-        .explosion-text { font-size: 48px; color: white; margin-bottom: 20px; }
-        .restart-btn { padding: 15px 30px; font-size: 20px; background: #ff4444; color: white; border: none; border-radius: 10px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="explosion-screen" id="explosionScreen">
-        <div class="explosion-text">💥 انفجار! 💥</div>
-        <div style="color: white; font-size: 24px; margin-bottom: 30px;">المركبة اقتربت جداً من الشمس!</div>
-        <button class="restart-btn" onclick="location.reload()">🔄 إعادة المحاولة</button>
-    </div>
-
-    <div class="info-panel" id="infoPanel">
-        <span>🚀 السرعة: <span id="speedValue">0</span> km/s</span>
-        <span>🪐 الحالة: <span id="statusText">طيران</span></span>
-        <span id="landingHint" style="display:none;" class="ready">✋ يمكن الهبوط!</span>
-        <span id="gravityWarning" style="display:none;" class="warning">⚠️ جاذبية!</span>
-        <span id="landingStatus" style="display:none;" class="landed">✅ متوقف</span>
-    </div>
-
-    <div class="joystick-container" id="joystick">
-        <div class="joystick-base"></div>
-        <div class="joystick-handle" id="joystickHandle"></div>
-    </div>
-
-    <div class="side-controls">
-        <div class="control-btn boost" data-action="boost">⚡<span class="btn-label">تسريع</span></div>
-        <div class="control-btn brake" data-action="brake">🛑<span class="btn-label">فرملة</span></div>
-        <div class="control-btn landing" data-action="landing" id="landingBtn">🛬<span class="btn-label">هبوط</span></div>
-    </div>
-
-    <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000);
-        scene.fog = new THREE.FogExp2(0x000000, 0.00004);
-
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 5000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        // إضاءة
-        const ambient = new THREE.AmbientLight(0x333355, 0.7);
-        scene.add(ambient);
-        const sunLight = new THREE.PointLight(0xffaa66, 2.5, 600);
-        sunLight.position.set(0, 0, 0);
-        sunLight.castShadow = true;
-        scene.add(sunLight);
-        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.5);
-        fillLight.position.set(1, 1, 1);
-        scene.add(fillLight);
-
-        // الشمس
-        const sunGroup = new THREE.Group();
-        const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(8, 128, 128), new THREE.MeshStandardMaterial({ color: 0xffaa33, emissive: 0xff4411, emissiveIntensity: 1.2 }));
-        sunGroup.add(sunMesh);
-        const glow1 = new THREE.Mesh(new THREE.SphereGeometry(10, 64, 64), new THREE.MeshBasicMaterial({ color: 0xff8844, transparent: true, opacity: 0.25, side: THREE.BackSide }));
-        sunGroup.add(glow1);
-        const glow2 = new THREE.Mesh(new THREE.SphereGeometry(14, 64, 64), new THREE.MeshBasicMaterial({ color: 0xff6622, transparent: true, opacity: 0.1, side: THREE.BackSide }));
-        sunGroup.add(glow2);
-        const sunParticles = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xffaa66, size: 0.2, blending: THREE.AdditiveBlending }));
-        const sunPartPos = [];
-        for (let i = 0; i < 4000; i++) {
-            const r = 9 + Math.random() * 7, theta = Math.random() * Math.PI * 2, phi = Math.acos(2 * Math.random() - 1);
-            sunPartPos.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta) * 0.6, r * Math.cos(phi));
-        }
-        sunParticles.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(sunPartPos), 3));
-        sunGroup.add(sunParticles);
-        scene.add(sunGroup);
-
-        // الكواكب (مبسطة لكن جميلة)
-        function createPlanetTexture(baseColor, accentColor, hasBands) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1024; canvas.height = 1024;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#' + baseColor.toString(16).padStart(6, '0');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < 5000; i++) {
-                const shade = Math.random();
-                const r = Math.floor(((baseColor >> 16) & 0xff) * (0.6 + shade * 0.8));
-                const g = Math.floor(((baseColor >> 8) & 0xff) * (0.6 + shade * 0.8));
-                const b = Math.floor((baseColor & 0xff) * (0.6 + shade * 0.8));
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.random() * 0.5 + 0.2})`;
-                const x = Math.random() * canvas.width, y = Math.random() * canvas.height, rad = Math.random() * 4 + 1;
-                ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
-            }
-            if (hasBands) {
-                for (let i = 0; i < 150; i++) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#' + accentColor.toString(16).padStart(6, '0');
-                    ctx.lineWidth = Math.random() * 15 + 5;
-                    ctx.globalAlpha = 0.3;
-                    const y = Math.random() * canvas.height;
-                    ctx.moveTo(0, y); ctx.lineTo(canvas.width, y + (Math.random() - 0.5) * 80);
-                    ctx.stroke();
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            return texture;
-        }
-
-        const planetsData = [
-            { name: 'عطارد', radius: 0.9, distance: 40, color: 0xad8d6b, speed: 0.02, accent: 0x8c6c4b, bands: false },
-            { name: 'الزهرة', radius: 1.3, distance: 65, color: 0xf0c48a, speed: 0.015, accent: 0xd0a46a, bands: false },
-            { name: 'الأرض', radius: 1.4, distance: 95, color: 0x5a9ee6, speed: 0.012, accent: 0x3a7ec6, bands: false },
-            { name: 'المريخ', radius: 1.1, distance: 130, color: 0xd45a2a, speed: 0.01, accent: 0xb43a0a, bands: false },
-            { name: 'المشتري', radius: 4.8, distance: 200, color: 0xe0b88a, speed: 0.005, accent: 0xc0986a, bands: true },
-            { name: 'زحل', radius: 4.2, distance: 280, color: 0xf8e0b0, speed: 0.004, accent: 0xd8c090, bands: true },
-            { name: 'أورانوس', radius: 2.8, distance: 360, color: 0xb0e0dc, speed: 0.003, accent: 0x90c0bc, bands: false },
-            { name: 'نبتون', radius: 2.7, distance: 440, color: 0x5a6ef0, speed: 0.0025, accent: 0x3a4ed0, bands: false }
-        ];
-        const planets = [];
-        planetsData.forEach(data => {
-            const texture = createPlanetTexture(data.color, data.accent, data.bands);
-            const planet = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 96, 96), new THREE.MeshStandardMaterial({ map: texture, metalness: 0.25, roughness: 0.65, emissive: 0x111111, emissiveIntensity: 0.1 }));
-            planet.castShadow = true; planet.receiveShadow = true;
-            planet.userData = { distance: data.distance, speed: data.speed, angle: Math.random() * Math.PI * 2, name: data.name, radius: data.radius };
-            scene.add(planet);
-            planets.push(planet);
-            if (data.name === 'زحل') {
-                const ring = new THREE.Mesh(new THREE.RingGeometry(data.radius * 1.5, data.radius * 2.4, 128), new THREE.MeshStandardMaterial({ color: 0xd8c090, side: THREE.DoubleSide, transparent: true, opacity: 0.75 }));
-                ring.rotation.x = Math.PI / 2.2;
-                planet.add(ring);
-            }
-        });
-
-        // حزام الكويكبات
-        const astCount = 5000;
-        const astPos = new Float32Array(astCount * 3);
-        for (let i = 0; i < astCount; i++) {
-            const r = 155 + Math.random() * 35, ang = Math.random() * Math.PI * 2, yoff = (Math.random() - 0.5) * 5;
-            astPos[i*3] = Math.cos(ang) * r; astPos[i*3+1] = yoff; astPos[i*3+2] = Math.sin(ang) * r;
-        }
-        const asteroidField = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xaa9988, size: 0.2 }));
-        asteroidField.geometry.setAttribute('position', new THREE.BufferAttribute(astPos, 3));
-        scene.add(asteroidField);
-
-        // حزام كايبر
-        const kuiperCount = 10000;
-        const kuiperPos = [], kuiperColors = [];
-        for (let i = 0; i < kuiperCount; i++) {
-            const angle = Math.random() * Math.PI * 2, dist = 480 + Math.random() * 350, height = (Math.random() - 0.5) * 35;
-            kuiperPos.push(Math.cos(angle) * dist, height, Math.sin(angle) * dist);
-            const isBlue = Math.random() < 0.7;
-            kuiperColors.push(isBlue ? 0.7 : 0.9, isBlue ? 0.8 : 0.9, isBlue ? 1.0 : 0.9);
-        }
-        const kuiperBelt = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ size: 0.28, vertexColors: true, transparent: true, opacity: 0.7 }));
-        kuiperBelt.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(kuiperPos), 3));
-        kuiperBelt.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(kuiperColors), 3));
-        scene.add(kuiperBelt);
-
-        // سحابة أورت
-        const oortCount = 20000;
-        const oortPos = [];
-        for (let i = 0; i < oortCount; i++) {
-            const r = 2000 + Math.random() * 3500, theta = Math.random() * Math.PI * 2, phi = Math.acos(2 * Math.random() - 1);
-            oortPos.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
-        }
-        const oortCloud = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0x8888aa, size: 0.2, transparent: true, opacity: 0.45 }));
-        oortCloud.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(oortPos), 3));
-        scene.add(oortCloud);
-
-        // النجوم
-        const starCount = 20000;
-        const starPos = new Float32Array(starCount * 3);
-        const starCol = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            const r = 1500 + Math.random() * 4000, theta = Math.random() * Math.PI * 2, phi = Math.acos(2 * Math.random() - 1);
-            starPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
-            starPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-            starPos[i*3+2] = r * Math.cos(phi);
-            const t = Math.random();
-            if (t < 0.7) { starCol[i*3]=1; starCol[i*3+1]=1; starCol[i*3+2]=1; }
-            else if (t < 0.85) { starCol[i*3]=1; starCol[i*3+1]=0.85; starCol[i*3+2]=0.65; }
-            else { starCol[i*3]=0.85; starCol[i*3+1]=0.85; starCol[i*3+2]=1; }
-        }
-        const stars = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ size: 1.2, vertexColors: true, transparent: true, opacity: 0.9 }));
-        stars.geometry.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-        stars.geometry.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
-        scene.add(stars);
-
-        // ============ المركبة الفضائية (مع لهب كبير واضح) ============
-        const rocket = new THREE.Group();
-        // الجسم الرئيسي
-        const bodyGeo = new THREE.ConeGeometry(0.85, 4.2, 48);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xeeeeff, metalness: 0.95, roughness: 0.08 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.rotation.x = Math.PI / 2;
-        body.position.z = 0.6;
-        body.castShadow = true;
-        rocket.add(body);
-        // الخلفية
-        const rearGeo = new THREE.CylinderGeometry(0.85, 0.55, 1.6, 48);
-        const rearMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.85 });
-        const rear = new THREE.Mesh(rearGeo, rearMat);
-        rear.rotation.x = Math.PI / 2;
-        rear.position.z = -1.2;
-        rocket.add(rear);
-        // المحرك
-        const engineGeo = new THREE.CylinderGeometry(0.55, 0.75, 0.9, 48);
-        const engineMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.9 });
-        const engine = new THREE.Mesh(engineGeo, engineMat);
-        engine.rotation.x = Math.PI / 2;
-        engine.position.z = -2.3;
-        rocket.add(engine);
-        // أجنحة
-        const wingShape = new THREE.Shape();
-        wingShape.moveTo(0,0); wingShape.lineTo(1.6,0); wingShape.lineTo(0.6,2.2); wingShape.lineTo(0,2.2);
-        const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.12, bevelEnabled: false });
-        const wingMat = new THREE.MeshStandardMaterial({ color: 0xdd5555, metalness: 0.7 });
-        const addWing = (x, y, z, rotY, rotZ, scaleX) => {
-            const w = new THREE.Mesh(wingGeo, wingMat);
-            w.position.set(x, y, z); w.rotation.y = rotY; w.rotation.z = rotZ;
-            if (scaleX) w.scale.x = scaleX;
-            rocket.add(w);
-        };
-        addWing(0.65, 0, -1.1, Math.PI/2, -0.25, 1);
-        addWing(-0.65, 0, -1.1, -Math.PI/2, 0.25, -1);
-        addWing(0, -0.65, -1.1, Math.PI/2, -0.25, 1);
-        addWing(0, 0.65, -1.1, -Math.PI/2, 0.25, 1);
-        // كابينة
-        const cockpit = new THREE.Mesh(new THREE.SphereGeometry(0.45, 48, 48), new THREE.MeshStandardMaterial({ color: 0x224466, metalness: 0.95, emissive: 0x113355, emissiveIntensity: 0.5 }));
-        cockpit.position.set(0, 0.35, 1.7);
-        rocket.add(cockpit);
-        // خطوط زخرفية
-        const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.88, 0.04, 24, 80), new THREE.MeshStandardMaterial({ color: 0xdd5555, metalness: 0.8 }));
-        stripe.rotation.x = Math.PI/2; stripe.position.z = 1.1; rocket.add(stripe.clone());
-        stripe.position.z = -0.4; rocket.add(stripe.clone());
-        // عجلات
-        const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.25, 24);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        const positions = [[0.7,-0.9,0.7],[-0.7,-0.9,0.7],[0.7,-0.9,-1.4],[-0.7,-0.9,-1.4]];
-        const wheels = positions.map(pos => {
-            const w = new THREE.Mesh(wheelGeo, wheelMat);
-            w.rotation.z = Math.PI/2; w.position.set(pos[0], pos[1], pos[2]); w.visible = false;
-            rocket.add(w);
-            return w;
-        });
-
-        // 🔥 اللهب الرئيسي (كبير ويظهر قدام الكاميرا)
-        const mainFlame = new THREE.Mesh(new THREE.ConeGeometry(0.9, 2.5, 32), new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 1.2, transparent: true, opacity: 0.95 }));
-        mainFlame.rotation.x = -Math.PI / 2;
-        mainFlame.position.z = -3.2;
-        rocket.add(mainFlame);
-        
-        // لهب داخلي أكثر سطوعاً
-        const innerFlame = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.0, 32), new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0xff8822, emissiveIntensity: 1.5, transparent: true, opacity: 0.9 }));
-        innerFlame.rotation.x = -Math.PI / 2;
-        innerFlame.position.z = -3.3;
-        rocket.add(innerFlame);
-        
-        // ضوء مصاحب للهب
-        const flameLight = new THREE.PointLight(0xff6622, 1.2, 25);
-        flameLight.position.set(0, 0, -3.5);
-        rocket.add(flameLight);
-
-        rocket.scale.set(0.55, 0.55, 0.55);
-        scene.add(rocket);
-        rocket.position.set(70, 8, 70);
-
-        // ============ التحكم ============
-        let speed = 0, MAX_SPEED = 16, ACC = 0.45;
-        let keys = { boost: false, brake: false };
-        let joystickInput = { x: 0, y: 0 };
-        let isLanded = false, currentPlanet = null;
-
-        // Joystick
-        const joystickDiv = document.getElementById('joystick');
-        const joystickHandle = document.getElementById('joystickHandle');
-        let isDragging = false, joystickCenter = { x:0, y:0 };
-        function updateJoystickCenter() { const rect = joystickDiv.getBoundingClientRect(); joystickCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; }
-        joystickDiv.addEventListener('mousedown', (e) => { isDragging = true; updateJoystickCenter(); joystickHandle.classList.add('active'); });
-        joystickDiv.addEventListener('touchstart', (e) => { isDragging = true; updateJoystickCenter(); joystickHandle.classList.add('active'); e.preventDefault(); });
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            let dx = e.clientX - joystickCenter.x, dy = e.clientY - joystickCenter.y;
-            const dist = Math.hypot(dx, dy), maxDist = 45;
-            if (dist > maxDist) { dx = dx/dist * maxDist; dy = dy/dist * maxDist; }
-            joystickHandle.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            joystickInput.x = dx / maxDist; joystickInput.y = dy / maxDist;
-        });
-        window.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const touch = e.touches[0];
-            let dx = touch.clientX - joystickCenter.x, dy = touch.clientY - joystickCenter.y;
-            const dist = Math.hypot(dx, dy), maxDist = 45;
-            if (dist > maxDist) { dx = dx/dist * maxDist; dy = dy/dist * maxDist; }
-            joystickHandle.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            joystickInput.x = dx / maxDist; joystickInput.y = dy / maxDist;
-        });
-        window.addEventListener('mouseup', () => { isDragging = false; joystickHandle.classList.remove('active'); joystickHandle.style.transform = 'translate(-50%, -50%)'; joystickInput = { x:0, y:0 }; });
-        window.addEventListener('touchend', () => { isDragging = false; joystickHandle.classList.remove('active'); joystickHandle.style.transform = 'translate(-50%, -50%)'; joystickInput = { x:0, y:0 }; });
-
-        document.querySelectorAll('.control-btn').forEach(btn => {
-            const action = btn.dataset.action;
-            const setState = (state) => {
-                keys[action] = state;
-                if (state) btn.classList.add('active'); else btn.classList.remove('active');
-                if (action === 'landing' && state) toggleLanding();
-            };
-            btn.addEventListener('mousedown', () => setState(true));
-            btn.addEventListener('mouseup', () => setState(false));
-            btn.addEventListener('mouseleave', () => setState(false));
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); setState(true); });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); setState(false); });
-        });
-        window.addEventListener('keydown', (e) => { if (e.code === 'ShiftLeft') keys.boost = true; if (e.code === 'ControlLeft') keys.brake = true; if (e.code === 'KeyL') toggleLanding(); });
-        window.addEventListener('keyup', (e) => { if (e.code === 'ShiftLeft') keys.boost = false; if (e.code === 'ControlLeft') keys.brake = false; });
-
-        function toggleLanding() {
-            if (isLanded) {
-                isLanded = false; currentPlanet = null;
-                wheels.forEach(w => w.visible = false);
-                document.getElementById('landingStatus').style.display = 'none';
-                document.getElementById('statusText').textContent = 'طيران';
-                rocket.children.forEach(c => {
-                    if (c.name === 'wing' || c.name === 'body') c.visible = true;
-                    if (c.name === 'rear') { c.rotation.x = Math.PI/2; c.position.set(0,0,-1.2); }
-                    if (c.name === 'engine') { c.rotation.x = Math.PI/2; c.position.set(0,0,-2.3); }
-                    if (c.name === 'cockpit') c.position.set(0,0.35,1.7);
-                });
-            } else {
-                const nearest = findNearestPlanet();
-                if (nearest && nearest.distance < nearest.planet.userData.radius + 12) {
-                    isLanded = true; currentPlanet = nearest.planet;
-                    wheels.forEach(w => w.visible = true);
-                    document.getElementById('landingStatus').style.display = 'block';
-                    document.getElementById('statusText').textContent = 'على ' + nearest.planet.userData.name;
-                    speed = 0;
-                    rocket.children.forEach(c => {
-                        if (c.name === 'wing' || c.name === 'body') c.visible = false;
-                        if (c.name === 'rear' || c.name === 'engine') { c.rotation.x = 0; c.position.y = 0.6; }
-                        if (c.name === 'cockpit') c.position.y = 1.1;
-                    });
-                }
-            }
-        }
-        function findNearestPlanet() { let nearest = null, minDist = Infinity; planets.forEach(p => { const d = rocket.position.distanceTo(p.position); if (d < minDist) { minDist = d; nearest = { planet: p, distance: d }; } }); return nearest; }
-
-        function updateRocket() {
-            if (rocket.position.distanceTo(new THREE.Vector3(0,0,0)) < 14) { document.getElementById('explosionScreen').style.display = 'flex'; return; }
-            let accel = 0;
-            if (keys.boost) accel = ACC * 2.2;
-            else if (keys.brake) accel = -ACC * 1.6;
-            speed += accel;
-            speed = Math.max(-MAX_SPEED * 0.3, Math.min(MAX_SPEED, speed));
-            speed *= 0.98;
-            if (Math.abs(speed) < 0.08) speed = 0;
-            rocket.rotation.y -= joystickInput.x * 0.045;
-            rocket.rotation.x += joystickInput.y * 0.045;
-            rocket.rotation.x = Math.max(-0.85, Math.min(0.85, rocket.rotation.x));
-            if (isLanded && currentPlanet) {
-                const forward = new THREE.Vector3(0,0,-1).applyQuaternion(rocket.quaternion);
-                const planetDir = new THREE.Vector3().subVectors(rocket.position, currentPlanet.position).normalize();
-                forward.projectOnPlane(planetDir);
-                if (keys.boost) rocket.position.add(forward.multiplyScalar(0.12));
-                if (keys.brake) rocket.position.sub(forward.multiplyScalar(0.12));
-                rocket.position.copy(currentPlanet.position).add(planetDir.multiplyScalar(currentPlanet.userData.radius + 0.6));
-                rocket.up.copy(planetDir);
-            } else {
-                const forward = new THREE.Vector3(0,0,-1).applyQuaternion(rocket.quaternion);
-                rocket.position.add(forward.multiplyScalar(speed * 0.16));
-            }
-            // تحكم في شدة اللهب حسب السرعة
-            const intensity = Math.min(1, Math.abs(speed) / MAX_SPEED);
-            mainFlame.scale.setScalar(0.8 + intensity * 1.5);
-            innerFlame.scale.setScalar(0.6 + intensity * 1.2);
-            mainFlame.material.emissiveIntensity = 0.8 + intensity * 1.5;
-            innerFlame.material.emissiveIntensity = 1.0 + intensity * 1.8;
-            flameLight.intensity = 0.5 + intensity * 1.5;
-            mainFlame.visible = Math.abs(speed) > 0.2;
-            innerFlame.visible = Math.abs(speed) > 0.2;
-            
-            document.getElementById('speedValue').textContent = Math.abs(speed).toFixed(1);
-            const nearest = findNearestPlanet();
-            if (nearest && nearest.distance < nearest.planet.userData.radius + 12 && !isLanded) {
-                document.getElementById('landingHint').style.display = 'block';
-                document.getElementById('landingBtn').classList.add('can-land');
-            } else {
-                document.getElementById('landingHint').style.display = 'none';
-                document.getElementById('landingBtn').classList.remove('can-land');
-            }
-        }
-
-        // ============ الكاميرا: من الخلف وناظرة على الصاروخ (النار قدامك) ============
-        function updateCamera() {
-            const rocketPos = rocket.position.clone();
-            // اتجاه المركبة (للأمام)
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(rocket.quaternion);
-            const up = new THREE.Vector3(0, 1, 0).applyQuaternion(rocket.quaternion);
-            // الكاميرا تكون خلف الصاروخ بمسافة 8 وحدات ومرتفعة قليلاً
-            const camPos = rocketPos.clone().sub(forward.clone().multiplyScalar(8)).add(up.clone().multiplyScalar(2.5));
-            camera.position.copy(camPos);
-            // الكاميرا تنظر إلى الصاروخ نفسه (مؤخرته)، وليس إلى الأمام
-            // عشان كده النار تبقى قدام الكاميرا بالضبط
-            camera.lookAt(rocketPos);
-        }
-
-        function updatePlanets() {
-            planets.forEach(p => {
-                p.userData.angle += p.userData.speed * 0.32;
-                p.position.x = Math.cos(p.userData.angle) * p.userData.distance;
-                p.position.z = Math.sin(p.userData.angle) * p.userData.distance;
-                p.rotation.y += 0.006;
-            });
-            asteroidField.rotation.y += 0.0006;
-            kuiperBelt.rotation.y += 0.00012;
-            oortCloud.rotation.y += 0.00006;
-            sunParticles.rotation.y += 0.0025;
-            stars.rotation.y += 0.00008;
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            updateRocket();
-            updateCamera();
-            updatePlanets();
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-</body>
-</html>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Astronomy and space</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f0a1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://upload-widget.cloudinary.com/global/all.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ---------- الأنماط الكاملة ---------- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
+    body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; }
+    .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; }
+    .nebula { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,.15) 0, transparent 70%); border-radius: 50%; filter: blur(60px); animation: float 20s infinite ease-in-out; }
+    .nebula:first-child { top: -300px; right: -300px; }
+    .nebula:nth-child(2) { bottom: -300px; left: -300px; background: radial-gradient(circle, rgba(236,72,153,.1) 0, transparent 70%); animation-delay: -10s; }
+    @keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-30px) scale(1.1); } 66% { transform: translate(-20px,20px) scale(.9); } }
+    .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050308; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; transition: opacity .5s; }
+    .loader.hidden { opacity: 0; pointer-events: none; }
+    .loader-ring { width: 120px; height: 120px; border: 4px solid transparent; border-top-color: #6366f1; border-right-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { margin-top: 2rem; font-size: 1.3rem; color: #6366f1; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
+    .navbar { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(99,102,241,.3); padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; flex-wrap: wrap; gap: 1rem; }
+    .brand { display: flex; align-items: center; gap: 0.5rem; }
+    .brand-logo { width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
+    .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
+    .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+    .settings-icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.5); border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #fff; font-size: 1.2rem; margin-left: 8px; }
+    .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
+    @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
+    .center-action { flex: 1; display: flex; justify-content: center; }
+    .btn { padding: 0.4rem 0.8rem; border: none; border-radius: 10px; cursor: pointer; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 0.8rem; transition: all .3s; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+    .btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+    .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+    .btn-info { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; }
+    .refresh-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(99,102,241,0.6); }
+    .refresh-btn i { transition: transform 0.5s ease; }
+    .refresh-btn:hover i { transform: rotate(360deg); }
+    .settings-dropdown { position: relative; display: inline-block; }
+    .settings-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: rgba(26,16,37,.98);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      border: 1px solid rgba(99,102,241,.5);
+      min-width: 200px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+      z-index: 1100;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeInUp 0.2s ease;
+    }
+    .settings-menu.active { display: flex; }
+    .settings-menu-item {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .settings-menu-item:last-child { border-bottom: none; }
+    .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
+    .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
+    @media (max-width:768px) { .settings-menu { left: 0; min-width: 180px; } .brand-logo { width: 45px; height: 45px; } .brand-text h1 { font-size: 1.1rem; } .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; } }
+    .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
+    .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
+    .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
+    .hero h2 { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; }
+    .hero h2 span { background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 1.2rem; color: #aaa; max-width: 600px; margin: 0 auto; }
+    .upload-zone { background: linear-gradient(135deg, rgba(99,102,241,.1) 0, rgba(236,72,153,.1) 100%); border: 2px dashed rgba(99,102,241,.5); border-radius: 25px; padding: 3rem; text-align: center; margin-bottom: 3rem; display: none; }
+    .upload-zone.active { display: block; animation: fadeInUp .5s; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .upload-icon { width: 100px; height: 100px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; cursor: pointer; transition: transform .3s; box-shadow: 0 10px 40px rgba(99,102,241,.4); }
+    .upload-icon:hover { transform: scale(1.1) rotate(10deg); }
+    .upload-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 1rem 2rem; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .youtube-section { margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+    .youtube-input-group { display: flex; gap: 10px; margin-top: 10px; }
+    .youtube-input { flex: 1; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid #6366f1; color: #fff; }
+    .youtube-add-btn { background: linear-gradient(135deg,#ff0000,#cc0000); color: #fff; border: none; border-radius: 12px; padding: 0 1.5rem; font-weight: 600; cursor: pointer; }
+    .storage-bar-container { background: rgba(255,255,255,.05); border-radius: 15px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid rgba(99,102,241,.2); display: none; }
+    .storage-header { display: flex; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem; }
+    .storage-bar-wrapper { background: rgba(0,0,0,.3); border-radius: 10px; height: 20px; overflow: hidden; }
+    .storage-bar { height: 100%; border-radius: 10px; transition: width .5s; }
+    .storage-bar.low { background: linear-gradient(90deg, #10b981, #059669); }
+    .storage-bar.medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .storage-bar.high { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    .resume-notification { background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(236,72,153,.2)); backdrop-filter: blur(10px); border: 1px solid #6366f1; border-radius: 20px; padding: 1rem 2rem; margin-bottom: 2rem; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .videos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
+    .video-card { background: #1a1025; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); transition: all .4s; cursor: pointer; display: flex; flex-direction: column; position: relative; }
+    .video-card:hover { transform: translateY(-10px); border-color: #6366f1; box-shadow: 0 25px 40px rgba(99,102,241,0.3); }
+    .video-thumbnail { position: relative; height: 220px; background: linear-gradient(135deg, #1a1a3e 0, #0f0f23 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: #6366f1; overflow: hidden; }
+    .video-thumbnail .bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+    .play-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .3s; z-index: 3; }
+    .video-card:hover .play-overlay { opacity: 1; }
+    .play-btn { width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+    .video-info { padding: 2rem 2rem 2.5rem 2rem; flex: 1; background: linear-gradient(to top, rgba(26,16,37,.98) 0, rgba(26,16,37,.9) 100%); position: relative; z-index: 4; margin-top: -60px; border-radius: 20px 20px 0 0; min-height: 380px; }
+    .video-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.5; }
+    .video-description { color: #ddd; font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.8; white-space: pre-wrap; max-height: 120px; overflow-y: auto; }
+    .video-meta { color: #aaa; font-size: .85rem; display: flex; gap: 1rem; flex-wrap: wrap; margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.1); }
+    .video-duration { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,.8); padding: .25rem .75rem; border-radius: 6px; font-size: .85rem; z-index: 5; }
+    .delete-btn, .edit-title-btn, .private-toggle-btn { position: absolute; top: 10px; background: #ef4444; color: #fff; border: none; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
+    .delete-btn { right: 10px; }
+    .edit-title-btn { right: 80px; background: #f59e0b; }
+    .private-toggle-btn { right: 150px; background: rgba(99,102,241,.2); color: #6366f1; border: 1px solid #6366f1; }
+    .video-card:hover .delete-btn, .video-card:hover .edit-title-btn, .video-card:hover .private-toggle-btn { opacity: 1; }
+    .private-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.6); color: #fff; padding: .3rem .8rem; border-radius: 20px; font-size: .8rem; z-index: 6; backdrop-filter: blur(5px); border: 1px solid #6366f1; }
+    .empty-state { text-align: center; padding: 6rem 2rem; color: #666; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 9999; }
+    .modal.active { display: flex; animation: fadeIn .3s; }
+    .modal-content { background: #0f0a1a; width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
+    .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(236,72,153,.2)); flex-wrap: wrap; gap: 0.75rem; }
+    .modal-close { width: 40px; height: 40px; border: none; background: rgba(239,68,68,.2); color: #ef4444; border-radius: 10px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: all .3s; }
+    .modal-close:hover { background: rgba(239,68,68,.4); transform: rotate(90deg); }
+    .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
+    .video-player-container { background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8)); backdrop-filter: blur(12px); border-radius: 32px; padding: 16px; margin-bottom: 1rem; }
+    .video-player { width: 100%; height: auto; max-height: 70vh; border-radius: 24px; background: #000; aspect-ratio: 16 / 9; }
+    .chat-btn { position: fixed; bottom: 2rem; left: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(99,102,241,.5); z-index: 999; display: flex; align-items: center; justify-content: center; }
+    .chat-btn .notification-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: .75rem; display: flex; align-items: center; justify-content: center; font-weight: 700; animation: pulse 2s infinite; }
+    .ai-chat-btn { position: fixed; bottom: 6rem; left: 2rem; width: 55px; height: 55px; background: linear-gradient(135deg, #06b6d4, #0891b2); border-radius: 50%; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 25px rgba(6,182,212,.4); z-index: 998; display: flex; align-items: center; justify-content: center; }
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+    .toast.show { display: block; animation: slideUp .3s; }
+    @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+    .chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 10000; }
+    .chat-modal.active { display: flex; }
+    .chat-container { background: #0f0a1a; width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .chat-header { padding: 1.5rem; background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(236,72,153,.2)); border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; align-items: center; }
+    .chat-header-info { display: flex; align-items: center; gap: 1rem; }
+    .chat-avatar { width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .message { max-width: 75%; padding: 1rem 1.25rem; border-radius: 20px; position: relative; }
+    .message.sent { align-self: flex-end; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-bottom-right-radius: 5px; }
+    .message.received { align-self: flex-start; background: rgba(255,255,255,.1); border-bottom-left-radius: 5px; }
+    .message-sender { font-size: .8rem; font-weight: 600; color: #ec4899; margin-bottom: .3rem; }
+    .message-content { font-size: .95rem; line-height: 1.6; word-wrap: break-word; }
+    .message-image { max-width: 100%; border-radius: 10px; margin-top: .5rem; cursor: pointer; }
+    .voice-message { display: flex; align-items: center; gap: .75rem; background: rgba(0,0,0,.3); padding: .75rem 1rem; border-radius: 15px; margin-top: .5rem; min-width: 250px; }
+    .voice-play-btn { width: 40px; height: 40px; border: none; background: linear-gradient(135deg, #6366f1, #ec4899); color: #fff; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .voice-slider { flex: 1; height: 6px; background: rgba(255,255,255,.2); border-radius: 3px; cursor: pointer; position: relative; }
+    .voice-progress { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 3px; width: 0%; }
+    .voice-time { font-size: .75rem; color: #aaa; min-width: 40px; text-align: center; }
+    .chat-input-area { padding: 1.5rem; background: rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.1); }
+    .chat-input-wrapper { background: rgba(255,255,255,.05); border-radius: 30px; padding: .5rem; display: flex; align-items: center; gap: .5rem; }
+    .chat-input { background: 0 0; border: none; color: #fff; font-family: 'Cairo', sans-serif; font-size: .95rem; resize: none; padding: .5rem; outline: 0; flex: 1; }
+    .chat-send-btn { width: 40px; height: 40px; border: none; background: linear-gradient(135deg, #6366f1, #ec4899); color: #fff; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .landing-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); display: flex; align-items: center; justify-content: center; z-index: 100000; backdrop-filter: blur(8px); }
+    .landing-card { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-radius: 40px; padding: 3rem 2rem; text-align: center; max-width: 500px; width: 90%; border: 1px solid rgba(99,102,241,.5); box-shadow: 0 25px 50px rgba(0,0,0,.5); }
+    .google-btn { background: #fff; color: #333; display: flex; align-items: center; 
