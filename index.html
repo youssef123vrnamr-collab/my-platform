@@ -78,34 +78,97 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .settings-dropdown { 
-  position: relative; 
-  display: inline-block; 
-  z-index: 9999;
-}
+      position: relative; 
+      display: inline-block;
+    }
     .settings-menu { 
-  position: absolute; 
-  top: calc(100% + 8px); 
-  right: 0; 
-  left: auto; 
-  background: rgba(26,16,37,.98); 
-  backdrop-filter: blur(16px); 
-  border-radius: 16px; 
-  border: 1px solid rgba(99,102,241,.5); 
-  min-width: 220px; 
-  box-shadow: 0 15px 35px rgba(0,0,0,0.5); 
-  z-index: 9999; 
-  display: none; 
-  flex-direction: column; 
-  overflow: visible; 
-  animation: fadeInUp 0.2s ease; 
-  direction: rtl; 
-}
-    .settings-menu.active { display: flex; }
-    .settings-menu-item { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,.05); white-space: nowrap; }
+      position: fixed;
+      top: 80px;
+      right: 10px;
+      background: rgba(26,16,37,0.98); 
+      backdrop-filter: blur(20px); 
+      border-radius: 16px; 
+      border: 2px solid rgba(99,102,241,0.8); 
+      min-width: 250px; 
+      max-width: 90vw;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8); 
+      z-index: 100000; 
+      display: none; 
+      flex-direction: column; 
+      overflow: hidden;
+      direction: rtl;
+      padding: 8px 0;
+    }
+    .settings-menu.active { 
+      display: flex !important;
+      animation: menuSlideIn 0.2s ease;
+    }
+    @keyframes menuSlideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .settings-menu-item { 
+      padding: 12px 16px; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      color: #fff; 
+      font-size: 15px; 
+      font-weight: 500; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      white-space: nowrap;
+    }
     .settings-menu-item:last-child { border-bottom: none; }
-    .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
-    .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
-    @media (max-width:768px) { .settings-menu { right: 0; left: auto; min-width: 180px; } .brand-logo { width: 60px; height: 60px; } .brand-text h1 { font-size: 1.1rem; } .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; } }
+    .settings-menu-item:hover { 
+      background: rgba(99,102,241,0.4); 
+      padding-right: 20px;
+    }
+    .settings-menu-item i { 
+      width: 24px; 
+      text-align: center; 
+      color: #6366f1;
+      font-size: 16px;
+    }
+    .settings-icon-btn { 
+      background: rgba(255,255,255,0.15); 
+      border: 2px solid rgba(99,102,241,0.6); 
+      border-radius: 50%; 
+      width: 44px; 
+      height: 44px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      transition: all 0.3s; 
+      color: #fff; 
+      font-size: 18px; 
+      margin-left: 8px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      position: relative;
+    }
+    .settings-icon-btn:hover, .settings-icon-btn:active {
+      background: rgba(99,102,241,0.4);
+      transform: scale(1.1);
+    }
+    @media (max-width:768px) { 
+      .settings-menu { 
+        top: 70px;
+        right: 5px;
+        left: 5px;
+        min-width: auto;
+        max-width: none;
+      } 
+      .brand-logo { width: 50px; height: 50px; } 
+      .brand-text h1 { font-size: 1rem; } 
+      .settings-icon-btn { 
+        width: 40px; 
+        height: 40px; 
+        font-size: 16px;
+      } 
+    }
     @media (orientation: landscape) { .container { padding: 1rem 2rem; } .hero { padding: 1rem 1rem; margin-bottom: 1rem; } .hero h2 { font-size: 2rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; } .video-card .video-thumbnail { height: 180px; } .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; } .video-title { font-size: 1.2rem; } .video-description { font-size: 0.85rem; max-height: 80px; } .navbar { padding: 0.5rem 1rem; } .brand-logo { width: 60px; height: 60px; } .chat-container { height: 100vh; } .message { max-width: 70%; } .modal-content { max-height: 95vh; overflow-y: auto; } .video-player-container { padding: 8px; } .video-player, .youtube-iframe { max-height: 65vh !important; width: auto !important; max-width: 100% !important; } .upload-zone { padding: 1.5rem; } .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; } .chat-messages { max-height: calc(100vh - 140px); overflow-y: auto; } }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; width: 100%; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
@@ -1684,30 +1747,48 @@
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
   // ========== Dropdown menu ==========
+  let settingsMenuOpen = false;
+
   function toggleSettingsMenu(e) {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
     }
     const menu = document.getElementById("settingsMenu");
+    if (!menu) {
+      console.error("Settings menu not found!");
+      return;
+    }
+
+    settingsMenuOpen = !settingsMenuOpen;
+
+    if (settingsMenuOpen) {
+      menu.style.display = "flex";
+      setTimeout(() => menu.classList.add("active"), 10);
+    } else {
+      menu.classList.remove("active");
+      setTimeout(() => menu.style.display = "none", 200);
+    }
+
+    console.log("Settings menu:", settingsMenuOpen ? "opened" : "closed");
+  }
+
+  function closeSettingsMenu() {
+    const menu = document.getElementById("settingsMenu");
     if (!menu) return;
-    menu.classList.toggle("active");
-    console.log("Settings menu toggled:", menu.classList.contains("active"));
+    settingsMenuOpen = false;
+    menu.classList.remove("active");
+    setTimeout(() => menu.style.display = "none", 200);
   }
 
   function closeSettingsMenuOnClickOutside(e) {
-    const dropdown = document.getElementById("settingsDropdown");
+    const btn = document.getElementById("settingsDropdownBtn");
     const menu = document.getElementById("settingsMenu");
-    if (menu && dropdown && !dropdown.contains(e.target)) {
-      menu.classList.remove("active");
-    }
-  }
+    if (!menu || !btn) return;
 
-  // Touch support for mobile
-  function handleSettingsTouch(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleSettingsMenu(e);
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      closeSettingsMenu();
+    }
   }
 
   function openAppsModal() {
@@ -1726,24 +1807,38 @@
   document.addEventListener("DOMContentLoaded", function() { 
     initScreenOrientation();
     
-    const dropdownBtn = document.getElementById("settingsDropdownBtn"); 
-    if (dropdownBtn) {
-      // Remove any existing listeners first
-      const newBtn = dropdownBtn.cloneNode(true);
-      dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
-      // Add click listener
-      newBtn.addEventListener("click", function(e) {
+    // Settings button setup
+    (function setupSettingsButton() {
+      const btn = document.getElementById("settingsDropdownBtn");
+      const menu = document.getElementById("settingsMenu");
+
+      if (!btn || !menu) {
+        console.error("Settings elements not found!");
+        return;
+      }
+
+      // Make sure menu is hidden initially
+      menu.style.display = "none";
+      menu.classList.remove("active");
+
+      // Click handler
+      btn.onclick = function(e) {
         e.preventDefault();
         e.stopPropagation();
         toggleSettingsMenu(e);
-      });
-      // Add touch listener for mobile
-      newBtn.addEventListener("touchstart", function(e) {
+        return false;
+      };
+
+      // Touch handler for mobile
+      btn.ontouchstart = function(e) {
         e.preventDefault();
         e.stopPropagation();
         toggleSettingsMenu(e);
-      }, { passive: false });
-    }
+        return false;
+      };
+
+      console.log("Settings button setup complete");
+    })();
     document.addEventListener("click", closeSettingsMenuOnClickOutside); 
     
     const googleLogoutMenuItem = document.getElementById("googleLogoutMenuItem"); 
