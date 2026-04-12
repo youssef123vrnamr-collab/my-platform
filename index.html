@@ -2,14 +2,13 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>Astronomy and space</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mweb-app-title" content="Astronomy and space">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://upload-widget.cloudinary.com/global/all.js" defer></script>
@@ -20,17 +19,17 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ========== جميع الأنماط الأصلية ========== */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow-x: hidden; background: #0f0a1a; }
-    body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-    .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
+    body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; background-attachment: fixed; }
+    .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; background: transparent; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
-    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; }
     .nebula { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,.15) 0, transparent 70%); border-radius: 50%; filter: blur(60px); animation: float 20s infinite ease-in-out; }
     .nebula:first-child { top: -300px; right: -300px; }
     .nebula:nth-child(2) { bottom: -300px; left: -300px; background: radial-gradient(circle, rgba(236,72,153,.1) 0, transparent 70%); animation-delay: -10s; }
     @keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-30px) scale(1.1); } 66% { transform: translate(-20px,20px) scale(.9); } }
+    .container, .navbar, .hero, .videos-grid, .video-card, .chat-container, .modal-content { -webkit-transform: translateZ(0); transform: translateZ(0); }
     .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050308; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; transition: opacity .5s; }
     .loader.hidden { opacity: 0; pointer-events: none; }
     .loader-ring { width: 120px; height: 120px; border: 4px solid transparent; border-top-color: #6366f1; border-right-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -38,13 +37,16 @@
     .loader-text { margin-top: 2rem; font-size: 1.3rem; color: #6366f1; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
     .navbar { background: rgba(26,16,37,.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(99,102,241,.3); padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; padding-top: max(0.75rem, env(safe-area-inset-top)); flex-wrap: wrap; gap: 1rem; }
-    .brand { display: flex; align-items: center; gap: 1rem; }
-    .brand-logo { width: 70px; height: 70px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
+    .brand { display: flex; align-items: center; gap: 0.5rem; }
+    .brand-logo { width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.4); animation: glow 3s infinite; overflow: hidden; }
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-    .brand-text { text-align: right; }
-    .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
+    .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+    .settings-icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.5); border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #fff; font-size: 1.2rem; margin-left: 8px; }
+    .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .center-action { flex: 1; display: flex; justify-content: center; }
     .btn { padding: 0.4rem 0.8rem; border: none; border-radius: 10px; cursor: pointer; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 0.8rem; transition: all .3s; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
     .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; box-shadow: 0 5px 20px rgba(99,102,241,.4); }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,.6); }
@@ -57,14 +59,22 @@
     .refresh-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(99,102,241,0.6); transition: all 0.3s ease; }
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
-    .refresh-btn:active i { transform: rotate(720deg); transition: transform 0.2s ease; }
-    .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; }
+    .settings-dropdown { position: relative; display: inline-block; }
+    .settings-menu { position: absolute; top: calc(100% + 8px); left: 0; background: rgba(26,16,37,.98); backdrop-filter: blur(16px); border-radius: 16px; border: 1px solid rgba(99,102,241,.5); min-width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 1100; display: none; flex-direction: column; overflow: hidden; animation: fadeInUp 0.2s ease; }
+    .settings-menu.active { display: flex; }
+    .settings-menu-item { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .settings-menu-item:last-child { border-bottom: none; }
+    .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
+    .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
+    @media (max-width:768px) { .settings-menu { left: 0; min-width: 180px; } .brand-logo { width: 60px; height: 60px; } .brand-text h1 { font-size: 1.1rem; } .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; } }
+    @media (orientation: landscape) { .container { padding: 1rem 2rem; } .hero { padding: 1rem 1rem; margin-bottom: 1rem; } .hero h2 { font-size: 2rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; } .video-card .video-thumbnail { height: 180px; } .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; } .video-title { font-size: 1.2rem; } .video-description { font-size: 0.85rem; max-height: 80px; } .navbar { padding: 0.5rem 1rem; } .brand-logo { width: 60px; height: 60px; } .chat-container { height: 100vh; } .message { max-width: 70%; } .modal-content { max-height: 95vh; overflow-y: auto; } .video-player-container { padding: 8px; } .video-player, .youtube-iframe { max-height: 65vh !important; width: auto !important; max-width: 100% !important; } .upload-zone { padding: 1.5rem; } .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; } .chat-messages { max-height: calc(100vh - 140px); overflow-y: auto; } }
+    .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; width: 100%; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
     .hero h2 { font-size: 3rem; font-weight: 900; margin-bottom: 1rem; }
     .hero h2 span { background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .hero p { font-size: 1.2rem; color: #aaa; max-width: 600px; margin: 0 auto; }
-    .upload-zone { background: linear-gradient(135deg, rgba(99,102,241,.1) 0, rgba(236,72,153,.1) 100%); border: 2px dashed rgba(99,102,241,.5); border-radius: 25px; padding: 3rem; text-align: center; margin-bottom: 3rem; display: none; position: relative; overflow: hidden; }
+    .upload-zone { background: linear-gradient(135deg, rgba(99,102,241,.1) 0, rgba(236,72,153,.1) 100%); border: 2px dashed rgba(99,102,241,.5); border-radius: 25px; padding: 3rem; text-align: center; margin-bottom: 3rem; display: none; }
     .upload-zone.active { display: block; animation: fadeInUp .5s; }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     .upload-icon { width: 100px; height: 100px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; cursor: pointer; transition: transform .3s; box-shadow: 0 10px 40px rgba(99,102,241,.4); }
@@ -112,85 +122,13 @@
     .modal-share:hover, .modal-fullscreen:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
     .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
     .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
-    .video-player-container {
-      transition: all 0.3s ease;
-      background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8));
-      backdrop-filter: blur(12px);
-      border-radius: 32px;
-      padding: 16px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2);
-    }
-    .video-player-container.video-playing {
-      padding: 0 !important;
-      background: #000 !important;
-      box-shadow: none !important;
-      backdrop-filter: none !important;
-      margin-bottom: 0 !important;
-    }
-    .modal.video-active .modal-body {
-      padding: 0 !important;
-    }
-    .video-player, .youtube-iframe { 
-      width: 100%; 
-      height: auto; 
-      max-height: 70vh; 
-      border-radius: 24px; 
-      background: #000; 
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
-      aspect-ratio: 16 / 9;
-    }
-    .video-player:fullscreen,
-    .video-player:-webkit-full-screen {
-      width: 100% !important;
-      height: 100% !important;
-      max-height: 100vh !important;
-      object-fit: contain !important;
-      border-radius: 0 !important;
-      background: #000;
-    }
-    .youtube-iframe:fullscreen,
-    .youtube-iframe:-webkit-full-screen {
-      width: 100% !important;
-      height: 100% !important;
-      max-height: 100vh !important;
-      border-radius: 0 !important;
-    }
-    .video-player-container:fullscreen,
-    .video-player-container:-webkit-full-screen {
-      padding: 0 !important;
-      background: #000 !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      backdrop-filter: none !important;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    /* إصلاحات PWA */
-    @media all and (display-mode: standalone) {
-      .video-player-container {
-        width: 100% !important;
-        height: auto !important;
-        min-height: 300px;
-      }
-      .video-player-container:fullscreen,
-      .video-player-container:-webkit-full-screen {
-        width: 100% !important;
-        height: 100% !important;
-      }
-      .video-player, .youtube-iframe {
-        width: 100% !important;
-        height: auto !important;
-      }
-      body {
-        overflow-x: hidden;
-        position: fixed;
-        width: 100%;
-        height: 100%;
-      }
-    }
+    .video-player-container { background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8)); backdrop-filter: blur(12px); border-radius: 32px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2); transition: all 0.3s ease; margin-bottom: 1rem; }
+    .video-player-container.video-playing { padding: 0 !important; background: #000 !important; box-shadow: none !important; backdrop-filter: none !important; margin-bottom: 0 !important; }
+    .modal.video-active .modal-body { padding: 0 !important; }
+    .video-player, .youtube-iframe { width: 100%; height: auto; max-height: 70vh; border-radius: 24px; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); aspect-ratio: 16 / 9; }
+    .video-player:fullscreen, .video-player:-webkit-full-screen { width: 100% !important; height: 100% !important; max-height: 100vh !important; object-fit: contain !important; border-radius: 0 !important; background: #000; }
+    .youtube-iframe:fullscreen, .youtube-iframe:-webkit-full-screen { width: 100% !important; height: 100% !important; max-height: 100vh !important; border-radius: 0 !important; }
+    .video-player-container:fullscreen, .video-player-container:-webkit-full-screen { padding: 0 !important; background: #000 !important; border-radius: 0 !important; box-shadow: none !important; backdrop-filter: none !important; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
     .toast.show { display: block; }
@@ -227,7 +165,7 @@
     .upload-progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 5px; transition: width .3s; position: relative; }
     .upload-progress-fill::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation: shimmer 1s infinite; }
     .upload-stats { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .8rem; color: #888; }
-    @media (max-width:768px) { .navbar { padding: .75rem 1rem; } .brand-text h1 { font-size: 1.2rem; } .brand-text p { font-size: .7rem; } .hero { padding: 2rem 1rem; } .hero h2 { font-size: 2rem; } .hero p { font-size: 1rem; } .container { padding: 1rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; } .upload-zone { padding: 1.5rem; } .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; } .resume-info { justify-content: center; } .resume-actions { justify-content: center; } .modal-content { max-width: 95%; } .video-info { margin-top: -40px; min-height: 300px; padding: 1.5rem; } .video-title { font-size: 1.3rem; } .video-description { font-size: 0.95rem; line-height: 1.7; } .storage-bar-container { padding: 1rem; } .form-group textarea { min-height: 150px; } }
+    @media (max-width:768px) { .navbar { padding: .75rem 1rem; } .brand-text h1 { font-size: 1.2rem; } .hero { padding: 2rem 1rem; } .hero h2 { font-size: 2rem; } .hero p { font-size: 1rem; } .container { padding: 1rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; } .upload-zone { padding: 1.5rem; } .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; } .resume-info { justify-content: center; } .resume-actions { justify-content: center; } .modal-content { max-width: 95%; } .video-info { margin-top: -40px; min-height: 300px; padding: 1.5rem; } .video-title { font-size: 1.3rem; } .video-description { font-size: 0.95rem; line-height: 1.7; } .storage-bar-container { padding: 1rem; } .form-group textarea { min-height: 150px; } }
     .chat-btn { position: fixed; bottom: 2rem; left: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(99,102,241,.5); z-index: 999; transition: all .3s; display: flex; align-items: center; justify-content: center; }
     .chat-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 40px rgba(99,102,241,.7); }
     .chat-btn .notification-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: .75rem; display: flex; align-items: center; justify-content: center; font-weight: 700; animation: pulse 2s infinite; }
@@ -399,15 +337,34 @@
     .email-settings-btn { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; border-radius: 12px; padding: .75rem 1.5rem; font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; transition: .3s; }
     .email-settings-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(16,185,129,.4); }
     @media (max-width:768px) { .landing-card { padding: 2rem 1.5rem; } .landing-title { font-size: 1.6rem; } .landing-icon { width: 70px; height: 70px; } .landing-header { gap: 1rem; } }
+    .apps-modal-content { max-width: 500px; background: #1a1025; border-radius: 28px; margin: auto; padding: 0; overflow: hidden; }
+    .apps-list { padding: 1.5rem; }
+    .app-item { background: rgba(255,255,255,.05); border-radius: 20px; padding: 1rem; margin-bottom: 1rem; transition: all 0.3s; border: 1px solid rgba(99,102,241,.3); display: flex; align-items: center; gap: 1rem; }
+    .app-item:hover { background: rgba(99,102,241,.2); transform: translateX(-5px); }
+    .app-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; overflow: hidden; }
+    .app-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
+    .app-info { flex: 1; }
+    .app-name { font-weight: 700; margin-bottom: 0.25rem; }
+    .app-desc { font-size: 0.8rem; color: #aaa; }
+    .app-link { background: #6366f1; border: none; color: #fff; padding: 0.5rem 1rem; border-radius: 30px; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+    .app-link:hover { background: #4f52e0; transform: scale(1.05); }
+    .app-actions { display: flex; gap: 0.5rem; }
+    .app-edit-btn, .app-delete-btn { background: rgba(255,255,255,0.1); border: none; border-radius: 30px; padding: 0.5rem; cursor: pointer; transition: 0.3s; color: #fff; }
+    .app-edit-btn:hover, .app-delete-btn:hover { transform: scale(1.1); }
+    .app-delete-btn { color: #ef4444; }
+    .manage-apps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .icon-preview { margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: center; }
+    .icon-preview img { max-width: 64px; max-height: 64px; border-radius: 12px; }
+    .screenshot-helper { position: fixed; bottom: 20px; right: 20px; background: rgba(99,102,241,0.9); color: white; border: none; border-radius: 50px; padding: 12px 20px; font-size: 14px; cursor: pointer; z-index: 1000; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: all 0.3s ease; font-family: 'Cairo', sans-serif; }
+    .screenshot-helper:hover { transform: scale(1.05); background: #6366f1; }
+    @media (max-width:768px) { .screenshot-helper { bottom: 80px; right: 10px; padding: 8px 12px; font-size: 11px; } }
   </style>
 </head>
 <body>
+
 <div class="landing-page" id="landingPage">
   <div class="landing-card">
-    <div class="landing-header">
-      <div class="landing-icon"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
-      <div class="landing-title">Astronomy and space</div>
-    </div>
+    <div class="landing-header"><div class="landing-icon"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div><div class="landing-title">Astronomy and space</div></div>
     <div class="landing-sub">سجل الدخول لاستكشاف الكون</div>
     <button class="google-btn" id="googleSignInBtn"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>
     <div id="googleUserInfo" style="display: none;" class="user-info"></div>
@@ -422,16 +379,25 @@
   <nav class="navbar">
     <div class="brand">
       <div class="brand-logo"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
-      <div class="brand-text"><h1>Astronomy and space</h1></div>
+      <div class="brand-text">
+        <h1>Astronomy and space</h1>
+        <div class="settings-dropdown" id="settingsDropdown">
+          <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
+          <div class="settings-menu" id="settingsMenu">
+            <div class="settings-menu-item" id="installAppMenuItem" style="display: none;"><i class="fas fa-download"></i> تثبيت التطبيق</div>
+            <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
+            <div class="settings-menu-item user-only" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
+            <div class="settings-menu-item admin-only" id="manageAppsMenuItem" style="display: none;"><i class="fas fa-th-large"></i> إدارة التطبيقات</div>
+            <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
+            <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
+            <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
+            <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="nav-actions">
-      <button class="btn btn-ghost refresh-btn" onclick="refreshPage()" title="تحديث الصفحة"><i class="fas fa-sync-alt"></i> تحديث</button>
-      <button class="btn btn-ghost" onclick="showLogin()" id="adminBtn"><i class="fas fa-lock"></i> دخول المشرف</button>
-      <button class="btn btn-danger" onclick="logout()" style="display:none" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> خروج المشرف</button>
-      <button class="btn btn-danger" onclick="googleLogout()" style="display:none" id="googleLogoutNavBtn"><i class="fab fa-google"></i> خروج جوجل</button>
-      <button class="maintenance-btn" onclick="openMaintenanceModal()" style="display:none" id="maintenanceBtn"><i class="fas fa-tools"></i> تحديث المحتوى</button>
-      <button class="email-settings-btn" onclick="openEmailSettingsModal()" style="display:none" id="emailSettingsBtn"><i class="fas fa-envelope"></i> إعدادات البريد</button>
-    </div>
+    <div class="center-action"><button class="btn btn-ghost refresh-btn" onclick="refreshPage()" title="تحديث الصفحة"><i class="fas fa-sync-alt"></i> تحديث</button></div>
+    <div class="nav-actions" style="display: none;"></div>
   </nav>
 
   <div class="maintenance-overlay" id="maintenanceOverlay">
@@ -448,118 +414,139 @@
   </div>
 
   <div class="container">
-    <div class="hero">
-      <div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div>
-      <h2>اكتشف أسرار <span>الكون</span></h2>
-      <p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
-    </div>
-
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
-      <button class="set-admins-btn" onclick="openSetAdminsModal()" style="display:none" id="setAdminsBtn"><i class="fas fa-users-cog"></i> تحديد المشرفين</button>
-      <button class="teach-ai-circle-btn" onclick="openTeachAICircleModal()" id="teachAICircleBtn" title="تعليم الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
-    </div>
-
-    <div class="storage-bar-container" id="storageBar" style="display:none">
-      <div class="storage-header">
-        <div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div>
-        <div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div>
-      </div>
-      <div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div>
-      <div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div>
-    </div>
-
-    <div class="upload-zone" id="uploadZone">
-      <div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div>
-      <h3>رفع فيديو جديد إلى Cloudinary</h3>
-      <p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p>
-      <button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button>
-      <div class="upload-progress-container" id="uploadProgressContainer">
-        <div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div>
-        <div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div>
-        <div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div>
-      </div>
-      <div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div>
-      <div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div>
-      
-      <div class="youtube-section">
-        <h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4>
-        <div class="youtube-input-group">
-          <input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube (مثال: https://youtu.be/... أو https://www.youtube.com/watch?v=...">
-          <button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="resume-notification" id="resumeNotification">
-      <div class="resume-info">
-        <div class="resume-icon"><i class="fas fa-history"></i></div>
-        <div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div>
-      </div>
-      <div class="resume-actions">
-        <button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button>
-        <button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button>
-      </div>
-    </div>
-
-    <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
-      <i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات
-      <span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span>
-      <button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button>
-    </h3>
-
-    <div class="videos-grid" id="videosContainer"></div>
-    <div id="loadingIndicator" class="loading-videos" style="display: none;">
-      <i class="fas fa-spinner fa-pulse"></i>
-      <p>جاري تحميل الفيديوهات...</p>
-    </div>
-    <div class="empty-state" id="emptyState" style="display: none;"><i class="fas fa-satellite"></i><h3>المكتبة فارغة</h3><p>ادخل كمشرف لرفع أول فيديو!</p></div>
+    <div class="hero"><div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div><h2>اكتشف أسرار <span>الكون</span></h2><p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center"><button class="set-admins-btn" onclick="openSetAdminsModal()" style="display:none" id="setAdminsBtn"><i class="fas fa-users-cog"></i> تحديد المشرفين</button><button class="teach-ai-circle-btn" onclick="openTeachAICircleModal()" id="teachAICircleBtn" title="تعليم الذكاء الاصطناعي"><i class="fas fa-robot"></i></button></div>
+    <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
+    <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube (مثال: https://youtu.be/... أو https://www.youtube.com/watch?v=..."><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
+    <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
+    <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
+    <div class="videos-grid" id="videosContainer"></div><div id="loadingIndicator" class="loading-videos" style="display: none;"><i class="fas fa-spinner fa-pulse"></i><p>جاري تحميل الفيديوهات...</p></div><div class="empty-state" id="emptyState" style="display: none;"><i class="fas fa-satellite"></i><h3>المكتبة فارغة</h3><p>ادخل كمشرف لرفع أول فيديو!</p></div>
   </div>
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
-  <!-- Modals -->
+  <!-- Screenshot Helper Button -->
+  <button class="screenshot-helper" onclick="takeScreenshot()" title="التقاط صورة للشاشة">
+    <i class="fas fa-camera"></i> التقاط شاشة
+  </button>
+
+  <!-- المودالات -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
-
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
-
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
-
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
-
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
-
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-lock"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body"><input id="passwordInput" placeholder="اكتب كلمة المرور هنا..." type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)doLogin()"><button class="btn btn-primary" onclick="doLogin()" style="width:100%"><i class="fas fa-sign-in-alt"></i> دخول</button><button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button></div></div></div>
-
   <div class="modal" id="adminPasswordModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-users-cog"></i> صلاحية تحديد المشرفين</h3><button class="modal-close" onclick="closeAdminPasswordModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1rem;color:#aaa">هذه الصلاحية للمشرف الرئيسي فقط</p><input id="adminPasswordInput" placeholder="كلمة المرور الخاصة" type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)verifyAdminPassword()"><button class="btn btn-primary" onclick="verifyAdminPassword()" style="width:100%"><i class="fas fa-check"></i> تحقق</button></div></div></div>
-
   <div class="modal" id="setAdminsModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-users"></i> تحديد عدد المشرفين</h3><button class="modal-close" onclick="closeSetAdminsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>عدد المشرفين المسموح به</label><input id="adminCountInput" type="number" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem" max="10" min="1" value="1"></div><button class="btn btn-success" onclick="saveAdminCount()" style="width:100%"><i class="fas fa-save"></i> حفظ</button></div></div></div>
-
-  <div class="modal" id="emailSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-envelope" style="color:#10b981"></i> إعدادات البريد الإلكتروني</h3><button class="modal-close" onclick="closeEmailSettingsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بيانات EmailJS لإرسال الإشعارات عند رفع فيديو جديد أو وصول رسائل</p><div class="form-group"><label><i class="fas fa-key"></i> Public Key</label><input id="emailPublicKey" placeholder="أدخل Public Key من EmailJS" style="direction:ltr"></div><div class="form-group"><label><i class="fas fa-code"></i> Service ID</label><input id="emailServiceId" placeholder="أدخل Service ID" style="direction:ltr"></div><div class="form-group"><label><i class="fas fa-file-alt"></i> Video Template ID</label><input id="emailVideoTemplateId" placeholder="لإشعارات رفع الفيديو" style="direction:ltr"></div><div class="form-group"><label><i class="fas fa-file-alt"></i> Message Template ID</label><input id="emailMessageTemplateId" placeholder="لإشعارات الرسائل الجديدة" style="direction:ltr"></div><div class="form-group"><label><i class="fas fa-envelope"></i> البريد المستلم للإشعارات</label><input id="adminEmail" placeholder="admin@example.com" type="email" style="direction:ltr"></div><button class="btn btn-success" onclick="saveEmailSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
-
-  <div class="modal" id="teachAICircleModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-robot" style="color:#06b6d4"></i> تعليم الذكاء الاصطناعي</h3><button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أضف أسئلة وأجوبة جديدة. عندما يسأل أحد الـ AI سؤالاً مشابهاً، سيرد بالإجابة المعلمة.</p><div class="form-group"><label><i class="fas fa-question-circle" style="color:#06b6d4"></i> السؤال</label><input id="aiQuestionInput" placeholder="مثال: ما هي السوائل؟" dir="rtl"></div><div class="form-group"><label><i class="fas fa-comment-dots" style="color:#10b981"></i> الإجابة</label><textarea id="aiAnswerInput" placeholder="اكتب الإجابة هنا..." rows="4" style="min-height:120px"></textarea></div><button class="btn btn-primary" onclick="saveAIKnowledge()" style="width:100%;margin-bottom:1.5rem"><i class="fas fa-save"></i> حفظ المعرفة</button><h4 style="margin:1.5rem 0 1rem 0;color:#fff"><i class="fas fa-list" style="color:#8b5cf6"></i> المعارف المخزنة</h4><div class="correction-list" id="aiKnowledgeList" style="max-height:250px;overflow-y:auto"><p style="text-align:center;color:#888;padding:2rem">جاري التحميل...</p></div><div style="text-align:center;margin-top:1.5rem"><button class="btn btn-danger" onclick="closeTeachAICircleModal()" style="width:50%"><i class="fas fa-times"></i> إغلاق</button></div></div></div></div>
-
+  <div class="modal" id="manageAppsModal"><div class="modal-content" style="max-width:600px"><div class="modal-header"><h3><i class="fas fa-th-large"></i> إدارة التطبيقات</h3><button class="modal-close" onclick="closeManageAppsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="manage-apps-header"><button class="btn btn-success" onclick="showAddAppForm()"><i class="fas fa-plus"></i> إضافة تطبيق جديد</button></div><div id="appsManageList" style="max-height:500px;overflow-y:auto"></div></div></div></div>
+  <div class="modal" id="addAppModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3 id="addAppModalTitle"><i class="fas fa-plus"></i> إضافة تطبيق</h3><button class="modal-close" onclick="closeAddAppModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم التطبيق</label><input id="appNameInput" placeholder="مثال: منصة البداية التعليمية"></div><div class="form-group"><label>الوصف</label><input id="appDescInput" placeholder="وصف مختصر"></div><div class="form-group"><label>الرابط (URL)</label><input id="appUrlInput" placeholder="https://..."></div><div class="form-group"><label>رابط الصورة (اختياري)</label><input id="appIconUrlInput" placeholder="https://example.com/icon.png" type="url"><button type="button" class="btn btn-secondary" style="margin-top:0.5rem;" onclick="previewAppIcon()"><i class="fas fa-eye"></i> معاينة الصورة</button><div id="iconPreviewContainer" class="icon-preview" style="display:none;"><img id="iconPreviewImg" src="" alt="معاينة"><p style="font-size:0.8rem; margin-top:0.3rem;">الصورة المعاينة</p></div></div><input type="hidden" id="editAppId"><button class="btn btn-primary" onclick="saveApp()" style="width:100%"><i class="fas fa-save"></i> حفظ</button></div></div></div>
   <div class="modal" id="descriptionModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-edit"></i> تفاصيل الفيديو</h3><button class="modal-close" onclick="closeDescriptionModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>عنوان الفيديو</label><input id="videoTitleInput" placeholder="أدخل عنوان الفيديو"></div><div class="form-group"><label>وصف الفيديو <span id="descCharCount" style="color:#888;font-size:.85rem">(0 / 5000 حرف)</span></label><textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5000"></textarea></div><button class="btn btn-success" onclick="saveVideoWithDescription()" style="width:100%"><i class="fas fa-save"></i> حفظ الفيديو</button></div></div></div>
-
   <div class="modal" id="editVideoModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-edit"></i> تعديل بيانات الفيديو</h3><button class="modal-close" onclick="closeEditVideoModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>عنوان الفيديو</label><input id="editVideoTitleInput" placeholder="أدخل عنوان الفيديو" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem"></div><div class="form-group"><label>وصف الفيديو <span id="editDescCharCount" style="color:#888;font-size:.85rem">(0 / 5000 حرف)</span></label><textarea id="editVideoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem;min-height:200px;resize:vertical" maxlength="5000"></textarea></div><button class="btn btn-success" onclick="saveVideoEdit()" style="width:100%"><i class="fas fa-save"></i> حفظ التعديلات</button></div></div></div>
-
   <div class="modal" id="maintenanceModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-tools"></i> تحديث المحتوى</h3><button class="modal-close" onclick="closeMaintenanceModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">حدد المدة التي تريد تعطيل المنصة خلالها للتحديث. سيظهر للزوار عداد تنازلي مع صوت تكتكة.</p><div class="form-group"><label>المدة (بالدقائق)</label><input id="maintenanceMinutes" type="number" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem" max="60" min="1" value="5"></div><div class="form-group"><label>رسالة التحديث (اختياري)</label><textarea id="maintenanceMessageInput" placeholder="اكتب رسالة للزوار..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem;min-height:100px"></textarea></div><button class="btn btn-warning" onclick="startMaintenance()" style="width:100%"><i class="fas fa-play"></i> بدء التحديث</button></div></div></div>
-
   <div class="modal" id="addQuizModal"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-list" style="color:#10b981"></i> إضافة امتحان للفيديو</h3><button class="modal-close" onclick="closeAddExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">اختر الفيديو ثم أضف الأسئلة والإجابات (يمكن إضافة صورة اختيارية لكل سؤال)</p><div class="form-group"><label>اختر الفيديو</label><select id="quizVideoSelect" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"><option value="">-- اختر فيديو --</option></select></div><div id="questionsContainer"></div><button class="btn btn-secondary" onclick="addQuestion()" style="width:100%;margin:1rem 0"><i class="fas fa-plus"></i> إضافة سؤال جديد</button><button class="btn btn-success" onclick="saveExam()" style="width:100%"><i class="fas fa-save"></i> حفظ الامتحان</button></div></div></div>
-
   <div class="modal" id="viewResultsModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-chart-bar" style="color:#f59e0b"></i> نتائج الامتحانات</h3><button class="modal-close" onclick="closeViewResultsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الفيديو لعرض النتائج</label><select id="resultsVideoSelect" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem" onchange="loadResultsForVideo()"><option value="">-- اختر فيديو --</option></select></div><div id="resultsContainer" style="margin-top:1.5rem"><p style="text-align:center;color:#888;padding:2rem">اختر فيديو لعرض النتائج</p></div></div></div></div>
-
   <div class="modal" id="takeQuizModal"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-check" style="color:#6366f1"></i> امتحان الفيديو</h3><button class="modal-close" onclick="closeTakeExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div id="studentNameSection"><p style="margin-bottom:1rem;color:#aaa">أدخل بياناتك قبل بدء الامتحان</p><input id="studentNameInput" placeholder="الاسم الكامل..." class="student-name-input" maxlength="50"><input id="studentPhoneInput" placeholder="رقم الهاتف..." class="student-name-input" maxlength="20" type="tel" style="margin-top:.5rem"><button class="btn btn-primary" onclick="startExam()" style="width:100%"><i class="fas fa-play"></i> بدء الامتحان</button></div><div id="quizSection" style="display:none"></div></div></div></div>
-
-  <div class="modal" id="nameModal"><div class="modal-content name-modal-content"><div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div><h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2><p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p><div class="name-input-group"><input id="userNameInput" placeholder="الاسم..." class="name-input" maxlength="20"><input id="userPhoneInput" placeholder="رقم الهاتف..." class="phone-input" maxlength="20" type="tel"></div><button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button></div></div>
+  
+  <!-- مودال إدخال الاسم ورقم الهاتف مع مفتاح الدولة -->
+  <div class="modal" id="nameModal">
+    <div class="modal-content name-modal-content">
+      <div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div>
+      <h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2>
+      <p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p>
+      <div class="name-input-group">
+        <input id="userNameInput" placeholder="الاسم..." class="name-input" maxlength="20">
+        <div style="display: flex; gap: 10px; margin-top: 0.5rem;">
+          <select id="userCountryCode" class="phone-input" style="width: 35%; text-align: center; direction: ltr;">
+            <option value="+20">🇪🇬 +20 (مصر)</option>
+            <option value="+966">🇸🇦 +966 (السعودية)</option>
+            <option value="+971">🇦🇪 +971 (الإمارات)</option>
+            <option value="+965">🇰🇼 +965 (الكويت)</option>
+            <option value="+974">🇶🇦 +974 (قطر)</option>
+            <option value="+973">🇧🇭 +973 (البحرين)</option>
+            <option value="+968">🇴🇲 +968 (عمان)</option>
+            <option value="+962">🇯🇴 +962 (الأردن)</option>
+            <option value="+961">🇱🇧 +961 (لبنان)</option>
+            <option value="+963">🇸🇾 +963 (سوريا)</option>
+            <option value="+970">🇵🇸 +970 (فلسطين)</option>
+            <option value="+218">🇱🇾 +218 (ليبيا)</option>
+            <option value="+213">🇩🇿 +213 (الجزائر)</option>
+            <option value="+212">🇲🇦 +212 (المغرب)</option>
+            <option value="+216">🇹🇳 +216 (تونس)</option>
+            <option value="+1">🇺🇸 +1 (الولايات المتحدة)</option>
+            <option value="+44">🇬🇧 +44 (المملكة المتحدة)</option>
+            <option value="+49">🇩🇪 +49 (ألمانيا)</option>
+            <option value="+33">🇫🇷 +33 (فرنسا)</option>
+          </select>
+          <input id="userPhoneInput" placeholder="رقم الهاتف (مثال: 5XXXXXXXX)" class="phone-input" style="width: 65%;" maxlength="15" type="tel">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button>
+    </div>
+  </div>
 
   <div class="modal" id="callModal"><div class="modal-content call-modal-content"><div class="call-avatar"><i class="fas fa-users"></i></div><div class="call-status" id="callStatus">مكالمة جماعية</div><div class="call-timer" id="callTimer">00:00</div><div class="call-actions"><button class="call-action mute" onclick="toggleMute()" id="muteBtn"><i class="fas fa-microphone"></i></button><button class="call-action end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div></div></div>
+  <div class="modal" id="appsModal"><div class="modal-content apps-modal-content"><div class="modal-header"><h3><i class="fas fa-th-large" style="color:#6366f1"></i> تطبيقات المنصة</h3><button class="modal-close" onclick="closeAppsModal()"><i class="fas fa-times"></i></button></div><div class="apps-list" id="appsList"></div></div></div>
+
+  <!-- المودال الخاص بتعليم الذكاء الاصطناعي -->
+  <div class="modal" id="teachAICircleModal">
+    <div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto">
+      <div class="modal-header">
+        <h3><i class="fas fa-robot" style="color:#06b6d4"></i> تعليم الذكاء الاصطناعي</h3>
+        <button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:2rem;">
+          <h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle"></i> إضافة معلومة جديدة</h4>
+          <div class="form-group"><label>السؤال</label><input type="text" id="aiQuestionInput" placeholder="مثال: ما هي سرعة الضوء؟" class="student-name-input"></div>
+          <div class="form-group"><label>الإجابة</label><textarea id="aiAnswerInput" placeholder="اكتب الإجابة..." class="student-name-input" rows="3"></textarea></div>
+          <button class="btn btn-primary" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button>
+        </div>
+        <div>
+          <h4><i class="fas fa-database"></i> قاعدة المعرفة الحالية</h4>
+          <div id="aiKnowledgeList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()"><button class="image-viewer-close" onclick="closeImageViewer()"><i class="fas fa-times"></i></button><img alt="صورة" id="viewerImage" src=""></div>
   <div class="toast" id="toast">تم بنجاح</div>
 </div>
 
 <script>
+  // ========== Screenshot Function ==========
+  function takeScreenshot() {
+    // استخدام html2canvas لالتقاط الشاشة
+    if (typeof html2canvas !== 'undefined') {
+      html2canvas(document.querySelector('.app-wrapper'), {
+        scale: 2,
+        backgroundColor: '#0f0a1a',
+        logging: false,
+        useCORS: true,
+        allowTaint: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'astronomy-screenshot.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        showToast('✅ تم التقاط الشاشة وحفظها!');
+      }).catch(err => {
+        console.error('Screenshot error:', err);
+        showToast('⚠️ فشل التقاط الشاشة، حاول مرة أخرى');
+      });
+    } else {
+      showToast('⚠️ جاري تحميل أداة التصوير...');
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.onload = () => {
+        setTimeout(() => takeScreenshot(), 100);
+      };
+      document.head.appendChild(script);
+    }
+  }
+
   // ========== Firebase Config ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
@@ -573,11 +560,11 @@
   const db = firebase.firestore();
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
-  
+
   // ========== Global Variables ==========
   const onlineUsersRef = db.collection("online_users");
-  let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null;
-  let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null;
+  let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null, apps = [];
+  let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
   let progressInterval = null, metadataListener = null, lastWatchedData = null, currentUser = null, currentUserPhone = null, currentUserId = null, chatUnsubscribe = null;
   let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false;
@@ -586,18 +573,13 @@
   let voiceSettings = { voiceURI: null, rate: 1, pitch: 1 };
   let isLoadingVideos = true;
   let googleUser = null;
-  
-  // EmailJS settings
-  let emailSettings = {
-    publicKey: "",
-    serviceId: "",
-    videoTemplateId: "",
-    messageTemplateId: "",
-    adminEmail: ""
-  };
+  let deferredPrompt = null;
+
+  // EmailJS settings (optional, not required)
+  let emailSettings = { publicKey: "", serviceId: "", videoTemplateId: "", messageTemplateId: "", adminEmail: "" };
 
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
-  
+
   function xorEncryptDecrypt(str, key = "Falak2024!@#") {
     let result = "";
     for (let i = 0; i < str.length; i++) {
@@ -606,28 +588,23 @@
     }
     return result;
   }
- 
+
   const ENCRYPTED_ADMIN_PASS = xorEncryptDecrypt("@@@&&&((())) GGGttt☄️☄️☄️🌘🌘🌘🌘🆗🛠️💫😶‍🌫️🤬💯💨🙏🌧️🌩️⛈️🌦️🌥️⛅🌤️☀️🌞🌝🌚🌜🌛🌙⭐🌟✨🕳️🪐🌍🌎🌏🌫️🌠🌌☄️🌑🌒🌓🌔🌕🌖", "Falak2024!@#");
   const ENCRYPTED_SUPER_ADMIN_PASS = xorEncryptDecrypt("1#3_5-7(9/0", "Falak2024!@#");
-  function checkAdminPassword(inputPass) {
-    return inputPass === xorEncryptDecrypt(ENCRYPTED_ADMIN_PASS, "Falak2024!@#");
-  }
-  function checkSuperAdminPassword(inputPass) {
-    return inputPass === xorEncryptDecrypt(ENCRYPTED_SUPER_ADMIN_PASS, "Falak2024!@#");
-  }
+  function checkAdminPassword(inputPass) { return inputPass === xorEncryptDecrypt(ENCRYPTED_ADMIN_PASS, "Falak2024!@#"); }
+  function checkSuperAdminPassword(inputPass) { return inputPass === xorEncryptDecrypt(ENCRYPTED_SUPER_ADMIN_PASS, "Falak2024!@#"); }
 
   const MAX_VIDEO_SIZE = 104857600;
   const CHUNK_SIZE = 10485760;
   const MAX_STORAGE = 26843545600;
   const STORAGE_KEY = "falak_last_watched";
 
-  // ========== Helper Functions ==========
   function showToast(msg) { const t = document.getElementById("toast"); t && (t.textContent = msg, t.classList.add("show"), setTimeout(() => t.classList.remove("show"), 4000)); }
   function formatDuration(sec) { if (!sec && sec !== 0) return "0:00"; const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ":" + (s < 10 ? "0" : "") + s; }
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
 
-  // ========== Sound Effects ==========
+  // Sound Effects
   const SoundEffects = {
     audioContext: null,
     init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -651,10 +628,7 @@
         if (data.username) currentUser = data.username;
         if (data.phone) currentUserPhone = data.phone;
         if (data.voiceSettings) voiceSettings = data.voiceSettings;
-        if (data.lastWatched) {
-          lastWatchedData = data.lastWatched;
-          setTimeout(() => checkForResume(), 1000);
-        }
+        if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); }
         if (currentUser) localStorage.setItem("falak_username", currentUser);
         if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
         return true;
@@ -662,7 +636,6 @@
     } catch (e) { console.error("Error loading user data:", e); }
     return false;
   }
-
   async function saveUserDataToFirebase(userId) {
     if (!userId) return;
     try {
@@ -677,83 +650,24 @@
       if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
     } catch (e) { console.error("Error saving user data:", e); }
   }
-
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) {
     if (!userId || !videoId) return;
     try {
-      const watchData = {
-        videoId: videoId,
-        title: videos.find(v => v.id === videoId)?.title || "",
-        currentTime: currentTime,
-        duration: duration,
-        timestamp: Date.now()
-      };
-      await db.collection("user_progress").doc(userId).set({
-        lastWatched: watchData,
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() };
+      await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
       lastWatchedData = watchData;
     } catch (e) { console.error("Error saving watch progress:", e); }
   }
 
-  // ========== EmailJS Functions ==========
+  // ========== EmailJS Functions (optional) ==========
   function loadEmailSettings() {
     const saved = localStorage.getItem("falak_email_settings");
     if (saved) {
       try {
         emailSettings = JSON.parse(saved);
-        if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
+        if (emailSettings.publicKey && typeof emailjs !== "undefined") emailjs.init(emailSettings.publicKey);
       } catch(e) {}
     }
-  }
-  
-  function saveEmailSettings() {
-    emailSettings.publicKey = document.getElementById("emailPublicKey").value.trim();
-    emailSettings.serviceId = document.getElementById("emailServiceId").value.trim();
-    emailSettings.videoTemplateId = document.getElementById("emailVideoTemplateId").value.trim();
-    emailSettings.messageTemplateId = document.getElementById("emailMessageTemplateId").value.trim();
-    emailSettings.adminEmail = document.getElementById("adminEmail").value.trim();
-    if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
-    localStorage.setItem("falak_email_settings", JSON.stringify(emailSettings));
-    closeEmailSettingsModal();
-    showToast("✅ تم حفظ إعدادات البريد");
-  }
-  
-  function openEmailSettingsModal() {
-    document.getElementById("emailPublicKey").value = emailSettings.publicKey || "";
-    document.getElementById("emailServiceId").value = emailSettings.serviceId || "";
-    document.getElementById("emailVideoTemplateId").value = emailSettings.videoTemplateId || "";
-    document.getElementById("emailMessageTemplateId").value = emailSettings.messageTemplateId || "";
-    document.getElementById("adminEmail").value = emailSettings.adminEmail || "";
-    document.getElementById("emailSettingsModal").classList.add("active");
-  }
-  
-  function closeEmailSettingsModal() {
-    document.getElementById("emailSettingsModal").classList.remove("active");
-  }
-  
-  async function sendEmailNotification(templateId, templateParams) {
-    if (!emailSettings.publicKey || !emailSettings.serviceId || !templateId || !emailSettings.adminEmail) return false;
-    try {
-      const params = { ...templateParams, to_email: emailSettings.adminEmail, reply_to: emailSettings.adminEmail };
-      await emailjs.send(emailSettings.serviceId, templateId, params);
-      return true;
-    } catch (error) { console.error("Failed to send email:", error); return false; }
-  }
-  
-  async function sendVideoUploadNotification(videoTitle, videoDescription, uploadedBy) {
-    return sendEmailNotification(emailSettings.videoTemplateId, {
-      video_title: videoTitle, video_description: videoDescription || "لا يوجد وصف",
-      uploaded_by: uploadedBy || "مشرف", upload_time: new Date().toLocaleString("ar-EG"),
-      video_link: window.location.href
-    });
-  }
-  
-  async function sendNewMessageNotification(senderName, senderPhone, messageContent) {
-    return sendEmailNotification(emailSettings.messageTemplateId, {
-      sender_name: senderName, sender_phone: senderPhone || "غير متوفر",
-      message_content: messageContent, message_time: new Date().toLocaleString("ar-EG")
-    });
   }
 
   // ========== Voice Functions ==========
@@ -766,9 +680,67 @@
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
   // ========== Admin & UI ==========
-  function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; document.getElementById("uploadZone").classList.add("active"); document.getElementById("adminBtn").style.display = "none"; document.getElementById("logoutBtn").style.display = "flex"; document.getElementById("maintenanceBtn").style.display = "flex"; document.getElementById("setAdminsBtn").style.display = "inline-flex"; document.getElementById("teachAICircleBtn").style.display = "inline-flex"; document.getElementById("emailSettingsBtn").style.display = "inline-flex"; updateStorageBar(); loadAIKnowledgeFromFirebase(); const a = document.getElementById("cancelMaintenanceBtn"); a && document.getElementById("maintenanceOverlay")?.classList.contains("active") && a.classList.add("active"); updateGoogleLogoutButtonsVisibility(); } }
-  function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"), g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
-  
+  function updateAdminUI() {
+    const adminOnlyItems = document.querySelectorAll('.admin-only');
+    const userOnlyItems = document.querySelectorAll('.user-only');
+    const localOnlyItem = document.getElementById('localLogoutMenuItem');
+    const setAdminsBtn = document.getElementById("setAdminsBtn");
+    const teachAICircleBtn = document.getElementById("teachAICircleBtn");
+    const uploadZone = document.getElementById("uploadZone");
+    const storageBar = document.getElementById("storageBar");
+    const manageAppsMenuItem = document.getElementById("manageAppsMenuItem");
+
+    const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
+    const isLocalOnly = (currentUser && currentUserPhone) && !googleUser;
+    const isGoogleUser = !!googleUser;
+
+    if (isAdmin) {
+      userOnlyItems.forEach(el => el.style.display = "none");
+      if(localOnlyItem) localOnlyItem.style.display = "none";
+      adminOnlyItems.forEach(el => el.style.display = "flex");
+      if (setAdminsBtn) setAdminsBtn.style.display = "inline-flex";
+      if (teachAICircleBtn) teachAICircleBtn.style.display = "inline-flex";
+      if (uploadZone) uploadZone.classList.add("active");
+      if (storageBar) storageBar.style.display = "block";
+      if (manageAppsMenuItem) manageAppsMenuItem.style.display = "flex";
+      updateStorageBar();
+      loadAIKnowledgeFromFirebase();
+      const cancelBtn = document.getElementById("cancelMaintenanceBtn");
+      if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
+    } else {
+      adminOnlyItems.forEach(el => el.style.display = "none");
+      if (isUserLoggedIn) {
+        userOnlyItems.forEach(el => el.style.display = "flex");
+        const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
+        if (googleLogoutItem) googleLogoutItem.style.display = isGoogleUser ? "flex" : "none";
+        if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
+      } else {
+        userOnlyItems.forEach(el => el.style.display = "none");
+        if(localOnlyItem) localOnlyItem.style.display = "none";
+      }
+      if (setAdminsBtn) setAdminsBtn.style.display = "none";
+      if (teachAICircleBtn) teachAICircleBtn.style.display = "none";
+      if (uploadZone) uploadZone.classList.remove("active");
+      if (storageBar) storageBar.style.display = "none";
+      if (manageAppsMenuItem) manageAppsMenuItem.style.display = "none";
+    }
+    updateGoogleLogoutButtonsVisibility();
+  }
+
+  function loadAdminPreference() { 
+    if ("true" === localStorage.getItem("falak_admin")) { 
+      isAdmin = true; 
+      updateAdminUI();
+    } 
+  }
+
+  function updateGoogleLogoutButtonsVisibility() { 
+    const g1 = document.getElementById("googleLogoutBtn"); 
+    const g2 = document.getElementById("googleLogoutNavBtn"); 
+    if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; 
+    if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; 
+  }
+
   function listenToVideosWithRetry(maxAttempts = 5) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "asc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
@@ -788,14 +760,14 @@
   function initCloudinaryWidget() { return new Promise((resolve, reject) => { if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") { try { uploadWidget = cloudinary.createUploadWidget({ cloudName: CLOUDINARY_CONFIG.cloudName, uploadPreset: CLOUDINARY_CONFIG.uploadPreset, resourceType: "video", clientAllowedFormats: ["mp4","webm","mov","mkv","avi","m4v","3gp","flv","gif"], maxFileSize: MAX_VIDEO_SIZE, maxVideoFileSize: MAX_VIDEO_SIZE, chunkSize: CHUNK_SIZE, sources: ["local","url","camera","dropbox","google_drive"], language: "ar", text: { ar: { or: "أو", local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" }, menu: { files: "ملفاتي", web: "رابط الويب", camera: "الكاميرا", gdrive: "Google Drive", dropbox: "Dropbox" } } }, styles: { palette: { window: "#1a1025", windowBorder: "#6366f1", tabIcon: "#6366f1", menuIcons: "#6366f1", textDark: "#ffffff", textLight: "#ffffff", link: "#ec4899", action: "#6366f1", inactiveTabIcon: "#8b5cf6", error: "#ef4444", inProgress: "#6366f1", complete: "#10b981", sourceBg: "#0f0a1a" }, fonts: { default: "Cairo", active: "Cairo" } }, showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: "local", eagerAsync: true, prepareUploadParams: function (params, data) { data.context = "alt=فيديو فلك العالمي"; data.eager = [ { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, { width: 400, height: 225, crop: "fill", format: "jpg" } ]; data.eager_async = true; params(data); } }, function (error, result) { if (error) { if (error.message && error.message.includes("focus")) { console.warn("Ignored focus error"); } else { console.error("Upload widget error:", error); document.getElementById("uploadProgressContainer")?.classList.remove("active"); SoundEffects.error(); showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف")); reject(error); } } else if (result) { switch (result.event) { case "success": document.getElementById("uploadProgressContainer")?.classList.remove("active"); pendingVideoInfo = result.info; document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان"; document.getElementById("videoDescriptionInput").value = ""; document.getElementById("descriptionModal").classList.add("active"); SoundEffects.success(); showToast("✅ تم الرفع! أكمل بيانات الفيديو"); resolve(result.info); break; case "queues-start": uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0; document.getElementById("uploadProgressContainer")?.classList.add("active"); showToast("🚀 جاري الرفع..."); break; case "upload-progress": updateUploadProgress(result.info); break; case "upload-success": showToast("📤 تم رفع جزء..."); break; } } }); resolve(uploadWidget); } catch (err) { if (err.message && err.message.includes("focus")) { console.warn("Ignored focus error"); resolve(null); } else reject(err); } } else { setTimeout(() => initCloudinaryWidget().then(resolve).catch(reject), 500); } }); }
   function openCloudinaryWidget() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الرفع"); return; } if (uploadWidget && typeof uploadWidget.open === "function") { try { uploadWidget.open(); } catch (e) { if (!e.message?.includes("focus")) console.warn("Error opening widget, reinitializing...", e); uploadWidget = null; } } if (!uploadWidget) { showToast("⏳ جاري تجهيز واجهة الرفع..."); initCloudinaryWidget().then(w => { if (w) w.open(); else setTimeout(() => { if (uploadWidget) uploadWidget.open(); }, 300); }).catch(e => { console.error("Failed to init widget:", e); SoundEffects.error(); showToast("❌ تعذر فتح واجهة الرفع"); }); } }
   function updateUploadProgress(info) { if (!info) return; let prog = info.progress || 0, uploaded = info.uploadedBytes || 0, total = info.totalBytes || 1; let now = Date.now(), dt = (now - lastTime) / 1000; let speed = dt > 0 ? (uploaded - lastUploadedBytes) / dt / 1048576 : 0; let remaining = speed > 0 ? (total - uploaded) / (speed * 1024 * 1024) : 0; let fill = document.getElementById("uploadProgressFill"); fill && (fill.style.width = prog + "%"); let pct = document.getElementById("uploadProgressPercent"); pct && (pct.textContent = Math.round(prog) + "%"); let sp = document.getElementById("uploadSpeed"); sp && (sp.textContent = speed.toFixed(2) + " MB/s"); let tr = document.getElementById("uploadTimeRemaining"); if (tr) { if (remaining > 60) { let m = Math.floor(remaining / 60), s = Math.floor(remaining % 60); tr.textContent = m + ":" + s.toString().padStart(2, "0") + " دقيقة متبقية"; } else tr.textContent = remaining > 0 ? Math.floor(remaining) + " ثانية متبقية" : "جاري إكمال الرفع..."; } lastTime = now; lastUploadedBytes = uploaded; }
-  
-  function saveVideoWithDescription() { if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; } let info = pendingVideoInfo; let title = document.getElementById("videoTitleInput").value.trim() || "فيديو بدون عنوان"; let desc = document.getElementById("videoDescriptionInput").value.trim() || ""; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); if (used + info.bytes > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; } let optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/"); let thumbnail = null; if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url; else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg"; let videoData = { title: title, description: desc, type: "cloudinary", url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnail, publicId: info.public_id || "", format: info.format, duration: info.duration, width: info.width, height: info.height, size: info.bytes, createdAt: firebase.firestore.FieldValue.serverTimestamp(), cloudinaryData: { assetId: info.asset_id, version: info.version_id }, optimized: true, private: false }; db.collection("videos").add(videoData).then(async () => { SoundEffects.success(); showToast("✅ تم الرفع والحفظ بنجاح!"); await sendVideoUploadNotification(title, desc, currentUser || "مشرف"); closeDescriptionModal(); pendingVideoInfo = null; }).catch(e => { console.error("Error saving to Firebase:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); }); }
+
+  function saveVideoWithDescription() { if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; } let info = pendingVideoInfo; let title = document.getElementById("videoTitleInput").value.trim() || "فيديو بدون عنوان"; let desc = document.getElementById("videoDescriptionInput").value.trim() || ""; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); if (used + info.bytes > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; } let optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/"); let thumbnail = null; if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url; else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg"; let videoData = { title: title, description: desc, type: "cloudinary", url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnail, publicId: info.public_id || "", format: info.format, duration: info.duration, width: info.width, height: info.height, size: info.bytes, createdAt: firebase.firestore.FieldValue.serverTimestamp(), cloudinaryData: { assetId: info.asset_id, version: info.version_id }, optimized: true, private: false }; db.collection("videos").add(videoData).then(async () => { SoundEffects.success(); showToast("✅ تم الرفع والحفظ بنجاح!"); closeDescriptionModal(); pendingVideoInfo = null; }).catch(e => { console.error("Error saving to Firebase:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); }); }
   function closeDescriptionModal() { document.getElementById("descriptionModal").classList.remove("active"); pendingVideoInfo = null; }
   function editVideoTitle(id) { if (!isAdmin) { SoundEffects.error(); showToast("❌ المشرف فقط يستطيع التعديل"); return; } let v = videos.find(v => v.id === id); if (v) { currentEditVideoId = id; document.getElementById("editVideoTitleInput").value = v.title || ""; document.getElementById("editVideoDescriptionInput").value = v.description || ""; document.getElementById("editDescCharCount").textContent = "(" + (v.description || "").length + " / 5000 حرف)"; document.getElementById("editVideoModal").classList.add("active"); } }
   function closeEditVideoModal() { document.getElementById("editVideoModal").classList.remove("active"); currentEditVideoId = null; }
   function saveVideoEdit() { if (!currentEditVideoId || !isAdmin) return; let title = document.getElementById("editVideoTitleInput").value.trim(); let desc = document.getElementById("editVideoDescriptionInput").value.trim(); if (!title) { SoundEffects.error(); showToast("⚠️ العنوان لا يمكن أن يكون فارغاً"); return; } db.collection("videos").doc(currentEditVideoId).update({ title: title, description: desc, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم التعديل"); closeEditVideoModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); }
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
-  
+
   function renderVideos() {
     let container = document.getElementById("videosContainer");
     let empty = document.getElementById("emptyState");
@@ -825,96 +797,15 @@
     }).join("");
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
-  
-  // ========== Video Playback with PWA Orientation Fix ==========
-  function forceVideoResizeOnPWA() {
-    const modal = document.getElementById('videoModal');
-    const isVideoActive = modal && modal.classList.contains('active');
-    if (!isVideoActive) return;
-    
-    const video = document.getElementById('videoPlayer');
-    const container = document.querySelector('.video-player-container');
-    if (!video || !container) return;
-    
-    if (video.tagName === 'VIDEO') {
-      video.style.width = '100%';
-      video.style.height = 'auto';
-      container.style.width = '100%';
-      container.style.height = 'auto';
-      
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        setTimeout(() => {
-          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            const req = container.requestFullscreen || container.webkitRequestFullscreen;
-            if (req) req.call(container).catch(e => console.warn(e));
-          }
-        }, 100);
-      }
-    } else if (video.tagName === 'IFRAME') {
-      video.style.width = '100%';
-      video.style.height = '100%';
-      container.style.width = '100%';
-      container.style.height = '100%';
-    }
-  }
-
-  window.addEventListener('orientationchange', function() { setTimeout(forceVideoResizeOnPWA, 50); });
-  window.addEventListener('resize', function() { setTimeout(forceVideoResizeOnPWA, 50); });
-  document.addEventListener('fullscreenchange', forceVideoResizeOnPWA);
-  document.addEventListener('webkitfullscreenchange', forceVideoResizeOnPWA);
-  document.addEventListener('visibilitychange', function() { if (!document.hidden) setTimeout(forceVideoResizeOnPWA, 100); });
-
-  const originalToggleFullscreenVideo = window.toggleFullscreenVideo;
-  window.toggleFullscreenVideo = function() {
-    const container = document.querySelector('.video-player-container');
-    if (!container) return;
-    
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      const req = container.requestFullscreen || container.webkitRequestFullscreen;
-      if (req) {
-        req.call(container).then(() => {
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(e => console.warn(e));
-          }
-          setTimeout(forceVideoResizeOnPWA, 50);
-        }).catch(e => console.warn(e));
-      }
-    } else {
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (exit) {
-        exit.call(document).then(() => {
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
-          setTimeout(forceVideoResizeOnPWA, 50);
-        }).catch(e => console.warn(e));
-      }
-    }
-  };
-
-  const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (mutation.attributeName === 'class') {
-        const modal = document.getElementById('videoModal');
-        if (modal && modal.classList.contains('active')) {
-          setTimeout(forceVideoResizeOnPWA, 100);
-        }
-      }
-    });
-  });
-  const modalElement = document.getElementById('videoModal');
-  if (modalElement) observer.observe(modalElement, { attributes: true });
 
   function playVideo(id, startTime = 0) {
     let v = videos.find(v => v.id === id);
     if (!v) return;
     if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; }
-    
     const playerContainer = document.getElementById("videoPlayerContainer");
     const modal = document.getElementById("videoModal");
     if (playerContainer) playerContainer.classList.add("video-playing");
     if (modal) modal.classList.add("video-active");
-    
     let oldVideo = document.getElementById("videoPlayer");
     if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause();
     if (v.type === "youtube") {
@@ -938,8 +829,6 @@
       video.className = "video-player";
       video.id = "videoPlayer";
       video.playsInline = true;
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('webkit-playsinline', 'true');
       playerContainer.innerHTML = "";
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
@@ -954,24 +843,21 @@
       quizContainer.style.display = "none";
       quizContainer.innerHTML = "";
     }
-    setTimeout(forceVideoResizeOnPWA, 100);
   }
-  
+
   function closeModal() { 
     saveVideoProgress(); 
     let p = document.getElementById("videoPlayer"); 
     if (p && p.tagName === "VIDEO") p.pause(); 
-    
     const playerContainer = document.getElementById("videoPlayerContainer");
     const modal = document.getElementById("videoModal");
     if (playerContainer) playerContainer.classList.remove("video-playing");
     if (modal) modal.classList.remove("video-active");
-    
     document.getElementById("videoModal").classList.remove("active"); 
     document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>'; 
     document.getElementById("videoQuizContainer").style.display = "none"; 
   }
-  
+
   async function saveVideoProgress() { 
     let p = document.getElementById("videoPlayer"); 
     if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; 
@@ -982,7 +868,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() }));
     }
   }
-  
+
   function checkForResume() { 
     let d = localStorage.getItem(STORAGE_KEY); 
     if (!d && !lastWatchedData) return; 
@@ -995,7 +881,7 @@
       document.getElementById("resumeNotification").style.display = "flex"; 
     } catch (e) { localStorage.removeItem(STORAGE_KEY); } 
   }
-  
+
   function resumeWatching() { 
     let data = lastWatchedData || (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; } })();
     if (!data) return; 
@@ -1005,7 +891,8 @@
   }
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => { if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); }); }
-  
+
+  function toggleFullscreenVideo() { const video = document.getElementById("videoPlayer"); if (!video) return; if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); }
   function shareCurrentTime() {
     let currentTime = 0;
     let videoId = null;
@@ -1029,9 +916,8 @@
     let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime;
     navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ")"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); });
   }
-  
   function checkUrlForShare() { let params = new URLSearchParams(window.location.search); let vid = params.get("video"); let t = params.get("t"); if (vid && videos.length > 0) { if (videos.find(v => v.id === vid)) { window.history.replaceState({}, document.title, window.location.href.split("?")[0]); playVideo(vid, parseInt(t) || 0); } else showToast("❌ الفيديو غير موجود"); } }
-  
+
   function showLogin() { document.getElementById("loginModal").classList.add("active"); document.getElementById("passwordInput").value = ""; setTimeout(() => document.getElementById("passwordInput").focus(), 150); }
   function closeLogin() { document.getElementById("loginModal").classList.remove("active"); }
   function doLogin() { 
@@ -1039,14 +925,7 @@
     if (checkAdminPassword(inputPass)) { 
       isAdmin = true; 
       localStorage.setItem("falak_admin", "true"); 
-      document.getElementById("uploadZone").classList.add("active"); 
-      document.getElementById("adminBtn").style.display = "none"; 
-      document.getElementById("logoutBtn").style.display = "flex"; 
-      document.getElementById("maintenanceBtn").style.display = "flex"; 
-      document.getElementById("setAdminsBtn").style.display = "inline-flex"; 
-      document.getElementById("teachAICircleBtn").style.display = "inline-flex"; 
-      document.getElementById("emailSettingsBtn").style.display = "inline-flex"; 
-      updateStorageBar(); 
+      updateAdminUI();
       closeLogin(); 
       renderVideos(); 
       loadAIKnowledgeFromFirebase(); 
@@ -1061,7 +940,7 @@
       document.getElementById("passwordInput").focus(); 
     } 
   }
-  function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); document.getElementById("uploadZone").classList.remove("active"); document.getElementById("storageBar").style.display = "none"; document.getElementById("adminBtn").style.display = "flex"; document.getElementById("logoutBtn").style.display = "none"; document.getElementById("maintenanceBtn").style.display = "none"; document.getElementById("setAdminsBtn").style.display = "none"; document.getElementById("teachAICircleBtn").style.display = "none"; document.getElementById("emailSettingsBtn").style.display = "none"; document.getElementById("cancelMaintenanceBtn").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); updateGoogleLogoutButtonsVisibility(); }
+  function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); updateAdminUI(); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); updateGoogleLogoutButtonsVisibility(); }
   function openSetAdminsModal() { isAdmin && (document.getElementById("adminPasswordModal").classList.add("active"), document.getElementById("adminPasswordInput").value = "", document.getElementById("adminPasswordInput").focus()); }
   function closeAdminPasswordModal() { document.getElementById("adminPasswordModal").classList.remove("active"); }
   function verifyAdminPassword() { 
@@ -1082,8 +961,164 @@
   }
   function closeSetAdminsModal() { document.getElementById("setAdminsModal").classList.remove("active"); }
   function saveAdminCount() { let c = parseInt(document.getElementById("adminCountInput").value); if (isNaN(c) || c < 1 || c > 10) showToast("❌ العدد يجب أن يكون بين 1 و 10"); else { localStorage.setItem("adminCount", c); showToast("✅ تم حفظ عدد المشرفين: " + c); closeSetAdminsModal(); } }
-  
-  // Exam Functions (as before, kept same for brevity)
+
+  // ========== App Management Functions (CRUD) with manual image URL ==========
+  function loadAppsFromFirebase() {
+    if (unsubscribeApps) unsubscribeApps();
+    unsubscribeApps = db.collection("apps").orderBy("createdAt", "asc").onSnapshot(snap => {
+      apps = [];
+      snap.forEach(d => { apps.push({ id: d.id, ...d.data() }); });
+      renderAppsList();
+      renderAppsManageList();
+    }, err => console.error("Error loading apps:", err));
+  }
+
+  function renderAppsList() {
+    const container = document.getElementById("appsList");
+    if (!container) return;
+    if (apps.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات مضافة بعد</p>';
+      return;
+    }
+    container.innerHTML = apps.map(app => `
+      <div class="app-item">
+        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
+        <div class="app-info">
+          <div class="app-name">${escapeHtml(app.name)}</div>
+          <div class="app-desc">${escapeHtml(app.desc || '')}</div>
+        </div>
+        <button class="app-link" onclick="openApp('${escapeHtml(app.url)}')">فتح <i class="fas fa-external-link-alt"></i></button>
+      </div>
+    `).join("");
+  }
+
+  function renderAppsManageList() {
+    const container = document.getElementById("appsManageList");
+    if (!container) return;
+    if (apps.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات. أضف تطبيقاً جديداً.</p>';
+      return;
+    }
+    container.innerHTML = apps.map(app => `
+      <div class="app-item">
+        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
+        <div class="app-info">
+          <div class="app-name">${escapeHtml(app.name)}</div>
+          <div class="app-desc">${escapeHtml(app.desc || '')}</div>
+          <div style="font-size:0.7rem;color:#888;direction:ltr;word-break:break-all;">${escapeHtml(app.url)}</div>
+        </div>
+        <div class="app-actions">
+          <button class="app-edit-btn" onclick="editApp('${app.id}')" title="تعديل"><i class="fas fa-edit"></i></button>
+          <button class="app-delete-btn" onclick="deleteApp('${app.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function openManageAppsModal() {
+    if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
+    renderAppsManageList();
+    document.getElementById("manageAppsModal").classList.add("active");
+  }
+  function closeManageAppsModal() { document.getElementById("manageAppsModal").classList.remove("active"); }
+
+  function showAddAppForm() {
+    document.getElementById("addAppModalTitle").innerHTML = '<i class="fas fa-plus"></i> إضافة تطبيق';
+    document.getElementById("appNameInput").value = "";
+    document.getElementById("appDescInput").value = "";
+    document.getElementById("appUrlInput").value = "";
+    document.getElementById("appIconUrlInput").value = "";
+    document.getElementById("iconPreviewContainer").style.display = "none";
+    document.getElementById("editAppId").value = "";
+    document.getElementById("addAppModal").classList.add("active");
+  }
+
+  function editApp(appId) {
+    const app = apps.find(a => a.id === appId);
+    if (!app) return;
+    document.getElementById("addAppModalTitle").innerHTML = '<i class="fas fa-edit"></i> تعديل تطبيق';
+    document.getElementById("appNameInput").value = app.name;
+    document.getElementById("appDescInput").value = app.desc || "";
+    document.getElementById("appUrlInput").value = app.url;
+    document.getElementById("appIconUrlInput").value = app.iconUrl || "";
+    document.getElementById("editAppId").value = appId;
+    if (app.iconUrl) {
+      document.getElementById("iconPreviewImg").src = app.iconUrl;
+      document.getElementById("iconPreviewContainer").style.display = "block";
+    } else {
+      document.getElementById("iconPreviewContainer").style.display = "none";
+    }
+    document.getElementById("addAppModal").classList.add("active");
+  }
+
+  function previewAppIcon() {
+    const url = document.getElementById("appIconUrlInput").value.trim();
+    if (!url) { showToast("⚠️ أدخل رابط الصورة أولاً"); return; }
+    const previewDiv = document.getElementById("iconPreviewContainer");
+    const img = document.getElementById("iconPreviewImg");
+    img.src = url;
+    previewDiv.style.display = "block";
+    img.onerror = () => { showToast("⚠️ الرابط غير صالح أو الصورة لا تظهر"); previewDiv.style.display = "none"; };
+  }
+
+  function saveApp() {
+    const name = document.getElementById("appNameInput").value.trim();
+    const desc = document.getElementById("appDescInput").value.trim();
+    const url = document.getElementById("appUrlInput").value.trim();
+    const iconUrl = document.getElementById("appIconUrlInput").value.trim();
+    const editId = document.getElementById("editAppId").value;
+
+    if (!name || !url) {
+      showToast("⚠️ الاسم والرابط مطلوبان");
+      return;
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      showToast("⚠️ الرابط يجب أن يبدأ بـ http:// أو https://");
+      return;
+    }
+
+    const appData = { 
+      name, 
+      desc, 
+      url, 
+      icon: "fa-rocket", 
+      iconUrl: iconUrl || null, 
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+    };
+    if (editId) {
+      db.collection("apps").doc(editId).update(appData).then(() => {
+        SoundEffects.success();
+        showToast("✅ تم تعديل التطبيق");
+        closeAddAppModal();
+      }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); });
+    } else {
+      appData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      appData.createdBy = currentUser || "مشرف";
+      db.collection("apps").add(appData).then(() => {
+        SoundEffects.success();
+        showToast("✅ تم إضافة التطبيق");
+        closeAddAppModal();
+      }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الإضافة"); });
+    }
+  }
+
+  function deleteApp(appId) {
+    if (confirm("هل أنت متأكد من حذف هذا التطبيق؟")) {
+      db.collection("apps").doc(appId).delete().then(() => {
+        SoundEffects.delete();
+        showToast("🗑️ تم حذف التطبيق");
+      }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); });
+    }
+  }
+
+  function closeAddAppModal() {
+    document.getElementById("addAppModal").classList.remove("active");
+    document.getElementById("editAppId").value = "";
+  }
+
+  function openApp(url) { window.open(url, "_blank", "noopener,noreferrer"); }
+
+  // Exam Functions (full)
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
   function closeAddExamModal() { document.getElementById("addQuizModal").classList.remove("active"); }
   function loadExamForEditing(exam) { let cont = document.getElementById("questionsContainer"); cont.innerHTML = ""; exam.questions.forEach((q, idx) => { let card = document.createElement("div"); card.className = "question-card"; card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><span style="color:#6366f1; font-weight:600;">السؤال ${idx + 1}</span>${idx > 0 ? '<button onclick="this.closest(\'.question-card\').remove()" style="background:#ef4444; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="fas fa-times"></i></button>' : ""}</div><input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-family:'Cairo'; margin-bottom:1rem;">${q.imageUrl ? `<div class="question-image-preview-container"><img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0; border:2px solid rgba(99,102,241,0.5);"><button class="remove-image-btn" onclick="removeQuestionImage(this)"><i class="fas fa-times"></i> إزالة الصورة</button></div>` : ""}<input type="file" accept="image/*" class="question-image-upload" style="display:none;" data-question-index="${idx}" onchange="uploadImageForQuestion(this)"><button class="upload-image-btn" onclick="document.querySelectorAll('.question-image-upload')[${idx}].click()"><i class="fas fa-image"></i> إضافة صورة (اختياري)</button><div class="options-container">${q.options.map((opt, optIdx) => `<div class="quiz-option-input"><input type="radio" name="correct-${idx}" value="${optIdx}" ${q.correctAnswer === optIdx ? "checked" : ""} style="width:20px; height:20px; accent-color:#10b981;"><input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input"></div>`).join("")}</div><p style="color:#888; font-size:0.85rem; margin-top:0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>`; cont.appendChild(card); }); }
@@ -1103,7 +1138,7 @@
   function selectExamAnswer(q, a) { currentExamAnswers[q] = a; }
   function submitExam() { if (examTimer) { clearInterval(examTimer); examTimer = null; } let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim().replace(/\s+/g, ""); let total = currentExam.questions.length; let answered = Object.keys(currentExamAnswers).length; if (answered < total && !confirm(`لم تجب على ${total - answered} سؤال. هل تريد التسليم؟`)) { examTimeRemaining = Math.max(examTimeRemaining, 1); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); return; } let correct = 0; let ansList = []; for (let i = 0; i < total; i++) { let a = currentExamAnswers[i] !== undefined ? currentExamAnswers[i] : -1; ansList.push(a); if (a === currentExam.questions[i].correctAnswer) correct++; } let percent = Math.round(correct / total * 100); db.collection("exam_results").add({ examId: currentExam.id, videoId: currentVideoIdForExam, studentName: name, studentPhone: phone, answers: ansList, score: correct, totalQuestions: total, percentage: percent, submittedAt: firebase.firestore.FieldValue.serverTimestamp(), gradeSent: false, resultVisible: false }).then(() => { SoundEffects.success(); showExamResult(correct, total, percent); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التسليم"); }); }
   function showExamResult(correct, total, percent) { let qSec = document.getElementById("quizSection"); if (!qSec) return; let msg = "", icon = ""; if (percent >= 90) { msg = "ممتاز! أداء رائع جداً"; icon = "🏆"; } else if (percent >= 75) { msg = "جيد جداً! استمر في التقدم"; icon = "👏"; } else if (percent >= 60) { msg = "جيد، يمكنك تحسين أدائك"; icon = "👍"; } else { msg = "حاول مرة أخرى، يمكنك التحسن"; icon = "💪"; } qSec.innerHTML = `<div class="quiz-result"><div class="result-icon">${icon}</div><div class="result-score">${percent}%</div><div class="result-message">${msg}</div><p style="color:#aaa; margin-bottom:1rem;">إجابات صحيحة: ${correct} من ${total}</p><button class="quiz-btn" onclick="closeTakeExamModal()"><i class="fas fa-times"></i> إغلاق</button></div>`; }
-  
+
   // AI Functions
   function openTeachAICircleModal() { isAdmin ? (document.getElementById("teachAICircleModal").classList.add("active"), renderAIKnowledgeList()) : showToast("❌ هذه الصلاحية للمشرف فقط"); }
   function closeTeachAICircleModal() { document.getElementById("teachAICircleModal").classList.remove("active"); }
@@ -1118,555 +1153,258 @@
   function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // Chat Functions
-  function loadUserDataFromStorage() { 
-    let savedName = localStorage.getItem("falak_username"); 
-    let savedPhone = localStorage.getItem("falak_userphone"); 
-    if (savedName && savedPhone) { 
-      currentUser = savedName; 
-      currentUserPhone = savedPhone; 
-      return true; 
-    } 
-    return false; 
-  }
-  
-  function saveUserDataToStorage(name, phone) { 
-    if (!name || !phone) return false; 
-    localStorage.setItem("falak_username", name); 
-    localStorage.setItem("falak_userphone", phone); 
-    currentUser = name; 
-    currentUserPhone = phone; 
-    if (currentUserId) saveUserDataToFirebase(currentUserId);
-    return true; 
-  }
-  
-  function checkUserName() { 
-    if (currentUser && currentUserPhone) return true;
-    return loadUserDataFromStorage(); 
-  }
-  
-  function openChat() { 
-    if (checkUserName()) { 
-      document.getElementById("chatModal").classList.add("active"); 
-      document.getElementById("chatBadge").style.display = "none"; 
-      unreadMessages = 0; 
-      loadMessages(); 
-      scrollToBottom(); 
-      initPresenceSystem(); 
-    } else { 
-      document.getElementById("nameModal").classList.add("active"); 
-      document.getElementById("userNameInput").value = currentUser || ""; 
-      document.getElementById("userPhoneInput").value = currentUserPhone || ""; 
-      document.getElementById("userNameInput").focus(); 
-    } 
-  }
-  
-  function closeChat() { 
-    document.getElementById("chatModal").classList.remove("active"); 
-    if (currentAudio) { 
-      currentAudio.pause(); 
-      currentAudio = null; 
-    } 
-    removePresence(); 
-    if (chatUnsubscribe) { 
-      chatUnsubscribe(); 
-      chatUnsubscribe = null; 
-    } 
-  }
-  
-  async function saveUserName() { 
-    let name = document.getElementById("userNameInput").value.trim(); 
-    let phone = document.getElementById("userPhoneInput").value.trim(); 
-    if (name.length < 2) { 
-      SoundEffects.error(); 
-      showToast("الاسم قصير جداً"); 
-      return; 
-    } 
-    if (!phone) { 
-      SoundEffects.error(); 
-      showToast("رقم الهاتف مطلوب"); 
-      return; 
-    } 
-    saveUserDataToStorage(name, phone); 
-    if (currentUserId) {
-      await saveUserDataToFirebase(currentUserId);
-    }
-    document.getElementById("nameModal").classList.remove("active"); 
-    document.getElementById("chatModal").classList.add("active"); 
-    SoundEffects.join(); 
-    initPresenceSystem(); 
-    loadMessages(); 
-    db.collection("chat_users").add({ 
-      name: name, 
-      phone: phone, 
-      userId: currentUserId || null,
-      joinedAt: firebase.firestore.FieldValue.serverTimestamp() 
-    }).catch(err => console.warn("Could not save chat user:", err)); 
-  }
-  
-  function loadMessages() { 
-    let cont = document.getElementById("chatMessages"); 
-    if (!cont) return; 
-    cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; 
-    if (chatUnsubscribe) chatUnsubscribe(); 
-    chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { 
-      cont.innerHTML = ""; 
-      snap.forEach(d => displayMessage(d.id, d.data())); 
-      scrollToBottom(); 
-    }, err => { 
-      console.error("Error loading messages:", err); 
-      cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; 
-    }); 
-  }
-  
-  function displayMessage(id, data) { 
-    if (data.type === "system") return; 
-    let cont = document.getElementById("chatMessages"); 
-    if (!cont) return; 
-    let isMe = data.sender === currentUser; 
-    let msgDiv = document.createElement("div"); 
-    msgDiv.className = "message " + (isMe ? "sent" : "received"); 
-    msgDiv.id = "msg-" + id; 
-    let html = ""; 
-    if (!isMe) html += '<div class="message-sender">' + escapeHtml(data.sender) + "</div>"; 
-    if (isAdmin || data.sender === currentUser) { 
-      let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; 
-      html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; 
-    } 
-    if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; 
-    if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; 
-    if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; 
-    html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; 
-    msgDiv.innerHTML = html; 
-    if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { 
-      unreadMessages++; 
-      let badge = document.getElementById("chatBadge"); 
-      badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); 
-      SoundEffects.receive(); 
-      if (data.text && emailSettings.messageTemplateId) { 
-        sendNewMessageNotification(data.sender, "", data.text.substring(0, 200)); 
-      } 
-    } 
-    cont.appendChild(msgDiv); 
-  }
-  
-  function deleteMessage(id, sender) { 
-    if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { 
-      SoundEffects.error(); 
-      showToast("❌ لا يمكنك حذف هذه الرسالة"); 
-      return; 
-    } 
-    if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; 
-    if (!id) { 
-      SoundEffects.error(); 
-      showToast("❌ معرف الرسالة غير صالح"); 
-      return; 
-    } 
-    db.collection("messages").doc(id).delete().then(() => { 
-      SoundEffects.delete(); 
-      showToast("🗑️ تم حذف الرسالة"); 
-      let el = document.getElementById("msg-" + id); 
-      el && el.remove(); 
-    }).catch(e => { 
-      console.error(e); 
-      SoundEffects.error(); 
-      if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); 
-      else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); 
-      else showToast("❌ فشل الحذف"); 
-    }); 
-  }
-  
-  function playVoiceMessage(btn, url, id) { 
-    let audio = document.getElementById("audio-" + id); 
-    let prog = document.getElementById("progress-" + id); 
-    let time = document.getElementById("time-" + id); 
-    if (!audio || !prog || !time) return; 
-    if (currentAudio && currentAudio !== audio) { 
-      currentAudio.pause(); 
-      currentAudio.currentTime = 0; 
-      if (currentAudioBtn) { 
-        currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; 
-        currentAudioBtn.classList.remove("playing"); 
-      } 
-    } 
-    if (audio.paused) { 
-      audio.play().then(() => { 
-        currentAudio = audio; 
-        currentAudioBtn = btn; 
-        btn.innerHTML = '<i class="fas fa-pause"></i>'; 
-        btn.classList.add("playing"); 
-        audio.ontimeupdate = () => { 
-          let p = (audio.currentTime / audio.duration) * 100; 
-          prog.style.width = p + "%"; 
-          let m = Math.floor(audio.currentTime / 60); 
-          let s = Math.floor(audio.currentTime % 60); 
-          time.textContent = m + ":" + s.toString().padStart(2, "0"); 
-        }; 
-        audio.onended = () => { 
-          btn.innerHTML = '<i class="fas fa-play"></i>'; 
-          btn.classList.remove("playing"); 
-          prog.style.width = "0%"; 
-          time.textContent = "0:00"; 
-          currentAudio = null; 
-          currentAudioBtn = null; 
-        }; 
-      }).catch(e => { 
-        console.error(e); 
-        SoundEffects.error(); 
-        showToast("❌ لا يمكن تشغيل الصوت"); 
-      }); 
-    } else { 
-      audio.pause(); 
-      btn.innerHTML = '<i class="fas fa-play"></i>'; 
-      btn.classList.remove("playing"); 
-    } 
-  }
-  
-  function seekVoice(e, slider, id) { 
-    let audio = document.getElementById("audio-" + id); 
-    if (!audio || !audio.duration) return; 
-    let rect = slider.getBoundingClientRect(); 
-    let pos = (e.clientX - rect.left) / rect.width; 
-    audio.currentTime = pos * audio.duration; 
-  }
-  
-  function sendMessage() { 
-    let inp = document.getElementById("messageInput"); 
-    if (!inp) return; 
-    let text = inp.value.trim(); 
-    if (!text || !currentUser) return; 
-    db.collection("messages").add({ 
-      type: "text", 
-      text: text, 
-      sender: currentUser, 
-      timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-    }).then(() => { 
-      SoundEffects.send(); 
-      inp.value = ""; 
-    }).catch(() => { 
-      SoundEffects.error(); 
-      showToast("فشل الإرسال"); 
-    }); 
-  }
-  
-  function handleKeyPress(e) { 
-    if (e.key === "Enter" && !e.shiftKey) { 
-      e.preventDefault(); 
-      sendMessage(); 
-    } 
-  }
-  
-  function sendImage(input) { 
-    let file = input.files[0]; 
-    if (!file || !currentUser) return; 
-    if (file.size > 5 * 1024 * 1024) { 
-      SoundEffects.error(); 
-      showToast("الصورة كبيرة (الحد 5 ميجا)"); 
-      return; 
-    } 
-    showToast("جاري الرفع..."); 
-    let fd = new FormData(); 
-    fd.append("file", file); 
-    fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); 
-    fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); 
-    fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", { method: "POST", body: fd }).then(r => r.json()).then(d => { 
-      db.collection("messages").add({ 
-        type: "image", 
-        imageUrl: d.secure_url, 
-        sender: currentUser, 
-        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-      }); 
-      SoundEffects.send(); 
-      showToast("تم إرسال الصورة"); 
-      input.value = ""; 
-    }).catch(() => { 
-      SoundEffects.error(); 
-      showToast("فشل الرفع"); 
-    }); 
-  }
-  
-  async function toggleRecording() { 
-    if (isRecording) stopRecording(); 
-    else await startRecording(); 
-  }
-  
-  async function startRecording() { 
-    if (!currentUser) { 
-      showToast("❌ سجل دخولك أولاً"); 
-      return; 
-    } 
-    try { 
-      let stream = await navigator.mediaDevices.getUserMedia({ audio: true }); 
-      mediaRecorder = new MediaRecorder(stream); 
-      audioChunks = []; 
-      mediaRecorder.ondataavailable = e => e.data.size && audioChunks.push(e.data); 
-      mediaRecorder.onstop = () => { 
-        uploadVoice(new Blob(audioChunks, { type: "audio/webm" })); 
-        stream.getTracks().forEach(t => t.stop()); 
-      }; 
-      mediaRecorder.start(); 
-      isRecording = true; 
-      document.getElementById("recordBtn").classList.add("recording"); 
-      document.getElementById("recordingIndicator").classList.add("active"); 
-      SoundEffects.recordStart(); 
-      let sec = 0; 
-      recordingTimer = setInterval(() => { 
-        sec++; 
-        let el = document.getElementById("recordingTime"); 
-        el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); 
-        if (sec >= 60) stopRecording(); 
-      }, 1000); 
-    } catch (e) { 
-      showToast("❌ لا يمكن الوصول للميكروفون"); 
-    } 
-  }
-  
-  function stopRecording() { 
-    if (mediaRecorder && isRecording) { 
-      mediaRecorder.stop(); 
-      clearInterval(recordingTimer); 
-      isRecording = false; 
-      document.getElementById("recordBtn").classList.remove("recording"); 
-      document.getElementById("recordingIndicator").classList.remove("active"); 
-      document.getElementById("recordingTime").textContent = "0:00"; 
-    } 
-  }
-  
-  async function uploadVoice(blob) { 
-    if (!currentUser) { 
-      showToast("❌ يجب تسجيل الدخول أولاً"); 
-      return; 
-    } 
-    showToast("📤 جاري رفع الرسالة الصوتية..."); 
-    let fd = new FormData(); 
-    fd.append("file", blob, "voice.webm"); 
-    fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); 
-    fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); 
-    try { 
-      let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, { method: "POST", body: fd }); 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`); 
-      let data = await res.json(); 
-      if (!data.secure_url) throw new Error("لم يتم استلام الرابط"); 
-      await db.collection("messages").add({ 
-        type: "voice", 
-        audioUrl: data.secure_url, 
-        sender: currentUser, 
-        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-      }); 
-      SoundEffects.send(); 
-      showToast("✅ تم إرسال الرسالة الصوتية"); 
-    } catch (e) { 
-      console.error(e); 
-      SoundEffects.error(); 
-      showToast("❌ فشل إرسال الصوت"); 
-    } 
-  }
-  
-  async function startVoiceCall() { 
-    if (!currentUser) return; 
-    try { 
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); 
-      document.getElementById("callModal").classList.add("active"); 
-      document.getElementById("callStatus").textContent = "مكالمة - " + currentUser; 
-      callSeconds = 0; 
-      callTimer = setInterval(() => { 
-        callSeconds++; 
-        let el = document.getElementById("callTimer"); 
-        if (el) el.textContent = Math.floor(callSeconds / 60).toString().padStart(2, "0") + ":" + (callSeconds % 60).toString().padStart(2, "0"); 
-      }, 1000); 
-      SoundEffects.join(); 
-    } catch (e) { 
-      SoundEffects.error(); 
-      showToast("لا يمكن الوصول للميكروفون"); 
-    } 
-  }
-  
-  function toggleMute() { 
-    if (!localStream) return; 
-    let track = localStream.getAudioTracks()[0]; 
-    track.enabled = !track.enabled; 
-    let btn = document.getElementById("muteBtn"); 
-    btn && (btn.classList.toggle("active"), btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'); 
-  }
-  
-  function endCall() { 
-    if (localStream) { 
-      localStream.getTracks().forEach(t => t.stop()); 
-      localStream = null; 
-    } 
-    clearInterval(callTimer); 
-    document.getElementById("callModal").classList.remove("active"); 
-    document.getElementById("callTimer").textContent = "00:00"; 
-  }
-  
-  function viewImage(src) { 
-    let viewer = document.getElementById("imageViewer"); 
-    let img = document.getElementById("viewerImage"); 
-    viewer && img && (img.src = src, viewer.classList.add("active")); 
-  }
-  
-  function closeImageViewer() { 
-    document.getElementById("imageViewer").classList.remove("active"); 
-  }
-  
-  function scrollToBottom() { 
-    let c = document.getElementById("chatMessages"); 
-    c && (c.scrollTop = c.scrollHeight); 
-  }
-  
-  function initPresenceSystem() { 
-    if (!currentUser) return; 
-    let uid = localStorage.getItem("falak_user_id"); 
-    if (!uid) { 
-      uid = "user_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now(); 
-      localStorage.setItem("falak_user_id", uid); 
-    } 
-    userPresenceRef = onlineUsersRef.doc(uid); 
-    userPresenceRef.set({ 
-      name: currentUser, 
-      userId: currentUserId || null,
-      joinedAt: firebase.firestore.FieldValue.serverTimestamp(), 
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp() 
-    }).catch(console.error); 
-    presenceInterval = setInterval(() => { 
-      userPresenceRef && userPresenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); 
-    }, 20000); 
-    listenToOnlineUsers(); 
-  }
-  
-  function removePresence() { 
-    if (presenceInterval) { 
-      clearInterval(presenceInterval); 
-      presenceInterval = null; 
-    } 
-    if (userPresenceRef) { 
-      userPresenceRef.delete().catch(console.error); 
-      userPresenceRef = null; 
-    } 
-    if (onlineUnsubscribe) { 
-      onlineUnsubscribe(); 
-      onlineUnsubscribe = null; 
-    } 
-  }
-  
-  function listenToOnlineUsers() { 
-    if (onlineUnsubscribe) onlineUnsubscribe(); 
-    onlineUnsubscribe = onlineUsersRef.onSnapshot(snap => { 
-      let cutoff = Date.now() - 120000; 
-      let online = []; 
-      snap.forEach(d => { 
-        let data = d.data(); 
-        if (data.lastSeen) { 
-          let time = (typeof data.lastSeen.toDate === "function") ? data.lastSeen.toDate().getTime() : data.lastSeen.seconds ? data.lastSeen.seconds * 1000 : new Date(data.lastSeen).getTime(); 
-          if (!isNaN(time) && time > cutoff) online.push(data); 
-        } 
-      }); 
-      let count = online.length; 
-      let text = count === 0 ? "لا أحد متصل" : count === 1 ? "متصل واحد" : count === 2 ? "متصلان" : count + " متصلين"; 
-      document.getElementById("onlineCount").textContent = text; 
-    }, err => { 
-      document.getElementById("onlineCount").textContent = "خطأ في التحميل"; 
-    }); 
-  }
-  
-  // Exam Result Functions
-  function openExamResultModal() { 
-    document.getElementById("examResultModal").classList.add("active"); 
-    document.getElementById("examResultName").value = ""; 
-    document.getElementById("examResultPhone").value = ""; 
-  }
-  
-  function closeExamResultModal() { 
-    document.getElementById("examResultModal").classList.remove("active"); 
-  }
-  
-  function checkExamResult() { 
-    let name = document.getElementById("examResultName").value.trim(); 
-    let phone = document.getElementById("examResultPhone").value.trim(); 
-    if (!name || !phone) { 
-      showToast("⚠️ أدخل الاسم ورقم الهاتف"); 
-      return; 
-    } 
-    phone = phone.replace(/\s+/g, ""); 
-    db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); 
-    db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { 
-      if (snap.empty) { 
-        alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); 
-        closeExamResultModal(); 
-        return; 
-      } 
-      let results = []; 
-      snap.forEach(d => results.push({ id: d.id, ...d.data() })); 
-      results.sort((a, b) => { 
-        let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; 
-        let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; 
-        return tb - ta; 
-      }); 
-      let r = results[0]; 
-      alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); 
-      closeExamResultModal(); 
-    }).catch(e => { 
-      console.error("Error fetching exam result:", e); 
-      alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); 
-    }); 
-  }
-  
-  // YouTube Functions
-  function extractYouTubeId(url) { 
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; 
-    const match = url.match(regExp); 
-    return (match && match[2].length === 11) ? match[2] : null; 
-  }
-  
-  async function addYouTubeVideo() { 
-    if (!isAdmin) { 
-      showToast("❌ المشرف فقط يمكنه الإضافة"); 
-      return; 
-    } 
-    const urlInput = document.getElementById("youtubeUrlInput"); 
-    const rawUrl = urlInput.value.trim(); 
-    if (!rawUrl) { 
-      showToast("⚠️ أدخل رابط يوتيوب صحيح"); 
-      return; 
-    } 
-    const videoId = extractYouTubeId(rawUrl); 
-    if (!videoId) { 
-      showToast("⚠️ الرابط غير صالح"); 
-      return; 
-    } 
-    const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); 
-    if (!title) return; 
-    const description = prompt("أدخل وصف الفيديو (اختياري):", ""); 
-    const videoData = { 
-      title: title, 
-      description: description || "", 
-      type: "youtube", 
-      videoId: videoId, 
-      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, 
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
-      private: false 
-    }; 
-    try { 
-      await db.collection("videos").add(videoData); 
-      showToast("✅ تم إضافة فيديو يوتيوب"); 
-      urlInput.value = ""; 
-    } catch(e) { 
-      console.error(e); 
-      SoundEffects.error(); 
-      showToast("❌ فشل إضافة الفيديو"); 
-    } 
-  }
-  
-  // Google Auth Functions
-  async function googleLogin() { 
+  // ========== منع الاشتراكات المتعددة ==========
+  async function checkIfUserAlreadyActive(name, phone) {
     try {
+      const activeUserQuery = await db.collection("active_sessions")
+        .where("name", "==", name)
+        .where("phone", "==", phone)
+        .where("active", "==", true)
+        .get();
+      
+      if (!activeUserQuery.empty) {
+        const session = activeUserQuery.docs[0].data();
+        const currentDeviceId = localStorage.getItem("falak_device_id");
+        if (session.deviceId !== currentDeviceId) {
+          return { 
+            allowed: false, 
+            message: `⚠️ هذا الحساب (${name} - ${phone}) مسجل الدخول بالفعل من جهاز آخر. لا يمكن التسجيل من جهازين بنفس البيانات.` 
+          };
+        }
+      }
+      return { allowed: true };
+    } catch (error) {
+      console.error("Error checking active user:", error);
+      return { allowed: true };
+    }
+  }
+
+  async function registerActiveSession(name, phone) {
+    try {
+      let deviceId = localStorage.getItem("falak_device_id");
+      if (!deviceId) {
+        deviceId = "device_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("falak_device_id", deviceId);
+      }
+      
+      const existingSessions = await db.collection("active_sessions")
+        .where("name", "==", name)
+        .where("phone", "==", phone)
+        .where("active", "==", true)
+        .get();
+      
+      for (const doc of existingSessions.docs) {
+        const sessionData = doc.data();
+        if (sessionData.deviceId === deviceId) {
+          await db.collection("active_sessions").doc(doc.id).update({
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          startSessionHeartbeat(name, phone, deviceId);
+          return;
+        }
+      }
+      
+      await db.collection("active_sessions").add({
+        name: name,
+        phone: phone,
+        deviceId: deviceId,
+        active: true,
+        userAgent: navigator.userAgent,
+        startedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      startSessionHeartbeat(name, phone, deviceId);
+      
+    } catch (error) {
+      console.error("Error registering active session:", error);
+    }
+  }
+
+  function startSessionHeartbeat(name, phone, deviceId) {
+    if (window.sessionHeartbeatInterval) {
+      clearInterval(window.sessionHeartbeatInterval);
+    }
+    
+    window.sessionHeartbeatInterval = setInterval(async () => {
+      try {
+        const sessions = await db.collection("active_sessions")
+          .where("name", "==", name)
+          .where("phone", "==", phone)
+          .where("active", "==", true)
+          .get();
+        
+        sessions.forEach(async (doc) => {
+          await db.collection("active_sessions").doc(doc.id).update({
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      } catch (error) {
+        console.error("Heartbeat error:", error);
+      }
+    }, 30000);
+  }
+
+  async function endUserSession(name, phone) {
+    try {
+      const sessions = await db.collection("active_sessions")
+        .where("name", "==", name)
+        .where("phone", "==", phone)
+        .where("active", "==", true)
+        .get();
+      
+      sessions.forEach(async (doc) => {
+        await db.collection("active_sessions").doc(doc.id).update({
+          active: false,
+          endedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      
+      if (window.sessionHeartbeatInterval) {
+        clearInterval(window.sessionHeartbeatInterval);
+        window.sessionHeartbeatInterval = null;
+      }
+    } catch (error) {
+      console.error("Error ending session:", error);
+    }
+  }
+
+  async function cleanupOldSessions() {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    try {
+      const oldSessions = await db.collection("active_sessions")
+        .where("active", "==", true)
+        .where("lastSeen", "<", oneHourAgo)
+        .get();
+      
+      oldSessions.forEach(async (doc) => {
+        await db.collection("active_sessions").doc(doc.id).update({
+          active: false,
+          endedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          reason: "timeout"
+        });
+      });
+    } catch (error) {
+      console.error("Cleanup error:", error);
+    }
+  }
+
+  // ========== Google Auth Functions with multi-device prevention ==========
+  async function checkIfUserAlreadyActiveGoogle(email, phone) {
+    try {
+      const activeUserQuery = await db.collection("active_sessions")
+        .where("email", "==", email)
+        .where("active", "==", true)
+        .get();
+      
+      if (!activeUserQuery.empty) {
+        const session = activeUserQuery.docs[0].data();
+        const currentDeviceId = localStorage.getItem("falak_device_id");
+        if (session.deviceId !== currentDeviceId) {
+          return { 
+            allowed: false, 
+            message: `⚠️ هذا الحساب (${email}) مسجل الدخول بالفعل من جهاز آخر. لا يمكن التسجيل من جهازين بنفس البيانات.` 
+          };
+        }
+      }
+      return { allowed: true };
+    } catch (error) {
+      console.error("Error checking active user:", error);
+      return { allowed: true };
+    }
+  }
+
+  async function registerActiveSessionGoogle(email, name, phone) {
+    try {
+      let deviceId = localStorage.getItem("falak_device_id");
+      if (!deviceId) {
+        deviceId = "device_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("falak_device_id", deviceId);
+      }
+      
+      const existingSessions = await db.collection("active_sessions")
+        .where("email", "==", email)
+        .where("active", "==", true)
+        .get();
+      
+      for (const doc of existingSessions.docs) {
+        const sessionData = doc.data();
+        if (sessionData.deviceId === deviceId) {
+          await db.collection("active_sessions").doc(doc.id).update({
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+            name: name,
+            phone: phone
+          });
+          startGoogleSessionHeartbeat(email, deviceId);
+          return;
+        }
+      }
+      
+      await db.collection("active_sessions").add({
+        email: email,
+        name: name,
+        phone: phone,
+        deviceId: deviceId,
+        active: true,
+        loginType: "google",
+        userAgent: navigator.userAgent,
+        startedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      startGoogleSessionHeartbeat(email, deviceId);
+      
+    } catch (error) {
+      console.error("Error registering Google session:", error);
+    }
+  }
+
+  function startGoogleSessionHeartbeat(email, deviceId) {
+    if (window.googleSessionHeartbeat) {
+      clearInterval(window.googleSessionHeartbeat);
+    }
+    
+    window.googleSessionHeartbeat = setInterval(async () => {
+      try {
+        const sessions = await db.collection("active_sessions")
+          .where("email", "==", email)
+          .where("active", "==", true)
+          .get();
+        
+        sessions.forEach(async (doc) => {
+          await db.collection("active_sessions").doc(doc.id).update({
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      } catch (error) {
+        console.error("Google heartbeat error:", error);
+      }
+    }, 30000);
+  }
+
+  async function googleLogin() {
+    try {
+      showToast("⏳ جاري تسجيل الدخول...");
       const result = await auth.signInWithPopup(provider);
       googleUser = result.user;
       currentUserId = googleUser.uid;
       let name = googleUser.displayName;
+      let email = googleUser.email;
       let phone = googleUser.phoneNumber || "";
+      
+      const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone);
+      
+      if (!checkResult.allowed) {
+        SoundEffects.error();
+        showToast(checkResult.message);
+        await auth.signOut();
+        googleUser = null;
+        currentUserId = null;
+        return;
+      }
+      
       currentUser = name;
-      currentUserPhone = phone;
+      currentUserPhone = phone || "";
       
       await loadUserDataFromFirebase(currentUserId);
       if (!currentUser) {
@@ -1674,6 +1412,8 @@
         currentUserPhone = phone || "";
         await saveUserDataToFirebase(currentUserId);
       }
+      
+      await registerActiveSessionGoogle(email, currentUser, currentUserPhone);
       
       if (currentUser) localStorage.setItem("falak_username", currentUser);
       if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
@@ -1683,7 +1423,6 @@
       document.getElementById("googleUserInfo").style.display = "flex";
       document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`;
       document.getElementById("googleLogoutBtn").style.display = "block";
-      document.getElementById("googleLogoutNavBtn").style.display = "flex";
       updateGoogleLogoutButtonsVisibility();
       SoundEffects.join();
       loadAdminPreference();
@@ -1692,9 +1431,11 @@
       loadAIKnowledgeFromFirebase();
       loadExamsFromFirebase();
       loadExamResultsFromFirebase();
+      loadAppsFromFirebase();
       initCloudinaryWidget();
       checkUrlForShare();
       loadEmailSettings();
+      updateAdminUI();
       showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
     } catch(error) {
       console.error(error);
@@ -1702,130 +1443,229 @@
       showToast("❌ فشل تسجيل الدخول بحساب Google");
     }
   }
-  
-  async function googleLogout() { 
-    if (currentUserId) {
-      await saveUserDataToFirebase(currentUserId);
+
+  async function googleLogout() {
+    if (currentUserId) await saveUserDataToFirebase(currentUserId);
+    
+    if (googleUser && googleUser.email) {
+      try {
+        const sessions = await db.collection("active_sessions")
+          .where("email", "==", googleUser.email)
+          .where("active", "==", true)
+          .get();
+        
+        sessions.forEach(async (doc) => {
+          await db.collection("active_sessions").doc(doc.id).update({
+            active: false,
+            endedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      } catch(e) { console.error("Error ending Google session:", e); }
     }
+    
+    if (window.googleSessionHeartbeat) {
+      clearInterval(window.googleSessionHeartbeat);
+      window.googleSessionHeartbeat = null;
+    }
+    
     auth.signOut().then(() => {
       googleUser = null;
       currentUserId = null;
       localStorage.removeItem("falak_username");
       localStorage.removeItem("falak_userphone");
+      localStorage.removeItem("falak_device_id");
       currentUser = null;
       currentUserPhone = null;
       document.getElementById("landingPage").style.display = "flex";
       document.getElementById("appWrapper").style.display = "none";
       document.getElementById("googleUserInfo").style.display = "none";
       document.getElementById("googleLogoutBtn").style.display = "none";
-      document.getElementById("googleLogoutNavBtn").style.display = "none";
       if (isAdmin) logout();
       SoundEffects.recordStop();
       showToast("👋 تم تسجيل الخروج من Google");
       updateGoogleLogoutButtonsVisibility();
+      updateAdminUI();
     }).catch(e => {
       console.error(e);
       SoundEffects.error();
       showToast("❌ فشل تسجيل الخروج");
     });
   }
+
+  // Chat Functions (full)
+  function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
+  function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
+  function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
+  function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").value = currentUser || ""; document.getElementById("userPhoneInput").value = currentUserPhone || ""; document.getElementById("userNameInput").focus(); } }
+  function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
   
-  function initAuthState() { 
-    auth.onAuthStateChanged(async user => {
-      if (user && !isAdmin) {
-        googleUser = user;
-        currentUserId = user.uid;
-        let name = user.displayName;
-        let phone = user.phoneNumber || "";
-        currentUser = name;
-        currentUserPhone = phone;
-        
-        await loadUserDataFromFirebase(currentUserId);
-        if (!currentUser) {
-          currentUser = name;
-          currentUserPhone = phone || "";
-          await saveUserDataToFirebase(currentUserId);
-        }
-        if (currentUser) localStorage.setItem("falak_username", currentUser);
-        if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
-        
-        document.getElementById("landingPage").style.display = "none";
-        document.getElementById("appWrapper").style.display = "flex";
-        document.getElementById("googleUserInfo").style.display = "flex";
-        document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`;
-        document.getElementById("googleLogoutBtn").style.display = "block";
-        document.getElementById("googleLogoutNavBtn").style.display = "flex";
-        updateGoogleLogoutButtonsVisibility();
-        loadAdminPreference();
-        listenToVideosWithRetry();
-        listenToMaintenance();
-        loadAIKnowledgeFromFirebase();
-        loadExamsFromFirebase();
-        loadExamResultsFromFirebase();
-        initCloudinaryWidget();
-        checkUrlForShare();
-        loadEmailSettings();
-      } else if (!user && !isAdmin) {
-        let hasLocal = loadUserDataFromStorage();
-        if (hasLocal && !currentUserId) {
-          document.getElementById("landingPage").style.display = "none";
-          document.getElementById("appWrapper").style.display = "flex";
-          document.getElementById("googleUserInfo").style.display = "none";
-          document.getElementById("googleLogoutBtn").style.display = "none";
-          document.getElementById("googleLogoutNavBtn").style.display = "none";
-          loadAdminPreference();
-          listenToVideosWithRetry();
-          listenToMaintenance();
-          loadAIKnowledgeFromFirebase();
-          loadExamsFromFirebase();
-          loadExamResultsFromFirebase();
-          initCloudinaryWidget();
-          checkUrlForShare();
-          loadEmailSettings();
-        } else {
-          document.getElementById("landingPage").style.display = "flex";
-          document.getElementById("appWrapper").style.display = "none";
-          googleUser = null;
-          currentUserId = null;
-          currentUser = null;
-          currentUserPhone = null;
-          localStorage.removeItem("falak_username");
-          localStorage.removeItem("falak_userphone");
-          updateGoogleLogoutButtonsVisibility();
-        }
-      }
+  async function saveUserName() {
+    let name = document.getElementById("userNameInput").value.trim();
+    let countryCode = document.getElementById("userCountryCode").value;
+    let phoneNumber = document.getElementById("userPhoneInput").value.trim();
+    
+    phoneNumber = phoneNumber.replace(/[^\d]/g, '');
+    
+    if (name.length < 2) {
+      SoundEffects.error();
+      showToast("الاسم قصير جداً");
+      return;
+    }
+    if (!phoneNumber) {
+      SoundEffects.error();
+      showToast("رقم الهاتف مطلوب");
+      return;
+    }
+    
+    let fullPhone = countryCode + phoneNumber;
+    if (fullPhone.startsWith('++')) fullPhone = fullPhone.substring(1);
+    
+    if (phoneNumber.length < 8) {
+      SoundEffects.error();
+      showToast("رقم الهاتف غير مكتمل");
+      return;
+    }
+    
+    showToast("⏳ جاري التحقق من البيانات...");
+    const checkResult = await checkIfUserAlreadyActive(name, fullPhone);
+    
+    if (!checkResult.allowed) {
+      SoundEffects.error();
+      showToast(checkResult.message);
+      return;
+    }
+    
+    saveUserDataToStorage(name, fullPhone);
+    
+    if (currentUserId) await saveUserDataToFirebase(currentUserId);
+    
+    await registerActiveSession(name, fullPhone);
+    
+    document.getElementById("nameModal").classList.remove("active");
+    document.getElementById("chatModal").classList.add("active");
+    SoundEffects.join();
+    initPresenceSystem();
+    loadMessages();
+    
+    db.collection("chat_users").add({
+      name: name,
+      phone: fullPhone,
+      userId: currentUserId || null,
+      joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(err => console.warn("Could not save chat user:", err));
+    
+    updateAdminUI();
+  }
+
+  function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
+  
+  function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) {
+    let senderDisplay = escapeHtml(data.sender);
+    if (data.senderPhone) {
+      senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">📞 ${escapeHtml(data.senderPhone)}</span>`;
+    }
+    html += '<div class="message-sender">' + senderDisplay + "</div>";
+  }
+  if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; }
+  if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>";
+  if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
+  if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>';
+  html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>";
+  msgDiv.innerHTML = html;
+  if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); }
+  cont.appendChild(msgDiv);
+}
+  
+  function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
+  function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
+  function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
+  function sendMessage() {
+    let inp = document.getElementById("messageInput");
+    if (!inp) return;
+    let text = inp.value.trim();
+    if (!text || !currentUser) return;
+    db.collection("messages").add({
+      type: "text",
+      text: text,
+      sender: currentUser,
+      senderPhone: currentUserPhone,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      SoundEffects.send();
+      inp.value = "";
+    }).catch(() => {
+      SoundEffects.error();
+      showToast("فشل الإرسال");
     });
   }
+  function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+  function sendImage(input) { let file = input.files[0]; if (!file || !currentUser) return; if (file.size > 5 * 1024 * 1024) { SoundEffects.error(); showToast("الصورة كبيرة (الحد 5 ميجا)"); return; } showToast("جاري الرفع..."); let fd = new FormData(); fd.append("file", file); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", { method: "POST", body: fd }).then(r => r.json()).then(d => { db.collection("messages").add({ type: "image", imageUrl: d.secure_url, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("تم إرسال الصورة"); input.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الرفع"); }); }
+  async function toggleRecording() { if (isRecording) stopRecording(); else await startRecording(); }
+  async function startRecording() { if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; } try { let stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = e => e.data.size && audioChunks.push(e.data); mediaRecorder.onstop = () => { uploadVoice(new Blob(audioChunks, { type: "audio/webm" })); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; document.getElementById("recordBtn").classList.add("recording"); document.getElementById("recordingIndicator").classList.add("active"); SoundEffects.recordStart(); let sec = 0; recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000); } catch (e) { showToast("❌ لا يمكن الوصول للميكروفون"); } }
+  function stopRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); clearInterval(recordingTimer); isRecording = false; document.getElementById("recordBtn").classList.remove("recording"); document.getElementById("recordingIndicator").classList.remove("active"); document.getElementById("recordingTime").textContent = "0:00"; } }
+  async function uploadVoice(blob) { if (!currentUser) { showToast("❌ يجب تسجيل الدخول أولاً"); return; } showToast("📤 جاري رفع الرسالة الصوتية..."); let fd = new FormData(); fd.append("file", blob, "voice.webm"); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); try { let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, { method: "POST", body: fd }); if (!res.ok) throw new Error(`HTTP ${res.status}`); let data = await res.json(); if (!data.secure_url) throw new Error("لم يتم استلام الرابط"); await db.collection("messages").add({ type: "voice", audioUrl: data.secure_url, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("✅ تم إرسال الرسالة الصوتية"); } catch (e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إرسال الصوت"); } }
+  async function startVoiceCall() { if (!currentUser) return; try { localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); document.getElementById("callModal").classList.add("active"); document.getElementById("callStatus").textContent = "مكالمة - " + currentUser; callSeconds = 0; callTimer = setInterval(() => { callSeconds++; let el = document.getElementById("callTimer"); if (el) el.textContent = Math.floor(callSeconds / 60).toString().padStart(2, "0") + ":" + (callSeconds % 60).toString().padStart(2, "0"); }, 1000); SoundEffects.join(); } catch (e) { SoundEffects.error(); showToast("لا يمكن الوصول للميكروفون"); } }
+  function toggleMute() { if (!localStream) return; let track = localStream.getAudioTracks()[0]; track.enabled = !track.enabled; let btn = document.getElementById("muteBtn"); btn && (btn.classList.toggle("active"), btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'); }
+  function endCall() { if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } clearInterval(callTimer); document.getElementById("callModal").classList.remove("active"); document.getElementById("callTimer").textContent = "00:00"; }
+  function viewImage(src) { let viewer = document.getElementById("imageViewer"); let img = document.getElementById("viewerImage"); viewer && img && (img.src = src, viewer.classList.add("active")); }
+  function closeImageViewer() { document.getElementById("imageViewer").classList.remove("active"); }
+  function scrollToBottom() { let c = document.getElementById("chatMessages"); c && (c.scrollTop = c.scrollHeight); }
+  function initPresenceSystem() { if (!currentUser) return; let uid = localStorage.getItem("falak_user_id"); if (!uid) { uid = "user_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now(); localStorage.setItem("falak_user_id", uid); } userPresenceRef = onlineUsersRef.doc(uid); userPresenceRef.set({ name: currentUser, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp(), lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); presenceInterval = setInterval(() => { userPresenceRef && userPresenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); }, 20000); listenToOnlineUsers(); }
+  function removePresence() { if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; } if (userPresenceRef) { userPresenceRef.delete().catch(console.error); userPresenceRef = null; } if (onlineUnsubscribe) { onlineUnsubscribe(); onlineUnsubscribe = null; } }
+  function listenToOnlineUsers() { if (onlineUnsubscribe) onlineUnsubscribe(); onlineUnsubscribe = onlineUsersRef.onSnapshot(snap => { let cutoff = Date.now() - 120000; let online = []; snap.forEach(d => { let data = d.data(); if (data.lastSeen) { let time = (typeof data.lastSeen.toDate === "function") ? data.lastSeen.toDate().getTime() : data.lastSeen.seconds ? data.lastSeen.seconds * 1000 : new Date(data.lastSeen).getTime(); if (!isNaN(time) && time > cutoff) online.push(data); } }); let count = online.length; let text = count === 0 ? "لا أحد متصل" : count === 1 ? "متصل واحد" : count === 2 ? "متصلان" : count + " متصلين"; document.getElementById("onlineCount").textContent = text; }, err => { document.getElementById("onlineCount").textContent = "خطأ في التحميل"; }); }
 
-  function refreshPage() {
-    SoundEffects.success();
-    const refreshBtn = document.querySelector('.refresh-btn i');
-    if (refreshBtn) {
-      refreshBtn.style.transform = 'rotate(360deg)';
-      setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500);
+  // Exam Result Functions
+  function openExamResultModal() { document.getElementById("examResultModal").classList.add("active"); document.getElementById("examResultName").value = ""; document.getElementById("examResultPhone").value = ""; }
+  function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
+  function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف"); return; } phone = phone.replace(/\s+/g, ""); db.collection("exam-result-queries").add({ name, phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", phone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
+
+  // YouTube Functions
+  function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
+  async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; } const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: title, description: description || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
+
+  function localLogout() {
+    if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) {
+      if (currentUser && currentUserPhone) {
+        endUserSession(currentUser, currentUserPhone);
+      }
+      localStorage.removeItem("falak_username");
+      localStorage.removeItem("falak_userphone");
+      localStorage.removeItem("falak_device_id");
+      currentUser = null;
+      currentUserPhone = null;
+      updateAdminUI();
+      location.reload();
     }
-    location.reload();
   }
 
+  // ========== Install App (PWA) ==========
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
+  function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
+
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); updateAdminUI(); } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
+
+  // ========== Landscape orientation fix ==========
+  window.addEventListener("resize", function() { setTimeout(function() { const videoContainer = document.querySelector(".video-player-container"); if (videoContainer) { const video = videoContainer.querySelector("video, iframe"); if (video) { video.style.height = "auto"; video.style.maxHeight = window.innerHeight < window.innerWidth ? "65vh" : "70vh"; } } const chatMessages = document.getElementById("chatMessages"); if (chatMessages) { chatMessages.style.maxHeight = (window.innerHeight - 140) + "px"; } window.scrollTo(0, 0); }, 100); });
+  window.addEventListener("orientationchange", function() { setTimeout(() => window.dispatchEvent(new Event("resize")), 50); });
+
+  function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
-  window.addEventListener("load", function() { 
-    loadUserDataFromStorage(); 
-    hideLoader(); 
-    requestFullscreenAutomatically(); 
-    setTimeout(requestFullscreenAutomatically, 1000); 
-    initAuthState(); 
-    loadEmailSettings(); 
-    document.getElementById("googleSignInBtn").onclick = googleLogin; 
-    document.getElementById("googleLogoutBtn").onclick = googleLogout; 
-    document.getElementById("googleLogoutNavBtn").onclick = googleLogout; 
-  });
+  // ========== Dropdown menu ==========
+  function toggleSettingsMenu(e) { e.stopPropagation(); const menu = document.getElementById("settingsMenu"); if (menu) menu.classList.toggle("active"); }
+  function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
+  function openAppsModal() { document.getElementById("appsModal").classList.add("active"); renderAppsList(); }
+  function closeAppsModal() { document.getElementById("appsModal").classList.remove("active"); }
+
+  document.addEventListener("DOMContentLoaded", function() { const dropdownBtn = document.getElementById("settingsDropdownBtn"); if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu); document.addEventListener("click", closeSettingsMenuOnClickOutside); const googleLogoutMenuItem = document.getElementById("googleLogoutMenuItem"); if (googleLogoutMenuItem) googleLogoutMenuItem.addEventListener("click", function() { googleLogout(); }); const adminLoginMenuItem = document.getElementById("adminLoginMenuItem"); if (adminLoginMenuItem) adminLoginMenuItem.addEventListener("click", function() { showLogin(); }); const logoutMenuItem = document.getElementById("logoutMenuItem"); if (logoutMenuItem) logoutMenuItem.addEventListener("click", function() { logout(); }); const maintenanceMenuItem = document.getElementById("maintenanceMenuItem"); if (maintenanceMenuItem) maintenanceMenuItem.addEventListener("click", function() { openMaintenanceModal(); }); const appsMenuItem = document.getElementById("appsMenuItem"); if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); }); const manageAppsMenuItem = document.getElementById("manageAppsMenuItem"); if (manageAppsMenuItem) manageAppsMenuItem.addEventListener("click", function() { openManageAppsModal(); }); const installAppMenuItem = document.getElementById("installAppMenuItem"); if (installAppMenuItem) installAppMenuItem.addEventListener("click", function() { installApp(); }); const localLogoutMenuItem = document.getElementById("localLogoutMenuItem"); if (localLogoutMenuItem) localLogoutMenuItem.addEventListener("click", localLogout); });
+
+  window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettings(); document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() { try { } catch (e) { console.error("Initialization error:", e); hideLoader(); } });
-  window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); removePresence(); });
-  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); } };
-  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); } });
+  window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); removePresence(); });
+  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); } };
+  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); } });
 </script>
 </body>
 </html>
