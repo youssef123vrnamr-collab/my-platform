@@ -43,25 +43,26 @@
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
     .settings-icon-btn { 
-  background: rgba(255,255,255,0.1); 
-  border: 1px solid rgba(99,102,241,0.5); 
-  border-radius: 40px; 
-  width: 40px; 
-  height: 40px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  cursor: pointer; 
-  transition: all 0.3s; 
-  color: #fff; 
-  font-size: 1.2rem; 
-  margin-left: 8px; 
-  -webkit-tap-highlight-color: transparent; 
-  touch-action: manipulation;
-  position: relative;
-  z-index: 100;
-}
-    .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
+      background: rgba(255,255,255,0.15); 
+      border: 2px solid rgba(99,102,241,0.6); 
+      border-radius: 50%; 
+      width: 44px; 
+      height: 44px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      transition: all 0.3s; 
+      color: #fff; 
+      font-size: 18px; 
+      margin-left: 8px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .settings-icon-btn:hover, .settings-icon-btn:active {
+      background: rgba(99,102,241,0.5);
+      transform: scale(1.05);
+    }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .center-action { flex: 1; display: flex; justify-content: center; }
@@ -77,10 +78,7 @@
     .refresh-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(99,102,241,0.6); transition: all 0.3s ease; }
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
-    .settings-dropdown { 
-      position: relative; 
-      display: inline-block;
-    }
+    .settings-dropdown { position: relative; display: inline-block; }
     .settings-menu { 
       position: fixed;
       top: 80px;
@@ -131,43 +129,11 @@
       color: #6366f1;
       font-size: 16px;
     }
-    .settings-icon-btn { 
-      background: rgba(255,255,255,0.15); 
-      border: 2px solid rgba(99,102,241,0.6); 
-      border-radius: 50%; 
-      width: 44px; 
-      height: 44px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      cursor: pointer; 
-      transition: all 0.3s; 
-      color: #fff; 
-      font-size: 18px; 
-      margin-left: 8px;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      position: relative;
-    }
-    .settings-icon-btn:hover, .settings-icon-btn:active {
-      background: rgba(99,102,241,0.4);
-      transform: scale(1.1);
-    }
     @media (max-width:768px) { 
-      .settings-menu { 
-        top: 70px;
-        right: 5px;
-        left: 5px;
-        min-width: auto;
-        max-width: none;
-      } 
+      .settings-menu { top: 70px; right: 5px; left: 5px; min-width: auto; max-width: none; } 
       .brand-logo { width: 50px; height: 50px; } 
       .brand-text h1 { font-size: 1rem; } 
-      .settings-icon-btn { 
-        width: 40px; 
-        height: 40px; 
-        font-size: 16px;
-      } 
+      .settings-icon-btn { width: 40px; height: 40px; font-size: 16px; } 
     }
     @media (orientation: landscape) { .container { padding: 1rem 2rem; } .hero { padding: 1rem 1rem; margin-bottom: 1rem; } .hero h2 { font-size: 2rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; } .video-card .video-thumbnail { height: 180px; } .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; } .video-title { font-size: 1.2rem; } .video-description { font-size: 0.85rem; max-height: 80px; } .navbar { padding: 0.5rem 1rem; } .brand-logo { width: 60px; height: 60px; } .chat-container { height: 100vh; } .message { max-width: 70%; } .modal-content { max-height: 95vh; overflow-y: auto; } .video-player-container { padding: 8px; } .video-player, .youtube-iframe { max-height: 65vh !important; width: auto !important; max-width: 100% !important; } .upload-zone { padding: 1.5rem; } .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; } .chat-messages { max-height: calc(100vh - 140px); overflow-y: auto; } }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; width: 100%; }
@@ -458,7 +424,6 @@
     .icon-preview { margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: center; }
     .icon-preview img { max-width: 64px; max-height: 64px; border-radius: 12px; }
   </style>
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
