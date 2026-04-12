@@ -42,7 +42,25 @@
     .brand-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
-    .settings-icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.5); border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #fff; font-size: 1.2rem; margin-left: 8px; }
+    .settings-icon-btn { 
+  background: rgba(255,255,255,0.1); 
+  border: 1px solid rgba(99,102,241,0.5); 
+  border-radius: 40px; 
+  width: 40px; 
+  height: 40px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  cursor: pointer; 
+  transition: all 0.3s; 
+  color: #fff; 
+  font-size: 1.2rem; 
+  margin-left: 8px; 
+  -webkit-tap-highlight-color: transparent; 
+  touch-action: manipulation;
+  position: relative;
+  z-index: 100;
+}
     .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
@@ -59,14 +77,98 @@
     .refresh-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(99,102,241,0.6); transition: all 0.3s ease; }
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
-    .settings-dropdown { position: relative; display: inline-block; }
-    .settings-menu { position: absolute; top: calc(100% + 8px); left: 0; background: rgba(26,16,37,.98); backdrop-filter: blur(16px); border-radius: 16px; border: 1px solid rgba(99,102,241,.5); min-width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 1100; display: none; flex-direction: column; overflow: hidden; animation: fadeInUp 0.2s ease; }
-    .settings-menu.active { display: flex; }
-    .settings-menu-item { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .settings-dropdown { 
+      position: relative; 
+      display: inline-block;
+    }
+    .settings-menu { 
+      position: fixed;
+      top: 80px;
+      right: 10px;
+      background: rgba(26,16,37,0.98); 
+      backdrop-filter: blur(20px); 
+      border-radius: 16px; 
+      border: 2px solid rgba(99,102,241,0.8); 
+      min-width: 250px; 
+      max-width: 90vw;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8); 
+      z-index: 100000; 
+      display: none; 
+      flex-direction: column; 
+      overflow: hidden;
+      direction: rtl;
+      padding: 8px 0;
+    }
+    .settings-menu.active { 
+      display: flex !important;
+      animation: menuSlideIn 0.2s ease;
+    }
+    @keyframes menuSlideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .settings-menu-item { 
+      padding: 12px 16px; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      color: #fff; 
+      font-size: 15px; 
+      font-weight: 500; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      white-space: nowrap;
+    }
     .settings-menu-item:last-child { border-bottom: none; }
-    .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
-    .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
-    @media (max-width:768px) { .settings-menu { left: 0; min-width: 180px; } .brand-logo { width: 60px; height: 60px; } .brand-text h1 { font-size: 1.1rem; } .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; } }
+    .settings-menu-item:hover { 
+      background: rgba(99,102,241,0.4); 
+      padding-right: 20px;
+    }
+    .settings-menu-item i { 
+      width: 24px; 
+      text-align: center; 
+      color: #6366f1;
+      font-size: 16px;
+    }
+    .settings-icon-btn { 
+      background: rgba(255,255,255,0.15); 
+      border: 2px solid rgba(99,102,241,0.6); 
+      border-radius: 50%; 
+      width: 44px; 
+      height: 44px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      transition: all 0.3s; 
+      color: #fff; 
+      font-size: 18px; 
+      margin-left: 8px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      position: relative;
+    }
+    .settings-icon-btn:hover, .settings-icon-btn:active {
+      background: rgba(99,102,241,0.4);
+      transform: scale(1.1);
+    }
+    @media (max-width:768px) { 
+      .settings-menu { 
+        top: 70px;
+        right: 5px;
+        left: 5px;
+        min-width: auto;
+        max-width: none;
+      } 
+      .brand-logo { width: 50px; height: 50px; } 
+      .brand-text h1 { font-size: 1rem; } 
+      .settings-icon-btn { 
+        width: 40px; 
+        height: 40px; 
+        font-size: 16px;
+      } 
+    }
     @media (orientation: landscape) { .container { padding: 1rem 2rem; } .hero { padding: 1rem 1rem; margin-bottom: 1rem; } .hero h2 { font-size: 2rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; } .video-card .video-thumbnail { height: 180px; } .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; } .video-title { font-size: 1.2rem; } .video-description { font-size: 0.85rem; max-height: 80px; } .navbar { padding: 0.5rem 1rem; } .brand-logo { width: 60px; height: 60px; } .chat-container { height: 100vh; } .message { max-width: 70%; } .modal-content { max-height: 95vh; overflow-y: auto; } .video-player-container { padding: 8px; } .video-player, .youtube-iframe { max-height: 65vh !important; width: auto !important; max-width: 100% !important; } .upload-zone { padding: 1.5rem; } .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; } .chat-messages { max-height: calc(100vh - 140px); overflow-y: auto; } }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; width: 100%; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
@@ -357,6 +459,7 @@
     .icon-preview img { max-width: 64px; max-height: 64px; border-radius: 12px; }
   </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -510,34 +613,19 @@
 
 <script>
   // ========== Screen Orientation Fix for PWA ==========
-  // This code forces the app to rotate with the device on Android
   function initScreenOrientation() {
-    // Unlock screen orientation to allow all rotations
     if (screen.orientation && screen.orientation.unlock) {
       screen.orientation.unlock().catch(err => console.log('Orientation unlock failed:', err));
     }
-    
-    // Listen for orientation changes
     window.addEventListener('orientationchange', function() {
-      // Force a reflow to ensure the app rotates properly
       document.body.style.display = 'none';
-      setTimeout(() => {
-        document.body.style.display = '';
-      }, 50);
-      
-      // Update viewport height for mobile browsers
+      setTimeout(() => { document.body.style.display = ''; }, 50);
       updateViewportHeight();
     });
-    
-    // Handle resize events
     window.addEventListener('resize', updateViewportHeight);
-    
-    // Initial viewport height update
     updateViewportHeight();
   }
-  
   function updateViewportHeight() {
-    // Fix for mobile browsers where 100vh doesn't account for browser chrome
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
@@ -966,19 +1054,23 @@
       snap.forEach(d => { apps.push({ id: d.id, ...d.data() }); });
       renderAppsList();
       renderAppsManageList();
-    }, err => console.error("Error loading apps:", err));
+    }, err => {
+      console.error("Error loading apps:", err);
+      const container = document.getElementById("appsList");
+      if (container) container.innerHTML = '<p style="text-align:center;color:#ef4444;padding:2rem;">⚠️ فشل تحميل التطبيقات، تأكد من الاتصال بالإنترنت.</p>';
+    });
   }
 
   function renderAppsList() {
     const container = document.getElementById("appsList");
     if (!container) return;
-    if (apps.length === 0) {
-      container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات مضافة بعد</p>';
+    if (!apps || apps.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#aaa;padding:2rem;"><i class="fas fa-info-circle"></i> لا توجد تطبيقات مضافة بعد.<br><small>يمكن للمشرف إضافة تطبيقات من قائمة الإدارة.</small></div>';
       return;
     }
     container.innerHTML = apps.map(app => `
       <div class="app-item">
-        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
+        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon" onerror="this.onerror=null;this.parentElement.innerHTML='<i class=\\'fas fa-rocket\\'></i>';">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
         <div class="app-info">
           <div class="app-name">${escapeHtml(app.name)}</div>
           <div class="app-desc">${escapeHtml(app.desc || '')}</div>
@@ -1112,7 +1204,14 @@
     document.getElementById("editAppId").value = "";
   }
 
-  function openApp(url) { window.open(url, "_blank", "noopener,noreferrer"); }
+  function openApp(url) {
+    if (!url) return;
+    let finalUrl = url;
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = 'https://' + finalUrl;
+    }
+    window.open(finalUrl, '_blank', 'noopener,noreferrer');
+  }
 
   // Exam Functions (full)
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
@@ -1649,18 +1748,100 @@
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
   // ========== Dropdown menu ==========
-  function toggleSettingsMenu(e) { e.stopPropagation(); const menu = document.getElementById("settingsMenu"); if (menu) menu.classList.toggle("active"); }
-  function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
-  function openAppsModal() { document.getElementById("appsModal").classList.add("active"); renderAppsList(); }
-  function closeAppsModal() { document.getElementById("appsModal").classList.remove("active"); }
+  let settingsMenuOpen = false;
+
+  function toggleSettingsMenu(e) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const menu = document.getElementById("settingsMenu");
+    if (!menu) {
+      console.error("Settings menu not found!");
+      return;
+    }
+
+    settingsMenuOpen = !settingsMenuOpen;
+
+    if (settingsMenuOpen) {
+      menu.style.display = "flex";
+      setTimeout(() => menu.classList.add("active"), 10);
+    } else {
+      menu.classList.remove("active");
+      setTimeout(() => menu.style.display = "none", 200);
+    }
+
+    console.log("Settings menu:", settingsMenuOpen ? "opened" : "closed");
+  }
+
+  function closeSettingsMenu() {
+    const menu = document.getElementById("settingsMenu");
+    if (!menu) return;
+    settingsMenuOpen = false;
+    menu.classList.remove("active");
+    setTimeout(() => menu.style.display = "none", 200);
+  }
+
+  function closeSettingsMenuOnClickOutside(e) {
+    const btn = document.getElementById("settingsDropdownBtn");
+    const menu = document.getElementById("settingsMenu");
+    if (!menu || !btn) return;
+
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      closeSettingsMenu();
+    }
+  }
+
+  function openAppsModal() {
+    const modal = document.getElementById("appsModal");
+    if (!modal) { showToast("❌ حدث خطأ في فتح النافذة"); return; }
+    loadAppsFromFirebase();
+    modal.classList.add("active");
+    renderAppsList();
+  }
+
+  function closeAppsModal() {
+    const modal = document.getElementById("appsModal");
+    if (modal) modal.classList.remove("active");
+  }
 
   document.addEventListener("DOMContentLoaded", function() { 
-    // Initialize screen orientation fix
     initScreenOrientation();
     
-    const dropdownBtn = document.getElementById("settingsDropdownBtn"); 
-    if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu); 
+    // Settings button setup
+    (function setupSettingsButton() {
+      const btn = document.getElementById("settingsDropdownBtn");
+      const menu = document.getElementById("settingsMenu");
+
+      if (!btn || !menu) {
+        console.error("Settings elements not found!");
+        return;
+      }
+
+      // Make sure menu is hidden initially
+      menu.style.display = "none";
+      menu.classList.remove("active");
+
+      // Click handler
+      btn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSettingsMenu(e);
+        return false;
+      };
+
+      // Touch handler for mobile
+      btn.ontouchstart = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSettingsMenu(e);
+        return false;
+      };
+
+      console.log("Settings button setup complete");
+    })();
     document.addEventListener("click", closeSettingsMenuOnClickOutside); 
+    
     const googleLogoutMenuItem = document.getElementById("googleLogoutMenuItem"); 
     if (googleLogoutMenuItem) googleLogoutMenuItem.addEventListener("click", function() { googleLogout(); }); 
     const adminLoginMenuItem = document.getElementById("adminLoginMenuItem"); 
@@ -1670,7 +1851,10 @@
     const maintenanceMenuItem = document.getElementById("maintenanceMenuItem"); 
     if (maintenanceMenuItem) maintenanceMenuItem.addEventListener("click", function() { openMaintenanceModal(); }); 
     const appsMenuItem = document.getElementById("appsMenuItem"); 
-    if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); }); 
+    if (appsMenuItem) {
+      appsMenuItem.removeEventListener("click", openAppsModal);
+      appsMenuItem.addEventListener("click", openAppsModal);
+    }
     const manageAppsMenuItem = document.getElementById("manageAppsMenuItem"); 
     if (manageAppsMenuItem) manageAppsMenuItem.addEventListener("click", function() { openManageAppsModal(); }); 
     const installAppMenuItem = document.getElementById("installAppMenuItem"); 
@@ -1694,8 +1878,8 @@
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() { try { } catch (e) { console.error("Initialization error:", e); hideLoader(); } });
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); removePresence(); });
-  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); } };
-  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); } });
+  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); } };
+  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); } });
 </script>
 </body>
 </html>
