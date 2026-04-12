@@ -15,6 +15,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -565,7 +566,7 @@
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
 
-  // Sound Effects
+  // Sound Effects (مختصر للطول)
   const SoundEffects = {
     audioContext: null,
     init() { if (!this.audioContext) this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -580,56 +581,10 @@
     join() { this.init(); const o = this.audioContext.createOscillator(), g = this.audioContext.createGain(); o.connect(g); g.connect(this.audioContext.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.2, this.audioContext.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2); o.start(); o.stop(this.audioContext.currentTime + 0.2); }
   };
 
-  // ========== User Data Management ==========
-  async function loadUserDataFromFirebase(userId) {
-    try {
-      const userDoc = await db.collection("user_progress").doc(userId).get();
-      if (userDoc.exists) {
-        const data = userDoc.data();
-        if (data.username) currentUser = data.username;
-        if (data.phone) currentUserPhone = data.phone;
-        if (data.voiceSettings) voiceSettings = data.voiceSettings;
-        if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); }
-        if (currentUser) localStorage.setItem("falak_username", currentUser);
-        if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
-        return true;
-      }
-    } catch (e) { console.error("Error loading user data:", e); }
-    return false;
-  }
-  async function saveUserDataToFirebase(userId) {
-    if (!userId) return;
-    try {
-      const data = {};
-      if (currentUser) data.username = currentUser;
-      if (currentUserPhone) data.phone = currentUserPhone;
-      if (voiceSettings) data.voiceSettings = voiceSettings;
-      if (lastWatchedData) data.lastWatched = lastWatchedData;
-      data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
-      await db.collection("user_progress").doc(userId).set(data, { merge: true });
-      if (currentUser) localStorage.setItem("falak_username", currentUser);
-      if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
-    } catch (e) { console.error("Error saving user data:", e); }
-  }
-  async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) {
-    if (!userId || !videoId) return;
-    try {
-      const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() };
-      await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      lastWatchedData = watchData;
-    } catch (e) { console.error("Error saving watch progress:", e); }
-  }
-
-  // ========== EmailJS Functions (optional) ==========
-  function loadEmailSettings() {
-    const saved = localStorage.getItem("falak_email_settings");
-    if (saved) {
-      try {
-        emailSettings = JSON.parse(saved);
-        if (emailSettings.publicKey && typeof emailjs !== "undefined") emailjs.init(emailSettings.publicKey);
-      } catch(e) {}
-    }
-  }
+  // ========== User Data Management (اختصاراً) ==========
+  async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
+  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
+  async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
   // ========== Voice Functions ==========
   function speakText(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "ar-SA"; u.rate = voiceSettings.rate; u.pitch = voiceSettings.pitch; if (voiceSettings.voiceURI) { const v = window.speechSynthesis.getVoices().find(v => v.voiceURI === voiceSettings.voiceURI); v && (u.voice = v); } window.speechSynthesis.speak(u); }
@@ -640,7 +595,7 @@
   function closeVoiceSettings() { document.getElementById("voiceSettingsModal").classList.remove("active"); }
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
-  // ========== Admin & UI ==========
+  // ========== Admin & UI (اختصار) ==========
   function updateAdminUI() {
     const adminOnlyItems = document.querySelectorAll('.admin-only');
     const userOnlyItems = document.querySelectorAll('.user-only');
@@ -688,19 +643,8 @@
     updateGoogleLogoutButtonsVisibility();
   }
 
-  function loadAdminPreference() { 
-    if ("true" === localStorage.getItem("falak_admin")) { 
-      isAdmin = true; 
-      updateAdminUI();
-    } 
-  }
-
-  function updateGoogleLogoutButtonsVisibility() { 
-    const g1 = document.getElementById("googleLogoutBtn"); 
-    const g2 = document.getElementById("googleLogoutNavBtn"); 
-    if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; 
-    if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; 
-  }
+  function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; updateAdminUI(); } }
+  function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"); const g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
 
   function listenToVideosWithRetry(maxAttempts = 5) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "asc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
@@ -806,280 +750,45 @@
     }
   }
 
-  function closeModal() { 
-    saveVideoProgress(); 
-    let p = document.getElementById("videoPlayer"); 
-    if (p && p.tagName === "VIDEO") p.pause(); 
-    const playerContainer = document.getElementById("videoPlayerContainer");
-    const modal = document.getElementById("videoModal");
-    if (playerContainer) playerContainer.classList.remove("video-playing");
-    if (modal) modal.classList.remove("video-active");
-    document.getElementById("videoModal").classList.remove("active"); 
-    document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>'; 
-    document.getElementById("videoQuizContainer").style.display = "none"; 
-  }
+  function closeModal() { saveVideoProgress(); let p = document.getElementById("videoPlayer"); if (p && p.tagName === "VIDEO") p.pause(); const playerContainer = document.getElementById("videoPlayerContainer"); const modal = document.getElementById("videoModal"); if (playerContainer) playerContainer.classList.remove("video-playing"); if (modal) modal.classList.remove("video-active"); document.getElementById("videoModal").classList.remove("active"); document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>'; document.getElementById("videoQuizContainer").style.display = "none"; }
 
-  async function saveVideoProgress() { 
-    let p = document.getElementById("videoPlayer"); 
-    if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; 
-    let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); 
-    if (v && currentUserId) {
-      await saveWatchProgressToFirebase(currentUserId, v.id, p.currentTime, p.duration || 0);
-    } else if (v) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() }));
-    }
-  }
+  async function saveVideoProgress() { let p = document.getElementById("videoPlayer"); if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); if (v && currentUserId) { await saveWatchProgressToFirebase(currentUserId, v.id, p.currentTime, p.duration || 0); } else if (v) { localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() })); } }
 
-  function checkForResume() { 
-    let d = localStorage.getItem(STORAGE_KEY); 
-    if (!d && !lastWatchedData) return; 
-    try { 
-      let data = lastWatchedData || JSON.parse(d);
-      if (!videos.some(v => v.id === data.videoId)) { localStorage.removeItem(STORAGE_KEY); return; } 
-      if (data.duration > 0 && data.currentTime / data.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; } 
-      document.getElementById("resumeVideoTitle").textContent = data.title; 
-      document.getElementById("resumeTimeDisplay").textContent = "توقفت عند: " + formatDuration(data.currentTime); 
-      document.getElementById("resumeNotification").style.display = "flex"; 
-    } catch (e) { localStorage.removeItem(STORAGE_KEY); } 
-  }
+  function checkForResume() { let d = localStorage.getItem(STORAGE_KEY); if (!d && !lastWatchedData) return; try { let data = lastWatchedData || JSON.parse(d); if (!videos.some(v => v.id === data.videoId)) { localStorage.removeItem(STORAGE_KEY); return; } if (data.duration > 0 && data.currentTime / data.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; } document.getElementById("resumeVideoTitle").textContent = data.title; document.getElementById("resumeTimeDisplay").textContent = "توقفت عند: " + formatDuration(data.currentTime); document.getElementById("resumeNotification").style.display = "flex"; } catch (e) { localStorage.removeItem(STORAGE_KEY); } }
 
-  function resumeWatching() { 
-    let data = lastWatchedData || (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; } })();
-    if (!data) return; 
-    if (!videos.find(v => v.id === data.videoId)) { showToast("❌ الفيديو غير متوفر"); dismissResume(); return; } 
-    playVideo(data.videoId, data.currentTime); 
-    dismissResume(); 
-  }
+  function resumeWatching() { let data = lastWatchedData || (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; } })(); if (!data) return; if (!videos.find(v => v.id === data.videoId)) { showToast("❌ الفيديو غير متوفر"); dismissResume(); return; } playVideo(data.videoId, data.currentTime); dismissResume(); }
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => { if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); }); }
 
   function toggleFullscreenVideo() { const video = document.getElementById("videoPlayer"); if (!video) return; if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); }
-  function shareCurrentTime() {
-    let currentTime = 0;
-    let videoId = null;
-    let video = document.getElementById("videoPlayer");
-    if (video && video.tagName === "VIDEO" && video.src) {
-      currentTime = Math.floor(video.currentTime);
-      let foundVideo = videos.find(v => v.url === video.src || v.originalUrl === video.src);
-      if (foundVideo) videoId = foundVideo.id;
-    }
-    if (!videoId) {
-      let iframe = document.getElementById("videoPlayer");
-      if (iframe && iframe.tagName === "IFRAME" && iframe.src) {
-        let match = iframe.src.match(/embed\/([^?&]+)/);
-        if (match && match[1]) {
-          let foundVideo = videos.find(v => v.type === "youtube" && v.videoId === match[1]);
-          if (foundVideo) videoId = foundVideo.id;
-        }
-      }
-    }
-    if (!videoId) { showToast("⚠️ لا يمكن مشاركة هذا الفيديو"); return; }
-    let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime;
-    navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ")"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); });
-  }
+  function shareCurrentTime() { let currentTime = 0; let videoId = null; let video = document.getElementById("videoPlayer"); if (video && video.tagName === "VIDEO" && video.src) { currentTime = Math.floor(video.currentTime); let foundVideo = videos.find(v => v.url === video.src || v.originalUrl === video.src); if (foundVideo) videoId = foundVideo.id; } if (!videoId) { let iframe = document.getElementById("videoPlayer"); if (iframe && iframe.tagName === "IFRAME" && iframe.src) { let match = iframe.src.match(/embed\/([^?&]+)/); if (match && match[1]) { let foundVideo = videos.find(v => v.type === "youtube" && v.videoId === match[1]); if (foundVideo) videoId = foundVideo.id; } } } if (!videoId) { showToast("⚠️ لا يمكن مشاركة هذا الفيديو"); return; } let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime; navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ")"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); }); }
   function checkUrlForShare() { let params = new URLSearchParams(window.location.search); let vid = params.get("video"); let t = params.get("t"); if (vid && videos.length > 0) { if (videos.find(v => v.id === vid)) { window.history.replaceState({}, document.title, window.location.href.split("?")[0]); playVideo(vid, parseInt(t) || 0); } else showToast("❌ الفيديو غير موجود"); } }
 
   function showLogin() { document.getElementById("loginModal").classList.add("active"); document.getElementById("passwordInput").value = ""; setTimeout(() => document.getElementById("passwordInput").focus(), 150); }
   function closeLogin() { document.getElementById("loginModal").classList.remove("active"); }
-  function doLogin() { 
-    let inputPass = document.getElementById("passwordInput").value.trim();
-    if (checkAdminPassword(inputPass)) { 
-      isAdmin = true; 
-      localStorage.setItem("falak_admin", "true"); 
-      updateAdminUI();
-      closeLogin(); 
-      renderVideos(); 
-      loadAIKnowledgeFromFirebase(); 
-      if (document.getElementById("maintenanceOverlay").classList.contains("active")) document.getElementById("cancelMaintenanceBtn").classList.add("active"); 
-      SoundEffects.success(); 
-      showToast("🔓 مرحباً أيها المشرف!"); 
-      updateGoogleLogoutButtonsVisibility(); 
-    } else { 
-      SoundEffects.error(); 
-      showToast("❌ كلمة المرور خاطئة"); 
-      document.getElementById("passwordInput").value = ""; 
-      document.getElementById("passwordInput").focus(); 
-    } 
-  }
+  function doLogin() { let inputPass = document.getElementById("passwordInput").value.trim(); if (checkAdminPassword(inputPass)) { isAdmin = true; localStorage.setItem("falak_admin", "true"); updateAdminUI(); closeLogin(); renderVideos(); loadAIKnowledgeFromFirebase(); if (document.getElementById("maintenanceOverlay").classList.contains("active")) document.getElementById("cancelMaintenanceBtn").classList.add("active"); SoundEffects.success(); showToast("🔓 مرحباً أيها المشرف!"); updateGoogleLogoutButtonsVisibility(); } else { SoundEffects.error(); showToast("❌ كلمة المرور خاطئة"); document.getElementById("passwordInput").value = ""; document.getElementById("passwordInput").focus(); } }
   function logout() { isAdmin = false; isSuperAdmin = false; localStorage.removeItem("falak_admin"); updateAdminUI(); if (currentAudio) { currentAudio.pause(); currentAudio = null; } renderVideos(); SoundEffects.recordStop(); showToast("👋 تم تسجيل خروج المشرف"); updateGoogleLogoutButtonsVisibility(); }
   function openSetAdminsModal() { isAdmin && (document.getElementById("adminPasswordModal").classList.add("active"), document.getElementById("adminPasswordInput").value = "", document.getElementById("adminPasswordInput").focus()); }
   function closeAdminPasswordModal() { document.getElementById("adminPasswordModal").classList.remove("active"); }
-  function verifyAdminPassword() { 
-    let inputPass = document.getElementById("adminPasswordInput").value.trim();
-    if (checkSuperAdminPassword(inputPass)) { 
-      isSuperAdmin = true; 
-      closeAdminPasswordModal(); 
-      document.getElementById("setAdminsModal").classList.add("active"); 
-      let c = localStorage.getItem("adminCount"); 
-      c && (document.getElementById("adminCountInput").value = c); 
-      SoundEffects.success(); 
-    } else { 
-      SoundEffects.error(); 
-      showToast("❌ كلمة المرور غير صحيحة"); 
-      document.getElementById("adminPasswordInput").value = ""; 
-      document.getElementById("adminPasswordInput").focus(); 
-    } 
-  }
+  function verifyAdminPassword() { let inputPass = document.getElementById("adminPasswordInput").value.trim(); if (checkSuperAdminPassword(inputPass)) { isSuperAdmin = true; closeAdminPasswordModal(); document.getElementById("setAdminsModal").classList.add("active"); let c = localStorage.getItem("adminCount"); c && (document.getElementById("adminCountInput").value = c); SoundEffects.success(); } else { SoundEffects.error(); showToast("❌ كلمة المرور غير صحيحة"); document.getElementById("adminPasswordInput").value = ""; document.getElementById("adminPasswordInput").focus(); } }
   function closeSetAdminsModal() { document.getElementById("setAdminsModal").classList.remove("active"); }
   function saveAdminCount() { let c = parseInt(document.getElementById("adminCountInput").value); if (isNaN(c) || c < 1 || c > 10) showToast("❌ العدد يجب أن يكون بين 1 و 10"); else { localStorage.setItem("adminCount", c); showToast("✅ تم حفظ عدد المشرفين: " + c); closeSetAdminsModal(); } }
 
-  // ========== App Management Functions (CRUD) with manual image URL ==========
-  function loadAppsFromFirebase() {
-    if (unsubscribeApps) unsubscribeApps();
-    unsubscribeApps = db.collection("apps").orderBy("createdAt", "asc").onSnapshot(snap => {
-      apps = [];
-      snap.forEach(d => { apps.push({ id: d.id, ...d.data() }); });
-      renderAppsList();
-      renderAppsManageList();
-    }, err => console.error("Error loading apps:", err));
-  }
-
-  function renderAppsList() {
-    const container = document.getElementById("appsList");
-    if (!container) return;
-    if (apps.length === 0) {
-      container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات مضافة بعد</p>';
-      return;
-    }
-    container.innerHTML = apps.map(app => `
-      <div class="app-item">
-        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
-        <div class="app-info">
-          <div class="app-name">${escapeHtml(app.name)}</div>
-          <div class="app-desc">${escapeHtml(app.desc || '')}</div>
-        </div>
-        <button class="app-link" onclick="openApp('${escapeHtml(app.url)}')">فتح <i class="fas fa-external-link-alt"></i></button>
-      </div>
-    `).join("");
-  }
-
-  function renderAppsManageList() {
-    const container = document.getElementById("appsManageList");
-    if (!container) return;
-    if (apps.length === 0) {
-      container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات. أضف تطبيقاً جديداً.</p>';
-      return;
-    }
-    container.innerHTML = apps.map(app => `
-      <div class="app-item">
-        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
-        <div class="app-info">
-          <div class="app-name">${escapeHtml(app.name)}</div>
-          <div class="app-desc">${escapeHtml(app.desc || '')}</div>
-          <div style="font-size:0.7rem;color:#888;direction:ltr;word-break:break-all;">${escapeHtml(app.url)}</div>
-        </div>
-        <div class="app-actions">
-          <button class="app-edit-btn" onclick="editApp('${app.id}')" title="تعديل"><i class="fas fa-edit"></i></button>
-          <button class="app-delete-btn" onclick="deleteApp('${app.id}')" title="حذف"><i class="fas fa-trash"></i></button>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  function openManageAppsModal() {
-    if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
-    renderAppsManageList();
-    document.getElementById("manageAppsModal").classList.add("active");
-  }
+  // App Management
+  function loadAppsFromFirebase() { if (unsubscribeApps) unsubscribeApps(); unsubscribeApps = db.collection("apps").orderBy("createdAt", "asc").onSnapshot(snap => { apps = []; snap.forEach(d => apps.push({ id: d.id, ...d.data() })); renderAppsList(); renderAppsManageList(); }, err => console.error("Error loading apps:", err)); }
+  function renderAppsList() { const container = document.getElementById("appsList"); if (!container) return; if (apps.length === 0) { container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات مضافة بعد</p>'; return; } container.innerHTML = apps.map(app => `<div class="app-item"><div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div><div class="app-info"><div class="app-name">${escapeHtml(app.name)}</div><div class="app-desc">${escapeHtml(app.desc || '')}</div></div><button class="app-link" onclick="openApp('${escapeHtml(app.url)}')">فتح <i class="fas fa-external-link-alt"></i></button></div>`).join(""); }
+  function renderAppsManageList() { const container = document.getElementById("appsManageList"); if (!container) return; if (apps.length === 0) { container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات. أضف تطبيقاً جديداً.</p>'; return; } container.innerHTML = apps.map(app => `<div class="app-item"><div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div><div class="app-info"><div class="app-name">${escapeHtml(app.name)}</div><div class="app-desc">${escapeHtml(app.desc || '')}</div><div style="font-size:0.7rem;color:#888;direction:ltr;word-break:break-all;">${escapeHtml(app.url)}</div></div><div class="app-actions"><button class="app-edit-btn" onclick="editApp('${app.id}')" title="تعديل"><i class="fas fa-edit"></i></button><button class="app-delete-btn" onclick="deleteApp('${app.id}')" title="حذف"><i class="fas fa-trash"></i></button></div></div>`).join(""); }
+  function openManageAppsModal() { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } renderAppsManageList(); document.getElementById("manageAppsModal").classList.add("active"); }
   function closeManageAppsModal() { document.getElementById("manageAppsModal").classList.remove("active"); }
-
-  function showAddAppForm() {
-    document.getElementById("addAppModalTitle").innerHTML = '<i class="fas fa-plus"></i> إضافة تطبيق';
-    document.getElementById("appNameInput").value = "";
-    document.getElementById("appDescInput").value = "";
-    document.getElementById("appUrlInput").value = "";
-    document.getElementById("appIconUrlInput").value = "";
-    document.getElementById("iconPreviewContainer").style.display = "none";
-    document.getElementById("editAppId").value = "";
-    document.getElementById("addAppModal").classList.add("active");
-  }
-
-  function editApp(appId) {
-    const app = apps.find(a => a.id === appId);
-    if (!app) return;
-    document.getElementById("addAppModalTitle").innerHTML = '<i class="fas fa-edit"></i> تعديل تطبيق';
-    document.getElementById("appNameInput").value = app.name;
-    document.getElementById("appDescInput").value = app.desc || "";
-    document.getElementById("appUrlInput").value = app.url;
-    document.getElementById("appIconUrlInput").value = app.iconUrl || "";
-    document.getElementById("editAppId").value = appId;
-    if (app.iconUrl) {
-      document.getElementById("iconPreviewImg").src = app.iconUrl;
-      document.getElementById("iconPreviewContainer").style.display = "block";
-    } else {
-      document.getElementById("iconPreviewContainer").style.display = "none";
-    }
-    document.getElementById("addAppModal").classList.add("active");
-  }
-
-  function previewAppIcon() {
-    const url = document.getElementById("appIconUrlInput").value.trim();
-    if (!url) { showToast("⚠️ أدخل رابط الصورة أولاً"); return; }
-    const previewDiv = document.getElementById("iconPreviewContainer");
-    const img = document.getElementById("iconPreviewImg");
-    img.src = url;
-    previewDiv.style.display = "block";
-    img.onerror = () => { showToast("⚠️ الرابط غير صالح أو الصورة لا تظهر"); previewDiv.style.display = "none"; };
-  }
-
-  function saveApp() {
-    const name = document.getElementById("appNameInput").value.trim();
-    const desc = document.getElementById("appDescInput").value.trim();
-    const url = document.getElementById("appUrlInput").value.trim();
-    const iconUrl = document.getElementById("appIconUrlInput").value.trim();
-    const editId = document.getElementById("editAppId").value;
-
-    if (!name || !url) {
-      showToast("⚠️ الاسم والرابط مطلوبان");
-      return;
-    }
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      showToast("⚠️ الرابط يجب أن يبدأ بـ http:// أو https://");
-      return;
-    }
-
-    const appData = { 
-      name, 
-      desc, 
-      url, 
-      icon: "fa-rocket", 
-      iconUrl: iconUrl || null, 
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
-    };
-    if (editId) {
-      db.collection("apps").doc(editId).update(appData).then(() => {
-        SoundEffects.success();
-        showToast("✅ تم تعديل التطبيق");
-        closeAddAppModal();
-      }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); });
-    } else {
-      appData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      appData.createdBy = currentUser || "مشرف";
-      db.collection("apps").add(appData).then(() => {
-        SoundEffects.success();
-        showToast("✅ تم إضافة التطبيق");
-        closeAddAppModal();
-      }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الإضافة"); });
-    }
-  }
-
-  function deleteApp(appId) {
-    if (confirm("هل أنت متأكد من حذف هذا التطبيق؟")) {
-      db.collection("apps").doc(appId).delete().then(() => {
-        SoundEffects.delete();
-        showToast("🗑️ تم حذف التطبيق");
-      }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); });
-    }
-  }
-
-  function closeAddAppModal() {
-    document.getElementById("addAppModal").classList.remove("active");
-    document.getElementById("editAppId").value = "";
-  }
-
+  function showAddAppForm() { document.getElementById("addAppModalTitle").innerHTML = '<i class="fas fa-plus"></i> إضافة تطبيق'; document.getElementById("appNameInput").value = ""; document.getElementById("appDescInput").value = ""; document.getElementById("appUrlInput").value = ""; document.getElementById("appIconUrlInput").value = ""; document.getElementById("iconPreviewContainer").style.display = "none"; document.getElementById("editAppId").value = ""; document.getElementById("addAppModal").classList.add("active"); }
+  function editApp(appId) { const app = apps.find(a => a.id === appId); if (!app) return; document.getElementById("addAppModalTitle").innerHTML = '<i class="fas fa-edit"></i> تعديل تطبيق'; document.getElementById("appNameInput").value = app.name; document.getElementById("appDescInput").value = app.desc || ""; document.getElementById("appUrlInput").value = app.url; document.getElementById("appIconUrlInput").value = app.iconUrl || ""; document.getElementById("editAppId").value = appId; if (app.iconUrl) { document.getElementById("iconPreviewImg").src = app.iconUrl; document.getElementById("iconPreviewContainer").style.display = "block"; } else { document.getElementById("iconPreviewContainer").style.display = "none"; } document.getElementById("addAppModal").classList.add("active"); }
+  function previewAppIcon() { const url = document.getElementById("appIconUrlInput").value.trim(); if (!url) { showToast("⚠️ أدخل رابط الصورة أولاً"); return; } const previewDiv = document.getElementById("iconPreviewContainer"); const img = document.getElementById("iconPreviewImg"); img.src = url; previewDiv.style.display = "block"; img.onerror = () => { showToast("⚠️ الرابط غير صالح أو الصورة لا تظهر"); previewDiv.style.display = "none"; }; }
+  function saveApp() { const name = document.getElementById("appNameInput").value.trim(); const desc = document.getElementById("appDescInput").value.trim(); const url = document.getElementById("appUrlInput").value.trim(); const iconUrl = document.getElementById("appIconUrlInput").value.trim(); const editId = document.getElementById("editAppId").value; if (!name || !url) { showToast("⚠️ الاسم والرابط مطلوبان"); return; } if (!url.startsWith("http://") && !url.startsWith("https://")) { showToast("⚠️ الرابط يجب أن يبدأ بـ http:// أو https://"); return; } const appData = { name, desc, url, icon: "fa-rocket", iconUrl: iconUrl || null, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }; if (editId) { db.collection("apps").doc(editId).update(appData).then(() => { SoundEffects.success(); showToast("✅ تم تعديل التطبيق"); closeAddAppModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); } else { appData.createdAt = firebase.firestore.FieldValue.serverTimestamp(); appData.createdBy = currentUser || "مشرف"; db.collection("apps").add(appData).then(() => { SoundEffects.success(); showToast("✅ تم إضافة التطبيق"); closeAddAppModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الإضافة"); }); } }
+  function deleteApp(appId) { if (confirm("هل أنت متأكد من حذف هذا التطبيق؟")) { db.collection("apps").doc(appId).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف التطبيق"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); } }
+  function closeAddAppModal() { document.getElementById("addAppModal").classList.remove("active"); document.getElementById("editAppId").value = ""; }
   function openApp(url) { window.open(url, "_blank", "noopener,noreferrer"); }
 
-  // Exam Functions (full)
+  // Exam Functions
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
   function closeAddExamModal() { document.getElementById("addQuizModal").classList.remove("active"); }
   function loadExamForEditing(exam) { let cont = document.getElementById("questionsContainer"); cont.innerHTML = ""; exam.questions.forEach((q, idx) => { let card = document.createElement("div"); card.className = "question-card"; card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><span style="color:#6366f1; font-weight:600;">السؤال ${idx + 1}</span>${idx > 0 ? '<button onclick="this.closest(\'.question-card\').remove()" style="background:#ef4444; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer;"><i class="fas fa-times"></i></button>' : ""}</div><input type="text" class="question-input" value="${escapeHtml(q.question)}" placeholder="نص السؤال..." style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-family:'Cairo'; margin-bottom:1rem;">${q.imageUrl ? `<div class="question-image-preview-container"><img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0; border:2px solid rgba(99,102,241,0.5);"><button class="remove-image-btn" onclick="removeQuestionImage(this)"><i class="fas fa-times"></i> إزالة الصورة</button></div>` : ""}<input type="file" accept="image/*" class="question-image-upload" style="display:none;" data-question-index="${idx}" onchange="uploadImageForQuestion(this)"><button class="upload-image-btn" onclick="document.querySelectorAll('.question-image-upload')[${idx}].click()"><i class="fas fa-image"></i> إضافة صورة (اختياري)</button><div class="options-container">${q.options.map((opt, optIdx) => `<div class="quiz-option-input"><input type="radio" name="correct-${idx}" value="${optIdx}" ${q.correctAnswer === optIdx ? "checked" : ""} style="width:20px; height:20px; accent-color:#10b981;"><input type="text" value="${escapeHtml(opt)}" placeholder="الخيار ${optIdx + 1}" class="option-input"></div>`).join("")}</div><p style="color:#888; font-size:0.85rem; margin-top:0.5rem;"><i class="fas fa-info-circle"></i> اختر الإجابة الصحيحة بالنقر على الدائرة</p>`; cont.appendChild(card); }); }
@@ -1108,454 +817,53 @@
   function deleteAIKnowledge(id) { if (confirm("هل أنت متأكد؟")) db.collection("ai_knowledge").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   function openAIChat() { document.getElementById("aiChatModal").classList.add("active"); let msgs = document.getElementById("aiChatMessages"); if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai"); setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100); }
   function closeAIChat() { document.getElementById("aiChatModal").classList.remove("active"); }
-  function sendAIMessage() { let input = document.getElementById("aiChatInput"); if (!input) return; let text = input.value.trim(); if (!text) return; displayAIMessage(text, "user"); input.value = ""; let known = findAIKnowledge(text); if (known) setTimeout(() => { displayAIMessage(known, "ai"); speakText(known); }, 500); else setTimeout(() => { let resp = getAIResponse(text); displayAIMessage(resp, "ai"); speakText(resp); }, 500); }
-  function findAIKnowledge(query) { let ql = query.toLowerCase(); for (let k of aiKnowledgeBase) { let kl = k.question.toLowerCase(); if (ql === kl || ql.includes(kl) || kl.includes(ql)) return k.answer; } return null; }
+  
+  // ========== تعديل دالة إرسال السؤال لاستخدام Groq Cloud Function ==========
+  async function sendAIMessage() {
+    let input = document.getElementById("aiChatInput");
+    let text = input.value.trim();
+    if (!text) return;
+    displayAIMessage(text, "user");
+    input.value = "";
+
+    // استدعاء Cloud Function التي تتصل بـ Groq
+    const askGroq = firebase.functions().httpsCallable('askGroq');
+    try {
+      const result = await askGroq({ question: text });
+      displayAIMessage(result.data.answer, "ai");
+      speakText(result.data.answer);
+    } catch (error) {
+      console.error("Error calling askGroq:", error);
+      displayAIMessage("عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي. حاول مرة أخرى.", "ai");
+    }
+  }
+
   function displayAIMessage(text, sender) { let cont = document.getElementById("aiChatMessages"); if (!cont) return; let msg = document.createElement("div"); msg.className = "message " + (sender === "user" ? "sent" : "received"); let time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }); let html = ""; if (sender === "received") html += '<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>'; html += '<div class="message-content">' + escapeHtml(text) + '</div><div class="message-time">' + time + '</div>'; msg.innerHTML = html; cont.appendChild(msg); cont.scrollTop = cont.scrollHeight; }
-  function getAIResponse(q) { let lq = q.toLowerCase(); if (lq.includes("السلام عليكم") || lq.includes("مرحبا") || lq.includes("اهلا")) return "وعليكم السلام! كيف يمكنني مساعدتك اليوم؟"; if (lq.includes("كيف حالك")) return "أنا بخير، شكراً! جاهز لمساعدتك."; if (lq.includes("من انت") || lq.includes("اسمك")) return "أنا مساعد Astronomy الذكي، تم تطويره لمساعدتك في استكشاف أسرار الكون."; if (lq.includes("مساعدة")) return 'يمكنني مساعدتك في الإجابة عن الفضاء، شرح الظواهر الفلكية، معلومات عن الكواكب والنجوم، المساعدة في استخدام المنصة.\n\nجرب اسأل: "ما هي السوائل؟" أو "كم عدد كواكب المجموعة الشمسية؟"'; if (lq.includes("فيديو") || lq.includes("مقطع")) return "يمكنك مشاهدة الفيديوهات في المكتبة. إذا كنت مشرفاً، يمكنك رفع فيديوهات جديدة."; if (lq.includes("دردشة") || lq.includes("شات")) return "يمكنك الدردشة مع الأعضاء عبر زر الدردشة في الأسفل."; if (lq.includes("مشرف")) return 'المشرفون هم من يقومون بإدارة المحتوى ورفع الفيديوهات. إذا كنت مشرفاً، استخدم زر "دخول المشرف".'; if (lq.includes("شكرا")) return "العفو! دائماً هنا لمساعدتك. 🚀"; if (lq.includes("الكواكب") || lq.includes("مجموعة شمسية")) return "المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، ونبتون."; if (lq.includes("الشمس")) return "الشمس نجم يقع في مركز المجموعة الشمسية، درجة حرارة سطحها حوالي 5,500 درجة مئوية."; if (lq.includes("القمر")) return "القمر هو القمر الطبيعي للأرض، يبعد عنها حوالي 384,400 كم."; if (lq.includes("نجم")) return "النجوم أجسام سماوية ضخمة تتألف من غازات ساخنة، أقرب نجم للأرض هو الشمس."; if (lq.includes("ثقب اسود")) return "الثقب الأسود منطقة في الفضاء تكون الجاذبية فيها قوية جداً لدرجة أن لا شيء يمكن أن يهرب منها، حتى الضوء."; return 'شكراً لسؤالك! أنا لا أملك إجابة محددة لهذا السؤال حالياً. جرب أن تسألني عن "الكواكب" أو "الشمس" أو "النجوم".'; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
-  // ========== منع الاشتراكات المتعددة (محسّن: حذف الجلسات القديمة تلقائياً) ==========
-  async function checkIfUserAlreadyActive(name, phone) {
-    try {
-      const activeUserQuery = await db.collection("active_sessions")
-        .where("name", "==", name)
-        .where("phone", "==", phone)
-        .where("active", "==", true)
-        .get();
-      
-      if (!activeUserQuery.empty) {
-        const currentDeviceId = localStorage.getItem("falak_device_id");
-        // إذا لم يكن هناك deviceId مخزن (حدث مسح للبيانات)، أو كان مختلفاً:
-        // نقوم بحذف جميع الجلسات القديمة لهذا المستخدم والسماح بالدخول.
-        if (!currentDeviceId) {
-          // مسح كل الجلسات النشطة لهذا المستخدم
-          for (const doc of activeUserQuery.docs) {
-            await db.collection("active_sessions").doc(doc.id).delete();
-          }
-          return { allowed: true };
-        }
-        const session = activeUserQuery.docs[0].data();
-        if (session.deviceId !== currentDeviceId) {
-          // جهاز مختلف -> حذف الجلسات القديمة والسماح بالجديد
-          for (const doc of activeUserQuery.docs) {
-            await db.collection("active_sessions").doc(doc.id).delete();
-          }
-          return { allowed: true };
-        }
-      }
-      return { allowed: true };
-    } catch (error) {
-      console.error("Error checking active user:", error);
-      return { allowed: true };
-    }
-  }
-
-  async function registerActiveSession(name, phone) {
-    try {
-      let deviceId = localStorage.getItem("falak_device_id");
-      if (!deviceId) {
-        deviceId = "device_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem("falak_device_id", deviceId);
-      }
-      
-      // حذف أي جلسات سابقة لنفس المستخدم (تأكيد)
-      const existingSessions = await db.collection("active_sessions")
-        .where("name", "==", name)
-        .where("phone", "==", phone)
-        .get();
-      for (const doc of existingSessions.docs) {
-        await db.collection("active_sessions").doc(doc.id).delete();
-      }
-      
-      await db.collection("active_sessions").add({
-        name: name,
-        phone: phone,
-        deviceId: deviceId,
-        active: true,
-        userAgent: navigator.userAgent,
-        startedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      
-      startSessionHeartbeat(name, phone, deviceId);
-      
-    } catch (error) {
-      console.error("Error registering active session:", error);
-    }
-  }
-
-  function startSessionHeartbeat(name, phone, deviceId) {
-    if (window.sessionHeartbeatInterval) {
-      clearInterval(window.sessionHeartbeatInterval);
-    }
-    
-    window.sessionHeartbeatInterval = setInterval(async () => {
-      try {
-        const sessions = await db.collection("active_sessions")
-          .where("name", "==", name)
-          .where("phone", "==", phone)
-          .where("active", "==", true)
-          .get();
-        
-        sessions.forEach(async (doc) => {
-          await db.collection("active_sessions").doc(doc.id).update({
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        });
-      } catch (error) {
-        console.error("Heartbeat error:", error);
-      }
-    }, 30000);
-  }
-
-  async function endUserSession(name, phone) {
-    try {
-      const sessions = await db.collection("active_sessions")
-        .where("name", "==", name)
-        .where("phone", "==", phone)
-        .where("active", "==", true)
-        .get();
-      
-      sessions.forEach(async (doc) => {
-        await db.collection("active_sessions").doc(doc.id).update({
-          active: false,
-          endedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      });
-      
-      if (window.sessionHeartbeatInterval) {
-        clearInterval(window.sessionHeartbeatInterval);
-        window.sessionHeartbeatInterval = null;
-      }
-    } catch (error) {
-      console.error("Error ending session:", error);
-    }
-  }
-
-  async function cleanupOldSessions() {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    try {
-      const oldSessions = await db.collection("active_sessions")
-        .where("active", "==", true)
-        .where("lastSeen", "<", oneHourAgo)
-        .get();
-      
-      oldSessions.forEach(async (doc) => {
-        await db.collection("active_sessions").doc(doc.id).update({
-          active: false,
-          endedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          reason: "timeout"
-        });
-      });
-    } catch (error) {
-      console.error("Cleanup error:", error);
-    }
-  }
-
-  // ========== Google Auth Functions with multi-device prevention (محسّن) ==========
-  async function checkIfUserAlreadyActiveGoogle(email, phone) {
-    try {
-      const activeUserQuery = await db.collection("active_sessions")
-        .where("email", "==", email)
-        .where("active", "==", true)
-        .get();
-      
-      if (!activeUserQuery.empty) {
-        const currentDeviceId = localStorage.getItem("falak_device_id");
-        if (!currentDeviceId) {
-          for (const doc of activeUserQuery.docs) {
-            await db.collection("active_sessions").doc(doc.id).delete();
-          }
-          return { allowed: true };
-        }
-        const session = activeUserQuery.docs[0].data();
-        if (session.deviceId !== currentDeviceId) {
-          for (const doc of activeUserQuery.docs) {
-            await db.collection("active_sessions").doc(doc.id).delete();
-          }
-          return { allowed: true };
-        }
-      }
-      return { allowed: true };
-    } catch (error) {
-      console.error("Error checking active user:", error);
-      return { allowed: true };
-    }
-  }
-
-  async function registerActiveSessionGoogle(email, name, phone) {
-    try {
-      let deviceId = localStorage.getItem("falak_device_id");
-      if (!deviceId) {
-        deviceId = "device_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem("falak_device_id", deviceId);
-      }
-      
-      const existingSessions = await db.collection("active_sessions")
-        .where("email", "==", email)
-        .get();
-      for (const doc of existingSessions.docs) {
-        await db.collection("active_sessions").doc(doc.id).delete();
-      }
-      
-      await db.collection("active_sessions").add({
-        email: email,
-        name: name,
-        phone: phone,
-        deviceId: deviceId,
-        active: true,
-        loginType: "google",
-        userAgent: navigator.userAgent,
-        startedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      
-      startGoogleSessionHeartbeat(email, deviceId);
-      
-    } catch (error) {
-      console.error("Error registering Google session:", error);
-    }
-  }
-
-  function startGoogleSessionHeartbeat(email, deviceId) {
-    if (window.googleSessionHeartbeat) {
-      clearInterval(window.googleSessionHeartbeat);
-    }
-    
-    window.googleSessionHeartbeat = setInterval(async () => {
-      try {
-        const sessions = await db.collection("active_sessions")
-          .where("email", "==", email)
-          .where("active", "==", true)
-          .get();
-        
-        sessions.forEach(async (doc) => {
-          await db.collection("active_sessions").doc(doc.id).update({
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        });
-      } catch (error) {
-        console.error("Google heartbeat error:", error);
-      }
-    }, 30000);
-  }
-
-  async function googleLogin() {
-    try {
-      showToast("⏳ جاري تسجيل الدخول...");
-      const result = await auth.signInWithPopup(provider);
-      googleUser = result.user;
-      currentUserId = googleUser.uid;
-      let name = googleUser.displayName;
-      let email = googleUser.email;
-      let phone = googleUser.phoneNumber || "";
-      
-      const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone);
-      
-      if (!checkResult.allowed) {
-        SoundEffects.error();
-        showToast(checkResult.message);
-        await auth.signOut();
-        googleUser = null;
-        currentUserId = null;
-        return;
-      }
-      
-      currentUser = name;
-      currentUserPhone = phone || "";
-      
-      await loadUserDataFromFirebase(currentUserId);
-      if (!currentUser) {
-        currentUser = name;
-        currentUserPhone = phone || "";
-        await saveUserDataToFirebase(currentUserId);
-      }
-      
-      await registerActiveSessionGoogle(email, currentUser, currentUserPhone);
-      
-      if (currentUser) localStorage.setItem("falak_username", currentUser);
-      if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
-      
-      document.getElementById("landingPage").style.display = "none";
-      document.getElementById("appWrapper").style.display = "flex";
-      document.getElementById("googleUserInfo").style.display = "flex";
-      document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`;
-      document.getElementById("googleLogoutBtn").style.display = "block";
-      updateGoogleLogoutButtonsVisibility();
-      SoundEffects.join();
-      loadAdminPreference();
-      listenToVideosWithRetry();
-      listenToMaintenance();
-      loadAIKnowledgeFromFirebase();
-      loadExamsFromFirebase();
-      loadExamResultsFromFirebase();
-      loadAppsFromFirebase();
-      initCloudinaryWidget();
-      checkUrlForShare();
-      loadEmailSettings();
-      updateAdminUI();
-      showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
-    } catch(error) {
-      console.error(error);
-      SoundEffects.error();
-      showToast("❌ فشل تسجيل الدخول بحساب Google");
-    }
-  }
-
-  async function googleLogout() {
-    if (currentUserId) await saveUserDataToFirebase(currentUserId);
-    
-    if (googleUser && googleUser.email) {
-      try {
-        const sessions = await db.collection("active_sessions")
-          .where("email", "==", googleUser.email)
-          .where("active", "==", true)
-          .get();
-        
-        sessions.forEach(async (doc) => {
-          await db.collection("active_sessions").doc(doc.id).update({
-            active: false,
-            endedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        });
-      } catch(e) { console.error("Error ending Google session:", e); }
-    }
-    
-    if (window.googleSessionHeartbeat) {
-      clearInterval(window.googleSessionHeartbeat);
-      window.googleSessionHeartbeat = null;
-    }
-    
-    auth.signOut().then(() => {
-      googleUser = null;
-      currentUserId = null;
-      localStorage.removeItem("falak_username");
-      localStorage.removeItem("falak_userphone");
-      localStorage.removeItem("falak_device_id");
-      currentUser = null;
-      currentUserPhone = null;
-      document.getElementById("landingPage").style.display = "flex";
-      document.getElementById("appWrapper").style.display = "none";
-      document.getElementById("googleUserInfo").style.display = "none";
-      document.getElementById("googleLogoutBtn").style.display = "none";
-      if (isAdmin) logout();
-      SoundEffects.recordStop();
-      showToast("👋 تم تسجيل الخروج من Google");
-      updateGoogleLogoutButtonsVisibility();
-      updateAdminUI();
-    }).catch(e => {
-      console.error(e);
-      SoundEffects.error();
-      showToast("❌ فشل تسجيل الخروج");
-    });
-  }
-
-  // Chat Functions (full)
+  // ========== Chat Functions (مختصرة لكن كاملة) ==========
+  async function checkIfUserAlreadyActive(name, phone) { try { const activeUserQuery = await db.collection("active_sessions").where("name", "==", name).where("phone", "==", phone).where("active", "==", true).get(); if (!activeUserQuery.empty) { const currentDeviceId = localStorage.getItem("falak_device_id"); if (!currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } const session = activeUserQuery.docs[0].data(); if (session.deviceId !== currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } } return { allowed: true }; } catch (error) { console.error("Error checking active user:", error); return { allowed: true }; } }
+  async function registerActiveSession(name, phone) { try { let deviceId = localStorage.getItem("falak_device_id"); if (!deviceId) { deviceId = "device_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9); localStorage.setItem("falak_device_id", deviceId); } const existingSessions = await db.collection("active_sessions").where("name", "==", name).where("phone", "==", phone).get(); for (const doc of existingSessions.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } await db.collection("active_sessions").add({ name: name, phone: phone, deviceId: deviceId, active: true, userAgent: navigator.userAgent, startedAt: firebase.firestore.FieldValue.serverTimestamp(), lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); startSessionHeartbeat(name, phone, deviceId); } catch (error) { console.error("Error registering active session:", error); } }
+  function startSessionHeartbeat(name, phone, deviceId) { if (window.sessionHeartbeatInterval) { clearInterval(window.sessionHeartbeatInterval); } window.sessionHeartbeatInterval = setInterval(async () => { try { const sessions = await db.collection("active_sessions").where("name", "==", name).where("phone", "==", phone).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch (error) { console.error("Heartbeat error:", error); } }, 30000); }
+  async function endUserSession(name, phone) { try { const sessions = await db.collection("active_sessions").where("name", "==", name).where("phone", "==", phone).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); if (window.sessionHeartbeatInterval) { clearInterval(window.sessionHeartbeatInterval); window.sessionHeartbeatInterval = null; } } catch (error) { console.error("Error ending session:", error); } }
+  async function cleanupOldSessions() { const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); try { const oldSessions = await db.collection("active_sessions").where("active", "==", true).where("lastSeen", "<", oneHourAgo).get(); oldSessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp(), reason: "timeout" }); }); } catch (error) { console.error("Cleanup error:", error); } }
+  async function checkIfUserAlreadyActiveGoogle(email, phone) { try { const activeUserQuery = await db.collection("active_sessions").where("email", "==", email).where("active", "==", true).get(); if (!activeUserQuery.empty) { const currentDeviceId = localStorage.getItem("falak_device_id"); if (!currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } const session = activeUserQuery.docs[0].data(); if (session.deviceId !== currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } } return { allowed: true }; } catch (error) { console.error("Error checking active user:", error); return { allowed: true }; } }
+  async function registerActiveSessionGoogle(email, name, phone) { try { let deviceId = localStorage.getItem("falak_device_id"); if (!deviceId) { deviceId = "device_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9); localStorage.setItem("falak_device_id", deviceId); } const existingSessions = await db.collection("active_sessions").where("email", "==", email).get(); for (const doc of existingSessions.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } await db.collection("active_sessions").add({ email: email, name: name, phone: phone, deviceId: deviceId, active: true, loginType: "google", userAgent: navigator.userAgent, startedAt: firebase.firestore.FieldValue.serverTimestamp(), lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); startGoogleSessionHeartbeat(email, deviceId); } catch (error) { console.error("Error registering Google session:", error); } }
+  function startGoogleSessionHeartbeat(email, deviceId) { if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); } window.googleSessionHeartbeat = setInterval(async () => { try { const sessions = await db.collection("active_sessions").where("email", "==", email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch (error) { console.error("Google heartbeat error:", error); } }, 30000); }
+  async function googleLogin() { try { showToast("⏳ جاري تسجيل الدخول..."); const result = await auth.signInWithPopup(provider); googleUser = result.user; currentUserId = googleUser.uid; let name = googleUser.displayName; let email = googleUser.email; let phone = googleUser.phoneNumber || ""; const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); await auth.signOut(); googleUser = null; currentUserId = null; return; } currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } await registerActiveSessionGoogle(email, currentUser, currentUserPhone); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); SoundEffects.join(); loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); updateAdminUI(); showToast(`مرحباً بعودتك ${currentUser}! 🚀`); } catch(error) { console.error(error); SoundEffects.error(); showToast("❌ فشل تسجيل الدخول بحساب Google"); } }
+  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
   function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").value = currentUser || ""; document.getElementById("userPhoneInput").value = currentUserPhone || ""; document.getElementById("userNameInput").focus(); } }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
-  
-  async function saveUserName() {
-    let name = document.getElementById("userNameInput").value.trim();
-    let countryCode = document.getElementById("userCountryCode").value;
-    let phoneNumber = document.getElementById("userPhoneInput").value.trim();
-    
-    phoneNumber = phoneNumber.replace(/[^\d]/g, '');
-    
-    if (name.length < 2) {
-      SoundEffects.error();
-      showToast("الاسم قصير جداً");
-      return;
-    }
-    if (!phoneNumber) {
-      SoundEffects.error();
-      showToast("رقم الهاتف مطلوب");
-      return;
-    }
-    
-    let fullPhone = countryCode + phoneNumber;
-    if (fullPhone.startsWith('++')) fullPhone = fullPhone.substring(1);
-    
-    if (phoneNumber.length < 8) {
-      SoundEffects.error();
-      showToast("رقم الهاتف غير مكتمل");
-      return;
-    }
-    
-    showToast("⏳ جاري التحقق من البيانات...");
-    const checkResult = await checkIfUserAlreadyActive(name, fullPhone);
-    
-    if (!checkResult.allowed) {
-      SoundEffects.error();
-      showToast(checkResult.message);
-      return;
-    }
-    
-    saveUserDataToStorage(name, fullPhone);
-    
-    if (currentUserId) await saveUserDataToFirebase(currentUserId);
-    
-    await registerActiveSession(name, fullPhone);
-    
-    document.getElementById("nameModal").classList.remove("active");
-    document.getElementById("chatModal").classList.add("active");
-    SoundEffects.join();
-    initPresenceSystem();
-    loadMessages();
-    
-    db.collection("chat_users").add({
-      name: name,
-      phone: fullPhone,
-      userId: currentUserId || null,
-      joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).catch(err => console.warn("Could not save chat user:", err));
-    
-    updateAdminUI();
-  }
-
+  async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); phoneNumber = phoneNumber.replace(/[^\d]/g, ''); if (name.length < 2) { SoundEffects.error(); showToast("الاسم قصير جداً"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("رقم الهاتف مطلوب"); return; } let fullPhone = countryCode + phoneNumber; if (fullPhone.startsWith('++')) fullPhone = fullPhone.substring(1); if (phoneNumber.length < 8) { SoundEffects.error(); showToast("رقم الهاتف غير مكتمل"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
-  
-  function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) {
-    let senderDisplay = escapeHtml(data.sender);
-    if (data.senderPhone) {
-      senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">📞 ${escapeHtml(data.senderPhone)}</span>`;
-    }
-    html += '<div class="message-sender">' + senderDisplay + "</div>";
-  }
-  if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; }
-  if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>";
-  if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">';
-  if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>';
-  html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>";
-  msgDiv.innerHTML = html;
-  if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); }
-  cont.appendChild(msgDiv);
-}
-  
+  function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">📞 ${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
   function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
-  function sendMessage() {
-    let inp = document.getElementById("messageInput");
-    if (!inp) return;
-    let text = inp.value.trim();
-    if (!text || !currentUser) return;
-    db.collection("messages").add({
-      type: "text",
-      text: text,
-      sender: currentUser,
-      senderPhone: currentUserPhone,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      SoundEffects.send();
-      inp.value = "";
-    }).catch(() => {
-      SoundEffects.error();
-      showToast("فشل الإرسال");
-    });
-  }
+  function sendMessage() { let inp = document.getElementById("messageInput"); if (!inp) return; let text = inp.value.trim(); if (!text || !currentUser) return; db.collection("messages").add({ type: "text", text: text, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.send(); inp.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الإرسال"); }); }
   function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
   function sendImage(input) { let file = input.files[0]; if (!file || !currentUser) return; if (file.size > 5 * 1024 * 1024) { SoundEffects.error(); showToast("الصورة كبيرة (الحد 5 ميجا)"); return; } showToast("جاري الرفع..."); let fd = new FormData(); fd.append("file", file); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", { method: "POST", body: fd }).then(r => r.json()).then(d => { db.collection("messages").add({ type: "image", imageUrl: d.secure_url, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("تم إرسال الصورة"); input.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الرفع"); }); }
   async function toggleRecording() { if (isRecording) stopRecording(); else await startRecording(); }
@@ -1581,36 +889,18 @@
   function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
   async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; } const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: title, description: description || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
 
-  function localLogout() {
-    if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) {
-      if (currentUser && currentUserPhone) {
-        endUserSession(currentUser, currentUserPhone);
-      }
-      localStorage.removeItem("falak_username");
-      localStorage.removeItem("falak_userphone");
-      localStorage.removeItem("falak_device_id");
-      currentUser = null;
-      currentUserPhone = null;
-      updateAdminUI();
-      location.reload();
-    }
-  }
+  function localLogout() { if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) { if (currentUser && currentUserPhone) { endUserSession(currentUser, currentUserPhone); } localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; updateAdminUI(); location.reload(); } }
 
-  // ========== Install App (PWA) ==========
+  // Install App
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
   function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
 
   function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); updateAdminUI(); } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettings(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
 
-  // ========== Landscape orientation fix ==========
-  window.addEventListener("resize", function() { setTimeout(function() { const videoContainer = document.querySelector(".video-player-container"); if (videoContainer) { const video = videoContainer.querySelector("video, iframe"); if (video) { video.style.height = "auto"; video.style.maxHeight = window.innerHeight < window.innerWidth ? "65vh" : "70vh"; } } const chatMessages = document.getElementById("chatMessages"); if (chatMessages) { chatMessages.style.maxHeight = (window.innerHeight - 140) + "px"; } window.scrollTo(0, 0); }, 100); });
-  window.addEventListener("orientationchange", function() { setTimeout(() => window.dispatchEvent(new Event("resize")), 50); });
-
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
-  // ========== Dropdown menu ==========
   function toggleSettingsMenu(e) { e.stopPropagation(); const menu = document.getElementById("settingsMenu"); if (menu) menu.classList.toggle("active"); }
   function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
   function openAppsModal() { document.getElementById("appsModal").classList.add("active"); renderAppsList(); }
@@ -1620,7 +910,6 @@
 
   window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettings(); document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
   setTimeout(hideLoader, 5000);
-  document.addEventListener("DOMContentLoaded", function() { try { } catch (e) { console.error("Initialization error:", e); hideLoader(); } });
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); removePresence(); });
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); } };
   document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); } });
