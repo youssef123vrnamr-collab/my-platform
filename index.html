@@ -510,19 +510,34 @@
 
 <script>
   // ========== Screen Orientation Fix for PWA ==========
+  // This code forces the app to rotate with the device on Android
   function initScreenOrientation() {
+    // Unlock screen orientation to allow all rotations
     if (screen.orientation && screen.orientation.unlock) {
       screen.orientation.unlock().catch(err => console.log('Orientation unlock failed:', err));
     }
+    
+    // Listen for orientation changes
     window.addEventListener('orientationchange', function() {
+      // Force a reflow to ensure the app rotates properly
       document.body.style.display = 'none';
-      setTimeout(() => { document.body.style.display = ''; }, 50);
+      setTimeout(() => {
+        document.body.style.display = '';
+      }, 50);
+      
+      // Update viewport height for mobile browsers
       updateViewportHeight();
     });
+    
+    // Handle resize events
     window.addEventListener('resize', updateViewportHeight);
+    
+    // Initial viewport height update
     updateViewportHeight();
   }
+  
   function updateViewportHeight() {
+    // Fix for mobile browsers where 100vh doesn't account for browser chrome
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
@@ -951,23 +966,19 @@
       snap.forEach(d => { apps.push({ id: d.id, ...d.data() }); });
       renderAppsList();
       renderAppsManageList();
-    }, err => {
-      console.error("Error loading apps:", err);
-      const container = document.getElementById("appsList");
-      if (container) container.innerHTML = '<p style="text-align:center;color:#ef4444;padding:2rem;">⚠️ فشل تحميل التطبيقات، تأكد من الاتصال بالإنترنت.</p>';
-    });
+    }, err => console.error("Error loading apps:", err));
   }
 
   function renderAppsList() {
     const container = document.getElementById("appsList");
     if (!container) return;
-    if (!apps || apps.length === 0) {
-      container.innerHTML = '<div style="text-align:center;color:#aaa;padding:2rem;"><i class="fas fa-info-circle"></i> لا توجد تطبيقات مضافة بعد.<br><small>يمكن للمشرف إضافة تطبيقات من قائمة الإدارة.</small></div>';
+    if (apps.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لا توجد تطبيقات مضافة بعد</p>';
       return;
     }
     container.innerHTML = apps.map(app => `
       <div class="app-item">
-        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon" onerror="this.onerror=null;this.parentElement.innerHTML='<i class=\\'fas fa-rocket\\'></i>';">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
+        <div class="app-icon">${app.iconUrl ? `<img src="${escapeHtml(app.iconUrl)}" alt="icon">` : `<i class="fas ${app.icon || 'fa-rocket'}"></i>`}</div>
         <div class="app-info">
           <div class="app-name">${escapeHtml(app.name)}</div>
           <div class="app-desc">${escapeHtml(app.desc || '')}</div>
@@ -1101,14 +1112,7 @@
     document.getElementById("editAppId").value = "";
   }
 
-  function openApp(url) {
-    if (!url) return;
-    let finalUrl = url;
-    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-      finalUrl = 'https://' + finalUrl;
-    }
-    window.open(finalUrl, '_blank', 'noopener,noreferrer');
-  }
+  function openApp(url) { window.open(url, "_blank", "noopener,noreferrer"); }
 
   // Exam Functions (full)
   function openAddExamModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("quizVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; let existing = exams.find(e => e.videoId === videoId); if (existing) loadExamForEditing(existing); else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } } else { document.getElementById("questionsContainer").innerHTML = ""; addQuestion(); } document.getElementById("addQuizModal").classList.add("active"); }
@@ -1645,47 +1649,18 @@
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
   // ========== Dropdown menu ==========
-  function toggleSettingsMenu(e) {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    const menu = document.getElementById("settingsMenu");
-    if (!menu) return;
-    menu.classList.toggle("active");
-  }
-
-  function closeSettingsMenuOnClickOutside(e) {
-    const dropdown = document.getElementById("settingsDropdown");
-    const menu = document.getElementById("settingsMenu");
-    if (menu && dropdown && !dropdown.contains(e.target)) {
-      menu.classList.remove("active");
-    }
-  }
-
-  function openAppsModal() {
-    const modal = document.getElementById("appsModal");
-    if (!modal) { showToast("❌ حدث خطأ في فتح النافذة"); return; }
-    loadAppsFromFirebase();
-    modal.classList.add("active");
-    renderAppsList();
-  }
-
-  function closeAppsModal() {
-    const modal = document.getElementById("appsModal");
-    if (modal) modal.classList.remove("active");
-  }
+  function toggleSettingsMenu(e) { e.stopPropagation(); const menu = document.getElementById("settingsMenu"); if (menu) menu.classList.toggle("active"); }
+  function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
+  function openAppsModal() { document.getElementById("appsModal").classList.add("active"); renderAppsList(); }
+  function closeAppsModal() { document.getElementById("appsModal").classList.remove("active"); }
 
   document.addEventListener("DOMContentLoaded", function() { 
+    // Initialize screen orientation fix
     initScreenOrientation();
     
     const dropdownBtn = document.getElementById("settingsDropdownBtn"); 
-    if (dropdownBtn) {
-      dropdownBtn.removeEventListener("click", toggleSettingsMenu);
-      dropdownBtn.addEventListener("click", toggleSettingsMenu);
-    }
+    if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu); 
     document.addEventListener("click", closeSettingsMenuOnClickOutside); 
-    
     const googleLogoutMenuItem = document.getElementById("googleLogoutMenuItem"); 
     if (googleLogoutMenuItem) googleLogoutMenuItem.addEventListener("click", function() { googleLogout(); }); 
     const adminLoginMenuItem = document.getElementById("adminLoginMenuItem"); 
@@ -1695,10 +1670,7 @@
     const maintenanceMenuItem = document.getElementById("maintenanceMenuItem"); 
     if (maintenanceMenuItem) maintenanceMenuItem.addEventListener("click", function() { openMaintenanceModal(); }); 
     const appsMenuItem = document.getElementById("appsMenuItem"); 
-    if (appsMenuItem) {
-      appsMenuItem.removeEventListener("click", openAppsModal);
-      appsMenuItem.addEventListener("click", openAppsModal);
-    }
+    if (appsMenuItem) appsMenuItem.addEventListener("click", function() { openAppsModal(); }); 
     const manageAppsMenuItem = document.getElementById("manageAppsMenuItem"); 
     if (manageAppsMenuItem) manageAppsMenuItem.addEventListener("click", function() { openManageAppsModal(); }); 
     const installAppMenuItem = document.getElementById("installAppMenuItem"); 
@@ -1722,8 +1694,8 @@
   setTimeout(hideLoader, 5000);
   document.addEventListener("DOMContentLoaded", function() { try { } catch (e) { console.error("Initialization error:", e); hideLoader(); } });
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); removePresence(); });
-  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); } };
-  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); } });
+  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); } };
+  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); } });
 </script>
 </body>
 </html>
