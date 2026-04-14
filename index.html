@@ -908,7 +908,26 @@
     closeEmailSettingsModal();
   }
 
-  // Feedback Functions
+  // ========== Feedback Functions with Auto-reply ==========
+  async function sendAutoReplyEmail(userEmail, userName) {
+    if(!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
+      console.warn("EmailJS settings missing, auto-reply not sent");
+      return;
+    }
+    try {
+      emailjs.init(emailSettings.publicKey);
+      await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
+        to_name: userName,
+        to_email: userEmail,
+        reply_message: "شكراً لتقييمك لمنصة Astronomy and space. تم استلام رأيك وسيتم الرد عليك قريباً إن شاء الله.\n\nفريق Astronomy and space",
+        original_feedback: ""
+      });
+      console.log("Auto-reply email sent to", userEmail);
+    } catch(e) {
+      console.error("Failed to send auto-reply email:", e);
+    }
+  }
+
   function openFeedbackModal() { document.getElementById("feedbackModal").classList.add("active"); }
   function closeFeedbackModal() { document.getElementById("feedbackModal").classList.remove("active"); }
   async function submitFeedback() {
@@ -925,7 +944,9 @@
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         replied: false
       });
-      showToast("✅ شكراً لتقييمك! سيتم الرد عليك قريباً.");
+      // إرسال رسالة تأكيد تلقائية إلى البريد الإلكتروني للمستخدم
+      await sendAutoReplyEmail(email, name);
+      showToast("✅ شكراً لتقييمك! تم إرسال تأكيد إلى بريدك الإلكتروني.");
       closeFeedbackModal();
       document.getElementById("fbName").value = "";
       document.getElementById("fbPhone").value = "";
@@ -935,6 +956,7 @@
       document.getElementById("fbMessage").value = "";
     } catch(e) { console.error(e); showToast("❌ فشل إرسال التقييم"); }
   }
+
   function openViewFeedbacksModal() {
     if(!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
     document.getElementById("viewFeedbacksModal").classList.add("active");
