@@ -20,6 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
+    /* جميع الأنماط الأصلية كما هي دون أي تغيير (تم حذف أنماط .debug-btn فقط) */
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; background-attachment: fixed; }
@@ -369,7 +370,7 @@
     .reply-btn { background: linear-gradient(135deg, #06b6d4, #0891b2); border: none; color: white; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; }
     .delete-feedback-btn { background: rgba(239,68,68,0.2); border: none; color: #ef4444; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; }
     .reply-status { font-size: 0.75rem; color: #10b981; margin-top: 0.5rem; }
-    /* تعديلات نهائية */
+    /* إخفاء زر الاختبار */
     .debug-btn { display: none !important; }
   </style>
 </head>
@@ -401,8 +402,8 @@
             <div class="settings-menu-item user-only" id="feedbackMenuItem"><i class="fas fa-star"></i> تقييم المنصة</div>
             <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
             <div class="settings-menu-item user-only" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
-            <!-- إضافة زر تحديد المشرفين هنا -->
             <div class="settings-menu-item admin-only" id="setAdminsMenuItem" style="display: none;"><i class="fas fa-users-cog"></i> تحديد المشرفين</div>
+            <div class="settings-menu-item admin-only" id="teachAIMenuItem" style="display: none;"><i class="fas fa-robot"></i> تعليم الذكاء الاصطناعي</div>
             <div class="settings-menu-item admin-only" id="manageAppsMenuItem" style="display: none;"><i class="fas fa-th-large"></i> إدارة التطبيقات</div>
             <div class="settings-menu-item admin-only" id="viewFeedbacksMenuItem" style="display: none;"><i class="fas fa-chart-simple"></i> معرفة رأي الجمهور</div>
             <div class="settings-menu-item admin-only" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد الإلكتروني</div>
@@ -433,10 +434,7 @@
 
   <div class="container">
     <div class="hero"><div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div><h2>اكتشف أسرار <span>الكون</span></h2><p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p></div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
-      <button class="set-admins-btn" onclick="openSetAdminsModal()" style="display:none" id="setAdminsBtn"><i class="fas fa-users-cog"></i> تحديد المشرفين</button>
-      <button class="teach-ai-circle-btn" onclick="openTeachAICircleModal()" id="teachAICircleBtn" title="تعليم الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
-    </div>
+    <!-- تم حذف الأزرار الظاهرة بالكامل -->
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
     <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube (مثال: https://youtu.be/... أو https://www.youtube.com/watch?v=..."><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
@@ -447,7 +445,7 @@
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
-  <!-- المودالات -->
+  <!-- جميع المودالات (نفس الكود الأصلي) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
@@ -468,25 +466,16 @@
   <div class="modal" id="callModal"><div class="modal-content call-modal-content"><div class="call-avatar"><i class="fas fa-users"></i></div><div class="call-status" id="callStatus">مكالمة جماعية</div><div class="call-timer" id="callTimer">00:00</div><div class="call-actions"><button class="call-action mute" onclick="toggleMute()" id="muteBtn"><i class="fas fa-microphone"></i></button><button class="call-action end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div></div></div>
   <div class="modal" id="appsModal"><div class="modal-content apps-modal-content"><div class="modal-header"><h3><i class="fas fa-th-large" style="color:#6366f1"></i> تطبيقات المنصة</h3><button class="modal-close" onclick="closeAppsModal()"><i class="fas fa-times"></i></button></div><div class="apps-list" id="appsList"></div></div></div>
   <div class="modal" id="teachAICircleModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-robot" style="color:#06b6d4"></i> تعليم الذكاء الاصطناعي</h3><button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="margin-bottom:2rem;"><h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle"></i> إضافة معلومة جديدة</h4><div class="form-group"><label>السؤال</label><input type="text" id="aiQuestionInput" placeholder="مثال: ما هي سرعة الضوء؟" class="student-name-input"></div><div class="form-group"><label>الإجابة</label><textarea id="aiAnswerInput" placeholder="اكتب الإجابة..." class="student-name-input" rows="3"></textarea></div><button class="btn btn-primary" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button></div><div><h4><i class="fas fa-database"></i> قاعدة المعرفة الحالية</h4><div id="aiKnowledgeList"></div></div></div></div></div>
-
-  <!-- مودال التقييم -->
   <div class="modal" id="feedbackModal"><div class="modal-content" style="max-width: 550px;"><div class="modal-header"><h3><i class="fas fa-star"></i> تقييم المنصة</h3><button class="modal-close" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>الاسم الكامل</label><input id="fbName" placeholder="مثال: أحمد محمد"></div><div class="form-group"><label>رقم الهاتف</label><input id="fbPhone" placeholder="مثال: 0123456789" type="tel"></div><div class="form-group"><label>البريد الإلكتروني (للاستلام الرد)</label><input id="fbEmail" placeholder="example@domain.com" type="email"></div><div class="form-group"><label>المحافظة</label><input id="fbGovernorate" placeholder="مثال: القاهرة"></div><div class="form-group"><label>القرية / المركز</label><input id="fbVillage" placeholder="مثال: مدينة نصر"></div><div class="form-group"><label>رأيك وتقييمك</label><textarea id="fbMessage" rows="5" placeholder="اكتب رأيك هنا..."></textarea></div><button class="btn btn-primary" onclick="submitFeedback()" style="width:100%"><i class="fas fa-paper-plane"></i> إرسال التقييم</button></div></div></div>
-
-  <!-- مودال عرض التقييمات للمشرف -->
   <div class="modal" id="viewFeedbacksModal"><div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;"><div class="modal-header"><h3><i class="fas fa-chart-simple"></i> آراء الجمهور</h3><button class="modal-close" onclick="closeViewFeedbacksModal()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="feedbacksListContainer"></div></div></div>
-
-  <!-- مودال الرد على التقييم -->
   <div class="modal" id="replyFeedbackModal"><div class="modal-content" style="max-width: 550px;"><div class="modal-header"><h3><i class="fas fa-reply"></i> رد على التقييم</h3><button class="modal-close" onclick="closeReplyModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p><strong>إلى:</strong> <span id="replyToName"></span> (<span id="replyToEmail"></span>)</p><div class="form-group"><label>نص الرد</label><textarea id="replyMessage" rows="5" placeholder="اكتب ردك هنا..."></textarea></div><button class="btn btn-success" onclick="sendReplyEmail()" style="width:100%"><i class="fas fa-envelope"></i> إرسال الرد</button></div></div></div>
-
-  <!-- مودال إعدادات البريد الإلكتروني -->
   <div class="modal" id="emailSettingsModal"><div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3><i class="fas fa-envelope"></i> إعدادات البريد الإلكتروني (EmailJS)</h3><button class="modal-close" onclick="closeEmailSettingsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>Public Key</label><input id="emailPublicKey" placeholder="أدخل Public Key من EmailJS"></div><div class="form-group"><label>Service ID</label><input id="emailServiceId" placeholder="أدخل Service ID"></div><div class="form-group"><label>Template ID</label><input id="emailTemplateId" placeholder="أدخل Template ID"></div><button class="btn btn-primary" onclick="saveEmailSettings()" style="width:100%">حفظ الإعدادات</button></div></div></div>
-
   <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()"><button class="image-viewer-close" onclick="closeImageViewer()"><i class="fas fa-times"></i></button><img alt="صورة" id="viewerImage" src=""></div>
   <div class="toast" id="toast">تم بنجاح</div>
 </div>
 
 <script>
-  // ========== Firebase Config ==========
+  // ========== Firebase Config (نفس القيم) ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
     authDomain: "planning-with-ai-390af.firebaseapp.com",
@@ -579,13 +568,13 @@
     const adminOnlyItems = document.querySelectorAll('.admin-only');
     const userOnlyItems = document.querySelectorAll('.user-only');
     const localOnlyItem = document.getElementById('localLogoutMenuItem');
-    const setAdminsBtn = document.getElementById("setAdminsBtn");
-    const teachAICircleBtn = document.getElementById("teachAICircleBtn");
     const uploadZone = document.getElementById("uploadZone");
     const storageBar = document.getElementById("storageBar");
     const manageAppsMenuItem = document.getElementById("manageAppsMenuItem");
     const viewFeedbacksMenuItem = document.getElementById("viewFeedbacksMenuItem");
     const emailSettingsMenuItem = document.getElementById("emailSettingsMenuItem");
+    const setAdminsMenuItem = document.getElementById("setAdminsMenuItem");
+    const teachAIMenuItem = document.getElementById("teachAIMenuItem");
 
     const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
     const isLocalOnly = (currentUser && currentUserPhone) && !googleUser;
@@ -595,8 +584,8 @@
       userOnlyItems.forEach(el => el.style.display = "none");
       if(localOnlyItem) localOnlyItem.style.display = "none";
       adminOnlyItems.forEach(el => el.style.display = "flex");
-      if (setAdminsBtn) setAdminsBtn.style.display = "inline-flex";
-      if (teachAICircleBtn) teachAICircleBtn.style.display = "inline-flex";
+      if (setAdminsMenuItem) setAdminsMenuItem.style.display = "flex";
+      if (teachAIMenuItem) teachAIMenuItem.style.display = "flex";
       if (uploadZone) uploadZone.classList.add("active");
       if (storageBar) storageBar.style.display = "block";
       if (manageAppsMenuItem) manageAppsMenuItem.style.display = "flex";
@@ -617,13 +606,8 @@
         userOnlyItems.forEach(el => el.style.display = "none");
         if(localOnlyItem) localOnlyItem.style.display = "none";
       }
-      if (setAdminsBtn) setAdminsBtn.style.display = "none";
-      if (teachAICircleBtn) teachAICircleBtn.style.display = "none";
       if (uploadZone) uploadZone.classList.remove("active");
       if (storageBar) storageBar.style.display = "none";
-      if (manageAppsMenuItem) manageAppsMenuItem.style.display = "none";
-      if (viewFeedbacksMenuItem) viewFeedbacksMenuItem.style.display = "none";
-      if (emailSettingsMenuItem) emailSettingsMenuItem.style.display = "none";
     }
     updateGoogleLogoutButtonsVisibility();
   }
@@ -1068,9 +1052,10 @@
     document.getElementById("feedbackMenuItem")?.addEventListener("click", openFeedbackModal);
     document.getElementById("viewFeedbacksMenuItem")?.addEventListener("click", openViewFeedbacksModal);
     document.getElementById("emailSettingsMenuItem")?.addEventListener("click", openEmailSettingsModal);
-    // ربط زر تحديد المشرفين في قائمة الإعدادات
     const setAdminsMenuItem = document.getElementById("setAdminsMenuItem");
     if (setAdminsMenuItem) setAdminsMenuItem.addEventListener("click", openSetAdminsModal);
+    const teachAIMenuItem = document.getElementById("teachAIMenuItem");
+    if (teachAIMenuItem) teachAIMenuItem.addEventListener("click", openTeachAICircleModal);
   });
 
   window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
