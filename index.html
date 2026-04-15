@@ -1111,134 +1111,8 @@
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
   document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); closeFeedbackModal(); closeViewFeedbacksModal(); closeReplyModal(); } });
   // ======================= رفع الملفات والصور والرد على الرسائل =======================
-
-// دالة مساعدة لعرض حجم الملف
-function formatFileSize(bytes) {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
-// إرسال الملفات (أي نوع)
-async function sendFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  if (!currentUser) { showToast("❌ يجب تسجيل الدخول"); return; }
-  const maxSize = 20 * 1024 * 1024; // 20 ميجابايت
-  if (file.size > maxSize) { showToast("❌ الملف كبير جداً (الحد 20 ميجابايت)"); return; }
-  
-  showToast(`⏳ جاري رفع ${file.name}...`);
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
-  formData.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
-  formData.append("resource_type", "auto");
-  
-  try {
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, {
-      method: "POST",
-      body: formData
-    });
-    const data = await res.json();
-    if (!data.secure_url) throw new Error("فشل الرفع");
-    
-    let fileType = "file";
-    if (file.type.startsWith("image/")) fileType = "image";
-    else if (file.type === "application/pdf") fileType = "pdf";
-    else if (file.type.startsWith("video/")) fileType = "video";
-    
-    await db.collection("messages").add({
-      type: "file",
-      fileType: fileType,
-      fileName: file.name,
-      fileUrl: data.secure_url,
-      fileSize: file.size,
-      sender: currentUser,
-      senderPhone: currentUserPhone,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    SoundEffects.send();
-    showToast("✅ تم إرسال الملف");
-    input.value = "";
-  } catch (err) {
-    console.error(err);
-    SoundEffects.error();
-    showToast("❌ فشل رفع الملف");
-  }
-}
-
-// متغير لتخزين بيانات الرد المؤقت
-let replyToData = null;
-
-// دالة الرد على رسالة معينة
-function replyToMessage(msgId, senderName, previewText) {
-  replyToData = { id: msgId, sender: senderName, preview: previewText.substring(0, 60) };
-  const inputField = document.getElementById("messageInput");
-  if (inputField) {
-    inputField.focus();
-    inputField.placeholder = `رد على ${senderName}: ${previewText.substring(0, 40)}...`;
-  }
-  // إضافة زر إلغاء الرد إن لم يكن موجوداً
-  let cancelBtn = document.getElementById("cancelReplyBtn");
-  if (!cancelBtn) {
-    cancelBtn = document.createElement("button");
-    cancelBtn.id = "cancelReplyBtn";
-    cancelBtn.className = "chat-tool-btn";
-    cancelBtn.innerHTML = '<i class="fas fa-times"></i>';
-    cancelBtn.title = "إلغاء الرد";
-    cancelBtn.onclick = () => {
-      replyToData = null;
-      document.getElementById("messageInput").placeholder = "اكتب رسالتك...";
-      cancelBtn.remove();
-    };
-    document.querySelector(".chat-input-wrapper").prepend(cancelBtn);
-  } else {
-    cancelBtn.style.display = "flex";
-  }
-}
-
-// تعديل دالة sendMessage لتضمين الرد (استبدل الدالة القديمة)
-window.originalSendMessage = sendMessage;
-sendMessage = async function() {
-  const inp = document.getElementById("messageInput");
-  let text = inp.value.trim();
-  if (!text && !replyToData) return;
-  if (!currentUser) { showToast("❌ يجب تسجيل الدخول"); return; }
-  
-  const messageData = {
-    type: "text",
-    text: text || "📎",
-    sender: currentUser,
-    senderPhone: currentUserPhone,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  if (replyToData) {
-    messageData.replyTo = {
-      messageId: replyToData.id,
-      sender: replyToData.sender,
-      preview: replyToData.preview
-    };
-    replyToData = null;
-    document.getElementById("messageInput").placeholder = "اكتب رسالتك...";
-    const cancelBtn = document.getElementById("cancelReplyBtn");
-    if (cancelBtn) cancelBtn.remove();
-  }
-  try {
-    await db.collection("messages").add(messageData);
-    SoundEffects.send();
-    inp.value = "";
-  } catch(e) {
-    console.error(e);
-    SoundEffects.error();
-    showToast("❌ فشل الإرسال");
-  }
-};
-
-// تعديل دالة displayMessage لعرض الردود والملفات والصور بشكل كامل
-window.originalDisplayMessage = displayMessage;
-displayMessage = function(id, data) {
+// استبدال دالة displayMessage بالكامل (ضع هذا بعد الكود الجديد)
+window.displayMessage = function(id, data) {
   if (data.type === "system") return;
   const container = document.getElementById("chatMessages");
   if (!container) return;
@@ -1251,53 +1125,60 @@ displayMessage = function(id, data) {
   if (!isMe) {
     let senderDisplay = escapeHtml(data.sender);
     if (data.senderPhone) {
-      senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`;
+      senderDisplay += ` <span style="font-size:0.7rem;color:#aaa;direction:ltr;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:12px;">${escapeHtml(data.senderPhone)}</span>`;
     }
     html += '<div class="message-sender">' + senderDisplay + "</div>";
   }
   
-  // زر الحذف (للمشرف أو المرسل)
+  // زر الحذف
   if (isAdmin || data.sender === currentUser) {
     const title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك";
     html += `<button class="message-delete-btn ${isAdmin ? "admin" : ""}" onclick="deleteMessage('${id}', '${escapeHtml(data.sender)}')" title="${title}"><i class="fas fa-times"></i></button>`;
   }
   
-  // عرض الرد على رسالة سابقة
+  // عرض الرد
   if (data.replyTo) {
-    html += `<div class="reply-context" style="background: rgba(255,255,255,0.08); padding: 6px 12px; border-radius: 12px; margin-bottom: 8px; font-size: 0.8rem; border-right: 3px solid #6366f1; direction: rtl;">
+    html += `<div style="background:rgba(255,255,255,0.08);padding:6px 12px;border-radius:12px;margin-bottom:8px;font-size:0.8rem;border-right:3px solid #6366f1;">
       <i class="fas fa-reply"></i> رد على <strong>${escapeHtml(data.replyTo.sender)}</strong>: ${escapeHtml(data.replyTo.preview)}
     </div>`;
   }
   
-  // محتوى الرسالة
+  // عرض النص
   if (data.text) {
     html += `<div class="message-content">${escapeHtml(data.text)}</div>`;
   }
   
-  if (data.type === "image" && data.imageUrl) {
-    html += `<img src="${data.imageUrl}" class="message-image" onclick="viewImage(this.src)" style="max-width: 250px; max-height: 250px; border-radius: 12px; margin-top: 8px; cursor: pointer;">`;
+  // عرض الصورة (من sendImage)
+  if (data.imageUrl) {
+    html += `<img src="${data.imageUrl}" class="message-image" onclick="viewImage(this.src)" style="max-width:250px;max-height:250px;border-radius:12px;margin-top:8px;cursor:pointer;">`;
   }
   
-  if (data.type === "file" && data.fileUrl) {
-    if (data.fileType === "image") {
-      html += `<img src="${data.fileUrl}" class="message-image" onclick="viewImage(this.src)" style="max-width: 250px; border-radius: 12px; margin-top: 8px; cursor: pointer;">`;
-    } else if (data.fileType === "pdf") {
-      html += `<div class="file-message" style="background: rgba(99,102,241,0.2); padding: 8px 12px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
-        <i class="fas fa-file-pdf" style="color: #ef4444; font-size: 1.5rem;"></i>
-        <span>${escapeHtml(data.fileName)} (${formatFileSize(data.fileSize)})</span>
-        <a href="${data.fileUrl}" download target="_blank" style="color: #10b981; margin-right: 5px;"><i class="fas fa-download"></i> تحميل</a>
+  // عرض الملف (من sendFile) - التحقق من وجود fileUrl
+  if (data.fileUrl) {
+    const fileName = data.fileName || "ملف";
+    const fileSize = data.fileSize ? formatFileSize(data.fileSize) : "";
+    const fileType = data.fileType || "file";
+    
+    if (fileType === "image") {
+      html += `<img src="${data.fileUrl}" class="message-image" onclick="viewImage(this.src)" style="max-width:250px;border-radius:12px;margin-top:8px;cursor:pointer;">`;
+    } else if (fileType === "pdf") {
+      html += `<div style="background:rgba(99,102,241,0.2);padding:8px 12px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
+        <i class="fas fa-file-pdf" style="color:#ef4444;font-size:1.5rem;"></i>
+        <span>${escapeHtml(fileName)} ${fileSize ? `(${fileSize})` : ""}</span>
+        <a href="${data.fileUrl}" download target="_blank" style="color:#10b981;"><i class="fas fa-download"></i> تحميل</a>
       </div>`;
-    } else if (data.fileType === "video") {
-      html += `<video controls src="${data.fileUrl}" style="max-width: 250px; border-radius: 12px; margin-top: 8px;"></video>`;
+    } else if (fileType === "video") {
+      html += `<video controls src="${data.fileUrl}" style="max-width:250px;border-radius:12px;margin-top:8px;"></video>`;
     } else {
-      html += `<div class="file-message" style="background: rgba(99,102,241,0.2); padding: 8px 12px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
-        <i class="fas fa-file" style="color: #6366f1; font-size: 1.5rem;"></i>
-        <span>${escapeHtml(data.fileName)} (${formatFileSize(data.fileSize)})</span>
-        <a href="${data.fileUrl}" download target="_blank" style="color: #10b981;"><i class="fas fa-download"></i> تحميل</a>
+      html += `<div style="background:rgba(99,102,241,0.2);padding:8px 12px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
+        <i class="fas fa-file" style="color:#6366f1;font-size:1.5rem;"></i>
+        <span>${escapeHtml(fileName)} ${fileSize ? `(${fileSize})` : ""}</span>
+        <a href="${data.fileUrl}" download target="_blank" style="color:#10b981;"><i class="fas fa-download"></i> تحميل</a>
       </div>`;
     }
   }
   
+  // عرض الصوت
   if (data.audioUrl) {
     html += `<div class="voice-message" id="voice-${id}">
       <button class="voice-play-btn" onclick="playVoiceMessage(this, '${data.audioUrl}', '${id}')"><i class="fas fa-play"></i></button>
@@ -1308,97 +1189,24 @@ displayMessage = function(id, data) {
   }
   
   // الوقت
-  const timeStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "";
+  const timeStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour:"2-digit", minute:"2-digit" }) : "";
   html += `<div class="message-time">${timeStr}</div>`;
   
-  // زر الرد على هذه الرسالة
-  let previewForReply = data.text ? data.text : (data.fileName || "صورة");
-  html += `<button class="reply-to-btn" onclick="replyToMessage('${id}', '${escapeHtml(data.sender)}', '${escapeHtml(previewForReply.substring(0, 50))}')" style="background: none; border: none; color: #6366f1; font-size: 0.7rem; margin-top: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fas fa-reply"></i> رد</button>`;
+  // زر الرد
+  let previewForReply = data.text ? data.text : (data.fileName || data.imageUrl ? "صورة" : "رسالة");
+  html += `<button onclick="replyToMessage('${id}', '${escapeHtml(data.sender)}', '${escapeHtml(previewForReply.substring(0,50))}')" style="background:none;border:none;color:#6366f1;font-size:0.7rem;margin-top:4px;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="fas fa-reply"></i> رد</button>`;
   
   msgDiv.innerHTML = html;
   container.appendChild(msgDiv);
   
-  // إشعار إذا كانت الرسالة جديدة والمستخدم ليس في الشات
   if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) {
     unreadMessages++;
     const badge = document.getElementById("chatBadge");
-    if (badge) {
-      badge.textContent = unreadMessages;
-      badge.style.display = "flex";
-    }
+    if (badge) { badge.textContent = unreadMessages; badge.style.display = "flex"; }
     SoundEffects.receive();
   }
-  
   scrollToBottom();
 };
-
-// إضافة زر رفع الملفات في واجهة الدردشة (إذا لم يكن موجوداً)
-function addFileUploadButton() {
-  const wrapper = document.querySelector(".chat-input-wrapper");
-  if (!wrapper) return;
-  // البحث عن زر الصورة الموجود
-  let imageBtn = wrapper.querySelector('button[onclick*="imageInput"]');
-  if (!imageBtn) {
-    // إضافة زر الصورة إذا لم يكن موجوداً
-    const imgBtn = document.createElement("button");
-    imgBtn.className = "chat-tool-btn";
-    imgBtn.innerHTML = '<i class="fas fa-image"></i>';
-    imgBtn.onclick = () => document.getElementById("imageInput").click();
-    wrapper.insertBefore(imgBtn, wrapper.firstChild);
-  }
-  // إضافة زر الملفات
-  let fileBtn = wrapper.querySelector('button[onclick*="fileInput"]');
-  if (!fileBtn) {
-    const btn = document.createElement("button");
-    btn.className = "chat-tool-btn";
-    btn.innerHTML = '<i class="fas fa-paperclip"></i>';
-    btn.onclick = () => document.getElementById("fileInput").click();
-    wrapper.insertBefore(btn, wrapper.firstChild);
-  }
-}
-
-// استدعاء إضافة الأزرار عند تحميل الدردشة
-window.originalOpenChat = openChat;
-openChat = function() {
-  if (checkUserName()) {
-    document.getElementById("chatModal").classList.add("active");
-    document.getElementById("chatBadge").style.display = "none";
-    unreadMessages = 0;
-    loadMessages();
-    scrollToBottom();
-    initPresenceSystem();
-    addFileUploadButton(); // إضافة الأزرار
-  } else {
-    document.getElementById("nameModal").classList.add("active");
-    document.getElementById("userNameInput").value = currentUser || "";
-    document.getElementById("userPhoneInput").value = currentUserPhone || "";
-    document.getElementById("userNameInput").focus();
-  }
-};
-
-// التأكد من وجود عناصر الإدخال للصور والملفات في الـ HTML (أضفها إذا لم تكن موجودة)
-function ensureInputElements() {
-  if (!document.getElementById("imageInput")) {
-    const inpImg = document.createElement("input");
-    inpImg.type = "file";
-    inpImg.id = "imageInput";
-    inpImg.style.display = "none";
-    inpImg.accept = "image/*";
-    inpImg.onchange = (e) => sendImage(e.target);
-    document.body.appendChild(inpImg);
-  }
-  if (!document.getElementById("fileInput")) {
-    const inpFile = document.createElement("input");
-    inpFile.type = "file";
-    inpFile.id = "fileInput";
-    inpFile.style.display = "none";
-    inpFile.onchange = (e) => sendFile(e.target);
-    document.body.appendChild(inpFile);
-  }
-}
-
-// استدعاء التأكد من العناصر عند تحميل الصفحة
-setTimeout(ensureInputElements, 500);
 </script>
 </body>
 </html>
