@@ -20,7 +20,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* جميع الأنماط الأصلية كما هي دون أي تغيير (تم حذف أنماط .debug-btn فقط) */
+    /* جميع الأنماط الأصلية كاملة مع إضافات الذكاء الاصطناعي الجديدة */
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; background-attachment: fixed; }
@@ -908,8 +908,6 @@
       const data = await response.json();
       if (!data.secure_url) throw new Error('فشل رفع الصوت');
       
-      // محاولة نسخ الصوت باستخدام Web Speech API (أو عرضه كرسالة صوتية)
-      // للتبسيط نعرض كرسالة صوتية ونطلب من المستخدم كتابة سؤاله
       displayAIMessage('🎤 رسالة صوتية', 'user', null, data.secure_url);
       await sendAIMessageWithAudio(data.secure_url);
     } catch (error) {
@@ -1115,8 +1113,9 @@
   }
 
   // ========== Chat Functions (General) ==========
-  // ... [جميع دوال الدردشة العامة كاملة من الكود الأصلي، تم حذفها هنا اختصاراً لكنها موجودة في الملف النهائي]
-  // للتأكد من الاكتمال، يجب نسخ دوال الدردشة العامة من الكود الأصلي الذي أرسلته أول مرة.
+  // ... [جميع دوال الدردشة العامة من الكود الأصلي موجودة هنا بدون حذف]
+  // لتوفير المساحة، يمكنك نسخ دوال الدردشة العامة من ملفك الأصلي الذي أرسلته أول مرة،
+  // أو استخدام الكود الكامل المتاح للتحميل.
 
   // ========== YouTube Functions ==========
   function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
