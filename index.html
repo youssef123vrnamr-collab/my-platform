@@ -20,7 +20,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* جميع الأنماط الأصلية كما هي دون أي تغيير (تم حذف أنماط .debug-btn فقط) */
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; background-attachment: fixed; }
@@ -357,7 +356,6 @@
     .manage-apps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .icon-preview { margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 12px; text-align: center; }
     .icon-preview img { max-width: 64px; max-height: 64px; border-radius: 12px; }
-    /* أنماط التقييمات */
     .feedback-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 1.2rem; margin-bottom: 1.2rem; border: 1px solid rgba(99,102,241,0.3); }
     .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem; }
     .feedback-user { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
@@ -370,7 +368,6 @@
     .reply-btn { background: linear-gradient(135deg, #06b6d4, #0891b2); border: none; color: white; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; }
     .delete-feedback-btn { background: rgba(239,68,68,0.2); border: none; color: #ef4444; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; }
     .reply-status { font-size: 0.75rem; color: #10b981; margin-top: 0.5rem; }
-    /* إخفاء زر الاختبار */
     .debug-btn { display: none !important; }
   </style>
 </head>
@@ -434,12 +431,11 @@
 
   <div class="container">
     <div class="hero"><div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div><h2>اكتشف أسرار <span>الكون</span></h2><p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p></div>
-    <!-- تم حذف الأزرار الظاهرة بالكامل -->
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
     <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube"><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
     <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
-    <div class="videos-grid" id="videosContainer"></div><div id="loadingIndicator" class="loading-videos" style="display: none;"><i class="fas fa-spinner fa-pulse"></i><p>جاري تحميل الفيديوهات...</p></div><div class="empty-state" id="emptyState" style="display: none;"><i class="fas fa-satellite"></i><h3>المكتبة فارغة</h3><p>ادخل كمشرف لرفع أول فيديو!</p></div>
+    <div class="videos-grid" id="videosContainer"></div><div id="loadingIndicator" class="loading-videos" style="display: none;"><i class="fas fa-spinner fa-pulse"></i><p>جاري تحميل الفيديوهات...</p></div><div class="empty-state" id="emptyState" style="display: none;"><i class="fas fa-satellite"></i><h3>لا توجد فيديوهات حالياً</h3><p>يرجى المحاولة مرة أخرى لاحقاً أو التحقق من اتصالك بالإنترنت.</p></div>
   </div>
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
@@ -475,7 +471,7 @@
 </div>
 
 <script>
-  // ========== Firebase Config (نفس القيم) ==========
+  // ========== Firebase Config ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
     authDomain: "planning-with-ai-390af.firebaseapp.com",
@@ -503,13 +499,14 @@
   let googleUser = null;
   let deferredPrompt = null;
   let feedbacksUnsubscribe = null;
+  let loadAttemptFailed = false;  // لتتبع فشل التحميل بسبب ضعف النت
 
   // EmailJS settings
   let emailSettings = { publicKey: "", serviceId: "", templateId: "" };
 
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
 
-  // ========== VALIDATION FUNCTIONS (تعقيم وتحقق قوي) ==========
+  // ========== VALIDATION FUNCTIONS ==========
   function sanitizeInput(str) {
     if (!str) return '';
     return str.replace(/[<>\/\\`"'&;]/g, '').trim();
@@ -654,7 +651,41 @@
   function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; updateAdminUI(); } }
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"); const g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
 
-  function listenToVideosWithRetry(maxAttempts = 5) { if (unsubscribeVideos) unsubscribeVideos(); let attempt = 0; const attemptFn = () => { attempt++; unsubscribeVideos = db.collection("videos").orderBy("createdAt", "asc").onSnapshot(snap => { videos = []; snap.forEach(d => { let v = d.data(); v.id = d.id; videos.push(v); }); if (isLoadingVideos) isLoadingVideos = false; renderVideos(); updateStorageBar(); checkForResume(); checkUrlForShare(); if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات"); }, err => { console.error("Error loading videos (attempt " + attempt + "):", err); if (attempt < maxAttempts) setTimeout(attemptFn, 3000 * attempt); else { showToast("⚠️ فشل تحميل الفيديوهات بعد عدة محاولات"); document.getElementById("videosContainer").innerHTML = '<div style="text-align:center;padding:3rem;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> تعذر تحميل الفيديوهات</div>'; } }); }; attemptFn(); }
+  // تم تعديل الدالة لتحسين رسائل الخطأ في حالة ضعف الاتصال
+  function listenToVideosWithRetry(maxAttempts = 5) {
+    if (unsubscribeVideos) unsubscribeVideos();
+    let attempt = 0;
+    const attemptFn = () => {
+      attempt++;
+      unsubscribeVideos = db.collection("videos").orderBy("createdAt", "asc").onSnapshot(snap => {
+        videos = [];
+        snap.forEach(d => {
+          let v = d.data();
+          v.id = d.id;
+          videos.push(v);
+        });
+        if (isLoadingVideos) isLoadingVideos = false;
+        loadAttemptFailed = false;
+        renderVideos();
+        updateStorageBar();
+        checkForResume();
+        checkUrlForShare();
+        if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات");
+      }, err => {
+        console.error("Error loading videos (attempt " + attempt + "):", err);
+        if (attempt < maxAttempts) {
+          setTimeout(attemptFn, 3000 * attempt);
+        } else {
+          isLoadingVideos = false;
+          loadAttemptFailed = true;
+          renderVideos(); // يعرض رسالة خطأ مناسبة للمستخدم العادي
+          showToast("⚠️ تعذر تحميل الفيديوهات بسبب ضعف الاتصال بالإنترنت. حاول تحديث الصفحة.");
+        }
+      });
+    };
+    attemptFn();
+  }
+
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
   function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); }
@@ -680,15 +711,34 @@
   function saveVideoEdit() { if (!currentEditVideoId || !isAdmin) return; let title = document.getElementById("editVideoTitleInput").value.trim(); let desc = document.getElementById("editVideoDescriptionInput").value.trim(); if (!title) { SoundEffects.error(); showToast("⚠️ العنوان لا يمكن أن يكون فارغاً"); return; } db.collection("videos").doc(currentEditVideoId).update({ title: title, description: desc, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم التعديل"); closeEditVideoModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); }
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
 
+  // تم تعديل دالة renderVideos لتحسين رسالة المكتبة الفارغة في حالة ضعف النت
   function renderVideos() {
     let container = document.getElementById("videosContainer");
     let empty = document.getElementById("emptyState");
     let loading = document.getElementById("loadingIndicator");
     let countSpan = document.getElementById("videoCount");
     if (!container || !empty || !countSpan || !loading) return;
-    if (isLoadingVideos) { container.innerHTML = ""; empty.style.display = "none"; loading.style.display = "block"; countSpan.textContent = "0 فيديو"; return; }
+    if (isLoadingVideos) {
+      container.innerHTML = "";
+      empty.style.display = "none";
+      loading.style.display = "block";
+      countSpan.textContent = "0 فيديو";
+      return;
+    }
     loading.style.display = "none";
-    if (videos.length === 0) { container.innerHTML = ""; empty.style.display = "block"; countSpan.textContent = "0 فيديو"; return; }
+    if (videos.length === 0) {
+      container.innerHTML = "";
+      // عرض رسالة مختلفة حسب سبب عدم وجود فيديوهات
+      if (loadAttemptFailed) {
+        empty.innerHTML = '<i class="fas fa-wifi" style="color:#ef4444; font-size:3rem;"></i><h3>تعذر تحميل الفيديوهات</h3><p>ضعف الاتصال بالإنترنت أو تعذر الوصول إلى الخادم. يرجى التحقق من اتصالك وإعادة المحاولة.</p><button class="btn btn-primary" onclick="refreshPage()" style="margin-top:1rem;"><i class="fas fa-sync-alt"></i> إعادة المحاولة</button>';
+      } else {
+        // رسالة للمستخدم العادي بدون ذكر المشرف
+        empty.innerHTML = '<i class="fas fa-satellite"></i><h3>لا توجد فيديوهات حالياً</h3><p>يرجى المحاولة مرة أخرى لاحقاً أو التحقق من اتصالك بالإنترنت.</p><button class="btn btn-primary" onclick="refreshPage()" style="margin-top:1rem;"><i class="fas fa-sync-alt"></i> تحديث</button>';
+      }
+      empty.style.display = "block";
+      countSpan.textContent = "0 فيديو";
+      return;
+    }
     empty.style.display = "none";
     countSpan.textContent = videos.length + " فيديو";
     container.innerHTML = videos.map(v => {
