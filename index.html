@@ -112,6 +112,86 @@
     .empty-state { text-align: center; padding: 6rem 2rem; color: #666; }
     .empty-state i.fa-satellite { animation: orbit 6s infinite ease-in-out; filter: drop-shadow(0 0 10px #6366f1); }
     @keyframes orbit { 0% { transform: rotate(0) translateX(0) translateY(0); } 25% { transform: rotate(90deg) translateX(15px) translateY(-15px); } 50% { transform: rotate(180deg) translateX(0) translateY(0); } 75% { transform: rotate(270deg) translateX(-15px) translateY(15px); } 100% { transform: rotate(360deg) translateX(0) translateY(0); } }
+    /* تأثير الثقب الأسود الاحترافي */
+    .black-hole-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .black-hole {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin-bottom: 2rem;
+    }
+    .accretion-disk {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #0f0a1a, #2a1e3a, #6366f1, #ec4899, #6366f1, #2a1e3a, #0f0a1a);
+      animation: spinDisk 3s linear infinite;
+      opacity: 0.7;
+    }
+    .black-core {
+      position: absolute;
+      top: 20%;
+      left: 20%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, #000000 0%, #0a0a1a 80%);
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.9), inset 0 0 15px rgba(99,102,241,0.3);
+      z-index: 2;
+    }
+    .gravitational-lens {
+      position: absolute;
+      top: -10%;
+      left: -10%;
+      width: 120%;
+      height: 120%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%);
+      animation: pulseLens 2s ease-in-out infinite;
+      z-index: 1;
+    }
+    @keyframes spinDisk {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pulseLens {
+      0% { transform: scale(0.9); opacity: 0.3; }
+      50% { transform: scale(1.1); opacity: 0.6; }
+      100% { transform: scale(0.9); opacity: 0.3; }
+    }
+    .black-hole-text {
+      color: #aaa;
+      font-size: 1rem;
+      margin-top: 1rem;
+      letter-spacing: 1px;
+    }
+    .black-hole-text i {
+      color: #6366f1;
+      margin-left: 0.5rem;
+    }
+    .retry-btn {
+      margin-top: 1.5rem;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      padding: 0.7rem 1.8rem;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .retry-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #6366f1;
+    }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 9999; padding: 0 !important; margin: 0 !important; }
     .modal.active { display: flex; animation: fadeIn .3s; }
     .modal-content { background: #0f0a1a; width: 100%; height: 100%; max-width: none; border: none; border-radius: 0; overflow-y: auto; display: flex; flex-direction: column; }
@@ -435,13 +515,36 @@
     <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube"><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
     <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
-    <div class="videos-grid" id="videosContainer"></div><div id="loadingIndicator" class="loading-videos" style="display: none;"><i class="fas fa-spinner fa-pulse"></i><p>جاري تحميل الفيديوهات...</p></div><div class="empty-state" id="emptyState" style="display: none;"><i class="fas fa-satellite"></i><h3>لا توجد فيديوهات حالياً</h3><p>يرجى المحاولة مرة أخرى لاحقاً أو التحقق من اتصالك بالإنترنت.</p></div>
+    <div class="videos-grid" id="videosContainer"></div>
+    <div id="loadingIndicator" class="loading-videos" style="display: none;">
+      <!-- تأثير الثقب الأسود أثناء التحميل -->
+      <div class="black-hole-loader">
+        <div class="black-hole">
+          <div class="accretion-disk"></div>
+          <div class="gravitational-lens"></div>
+          <div class="black-core"></div>
+        </div>
+        <div class="black-hole-text"><i class="fas fa-spinner fa-pulse"></i> جذب البيانات من الثقب الأسود... <i class="fas fa-gravity"></i></div>
+      </div>
+    </div>
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <div class="black-hole-loader" style="transform: scale(0.8);">
+        <div class="black-hole">
+          <div class="accretion-disk" style="animation-duration: 2s;"></div>
+          <div class="gravitational-lens"></div>
+          <div class="black-core"></div>
+        </div>
+      </div>
+      <h3>⚫ الثقب الأسود ابتلع البيانات!</h3>
+      <p>تعذر الاتصال بالخادم أو لا توجد فيديوهات حالياً. حاول تحديث الصفحة أو تأكد من اتصالك بالإنترنت.</p>
+      <button class="retry-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> محاولة السحب من الثقب مرة أخرى</button>
+    </div>
   </div>
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
-  <!-- جميع المودالات (نفس الكود الأصلي) -->
+  <!-- جميع المودالات (نفس الكود الأصلي مع إبقاء الوظائف) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
@@ -499,7 +602,7 @@
   let googleUser = null;
   let deferredPrompt = null;
   let feedbacksUnsubscribe = null;
-  let loadAttemptFailed = false;  // لتتبع فشل التحميل بسبب ضعف النت
+  let loadAttemptFailed = false;
 
   // EmailJS settings
   let emailSettings = { publicKey: "", serviceId: "", templateId: "" };
@@ -651,7 +754,6 @@
   function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; updateAdminUI(); } }
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"); const g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
 
-  // تم تعديل الدالة لتحسين رسائل الخطأ في حالة ضعف الاتصال
   function listenToVideosWithRetry(maxAttempts = 5) {
     if (unsubscribeVideos) unsubscribeVideos();
     let attempt = 0;
@@ -678,8 +780,8 @@
         } else {
           isLoadingVideos = false;
           loadAttemptFailed = true;
-          renderVideos(); // يعرض رسالة خطأ مناسبة للمستخدم العادي
-          showToast("⚠️ تعذر تحميل الفيديوهات بسبب ضعف الاتصال بالإنترنت. حاول تحديث الصفحة.");
+          renderVideos(); 
+          showToast("⚫ تعذر الاتصال بالخادم. يبدو أن الثقب الأسود ابتلع البيانات!");
         }
       });
     };
@@ -711,7 +813,7 @@
   function saveVideoEdit() { if (!currentEditVideoId || !isAdmin) return; let title = document.getElementById("editVideoTitleInput").value.trim(); let desc = document.getElementById("editVideoDescriptionInput").value.trim(); if (!title) { SoundEffects.error(); showToast("⚠️ العنوان لا يمكن أن يكون فارغاً"); return; } db.collection("videos").doc(currentEditVideoId).update({ title: title, description: desc, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم التعديل"); closeEditVideoModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); }
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
 
-  // تم تعديل دالة renderVideos لتحسين رسالة المكتبة الفارغة في حالة ضعف النت
+  // دالة عرض الفيديوهات مع رسالة الثقب الأسود الاحترافية
   function renderVideos() {
     let container = document.getElementById("videosContainer");
     let empty = document.getElementById("emptyState");
@@ -728,12 +830,10 @@
     loading.style.display = "none";
     if (videos.length === 0) {
       container.innerHTML = "";
-      // عرض رسالة مختلفة حسب سبب عدم وجود فيديوهات
       if (loadAttemptFailed) {
-        empty.innerHTML = '<i class="fas fa-wifi" style="color:#ef4444; font-size:3rem;"></i><h3>تعذر تحميل الفيديوهات</h3><p>ضعف الاتصال بالإنترنت أو تعذر الوصول إلى الخادم. يرجى التحقق من اتصالك وإعادة المحاولة.</p><button class="btn btn-primary" onclick="refreshPage()" style="margin-top:1rem;"><i class="fas fa-sync-alt"></i> إعادة المحاولة</button>';
+        empty.innerHTML = `<div class="black-hole-loader"><div class="black-hole"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div></div><h3>⚫ الثقب الأسود ابتلع البيانات!</h3><p>تعذر الاتصال بالخادم أو لا توجد فيديوهات حالياً. حاول تحديث الصفحة أو تأكد من اتصالك بالإنترنت.</p><button class="retry-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> محاولة السحب من الثقب مرة أخرى</button>`;
       } else {
-        // رسالة للمستخدم العادي بدون ذكر المشرف
-        empty.innerHTML = '<i class="fas fa-satellite"></i><h3>لا توجد فيديوهات حالياً</h3><p>يرجى المحاولة مرة أخرى لاحقاً أو التحقق من اتصالك بالإنترنت.</p><button class="btn btn-primary" onclick="refreshPage()" style="margin-top:1rem;"><i class="fas fa-sync-alt"></i> تحديث</button>';
+        empty.innerHTML = `<div class="black-hole-loader" style="transform: scale(0.8);"><div class="black-hole"><div class="accretion-disk" style="animation-duration: 2s;"></div><div class="gravitational-lens"></div><div class="black-core"></div></div></div><h3>⚫ لا توجد فيديوهات بعد</h3><p>يبدو أن الكون فارغ حالياً... عُد لاحقاً لمشاهدة محتوى جديد.</p>`;
       }
       empty.style.display = "block";
       countSpan.textContent = "0 فيديو";
@@ -1162,4 +1262,4 @@
   document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); closeFeedbackModal(); closeViewFeedbacksModal(); closeReplyModal(); } });
 </script>
 </body>
-</html> 
+</html>
