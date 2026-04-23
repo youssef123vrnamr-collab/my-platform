@@ -194,6 +194,14 @@
     }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 9999; padding: 0 !important; margin: 0 !important; }
     .modal.active { display: flex; animation: fadeIn .3s; }
+    .modal.courses-list-modal { align-items: flex-start; justify-content: stretch; }
+    .modal.courses-list-modal .modal-content { width: 100%; max-width: 100%; height: 100vh; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column; }
+    .modal.courses-list-modal .modal-header { position: sticky; top: 0; z-index: 3; padding-top: max(0.35rem, env(safe-area-inset-top)); padding-bottom: 0.65rem; box-shadow: 0 4px 20px rgba(0,0,0,.35); }
+    .modal.courses-list-modal .modal-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .course-actions-toolbar { display: flex; width: 100%; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0; min-height: 3rem; }
+    .course-actions-toolbar .course-actions-spacer { flex: 1; min-width: 80px; }
+    .course-actions-toolbar .course-actions-center { flex: 0 0 auto; }
+    .course-actions-toolbar .course-actions-side { flex: 1; min-width: 80px; display: flex; justify-content: flex-end; }
     .modal-content { background: #0f0a1a; width: 100%; height: 100%; max-width: none; border: none; border-radius: 0; overflow-y: auto; display: flex; flex-direction: column; }
     .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(236,72,153,.2)); flex-wrap: wrap; gap: 0.75rem; }
     .modal-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -484,6 +492,7 @@
             <div class="settings-menu-item admin-only" id="manageAppsMenuItem" style="display: none;"><i class="fas fa-th-large"></i> إدارة التطبيقات</div>
             <div class="settings-menu-item admin-only" id="viewFeedbacksMenuItem" style="display: none;"><i class="fas fa-chart-simple"></i> معرفة رأي الجمهور</div>
             <div class="settings-menu-item admin-only" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد الإلكتروني</div>
+            <div class="settings-menu-item admin-only" id="supervisorPayoutMenuItem" style="display: none;"><i class="fas fa-credit-card"></i> ربط استلام المدفوعات (مشرف)</div>
             <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
@@ -535,10 +544,15 @@
 </div>
     <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube"><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
-    <div style="margin: 1rem 0; display: flex; gap: 1rem; flex-wrap: wrap;">
-  <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
-  <button class="btn btn-info" onclick="showCoursesList()"><i class="fas fa-layer-group"></i> استعراض الكورسات</button>
-</div>
+    <div class="course-actions-toolbar">
+      <div class="course-actions-spacer" aria-hidden="true"></div>
+      <div class="course-actions-center">
+        <button class="btn btn-info" onclick="showCoursesList()"><i class="fas fa-layer-group"></i> استعراض الكورسات</button>
+      </div>
+      <div class="course-actions-side">
+        <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
+      </div>
+    </div>
     <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
     <div class="videos-grid" id="videosContainer"></div>
     <div id="loadingIndicator" class="loading-videos" style="display: none;">
@@ -594,6 +608,7 @@
   <div class="modal" id="viewFeedbacksModal"><div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;"><div class="modal-header"><h3><i class="fas fa-chart-simple"></i> آراء الجمهور</h3><button class="modal-close" onclick="closeViewFeedbacksModal()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="feedbacksListContainer"></div></div></div>
   <div class="modal" id="replyFeedbackModal"><div class="modal-content" style="max-width: 550px;"><div class="modal-header"><h3><i class="fas fa-reply"></i> رد على التقييم</h3><button class="modal-close" onclick="closeReplyModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p><strong>إلى:</strong> <span id="replyToName"></span> (<span id="replyToEmail"></span>)</p><div class="form-group"><label>نص الرد</label><textarea id="replyMessage" rows="5" placeholder="اكتب ردك هنا"></textarea></div><button class="btn btn-success" onclick="sendReplyEmail()" style="width:100%"><i class="fas fa-envelope"></i> إرسال الرد</button></div></div></div>
   <div class="modal" id="emailSettingsModal"><div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3><i class="fas fa-envelope"></i> إعدادات البريد الإلكتروني (EmailJS)</h3><button class="modal-close" onclick="closeEmailSettingsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>Public Key</label><input id="emailPublicKey" placeholder="أدخل Public Key من EmailJS"></div><div class="form-group"><label>Service ID</label><input id="emailServiceId" placeholder="أدخل Service ID"></div><div class="form-group"><label>Template ID</label><input id="emailTemplateId" placeholder="أدخل Template ID"></div><button class="btn btn-primary" onclick="saveEmailSettings()" style="width:100%">حفظ الإعدادات</button></div></div></div>
+  <div class="modal" id="supervisorPayoutModal"><div class="modal-content" style="max-width: 520px;"><div class="modal-header"><h3><i class="fas fa-wallet"></i> استلام المدفوعات (للمشرفين)</h3><button class="modal-close" onclick="closeSupervisorPayoutModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="color:#94a3b8;font-size:.9rem;line-height:1.7;margin-bottom:1rem">للأمان والقانون: <strong>لا</strong> تُخزَّن أرقام البطاقات على الموقع. اربط <strong>رابط دفع معتمد</strong> (مثل Stripe Payment Link أو Tap أو Paymob) يفتح صفحة دفع آمنة؛ الأموال تصل لحسابك عند المزوّد.</p><div class="form-group"><label>رابط الدفع الافتراضي للكورسات بدون رابط خاص</label><input id="supervisorDefaultPaymentLink" type="url" placeholder="https://..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo"></div><div class="form-group"><label>ملاحظة للطلاب (اختياري)</label><textarea id="supervisorPayoutNote" rows="3" placeholder="مثال: بعد الدفع أرسل إثبات واتساب..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo"></textarea></div><button class="btn btn-success" onclick="saveSupervisorPayoutSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ</button></div></div></div>
   <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()"><button class="image-viewer-close" onclick="closeImageViewer()"><i class="fas fa-times"></i></button><img alt="صورة" id="viewerImage" src=""></div>
   <div class="toast" id="toast">تم بنجاح</div>
 </div>
@@ -1325,6 +1340,7 @@ video.addEventListener("ended", async () => {
     document.getElementById("feedbackMenuItem")?.addEventListener("click", openFeedbackModal);
     document.getElementById("viewFeedbacksMenuItem")?.addEventListener("click", openViewFeedbacksModal);
     document.getElementById("emailSettingsMenuItem")?.addEventListener("click", openEmailSettingsModal);
+    document.getElementById("supervisorPayoutMenuItem")?.addEventListener("click", openSupervisorPayoutModal);
     const setAdminsMenuItem = document.getElementById("setAdminsMenuItem");
     if (setAdminsMenuItem) setAdminsMenuItem.addEventListener("click", openSetAdminsModal);
     const teachAIMenuItem = document.getElementById("teachAIMenuItem");
@@ -1334,8 +1350,8 @@ video.addEventListener("ended", async () => {
   window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
   setTimeout(hideLoader, 5000);
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); if(feedbacksUnsubscribe) feedbacksUnsubscribe(); removePresence(); });
-  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
-  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); closeFeedbackModal(); closeViewFeedbacksModal(); closeReplyModal(); } });
+  window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "supervisorPayoutModal") closeSupervisorPayoutModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
+  document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeSupervisorPayoutModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); closeFeedbackModal(); closeViewFeedbacksModal(); closeReplyModal(); } });
   // ========== Dashboard Functions ==========
 async function loadUserDashboard() {
   if (!currentUserId) return;
@@ -1389,6 +1405,36 @@ async function addPoints(userId, points, reason) {
 }
 
 // ========== Courses Functions ==========
+function openSupervisorPayoutModal() {
+  if (!isAdmin) { showToast("❌ للمشرفين فقط"); return; }
+  document.getElementById("supervisorPayoutModal").classList.add("active");
+  loadSupervisorPayoutSettings();
+}
+function closeSupervisorPayoutModal() { document.getElementById("supervisorPayoutModal").classList.remove("active"); }
+async function loadSupervisorPayoutSettings() {
+  try {
+    const doc = await db.collection("system").doc("supervisor_payout").get();
+    const d = doc.exists ? doc.data() : {};
+    document.getElementById("supervisorDefaultPaymentLink").value = d.defaultPaymentLink || "";
+    document.getElementById("supervisorPayoutNote").value = d.payoutNote || "";
+  } catch (e) { console.error(e); showToast("تعذر تحميل الإعدادات"); }
+}
+async function saveSupervisorPayoutSettings() {
+  if (!isAdmin) return;
+  const defaultPaymentLink = document.getElementById("supervisorDefaultPaymentLink").value.trim();
+  const payoutNote = document.getElementById("supervisorPayoutNote").value.trim();
+  if (defaultPaymentLink && !/^https?:\/\//i.test(defaultPaymentLink)) { showToast("رابط الدفع يجب أن يبدأ بـ https://"); return; }
+  try {
+    await db.collection("system").doc("supervisor_payout").set({
+      defaultPaymentLink: defaultPaymentLink || null,
+      payoutNote: payoutNote || null,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    showToast("✅ تم حفظ إعدادات استلام المدفوعات");
+    closeSupervisorPayoutModal();
+  } catch (e) { console.error(e); showToast("❌ فشل الحفظ"); }
+}
+
 let currentEditingCourseId = null;
 
 function showCreateCourseModal() {
@@ -1397,6 +1443,8 @@ function showCreateCourseModal() {
   document.getElementById("courseName").value = "";
   document.getElementById("courseDesc").value = "";
   document.getElementById("coursePrice").value = 0;
+  const cpl = document.getElementById("coursePaymentLink");
+  if (cpl) cpl.value = "";
   currentEditingCourseId = null;
   let container = document.getElementById("courseVideosChecklist");
   container.innerHTML = "";
@@ -1410,10 +1458,12 @@ async function saveCourse() {
   const name = document.getElementById("courseName").value.trim();
   const desc = document.getElementById("courseDesc").value.trim();
   const price = parseInt(document.getElementById("coursePrice").value) || 0;
+  const paymentLink = (document.getElementById("coursePaymentLink") && document.getElementById("coursePaymentLink").value.trim()) || "";
   const selectedVideos = Array.from(document.querySelectorAll("#courseVideosChecklist input:checked")).map(cb => cb.value);
   if (!name) { showToast("⚠️ أدخل اسم الكورس"); return; }
   if (selectedVideos.length === 0) { showToast("⚠️ اختر فيديو واحد على الأقل"); return; }
-  const courseData = { title: name, description: desc, videoIds: selectedVideos, price, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+  if (price > 0 && !paymentLink) { showToast("⚠️ أدخل رابط دفع آمن للكورس المدفوع أو اجعل السعر 0"); return; }
+  const courseData = { title: name, description: desc, videoIds: selectedVideos, price, paymentLink: paymentLink || null, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
   if (currentEditingCourseId) {
     await db.collection("courses").doc(currentEditingCourseId).update(courseData);
     showToast("✅ تم تحديث الكورس");
@@ -1430,22 +1480,29 @@ function closeCourseModal() { document.getElementById("courseModal").classList.r
 async function showCoursesList() {
   const coursesSnap = await db.collection("courses").get();
   if (coursesSnap.empty) { showToast("لا توجد كورسات بعد"); return; }
-  let listHtml = `<div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">`;
+  let payoutNote = "";
+  try {
+    const ps = await db.collection("system").doc("supervisor_payout").get();
+    if (ps.exists && ps.data().payoutNote) payoutNote = String(ps.data().payoutNote);
+  } catch (e) { console.warn(e); }
+  let listHtml = `<div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">`;
+  if (payoutNote) listHtml += `<div style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);border-radius:12px;padding:.75rem 1rem;font-size:.9rem;color:#cbd5e1;line-height:1.6"><i class="fas fa-info-circle" style="color:#6366f1"></i> ${escapeHtml(payoutNote)}</div>`;
   for (const doc of coursesSnap.docs) {
     const c = doc.data();
+    const paid = (c.price || 0) > 0;
     listHtml += `<div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 1rem;">
       <h4><i class="fas fa-book-open"></i> ${escapeHtml(c.title)}</h4>
       <p>${escapeHtml(c.description || '')}</p>
       <p><strong>عدد الدروس:</strong> ${c.videoIds.length}</p>
-      <p><strong>السعر:</strong> ${c.price === 0 ? "مجاني" : c.price + " جنيه"}</p>
-      <button class="btn btn-primary" onclick="enrollInCourse('${doc.id}')">اشترك الآن</button>
+      <p><strong>السعر:</strong> ${c.price === 0 ? "مجاني" : c.price + " جنيه"}${paid && c.paymentLink ? ' <span style="color:#10b981;font-size:.85rem">(دفع عبر رابط آمن)</span>' : ''}</p>
+      <button class="btn btn-primary" onclick="enrollInCourse('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>
       ${isAdmin ? `<button class="btn btn-warning" onclick="editCourse('${doc.id}')">تعديل</button>` : ''}
     </div>`;
   }
   listHtml += `</div>`;
   const modal = document.createElement("div");
-  modal.className = "modal active";
-  modal.innerHTML = `<div class="modal-content" style="max-width: 700px; max-height: 80vh; overflow-y: auto;"><div class="modal-header"><h3>قائمة الكورسات</h3><button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button></div><div class="modal-body">${listHtml}</div></div>`;
+  modal.className = "modal active courses-list-modal";
+  modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3><i class="fas fa-layer-group"></i> قائمة الكورسات</h3><button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button></div><div class="modal-body">${listHtml}</div></div>`;
   document.body.appendChild(modal);
 }
 
@@ -1458,6 +1515,8 @@ async function editCourse(courseId) {
   document.getElementById("courseName").value = data.title;
   document.getElementById("courseDesc").value = data.description || "";
   document.getElementById("coursePrice").value = data.price;
+  const cplEl = document.getElementById("coursePaymentLink");
+  if (cplEl) cplEl.value = data.paymentLink || "";
   currentEditingCourseId = courseId;
   const container = document.getElementById("courseVideosChecklist");
   container.innerHTML = "";
@@ -1468,16 +1527,41 @@ async function editCourse(courseId) {
   document.getElementById("courseModal").classList.add("active");
 }
 
+async function getGlobalPaymentLink() {
+  try {
+    const doc = await db.collection("system").doc("supervisor_payout").get();
+    if (doc.exists && doc.data().defaultPaymentLink) return String(doc.data().defaultPaymentLink).trim();
+  } catch (e) { console.error(e); }
+  return "";
+}
 async function enrollInCourse(courseId) {
   if (!currentUserId) { showToast("سجل دخولك أولاً"); return; }
   const courseDoc = await db.collection("courses").doc(courseId).get();
   const courseData = courseDoc.data();
-  if (courseData.price > 0) {
-    showToast("هذا الكورس مدفوع. سيتم تفعيل خاصية الدفع قريباً.");
-    return;
-  }
   const existing = await db.collection("course_enrollments").where("userId", "==", currentUserId).where("courseId", "==", courseId).get();
   if (!existing.empty) { showToast("أنت مسجل بالفعل في هذا الكورس"); return; }
+  if (courseData.price > 0) {
+    let link = (courseData.paymentLink && String(courseData.paymentLink).trim()) || "";
+    if (!link) link = await getGlobalPaymentLink();
+    if (!link) { showToast("لم يُضبط رابط دفع. المشرف يضيفه من الإعدادات أو من بيانات الكورس"); return; }
+    try {
+      const w = window.open(link, "_blank", "noopener,noreferrer");
+      if (!w) showToast("اسمح بالنوافذ المنبثقة لإتمام الدفع");
+    } catch (e) { console.error(e); showToast("تعذر فتح صفحة الدفع"); return; }
+    const ok = confirm("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟\n\nسيتم تفعيل اشتراكك في المنصة. يُفضّل أن يتحقق المشرف من استلام المبلغ عند مزوّد الدفع.");
+    if (!ok) { showToast("يمكنك الضغط على اشتراك مرة أخرى بعد إتمام الدفع"); return; }
+    await db.collection("course_enrollments").add({
+      userId: currentUserId,
+      courseId: courseId,
+      enrolledAt: firebase.firestore.FieldValue.serverTimestamp(),
+      completedVideos: 0,
+      totalVideos: courseData.videoIds.length,
+      completedVideosIds: [],
+      paidEnrollment: true
+    });
+    showToast("✅ تم تفعيل اشتراكك بعد الدفع");
+    return;
+  }
   await db.collection("course_enrollments").add({
     userId: currentUserId,
     courseId: courseId,
@@ -1490,6 +1574,6 @@ async function enrollInCourse(courseId) {
 }
 </script>
 <!-- Modal إنشاء / تعديل كورس -->
-<div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
+<div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
 </body>
 </html>
