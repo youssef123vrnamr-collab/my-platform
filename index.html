@@ -197,7 +197,10 @@
     .modal.courses-list-modal { align-items: flex-start; justify-content: stretch; }
     .modal.courses-list-modal .modal-content { width: 100%; max-width: 100%; height: 100vh; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column; }
     .modal.courses-list-modal .modal-header { position: sticky; top: 0; z-index: 3; padding-top: max(0.35rem, env(safe-area-inset-top)); padding-bottom: 0.65rem; box-shadow: 0 4px 20px rgba(0,0,0,.35); }
-    .modal.courses-list-modal .modal-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal.courses-list-modal .modal-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1.25rem 1.5rem 2.5rem; display: flex; flex-direction: column; align-items: stretch; }
+    .modal.courses-list-modal .courses-list-inner { width: 100%; max-width: min(1100px, 100%); margin-inline: auto; box-sizing: border-box; }
+    .modal.courses-list-modal .course-card-item { width: 100%; max-width: 100%; box-sizing: border-box; }
+    #courseModal.active { z-index: 10050; }
     .course-actions-toolbar { display: flex; width: 100%; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0; min-height: 3rem; }
     .course-actions-toolbar .course-actions-spacer { flex: 1; min-width: 80px; }
     .course-actions-toolbar .course-actions-center { flex: 0 0 auto; }
@@ -1437,8 +1440,13 @@ async function saveSupervisorPayoutSettings() {
 
 let currentEditingCourseId = null;
 
+function closeCoursesListModal() {
+  document.querySelectorAll(".modal.courses-list-modal").forEach(function (el) { el.remove(); });
+}
+
 function showCreateCourseModal() {
   if (!isAdmin && !(isAdminUser(currentUserId))) { showToast("❌ غير مصرح"); return; }
+  closeCoursesListModal();
   document.getElementById("courseModalTitle").innerText = "إنشاء كورس جديد";
   document.getElementById("courseName").value = "";
   document.getElementById("courseDesc").value = "";
@@ -1485,18 +1493,21 @@ async function showCoursesList() {
     const ps = await db.collection("system").doc("supervisor_payout").get();
     if (ps.exists && ps.data().payoutNote) payoutNote = String(ps.data().payoutNote);
   } catch (e) { console.warn(e); }
-  let listHtml = `<div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">`;
+  let listHtml = `<div class="courses-list-inner" style="display: flex; flex-direction: column; gap: 1.25rem; margin-top: 0.25rem;">`;
   if (payoutNote) listHtml += `<div style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);border-radius:12px;padding:.75rem 1rem;font-size:.9rem;color:#cbd5e1;line-height:1.6"><i class="fas fa-info-circle" style="color:#6366f1"></i> ${escapeHtml(payoutNote)}</div>`;
   for (const doc of coursesSnap.docs) {
     const c = doc.data();
     const paid = (c.price || 0) > 0;
-    listHtml += `<div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 1rem;">
-      <h4><i class="fas fa-book-open"></i> ${escapeHtml(c.title)}</h4>
-      <p>${escapeHtml(c.description || '')}</p>
-      <p><strong>عدد الدروس:</strong> ${c.videoIds.length}</p>
+    const nLessons = (c.videoIds && c.videoIds.length) ? c.videoIds.length : 0;
+    listHtml += `<div class="course-card-item" style="background: rgba(255,255,255,0.06); border-radius: 20px; padding: 1.25rem 1.5rem; border: 1px solid rgba(255,255,255,.08);">
+      <h4 style="font-size:1.25rem;margin-bottom:.5rem"><i class="fas fa-book-open"></i> ${escapeHtml(c.title)}</h4>
+      <p style="line-height:1.7;color:#ddd">${escapeHtml(c.description || '')}</p>
+      <p style="margin-top:.75rem"><strong>عدد الدروس:</strong> ${nLessons}</p>
       <p><strong>السعر:</strong> ${c.price === 0 ? "مجاني" : c.price + " جنيه"}${paid && c.paymentLink ? ' <span style="color:#10b981;font-size:.85rem">(دفع عبر رابط آمن)</span>' : ''}</p>
-      <button class="btn btn-primary" onclick="enrollInCourse('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>
-      ${isAdmin ? `<button class="btn btn-warning" onclick="editCourse('${doc.id}')">تعديل</button>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1rem">
+      <button type="button" class="btn btn-primary" onclick="enrollInCourse('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>
+      ${isAdmin ? `<button type="button" class="btn btn-warning" onclick="editCourse('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>` : ''}
+      </div>
     </div>`;
   }
   listHtml += `</div>`;
@@ -1507,7 +1518,8 @@ async function showCoursesList() {
 }
 
 async function editCourse(courseId) {
-  if (!isAdmin) return;
+  if (!isAdmin) { showToast("❌ غير مصرح"); return; }
+  closeCoursesListModal();
   const doc = await db.collection("courses").doc(courseId).get();
   if (!doc.exists) return;
   const data = doc.data();
@@ -1520,8 +1532,9 @@ async function editCourse(courseId) {
   currentEditingCourseId = courseId;
   const container = document.getElementById("courseVideosChecklist");
   container.innerHTML = "";
+  const vidIds = data.videoIds || [];
   videos.forEach(v => {
-    const checked = data.videoIds.includes(v.id) ? "checked" : "";
+    const checked = vidIds.includes(v.id) ? "checked" : "";
     container.innerHTML += `<label style="display: block;"><input type="checkbox" value="${v.id}" ${checked}> ${escapeHtml(v.title)}</label>`;
   });
   document.getElementById("courseModal").classList.add("active");
