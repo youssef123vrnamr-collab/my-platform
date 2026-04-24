@@ -2080,6 +2080,7 @@ async function enrollInCourse(courseId) {
         <i class="fas fa-right-to-bracket"></i>
         <h4>سجّل دخولك أولاً</h4>
         <p>يجب تسجيل الدخول بحساب جوجل لكي تتمكن من بدء محادثة خاصة مع المشرفين.</p>
+        <button class="google-btn" style="margin-top:1rem" onclick="pacTriggerGoogleLogin()"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>
       </div>
     </div>
   </div>
@@ -2331,9 +2332,13 @@ async function enrollInCourse(courseId) {
     if (!articles || !articles.length) {
       return '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب لاحقاً.</p></div>';
     }
-    return `<div class="cosmos-cards">${articles.map(a=>`
-      <article class="cosmos-card cosmos-news-card" onclick="window.open('${encodeURI(a.url)}','_blank','noopener')">
-        <div class="cosmos-card-img" style="background-image:url('${encodeURI(a.image_url||'')}')">
+    const fallback = 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70';
+    return `<div class="cosmos-cards">${articles.map(a=>{
+      const url = a.url || '#';
+      const img = a.image_url || fallback;
+      return `
+      <a class="cosmos-card cosmos-news-card" href="${encodeURI(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit;display:block">
+        <div class="cosmos-card-img" style="background-image:url('${encodeURI(img)}')" onerror="this.style.backgroundImage='url(${fallback})'">
           <span class="cosmos-card-tag floating"><i class="fas fa-rss"></i> ${escapeHtml(a.news_site||'Space News')}</span>
           <span class="cosmos-card-time"><i class="far fa-clock"></i> ${escapeHtml(timeAgo(a.published_at))}</span>
         </div>
@@ -2342,8 +2347,8 @@ async function enrollInCourse(courseId) {
           <p>${escapeHtml((a.summary||'').slice(0, 220))}${(a.summary||'').length>220?'…':''}</p>
           <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ الخبر كاملاً</span>
         </div>
-      </article>
-    `).join('')}</div>`;
+      </a>`;
+    }).join('')}</div>`;
   }
 
   window.openCosmosCategory = async function(key){
@@ -2610,6 +2615,19 @@ async function enrollInCourse(courseId) {
     pacCurrentThreadUserId = null;
     document.getElementById('privateAdminChatModal').classList.remove('active');
     document.body.style.overflow = '';
+  };
+
+  window.pacTriggerGoogleLogin = async function(){
+    try {
+      if (typeof googleLogin === 'function') {
+        window.closePrivateAdminChat();
+        await googleLogin();
+        setTimeout(()=>{ try { window.openPrivateAdminChat(); } catch(e){} }, 600);
+        return;
+      }
+      const btn = document.getElementById('googleSignInBtn');
+      if (btn) { window.closePrivateAdminChat(); btn.click(); }
+    } catch(e){ console.error('pac google login failed', e); if (window.showToast) showToast('❌ فشل تسجيل الدخول'); }
   };
 
   window.pacBackToList = function(){
