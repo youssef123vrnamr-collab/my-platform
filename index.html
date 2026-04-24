@@ -688,6 +688,42 @@
       .btn { padding: 0.5rem 0.85rem; font-size: 0.8rem; }
       .brand-text h1 { font-size: 1rem; }
     }
+
+    /* ===== Cosmos Explorer carousel ===== */
+    .cosmos-carousel-section { margin: 1.25rem 0 2rem; padding: 1.25rem 1.25rem 1.5rem; background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(236,72,153,.06)); border: 1px solid rgba(167,139,250,.18); border-radius: 22px; box-shadow: 0 12px 30px -18px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04); position: relative; overflow: hidden; }
+    .cosmos-carousel-section::before { content:""; position:absolute; inset:-2px; background: radial-gradient(600px 200px at 20% 0%, rgba(167,139,250,.18), transparent 70%), radial-gradient(500px 180px at 90% 100%, rgba(236,72,153,.14), transparent 70%); pointer-events: none; }
+    .cosmos-carousel-header { display:flex; flex-direction:column; gap:.25rem; margin-bottom: 1rem; position: relative; }
+    .cosmos-carousel-header h3 { font-size: 1.2rem; font-weight: 800; display:flex; align-items:center; gap:.6rem; margin:0; background: linear-gradient(120deg,#fff, #c4b5fd); -webkit-background-clip:text; -webkit-text-fill-color: transparent; }
+    .cosmos-carousel-header h3 i { color:#a78bfa; -webkit-text-fill-color:#a78bfa; }
+    .cosmos-carousel-header p { font-size: .85rem; color:#b8b3c9; margin: 0; }
+    .cosmos-carousel-wrapper { position:relative; }
+    .cosmos-carousel { display:flex; gap:.75rem; overflow-x:auto; scroll-behavior:smooth; scroll-snap-type: x mandatory; padding: .25rem .25rem .75rem; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(167,139,250,.5) transparent; }
+    .cosmos-carousel::-webkit-scrollbar { height: 6px; }
+    .cosmos-carousel::-webkit-scrollbar-thumb { background: linear-gradient(90deg,#6366f1,#ec4899); border-radius: 10px; border: none; }
+    .cosmos-carousel::-webkit-scrollbar-track { background: transparent; }
+    .cosmos-pill { flex: 0 0 auto; scroll-snap-align: start; display:inline-flex; align-items:center; gap:.55rem; padding: .7rem 1.1rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(26,16,37,.75), rgba(40,20,55,.6)); color:#fff; font-family:'Cairo',sans-serif; font-weight: 700; font-size: .9rem; cursor:pointer; transition: transform .25s, box-shadow .25s, background .25s, border-color .25s; box-shadow: 0 6px 16px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06); white-space: nowrap; backdrop-filter: blur(8px); position: relative; overflow: hidden; }
+    .cosmos-pill::after { content:""; position:absolute; top:0; left:-150%; width:55%; height:100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,.22), transparent); transform: skewX(-20deg); transition: left .65s ease; pointer-events:none; }
+    .cosmos-pill:hover::after { left: 150%; }
+    .cosmos-pill:hover { transform: translateY(-3px); border-color: rgba(167,139,250,.55); box-shadow: 0 14px 28px -12px rgba(99,102,241,.5); }
+    .cosmos-pill .pill-icon { width: 28px; height: 28px; border-radius: 50%; display:inline-flex; align-items:center; justify-content:center; font-size:.95rem; background: linear-gradient(135deg, var(--pill-c1, #6366f1), var(--pill-c2, #ec4899)); box-shadow: 0 4px 10px -4px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25); }
+    .carousel-nav { position:absolute; top:50%; transform: translateY(-55%); width:38px; height:38px; border-radius:50%; border:1px solid rgba(167,139,250,.4); background: rgba(26,16,37,.85); color:#fff; font-size: 1rem; cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(10px); box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); transition: background .25s, transform .25s; }
+    .carousel-nav:hover { background: rgba(99,102,241,.4); transform: translateY(-55%) scale(1.08); }
+    .carousel-nav-right { right: -6px; }
+    .carousel-nav-left { left: -6px; }
+    @media (max-width: 600px) { .carousel-nav { display: none; } .cosmos-pill { padding: .6rem .95rem; font-size:.85rem; } }
+
+    /* Cosmos modal cards */
+    .cosmos-modal-intro { padding: 1rem 1.25rem; background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(236,72,153,.08)); border:1px solid rgba(167,139,250,.2); border-radius:16px; margin-bottom: 1.25rem; color:#cfc9dd; line-height:1.7; font-size:.95rem; }
+    .cosmos-cards { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.1rem; }
+    .cosmos-card { background: linear-gradient(180deg, rgba(26,16,37,.95), rgba(15,10,26,.95)); border:1px solid rgba(255,255,255,.06); border-radius:18px; overflow:hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s; box-shadow: 0 12px 28px -16px rgba(0,0,0,.6); display:flex; flex-direction:column; }
+    .cosmos-card:hover { transform: translateY(-6px); border-color: rgba(167,139,250,.45); box-shadow: 0 24px 44px -20px rgba(99,102,241,.45); }
+    .cosmos-card-img { height: 180px; background-size: cover; background-position: center; background-color: #1a1025; position:relative; }
+    .cosmos-card-img::after { content:""; position:absolute; inset:0; background: linear-gradient(180deg, transparent 40%, rgba(15,10,26,.9)); }
+    .cosmos-card-body { padding: 1rem 1.1rem 1.2rem; flex:1; display:flex; flex-direction:column; gap:.5rem; }
+    .cosmos-card-body h4 { font-size:1.05rem; font-weight:800; margin:0; background: linear-gradient(120deg,#fff,#c4b5fd); -webkit-background-clip:text; -webkit-text-fill-color: transparent; }
+    .cosmos-card-body p { font-size:.88rem; line-height:1.7; color:#cfc9dd; margin:0; }
+    .cosmos-card-tag { display:inline-flex; align-items:center; gap:.35rem; align-self: flex-start; padding: .25rem .65rem; border-radius: 999px; font-size:.72rem; font-weight:700; background: rgba(167,139,250,.18); color:#c4b5fd; border: 1px solid rgba(167,139,250,.3); margin-top:.25rem; }
+    @media (max-width: 600px) { .cosmos-cards { grid-template-columns: 1fr; gap: .9rem; } .cosmos-card-img { height: 200px; } }
   </style>
 </head>
 <body>
@@ -784,6 +820,31 @@
         <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
       </div>
     </div>
+
+    <!-- ===== Cosmos Explorer carousel ===== -->
+    <section class="cosmos-carousel-section" id="cosmosCarouselSection">
+      <div class="cosmos-carousel-header">
+        <h3><i class="fas fa-meteor"></i> استكشف الكون — مكتبة معلومات أسطورية</h3>
+        <p>اختر قسم وابدأ رحلتك بين النجوم والكواكب وأخبار الفضاء الحقيقية</p>
+      </div>
+      <div class="cosmos-carousel-wrapper">
+        <button type="button" class="carousel-nav carousel-nav-right" onclick="scrollCosmosCarousel(1)" aria-label="التالي"><i class="fas fa-chevron-right"></i></button>
+        <button type="button" class="carousel-nav carousel-nav-left" onclick="scrollCosmosCarousel(-1)" aria-label="السابق"><i class="fas fa-chevron-left"></i></button>
+        <div class="cosmos-carousel" id="cosmosCarousel">
+          <button type="button" class="cosmos-pill" style="--pill-c1:#fbbf24;--pill-c2:#f97316" onclick="openCosmosCategory('stars')"><span class="pill-icon"><i class="fas fa-star"></i></span><span>النجوم</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#3b82f6;--pill-c2:#06b6d4" onclick="openCosmosCategory('planets')"><span class="pill-icon"><i class="fas fa-globe"></i></span><span>الكواكب</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#a855f7;--pill-c2:#ec4899" onclick="openCosmosCategory('universe')"><span class="pill-icon"><i class="fas fa-infinity"></i></span><span>الكون</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#8b5cf6;--pill-c2:#6366f1" onclick="openCosmosCategory('galaxies')"><span class="pill-icon"><i class="fas fa-circle-notch"></i></span><span>المجرات</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#0f172a;--pill-c2:#6366f1" onclick="openCosmosCategory('blackholes')"><span class="pill-icon"><i class="fas fa-circle"></i></span><span>الثقوب السوداء</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#ef4444;--pill-c2:#f97316" onclick="openCosmosCategory('missions')"><span class="pill-icon"><i class="fas fa-rocket"></i></span><span>مهمات فضائية</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#10b981;--pill-c2:#06b6d4" onclick="openCosmosCategory('astronauts')"><span class="pill-icon"><i class="fas fa-user-astronaut"></i></span><span>رواد الفضاء</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#ec4899;--pill-c2:#a855f7" onclick="openCosmosCategory('news')"><span class="pill-icon"><i class="fas fa-newspaper"></i></span><span>أخبار الكون</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#06b6d4;--pill-c2:#3b82f6" onclick="openCosmosCategory('telescopes')"><span class="pill-icon"><i class="fas fa-search"></i></span><span>التلسكوبات</span></button>
+          <button type="button" class="cosmos-pill" style="--pill-c1:#f59e0b;--pill-c2:#ef4444" onclick="openCosmosCategory('phenomena')"><span class="pill-icon"><i class="fas fa-bolt"></i></span><span>ظواهر فلكية</span></button>
+        </div>
+      </div>
+    </section>
+
     <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
     <div class="videos-grid" id="videosContainer"></div>
     <div id="loadingIndicator" class="loading-videos" style="display: none;">
@@ -1815,6 +1876,146 @@ async function enrollInCourse(courseId) {
 }
 </script>
 <!-- Modal إنشاء / تعديل كورس -->
+<!-- ===== Cosmos Explorer modal ===== -->
+<div class="modal" id="cosmosModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-header-left"><h3 id="cosmosModalTitle"><i class="fas fa-meteor" style="color:#a78bfa"></i> استكشف الكون</h3></div>
+      <button class="modal-close" onclick="closeCosmosModal()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="cosmosModalBody"></div>
+  </div>
+</div>
+<script>
+(function(){
+  const COSMOS_DATA = {
+    stars: { title:'النجوم', icon:'fa-star', color:'#fbbf24', intro:'النجوم كرات هائلة من البلازما تتوهج بفعل الاندماج النووي في نواتها. يقدّر العلماء عدد النجوم في الكون المرئي بأكثر من 200 سكستيليون نجم — رقم يفوق حبات الرمل على كل شواطئ الأرض.', items:[
+      {img:'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70', tag:'نجمنا الأم', title:'الشمس', text:'نجم قزم أصفر عمره ≈ 4.6 مليار سنة، تبلغ حرارة سطحه 5,500°م ونواته 15 مليون درجة. تنتج طاقتها بدمج 600 مليون طن هيدروجين كل ثانية، وتمدّ كل أشكال الحياة على الأرض بالطاقة.'},
+      {img:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70', tag:'العملاق الأحمر', title:'منكب الجوزاء (Betelgeuse)', text:'عملاق أحمر في كوكبة الجبار، أكبر من شمسنا بـ 700 مرة. لو وُضع مكان الشمس لابتلع المريخ! يُتوقّع أن ينفجر كمستعر أعظم خلال 100,000 سنة قادمة، وسيكون أسطع من القمر في سمائنا.'},
+      {img:'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70', tag:'الأقرب إلينا', title:'بروكسيما سنتوري', text:'أقرب نجم لنا بعد الشمس، يبعد 4.24 سنة ضوئية. قزم أحمر صغير يدور حوله كوكب صخري شبيه بالأرض اسمه "بروكسيما ب" يقع في النطاق الصالح للحياة.'},
+      {img:'https://images.unsplash.com/photo-1539593395743-7da5ee10ff07?w=900&q=70', tag:'النجم القطبي', title:'الجدي (Polaris)', text:'النجم الذي ظلّ البحارة يهتدون به آلاف السنين لأنه يقع تقريباً فوق القطب الشمالي للأرض. هو فعلياً نظام ثلاثي النجوم يبعد 433 سنة ضوئية.'},
+      {img:'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70', tag:'حضانة النجوم', title:'سُدُم تكوّن النجوم', text:'النجوم تولد داخل سحب جزيئية ضخمة من الغاز والغبار تُعرف بـ"السدم". أشهرها سديم الجبار (Orion Nebula) المرئي بالعين المجردة، حيث وُلدت آلاف النجوم خلال آخر مليون سنة.'},
+      {img:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70', tag:'النجوم النيوترونية', title:'النابضات (Pulsars)', text:'بقايا نجوم انفجرت كمستعرات عظمى. كثافتها مهولة: ملعقة شاي منها تزن ملياري طن! تدور آلاف الدورات في الثانية وتُطلق نبضات راديوية منتظمة كمنارة كونية.'}
+    ]},
+    planets: { title:'الكواكب', icon:'fa-globe', color:'#3b82f6', intro:'يضم نظامنا الشمسي 8 كواكب، 4 صخرية داخلية و4 غازية عملاقة. وقد رصد علماء الفلك أكثر من 5,500 كوكب خارج المجموعة الشمسية حتى الآن، بعضها قد يكون صالحاً للحياة.', items:[
+      {img:'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70', tag:'كوكبنا', title:'الأرض', text:'الكوكب الوحيد المعروف بإيوائه الحياة. عمره 4.54 مليار سنة، يدور حول الشمس بسرعة 107,000 كم/س. سطحه مغطى 71% بالمياه السائلة، ولديه قمر طبيعي واحد يُثبّت ميلانه ويهبنا الفصول.'},
+      {img:'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=900&q=70', tag:'الكوكب الأحمر', title:'المريخ', text:'يُسمّى الكوكب الأحمر بسبب أكسيد الحديد على سطحه. يضم أعلى جبل في النظام الشمسي (أوليمبوس مونس بارتفاع 22 كم) وأطول وادٍ (فاليس مارينيريس بطول 4,000 كم). دلائل قوية على وجود ماء سائل في ماضيه.'},
+      {img:'https://images.unsplash.com/photo-1630839437035-dac17da580d0?w=900&q=70', tag:'الجبّار', title:'المشتري', text:'أكبر كواكب النظام الشمسي — حجمه يفوق الأرض بـ 1,300 مرة. البقعة الحمراء العظيمة عاصفة دائرة منذ 350 سنة على الأقل وتسع كرتنا الأرضية كاملة. لديه 95 قمراً معروفاً!'},
+      {img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=900&q=70', tag:'سيد الحلقات', title:'زحل', text:'مشهور بحلقاته المهيبة المكوّنة من مليارات قطع الجليد والصخر. كثافته أقل من كثافة الماء — لو وضعته في محيط ضخم لطفا! يضم 146 قمراً، أكبرها تيتان الذي له غلاف جوي وبحيرات ميثان.'},
+      {img:'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70', tag:'الأقرب للشمس', title:'عطارد', text:'أصغر كواكب المجموعة وأقربها للشمس. يومه أطول من سنته! درجة الحرارة تتراوح بين 430°م نهاراً و-180°م ليلاً، أكبر فارق حراري في المنظومة الشمسية.'},
+      {img:'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70', tag:'كواكب خارجية', title:'TRAPPIST-1 system', text:'نظام نجمي يبعد 40 سنة ضوئية يضم 7 كواكب صخرية بحجم الأرض، 3 منها في النطاق الصالح للحياة. أحد أكثر الاكتشافات إثارة في تاريخ علم الفلك (2017).'}
+    ]},
+    universe: { title:'الكون', icon:'fa-infinity', color:'#a855f7', intro:'الكون: كل ما هو موجود من مادة وطاقة وزمن ومكان. عمره ≈ 13.8 مليار سنة، ويتمدّد منذ الانفجار العظيم. الجزء المرئي منه قطره 93 مليار سنة ضوئية، لكن قد يكون أكبر من ذلك بكثير — ربما لانهائياً.', items:[
+      {img:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70', tag:'البداية', title:'الانفجار العظيم (Big Bang)', text:'قبل 13.8 مليار سنة، انبثق الكون كله من نقطة فائقة الكثافة والحرارة. في أول جزء من الثانية تمدّد بسرعة تفوق سرعة الضوء (التضخم الكوني)، ثم بدأت الذرات والنجوم والمجرات تتشكل.'},
+      {img:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70', tag:'السر الأعظم', title:'المادة المظلمة', text:'تُشكّل 27% من الكون لكن لم نرها ولم نمسكها — نعرف بوجودها فقط من تأثير جاذبيتها على المجرات. بدونها كانت المجرات ستتفكك وتتطاير في الفضاء.'},
+      {img:'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70', tag:'الطاقة الخفية', title:'الطاقة المظلمة', text:'68% من الكون عبارة عن "طاقة مظلمة" تدفعه ليتسارع في التمدّد. أكبر لغز في الفيزياء الحديثة — لا أحد يعرف ما هي بالضبط.'},
+      {img:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70', tag:'الإشعاع القديم', title:'إشعاع الخلفية الكونية', text:'صدى الانفجار العظيم لا يزال مسموعاً! إشعاع ميكروويف يملأ الكون بحرارة 2.7 كلفن فقط، رصده العلماء عام 1964 وأثبت نظرية الانفجار العظيم.'},
+      {img:'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70', tag:'الأرقام', title:'حجم الكون المرصود', text:'يحتوي الكون المرصود على 2 تريليون مجرة، تضم كل واحدة منها مئات المليارات من النجوم. لو عددت نجمة كل ثانية لاحتجت أكثر من 3 تريليون سنة!'},
+      {img:'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70', tag:'النهاية الممكنة', title:'مصير الكون', text:'هناك نظريات: التمدّد الأبدي حتى الموت الحراري (Big Freeze)، أو انهيار عظيم (Big Crunch)، أو تمزّق عظيم (Big Rip). أرجح السيناريوهات حالياً: التمدّد الأبدي مع فقدان كل المجرات للاتصال.'}
+    ]},
+    galaxies: { title:'المجرات', icon:'fa-circle-notch', color:'#8b5cf6', intro:'المجرات تجمعات هائلة من النجوم والغاز والغبار والمادة المظلمة، يربطها الجاذبية. تتفاوت من أقزام تضم بضعة ملايين نجم إلى عمالقة بمئات تريليونات النجوم.', items:[
+      {img:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70', tag:'مجرتنا', title:'درب التبانة', text:'مجرة حلزونية قطرها 100,000 سنة ضوئية تضم 100-400 مليار نجم. شمسنا تقع في أحد أذرعها وتدور حول مركزها كل 230 مليون سنة. في مركزها ثقب أسود هائل اسمه "Sagittarius A*".'},
+      {img:'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70', tag:'الجارة الكبرى', title:'مجرة أندروميدا (M31)', text:'أقرب مجرة حلزونية كبيرة، تبعد 2.5 مليون سنة ضوئية. ضعف حجم درب التبانة وستصطدم بمجرتنا خلال 4.5 مليار سنة لتشكلا مجرة بيضاوية واحدة اسمها "Milkomeda".'},
+      {img:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70', tag:'القلب النشط', title:'الكوازارات', text:'أكثر الأجسام إشعاعاً في الكون — مراكز مجرات نشطة تحوي ثقباً أسود فائقاً يبتلع المادة. كوازار واحد يضيء أكثر من تريليون شمس!'},
+      {img:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70', tag:'تصادم كوني', title:'مجرات متصادمة', text:'المجرات تتصادم باستمرار! تستغرق العملية مئات ملايين السنين، لكن النجوم نادراً ما تصطدم لأن المسافات بينها هائلة. ينتج عنها انفجارات تكوّن نجوم جديدة بكثافة.'},
+      {img:'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70', tag:'الأبعد', title:'مجرة JADES-GS-z14-0', text:'أبعد مجرة رصدها تلسكوب جيمس ويب (2024). نراها كما كانت بعد 290 مليون سنة فقط من الانفجار العظيم — رحلة ضوئها لنا استغرقت 13.5 مليار سنة.'}
+    ]},
+    blackholes: { title:'الثقوب السوداء', icon:'fa-circle', color:'#6366f1', intro:'الثقوب السوداء مناطق في الزمكان تكون جاذبيتها قوية جداً لدرجة أن لا شيء، حتى الضوء، يستطيع الإفلات منها. تتشكل عندما ينهار نجم ضخم على نفسه عند موته.', items:[
+      {img:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70', tag:'أول صورة', title:'M87* — أول صورة لثقب أسود', text:'في 2019 نشر تلسكوب أفق الحدث (EHT) أول صورة في التاريخ لثقب أسود، يقع في مركز مجرة M87 ويبعد 53 مليون سنة ضوئية. كتلته 6.5 مليار شمس!'},
+      {img:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70', tag:'في قلب مجرتنا', title:'Sagittarius A*', text:'الثقب الأسود الهائل في مركز درب التبانة. كتلته 4.3 مليون شمس وقطره 23 مليون كيلومتر. تم تصويره عام 2022، وهو الأقرب لنا (26,000 سنة ضوئية).'},
+      {img:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70', tag:'الفيزياء الغريبة', title:'تمدد الزمن', text:'بقرب الثقب الأسود، الزمن يتباطأ بشكل دراماتيكي بسبب الجاذبية الهائلة (نسبية أينشتاين). ساعة عند أفق الحدث تتوقف فعلياً من منظور مراقب بعيد!'},
+      {img:'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70', tag:'إشعاع هوكينغ', title:'الثقوب السوداء تتبخّر', text:'اكتشف ستيفن هوكينغ عام 1974 أن الثقوب السوداء تُشِع طاقة وتفقد كتلتها ببطء شديد. ثقب بحجم الشمس يحتاج 10⁶⁷ سنة ليتبخر تماماً.'},
+      {img:'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70', tag:'موجات الجاذبية', title:'GW150914', text:'في 2015 رصد LIGO أول موجة جاذبية في التاريخ، نتجت عن اندماج ثقبين أسودين قبل 1.3 مليار سنة. أكدت تنبؤات أينشتاين بعد قرن من نظرية النسبية.'}
+    ]},
+    missions: { title:'مهمات فضائية', icon:'fa-rocket', color:'#ef4444', intro:'منذ أول قمر صناعي عام 1957، أرسلت البشرية مئات المهمات الفضائية لاستكشاف الكواكب والأقمار والكويكبات والشمس والنجوم البعيدة.', items:[
+      {img:'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70', tag:'أبولو 11', title:'الهبوط على القمر — 1969', text:'في 20 يوليو 1969، وضع نيل أرمسترونغ أول قدم بشرية على سطح القمر قائلاً جملته الشهيرة. مهمة أبولو 11 احتاجت 400,000 شخص و8 سنوات عمل وميزانية تعادل 280 مليار دولار حالياً.'},
+      {img:'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=900&q=70', tag:'فوييجر', title:'فوييجر 1 و 2', text:'أُطلقتا عام 1977. فوييجر 1 الآن أبعد جسم صنعه الإنسان (24 مليار كم)، خرجت من النظام الشمسي عام 2012 وما زالت ترسل بيانات. تحملان قرصاً ذهبياً يحوي تحية الأرض إلى أي حضارة فضائية تجدها.'},
+      {img:'https://images.unsplash.com/photo-1630839437035-dac17da580d0?w=900&q=70', tag:'علم المريخ', title:'مهمات المريخ', text:'هبط على المريخ مسبارات مثل Curiosity (2012) وPerseverance (2021). الأخير يحمل مروحية Ingenuity التي طارت في غلاف المريخ — أول طيران بمحرك على كوكب آخر!'},
+      {img:'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70', tag:'محطة فضائية', title:'محطة الفضاء الدولية ISS', text:'منذ 2000 ومحطة الفضاء الدولية مأهولة باستمرار. تدور 400 كم فوق الأرض بسرعة 28,000 كم/س، وتشاهد 16 شروقاً وغروباً يومياً. تكلفت 150 مليار دولار وتعدّ أكبر مشروع علمي تعاوني في التاريخ.'},
+      {img:'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70', tag:'تلسكوب جيمس ويب', title:'JWST', text:'أُطلق ديسمبر 2021، ثاني أكبر تلسكوب فضائي ويعمل بالأشعة تحت الحمراء. يقع 1.5 مليون كم من الأرض. يكشف مجرات لم تُرَ من قبل من فجر الكون، وأول صورة وضعها (2022) صعقت العالم.'},
+      {img:'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70', tag:'سبيس إكس', title:'برنامج Starship', text:'أكبر صاروخ صنعه الإنسان (120م ارتفاع، 5,000 طن) تطوّره SpaceX لنقل البشر إلى المريخ. أنجز اختبارات إعادة هبوط ناجحة عام 2024 — ثورة في اقتصاد رحلات الفضاء.'}
+    ]},
+    astronauts: { title:'رواد الفضاء', icon:'fa-user-astronaut', color:'#10b981', intro:'منذ يوري غاغارين عام 1961، صعد أكثر من 670 إنساناً إلى الفضاء. لكل واحد منهم قصة شجاعة وإنجاز غيّرت نظرتنا للأرض ومكاننا في الكون.', items:[
+      {img:'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70', tag:'الأول في الفضاء', title:'يوري غاغارين', text:'رائد فضاء سوفييتي أصبح أول إنسان يصعد للفضاء في 12 أبريل 1961. أكمل دورة كاملة حول الأرض في 108 دقائق على متن "فوستوك 1". قال جملته الشهيرة: "الأرض زرقاء... كم هي جميلة!".'},
+      {img:'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70', tag:'القمر', title:'نيل أرمسترونغ', text:'أول إنسان يطأ القمر، 20 يوليو 1969. مهندس وطيار اختبار قبل أن يصبح رائد فضاء. تواضعه بعد المهمة أصبح مضرب أمثال — ابتعد عن الأضواء طوال حياته.'},
+      {img:'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70', tag:'أول امرأة', title:'فالنتينا تيريشكوفا', text:'أول امرأة في الفضاء (1963). كانت عاملة نسيج تطوّعت بعد رحلة غاغارين، فأصبحت قائدة "فوستوك 6" بعمر 26. أكملت 48 دورة حول الأرض خلال 3 أيام.'},
+      {img:'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70', tag:'الإمارات', title:'هزاع المنصوري', text:'أول رائد فضاء عربي يصعد لمحطة الفضاء الدولية (سبتمبر 2019). قضى 8 أيام في الفضاء وحمل علم الإمارات وقرآناً وصور أدبائها. مهمته فتحت الباب لجيل عربي جديد من رواد الفضاء.'},
+      {img:'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=900&q=70', tag:'السعودية', title:'الأمير سلطان بن سلمان', text:'أول رائد فضاء عربي ومسلم في التاريخ (1985)، على متن المكوك "ديسكفري". قضى 7 أيام في الفضاء، أجرى تجارب علمية وصلّى من المدار، وألهم جيلاً عربياً كاملاً.'},
+      {img:'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70', tag:'القياسي', title:'سكوت كيلي', text:'قضى 340 يوماً متواصلاً في محطة الفضاء الدولية (2015-2016) في "مهمة السنة". قارنت ناسا تغيراته الجينية بشقيقه التوأم على الأرض لدراسة آثار الفضاء على الجسم البشري.'}
+    ]},
+    news: { title:'أخبار الكون', icon:'fa-newspaper', color:'#ec4899', intro:'كل يوم يكشف العلماء أسراراً جديدة عن الكون. هذه أبرز الاكتشافات والأخبار الفلكية المثيرة في السنوات الأخيرة.', items:[
+      {img:'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=900&q=70', tag:'2024', title:'تلسكوب جيمس ويب يرصد أقدم مجرة', text:'رصد JWST مجرة "JADES-GS-z14-0" تكوّنت بعد 290 مليون سنة فقط من الانفجار العظيم. هذا أبعد ما رآه الإنسان حتى الآن، ويتحدّى نماذجنا عن سرعة تكوّن المجرات الأولى.'},
+      {img:'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70', tag:'2024', title:'علامات حياة محتملة على K2-18b', text:'رصد العلماء جزيء "ثنائي ميثيل السلفيد" في غلاف الكوكب الخارجي K2-18b — جزيء على الأرض لا تنتجه إلا الكائنات الحية. الكوكب يبعد 124 سنة ضوئية ويُعدّ من أفضل المرشحين لاحتواء حياة.'},
+      {img:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70', tag:'2023', title:'هيئة فلكية جديدة لأينشتاين', text:'مرصد NANOGrav رصد لأول مرة "خلفية موجات جاذبية" تنتج عن اندماج ثقوب سوداء فائقة الكتلة في كل أنحاء الكون — تأكيد جديد لنظرية النسبية بعد أكثر من قرن.'},
+      {img:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70', tag:'2024', title:'مهمة Europa Clipper تنطلق', text:'في أكتوبر 2024 أطلقت ناسا مسبار Europa Clipper نحو قمر المشتري "أوروبا" الذي يحتوي على محيط مائي ضخم تحت سطحه الجليدي — قد يكون أفضل مكان للبحث عن حياة في النظام الشمسي.'},
+      {img:'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70', tag:'2024', title:'رواد فضاء عرب جدد', text:'أكملت رائدتا الفضاء العربيتان نورا المطروشي ومحمد الملا تدريباتهما مع ناسا (2024) ضمن برنامج رواد الفضاء، تمهيداً لمهمات على محطة الفضاء الدولية وربما القمر.'},
+      {img:'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70', tag:'2024', title:'كسوف شمسي كلي يجتاح أمريكا', text:'في 8 أبريل 2024 شهدت أمريكا الشمالية كسوفاً شمسياً كلياً عبور 31 مليون شخص. الكسوف الكلي التالي بهذا الحجم سيكون عام 2044 — حدث نادر يحدث في كل بقعة كل 375 سنة في المتوسط.'}
+    ]},
+    telescopes: { title:'التلسكوبات', icon:'fa-search', color:'#06b6d4', intro:'التلسكوبات عيوننا على الكون. منذ أول تلسكوب صنعه غاليليو عام 1609 إلى التلسكوبات الفضائية العملاقة اليوم، غيّرت فهمنا لمكاننا في الكون.', items:[
+      {img:'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70', tag:'الفضائي الأول', title:'تلسكوب هابل', text:'أُطلق 1990، يدور حول الأرض على ارتفاع 540 كم. التقط أكثر من 1.5 مليون صورة غيّرت علم الفلك. حدّد عمر الكون بدقة (13.8 مليار سنة) ورصد أبعد المجرات في عصره. لا يزال يعمل بعد 35 سنة.'},
+      {img:'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70', tag:'الجيل الجديد', title:'جيمس ويب JWST', text:'أكبر تلسكوب فضائي في التاريخ، مرآته 6.5م. تكلف 10 مليار دولار واحتاج 30 سنة تطوير. يرى الأشعة تحت الحمراء فيخترق الغبار الكوني ويصل لأقدم المجرات.'},
+      {img:'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70', tag:'الراديو', title:'تلسكوب FAST الصيني', text:'أكبر تلسكوب راديوي في العالم — طبق بقطر 500م في الصين! يبحث عن نبضات راديوية من نجوم نيوترونية وعن إشارات حضارات فضائية محتملة (SETI).'},
+      {img:'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70', tag:'تحت الأرض', title:'مرصد LIGO', text:'يرصد موجات الجاذبية بدقة لا تصدّق — يقيس تغيرات أصغر من قطر بروتون! اكتشف اندماج ثقوب سوداء ونجوم نيوترونية وفتح نافذة جديدة كاملة على الكون.'},
+      {img:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70', tag:'القادم', title:'مرصد فيرا روبين', text:'يبدأ العمل 2025 في تشيلي، وسيرصد كل سماء الجنوب كل 3 ليالٍ. سيكتشف ملايين الكواكب الخارجية، الكويكبات الخطرة، ويصوّر الكون بدقة لم يسبق لها مثيل.'}
+    ]},
+    phenomena: { title:'ظواهر فلكية', icon:'fa-bolt', color:'#f59e0b', intro:'الكون مليء بالظواهر المذهلة، بعضها يحدث أمام أعيننا وبعضها يشاهَد مرة في العمر. هذه أبرز ما يمكن أن تختبره من ظواهر.', items:[
+      {img:'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70', tag:'كل عام', title:'زخات الشهب', text:'لما تعبر الأرض ذيل مذنّب، يحترق الغبار في غلافنا الجوي ويشكّل "نجوم متساقطة". أشهرها: شهب البرشاويات (أغسطس) وشهب التوأميات (ديسمبر) — تصل إلى 100 شهاب في الساعة!'},
+      {img:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70', tag:'نادر', title:'الكسوف الكلي', text:'عندما يحجب القمر الشمس بالكامل لدقائق معدودة. يحدث في بقعة معينة على الأرض كل 375 سنة في المتوسط. أحد أكثر التجارب البصرية إذهالاً للبشر — السماء تظلم نهاراً!'},
+      {img:'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70', tag:'القطبي', title:'الشفق القطبي', text:'الجسيمات المشحونة من الشمس تصطدم بالغلاف الجوي قرب القطبين فتُنتج هذه الستائر الضوئية الراقصة. أفضل أوقات المشاهدة في النرويج وأيسلندا وألاسكا خلال أشهر الشتاء.'},
+      {img:'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70', tag:'كل 76 سنة', title:'مذنّب هالي', text:'أشهر مذنّب في التاريخ، يزور الأرض كل 76 سنة. آخر زيارة كانت 1986 والقادمة 2061. لاحظه الإنسان منذ 240 ق.م.، وذُكر في أعمال شكسبير ورُسم في معركة هيستينغز 1066.'},
+      {img:'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70', tag:'انفجار كوني', title:'المستعر الأعظم (Supernova)', text:'موت نجم ضخم في انفجار يفوق سطوعه مجرة كاملة لأسابيع! أنتج كل العناصر الثقيلة (ذهب، حديد، فضة) في أجسامنا. كما قال كارل ساغان: "نحن من غبار النجوم".'},
+      {img:'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70', tag:'لحظات نادرة', title:'اقتران الكواكب', text:'أحياناً تبدو كواكب متعددة قريبة جداً من بعضها في السماء. اقتران المشتري وزحل عام 2020 (نجمة الميلاد العظمى) كان الأقرب منذ 1623 — ظاهرة بصرية ساحرة بالعين المجردة.'}
+    ]}
+  };
+
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+  window.openCosmosCategory = function(key){
+    const cat = COSMOS_DATA[key]; if(!cat) return;
+    const titleEl = document.getElementById('cosmosModalTitle');
+    const body = document.getElementById('cosmosModalBody');
+    titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
+    body.innerHTML = `
+      <div class="cosmos-modal-intro"><i class="fas fa-info-circle" style="color:${cat.color};margin-left:.5rem"></i>${escapeHtml(cat.intro)}</div>
+      <div class="cosmos-cards">
+        ${cat.items.map(it=>`
+          <article class="cosmos-card">
+            <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')"></div>
+            <div class="cosmos-card-body">
+              ${it.tag?`<span class="cosmos-card-tag"><i class="fas fa-tag"></i> ${escapeHtml(it.tag)}</span>`:''}
+              <h4>${escapeHtml(it.title)}</h4>
+              <p>${escapeHtml(it.text)}</p>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    `;
+    const m = document.getElementById('cosmosModal');
+    m.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeCosmosModal = function(){
+    document.getElementById('cosmosModal').classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  window.scrollCosmosCarousel = function(dir){
+    const el = document.getElementById('cosmosCarousel'); if(!el) return;
+    const isRTL = document.documentElement.dir === 'rtl' || getComputedStyle(el).direction === 'rtl';
+    const amount = 320 * (isRTL ? -dir : dir);
+    el.scrollBy({left: amount, behavior: 'smooth'});
+  };
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') {
+      const m = document.getElementById('cosmosModal');
+      if (m && m.classList.contains('active')) window.closeCosmosModal();
+    }
+  });
+})();
+</script>
+
 <div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
 </body>
 </html>
