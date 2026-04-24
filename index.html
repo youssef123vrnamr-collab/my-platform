@@ -1123,79 +1123,6 @@ async function createUserRole(userId, role, creatorId = null) {
 }
 
 async function getUserRole(userId) {
-// check if a video belongs to any paid course
-async function isVideoInPaidCourse(videoId) {
-  const coursesSnap = await db.collection("courses").get();
-  for (const doc of coursesSnap.docs) {
-    const data = doc.data();
-    if ((data.price || 0) > 0 && data.videoIds && data.videoIds.includes(videoId)) {
-      return true;
-    }
-    // دالة للتحقق مما إذا كان فيديو معين موجود داخل أي كورس مدفوع
-async function isVideoInPaidCourse(videoId) {
-  const coursesSnap = await db.collection("courses").get();
-  for (const doc of coursesSnap.docs) {
-    const data = doc.data();
-    if ((data.price || 0) > 0 && data.videoIds && data.videoIds.includes(videoId)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// دالة للتحقق من صلاحية المستخدم لمشاهدة فيديو معين
-async function isUserAllowedToWatchVideo(userId, videoId) {
-  if (!userId) return false;
-  if (isAdmin) return true;
-
-  const coursesSnap = await db.collection("courses").get();
-  for (const doc of coursesSnap.docs) {
-    const data = doc.data();
-    if (data.videoIds && data.videoIds.includes(videoId)) {
-      if ((data.price || 0) > 0) {
-        const enrollment = await db.collection("course_enrollments")
-          .where("userId", "==", userId)
-          .where("courseId", "==", doc.id)
-          .get();
-        if (!enrollment.empty) return true;
-        else return false;
-      } else {
-        return true;
-      }
-    }
-  }
-  return true;
-}
-  } 
-  return false;
-}
-
-// check if user is enrolled in any paid course that contains this video
-async function isUserAllowedToWatchVideo(userId, videoId) {
-  if (!userId) return false;
-  // admin always allowed
-  if (isAdmin) return true;
-  const coursesSnap = await db.collection("courses").get();
-  for (const doc of coursesSnap.docs) {
-    const data = doc.data();
-    if (data.videoIds && data.videoIds.includes(videoId)) {
-      if ((data.price || 0) > 0) {
-        // paid course: check enrollment
-        const enrollment = await db.collection("course_enrollments")
-          .where("userId", "==", userId)
-          .where("courseId", "==", doc.id)
-          .get();
-        if (!enrollment.empty) return true; // user subscribed to this paid course
-        else return false; // not subscribed
-      } else {
-        // free course: allowed
-        return true;
-      }
-    }
-  }
-  // video not in any course -> treat as free
-  return true;
-}
   if (!userId) return 'student';
   const doc = await db.collection("users").doc(userId).get();
   return doc.exists ? doc.data().role : 'student';
@@ -1210,6 +1137,11 @@ async function isAdminUser(userId) {
   const onlineUsersRef = db.collection("online_users");
   let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null, apps = [];
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
+  // ===== Paid courses access control =====
+  let unsubscribeCoursesAccess = null, unsubscribeUserEnrollmentsAccess = null;
+  let paidCourseVideoIds = new Set();   // videos that appear in any paid course (price > 0)
+  let freeCourseVideoIds = new Set();   // videos that appear in any free course (price == 0)
+  let userUnlockedVideoIds = new Set(); // videos unlocked by current user's enrollments
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
   let progressInterval = null, metadataListener = null, lastWatchedData = null, currentUser = null, currentUserPhone = null, currentUserId = null, chatUnsubscribe = null;
   let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false;
@@ -1409,6 +1341,69 @@ function updateAdminUI() {
       });
     };
     attemptFn(); 
+  }
+
+  // ===== Listen to courses to know which videos are locked behind a paid course =====
+  function listenToCoursesAccess() {
+    if (unsubscribeCoursesAccess) unsubscribeCoursesAccess();
+    unsubscribeCoursesAccess = db.collection("courses").onSnapshot(snap => {
+      const paidSet = new Set();
+      const freeSet = new Set();
+      snap.forEach(d => {
+        const c = d.data() || {};
+        const ids = Array.isArray(c.videoIds) ? c.videoIds : [];
+        const isPaid = (c.price || 0) > 0;
+        ids.forEach(id => {
+          if (isPaid) paidSet.add(id);
+          else freeSet.add(id);
+        });
+      });
+      paidCourseVideoIds = paidSet;
+      freeCourseVideoIds = freeSet;
+      renderVideos();
+    }, err => console.error("Error loading courses access:", err));
+  }
+  // ===== Listen to current user's enrollments to unlock paid course videos =====
+  function listenToUserEnrollmentsAccess() {
+    if (unsubscribeUserEnrollmentsAccess) unsubscribeUserEnrollmentsAccess();
+    if (!currentUserId) { userUnlockedVideoIds = new Set(); renderVideos(); return; }
+    unsubscribeUserEnrollmentsAccess = db.collection("course_enrollments")
+      .where("userId", "==", currentUserId)
+      .onSnapshot(async snap => {
+        try {
+          const courseIds = [];
+          snap.forEach(d => { const data = d.data() || {}; if (data.courseId) courseIds.push(data.courseId); });
+          const unlocked = new Set();
+          // Fetch each enrolled course and union its videoIds
+          const fetches = courseIds.map(cid => db.collection("courses").doc(cid).get().catch(() => null));
+          const docs = await Promise.all(fetches);
+          docs.forEach(doc => {
+            if (!doc || !doc.exists) return;
+            const ids = (doc.data() && doc.data().videoIds) || [];
+            ids.forEach(id => unlocked.add(id));
+          });
+          userUnlockedVideoIds = unlocked;
+          renderVideos();
+        } catch (e) {
+          console.error("Error computing unlocked videos:", e);
+        }
+      }, err => console.error("Error loading user enrollments:", err));
+  }
+  function stopUserEnrollmentsAccess() {
+    if (unsubscribeUserEnrollmentsAccess) { unsubscribeUserEnrollmentsAccess(); unsubscribeUserEnrollmentsAccess = null; }
+    userUnlockedVideoIds = new Set();
+    renderVideos();
+  }
+  // Helper: should this video be hidden from the current viewer?
+  function isVideoHiddenForViewer(v) {
+    if (isAdmin) return false;
+    if (!v || !v.id) return false;
+    // If the video isn't part of any paid course, always show.
+    if (!paidCourseVideoIds.has(v.id)) return false;
+    // If the same video also exists in a free course, treat it as accessible.
+    if (freeCourseVideoIds.has(v.id)) return false;
+    // Otherwise it's locked behind a paid course; show only if user has unlocked it.
+    return !userUnlockedVideoIds.has(v.id);
   }
 
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
