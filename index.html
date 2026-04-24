@@ -194,6 +194,15 @@
     }
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 9999; padding: 0 !important; margin: 0 !important; }
     .modal.active { display: flex; animation: fadeIn .3s; }
+    .course-section { margin-bottom: 2rem; }
+    .course-section-header { display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin: 0 .25rem 1rem; padding: .85rem 1.1rem; background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.12)); border: 1px solid rgba(139,92,246,.35); border-radius: 14px; backdrop-filter: blur(8px); }
+    .course-section-title { display:flex; align-items:center; gap:.6rem; font-weight:800; font-size:1.05rem; color:#e0e7ff; flex-wrap:wrap; }
+    .course-section-title i { color:#a78bfa; }
+    .course-section-count { font-size:.78rem; color:#cbd5e1; background: rgba(15,10,26,.45); padding: .3rem .65rem; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+    .course-section-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .55rem; border-radius:999px; font-size:.7rem; font-weight:700; background: rgba(245,158,11,.18); color:#fbbf24; border:1px solid rgba(245,158,11,.4); }
+    .course-section-badge.unlocked { background: rgba(16,185,129,.18); color:#6ee7b7; border-color: rgba(16,185,129,.4); }
+    .course-section-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.15rem; }
+    @media (max-width: 600px){ .course-section-grid { grid-template-columns: 1fr; gap: 1rem; } .course-section-header { flex-direction:column; align-items:flex-start; padding:.75rem .9rem; } }
     .modal.courses-list-modal { align-items: flex-start; justify-content: stretch; }
     .modal.courses-list-modal .modal-content { width: 100%; max-width: 100%; height: 100vh; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column; }
     .modal.courses-list-modal .modal-header { position: sticky; top: 0; z-index: 3; padding-top: max(0.35rem, env(safe-area-inset-top)); padding-bottom: 0.65rem; box-shadow: 0 4px 20px rgba(0,0,0,.35); }
@@ -1147,6 +1156,7 @@ async function isAdminUser(userId) {
   let paidCourseVideoIds = new Set();   // videos that appear in any paid course (price > 0)
   let freeCourseVideoIds = new Set();   // videos that appear in any free course (price == 0)
   let userUnlockedVideoIds = new Set(); // videos unlocked by current user's enrollments
+  let paidCoursesData = []; // [{id, title, videoIds, price}] for grouping in library view
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
   let progressInterval = null, metadataListener = null, lastWatchedData = null, currentUser = null, currentUserPhone = null, currentUserId = null, chatUnsubscribe = null;
   let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false;
@@ -1354,6 +1364,7 @@ function updateAdminUI() {
     unsubscribeCoursesAccess = db.collection("courses").onSnapshot(snap => {
       const paidSet = new Set();
       const freeSet = new Set();
+      const paidArr = [];
       snap.forEach(d => {
         const c = d.data() || {};
         const ids = Array.isArray(c.videoIds) ? c.videoIds : [];
@@ -1362,9 +1373,13 @@ function updateAdminUI() {
           if (isPaid) paidSet.add(id);
           else freeSet.add(id);
         });
+        if (isPaid && ids.length) {
+          paidArr.push({ id: d.id, title: c.title || 'كورس بدون اسم', videoIds: ids, price: c.price || 0 });
+        }
       });
       paidCourseVideoIds = paidSet;
       freeCourseVideoIds = freeSet;
+      paidCoursesData = paidArr;
       renderVideos();
     }, err => console.error("Error loading courses access:", err));
   }
@@ -1472,7 +1487,34 @@ function updateAdminUI() {
     }
     empty.style.display = "none";
     countSpan.textContent = visibleVideos.length + " فيديو";
-    container.innerHTML = visibleVideos.map(v => {
+    const visibleById = new Map(visibleVideos.map(v => [v.id, v]));
+    const usedInPaidGroup = new Set();
+    const courseSections = [];
+    paidCoursesData.forEach(course => {
+      const courseVideos = [];
+      course.videoIds.forEach(vid => {
+        const v = visibleById.get(vid);
+        if (v) courseVideos.push(v);
+      });
+      if (courseVideos.length === 0) return;
+      courseVideos.forEach(v => usedInPaidGroup.add(v.id));
+      const cardsHtml = courseVideos.map(renderVideoCardHtml).join("");
+      const lockBadge = isAdmin ? '<span class="course-section-badge"><i class="fas fa-coins"></i> مدفوع</span>' : '<span class="course-section-badge unlocked"><i class="fas fa-unlock"></i> مفتوح لك</span>';
+      courseSections.push(`<section class="course-section"><header class="course-section-header"><div class="course-section-title"><i class="fas fa-graduation-cap"></i> ${escapeHtml(course.title)} ${lockBadge}</div><span class="course-section-count">${courseVideos.length} فيديو</span></header><div class="course-section-grid">${cardsHtml}</div></section>`);
+    });
+    const ungrouped = visibleVideos.filter(v => !usedInPaidGroup.has(v.id));
+    let ungroupedHtml = "";
+    if (ungrouped.length) {
+      const cardsHtml = ungrouped.map(renderVideoCardHtml).join("");
+      const headerHtml = courseSections.length ? `<header class="course-section-header"><div class="course-section-title"><i class="fas fa-photo-film"></i> فيديوهات عامة</div><span class="course-section-count">${ungrouped.length} فيديو</span></header>` : "";
+      ungroupedHtml = `<section class="course-section">${headerHtml}<div class="course-section-grid">${cardsHtml}</div></section>`;
+    }
+    container.innerHTML = ungroupedHtml + courseSections.join("");
+    return;
+  }
+
+  function renderVideoCardHtml(v) {
+    return (function() {
       let duration = v.duration ? formatDuration(v.duration) : "";
       let thumb = v.thumbnail;
       if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
@@ -1487,7 +1529,7 @@ function updateAdminUI() {
       }
       let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : "";
       return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
-    }).join("");
+    })();
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
 
