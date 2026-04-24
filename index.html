@@ -1123,6 +1123,79 @@ async function createUserRole(userId, role, creatorId = null) {
 }
 
 async function getUserRole(userId) {
+// check if a video belongs to any paid course
+async function isVideoInPaidCourse(videoId) {
+  const coursesSnap = await db.collection("courses").get();
+  for (const doc of coursesSnap.docs) {
+    const data = doc.data();
+    if ((data.price || 0) > 0 && data.videoIds && data.videoIds.includes(videoId)) {
+      return true;
+    }
+    // دالة للتحقق مما إذا كان فيديو معين موجود داخل أي كورس مدفوع
+async function isVideoInPaidCourse(videoId) {
+  const coursesSnap = await db.collection("courses").get();
+  for (const doc of coursesSnap.docs) {
+    const data = doc.data();
+    if ((data.price || 0) > 0 && data.videoIds && data.videoIds.includes(videoId)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// دالة للتحقق من صلاحية المستخدم لمشاهدة فيديو معين
+async function isUserAllowedToWatchVideo(userId, videoId) {
+  if (!userId) return false;
+  if (isAdmin) return true;
+
+  const coursesSnap = await db.collection("courses").get();
+  for (const doc of coursesSnap.docs) {
+    const data = doc.data();
+    if (data.videoIds && data.videoIds.includes(videoId)) {
+      if ((data.price || 0) > 0) {
+        const enrollment = await db.collection("course_enrollments")
+          .where("userId", "==", userId)
+          .where("courseId", "==", doc.id)
+          .get();
+        if (!enrollment.empty) return true;
+        else return false;
+      } else {
+        return true;
+      }
+    }
+  }
+  return true;
+}
+  } 
+  return false;
+}
+
+// check if user is enrolled in any paid course that contains this video
+async function isUserAllowedToWatchVideo(userId, videoId) {
+  if (!userId) return false;
+  // admin always allowed
+  if (isAdmin) return true;
+  const coursesSnap = await db.collection("courses").get();
+  for (const doc of coursesSnap.docs) {
+    const data = doc.data();
+    if (data.videoIds && data.videoIds.includes(videoId)) {
+      if ((data.price || 0) > 0) {
+        // paid course: check enrollment
+        const enrollment = await db.collection("course_enrollments")
+          .where("userId", "==", userId)
+          .where("courseId", "==", doc.id)
+          .get();
+        if (!enrollment.empty) return true; // user subscribed to this paid course
+        else return false; // not subscribed
+      } else {
+        // free course: allowed
+        return true;
+      }
+    }
+  }
+  // video not in any course -> treat as free
+  return true;
+}
   if (!userId) return 'student';
   const doc = await db.collection("users").doc(userId).get();
   return doc.exists ? doc.data().role : 'student';
