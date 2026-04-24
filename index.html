@@ -746,6 +746,72 @@
     .cosmos-refresh-btn:hover { background: rgba(167,139,250,.3); transform: translateY(-1px); }
     .cosmos-refresh-btn i { transition: transform .5s; }
     .cosmos-refresh-btn:hover i { transform: rotate(360deg); }
+
+    /* Carousel pill unread badge */
+    .cosmos-pill-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:#ef4444; color:#fff; font-size:.7rem; font-weight:800; margin-right:.4rem; box-shadow:0 0 0 2px rgba(15,10,26,.9); animation:pulse 2s infinite; }
+
+    /* ===== Private Admin Chat (PAC) styles ===== */
+    .pac-modal-content { max-width: 760px !important; width: 92%; height: 86vh; max-height: 86vh; display:flex; flex-direction:column; padding: 0; overflow: hidden; }
+    .pac-header { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.08); background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(16,185,129,.04)); }
+    .pac-header h3 { display:flex; align-items:center; gap:.6rem; margin:0; font-size:1.15rem; font-weight:900; }
+    .pac-sub { margin: .35rem 0 0; font-size:.78rem; color:#9ca3af; line-height:1.5; }
+    .pac-header-actions { display:flex; align-items:center; gap:.5rem; }
+    .pac-back-btn { width:38px; height:38px; border-radius:50%; border:1px solid rgba(34,197,94,.4); background:rgba(34,197,94,.12); color:#22c55e; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: all .25s; }
+    .pac-back-btn:hover { background:rgba(34,197,94,.25); transform: translateX(2px); }
+    .pac-body { flex:1; min-height:0; padding:0; display:flex; flex-direction:column; }
+
+    /* Chat view */
+    .pac-chat-view { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .pac-messages { flex:1; min-height:0; overflow-y:auto; padding: 1.1rem 1rem; display:flex; flex-direction:column; gap:.6rem; background: radial-gradient(circle at 30% 0%, rgba(34,197,94,.04), transparent 60%), radial-gradient(circle at 70% 100%, rgba(99,102,241,.04), transparent 60%); }
+    .pac-messages::-webkit-scrollbar { width:8px; } .pac-messages::-webkit-scrollbar-thumb { background: rgba(167,139,250,.3); border-radius:8px; }
+
+    .pac-msg { max-width:78%; padding:.7rem .95rem; border-radius:18px; line-height:1.65; font-size:.92rem; word-wrap:break-word; position:relative; animation: pacMsgIn .3s ease; }
+    @keyframes pacMsgIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+    .pac-msg-meta { display:flex; align-items:center; gap:.45rem; font-size:.7rem; opacity:.75; margin-bottom:.28rem; font-weight:700; }
+    .pac-msg-text { white-space: pre-wrap; }
+    .pac-msg-time { font-size:.65rem; opacity:.6; margin-top:.3rem; display:block; }
+    .pac-msg.me { align-self: flex-start; background: linear-gradient(135deg, #6366f1, #8b5cf6); color:#fff; border-bottom-right-radius: 6px; box-shadow: 0 6px 18px -8px rgba(99,102,241,.6); }
+    .pac-msg.them { align-self: flex-end; background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(16,185,129,.12)); border:1px solid rgba(34,197,94,.3); color:#e5e7eb; border-bottom-left-radius: 6px; }
+    .pac-msg.them .pac-msg-meta { color:#86efac; }
+    .pac-msg.system { align-self:center; background: rgba(255,255,255,.05); color:#9ca3af; font-size:.78rem; padding:.5rem .9rem; border-radius:999px; max-width:90%; text-align:center; }
+    .pac-empty { margin:auto; text-align:center; padding:2rem 1rem; color:#9ca3af; }
+    .pac-empty i { font-size:3rem; color:#22c55e; margin-bottom:1rem; display:block; opacity:.7; }
+    .pac-empty h4 { color:#e5e7eb; margin:.5rem 0; font-weight:800; }
+
+    .pac-composer { display:flex; gap:.5rem; padding: .75rem .85rem; border-top:1px solid rgba(255,255,255,.08); background: rgba(15,10,26,.6); align-items:flex-end; }
+    .pac-composer textarea { flex:1; resize:none; max-height:120px; min-height:44px; padding:.7rem .9rem; border-radius:14px; border:1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); color:#fff; font-family:'Cairo',sans-serif; font-size:.95rem; line-height:1.5; outline:none; transition:border-color .2s; }
+    .pac-composer textarea:focus { border-color: rgba(34,197,94,.5); background: rgba(255,255,255,.06); }
+    .pac-send-btn { width:44px; height:44px; border-radius:50%; border:none; background: linear-gradient(135deg, #22c55e, #10b981); color:#fff; font-size:1.05rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: all .25s; box-shadow: 0 6px 18px -6px rgba(34,197,94,.6); flex:0 0 auto; }
+    .pac-send-btn:hover { transform: translateY(-2px) scale(1.04); }
+    .pac-send-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+    /* Admin list of threads */
+    .pac-admin-list { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .pac-admin-list-header { padding:.85rem 1.1rem; font-weight:800; color:#a78bfa; border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; gap:.5rem; font-size:.92rem; }
+    .pac-threads { flex:1; overflow-y:auto; padding:.5rem; }
+    .pac-thread { display:flex; gap:.85rem; align-items:center; padding:.85rem 1rem; border-radius:14px; cursor:pointer; transition:background .2s; border:1px solid transparent; margin-bottom:.35rem; }
+    .pac-thread:hover { background: rgba(99,102,241,.08); border-color: rgba(99,102,241,.25); }
+    .pac-thread-avatar { width:46px; height:46px; border-radius:50%; background: linear-gradient(135deg,#6366f1,#ec4899); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:1rem; flex:0 0 auto; }
+    .pac-thread-info { flex:1; min-width:0; }
+    .pac-thread-name { display:flex; align-items:center; gap:.5rem; font-weight:800; color:#fff; font-size:.95rem; margin-bottom:.2rem; }
+    .pac-thread-preview { color:#9ca3af; font-size:.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pac-thread-meta { display:flex; flex-direction:column; align-items:flex-end; gap:.3rem; flex:0 0 auto; }
+    .pac-thread-time { color:#6b7280; font-size:.7rem; }
+    .pac-thread-unread { background:#ef4444; color:#fff; min-width:22px; height:22px; padding:0 7px; border-radius:999px; font-size:.72rem; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+    .pac-empty-list { text-align:center; padding:3rem 1rem; color:#9ca3af; }
+    .pac-empty-list i { font-size:2.5rem; color:#a78bfa; opacity:.6; display:block; margin-bottom:1rem; }
+
+    .pac-login-notice { padding:3rem 1.5rem; text-align:center; color:#9ca3af; }
+    .pac-login-notice i { font-size:3rem; color:#22c55e; margin-bottom:1rem; display:block; }
+    .pac-login-notice h4 { color:#fff; margin:.5rem 0; font-weight:800; }
+
+    @media (max-width: 600px) {
+      .pac-modal-content { width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; }
+      .pac-header { padding: .85rem 1rem; }
+      .pac-header h3 { font-size: 1rem; }
+      .pac-sub { font-size: .72rem; }
+      .pac-msg { max-width: 88%; font-size: .9rem; }
+    }
   </style>
 </head>
 <body>
@@ -863,7 +929,7 @@
           <button type="button" class="cosmos-pill" style="--pill-c1:#ec4899;--pill-c2:#a855f7" onclick="openCosmosCategory('news')"><span class="pill-icon"><i class="fas fa-newspaper"></i></span><span>أخبار الكون</span></button>
           <button type="button" class="cosmos-pill" style="--pill-c1:#06b6d4;--pill-c2:#3b82f6" onclick="openCosmosCategory('telescopes')"><span class="pill-icon"><i class="fas fa-search"></i></span><span>التلسكوبات</span></button>
           <button type="button" class="cosmos-pill" style="--pill-c1:#f59e0b;--pill-c2:#ef4444" onclick="openCosmosCategory('phenomena')"><span class="pill-icon"><i class="fas fa-bolt"></i></span><span>ظواهر فلكية</span></button>
-          <button type="button" class="cosmos-pill cosmos-pill-contact" style="--pill-c1:#22c55e;--pill-c2:#10b981" onclick="openAdminChat()"><span class="pill-icon"><i class="fas fa-comments"></i></span><span>تواصل مع المشرفين</span></button>
+          <button type="button" class="cosmos-pill cosmos-pill-contact" style="--pill-c1:#22c55e;--pill-c2:#10b981" onclick="openPrivateAdminChat()"><span class="pill-icon"><i class="fas fa-user-shield"></i></span><span>تواصل خاص مع المشرفين</span><span id="privateAdminChatBadge" class="cosmos-pill-badge" style="display:none">0</span></button>
         </div>
       </div>
     </section>
@@ -1909,6 +1975,43 @@ async function enrollInCourse(courseId) {
     <div class="modal-body" id="cosmosModalBody"></div>
   </div>
 </div>
+
+<!-- ===== Private Admin Chat modal (each user has own private thread with admins) ===== -->
+<div class="modal" id="privateAdminChatModal">
+  <div class="modal-content pac-modal-content">
+    <div class="modal-header pac-header">
+      <div class="modal-header-left">
+        <h3 id="pacTitle"><i class="fas fa-user-shield" style="color:#22c55e"></i> تواصل خاص مع المشرفين</h3>
+        <p class="pac-sub" id="pacSubtitle">محادثتك خاصة تماماً، لا يراها أي مستخدم آخر — فقط أنت والمشرفون.</p>
+      </div>
+      <div class="pac-header-actions">
+        <button class="pac-back-btn" id="pacBackBtn" onclick="pacBackToList()" style="display:none" aria-label="رجوع"><i class="fas fa-arrow-right"></i></button>
+        <button class="modal-close" onclick="closePrivateAdminChat()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="modal-body pac-body">
+      <!-- Admin: list of user threads -->
+      <div id="pacAdminList" class="pac-admin-list" style="display:none">
+        <div class="pac-admin-list-header"><i class="fas fa-inbox"></i> المحادثات الخاصة الواردة</div>
+        <div id="pacAdminThreads" class="pac-threads"></div>
+      </div>
+      <!-- Conversation view (used by both user and admin) -->
+      <div id="pacChatView" class="pac-chat-view">
+        <div id="pacMessages" class="pac-messages"></div>
+        <div class="pac-composer">
+          <textarea id="pacInput" rows="1" placeholder="اكتب رسالتك للمشرفين..." onkeydown="pacInputKeydown(event)"></textarea>
+          <button class="pac-send-btn" onclick="pacSendMessage()" aria-label="إرسال"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+      <!-- Login required notice -->
+      <div id="pacLoginNotice" class="pac-login-notice" style="display:none">
+        <i class="fas fa-right-to-bracket"></i>
+        <h4>سجّل دخولك أولاً</h4>
+        <p>يجب تسجيل الدخول بحساب جوجل لكي تتمكن من بدء محادثة خاصة مع المشرفين.</p>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
 (function(){
   const COSMOS_DATA = {
@@ -2126,6 +2229,311 @@ async function enrollInCourse(courseId) {
     if (e.key === 'Escape') {
       const m = document.getElementById('cosmosModal');
       if (m && m.classList.contains('active')) window.closeCosmosModal();
+    }
+  });
+})();
+</script>
+
+<!-- ===== Private Admin Chat (PAC) script — separate Firestore-backed private threads ===== -->
+<script>
+(function(){
+  const PAC_COL = 'private_admin_chats';
+  let pacUnsubMessages = null;
+  let pacUnsubThreads = null;
+  let pacUnsubBadge = null;
+  let pacCurrentThreadUserId = null;
+  let pacIsAdminView = false;
+
+  function pacGetDb(){ return (typeof db !== 'undefined') ? db : (window.firebase && firebase.firestore ? firebase.firestore() : null); }
+  function pacIsAdmin(){ return !!window.isAdmin; }
+  function pacUserId(){ return window.currentUserId || (window.googleUser && window.googleUser.uid) || null; }
+  function pacUserName(){ return window.currentUser || (window.googleUser && window.googleUser.displayName) || 'مستخدم'; }
+  function pacUserEmail(){ return (window.googleUser && window.googleUser.email) || ''; }
+  function pacUserPhone(){ return window.currentUserPhone || ''; }
+
+  function pacEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function pacFmtTime(ts){
+    let d; if (!ts) return ''; if (ts.toDate) d = ts.toDate(); else if (ts instanceof Date) d = ts; else d = new Date(ts);
+    if (isNaN(d)) return '';
+    const diff = (Date.now() - d.getTime())/1000;
+    if (diff < 60) return 'الآن';
+    if (diff < 3600) return 'منذ ' + Math.floor(diff/60) + 'د';
+    if (diff < 86400) return 'منذ ' + Math.floor(diff/3600) + 'س';
+    if (diff < 7*86400) return 'منذ ' + Math.floor(diff/86400) + 'ي';
+    return d.toLocaleDateString('ar-EG', {year:'numeric', month:'short', day:'numeric'});
+  }
+  function pacFmtFull(ts){
+    let d; if (!ts) return ''; if (ts.toDate) d = ts.toDate(); else if (ts instanceof Date) d = ts; else d = new Date(ts);
+    if (isNaN(d)) return '';
+    return d.toLocaleString('ar-EG', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
+  }
+
+  function pacInitials(name){
+    const n = (name||'').trim(); if (!n) return '؟';
+    const parts = n.split(/\s+/); return (parts[0][0] + (parts[1]?parts[1][0]:'')).toUpperCase();
+  }
+
+  function pacUnsubAll(){
+    if (pacUnsubMessages) { try{pacUnsubMessages();}catch(e){} pacUnsubMessages = null; }
+    if (pacUnsubThreads) { try{pacUnsubThreads();}catch(e){} pacUnsubThreads = null; }
+  }
+
+  window.openPrivateAdminChat = async function(){
+    const modal = document.getElementById('privateAdminChatModal');
+    const adminList = document.getElementById('pacAdminList');
+    const chatView = document.getElementById('pacChatView');
+    const loginNotice = document.getElementById('pacLoginNotice');
+    const backBtn = document.getElementById('pacBackBtn');
+    const subtitle = document.getElementById('pacSubtitle');
+    const title = document.getElementById('pacTitle');
+    const dbi = pacGetDb();
+
+    pacUnsubAll();
+    backBtn.style.display = 'none';
+    pacCurrentThreadUserId = null;
+
+    if (!dbi) { if (window.showToast) showToast('❌ قاعدة البيانات غير متاحة'); return; }
+
+    if (pacIsAdmin()) {
+      pacIsAdminView = true;
+      title.innerHTML = '<i class="fas fa-inbox" style="color:#22c55e"></i> محادثات المستخدمين الخاصة';
+      subtitle.textContent = 'هذه قائمة بالمحادثات الخاصة المرسلة إليكم من المستخدمين. اضغط على أي محادثة لفتحها.';
+      adminList.style.display = 'flex';
+      chatView.style.display = 'none';
+      loginNotice.style.display = 'none';
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      pacListenAdminThreads();
+      return;
+    }
+
+    pacIsAdminView = false;
+    const uid = pacUserId();
+    if (!uid) {
+      title.innerHTML = '<i class="fas fa-user-shield" style="color:#22c55e"></i> تواصل خاص مع المشرفين';
+      subtitle.textContent = 'محادثتك خاصة تماماً، لا يراها أي مستخدم آخر — فقط أنت والمشرفون.';
+      adminList.style.display = 'none';
+      chatView.style.display = 'none';
+      loginNotice.style.display = 'block';
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    title.innerHTML = '<i class="fas fa-user-shield" style="color:#22c55e"></i> تواصل خاص مع المشرفين';
+    subtitle.textContent = 'محادثتك خاصة تماماً، لا يراها أي مستخدم آخر — فقط أنت والمشرفون.';
+    adminList.style.display = 'none';
+    chatView.style.display = 'flex';
+    loginNotice.style.display = 'none';
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      await dbi.collection(PAC_COL).doc(uid).set({
+        userName: pacUserName(),
+        userEmail: pacUserEmail(),
+        userPhone: pacUserPhone(),
+        unreadByUser: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch(e){ console.warn('pac thread upsert failed', e); }
+
+    pacOpenThread(uid);
+  };
+
+  window.closePrivateAdminChat = function(){
+    pacUnsubAll();
+    pacCurrentThreadUserId = null;
+    document.getElementById('privateAdminChatModal').classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  window.pacBackToList = function(){
+    if (!pacIsAdminView) { window.closePrivateAdminChat(); return; }
+    if (pacUnsubMessages) { try{pacUnsubMessages();}catch(e){} pacUnsubMessages = null; }
+    pacCurrentThreadUserId = null;
+    document.getElementById('pacBackBtn').style.display = 'none';
+    document.getElementById('pacAdminList').style.display = 'flex';
+    document.getElementById('pacChatView').style.display = 'none';
+    document.getElementById('pacTitle').innerHTML = '<i class="fas fa-inbox" style="color:#22c55e"></i> محادثات المستخدمين الخاصة';
+    document.getElementById('pacSubtitle').textContent = 'هذه قائمة بالمحادثات الخاصة المرسلة إليكم من المستخدمين.';
+  };
+
+  function pacListenAdminThreads(){
+    const dbi = pacGetDb(); if (!dbi) return;
+    const cont = document.getElementById('pacAdminThreads');
+    cont.innerHTML = '<div class="pac-empty-list"><i class="fas fa-spinner fa-spin"></i><p>جاري تحميل المحادثات...</p></div>';
+    pacUnsubThreads = dbi.collection(PAC_COL).orderBy('lastMessageTime','desc').onSnapshot(snap => {
+      if (snap.empty) {
+        cont.innerHTML = '<div class="pac-empty-list"><i class="fas fa-inbox"></i><p>لا توجد محادثات خاصة حتى الآن.</p></div>';
+        return;
+      }
+      const items = [];
+      snap.forEach(doc => { items.push({ id: doc.id, ...doc.data() }); });
+      cont.innerHTML = items.map(t => {
+        const unread = (t.unreadByAdmin || 0);
+        return `
+          <div class="pac-thread" onclick="pacAdminOpenThread('${pacEsc(t.id)}', ${JSON.stringify(t.userName||'مستخدم').replace(/"/g,'&quot;')})">
+            <div class="pac-thread-avatar">${pacEsc(pacInitials(t.userName))}</div>
+            <div class="pac-thread-info">
+              <div class="pac-thread-name">${pacEsc(t.userName||'مستخدم')} ${t.userEmail?`<span style="font-weight:500;color:#9ca3af;font-size:.78rem">· ${pacEsc(t.userEmail)}</span>`:''}</div>
+              <div class="pac-thread-preview">${pacEsc((t.lastMessage||'لا توجد رسائل بعد').slice(0,90))}</div>
+            </div>
+            <div class="pac-thread-meta">
+              <span class="pac-thread-time">${pacEsc(pacFmtTime(t.lastMessageTime))}</span>
+              ${unread>0?`<span class="pac-thread-unread">${unread}</span>`:''}
+            </div>
+          </div>`;
+      }).join('');
+    }, err => { console.error('pac threads snap err', err); cont.innerHTML = '<div class="pac-empty-list"><i class="fas fa-triangle-exclamation"></i><p>خطأ في تحميل المحادثات.</p></div>'; });
+  }
+
+  window.pacAdminOpenThread = function(userId, userName){
+    pacCurrentThreadUserId = userId;
+    document.getElementById('pacAdminList').style.display = 'none';
+    document.getElementById('pacChatView').style.display = 'flex';
+    document.getElementById('pacBackBtn').style.display = 'flex';
+    document.getElementById('pacTitle').innerHTML = `<i class="fas fa-user-circle" style="color:#22c55e"></i> ${pacEsc(userName||'مستخدم')}`;
+    document.getElementById('pacSubtitle').textContent = 'محادثة خاصة — ردّ المشرف يصل للمستخدم فقط.';
+    pacOpenThread(userId);
+    const dbi = pacGetDb();
+    if (dbi) { dbi.collection(PAC_COL).doc(userId).set({ unreadByAdmin: 0 }, { merge: true }).catch(()=>{}); }
+  };
+
+  function pacOpenThread(threadUserId){
+    pacCurrentThreadUserId = threadUserId;
+    const dbi = pacGetDb(); if (!dbi) return;
+    const msgsEl = document.getElementById('pacMessages');
+    msgsEl.innerHTML = '<div class="pac-empty"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>';
+
+    if (pacUnsubMessages) { try{pacUnsubMessages();}catch(e){} pacUnsubMessages = null; }
+
+    pacUnsubMessages = dbi.collection(PAC_COL).doc(threadUserId).collection('messages').orderBy('timestamp','asc').onSnapshot(snap => {
+      if (snap.empty) {
+        msgsEl.innerHTML = `<div class="pac-empty"><i class="fas fa-comments"></i><h4>ابدأ المحادثة</h4><p>${pacIsAdminView?'لم يرسل هذا المستخدم أي رسالة بعد.':'اكتب رسالتك أدناه — سيردّ عليك المشرفون قريباً.'}</p></div>`;
+        return;
+      }
+      const me = pacIsAdminView ? 'admin' : 'user';
+      const html = [];
+      snap.forEach(doc => {
+        const m = doc.data();
+        if (m.sender === 'system') {
+          html.push(`<div class="pac-msg system">${pacEsc(m.text||'')}</div>`);
+        } else {
+          const mine = m.sender === me;
+          const cls = mine ? 'me' : 'them';
+          const senderName = m.senderName || (m.sender==='admin' ? 'مشرف' : 'مستخدم');
+          const senderIcon = m.sender==='admin' ? 'fa-user-shield' : 'fa-user';
+          html.push(`
+            <div class="pac-msg ${cls}">
+              <div class="pac-msg-meta"><i class="fas ${senderIcon}"></i> ${pacEsc(senderName)}</div>
+              <div class="pac-msg-text">${pacEsc(m.text||'')}</div>
+              <span class="pac-msg-time">${pacEsc(pacFmtFull(m.timestamp))}</span>
+            </div>`);
+        }
+      });
+      msgsEl.innerHTML = html.join('');
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+
+      try {
+        const upd = pacIsAdminView ? { unreadByAdmin: 0 } : { unreadByUser: 0 };
+        dbi.collection(PAC_COL).doc(threadUserId).set(upd, { merge: true });
+      } catch(e){}
+    }, err => { console.error('pac msgs snap err', err); msgsEl.innerHTML = '<div class="pac-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر تحميل الرسائل.</p></div>'; });
+  }
+
+  window.pacInputKeydown = function(ev){
+    if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); window.pacSendMessage(); }
+  };
+
+  window.pacSendMessage = async function(){
+    const input = document.getElementById('pacInput');
+    const text = (input.value || '').trim();
+    if (!text) return;
+    const dbi = pacGetDb(); if (!dbi) return;
+
+    const threadId = pacCurrentThreadUserId;
+    if (!threadId) { if (window.showToast) showToast('❌ لم يتم اختيار محادثة'); return; }
+
+    const sender = pacIsAdminView ? 'admin' : 'user';
+    const senderName = pacIsAdminView ? 'المشرف' : pacUserName();
+
+    input.value = '';
+    input.style.height = 'auto';
+
+    try {
+      await dbi.collection(PAC_COL).doc(threadId).collection('messages').add({
+        text, sender, senderName,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      const meta = {
+        lastMessage: text,
+        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSender: sender
+      };
+      if (pacIsAdminView) {
+        meta.unreadByUser = firebase.firestore.FieldValue.increment(1);
+        meta.unreadByAdmin = 0;
+      } else {
+        meta.unreadByAdmin = firebase.firestore.FieldValue.increment(1);
+        meta.unreadByUser = 0;
+        meta.userName = pacUserName();
+        meta.userEmail = pacUserEmail();
+        meta.userPhone = pacUserPhone();
+      }
+      await dbi.collection(PAC_COL).doc(threadId).set(meta, { merge: true });
+
+      if (window.SoundEffects && SoundEffects.success) try{SoundEffects.success();}catch(e){}
+    } catch(e){
+      console.error('pac send err', e);
+      if (window.showToast) showToast('❌ فشل إرسال الرسالة');
+      input.value = text;
+    }
+  };
+
+  // Auto-grow composer
+  document.addEventListener('input', function(e){
+    if (e.target && e.target.id === 'pacInput') {
+      e.target.style.height = 'auto';
+      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+    }
+  });
+
+  // Unread badge on the carousel pill
+  function pacStartBadgeWatcher(){
+    const dbi = pacGetDb(); if (!dbi) return;
+    if (pacUnsubBadge) { try{pacUnsubBadge();}catch(e){} pacUnsubBadge = null; }
+    const badge = document.getElementById('privateAdminChatBadge');
+    if (!badge) return;
+
+    if (pacIsAdmin()) {
+      pacUnsubBadge = dbi.collection(PAC_COL).onSnapshot(snap => {
+        let total = 0;
+        snap.forEach(d => { total += (d.data().unreadByAdmin || 0); });
+        if (total > 0) { badge.textContent = total > 99 ? '99+' : total; badge.style.display = 'inline-flex'; }
+        else { badge.style.display = 'none'; }
+      }, err => { console.warn('pac badge admin err', err); });
+    } else {
+      const uid = pacUserId(); if (!uid) { badge.style.display = 'none'; return; }
+      pacUnsubBadge = dbi.collection(PAC_COL).doc(uid).onSnapshot(d => {
+        const n = (d.data() || {}).unreadByUser || 0;
+        if (n > 0) { badge.textContent = n > 99 ? '99+' : n; badge.style.display = 'inline-flex'; }
+        else { badge.style.display = 'none'; }
+      }, err => { console.warn('pac badge user err', err); });
+    }
+  }
+
+  // Re-arm badge watcher whenever auth/admin state likely changed
+  let _pacBadgeInterval = setInterval(pacStartBadgeWatcher, 5000);
+  document.addEventListener('DOMContentLoaded', () => setTimeout(pacStartBadgeWatcher, 2000));
+  setTimeout(pacStartBadgeWatcher, 3500);
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') {
+      const m = document.getElementById('privateAdminChatModal');
+      if (m && m.classList.contains('active')) window.closePrivateAdminChat();
     }
   });
 })();
