@@ -2064,7 +2064,10 @@ async function enrollInCourse(courseId) {
     <div class="modal-body pac-body">
       <!-- Admin: list of user threads -->
       <div id="pacAdminList" class="pac-admin-list" style="display:none">
-        <div class="pac-admin-list-header"><i class="fas fa-inbox"></i> المحادثات الخاصة الواردة</div>
+        <div class="pac-admin-list-header" style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
+          <span><i class="fas fa-inbox"></i> المحادثات الخاصة الواردة</span>
+          <button onclick="pacAdminSendAsUser()" style="background:linear-gradient(135deg,#22c55e,#10b981);border:none;color:#fff;padding:.5rem .9rem;border-radius:.6rem;cursor:pointer;font-size:.85rem;font-weight:600"><i class="fas fa-pen"></i> أرسل رسالة كمستخدم</button>
+        </div>
         <div id="pacAdminThreads" class="pac-threads"></div>
       </div>
       <!-- Conversation view (used by both user and admin) -->
@@ -2247,9 +2250,15 @@ async function enrollInCourse(courseId) {
   function renderWikiCards(items, accent){
     if (!items || !items.length) return '';
     const color = accent || '#3b82f6';
-    return `<div class="cosmos-cards">${items.map(p=>{
+    const fallbacks = [
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+      'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+      'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70'
+    ];
+    return `<div class="cosmos-cards">${items.map((p,i)=>{
       const d = p.data;
-      const img = (d.thumbnail && d.thumbnail.source) || (d.originalimage && d.originalimage.source) || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70';
+      const img = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source) || fallbacks[i % fallbacks.length];
       const extract = d.extract || '';
       const displayTitle = (d.titles && d.titles.normalized) || p.title;
       const url = (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || `https://ar.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
@@ -2615,6 +2624,28 @@ async function enrollInCourse(courseId) {
     pacCurrentThreadUserId = null;
     document.getElementById('privateAdminChatModal').classList.remove('active');
     document.body.style.overflow = '';
+  };
+
+  window.pacAdminSendAsUser = function(){
+    const uid = pacUserId();
+    if (!uid) { if (window.showToast) showToast('❌ سجّل دخولك بحساب جوجل أولاً'); return; }
+    pacIsAdminView = false;
+    document.getElementById('pacAdminList').style.display = 'none';
+    document.getElementById('pacChatView').style.display = 'flex';
+    document.getElementById('pacBackBtn').style.display = 'flex';
+    document.getElementById('pacTitle').innerHTML = '<i class="fas fa-pen" style="color:#22c55e"></i> إرسال رسالة للمشرفين';
+    document.getElementById('pacSubtitle').textContent = 'أنت ترسل كمستخدم. أي مشرف آخر سيستلم رسالتك في صندوق الوارد الخاص.';
+    const dbi = pacGetDb();
+    if (dbi) {
+      dbi.collection(PAC_COL).doc(uid).set({
+        userName: pacUserName(),
+        userEmail: pacUserEmail(),
+        userPhone: pacUserPhone(),
+        unreadByUser: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }).catch(()=>{});
+    }
+    pacOpenThread(uid);
   };
 
   window.pacTriggerGoogleLogin = async function(){
