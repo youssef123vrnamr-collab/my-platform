@@ -2217,7 +2217,7 @@ async function enrollInCourse(courseId) {
     blackholes: ['ثقب أسود','إم 87 (مجرة)','القوس A*','أفق الحدث','إشعاع هوكينغ','ثقب أسود فائق الكتلة','ثقب أسود نجمي'],
     astronauts: ['يوري غاغارين','نيل أرمسترونغ','فالنتينا تيريشكوفا','هزاع المنصوري','سلطان بن سلمان آل سعود','سكوت كيلي','بز ألدرين','كريستينا كوخ'],
     telescopes: ['تلسكوب هابل الفضائي','تلسكوب جيمس ويب الفضائي','تلسكوب فاست','مرصد ليغو','تلسكوب أفق الحدث','مرصد فيرا روبين','مصفوفة أتاكاما الكبيرة المليمترية'],
-    phenomena:  ['زخة شهب','كسوف شمسي','شفق قطبي','مذنب هالي','مستعر أعظم','اقتران فلكي','عبور (فلك)','خسوف القمر']
+    phenomena:  ['زخة شهب','كسوف الشمس','خسوف القمر','شفق قطبي','مذنب هالي','اقتران كوكبي','عبور فلكي','نيزك']
   };
 
   const _wikiCache = {};
@@ -2769,7 +2769,15 @@ async function enrollInCourse(courseId) {
       if (window.SoundEffects && SoundEffects.success) try{SoundEffects.success();}catch(e){}
     } catch(e){
       console.error('pac send err', e);
-      if (window.showToast) showToast('❌ فشل إرسال الرسالة');
+      let msg = '❌ فشل إرسال الرسالة';
+      const code = (e && (e.code || e.message)) || '';
+      if (/permission|denied|insufficient/i.test(code)) {
+        msg = '❌ صلاحيات Firestore لا تسمح بإرسال الرسالة. أضف هذه القاعدة في Firebase Console → Firestore → Rules:\n\nmatch /private_admin_chats/{doc=**} { allow read, write: if request.auth != null; }';
+        alert(msg);
+      } else if (/network|offline|unavailable/i.test(code)) {
+        msg = '❌ تحقق من اتصال الإنترنت';
+      }
+      if (window.showToast) showToast(msg.split('\n')[0]);
       input.value = text;
     }
   };
