@@ -2209,30 +2209,48 @@ async function enrollInCourse(courseId) {
     return _newsCache;
   }
 
-  const PLANET_TITLES = ['عطارد','الزهرة','الأرض','المريخ','المشتري','زحل','أورانوس','نبتون'];
-  let _planetsCache = null, _planetsTime = 0;
-  async function fetchLivePlanets(){
+  const WIKI_TITLES = {
+    planets:    ['عطارد','الزهرة','الأرض','المريخ','المشتري','زحل','أورانوس','نبتون'],
+    stars:      ['الشمس','منكب الجوزاء','بروكسيما قنطورس','الشعرى اليمانية','نجم قطبي','نجم نيوتروني','قزم أبيض','مستعر أعظم'],
+    galaxies:   ['درب التبانة','مجرة المرأة المسلسلة','مجرة المثلث','مجرة دوامة','مجرة سومبريرو','مجرة بيضوية','نشاط مجري'],
+    blackholes: ['ثقب أسود','إم 87 (مجرة)','القوس A*','أفق الحدث','إشعاع هوكينغ','ثقب أسود فائق الكتلة','ثقب أسود نجمي'],
+    astronauts: ['يوري غاغارين','نيل أرمسترونغ','فالنتينا تيريشكوفا','هزاع المنصوري','سلطان بن سلمان آل سعود','سكوت كيلي','بز ألدرين','كريستينا كوخ'],
+    telescopes: ['تلسكوب هابل الفضائي','تلسكوب جيمس ويب الفضائي','تلسكوب فاست','مرصد ليغو','تلسكوب أفق الحدث','مرصد فيرا روبين','مصفوفة أتاكاما الكبيرة المليمترية'],
+    phenomena:  ['زخة شهب','كسوف شمسي','شفق قطبي','مذنب هالي','مستعر أعظم','اقتران فلكي','عبور (فلك)','خسوف القمر']
+  };
+
+  const _wikiCache = {};
+  async function fetchWikiCards(key){
     const TTL = 6 * 60 * 60 * 1000;
-    if (_planetsCache && (Date.now() - _planetsTime) < TTL) return _planetsCache;
-    const results = await Promise.all(PLANET_TITLES.map(async title=>{
+    const titles = WIKI_TITLES[key];
+    if (!titles) return [];
+    const cached = _wikiCache[key];
+    if (cached && (Date.now() - cached.time) < TTL) return cached.data;
+    const results = await Promise.all(titles.map(async title => {
       try{
-        const r = await fetch(`https://ar.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+        const ctrl = new AbortController();
+        const t = setTimeout(()=>ctrl.abort(), 6000);
+        const r = await fetch(`https://ar.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { signal: ctrl.signal });
+        clearTimeout(t);
         if (!r.ok) return null;
         const d = await r.json();
-        return { title, data:d };
+        if (!d.extract) return null;
+        return { title, data: d };
       }catch(e){ return null; }
     }));
-    _planetsCache = results.filter(Boolean);
-    _planetsTime = Date.now();
-    return _planetsCache;
+    const data = results.filter(Boolean);
+    _wikiCache[key] = { data, time: Date.now() };
+    return data;
   }
 
-  function renderLivePlanetCards(planets){
-    if (!planets || !planets.length) return '';
-    return `<div class="cosmos-cards">${planets.map(p=>{
+  function renderWikiCards(items, accent){
+    if (!items || !items.length) return '';
+    const color = accent || '#3b82f6';
+    return `<div class="cosmos-cards">${items.map(p=>{
       const d = p.data;
-      const img = (d.thumbnail && d.thumbnail.source) || (d.originalimage && d.originalimage.source) || 'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70';
+      const img = (d.thumbnail && d.thumbnail.source) || (d.originalimage && d.originalimage.source) || 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70';
       const extract = d.extract || '';
+      const displayTitle = (d.titles && d.titles.normalized) || p.title;
       const url = (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || `https://ar.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
       return `
       <article class="cosmos-card" onclick="window.open('${encodeURI(url)}','_blank','noopener')" style="cursor:pointer">
@@ -2240,7 +2258,7 @@ async function enrollInCourse(courseId) {
           <span class="cosmos-card-tag floating"><i class="fas fa-satellite-dish"></i> محدّث</span>
         </div>
         <div class="cosmos-card-body">
-          <h4><i class="fas fa-globe" style="color:#3b82f6"></i> ${escapeHtml(p.title)}</h4>
+          <h4><i class="fas fa-bookmark" style="color:${color}"></i> ${escapeHtml(displayTitle)}</h4>
           <p>${escapeHtml(extract.slice(0,260))}${extract.length>260?'…':''}</p>
           <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ المزيد على ويكيبيديا</span>
         </div>
@@ -2359,8 +2377,9 @@ async function enrollInCourse(courseId) {
     const cat = COSMOS_DATA[key]; if(!cat) return;
     titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
     const liveContainerId = `cosmosLive_${key}`;
-    const liveBlock = (key==='planets'||key==='universe'||key==='missions') ? `
-      <div class="cosmos-modal-intro" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.35)">
+    const hasLive = ['planets','universe','missions','stars','galaxies','blackholes','astronauts','telescopes','phenomena'].includes(key);
+    const liveBlock = hasLive ? `
+      <div class="cosmos-modal-intro" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35)">
         <i class="fas fa-satellite-dish" style="color:#22c55e;margin-left:.5rem"></i>
         <strong>تحديث مباشر من مصادر موثوقة</strong>
         <button class="cosmos-refresh-btn" onclick="refreshLiveCategory('${key}', event)"><i class="fas fa-rotate"></i> تحديث</button>
@@ -2373,39 +2392,39 @@ async function enrollInCourse(courseId) {
     body.innerHTML = liveBlock + renderStaticCosmos(cat);
     m.classList.add('active');
     document.body.style.overflow = 'hidden';
-    if (liveBlock) loadLiveCategoryData(key);
+    if (hasLive) loadLiveCategoryData(key, cat.color);
   };
 
-  async function loadLiveCategoryData(key){
+  async function loadLiveCategoryData(key, color){
     const container = document.getElementById(`cosmosLive_${key}`);
     if (!container) return;
     try {
-      let html = '';
-      if (key === 'planets') {
-        const planets = await fetchLivePlanets();
-        html = renderLivePlanetCards(planets);
-      } else if (key === 'universe') {
-        const apod = await fetchAPOD();
-        html = renderAPODCard(apod);
+      const parts = [];
+      if (key === 'universe') {
+        try { const apod = await fetchAPOD(); if (apod) parts.push(renderAPODCard(apod)); } catch(e){ console.warn('apod failed', e); }
       } else if (key === 'missions') {
-        const launches = await fetchUpcomingLaunches();
-        html = renderLaunchCards(launches);
+        try { const launches = await fetchUpcomingLaunches(); if (launches && launches.length) parts.push(renderLaunchCards(launches)); } catch(e){ console.warn('launches failed', e); }
       }
-      container.innerHTML = html || '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد بيانات حية متاحة الآن.</p></div>';
+      if (WIKI_TITLES[key]) {
+        const items = await fetchWikiCards(key);
+        if (items.length) parts.push(renderWikiCards(items, color));
+      }
+      container.innerHTML = parts.length ? parts.join('<div style="height:1rem"></div>') : '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد بيانات حية متاحة الآن. تأكد من اتصال الإنترنت.</p></div>';
     } catch (e) {
       console.error('live category fetch failed', e);
-      container.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب البيانات الحية، تم عرض المحتوى المحفوظ بالأسفل.</p></div>';
+      container.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب البيانات الحية، المحتوى المحفوظ ظاهر بالأسفل.</p></div>';
     }
   }
 
   window.refreshLiveCategory = async function(key, ev){
     if (ev) ev.stopPropagation();
-    if (key === 'planets') { _planetsCache = null; }
-    else if (key === 'universe') { _apodCache = null; }
+    delete _wikiCache[key];
+    if (key === 'universe') { _apodCache = null; }
     else if (key === 'missions') { _launchesCache = null; }
     const c = document.getElementById(`cosmosLive_${key}`);
     if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
-    await loadLiveCategoryData(key);
+    const cat = COSMOS_DATA[key];
+    await loadLiveCategoryData(key, cat ? cat.color : '#3b82f6');
   };
 
   window.refreshLiveNews = async function(ev){
