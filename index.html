@@ -724,6 +724,28 @@
     .cosmos-card-body p { font-size:.88rem; line-height:1.7; color:#cfc9dd; margin:0; }
     .cosmos-card-tag { display:inline-flex; align-items:center; gap:.35rem; align-self: flex-start; padding: .25rem .65rem; border-radius: 999px; font-size:.72rem; font-weight:700; background: rgba(167,139,250,.18); color:#c4b5fd; border: 1px solid rgba(167,139,250,.3); margin-top:.25rem; }
     @media (max-width: 600px) { .cosmos-cards { grid-template-columns: 1fr; gap: .9rem; } .cosmos-card-img { height: 200px; } }
+
+    /* Floating tag overlay on image (more pro look) */
+    .cosmos-card-img { position: relative; }
+    .cosmos-card-tag.floating { position: absolute; top: .65rem; right: .65rem; z-index: 2; background: rgba(15,10,26,.75); backdrop-filter: blur(10px); border: 1px solid rgba(167,139,250,.4); color:#fff; padding: .3rem .75rem; box-shadow: 0 4px 12px -4px rgba(0,0,0,.6); }
+    .cosmos-card-time { position: absolute; bottom: .65rem; right: .65rem; z-index: 2; background: rgba(15,10,26,.75); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.12); color:#fff; padding: .25rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 600; display:inline-flex; align-items:center; gap:.35rem; }
+    .cosmos-news-card { cursor: pointer; }
+    .cosmos-read-more { display:inline-flex; align-items:center; gap:.4rem; margin-top: auto; padding-top: .5rem; color:#a78bfa; font-size:.82rem; font-weight:700; }
+    .cosmos-news-card:hover .cosmos-read-more { color:#c4b5fd; }
+
+    /* Contact admins pill — subtle pulse to draw attention */
+    .cosmos-pill-contact { background: linear-gradient(135deg, rgba(34,197,94,.15), rgba(16,185,129,.12)); border-color: rgba(34,197,94,.45); }
+    .cosmos-pill-contact .pill-icon { animation: contactPulse 2.4s infinite; }
+    @keyframes contactPulse { 0%,100% { box-shadow: 0 4px 10px -4px rgba(34,197,94,.5), inset 0 1px 0 rgba(255,255,255,.25); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,.18), 0 4px 12px -4px rgba(34,197,94,.7); } }
+
+    /* News loading + empty + refresh button */
+    .cosmos-loading { padding: 2.5rem 1rem; text-align: center; }
+    .cosmos-empty { padding: 3rem 1rem; text-align: center; color:#aaa; }
+    .cosmos-empty i { font-size: 2.5rem; color:#a78bfa; margin-bottom: 1rem; display:block; }
+    .cosmos-refresh-btn { margin-right: 1rem; margin-top: .75rem; padding: .45rem 1rem; border-radius: 999px; border: 1px solid rgba(167,139,250,.5); background: rgba(167,139,250,.15); color:#c4b5fd; font-family:'Cairo',sans-serif; font-weight:700; font-size: .82rem; cursor:pointer; display:inline-flex; align-items:center; gap:.4rem; transition: all .25s; }
+    .cosmos-refresh-btn:hover { background: rgba(167,139,250,.3); transform: translateY(-1px); }
+    .cosmos-refresh-btn i { transition: transform .5s; }
+    .cosmos-refresh-btn:hover i { transform: rotate(360deg); }
   </style>
 </head>
 <body>
@@ -841,6 +863,7 @@
           <button type="button" class="cosmos-pill" style="--pill-c1:#ec4899;--pill-c2:#a855f7" onclick="openCosmosCategory('news')"><span class="pill-icon"><i class="fas fa-newspaper"></i></span><span>أخبار الكون</span></button>
           <button type="button" class="cosmos-pill" style="--pill-c1:#06b6d4;--pill-c2:#3b82f6" onclick="openCosmosCategory('telescopes')"><span class="pill-icon"><i class="fas fa-search"></i></span><span>التلسكوبات</span></button>
           <button type="button" class="cosmos-pill" style="--pill-c1:#f59e0b;--pill-c2:#ef4444" onclick="openCosmosCategory('phenomena')"><span class="pill-icon"><i class="fas fa-bolt"></i></span><span>ظواهر فلكية</span></button>
+          <button type="button" class="cosmos-pill cosmos-pill-contact" style="--pill-c1:#22c55e;--pill-c2:#10b981" onclick="openAdminChat()"><span class="pill-icon"><i class="fas fa-comments"></i></span><span>تواصل مع المشرفين</span></button>
         </div>
       </div>
     </section>
@@ -1970,19 +1993,16 @@ async function enrollInCourse(courseId) {
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-  window.openCosmosCategory = function(key){
-    const cat = COSMOS_DATA[key]; if(!cat) return;
-    const titleEl = document.getElementById('cosmosModalTitle');
-    const body = document.getElementById('cosmosModalBody');
-    titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
-    body.innerHTML = `
+  function renderStaticCosmos(cat){
+    return `
       <div class="cosmos-modal-intro"><i class="fas fa-info-circle" style="color:${cat.color};margin-left:.5rem"></i>${escapeHtml(cat.intro)}</div>
       <div class="cosmos-cards">
         ${cat.items.map(it=>`
           <article class="cosmos-card">
-            <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')"></div>
+            <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')">
+              ${it.tag?`<span class="cosmos-card-tag floating"><i class="fas fa-tag"></i> ${escapeHtml(it.tag)}</span>`:''}
+            </div>
             <div class="cosmos-card-body">
-              ${it.tag?`<span class="cosmos-card-tag"><i class="fas fa-tag"></i> ${escapeHtml(it.tag)}</span>`:''}
               <h4>${escapeHtml(it.title)}</h4>
               <p>${escapeHtml(it.text)}</p>
             </div>
@@ -1990,9 +2010,104 @@ async function enrollInCourse(courseId) {
         `).join('')}
       </div>
     `;
+  }
+
+  function timeAgo(dateStr){
+    const d = new Date(dateStr); if(isNaN(d)) return '';
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return 'منذ لحظات';
+    if (diff < 3600) return 'منذ ' + Math.floor(diff/60) + ' دقيقة';
+    if (diff < 86400) return 'منذ ' + Math.floor(diff/3600) + ' ساعة';
+    if (diff < 2592000) return 'منذ ' + Math.floor(diff/86400) + ' يوم';
+    return d.toLocaleDateString('ar-EG', {year:'numeric', month:'long', day:'numeric'});
+  }
+
+  let _newsCache = null, _newsTime = 0;
+  async function fetchLiveNews(){
+    const TTL = 10 * 60 * 1000;
+    if (_newsCache && (Date.now() - _newsTime) < TTL) return _newsCache;
+    const res = await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=18&ordering=-published_at');
+    if (!res.ok) throw new Error('news fetch failed');
+    const data = await res.json();
+    _newsCache = data.results || [];
+    _newsTime = Date.now();
+    return _newsCache;
+  }
+
+  function renderNewsCards(articles){
+    if (!articles || !articles.length) {
+      return '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب لاحقاً.</p></div>';
+    }
+    return `<div class="cosmos-cards">${articles.map(a=>`
+      <article class="cosmos-card cosmos-news-card" onclick="window.open('${encodeURI(a.url)}','_blank','noopener')">
+        <div class="cosmos-card-img" style="background-image:url('${encodeURI(a.image_url||'')}')">
+          <span class="cosmos-card-tag floating"><i class="fas fa-rss"></i> ${escapeHtml(a.news_site||'Space News')}</span>
+          <span class="cosmos-card-time"><i class="far fa-clock"></i> ${escapeHtml(timeAgo(a.published_at))}</span>
+        </div>
+        <div class="cosmos-card-body">
+          <h4>${escapeHtml(a.title||'')}</h4>
+          <p>${escapeHtml((a.summary||'').slice(0, 220))}${(a.summary||'').length>220?'…':''}</p>
+          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ الخبر كاملاً</span>
+        </div>
+      </article>
+    `).join('')}</div>`;
+  }
+
+  window.openCosmosCategory = async function(key){
+    const titleEl = document.getElementById('cosmosModalTitle');
+    const body = document.getElementById('cosmosModalBody');
     const m = document.getElementById('cosmosModal');
+
+    if (key === 'news') {
+      titleEl.innerHTML = `<i class="fas fa-newspaper" style="color:#ec4899"></i> أخبار الكون — مباشرة`;
+      body.innerHTML = `
+        <div class="cosmos-modal-intro">
+          <i class="fas fa-bolt" style="color:#ec4899;margin-left:.5rem"></i>
+          أحدث أخبار الفضاء والفلك تُحدَّث تلقائياً من <strong>Spaceflight News</strong> (مصادر عالمية موثوقة كـ NASA و SpaceX و ESA). اضغط على أي خبر لقراءته كاملاً في المصدر الأصلي.
+          <button class="cosmos-refresh-btn" onclick="refreshLiveNews(event)"><i class="fas fa-rotate"></i> تحديث الآن</button>
+        </div>
+        <div id="cosmosNewsContainer">
+          <div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب آخر الأخبار من الفضاء...</p></div>
+        </div>`;
+      m.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      try {
+        const articles = await fetchLiveNews();
+        document.getElementById('cosmosNewsContainer').innerHTML = renderNewsCards(articles);
+      } catch(e){
+        console.error(e);
+        document.getElementById('cosmosNewsContainer').innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب الأخبار الآن. تحقق من الاتصال وحاول مرة أخرى.</p></div>';
+      }
+      return;
+    }
+
+    const cat = COSMOS_DATA[key]; if(!cat) return;
+    titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
+    body.innerHTML = renderStaticCosmos(cat);
     m.classList.add('active');
     document.body.style.overflow = 'hidden';
+  };
+
+  window.refreshLiveNews = async function(ev){
+    if (ev) ev.stopPropagation();
+    _newsCache = null;
+    const c = document.getElementById('cosmosNewsContainer');
+    if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
+    try {
+      const articles = await fetchLiveNews();
+      if (c) c.innerHTML = renderNewsCards(articles);
+    } catch(e){
+      if (c) c.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر التحديث الآن.</p></div>';
+    }
+  };
+
+  window.openAdminChat = function(){
+    if (typeof window.openChat === 'function') {
+      window.openChat();
+    } else {
+      const btn = document.getElementById('chatBtn');
+      if (btn) btn.click();
+    }
   };
 
   window.closeCosmosModal = function(){
