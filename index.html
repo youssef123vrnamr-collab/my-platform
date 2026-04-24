@@ -2209,6 +2209,106 @@ async function enrollInCourse(courseId) {
     return _newsCache;
   }
 
+  const PLANET_TITLES = ['عطارد','الزهرة','الأرض','المريخ','المشتري','زحل','أورانوس','نبتون'];
+  let _planetsCache = null, _planetsTime = 0;
+  async function fetchLivePlanets(){
+    const TTL = 6 * 60 * 60 * 1000;
+    if (_planetsCache && (Date.now() - _planetsTime) < TTL) return _planetsCache;
+    const results = await Promise.all(PLANET_TITLES.map(async title=>{
+      try{
+        const r = await fetch(`https://ar.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+        if (!r.ok) return null;
+        const d = await r.json();
+        return { title, data:d };
+      }catch(e){ return null; }
+    }));
+    _planetsCache = results.filter(Boolean);
+    _planetsTime = Date.now();
+    return _planetsCache;
+  }
+
+  function renderLivePlanetCards(planets){
+    if (!planets || !planets.length) return '';
+    return `<div class="cosmos-cards">${planets.map(p=>{
+      const d = p.data;
+      const img = (d.thumbnail && d.thumbnail.source) || (d.originalimage && d.originalimage.source) || 'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70';
+      const extract = d.extract || '';
+      const url = (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || `https://ar.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
+      return `
+      <article class="cosmos-card" onclick="window.open('${encodeURI(url)}','_blank','noopener')" style="cursor:pointer">
+        <div class="cosmos-card-img" style="background-image:url('${encodeURI(img)}')">
+          <span class="cosmos-card-tag floating"><i class="fas fa-satellite-dish"></i> محدّث</span>
+        </div>
+        <div class="cosmos-card-body">
+          <h4><i class="fas fa-globe" style="color:#3b82f6"></i> ${escapeHtml(p.title)}</h4>
+          <p>${escapeHtml(extract.slice(0,260))}${extract.length>260?'…':''}</p>
+          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ المزيد على ويكيبيديا</span>
+        </div>
+      </article>`;
+    }).join('')}</div>
+    <p style="font-size:.78rem;color:#9ca3af;margin-top:.65rem;text-align:center"><i class="fas fa-circle-info"></i> المصدر: ويكيبيديا العربية (محتوى محدَّث باستمرار)</p>`;
+  }
+
+  let _apodCache = null, _apodTime = 0;
+  async function fetchAPOD(){
+    const TTL = 60 * 60 * 1000;
+    if (_apodCache && (Date.now() - _apodTime) < TTL) return _apodCache;
+    const r = await fetch('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY');
+    if (!r.ok) throw new Error('apod fetch failed');
+    _apodCache = await r.json();
+    _apodTime = Date.now();
+    return _apodCache;
+  }
+
+  function renderAPODCard(a){
+    if (!a) return '';
+    const isImg = (a.media_type === 'image');
+    return `<article class="cosmos-card" style="grid-column:1/-1;max-width:900px;margin:0 auto 1.25rem">
+      <div class="cosmos-card-img" style="height:340px;${isImg?`background-image:url('${encodeURI(a.hdurl||a.url||'')}')`:''}">
+        <span class="cosmos-card-tag floating"><i class="fas fa-camera"></i> صورة اليوم — ناسا</span>
+        <span class="cosmos-card-time"><i class="far fa-calendar"></i> ${escapeHtml(a.date||'')}</span>
+        ${!isImg && a.url ? `<iframe src="${encodeURI(a.url)}" style="width:100%;height:100%;border:none" allowfullscreen></iframe>` : ''}
+      </div>
+      <div class="cosmos-card-body">
+        <h4>${escapeHtml(a.title||'')}</h4>
+        <p>${escapeHtml((a.explanation||'').slice(0,420))}${(a.explanation||'').length>420?'…':''}</p>
+        <p style="font-size:.75rem;color:#9ca3af;margin-top:.5rem"><i class="fas fa-circle-info"></i> المصدر: NASA Astronomy Picture of the Day (APOD)</p>
+      </div>
+    </article>`;
+  }
+
+  let _launchesCache = null, _launchesTime = 0;
+  async function fetchUpcomingLaunches(){
+    const TTL = 30 * 60 * 1000;
+    if (_launchesCache && (Date.now() - _launchesTime) < TTL) return _launchesCache;
+    const r = await fetch('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=6&mode=list');
+    if (!r.ok) throw new Error('launches fetch failed');
+    const d = await r.json();
+    _launchesCache = d.results || [];
+    _launchesTime = Date.now();
+    return _launchesCache;
+  }
+
+  function renderLaunchCards(launches){
+    if (!launches || !launches.length) return '';
+    return `<div class="cosmos-cards">${launches.map(l=>{
+      const dt = l.net ? new Date(l.net) : null;
+      const when = dt && !isNaN(dt) ? dt.toLocaleString('ar-EG', {dateStyle:'medium', timeStyle:'short'}) : '';
+      return `<article class="cosmos-card">
+        <div class="cosmos-card-img" style="background-image:url('${encodeURI((l.image)||'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70')}')">
+          <span class="cosmos-card-tag floating"><i class="fas fa-rocket"></i> إطلاق قادم</span>
+          <span class="cosmos-card-time"><i class="far fa-clock"></i> ${escapeHtml(when)}</span>
+        </div>
+        <div class="cosmos-card-body">
+          <h4>${escapeHtml(l.name||'')}</h4>
+          <p><strong>الوكالة:</strong> ${escapeHtml((l.launch_service_provider && l.launch_service_provider.name)||'—')}</p>
+          <p><strong>الحالة:</strong> ${escapeHtml((l.status && l.status.name)||'—')}</p>
+        </div>
+      </article>`;
+    }).join('')}</div>
+    <p style="font-size:.78rem;color:#9ca3af;margin-top:.65rem;text-align:center"><i class="fas fa-circle-info"></i> المصدر: The Space Devs (Launch Library 2)</p>`;
+  }
+
   function renderNewsCards(articles){
     if (!articles || !articles.length) {
       return '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب لاحقاً.</p></div>';
@@ -2258,9 +2358,54 @@ async function enrollInCourse(courseId) {
 
     const cat = COSMOS_DATA[key]; if(!cat) return;
     titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
-    body.innerHTML = renderStaticCosmos(cat);
+    const liveContainerId = `cosmosLive_${key}`;
+    const liveBlock = (key==='planets'||key==='universe'||key==='missions') ? `
+      <div class="cosmos-modal-intro" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.35)">
+        <i class="fas fa-satellite-dish" style="color:#22c55e;margin-left:.5rem"></i>
+        <strong>تحديث مباشر من مصادر موثوقة</strong>
+        <button class="cosmos-refresh-btn" onclick="refreshLiveCategory('${key}', event)"><i class="fas fa-rotate"></i> تحديث</button>
+      </div>
+      <div id="${liveContainerId}">
+        <div class="cosmos-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب أحدث البيانات...</p></div>
+      </div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:1.5rem 0">
+    ` : '';
+    body.innerHTML = liveBlock + renderStaticCosmos(cat);
     m.classList.add('active');
     document.body.style.overflow = 'hidden';
+    if (liveBlock) loadLiveCategoryData(key);
+  };
+
+  async function loadLiveCategoryData(key){
+    const container = document.getElementById(`cosmosLive_${key}`);
+    if (!container) return;
+    try {
+      let html = '';
+      if (key === 'planets') {
+        const planets = await fetchLivePlanets();
+        html = renderLivePlanetCards(planets);
+      } else if (key === 'universe') {
+        const apod = await fetchAPOD();
+        html = renderAPODCard(apod);
+      } else if (key === 'missions') {
+        const launches = await fetchUpcomingLaunches();
+        html = renderLaunchCards(launches);
+      }
+      container.innerHTML = html || '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد بيانات حية متاحة الآن.</p></div>';
+    } catch (e) {
+      console.error('live category fetch failed', e);
+      container.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب البيانات الحية، تم عرض المحتوى المحفوظ بالأسفل.</p></div>';
+    }
+  }
+
+  window.refreshLiveCategory = async function(key, ev){
+    if (ev) ev.stopPropagation();
+    if (key === 'planets') { _planetsCache = null; }
+    else if (key === 'universe') { _apodCache = null; }
+    else if (key === 'missions') { _launchesCache = null; }
+    const c = document.getElementById(`cosmosLive_${key}`);
+    if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
+    await loadLiveCategoryData(key);
   };
 
   window.refreshLiveNews = async function(ev){
