@@ -1412,6 +1412,100 @@ async function isAdminUser(userId) {
   async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
+  // ====== تسجيل مشاهدة فيديو (موحّد لكل أنواع الفيديوهات) ======
+  // يستخدم Doc ID ثابت = userId_videoId لمنع التكرار، ويعمل بدون قراءة سابقة
+  // ويتعامل مع فيديوهات YouTube والفيديوهات العادية بنفس الطريقة.
+  let __markingWatched = new Set();
+  async function markVideoAsWatched(videoId) {
+    try {
+      if (!currentUserId || !videoId) return;
+      const key = currentUserId + "_" + videoId;
+      if (__markingWatched.has(key)) return;
+      __markingWatched.add(key);
+      const docRef = db.collection("watch_history").doc(key);
+      const existing = await docRef.get();
+      if (existing.exists) { __markingWatched.delete(key); return; }
+      await docRef.set({
+        userId: currentUserId,
+        videoId: videoId,
+        title: (videos.find(v => v.id === videoId) || {}).title || "",
+        watchedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch (e) { console.warn("addPoints failed", e); }
+      try {
+        const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
+        for (const enroll of enrollments.docs) {
+          const ed = enroll.data();
+          const course = await db.collection("courses").doc(ed.courseId).get();
+          if (course.exists && (course.data().videoIds || []).includes(videoId)) {
+            if (!(ed.completedVideosIds || []).includes(videoId)) {
+              const completed = (ed.completedVideos || 0) + 1;
+              await enroll.ref.update({
+                completedVideos: completed,
+                completedVideosIds: firebase.firestore.FieldValue.arrayUnion(videoId)
+              });
+            }
+          }
+        }
+      } catch (e) { console.warn("course progress update failed", e); }
+      try { if (typeof showToast === "function") showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك"); } catch(_){}
+      __markingWatched.delete(key);
+    } catch (e) {
+      console.error("markVideoAsWatched failed:", e);
+      try { __markingWatched.delete(currentUserId + "_" + videoId); } catch(_){}
+    }
+  }
+  window.markVideoAsWatched = markVideoAsWatched;
+
+  // ====== تحميل YouTube IFrame API مرة واحدة ======
+  let __ytApiReadyPromise = null;
+  function loadYouTubeAPI() {
+    if (__ytApiReadyPromise) return __ytApiReadyPromise;
+    __ytApiReadyPromise = new Promise((resolve) => {
+      if (window.YT && window.YT.Player) { resolve(window.YT); return; }
+      window.onYouTubeIframeAPIReady = function() { resolve(window.YT); };
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    });
+    return __ytApiReadyPromise;
+  }
+
+  // ====== متتبع فيديوهات YouTube (يسجل المشاهدة عند 80% أو عند الانتهاء) ======
+  let __ytPlayer = null;
+  let __ytWatchTimer = null;
+  function setupYouTubeProgressTracking(videoId) {
+    if (__ytWatchTimer) { clearInterval(__ytWatchTimer); __ytWatchTimer = null; }
+    if (__ytPlayer) { try { __ytPlayer.destroy(); } catch(_){} __ytPlayer = null; }
+    loadYouTubeAPI().then((YT) => {
+      const iframe = document.getElementById("videoPlayer");
+      if (!iframe || iframe.tagName !== "IFRAME") return;
+      try {
+        __ytPlayer = new YT.Player(iframe, {
+          events: {
+            onStateChange: function(e) {
+              if (e.data === YT.PlayerState.ENDED) {
+                markVideoAsWatched(videoId);
+              }
+            }
+          }
+        });
+        __ytWatchTimer = setInterval(() => {
+          try {
+            if (!__ytPlayer || typeof __ytPlayer.getCurrentTime !== "function") return;
+            const cur = __ytPlayer.getCurrentTime() || 0;
+            const dur = __ytPlayer.getDuration() || 0;
+            if (dur > 0 && cur / dur >= 0.8) {
+              markVideoAsWatched(videoId);
+              clearInterval(__ytWatchTimer);
+              __ytWatchTimer = null;
+            }
+          } catch(_){}
+        }, 3000);
+      } catch (e) { console.warn("YT.Player init failed:", e); }
+    });
+  }
+
   // ========== Voice Functions ==========
   function speakText(text) { if (!("speechSynthesis" in window)) return; window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "ar-SA"; u.rate = voiceSettings.rate; u.pitch = voiceSettings.pitch; if (voiceSettings.voiceURI) { const v = window.speechSynthesis.getVoices().find(v => v.voiceURI === voiceSettings.voiceURI); v && (u.voice = v); } window.speechSynthesis.speak(u); }
   function populateVoiceList() { const v = window.speechSynthesis.getVoices(), sel = document.getElementById("voiceSelect"); if (!sel) return; sel.innerHTML = ""; v.forEach(v => { const o = document.createElement("option"); o.value = v.voiceURI; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }); voiceSettings.voiceURI && (sel.value = voiceSettings.voiceURI); }
@@ -1710,6 +1804,8 @@ function updateAdminUI() {
       iframe.id = "videoPlayer";
       playerContainer.innerHTML = "";
       playerContainer.appendChild(iframe);
+      // تتبع تقدم فيديوهات YouTube لتسجيلها في "تقدم الطالب"
+      if (currentUserId) setupYouTubeProgressTracking(id);
     } else {
       let video = document.createElement("video");
       video.controls = true;
@@ -1721,26 +1817,9 @@ function updateAdminUI() {
       playerContainer.innerHTML = "";
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
-      // إضافة نقاط عند انتهاء الفيديو
-video.addEventListener("ended", async () => {
-  if (currentUserId) {
-    await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة");
-    await db.collection("watch_history").add({ userId: currentUserId, videoId: id, watchedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    // تحديث تقدم الكورسات
-    const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
-    for (const enroll of enrollments.docs) {
-      const course = await db.collection("courses").doc(enroll.data().courseId).get();
-      if (course.exists && course.data().videoIds.includes(id)) {
-        let completed = enroll.data().completedVideos || 0;
-        if (!enroll.data().completedVideosIds?.includes(id)) {
-          completed++;
-          await enroll.ref.update({ completedVideos: completed, completedVideosIds: firebase.firestore.FieldValue.arrayUnion(id) });
-        }
-      }
-    }
-  }
-});
-      setupProgressTracking();
+      // تسجيل المشاهدة عند نهاية الفيديو (يمنع التكرار من خلال markVideoAsWatched)
+      video.addEventListener("ended", () => { markVideoAsWatched(id); });
+      setupProgressTracking(id);
       
     }
     document.getElementById("videoModal").classList.add("active");
@@ -1754,7 +1833,35 @@ video.addEventListener("ended", async () => {
     }
   }
 
-  function closeModal() { saveVideoProgress(); let p = document.getElementById("videoPlayer"); if (p && p.tagName === "VIDEO") p.pause(); const playerContainer = document.getElementById("videoPlayerContainer"); const modal = document.getElementById("videoModal"); if (playerContainer) playerContainer.classList.remove("video-playing"); if (modal) modal.classList.remove("video-active"); document.getElementById("videoModal").classList.remove("active"); document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>'; document.getElementById("videoQuizContainer").style.display = "none"; }
+  function closeModal() {
+    saveVideoProgress();
+    let p = document.getElementById("videoPlayer");
+    if (p && p.tagName === "VIDEO") p.pause();
+    // قبل إغلاق المشغل: لو فيديو يوتيوب وصلنا فيه لنسبة معقولة سجّله كمشاهَد
+    try {
+      if (__ytPlayer && typeof __ytPlayer.getCurrentTime === "function") {
+        const cur = __ytPlayer.getCurrentTime() || 0;
+        const dur = __ytPlayer.getDuration() || 0;
+        const iframe = document.getElementById("videoPlayer");
+        if (iframe && iframe.tagName === "IFRAME") {
+          const m = (iframe.src || "").match(/embed\/([^?&]+)/);
+          if (m && m[1]) {
+            const v = videos.find(x => x.type === "youtube" && x.videoId === m[1]);
+            if (v && dur > 0 && (cur / dur) >= 0.8) markVideoAsWatched(v.id);
+          }
+        }
+      }
+    } catch(_){}
+    if (__ytWatchTimer) { clearInterval(__ytWatchTimer); __ytWatchTimer = null; }
+    if (__ytPlayer) { try { __ytPlayer.destroy(); } catch(_){} __ytPlayer = null; }
+    const playerContainer = document.getElementById("videoPlayerContainer");
+    const modal = document.getElementById("videoModal");
+    if (playerContainer) playerContainer.classList.remove("video-playing");
+    if (modal) modal.classList.remove("video-active");
+    document.getElementById("videoModal").classList.remove("active");
+    document.getElementById("videoPlayerContainer").innerHTML = '<video class="video-player" controls id="videoPlayer" playsinline preload="none"></video>';
+    document.getElementById("videoQuizContainer").style.display = "none";
+  }
 
   async function saveVideoProgress() { let p = document.getElementById("videoPlayer"); if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); if (v && currentUserId) { await saveWatchProgressToFirebase(currentUserId, v.id, p.currentTime, p.duration || 0); } else if (v) { localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() })); } }
 
@@ -1762,7 +1869,26 @@ video.addEventListener("ended", async () => {
 
   function resumeWatching() { let data = lastWatchedData || (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; } })(); if (!data) return; if (!videos.find(v => v.id === data.videoId)) { showToast("❌ الفيديو غير متوفر"); dismissResume(); return; } playVideo(data.videoId, data.currentTime); dismissResume(); }
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
-  function setupProgressTracking() { let p = document.getElementById("videoPlayer"); if (!p || p.tagName !== "VIDEO") return; progressInterval && clearInterval(progressInterval); progressInterval = setInterval(() => { p.paused || p.ended || saveVideoProgress(); }, 5000); p.addEventListener("pause", saveVideoProgress); window.addEventListener("beforeunload", saveVideoProgress); p.addEventListener("ended", () => { if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); }); }
+  function setupProgressTracking(videoIdForWatch) {
+    let p = document.getElementById("videoPlayer");
+    if (!p || p.tagName !== "VIDEO") return;
+    progressInterval && clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+      if (!p.paused && !p.ended) {
+        saveVideoProgress();
+        // إذا تجاوز المستخدم 80% من الفيديو نسجلها في تقدم الطالب
+        if (videoIdForWatch && currentUserId && p.duration > 0 && (p.currentTime / p.duration) >= 0.8) {
+          markVideoAsWatched(videoIdForWatch);
+        }
+      }
+    }, 5000);
+    p.addEventListener("pause", saveVideoProgress);
+    window.addEventListener("beforeunload", saveVideoProgress);
+    p.addEventListener("ended", () => {
+      if (currentUserId) saveUserDataToFirebase(currentUserId);
+      else localStorage.removeItem(STORAGE_KEY);
+    });
+  }
 
   function toggleFullscreenVideo() { const video = document.getElementById("videoPlayer"); if (!video) return; if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); }
   function shareCurrentTime() { let currentTime = 0; let videoId = null; let video = document.getElementById("videoPlayer"); if (video && video.tagName === "VIDEO" && video.src) { currentTime = Math.floor(video.currentTime); let foundVideo = videos.find(v => v.url === video.src || v.originalUrl === video.src); if (foundVideo) videoId = foundVideo.id; } if (!videoId) { let iframe = document.getElementById("videoPlayer"); if (iframe && iframe.tagName === "IFRAME" && iframe.src) { let match = iframe.src.match(/embed\/([^?&]+)/); if (match && match[1]) { let foundVideo = videos.find(v => v.type === "youtube" && v.videoId === match[1]); if (foundVideo) videoId = foundVideo.id; } } } if (!videoId) { showToast("⚠️ لا يمكن مشاركة هذا الفيديو"); return; } let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime; navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ")"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); }); }
