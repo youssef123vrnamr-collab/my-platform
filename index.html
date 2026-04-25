@@ -2499,80 +2499,95 @@ async function enrollInCourse(courseId) {
     }
 
     async function loadAllStudentsData() {
-      // الخريطة بتربط بـ userId الحقيقي بتاع Firebase — بس الطلاب اللي مسجلين بحساب جوجل
+      // المنطق الجديد (صارم جداً):
+      // الطالب الحقيقي = اللي شاف فيديو واحد على الأقل (سجل المشاهدة بيتسجل بس
+      // لما يبقى الطالب عامل تسجيل دخول بحساب جوجل، فده ضمان مزدوج).
+      // أي حد ظهر اسمه في امتحانات بس بدون مشاهدة حقيقية = مش هيتعرض.
+
+      // الخطوة 1: نبني قائمة الطلاب من سجل المشاهدة (دول الطلاب الحقيقيين)
       const studentsMap = new Map();
-
-      // الخطوة 1: نجيب بس المستخدمين اللي عملوا تسجيل دخول بحساب جوجل
-      // (بياناتهم بتتحفظ في user_progress عند تسجيل الدخول)
-      try {
-        const usersSnap = await db.collection('user_progress').get();
-        usersSnap.forEach(d => {
-          const u = d.data() || {};
-          const name = (u.username || u.name || u.displayName || '').trim();
-          const phone = (u.phone || '').trim();
-          // نتجاهل أي وثيقة فاضية مالهاش اسم ولا تليفون
-          if (!name && !phone) return;
-          studentsMap.set(d.id, {
-            userId: d.id,
-            name: name || 'بدون اسم',
-            phone: phone || '',
-            watchedIds: new Set(),
-            examResults: [],
-            points: u.points || 0,
-            lastActivity: u.lastUpdated && u.lastUpdated.toDate ? u.lastUpdated.toDate() : null,
-          });
-        });
-      } catch (e) { console.warn('user_progress read failed', e); }
-
-      // الخطوة 2: نضيف سجل المشاهدة للطلاب المسجلين فقط (مطابقة صارمة بالـ userId).
-      // أي سجل مشاهدة لـ userId مش موجود في قائمة الطلاب المسجلين هيتجاهل — عشان منطلعش طلاب وهميين.
       try {
         const wh = await db.collection('watch_history').get();
         wh.forEach(d => {
           const x = d.data() || {};
           const uid = x.userId;
           if (!uid) return;
-          const entry = studentsMap.get(uid);
-          if (!entry) return; // مش طالب مسجل — تجاهل
+          let entry = studentsMap.get(uid);
+          if (!entry) {
+            entry = {
+              userId: uid,
+              name: '',
+              phone: '',
+              watchedIds: new Set(),
+              examResults: [],
+              points: 0,
+              lastActivity: null,
+            };
+            studentsMap.set(uid, entry);
+          }
           if (x.videoId) entry.watchedIds.add(x.videoId);
           const wDate = x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : null;
           if (wDate && (!entry.lastActivity || wDate > entry.lastActivity)) entry.lastActivity = wDate;
         });
       } catch (e) { console.warn('watch_history read failed', e); }
 
-      // الخطوة 3: نضيف نتائج الامتحانات للطلاب المسجلين فقط، بمطابقة صارمة:
-      // أولاً بالـ userId، بعدين برقم تليفون كامل ومطابق، وأخيراً باسم كامل ومطابق تمامًا.
+      // الخطوة 2: نجيب بيانات الطالب (الاسم والتليفون) من user_progress
+      // ولو مفيش وثيقة في user_progress = مش طالب مسجل بجوجل = نشيله
+      const uids = Array.from(studentsMap.keys());
+      await Promise.all(uids.map(async (uid) => {
+        try {
+          const doc = await db.collection('user_progress').doc(uid).get();
+          if (!doc.exists) {
+            studentsMap.delete(uid);
+            return;
+          }
+          const u = doc.data() || {};
+          const name = (u.username || u.name || u.displayName || '').trim();
+          const phone = (u.phone || '').trim();
+          // لازم على الأقل اسم أو تليفون عشان نعتبره طالب مكتمل البيانات
+          if (!name && !phone) {
+            studentsMap.delete(uid);
+            return;
+          }
+          const entry = studentsMap.get(uid);
+          entry.name = name || 'بدون اسم';
+          entry.phone = phone;
+          entry.points = u.points || 0;
+          const lu = u.lastUpdated && u.lastUpdated.toDate ? u.lastUpdated.toDate() : null;
+          if (lu && (!entry.lastActivity || lu > entry.lastActivity)) entry.lastActivity = lu;
+        } catch (e) {
+          console.warn('user_progress doc read failed', uid, e);
+        }
+      }));
+
+      // الخطوة 3: نضيف نتائج الامتحانات للطلاب المسجلين فقط، بمطابقة صارمة
       const norm = s => String(s || '').replace(/[^\d+]/g, '');
       (examResults || []).forEach(r => {
         const phoneN = norm(r.studentPhone);
         const nameN = (r.studentName || '').trim();
         let entry = null;
 
-        // 1) مطابقة بالـ userId
         if (r.userId && studentsMap.has(r.userId)) {
           entry = studentsMap.get(r.userId);
         }
-        // 2) مطابقة برقم التليفون كامل (لازم على الأقل 6 أرقام عشان يبقى رقم حقيقي)
         if (!entry && phoneN.length >= 6) {
           for (const v of studentsMap.values()) {
             if (v.phone && norm(v.phone) === phoneN) { entry = v; break; }
           }
         }
-        // 3) مطابقة بالاسم الكامل تماماً (لازم 3 حروف فأكتر)
         if (!entry && nameN.length >= 3) {
           for (const v of studentsMap.values()) {
             if (v.name && v.name.trim() === nameN) { entry = v; break; }
           }
         }
 
-        if (!entry) return; // الامتحان مش بتاع أي طالب مسجل — تجاهل
+        if (!entry) return;
         const sDate = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : null;
         entry.examResults.push({ ...r, submittedDate: sDate || new Date() });
         if (sDate && (!entry.lastActivity || sDate > entry.lastActivity)) entry.lastActivity = sDate;
       });
 
-      // الخطوة 4: نحسب الإحصائيات ونعرض بس الطلاب اللي عندهم نشاط حقيقي
-      // (شاهد فيديو أو دخل امتحان). النقاط لوحدها مش كافية.
+      // الخطوة 4: الفلتر النهائي — لازم يكون الطالب شاف فيديو حقيقي
       const totalVideos = (videos || []).filter(v => !v.private).length;
       const list = Array.from(studentsMap.values()).map(s => {
         const watchedCount = s.watchedIds.size;
@@ -2580,7 +2595,7 @@ async function enrollInCourse(courseId) {
         const avgScore = examCount ? Math.round(s.examResults.reduce((a, r) => a + (r.percentage || 0), 0) / examCount) : 0;
         const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
         return { ...s, watchedCount, examCount, avgScore, overallPct };
-      }).filter(s => s.watchedCount > 0 || s.examCount > 0);
+      }).filter(s => s.watchedCount > 0); // لازم شاف فيديو واحد على الأقل
 
       list.sort((a, b) => (b.overallPct - a.overallPct) || (b.avgScore - a.avgScore));
       __allStudentsCache = { list, totalVideos };
