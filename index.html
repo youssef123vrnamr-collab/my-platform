@@ -2499,62 +2499,80 @@ async function enrollInCourse(courseId) {
     }
 
     async function loadAllStudentsData() {
+      // الخريطة بتربط بـ userId الحقيقي بتاع Firebase — بس الطلاب اللي مسجلين بحساب جوجل
       const studentsMap = new Map();
 
+      // الخطوة 1: نجيب بس المستخدمين اللي عملوا تسجيل دخول بحساب جوجل
+      // (بياناتهم بتتحفظ في user_progress عند تسجيل الدخول)
       try {
-        const usersSnap = await db.collection('users').get();
+        const usersSnap = await db.collection('user_progress').get();
         usersSnap.forEach(d => {
-          const u = d.data();
-          const name = (u.name || u.displayName || '').trim();
+          const u = d.data() || {};
+          const name = (u.username || u.name || u.displayName || '').trim();
           const phone = (u.phone || '').trim();
-          const key = (phone || name || d.id).toLowerCase();
-          if (!studentsMap.has(key)) {
-            studentsMap.set(key, {
-              userId: d.id, name: name || 'بدون اسم', phone: phone || '',
-              watchedIds: new Set(), examResults: [], points: u.points || 0,
-              lastActivity: u.lastSeen && u.lastSeen.toDate ? u.lastSeen.toDate() : null,
-            });
-          }
+          // نتجاهل أي وثيقة فاضية مالهاش اسم ولا تليفون
+          if (!name && !phone) return;
+          studentsMap.set(d.id, {
+            userId: d.id,
+            name: name || 'بدون اسم',
+            phone: phone || '',
+            watchedIds: new Set(),
+            examResults: [],
+            points: u.points || 0,
+            lastActivity: u.lastUpdated && u.lastUpdated.toDate ? u.lastUpdated.toDate() : null,
+          });
         });
-      } catch (e) { console.warn('users read failed', e); }
+      } catch (e) { console.warn('user_progress read failed', e); }
 
+      // الخطوة 2: نضيف سجل المشاهدة للطلاب المسجلين فقط (مطابقة صارمة بالـ userId).
+      // أي سجل مشاهدة لـ userId مش موجود في قائمة الطلاب المسجلين هيتجاهل — عشان منطلعش طلاب وهميين.
       try {
         const wh = await db.collection('watch_history').get();
         wh.forEach(d => {
-          const x = d.data();
+          const x = d.data() || {};
           const uid = x.userId;
           if (!uid) return;
-          let entry = null;
-          for (const v of studentsMap.values()) { if (v.userId === uid) { entry = v; break; } }
-          if (!entry) {
-            const k = uid.toLowerCase();
-            entry = { userId: uid, name: 'مستخدم', phone: '', watchedIds: new Set(), examResults: [], points: 0, lastActivity: null };
-            studentsMap.set(k, entry);
-          }
-          entry.watchedIds.add(x.videoId);
+          const entry = studentsMap.get(uid);
+          if (!entry) return; // مش طالب مسجل — تجاهل
+          if (x.videoId) entry.watchedIds.add(x.videoId);
           const wDate = x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : null;
           if (wDate && (!entry.lastActivity || wDate > entry.lastActivity)) entry.lastActivity = wDate;
         });
-      } catch (e) { console.warn('watch_history all read failed', e); }
+      } catch (e) { console.warn('watch_history read failed', e); }
 
+      // الخطوة 3: نضيف نتائج الامتحانات للطلاب المسجلين فقط، بمطابقة صارمة:
+      // أولاً بالـ userId، بعدين برقم تليفون كامل ومطابق، وأخيراً باسم كامل ومطابق تمامًا.
       const norm = s => String(s || '').replace(/[^\d+]/g, '');
       (examResults || []).forEach(r => {
         const phoneN = norm(r.studentPhone);
         const nameN = (r.studentName || '').trim();
         let entry = null;
-        for (const v of studentsMap.values()) {
-          if ((phoneN && norm(v.phone) === phoneN) || (nameN && v.name === nameN)) { entry = v; break; }
+
+        // 1) مطابقة بالـ userId
+        if (r.userId && studentsMap.has(r.userId)) {
+          entry = studentsMap.get(r.userId);
         }
-        if (!entry) {
-          const k = (phoneN || nameN || Math.random().toString(36)).toLowerCase();
-          entry = { userId: null, name: nameN || 'بدون اسم', phone: r.studentPhone || '', watchedIds: new Set(), examResults: [], points: 0, lastActivity: null };
-          studentsMap.set(k, entry);
+        // 2) مطابقة برقم التليفون كامل (لازم على الأقل 6 أرقام عشان يبقى رقم حقيقي)
+        if (!entry && phoneN.length >= 6) {
+          for (const v of studentsMap.values()) {
+            if (v.phone && norm(v.phone) === phoneN) { entry = v; break; }
+          }
         }
+        // 3) مطابقة بالاسم الكامل تماماً (لازم 3 حروف فأكتر)
+        if (!entry && nameN.length >= 3) {
+          for (const v of studentsMap.values()) {
+            if (v.name && v.name.trim() === nameN) { entry = v; break; }
+          }
+        }
+
+        if (!entry) return; // الامتحان مش بتاع أي طالب مسجل — تجاهل
         const sDate = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : null;
         entry.examResults.push({ ...r, submittedDate: sDate || new Date() });
         if (sDate && (!entry.lastActivity || sDate > entry.lastActivity)) entry.lastActivity = sDate;
       });
 
+      // الخطوة 4: نحسب الإحصائيات ونعرض بس الطلاب اللي عندهم نشاط حقيقي
+      // (شاهد فيديو أو دخل امتحان). النقاط لوحدها مش كافية.
       const totalVideos = (videos || []).filter(v => !v.private).length;
       const list = Array.from(studentsMap.values()).map(s => {
         const watchedCount = s.watchedIds.size;
@@ -2562,7 +2580,7 @@ async function enrollInCourse(courseId) {
         const avgScore = examCount ? Math.round(s.examResults.reduce((a, r) => a + (r.percentage || 0), 0) / examCount) : 0;
         const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
         return { ...s, watchedCount, examCount, avgScore, overallPct };
-      }).filter(s => s.watchedCount > 0 || s.examCount > 0 || s.points > 0);
+      }).filter(s => s.watchedCount > 0 || s.examCount > 0);
 
       list.sort((a, b) => (b.overallPct - a.overallPct) || (b.avgScore - a.avgScore));
       __allStudentsCache = { list, totalVideos };
