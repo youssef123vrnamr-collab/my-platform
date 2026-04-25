@@ -1045,27 +1045,34 @@
 }
 .student-delete-btn i { font-size: 0.95rem; }
 
-/* ===== Force responsive videos grid (override all earlier rules) ===== */
+/* ===== Responsive videos grid (override earlier rules) ===== */
+/* الحاوي الخارجي: الأقسام تحت بعض (مش جريد) */
 .videos-grid, #videosContainer {
+  display: block !important;
+}
+.course-section { margin-bottom: 2rem; }
+
+/* القسم الفعلي اللي فيه كروت الفيديو */
+.course-section-grid {
   display: grid !important;
 }
 /* الموبايل: عمود واحد */
 @media (max-width: 767px) {
-  .videos-grid, #videosContainer {
+  .course-section-grid {
     grid-template-columns: 1fr !important;
     gap: 1rem !important;
   }
 }
 /* التابلت: عمودين */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .videos-grid, #videosContainer {
+  .course-section-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 1.25rem !important;
   }
 }
 /* الكمبيوتر: ثلاث فيديوهات في الصف */
 @media (min-width: 1024px) {
-  .videos-grid, #videosContainer {
+  .course-section-grid {
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 1.5rem !important;
   }
