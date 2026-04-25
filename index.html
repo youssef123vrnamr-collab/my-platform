@@ -68,7 +68,7 @@
     .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
     .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
     @media (max-width:768px) { .settings-menu { left: 0; min-width: 180px; } .brand-logo { width: 60px; height: 60px; } .brand-text h1 { font-size: 1.1rem; } .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; } }
-    @media (orientation: landscape) { .container { padding: 1rem 2rem; } .hero { padding: 1rem 1rem; margin-bottom: 1rem; } .hero h2 { font-size: 2rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; } .video-card .video-thumbnail { height: 180px; } .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; } .video-title { font-size: 1.2rem; } .video-description { font-size: 0.85rem; max-height: 80px; } .navbar { padding: 0.5rem 1rem; } .brand-logo { width: 60px; height: 60px; } .chat-container { height: 100vh; } .message { max-width: 70%; } .modal-content { max-height: 100dvh !important; overflow-y: auto !important; } .video-player-container { padding: 8px; } .video-player, .youtube-iframe { max-height: 65vh !important; width: auto !important; max-width: 100% !important; } .upload-zone { padding: 1.5rem; } .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; } .chat-messages { max-height: calc(100vh - 140px); overflow-y: auto; } }
+    @media (orientation: landscape) and (min-width: 768px) { .container { padding: 1rem 2rem; } .hero { padding: 1rem 1rem; margin-bottom: 1rem; } .hero h2 { font-size: 2rem; } .videos-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } .video-card .video-thumbnail { height: 180px; } .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; } .video-title { font-size: 1.2rem; } .video-description { font-size: 0.85rem; max-height: 80px; } .navbar { padding: 0.5rem 1rem; } .brand-logo { width: 60px; height: 60px; } .chat-container { height: 100vh; } .message { max-width: 70%; } .modal-content { max-height: 100dvh !important; overflow-y: auto !important; } .video-player-container { padding: 8px; } .video-player, .youtube-iframe { max-height: 65vh !important; width: auto !important; max-width: 100% !important; } .upload-zone { padding: 1.5rem; } .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; } .chat-messages { max-height: calc(100vh - 140px); overflow-y: auto; } }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; width: 100%; }
     .hero { text-align: center; padding: 4rem 2rem; margin-bottom: 3rem; }
     .hero-badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(16,185,129,.2); border: 1px solid #10b981; padding: .5rem 1rem; border-radius: 20px; font-size: .9rem; color: #10b981; margin-bottom: 1.5rem; }
@@ -95,7 +95,7 @@
     .resume-btn:hover { background: #4f52e0; transform: scale(1.05); }
     .dismiss-btn { background: 0 0; border: 1px solid rgba(255,255,255,.2); color: #ccc; padding: .6rem 1.2rem; border-radius: 30px; font-family: 'Cairo', sans-serif; cursor: pointer; transition: .3s; }
     .dismiss-btn:hover { background: rgba(255,255,255,.1); }
-    .videos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
+    .videos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
     .video-card { background: #1a1025; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); transition: all .4s; cursor: pointer; display: flex; flex-direction: column; position: relative; backdrop-filter: blur(4px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3); }
     .video-card:hover { transform: translateY(-10px); border-color: #6366f1; box-shadow: 0 25px 40px rgba(99,102,241,0.3); }
     .video-thumbnail { position: relative; height: 220px; background: linear-gradient(135deg, #1a1a3e 0, #0f0f23 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: #6366f1; overflow: hidden; }
@@ -322,7 +322,7 @@
     .upload-progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 5px; transition: width .3s; position: relative; }
     .upload-progress-fill::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation: shimmer 1s infinite; }
     .upload-stats { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .8rem; color: #888; }
-    @media (max-width:768px) { .navbar { padding: .75rem 1rem; } .brand-text h1 { font-size: 1.2rem; } .hero { padding: 2rem 1rem; } .hero h2 { font-size: 2rem; } .hero p { font-size: 1rem; } .container { padding: 1rem; } .videos-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; } .upload-zone { padding: 1.5rem; } .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; } .resume-info { justify-content: center; } .resume-actions { justify-content: center; } .modal-content { max-width: 100% !important; } .video-info { margin-top: -40px; min-height: 300px; padding: 1.5rem; } .video-title { font-size: 1.3rem; } .video-description { font-size: 0.95rem; line-height: 1.7; } .storage-bar-container { padding: 1rem; } .form-group textarea { min-height: 150px; } }
+    @media (max-width:768px) { .navbar { padding: .75rem 1rem; } .brand-text h1 { font-size: 1.2rem; } .hero { padding: 2rem 1rem; } .hero h2 { font-size: 2rem; } .hero p { font-size: 1rem; } .container { padding: 1rem; } .videos-grid { grid-template-columns: 1fr; gap: 1rem; } .upload-zone { padding: 1.5rem; } .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; } .resume-info { justify-content: center; } .resume-actions { justify-content: center; } .modal-content { max-width: 100% !important; } .video-info { margin-top: -40px; min-height: 300px; padding: 1.5rem; } .video-title { font-size: 1.3rem; } .video-description { font-size: 0.95rem; line-height: 1.7; } .storage-bar-container { padding: 1rem; } .form-group textarea { min-height: 150px; } }
     .chat-btn { position: fixed; bottom: 2rem; left: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(99,102,241,.5); z-index: 999; transition: all .3s; display: flex; align-items: center; justify-content: center; }
     .chat-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 40px rgba(99,102,241,.7); }
     .chat-btn .notification-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: .75rem; display: flex; align-items: center; justify-content: center; font-weight: 700; animation: pulse 2s infinite; }
@@ -583,7 +583,7 @@
       .retry-btn { padding: 0.6rem 1.5rem; font-size: 0.9rem; box-shadow: 0 8px 22px -8px rgba(99,102,241,.5), inset 0 1px 0 rgba(255,255,255,.2); }
       .resume-icon { width: 42px; height: 42px; font-size: 1.15rem; box-shadow: 0 6px 16px -6px rgba(236,72,153,.5); }
 
-      .videos-grid { gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+      .videos-grid { gap: 1.5rem; grid-template-columns: repeat(3, 1fr); }
       .video-card { border-radius: 18px; border: 1px solid rgba(255,255,255,.06); box-shadow: 0 12px 28px -16px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.03); transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, border-color .35s ease; }
       .video-card:hover { transform: translateY(-6px); border-color: rgba(167,139,250,.45); box-shadow: 0 24px 44px -20px rgba(99,102,241,.45); }
       .video-thumbnail { height: 180px; }
@@ -623,7 +623,7 @@
       .container { max-width: 1320px; padding: 2rem 2.5rem 3rem; }
       .hero h2 { font-size: 2.7rem; }
       .hero p { font-size: 1.08rem; }
-      .videos-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.75rem; }
+      .videos-grid { grid-template-columns: repeat(3, 1fr); gap: 1.75rem; }
     }
 
     /* ===== Tablet refinement (768px – 1023px) ===== */
@@ -642,7 +642,7 @@
       .upload-icon { width: 72px; height: 72px; font-size: 1.7rem; }
       .upload-btn { padding: 0.7rem 1.5rem; font-size: 0.95rem; border-radius: 12px; }
 
-      .videos-grid { gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+      .videos-grid { gap: 1.25rem; grid-template-columns: repeat(2, 1fr); }
       .video-thumbnail { height: 180px; }
       .play-btn { width: 60px; height: 60px; font-size: 1.5rem; }
       .video-info { padding: 1.2rem; min-height: 240px; margin-top: -40px; }
