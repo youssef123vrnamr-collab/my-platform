@@ -2701,7 +2701,7 @@ async function enrollInCourse(courseId) {
       __studentDetailFor = null;
       studentProgressTab = 'videos';
 
-      if (!currentUser || !currentUserPhone) {
+      if (!currentUserId && !(currentUser && currentUserPhone)) {
         document.getElementById('studentProgressBody').innerHTML = `
           <div class="progress-login-warn">
             <i class="fas fa-user-lock"></i>
