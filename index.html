@@ -1023,7 +1023,54 @@
       .message{ box-shadow:0 6px 18px -8px rgba(0,0,0,.45); }
       body::before, body::after{ display:none; }
     }
-  </style>
+  
+.progress-student-row { position: relative; }
+.student-delete-btn {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  margin-inline-start: 0.5rem;
+  flex-shrink: 0;
+  transition: all .2s ease;
+}
+.student-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+.student-delete-btn i { font-size: 0.95rem; }
+
+/* ===== Force responsive videos grid (override all earlier rules) ===== */
+.videos-grid, #videosContainer {
+  display: grid !important;
+}
+/* الموبايل: عمود واحد */
+@media (max-width: 767px) {
+  .videos-grid, #videosContainer {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+/* التابلت: عمودين */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .videos-grid, #videosContainer {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.25rem !important;
+  }
+}
+/* الكمبيوتر: ثلاث فيديوهات في الصف */
+@media (min-width: 1024px) {
+  .videos-grid, #videosContainer {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1.5rem !important;
+  }
+}
+</style>
 </head>
 <body>
 
@@ -2783,10 +2830,10 @@ async function enrollInCourse(courseId) {
           const cls = s.overallPct >= 75 ? 'high' : s.overallPct >= 40 ? 'mid' : 'low';
           const rankIcon = idx === 0 ? '<i class="fas fa-crown" style="color:#fde047"></i>' : idx === 1 ? '<i class="fas fa-medal" style="color:#cbd5e1"></i>' : idx === 2 ? '<i class="fas fa-medal" style="color:#fb923c"></i>' : `<span style="color:#9690a8;font-size:.85rem">#${idx+1}</span>`;
           return `
-            <div class="progress-student-row" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')" data-search="${escapeHtml((s.name + ' ' + s.phone).toLowerCase())}">
-              <div class="progress-rank">${rankIcon}</div>
-              <div class="progress-avatar small">${escapeHtml(initial)}</div>
-              <div class="progress-student-info">
+            <div class="progress-student-row" data-uid="${escapeHtml(s.userId || '')}" data-search="${escapeHtml((s.name + ' ' + s.phone).toLowerCase())}">
+              <div class="progress-rank" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">${rankIcon}</div>
+              <div class="progress-avatar small" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">${escapeHtml(initial)}</div>
+              <div class="progress-student-info" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
                 <h4>${escapeHtml(s.name)}</h4>
                 <div class="progress-student-meta">
                   <span><i class="fas fa-phone"></i> ${escapeHtml(s.phone || '—')}</span>
@@ -2795,12 +2842,15 @@ async function enrollInCourse(courseId) {
                 </div>
                 <div class="progress-mini-bar"><div class="progress-mini-fill" style="width:${s.overallPct}%"></div></div>
               </div>
-              <div class="progress-student-stats">
+              <div class="progress-student-stats" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
                 <div class="psm"><b>${s.watchedCount}</b><span>فيديو</span></div>
                 <div class="psm"><b>${s.examCount}</b><span>امتحان</span></div>
                 <div class="psm"><b>${s.avgScore}%</b><span>متوسط</span></div>
                 <span class="progress-item-badge ${cls}">${s.overallPct}%</span>
               </div>
+              <button class="student-delete-btn" title="حذف بيانات الطالب" onclick="event.stopPropagation(); deleteStudentRecord('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
+                <i class="fas fa-trash-alt"></i>
+              </button>
             </div>`;
         }).join('') + `</div>`;
       }
@@ -2835,7 +2885,66 @@ async function enrollInCourse(courseId) {
       }
     }
 
-    function switchProgressTab(tab) {
+    async function deleteStudentRecord(uidEnc, nameEnc, phoneEnc) {
+      const uid = decodeURIComponent(uidEnc || '');
+      const name = decodeURIComponent(nameEnc || '');
+      const phone = decodeURIComponent(phoneEnc || '');
+      if (!uid && !name && !phone) { showToast('⚠️ بيانات الطالب غير متاحة'); return; }
+      const ok = confirm('هل تريد حذف بيانات الطالب "' + (name || 'بدون اسم') + '" نهائياً؟\n\nسيتم مسح:\n• ملف الطالب\n• كل سجل المشاهدة\n• كل نتائج الامتحانات\n\nلا يمكن التراجع عن هذا الإجراء.');
+      if (!ok) return;
+      const row = document.querySelector('#allStudentsList .progress-student-row[data-uid="' + uid + '"]');
+      if (row) row.style.opacity = '0.4';
+      try {
+        const tasks = [];
+        // 1) ملف الطالب
+        if (uid) tasks.push(db.collection('user_progress').doc(uid).delete().catch(e => console.warn('user_progress delete', e)));
+        // 2) سجل المشاهدة
+        if (uid) {
+          tasks.push((async () => {
+            const snap = await db.collection('watch_history').where('userId', '==', uid).get();
+            const batch = db.batch();
+            snap.forEach(d => batch.delete(d.ref));
+            if (!snap.empty) await batch.commit();
+          })().catch(e => console.warn('watch_history delete', e)));
+        }
+        // 3) نتائج الامتحانات (بالـ userId والتليفون والاسم)
+        const norm = s => String(s || '').replace(/[^\d+]/g, '');
+        const phoneN = norm(phone);
+        const nameT = (name || '').trim();
+        tasks.push((async () => {
+          const toDelete = new Set();
+          if (uid) {
+            const s1 = await db.collection('exam_results').where('userId', '==', uid).get();
+            s1.forEach(d => toDelete.add(d.id));
+          }
+          (examResults || []).forEach(r => {
+            const matchPhone = phoneN.length >= 6 && norm(r.studentPhone) === phoneN;
+            const matchName = nameT.length >= 3 && (r.studentName || '').trim() === nameT;
+            if (matchPhone || matchName) toDelete.add(r.id);
+          });
+          const ids = Array.from(toDelete).filter(Boolean);
+          for (let i = 0; i < ids.length; i += 400) {
+            const batch = db.batch();
+            ids.slice(i, i + 400).forEach(id => batch.delete(db.collection('exam_results').doc(id)));
+            await batch.commit();
+          }
+        })().catch(e => console.warn('exam_results delete', e)));
+        await Promise.all(tasks);
+        // امسح من الكاش المحلي وحدّث الواجهة
+        if (__allStudentsCache && Array.isArray(__allStudentsCache.list)) {
+          __allStudentsCache.list = __allStudentsCache.list.filter(s => s.userId !== uid);
+        }
+        showToast('✅ تم حذف بيانات الطالب');
+        const data = await loadAllStudentsData();
+        renderAllStudents(data);
+      } catch (e) {
+        console.error(e);
+        if (row) row.style.opacity = '';
+        showToast('⚠️ حصل خطأ أثناء الحذف');
+      }
+    }
+
+        function switchProgressTab(tab) {
       studentProgressTab = tab;
       if (__studentDetailFor) {
         loadStudentProgressData(__studentDetailFor).then(renderStudentProgress).catch(e => console.error(e));
