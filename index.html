@@ -322,6 +322,28 @@
     .upload-progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 5px; transition: width .3s; position: relative; }
     .upload-progress-fill::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation: shimmer 1s infinite; }
     .upload-stats { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .8rem; color: #888; }
+    .video-with-board { display: flex; flex-direction: row; gap: 1rem; align-items: stretch; direction: ltr; margin-bottom: 1rem; }
+    .video-with-board > .video-player-container { flex: 1 1 65%; min-width: 0; margin-bottom: 0; direction: rtl; display: flex; align-items: center; justify-content: center; }
+    .video-with-board > .video-player-container > .video-player, .video-with-board > .video-player-container > .youtube-iframe { max-height: 70vh; }
+    .drawing-board { flex: 0 0 35%; display: flex; flex-direction: column; background: linear-gradient(145deg, rgba(26,16,37,0.85), rgba(10,5,18,0.95)); backdrop-filter: blur(12px); border-radius: 24px; overflow: hidden; border: 1px solid rgba(99,102,241,0.35); box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(236,72,153,0.15); direction: rtl; min-height: 320px; }
+    .drawing-board.collapsed .drawing-canvas-wrap { display: none; }
+    .drawing-toolbar { display: flex; gap: 0.4rem; padding: 0.6rem 0.7rem; background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(236,72,153,0.12)); border-bottom: 1px solid rgba(99,102,241,0.3); flex-wrap: wrap; align-items: center; }
+    .drawing-toolbar .db-btn { background: rgba(99,102,241,0.18); color: #fff; border: 1px solid rgba(99,102,241,0.4); padding: 0.45rem 0.7rem; border-radius: 10px; cursor: pointer; font-size: 0.95rem; transition: all 0.2s; min-width: 38px; min-height: 38px; display: inline-flex; align-items: center; justify-content: center; }
+    .drawing-toolbar .db-btn:hover { background: rgba(99,102,241,0.35); transform: translateY(-1px); }
+    .drawing-toolbar .db-btn.active { background: linear-gradient(135deg, #6366f1, #ec4899); border-color: transparent; box-shadow: 0 4px 12px rgba(236,72,153,0.4); }
+    .drawing-toolbar .db-btn-danger { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.45); }
+    .drawing-toolbar .db-btn-danger:hover { background: rgba(239,68,68,0.35); }
+    .drawing-toolbar .db-color-wrap { position: relative; width: 38px; height: 38px; cursor: pointer; }
+    .drawing-toolbar .db-color-wrap input[type=color] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+    .drawing-toolbar .db-color-swatch { display: block; width: 100%; height: 100%; border-radius: 10px; border: 2px solid rgba(255,255,255,0.4); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3); }
+    .drawing-toolbar .db-range-wrap { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 0.5rem; color: #fff; }
+    .drawing-toolbar .db-range-wrap input[type=range] { width: 80px; accent-color: #ec4899; }
+    .drawing-canvas-wrap { position: relative; flex: 1; background: #fdfdfd; min-height: 260px; }
+    .drawing-canvas-wrap canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    .drawing-empty-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; color: #b8b8c8; pointer-events: none; font-size: 0.95rem; }
+    .drawing-empty-hint i { font-size: 2.5rem; color: #c9cad8; }
+    .drawing-empty-hint.hidden { display: none; }
+    @media (max-width:768px) { .video-with-board { flex-direction: column; direction: rtl; } .video-with-board > .video-player-container { flex: 0 0 auto; order: 1; } .drawing-board { flex: 0 0 auto; order: 2; min-height: 360px; } .drawing-toolbar .db-btn { min-width: 42px; min-height: 42px; padding: 0.5rem; } .drawing-toolbar .db-range-wrap input[type=range] { width: 70px; } }
     @media (max-width:768px) { .navbar { padding: .75rem 1rem; } .brand-text h1 { font-size: 1.2rem; } .hero { padding: 2rem 1rem; } .hero h2 { font-size: 2rem; } .hero p { font-size: 1rem; } .container { padding: 1rem; } .videos-grid { grid-template-columns: 1fr; gap: 1rem; } .upload-zone { padding: 1.5rem; } .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; } .resume-info { justify-content: center; } .resume-actions { justify-content: center; } .modal-content { max-width: 100% !important; } .video-info { margin-top: -40px; min-height: 300px; padding: 1.5rem; } .video-title { font-size: 1.3rem; } .video-description { font-size: 0.95rem; line-height: 1.7; } .storage-bar-container { padding: 1rem; } .form-group textarea { min-height: 150px; } }
     .chat-btn { position: fixed; bottom: 2rem; left: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(99,102,241,.5); z-index: 999; transition: all .3s; display: flex; align-items: center; justify-content: center; }
     .chat-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 40px rgba(99,102,241,.7); }
@@ -1236,7 +1258,7 @@
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
+  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar"><button type="button" data-tool="pen" class="db-btn active" onclick="setDrawTool('pen')" title="قلم"><i class="fas fa-pen"></i></button><button type="button" data-tool="eraser" class="db-btn" onclick="setDrawTool('eraser')" title="ممحاة"><i class="fas fa-eraser"></i></button><label class="db-color-wrap" title="اللون"><input type="color" id="drawColorInput" value="#ff4d6d" onchange="setDrawColor(this.value)"><span class="db-color-swatch" id="drawColorSwatch" style="background:#ff4d6d"></span></label><label class="db-range-wrap" title="سُمك القلم"><i class="fas fa-circle" style="font-size:0.5rem"></i><input type="range" id="drawWidthInput" min="1" max="20" value="3" oninput="setDrawWidth(this.value)"><i class="fas fa-circle" style="font-size:1rem"></i></label><button type="button" class="db-btn db-btn-danger" onclick="clearDrawing()" title="مسح الكل"><i class="fas fa-trash"></i></button><button type="button" class="db-btn" onclick="toggleDrawingBoard()" title="إخفاء/إظهار" id="drawToggleBtn"><i class="fas fa-eye-slash"></i></button></div><div class="drawing-canvas-wrap" id="drawingCanvasWrap"><canvas id="drawingCanvas"></canvas><div class="drawing-empty-hint" id="drawingEmptyHint"><i class="fas fa-pen-fancy"></i><span>ارسم أو اكتب ملاحظاتك هنا</span></div></div></div><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-lock"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body"><input id="passwordInput" placeholder="اكتب كلمة المرور هنا..." type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)doLogin()"><button class="btn btn-primary" onclick="doLogin()" style="width:100%"><i class="fas fa-sign-in-alt"></i> دخول</button><button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button></div></div></div>
   <div class="modal" id="adminPasswordModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:400px"><div class="modal-header"><h3><i class="fas fa-users-cog"></i> صلاحية تحديد المشرفين</h3><button class="modal-close" onclick="closeAdminPasswordModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1rem;color:#aaa">هذه الصلاحية للمشرف الرئيسي فقط</p><input id="adminPasswordInput" placeholder="كلمة المرور الخاصة" type="password" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;margin-bottom:1rem;font-size:1.1rem;text-align:center" onkeypress="if('Enter'===event.key)verifyAdminPassword()"><button class="btn btn-primary" onclick="verifyAdminPassword()" style="width:100%"><i class="fas fa-check"></i> تحقق</button></div></div></div>
   <div class="modal" id="setAdminsModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-users"></i> تحديد عدد المشرفين</h3><button class="modal-close" onclick="closeSetAdminsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>عدد المشرفين المسموح به</label><input id="adminCountInput" type="number" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem" max="10" min="1" value="1"></div><button class="btn btn-success" onclick="saveAdminCount()" style="width:100%"><i class="fas fa-save"></i> حفظ</button></div></div></div>
@@ -1823,6 +1845,7 @@ function updateAdminUI() {
       
     }
     document.getElementById("videoModal").classList.add("active");
+    setTimeout(() => { try { initDrawingBoard(); } catch(e) { console.warn("drawing init failed", e); } }, 100);
     let quizContainer = document.getElementById("videoQuizContainer");
     if (exams.some(e => e.videoId === id)) {
       quizContainer.style.display = "block";
@@ -1831,6 +1854,101 @@ function updateAdminUI() {
       quizContainer.style.display = "none";
       quizContainer.innerHTML = "";
     }
+  }
+
+  let __drawCtx = null, __drawing = false, __drawLastX = 0, __drawLastY = 0;
+  let __drawTool = "pen", __drawColor = "#ff4d6d", __drawWidth = 3, __drawHasContent = false;
+  function initDrawingBoard() {
+    const canvas = document.getElementById("drawingCanvas");
+    const wrap = document.getElementById("drawingCanvasWrap");
+    if (!canvas || !wrap) return;
+    const sizeCanvas = () => {
+      const rect = wrap.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) return;
+      let prev = null;
+      if (canvas.width > 0 && canvas.height > 0) {
+        prev = document.createElement("canvas");
+        prev.width = canvas.width; prev.height = canvas.height;
+        prev.getContext("2d").drawImage(canvas, 0, 0);
+      }
+      canvas.width = Math.floor(rect.width);
+      canvas.height = Math.floor(rect.height);
+      __drawCtx = canvas.getContext("2d");
+      __drawCtx.lineCap = "round";
+      __drawCtx.lineJoin = "round";
+      __drawCtx.fillStyle = "#fdfdfd";
+      __drawCtx.fillRect(0, 0, canvas.width, canvas.height);
+      if (prev) __drawCtx.drawImage(prev, 0, 0, canvas.width, canvas.height);
+    };
+    sizeCanvas();
+    if (canvas._dbResizeObs) try { canvas._dbResizeObs.disconnect(); } catch(_){}
+    try { canvas._dbResizeObs = new ResizeObserver(sizeCanvas); canvas._dbResizeObs.observe(wrap); } catch(_){}
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const t = (e.touches && e.touches[0]) ? e.touches[0] : (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : e;
+      const sx = canvas.width / rect.width;
+      const sy = canvas.height / rect.height;
+      return { x: (t.clientX - rect.left) * sx, y: (t.clientY - rect.top) * sy };
+    };
+    const start = (e) => {
+      e.preventDefault();
+      __drawing = true;
+      const p = getPos(e);
+      __drawLastX = p.x; __drawLastY = p.y;
+      const hint = document.getElementById("drawingEmptyHint");
+      if (hint) hint.classList.add("hidden");
+      __drawHasContent = true;
+    };
+    const move = (e) => {
+      if (!__drawing || !__drawCtx) return;
+      e.preventDefault();
+      const p = getPos(e);
+      if (__drawTool === "eraser") {
+        __drawCtx.strokeStyle = "#fdfdfd";
+        __drawCtx.lineWidth = Math.max(__drawWidth * 4, 12);
+      } else {
+        __drawCtx.strokeStyle = __drawColor;
+        __drawCtx.lineWidth = __drawWidth;
+      }
+      __drawCtx.beginPath();
+      __drawCtx.moveTo(__drawLastX, __drawLastY);
+      __drawCtx.lineTo(p.x, p.y);
+      __drawCtx.stroke();
+      __drawLastX = p.x; __drawLastY = p.y;
+    };
+    const end = () => { __drawing = false; };
+    canvas.onmousedown = start; canvas.onmousemove = move;
+    canvas.onmouseup = end; canvas.onmouseleave = end;
+    canvas.ontouchstart = start; canvas.ontouchmove = move;
+    canvas.ontouchend = end; canvas.ontouchcancel = end;
+  }
+  function setDrawTool(t) {
+    __drawTool = t;
+    document.querySelectorAll(".drawing-toolbar .db-btn[data-tool]").forEach(b => {
+      b.classList.toggle("active", b.dataset.tool === t);
+    });
+  }
+  function setDrawColor(c) {
+    __drawColor = c;
+    const sw = document.getElementById("drawColorSwatch");
+    if (sw) sw.style.background = c;
+    setDrawTool("pen");
+  }
+  function setDrawWidth(w) { __drawWidth = parseInt(w) || 3; }
+  function clearDrawing() {
+    if (!__drawCtx) return;
+    __drawCtx.fillStyle = "#fdfdfd";
+    __drawCtx.fillRect(0, 0, __drawCtx.canvas.width, __drawCtx.canvas.height);
+    __drawHasContent = false;
+    const hint = document.getElementById("drawingEmptyHint");
+    if (hint) hint.classList.remove("hidden");
+  }
+  function toggleDrawingBoard() {
+    const board = document.getElementById("drawingBoard");
+    const btn = document.getElementById("drawToggleBtn");
+    if (!board) return;
+    board.classList.toggle("collapsed");
+    if (btn) btn.innerHTML = board.classList.contains("collapsed") ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
   }
 
   function closeModal() {
