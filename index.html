@@ -749,6 +749,97 @@
     .cosmos-news-card:hover .cosmos-read-more { color:#c4b5fd; }
 
     /* Contact admins pill — subtle pulse to draw attention */
+    .cosmos-pill-progress { background: linear-gradient(135deg, rgba(253,224,71,.15), rgba(245,158,11,.12)); border-color: rgba(253,224,71,.45); }
+    .cosmos-pill-progress .pill-icon { animation: trophyShine 2.6s infinite; }
+    @keyframes trophyShine { 0%,100%{ box-shadow: 0 4px 10px -4px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25); } 50%{ box-shadow: 0 0 18px rgba(253,224,71,.7), inset 0 1px 0 rgba(255,255,255,.4); } }
+
+    /* ===== Student Progress Modal — pro design ===== */
+    .progress-hero { position: relative; padding: 1.6rem 1.4rem; border-radius: 22px; background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(236,72,153,.14)); border: 1px solid rgba(167,139,250,.28); overflow: hidden; margin-bottom: 1.5rem; box-shadow: 0 18px 40px -22px rgba(99,102,241,.5), inset 0 1px 0 rgba(255,255,255,.05); }
+    .progress-hero::before { content:""; position:absolute; inset:-2px; background: radial-gradient(500px 200px at 15% 0%, rgba(167,139,250,.22), transparent 70%), radial-gradient(450px 180px at 90% 100%, rgba(236,72,153,.18), transparent 70%); pointer-events:none; }
+    .progress-hero-row { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; position: relative; }
+    .progress-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #ec4899); display:flex; align-items:center; justify-content:center; font-size: 1.9rem; color:#fff; box-shadow: 0 12px 28px -10px rgba(236,72,153,.55), inset 0 1px 0 rgba(255,255,255,.25); flex-shrink: 0; }
+    .progress-hero-info { flex: 1; min-width: 200px; }
+    .progress-hero-info h3 { margin: 0; font-size: 1.4rem; font-weight: 800; background: linear-gradient(120deg,#fff,#c4b5fd); -webkit-background-clip:text; -webkit-text-fill-color: transparent; }
+    .progress-hero-info p { margin: .25rem 0 0; color: #b8b3c9; font-size: .92rem; }
+    .progress-level-badge { display:inline-flex; align-items:center; gap:.4rem; padding: .35rem .85rem; border-radius: 999px; background: linear-gradient(135deg, rgba(253,224,71,.2), rgba(245,158,11,.18)); border: 1px solid rgba(253,224,71,.45); color:#fde047; font-size: .82rem; font-weight: 700; margin-top: .5rem; box-shadow: 0 6px 16px -8px rgba(245,158,11,.4); }
+    .progress-level-badge i { color: #fde047; }
+    .progress-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .85rem; margin-bottom: 1.5rem; }
+    .progress-stat-card { padding: 1.1rem .9rem; background: linear-gradient(180deg, rgba(26,16,37,.95), rgba(15,10,26,.95)); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; text-align: center; position: relative; overflow: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), border-color .35s, box-shadow .35s; box-shadow: 0 10px 22px -16px rgba(0,0,0,.6); }
+    .progress-stat-card:hover { transform: translateY(-4px); border-color: rgba(167,139,250,.35); box-shadow: 0 18px 32px -18px rgba(99,102,241,.4); }
+    .progress-stat-icon { width: 44px; height: 44px; border-radius: 12px; display:inline-flex; align-items:center; justify-content:center; font-size: 1.2rem; margin: 0 auto .55rem; background: linear-gradient(135deg, var(--c1, #6366f1), var(--c2, #8b5cf6)); color: #fff; box-shadow: 0 8px 18px -8px rgba(99,102,241,.5), inset 0 1px 0 rgba(255,255,255,.2); }
+    .progress-stat-num { font-size: 1.6rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: .25rem; font-feature-settings: "tnum"; }
+    .progress-stat-label { font-size: .78rem; color: #b8b3c9; font-weight: 600; }
+    @media (max-width: 768px) { .progress-stats-grid { grid-template-columns: repeat(2, 1fr); gap: .7rem; } .progress-stat-num { font-size: 1.35rem; } .progress-avatar { width: 60px; height: 60px; font-size: 1.5rem; } .progress-hero-info h3 { font-size: 1.15rem; } }
+
+    .progress-overall { padding: 1.1rem 1.2rem; background: linear-gradient(180deg, rgba(26,16,37,.95), rgba(15,10,26,.95)); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; margin-bottom: 1.5rem; }
+    .progress-overall-label { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .65rem; flex-wrap: wrap; }
+    .progress-overall-label-text { font-size: .95rem; font-weight: 700; color: #fff; display:flex; align-items:center; gap:.5rem; }
+    .progress-overall-label-text i { color: #a78bfa; }
+    .progress-overall-pct { font-size: 1.1rem; font-weight: 900; color: #fde047; font-feature-settings: "tnum"; }
+    .progress-overall-bar { height: 12px; background: rgba(255,255,255,.06); border-radius: 999px; overflow: hidden; position: relative; box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
+    .progress-overall-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899, #fde047); border-radius: 999px; transition: width .9s cubic-bezier(.2,.8,.2,1); position: relative; box-shadow: 0 0 14px rgba(236,72,153,.5); }
+    .progress-overall-fill::after { content:""; position:absolute; inset:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: shimmer 2s infinite; }
+
+    .progress-tabs { display: flex; gap: .5rem; padding: .35rem; background: rgba(255,255,255,.04); border-radius: 14px; border: 1px solid rgba(255,255,255,.06); margin-bottom: 1.25rem; }
+    .progress-tab { flex: 1; padding: .7rem .9rem; background: transparent; border: none; color: #b8b3c9; font-family: 'Cairo', sans-serif; font-weight: 700; font-size: .9rem; border-radius: 11px; cursor: pointer; transition: all .25s; display: inline-flex; align-items:center; justify-content:center; gap:.5rem; }
+    .progress-tab.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; box-shadow: 0 8px 18px -8px rgba(99,102,241,.5), inset 0 1px 0 rgba(255,255,255,.2); }
+    .progress-tab:not(.active):hover { color: #fff; background: rgba(255,255,255,.04); }
+
+    .progress-section-title { font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0 0 .85rem; display: flex; align-items: center; gap: .55rem; }
+    .progress-section-title i { color: #a78bfa; }
+    .progress-list { display: flex; flex-direction: column; gap: .7rem; }
+    .progress-item { display: flex; align-items: center; gap: .9rem; padding: .9rem 1rem; background: linear-gradient(180deg, rgba(26,16,37,.95), rgba(15,10,26,.95)); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; transition: transform .3s, border-color .3s, box-shadow .3s; }
+    .progress-item:hover { transform: translateX(-4px); border-color: rgba(167,139,250,.35); box-shadow: 0 12px 24px -16px rgba(99,102,241,.4); }
+    .progress-item-thumb { width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, #1a1a3e, #0f0f23); display: flex; align-items: center; justify-content: center; color: #6366f1; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; position: relative; }
+    .progress-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .progress-item-body { flex: 1; min-width: 0; }
+    .progress-item-title { font-size: .98rem; font-weight: 700; color: #fff; margin: 0 0 .25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .progress-item-meta { font-size: .78rem; color: #9690a8; display: flex; gap: .85rem; flex-wrap: wrap; align-items: center; }
+    .progress-item-meta i { margin-left: .25rem; }
+    .progress-item-badge { padding: .35rem .75rem; border-radius: 999px; font-size: .78rem; font-weight: 800; font-feature-settings: "tnum"; flex-shrink: 0; }
+    .progress-item-badge.high { background: linear-gradient(135deg, rgba(16,185,129,.2), rgba(5,150,105,.18)); color: #10b981; border: 1px solid rgba(16,185,129,.4); }
+    .progress-item-badge.mid { background: linear-gradient(135deg, rgba(251,191,36,.2), rgba(245,158,11,.18)); color: #fbbf24; border: 1px solid rgba(251,191,36,.4); }
+    .progress-item-badge.low { background: linear-gradient(135deg, rgba(239,68,68,.2), rgba(220,38,38,.18)); color: #ef4444; border: 1px solid rgba(239,68,68,.4); }
+    .progress-item-badge.done { background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(139,92,246,.18)); color: #c4b5fd; border: 1px solid rgba(167,139,250,.4); }
+    .progress-empty { text-align: center; padding: 2.5rem 1rem; color: #888; }
+    .progress-empty i { font-size: 2.5rem; color: #6366f1; opacity: .55; margin-bottom: .85rem; display: block; }
+    .progress-empty h4 { color: #fff; font-size: 1.05rem; margin: 0 0 .35rem; }
+    .progress-empty p { margin: 0; font-size: .88rem; }
+    .progress-login-warn { padding: 1.5rem 1.25rem; background: linear-gradient(135deg, rgba(239,68,68,.12), rgba(245,158,11,.08)); border: 1px solid rgba(239,68,68,.3); border-radius: 16px; text-align: center; color: #fff; }
+    .progress-login-warn i { font-size: 2rem; color: #fbbf24; margin-bottom: .75rem; display: block; }
+    @media (max-width: 600px) { .progress-item { padding: .75rem .8rem; gap: .65rem; } .progress-item-thumb { width: 48px; height: 48px; } .progress-item-title { font-size: .9rem; } .progress-item-meta { font-size: .72rem; gap: .5rem; } .progress-tab { font-size: .82rem; padding: .6rem .55rem; } }
+
+    /* Admin all-students view */
+    .progress-admin-toggle { display: flex; gap: .4rem; padding: .35rem; background: linear-gradient(135deg, rgba(253,224,71,.08), rgba(245,158,11,.06)); border-radius: 14px; border: 1px solid rgba(253,224,71,.2); margin-bottom: 1.1rem; }
+    .progress-admin-toggle .progress-tab.active { background: linear-gradient(135deg, #fde047, #f59e0b); color: #1a1025; }
+    .progress-back-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .55rem 1rem; margin-bottom: 1rem; background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.35); color: #c7d2fe; border-radius: 999px; font-family: 'Cairo', sans-serif; font-weight: 700; font-size: .85rem; cursor: pointer; transition: all .25s; }
+    .progress-back-btn:hover { background: rgba(99,102,241,.22); transform: translateX(3px); }
+    .progress-search-row { margin-bottom: 1rem; }
+    .progress-search-input { position: relative; }
+    .progress-search-input i { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: #888; font-size: .9rem; }
+    .progress-search-input input { width: 100%; padding: .8rem 2.6rem .8rem 1rem; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #fff; font-family: 'Cairo', sans-serif; font-size: .9rem; outline: none; transition: border-color .25s; }
+    .progress-search-input input:focus { border-color: rgba(167,139,250,.5); background: rgba(255,255,255,.06); }
+    .progress-student-row { display: grid; grid-template-columns: 36px 50px 1fr auto; gap: .8rem; align-items: center; padding: .9rem 1rem; background: linear-gradient(180deg, rgba(26,16,37,.95), rgba(15,10,26,.9)); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; cursor: pointer; transition: all .25s; }
+    .progress-student-row:hover { border-color: rgba(167,139,250,.4); transform: translateX(-3px); box-shadow: 0 12px 24px -16px rgba(99,102,241,.5); }
+    .progress-rank { display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; }
+    .progress-avatar.small { width: 44px; height: 44px; font-size: 1.05rem; border-radius: 12px; }
+    .progress-student-info h4 { margin: 0 0 .3rem; color: #fff; font-size: .98rem; font-weight: 700; }
+    .progress-student-meta { display: flex; flex-wrap: wrap; gap: .8rem; font-size: .75rem; color: #9690a8; margin-bottom: .5rem; }
+    .progress-student-meta span { display: inline-flex; align-items: center; gap: .3rem; }
+    .progress-student-meta i { color: #a78bfa; font-size: .7rem; }
+    .progress-mini-bar { height: 5px; background: rgba(255,255,255,.06); border-radius: 999px; overflow: hidden; }
+    .progress-mini-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #a78bfa, #ec4899); border-radius: 999px; transition: width .6s ease; }
+    .progress-student-stats { display: flex; align-items: center; gap: .6rem; }
+    .progress-student-stats .psm { display: flex; flex-direction: column; align-items: center; min-width: 42px; }
+    .progress-student-stats .psm b { color: #fff; font-size: .92rem; font-weight: 800; }
+    .progress-student-stats .psm span { font-size: .68rem; color: #888; margin-top: .1rem; }
+    @media (max-width: 700px) {
+      .progress-student-row { grid-template-columns: 28px 40px 1fr; gap: .55rem; padding: .75rem .8rem; }
+      .progress-student-stats { grid-column: 1 / -1; justify-content: space-between; padding-top: .6rem; border-top: 1px dashed rgba(255,255,255,.08); margin-top: .3rem; }
+      .progress-student-meta { font-size: .7rem; gap: .55rem; }
+      .progress-avatar.small { width: 40px; height: 40px; font-size: .95rem; }
+    }
+
     .cosmos-pill-contact { background: linear-gradient(135deg, rgba(34,197,94,.15), rgba(16,185,129,.12)); border-color: rgba(34,197,94,.45); }
     .cosmos-pill-contact .pill-icon { animation: contactPulse 2.4s infinite; }
     @keyframes contactPulse { 0%,100% { box-shadow: 0 4px 10px -4px rgba(34,197,94,.5), inset 0 1px 0 rgba(255,255,255,.25); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,.18), 0 4px 12px -4px rgba(34,197,94,.7); } }
@@ -1050,6 +1141,7 @@
           <button type="button" class="cosmos-pill" style="--pill-c1:#ec4899;--pill-c2:#a855f7" onclick="openCosmosCategory('news')"><span class="pill-icon"><i class="fas fa-newspaper"></i></span><span>أخبار الكون</span></button>
           <button type="button" class="cosmos-pill" style="--pill-c1:#06b6d4;--pill-c2:#3b82f6" onclick="openCosmosCategory('telescopes')"><span class="pill-icon"><i class="fas fa-search"></i></span><span>التلسكوبات</span></button>
           <button type="button" class="cosmos-pill" style="--pill-c1:#f59e0b;--pill-c2:#ef4444" onclick="openCosmosCategory('phenomena')"><span class="pill-icon"><i class="fas fa-bolt"></i></span><span>ظواهر فلكية</span></button>
+          <button type="button" class="cosmos-pill cosmos-pill-progress" style="--pill-c1:#fde047;--pill-c2:#f59e0b" onclick="openStudentProgress()"><span class="pill-icon"><i class="fas fa-trophy"></i></span><span>تقدم الطالب</span></button>
           <button type="button" class="cosmos-pill cosmos-pill-contact" style="--pill-c1:#22c55e;--pill-c2:#10b981" onclick="openPrivateAdminChat()"><span class="pill-icon"><i class="fas fa-user-shield"></i></span><span>تواصل خاص مع المشرفين</span><span id="privateAdminChatBadge" class="cosmos-pill-badge" style="display:none">0</span></button>
         </div>
       </div>
@@ -2284,6 +2376,444 @@ async function enrollInCourse(courseId) {
   </div>
 </div>
 
+  <!-- ===== Student Progress modal ===== -->
+  <div class="modal" id="studentProgressModal">
+    <div class="modal-content" style="max-width: 980px;">
+      <div class="modal-header">
+        <div class="modal-header-left"><h3 id="studentProgressTitle"><i class="fas fa-trophy" style="color:#fde047"></i> تقدم الطالب</h3></div>
+        <button class="modal-close" onclick="closeStudentProgress()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="studentProgressBody">
+        <div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل البيانات...</h4></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let studentProgressTab = 'videos';
+    let studentProgressView = 'me';
+    let __allStudentsCache = null;
+    let __studentDetailFor = null;
+
+    async function openStudentProgress() {
+      document.getElementById('studentProgressModal').classList.add('active');
+      if (typeof SoundEffects !== 'undefined' && SoundEffects.click) { try { SoundEffects.click(); } catch(_){} }
+
+      studentProgressView = (typeof isAdmin !== 'undefined' && isAdmin) ? 'all' : 'me';
+      __studentDetailFor = null;
+      studentProgressTab = 'videos';
+
+      if (!currentUser || !currentUserPhone) {
+        document.getElementById('studentProgressBody').innerHTML = `
+          <div class="progress-login-warn">
+            <i class="fas fa-user-lock"></i>
+            <h4 style="margin:0 0 .5rem;font-size:1.1rem;">سجّل الدخول لعرض التقدم</h4>
+            <p style="margin:0;color:#cfc9dd;font-size:.9rem;line-height:1.7">عشان تقدر تتابع رحلتك ومستوى تقدمك في الفيديوهات والامتحانات، لازم تسجّل دخولك أولاً.</p>
+          </div>`;
+        return;
+      }
+
+      document.getElementById('studentProgressBody').innerHTML =
+        `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل البيانات...</h4></div>`;
+
+      try {
+        if (studentProgressView === 'all') {
+          const data = await loadAllStudentsData();
+          renderAllStudents(data);
+        } else {
+          const data = await loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId });
+          renderStudentProgress(data);
+        }
+      } catch (e) {
+        console.error('Error loading progress:', e);
+        document.getElementById('studentProgressBody').innerHTML =
+          `<div class="progress-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i><h4>تعذر تحميل البيانات</h4><p>حاول مرة أخرى بعد قليل.</p></div>`;
+      }
+    }
+
+    function closeStudentProgress() {
+      document.getElementById('studentProgressModal').classList.remove('active');
+      __studentDetailFor = null;
+    }
+
+    function setProgressView(v) {
+      studentProgressView = v;
+      __studentDetailFor = null;
+      studentProgressTab = 'videos';
+      document.getElementById('studentProgressBody').innerHTML =
+        `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل البيانات...</h4></div>`;
+      if (v === 'all') {
+        loadAllStudentsData().then(renderAllStudents).catch(e => { console.error(e); });
+      } else {
+        loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
+          .then(renderStudentProgress).catch(e => console.error(e));
+      }
+    }
+
+    async function loadStudentProgressData(student) {
+      const watched = [];
+      const watchedIds = new Set();
+
+      if (student.userId) {
+        try {
+          const snap = await db.collection('watch_history').where('userId', '==', student.userId).get();
+          snap.forEach(d => {
+            const x = d.data();
+            if (!watchedIds.has(x.videoId)) {
+              watchedIds.add(x.videoId);
+              watched.push({ videoId: x.videoId, watchedAt: x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : new Date() });
+            }
+          });
+        } catch (e) { console.warn('watch_history read failed', e); }
+      }
+
+      let myExamResults = [];
+      try {
+        const norm = s => String(s || '').replace(/[^\d+]/g, '');
+        const studentPhone = norm(student.phone);
+        myExamResults = (examResults || []).filter(r => {
+          const sameName = (r.studentName || '').trim() === (student.name || '').trim();
+          const samePhone = norm(r.studentPhone) === studentPhone && studentPhone.length > 0;
+          return sameName || samePhone;
+        }).map(r => ({
+          ...r,
+          submittedDate: r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : new Date(),
+        }));
+      } catch (e) { console.warn('exam results filter failed', e); }
+
+      let points = 0;
+      if (student.userId) {
+        try {
+          const userDoc = await db.collection('user_progress').doc(student.userId).get();
+          if (userDoc.exists) points = userDoc.data().points || 0;
+        } catch (e) { /* silent */ }
+      }
+
+      const totalVideos = (videos || []).filter(v => !v.private).length;
+      const watchedCount = watched.length;
+      const examCount = myExamResults.length;
+      const avgScore = examCount ? Math.round(myExamResults.reduce((s, r) => s + (r.percentage || 0), 0) / examCount) : 0;
+      const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
+
+      return { student, watched, myExamResults, points, totalVideos, watchedCount, examCount, avgScore, overallPct };
+    }
+
+    async function loadAllStudentsData() {
+      const studentsMap = new Map();
+
+      try {
+        const usersSnap = await db.collection('users').get();
+        usersSnap.forEach(d => {
+          const u = d.data();
+          const name = (u.name || u.displayName || '').trim();
+          const phone = (u.phone || '').trim();
+          const key = (phone || name || d.id).toLowerCase();
+          if (!studentsMap.has(key)) {
+            studentsMap.set(key, {
+              userId: d.id, name: name || 'بدون اسم', phone: phone || '',
+              watchedIds: new Set(), examResults: [], points: u.points || 0,
+              lastActivity: u.lastSeen && u.lastSeen.toDate ? u.lastSeen.toDate() : null,
+            });
+          }
+        });
+      } catch (e) { console.warn('users read failed', e); }
+
+      try {
+        const wh = await db.collection('watch_history').get();
+        wh.forEach(d => {
+          const x = d.data();
+          const uid = x.userId;
+          if (!uid) return;
+          let entry = null;
+          for (const v of studentsMap.values()) { if (v.userId === uid) { entry = v; break; } }
+          if (!entry) {
+            const k = uid.toLowerCase();
+            entry = { userId: uid, name: 'مستخدم', phone: '', watchedIds: new Set(), examResults: [], points: 0, lastActivity: null };
+            studentsMap.set(k, entry);
+          }
+          entry.watchedIds.add(x.videoId);
+          const wDate = x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : null;
+          if (wDate && (!entry.lastActivity || wDate > entry.lastActivity)) entry.lastActivity = wDate;
+        });
+      } catch (e) { console.warn('watch_history all read failed', e); }
+
+      const norm = s => String(s || '').replace(/[^\d+]/g, '');
+      (examResults || []).forEach(r => {
+        const phoneN = norm(r.studentPhone);
+        const nameN = (r.studentName || '').trim();
+        let entry = null;
+        for (const v of studentsMap.values()) {
+          if ((phoneN && norm(v.phone) === phoneN) || (nameN && v.name === nameN)) { entry = v; break; }
+        }
+        if (!entry) {
+          const k = (phoneN || nameN || Math.random().toString(36)).toLowerCase();
+          entry = { userId: null, name: nameN || 'بدون اسم', phone: r.studentPhone || '', watchedIds: new Set(), examResults: [], points: 0, lastActivity: null };
+          studentsMap.set(k, entry);
+        }
+        const sDate = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : null;
+        entry.examResults.push({ ...r, submittedDate: sDate || new Date() });
+        if (sDate && (!entry.lastActivity || sDate > entry.lastActivity)) entry.lastActivity = sDate;
+      });
+
+      const totalVideos = (videos || []).filter(v => !v.private).length;
+      const list = Array.from(studentsMap.values()).map(s => {
+        const watchedCount = s.watchedIds.size;
+        const examCount = s.examResults.length;
+        const avgScore = examCount ? Math.round(s.examResults.reduce((a, r) => a + (r.percentage || 0), 0) / examCount) : 0;
+        const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
+        return { ...s, watchedCount, examCount, avgScore, overallPct };
+      }).filter(s => s.watchedCount > 0 || s.examCount > 0 || s.points > 0);
+
+      list.sort((a, b) => (b.overallPct - a.overallPct) || (b.avgScore - a.avgScore));
+      __allStudentsCache = { list, totalVideos };
+      return __allStudentsCache;
+    }
+
+    function getStudentLevel(pct, points) {
+      if (pct >= 80 || points >= 200) return { name: 'مستكشف خبير', icon: 'fa-rocket' };
+      if (pct >= 50 || points >= 100) return { name: 'مستكشف نشط', icon: 'fa-meteor' };
+      if (pct >= 20 || points >= 30) return { name: 'مستكشف صاعد', icon: 'fa-star' };
+      return { name: 'مستكشف مبتدئ', icon: 'fa-seedling' };
+    }
+
+    function adminToggleHtml() {
+      if (typeof isAdmin === 'undefined' || !isAdmin) return '';
+      return `
+        <div class="progress-admin-toggle">
+          <button class="progress-tab ${studentProgressView==='all'?'active':''}" onclick="setProgressView('all')"><i class="fas fa-users"></i> كل الطلاب</button>
+          <button class="progress-tab ${studentProgressView==='me'?'active':''}" onclick="setProgressView('me')"><i class="fas fa-user"></i> تقدمي</button>
+        </div>`;
+    }
+
+    function renderStudentProgress(data) {
+      const { student, watched, myExamResults, points, totalVideos, watchedCount, examCount, avgScore, overallPct } = data;
+      const level = getStudentLevel(overallPct, points);
+      const displayName = student.name || currentUser || 'الطالب';
+      const initial = (displayName || '?').trim().charAt(0).toUpperCase();
+      document.getElementById('studentProgressTitle').innerHTML =
+        `<i class="fas fa-trophy" style="color:#fde047"></i> ${__studentDetailFor ? 'تقدم: ' + escapeHtml(displayName) : 'تقدم الطالب'}`;
+
+      const backBtn = __studentDetailFor
+        ? `<button class="progress-back-btn" onclick="setProgressView('all')"><i class="fas fa-arrow-right"></i> رجوع لكل الطلاب</button>`
+        : '';
+
+      const hero = `
+        <div class="progress-hero">
+          <div class="progress-hero-row">
+            <div class="progress-avatar">${escapeHtml(initial)}</div>
+            <div class="progress-hero-info">
+              <h3>${escapeHtml(displayName)}</h3>
+              <p>${student.phone ? escapeHtml(student.phone) : 'رحلتك في عالم الفلك والفضاء'}</p>
+              <span class="progress-level-badge"><i class="fas ${level.icon}"></i> ${level.name}</span>
+            </div>
+          </div>
+        </div>`;
+
+      const stats = `
+        <div class="progress-stats-grid">
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#6366f1;--c2:#8b5cf6"><i class="fas fa-play-circle"></i></div>
+            <div class="progress-stat-num">${watchedCount}</div>
+            <div class="progress-stat-label">فيديو مكتمل</div>
+          </div>
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#10b981;--c2:#06b6d4"><i class="fas fa-clipboard-check"></i></div>
+            <div class="progress-stat-num">${examCount}</div>
+            <div class="progress-stat-label">امتحان</div>
+          </div>
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#fbbf24;--c2:#f59e0b"><i class="fas fa-percentage"></i></div>
+            <div class="progress-stat-num">${avgScore}%</div>
+            <div class="progress-stat-label">متوسط الدرجات</div>
+          </div>
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#ec4899;--c2:#a855f7"><i class="fas fa-gem"></i></div>
+            <div class="progress-stat-num">${points}</div>
+            <div class="progress-stat-label">نقطة</div>
+          </div>
+        </div>`;
+
+      const overall = `
+        <div class="progress-overall">
+          <div class="progress-overall-label">
+            <span class="progress-overall-label-text"><i class="fas fa-chart-line"></i> نسبة إكمال المكتبة</span>
+            <span class="progress-overall-pct">${overallPct}%</span>
+          </div>
+          <div class="progress-overall-bar"><div class="progress-overall-fill" style="width:${overallPct}%"></div></div>
+          <div style="margin-top:.55rem;font-size:.8rem;color:#9690a8">${watchedCount} من أصل ${totalVideos} فيديو</div>
+        </div>`;
+
+      const tabs = `
+        <div class="progress-tabs">
+          <button class="progress-tab ${studentProgressTab === 'videos' ? 'active' : ''}" onclick="switchProgressTab('videos')"><i class="fas fa-video"></i> الفيديوهات</button>
+          <button class="progress-tab ${studentProgressTab === 'exams' ? 'active' : ''}" onclick="switchProgressTab('exams')"><i class="fas fa-clipboard-list"></i> الامتحانات</button>
+        </div>`;
+
+      let listHtml = '';
+      if (studentProgressTab === 'videos') {
+        if (!watched.length) {
+          listHtml = `<div class="progress-empty"><i class="fas fa-video"></i><h4>لم يشاهد أي فيديو بعد</h4><p>بعد بدء المشاهدة، الفيديوهات هتظهر هنا.</p></div>`;
+        } else {
+          watched.sort((a, b) => b.watchedAt - a.watchedAt);
+          listHtml = `<div class="progress-list">` + watched.map(w => {
+            const v = (videos || []).find(x => x.id === w.videoId);
+            if (!v) return '';
+            const thumb = v.thumbnail ? `<img src="${escapeHtml(v.thumbnail)}" alt="">` : `<i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'fa-film'}"></i>`;
+            const date = w.watchedAt.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+            const isMe = !__studentDetailFor;
+            return `
+              <div class="progress-item" ${isMe ? `onclick="closeStudentProgress(); setTimeout(()=>playVideo('${v.id}'),250);" style="cursor:pointer"` : ''}>
+                <div class="progress-item-thumb">${thumb}</div>
+                <div class="progress-item-body">
+                  <h4 class="progress-item-title">${escapeHtml(v.title || 'فيديو')}</h4>
+                  <div class="progress-item-meta"><span><i class="fas fa-calendar"></i>${date}</span><span><i class="fas fa-check-circle" style="color:#10b981"></i>تم الإكمال</span></div>
+                </div>
+                <span class="progress-item-badge done"><i class="fas fa-check"></i></span>
+              </div>`;
+          }).join('') + `</div>`;
+        }
+      } else {
+        if (!myExamResults.length) {
+          listHtml = `<div class="progress-empty"><i class="fas fa-clipboard-list"></i><h4>لا توجد امتحانات بعد</h4><p>بعد إكمال أول امتحان، النتائج هتظهر هنا.</p></div>`;
+        } else {
+          myExamResults.sort((a, b) => b.submittedDate - a.submittedDate);
+          listHtml = `<div class="progress-list">` + myExamResults.map(r => {
+            const v = (videos || []).find(x => x.id === r.videoId);
+            const title = v ? v.title : 'امتحان';
+            const pct = r.percentage || 0;
+            const cls = pct >= 75 ? 'high' : pct >= 50 ? 'mid' : 'low';
+            const date = r.submittedDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+            return `
+              <div class="progress-item">
+                <div class="progress-item-thumb" style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(99,102,241,.15));color:#10b981"><i class="fas fa-clipboard-check"></i></div>
+                <div class="progress-item-body">
+                  <h4 class="progress-item-title">${escapeHtml(title)}</h4>
+                  <div class="progress-item-meta"><span><i class="fas fa-calendar"></i>${date}</span><span><i class="fas fa-check"></i>${r.score || 0}/${r.totalQuestions || 0}</span></div>
+                </div>
+                <span class="progress-item-badge ${cls}">${pct}%</span>
+              </div>`;
+          }).join('') + `</div>`;
+        }
+      }
+
+      document.getElementById('studentProgressBody').innerHTML =
+        adminToggleHtml() + backBtn + hero + stats + overall + tabs + listHtml;
+    }
+
+    function renderAllStudents(data) {
+      const { list, totalVideos } = data;
+      document.getElementById('studentProgressTitle').innerHTML =
+        `<i class="fas fa-users" style="color:#fde047"></i> تقدم كل الطلاب`;
+
+      const totalStudents = list.length;
+      const activeStudents = list.filter(s => s.watchedCount > 0).length;
+      const totalWatchEvents = list.reduce((a, s) => a + s.watchedCount, 0);
+      const totalExams = list.reduce((a, s) => a + s.examCount, 0);
+
+      const summary = `
+        <div class="progress-stats-grid">
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#6366f1;--c2:#8b5cf6"><i class="fas fa-users"></i></div>
+            <div class="progress-stat-num">${totalStudents}</div>
+            <div class="progress-stat-label">إجمالي الطلاب</div>
+          </div>
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#10b981;--c2:#06b6d4"><i class="fas fa-user-check"></i></div>
+            <div class="progress-stat-num">${activeStudents}</div>
+            <div class="progress-stat-label">طلاب نشطون</div>
+          </div>
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#fbbf24;--c2:#f59e0b"><i class="fas fa-play-circle"></i></div>
+            <div class="progress-stat-num">${totalWatchEvents}</div>
+            <div class="progress-stat-label">فيديوهات تمت مشاهدتها</div>
+          </div>
+          <div class="progress-stat-card">
+            <div class="progress-stat-icon" style="--c1:#ec4899;--c2:#a855f7"><i class="fas fa-clipboard-check"></i></div>
+            <div class="progress-stat-num">${totalExams}</div>
+            <div class="progress-stat-label">إجمالي الامتحانات</div>
+          </div>
+        </div>`;
+
+      const search = `
+        <div class="progress-search-row">
+          <div class="progress-search-input"><i class="fas fa-search"></i><input type="text" id="progressSearchInput" placeholder="ابحث باسم الطالب أو رقم الهاتف..." oninput="filterStudentsList()"></div>
+        </div>`;
+
+      let listHtml = '';
+      if (!list.length) {
+        listHtml = `<div class="progress-empty"><i class="fas fa-users-slash"></i><h4>لا يوجد نشاط بعد</h4><p>الطلاب لم يبدأوا المشاهدة أو الامتحانات بعد.</p></div>`;
+      } else {
+        listHtml = `<div class="progress-list" id="allStudentsList">` + list.map((s, idx) => {
+          const lvl = getStudentLevel(s.overallPct, s.points);
+          const initial = (s.name || '?').trim().charAt(0).toUpperCase();
+          const lastDate = s.lastActivity ? s.lastActivity.toLocaleDateString('ar-EG', { year:'numeric', month:'short', day:'numeric' }) : '—';
+          const cls = s.overallPct >= 75 ? 'high' : s.overallPct >= 40 ? 'mid' : 'low';
+          const rankIcon = idx === 0 ? '<i class="fas fa-crown" style="color:#fde047"></i>' : idx === 1 ? '<i class="fas fa-medal" style="color:#cbd5e1"></i>' : idx === 2 ? '<i class="fas fa-medal" style="color:#fb923c"></i>' : `<span style="color:#9690a8;font-size:.85rem">#${idx+1}</span>`;
+          return `
+            <div class="progress-student-row" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')" data-search="${escapeHtml((s.name + ' ' + s.phone).toLowerCase())}">
+              <div class="progress-rank">${rankIcon}</div>
+              <div class="progress-avatar small">${escapeHtml(initial)}</div>
+              <div class="progress-student-info">
+                <h4>${escapeHtml(s.name)}</h4>
+                <div class="progress-student-meta">
+                  <span><i class="fas fa-phone"></i> ${escapeHtml(s.phone || '—')}</span>
+                  <span><i class="fas ${lvl.icon}"></i> ${lvl.name}</span>
+                  <span><i class="fas fa-clock"></i> آخر نشاط: ${lastDate}</span>
+                </div>
+                <div class="progress-mini-bar"><div class="progress-mini-fill" style="width:${s.overallPct}%"></div></div>
+              </div>
+              <div class="progress-student-stats">
+                <div class="psm"><b>${s.watchedCount}</b><span>فيديو</span></div>
+                <div class="psm"><b>${s.examCount}</b><span>امتحان</span></div>
+                <div class="psm"><b>${s.avgScore}%</b><span>متوسط</span></div>
+                <span class="progress-item-badge ${cls}">${s.overallPct}%</span>
+              </div>
+            </div>`;
+        }).join('') + `</div>`;
+      }
+
+      document.getElementById('studentProgressBody').innerHTML =
+        adminToggleHtml() + summary + search + listHtml;
+    }
+
+    function filterStudentsList() {
+      const q = (document.getElementById('progressSearchInput').value || '').trim().toLowerCase();
+      document.querySelectorAll('#allStudentsList .progress-student-row').forEach(row => {
+        const txt = row.getAttribute('data-search') || '';
+        row.style.display = !q || txt.includes(q) ? '' : 'none';
+      });
+    }
+
+    async function openStudentDetail(uid, name, phone) {
+      uid = decodeURIComponent(uid || '');
+      name = decodeURIComponent(name || '');
+      phone = decodeURIComponent(phone || '');
+      __studentDetailFor = { userId: uid, name, phone };
+      studentProgressTab = 'videos';
+      document.getElementById('studentProgressBody').innerHTML =
+        `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل بيانات الطالب...</h4></div>`;
+      try {
+        const data = await loadStudentProgressData({ userId: uid, name, phone });
+        renderStudentProgress(data);
+      } catch (e) {
+        console.error(e);
+        document.getElementById('studentProgressBody').innerHTML =
+          `<div class="progress-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i><h4>تعذر تحميل البيانات</h4></div>`;
+      }
+    }
+
+    function switchProgressTab(tab) {
+      studentProgressTab = tab;
+      if (__studentDetailFor) {
+        loadStudentProgressData(__studentDetailFor).then(renderStudentProgress).catch(e => console.error(e));
+      } else if (currentUser && currentUserPhone) {
+        loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
+          .then(renderStudentProgress).catch(e => console.error(e));
+      }
+    }
+  </script>
+
+  
 <!-- ===== Private Admin Chat modal (each user has own private thread with admins) ===== -->
 <div class="modal" id="privateAdminChatModal">
   <div class="modal-content pac-modal-content">
