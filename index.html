@@ -1201,7 +1201,6 @@
     <!-- ===== Cosmos Explorer carousel ===== -->
     <section class="cosmos-carousel-section" id="cosmosCarouselSection">
       <div class="cosmos-carousel-header">
-        <h3><i class="fas fa-meteor"></i> استكشف الكون — مكتبة معلومات أسطورية</h3>
         <p>اختر قسم وابدأ رحلتك بين النجوم والكواكب وأخبار الفضاء الحقيقية</p>
       </div>
       <div class="cosmos-carousel-wrapper">
@@ -3989,8 +3988,7 @@ function switchProgressTab(tab) {
 
   window.scrollCosmosCarousel = function(dir){
     const el = document.getElementById('cosmosCarousel'); if(!el) return;
-    const isRTL = document.documentElement.dir === 'rtl' || getComputedStyle(el).direction === 'rtl';
-    const amount = 320 * (isRTL ? -dir : dir);
+    const amount = 320 * dir;
     el.scrollBy({left: amount, behavior: 'smooth'});
   };
 
