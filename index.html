@@ -1539,7 +1539,15 @@ async function isAdminUser(userId) {
 
   // ========== Admin & UI ==========
 // ========== Admin & UI ==========
-function updateAdminUI() {
+async function updateAdminUI() {
+    // ✅ أول حاجة: لو في مستخدم جوجل مسجل، أجب token جديد عشان نعرف صلاحياته
+    if (googleUser && googleUser.getIdTokenResult) {
+        try {
+            const tokenResult = await googleUser.getIdTokenResult();
+            window.isAdminClaim = tokenResult.claims.admin === true;
+        } catch(e) { console.warn("token error", e); }
+    }
+
     const adminOnlyItems = document.querySelectorAll('.admin-only');
     const userOnlyItems = document.querySelectorAll('.user-only');
     const localOnlyItem = document.getElementById('localLogoutMenuItem');
@@ -1554,6 +1562,10 @@ function updateAdminUI() {
     const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
     const isLocalOnly = (currentUser && currentUserPhone) && !googleUser;
     const isGoogleUser = !!googleUser;
+
+    // ✅ صلاحية المشرف (الأولوية لـ isAdmin اللي جاية من Realtime أو من الـ claim)
+    if (window.isAdminClaim === true) isAdmin = true;
+    if (localStorage.getItem('falak_admin') === 'true') isAdmin = true;
 
     if (isAdmin) {
         userOnlyItems.forEach(el => el.style.display = "none");
@@ -1585,12 +1597,9 @@ function updateAdminUI() {
         if (storageBar) storageBar.style.display = "none";
     }
     updateGoogleLogoutButtonsVisibility();
-
-    // ✅ السطرين الخاصين بزر إنشاء الكورس
     const createCourseBtn = document.getElementById("createCourseBtn");
     if (createCourseBtn) createCourseBtn.style.display = isAdmin ? "inline-flex" : "none";
 }
-
   function loadAdminPreference() { if ("true" === localStorage.getItem("falak_admin")) { isAdmin = true; updateAdminUI(); } }
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"); const g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
 
@@ -2690,521 +2699,525 @@ async function enrollInCourse(courseId) {
 
   <script>
     let studentProgressTab = 'videos';
-    let studentProgressView = 'me';
-    let __allStudentsCache = null;
-    let __studentDetailFor = null;
+let studentProgressView = 'me';
+let __allStudentsCache = null;
+let __studentDetailFor = null;
+let progressRefreshInterval = null;
 
-    async function openStudentProgress() {
-      document.getElementById('studentProgressModal').classList.add('active');
-      if (typeof SoundEffects !== 'undefined' && SoundEffects.click) { try { SoundEffects.click(); } catch(_){} }
+async function openStudentProgress() {
+  document.getElementById('studentProgressModal').classList.add('active');
+  if (typeof SoundEffects !== 'undefined' && SoundEffects.click) { try { SoundEffects.click(); } catch(_){} }
 
-      studentProgressView = (typeof isAdmin !== 'undefined' && isAdmin) ? 'all' : 'me';
-      __studentDetailFor = null;
-      studentProgressTab = 'videos';
+  studentProgressView = (typeof isAdmin !== 'undefined' && isAdmin) ? 'all' : 'me';
+  __studentDetailFor = null;
+  studentProgressTab = 'videos';
 
-      if (!currentUserId && !(currentUser && currentUserPhone)) {
-        document.getElementById('studentProgressBody').innerHTML = `
-          <div class="progress-login-warn">
-            <i class="fas fa-user-lock"></i>
-            <h4 style="margin:0 0 .5rem;font-size:1.1rem;">سجّل الدخول لعرض التقدم</h4>
-            <p style="margin:0;color:#cfc9dd;font-size:.9rem;line-height:1.7">عشان تقدر تتابع رحلتك ومستوى تقدمك في الفيديوهات والامتحانات، لازم تسجّل دخولك أولاً.</p>
-          </div>`;
+  if (!currentUserId && !(currentUser && currentUserPhone)) {
+    document.getElementById('studentProgressBody').innerHTML = `
+      <div class="progress-login-warn">
+        <i class="fas fa-user-lock"></i>
+        <h4 style="margin:0 0 .5rem;font-size:1.1rem;">سجّل الدخول لعرض التقدم</h4>
+        <p style="margin:0;color:#cfc9dd;font-size:.9rem;line-height:1.7">عشان تقدر تتابع رحلتك ومستوى تقدمك في الفيديوهات والامتحانات، لازم تسجّل دخولك أولاً.</p>
+      </div>`;
+    return;
+  }
+
+  if (progressRefreshInterval) clearInterval(progressRefreshInterval);
+  progressRefreshInterval = setInterval(() => {
+    const modal = document.getElementById('studentProgressModal');
+    if (!modal || !modal.classList.contains('active')) {
+      if (progressRefreshInterval) clearInterval(progressRefreshInterval);
+      return;
+    }
+    if (studentProgressView === 'all') {
+      loadAllStudentsData().then(renderAllStudents).catch(e => console.error(e));
+    } else {
+      loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
+        .then(renderStudentProgress).catch(e => console.error(e));
+    }
+  }, 30000);
+
+  document.getElementById('studentProgressBody').innerHTML =
+    `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل البيانات...</h4></div>`;
+
+  try {
+    if (studentProgressView === 'all') {
+      const data = await loadAllStudentsData();
+      renderAllStudents(data);
+    } else {
+      const data = await loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId });
+      renderStudentProgress(data);
+    }
+  } catch (e) {
+    console.error('Error loading progress:', e);
+    document.getElementById('studentProgressBody').innerHTML =
+      `<div class="progress-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i><h4>تعذر تحميل البيانات</h4><p>حاول مرة أخرى بعد قليل.</p></div>`;
+  }
+}
+
+function closeStudentProgress() {
+  document.getElementById('studentProgressModal').classList.remove('active');
+  __studentDetailFor = null;
+  if (progressRefreshInterval) {
+    clearInterval(progressRefreshInterval);
+    progressRefreshInterval = null;
+  }
+}
+
+function setProgressView(v) {
+  studentProgressView = v;
+  __studentDetailFor = null;
+  studentProgressTab = 'videos';
+  document.getElementById('studentProgressBody').innerHTML =
+    `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل البيانات...</h4></div>`;
+  if (v === 'all') {
+    loadAllStudentsData().then(renderAllStudents).catch(e => { console.error(e); });
+  } else {
+    loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
+      .then(renderStudentProgress).catch(e => console.error(e));
+  }
+}
+
+async function loadStudentProgressData(student) {
+  const watched = [];
+  const watchedIds = new Set();
+
+  if (student.userId) {
+    try {
+      const snap = await db.collection('watch_history').where('userId', '==', student.userId).get();
+      snap.forEach(d => {
+        const x = d.data();
+        if (!watchedIds.has(x.videoId)) {
+          watchedIds.add(x.videoId);
+          watched.push({ videoId: x.videoId, watchedAt: x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : new Date() });
+        }
+      });
+    } catch (e) { console.warn('watch_history read failed', e); }
+  }
+
+  let myExamResults = [];
+  try {
+    const norm = s => String(s || '').replace(/[^\d+]/g, '');
+    const studentPhone = norm(student.phone);
+    myExamResults = (examResults || []).filter(r => {
+      const sameName = (r.studentName || '').trim() === (student.name || '').trim();
+      const samePhone = norm(r.studentPhone) === studentPhone && studentPhone.length > 0;
+      return sameName || samePhone;
+    }).map(r => ({
+      ...r,
+      submittedDate: r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : new Date(),
+    }));
+  } catch (e) { console.warn('exam results filter failed', e); }
+
+  let points = 0;
+  if (student.userId) {
+    try {
+      const userDoc = await db.collection('user_progress').doc(student.userId).get();
+      if (userDoc.exists) points = userDoc.data().points || 0;
+    } catch (e) { /* silent */ }
+  }
+
+  const totalVideos = (videos || []).filter(v => !v.private).length;
+  const watchedCount = watched.length;
+  const examCount = myExamResults.length;
+  const avgScore = examCount ? Math.round(myExamResults.reduce((s, r) => s + (r.percentage || 0), 0) / examCount) : 0;
+  const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
+
+  return { student, watched, myExamResults, points, totalVideos, watchedCount, examCount, avgScore, overallPct };
+}
+
+async function loadAllStudentsData() {
+  const studentsMap = new Map();
+  try {
+    const wh = await db.collection('watch_history').get();
+    wh.forEach(d => {
+      const x = d.data() || {};
+      const uid = x.userId;
+      if (!uid) return;
+      let entry = studentsMap.get(uid);
+      if (!entry) {
+        entry = {
+          userId: uid,
+          name: '',
+          phone: '',
+          watchedIds: new Set(),
+          examResults: [],
+          points: 0,
+          lastActivity: null,
+        };
+        studentsMap.set(uid, entry);
+      }
+      if (x.videoId) entry.watchedIds.add(x.videoId);
+      const wDate = x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : null;
+      if (wDate && (!entry.lastActivity || wDate > entry.lastActivity)) entry.lastActivity = wDate;
+    });
+  } catch (e) { console.warn('watch_history read failed', e); }
+
+  const uids = Array.from(studentsMap.keys());
+  await Promise.all(uids.map(async (uid) => {
+    try {
+      const doc = await db.collection('user_progress').doc(uid).get();
+      if (!doc.exists) {
+        studentsMap.delete(uid);
         return;
       }
+      const u = doc.data() || {};
+      const name = (u.username || u.name || u.displayName || '').trim();
+      const phone = (u.phone || '').trim();
+      if (!name && !phone) {
+        studentsMap.delete(uid);
+        return;
+      }
+      const entry = studentsMap.get(uid);
+      entry.name = name || 'بدون اسم';
+      entry.phone = phone;
+      entry.points = u.points || 0;
+      const lu = u.lastUpdated && u.lastUpdated.toDate ? u.lastUpdated.toDate() : null;
+      if (lu && (!entry.lastActivity || lu > entry.lastActivity)) entry.lastActivity = lu;
+    } catch (e) {
+      console.warn('user_progress doc read failed', uid, e);
+    }
+  }));
 
-      document.getElementById('studentProgressBody').innerHTML =
-        `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل البيانات...</h4></div>`;
-
-      try {
-        if (studentProgressView === 'all') {
-          const data = await loadAllStudentsData();
-          renderAllStudents(data);
-        } else {
-          const data = await loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId });
-          renderStudentProgress(data);
-        }
-      } catch (e) {
-        console.error('Error loading progress:', e);
-        document.getElementById('studentProgressBody').innerHTML =
-          `<div class="progress-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i><h4>تعذر تحميل البيانات</h4><p>حاول مرة أخرى بعد قليل.</p></div>`;
+  const norm = s => String(s || '').replace(/[^\d+]/g, '');
+  (examResults || []).forEach(r => {
+    const phoneN = norm(r.studentPhone);
+    const nameN = (r.studentName || '').trim();
+    let entry = null;
+    if (r.userId && studentsMap.has(r.userId)) {
+      entry = studentsMap.get(r.userId);
+    }
+    if (!entry && phoneN.length >= 6) {
+      for (const v of studentsMap.values()) {
+        if (v.phone && norm(v.phone) === phoneN) { entry = v; break; }
       }
     }
-
-    function closeStudentProgress() {
-      document.getElementById('studentProgressModal').classList.remove('active');
-      __studentDetailFor = null;
-    }
-
-    function setProgressView(v) {
-      studentProgressView = v;
-      __studentDetailFor = null;
-      studentProgressTab = 'videos';
-      document.getElementById('studentProgressBody').innerHTML =
-        `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل البيانات...</h4></div>`;
-      if (v === 'all') {
-        loadAllStudentsData().then(renderAllStudents).catch(e => { console.error(e); });
-      } else {
-        loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
-          .then(renderStudentProgress).catch(e => console.error(e));
+    if (!entry && nameN.length >= 3) {
+      for (const v of studentsMap.values()) {
+        if (v.name && v.name.trim() === nameN) { entry = v; break; }
       }
     }
+    if (!entry) return;
+    const sDate = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : null;
+    entry.examResults.push({ ...r, submittedDate: sDate || new Date() });
+    if (sDate && (!entry.lastActivity || sDate > entry.lastActivity)) entry.lastActivity = sDate;
+  });
 
-    async function loadStudentProgressData(student) {
-      const watched = [];
-      const watchedIds = new Set();
+  const totalVideos = (videos || []).filter(v => !v.private).length;
+  const list = Array.from(studentsMap.values()).map(s => {
+    const watchedCount = s.watchedIds.size;
+    const examCount = s.examResults.length;
+    const avgScore = examCount ? Math.round(s.examResults.reduce((a, r) => a + (r.percentage || 0), 0) / examCount) : 0;
+    const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
+    return { ...s, watchedCount, examCount, avgScore, overallPct };
+  }).filter(s => s.watchedCount > 0);
 
-      if (student.userId) {
-        try {
-          const snap = await db.collection('watch_history').where('userId', '==', student.userId).get();
-          snap.forEach(d => {
-            const x = d.data();
-            if (!watchedIds.has(x.videoId)) {
-              watchedIds.add(x.videoId);
-              watched.push({ videoId: x.videoId, watchedAt: x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : new Date() });
-            }
-          });
-        } catch (e) { console.warn('watch_history read failed', e); }
-      }
+  list.sort((a, b) => (b.overallPct - a.overallPct) || (b.avgScore - a.avgScore));
+  __allStudentsCache = { list, totalVideos };
+  return __allStudentsCache;
+}
 
-      let myExamResults = [];
-      try {
-        const norm = s => String(s || '').replace(/[^\d+]/g, '');
-        const studentPhone = norm(student.phone);
-        myExamResults = (examResults || []).filter(r => {
-          const sameName = (r.studentName || '').trim() === (student.name || '').trim();
-          const samePhone = norm(r.studentPhone) === studentPhone && studentPhone.length > 0;
-          return sameName || samePhone;
-        }).map(r => ({
-          ...r,
-          submittedDate: r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : new Date(),
-        }));
-      } catch (e) { console.warn('exam results filter failed', e); }
+function getStudentLevel(pct, points) {
+  if (pct >= 80 || points >= 200) return { name: 'مستكشف خبير', icon: 'fa-rocket' };
+  if (pct >= 50 || points >= 100) return { name: 'مستكشف نشط', icon: 'fa-meteor' };
+  if (pct >= 20 || points >= 30) return { name: 'مستكشف صاعد', icon: 'fa-star' };
+  return { name: 'مستكشف مبتدئ', icon: 'fa-seedling' };
+}
 
-      let points = 0;
-      if (student.userId) {
-        try {
-          const userDoc = await db.collection('user_progress').doc(student.userId).get();
-          if (userDoc.exists) points = userDoc.data().points || 0;
-        } catch (e) { /* silent */ }
-      }
+function adminToggleHtml() {
+  if (typeof isAdmin === 'undefined' || !isAdmin) return '';
+  return `
+    <div class="progress-admin-toggle">
+      <button class="progress-tab ${studentProgressView==='all'?'active':''}" onclick="setProgressView('all')"><i class="fas fa-users"></i> كل الطلاب</button>
+      <button class="progress-tab ${studentProgressView==='me'?'active':''}" onclick="setProgressView('me')"><i class="fas fa-user"></i> تقدمي</button>
+    </div>`;
+}
 
-      const totalVideos = (videos || []).filter(v => !v.private).length;
-      const watchedCount = watched.length;
-      const examCount = myExamResults.length;
-      const avgScore = examCount ? Math.round(myExamResults.reduce((s, r) => s + (r.percentage || 0), 0) / examCount) : 0;
-      const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
+function renderStudentProgress(data) {
+  const { student, watched, myExamResults, points, totalVideos, watchedCount, examCount, avgScore, overallPct } = data;
+  const level = getStudentLevel(overallPct, points);
+  const displayName = student.name || currentUser || 'الطالب';
+  const initial = (displayName || '?').trim().charAt(0).toUpperCase();
+  document.getElementById('studentProgressTitle').innerHTML =
+    `<i class="fas fa-trophy" style="color:#fde047"></i> ${__studentDetailFor ? 'تقدم: ' + escapeHtml(displayName) : 'تقدم الطالب'}`;
 
-      return { student, watched, myExamResults, points, totalVideos, watchedCount, examCount, avgScore, overallPct };
-    }
+  const backBtn = __studentDetailFor
+    ? `<button class="progress-back-btn" onclick="setProgressView('all')"><i class="fas fa-arrow-right"></i> رجوع لكل الطلاب</button>`
+    : '';
 
-    async function loadAllStudentsData() {
-      // المنطق الجديد (صارم جداً):
-      // الطالب الحقيقي = اللي شاف فيديو واحد على الأقل (سجل المشاهدة بيتسجل بس
-      // لما يبقى الطالب عامل تسجيل دخول بحساب جوجل، فده ضمان مزدوج).
-      // أي حد ظهر اسمه في امتحانات بس بدون مشاهدة حقيقية = مش هيتعرض.
+  const hero = `
+    <div class="progress-hero">
+      <div class="progress-hero-row">
+        <div class="progress-avatar">${escapeHtml(initial)}</div>
+        <div class="progress-hero-info">
+          <h3>${escapeHtml(displayName)}</h3>
+          <p>${student.phone ? escapeHtml(student.phone) : 'رحلتك في عالم الفلك والفضاء'}</p>
+          <span class="progress-level-badge"><i class="fas ${level.icon}"></i> ${level.name}</span>
+        </div>
+      </div>
+    </div>`;
 
-      // الخطوة 1: نبني قائمة الطلاب من سجل المشاهدة (دول الطلاب الحقيقيين)
-      const studentsMap = new Map();
-      try {
-        const wh = await db.collection('watch_history').get();
-        wh.forEach(d => {
-          const x = d.data() || {};
-          const uid = x.userId;
-          if (!uid) return;
-          let entry = studentsMap.get(uid);
-          if (!entry) {
-            entry = {
-              userId: uid,
-              name: '',
-              phone: '',
-              watchedIds: new Set(),
-              examResults: [],
-              points: 0,
-              lastActivity: null,
-            };
-            studentsMap.set(uid, entry);
-          }
-          if (x.videoId) entry.watchedIds.add(x.videoId);
-          const wDate = x.watchedAt && x.watchedAt.toDate ? x.watchedAt.toDate() : null;
-          if (wDate && (!entry.lastActivity || wDate > entry.lastActivity)) entry.lastActivity = wDate;
-        });
-      } catch (e) { console.warn('watch_history read failed', e); }
+  const stats = `
+    <div class="progress-stats-grid">
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#6366f1;--c2:#8b5cf6"><i class="fas fa-play-circle"></i></div>
+        <div class="progress-stat-num">${watchedCount}</div>
+        <div class="progress-stat-label">فيديو مكتمل</div>
+      </div>
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#10b981;--c2:#06b6d4"><i class="fas fa-clipboard-check"></i></div>
+        <div class="progress-stat-num">${examCount}</div>
+        <div class="progress-stat-label">امتحان</div>
+      </div>
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#fbbf24;--c2:#f59e0b"><i class="fas fa-percentage"></i></div>
+        <div class="progress-stat-num">${avgScore}%</div>
+        <div class="progress-stat-label">متوسط الدرجات</div>
+      </div>
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#ec4899;--c2:#a855f7"><i class="fas fa-gem"></i></div>
+        <div class="progress-stat-num">${points}</div>
+        <div class="progress-stat-label">نقطة</div>
+      </div>
+    </div>`;
 
-      // الخطوة 2: نجيب بيانات الطالب (الاسم والتليفون) من user_progress
-      // ولو مفيش وثيقة في user_progress = مش طالب مسجل بجوجل = نشيله
-      const uids = Array.from(studentsMap.keys());
-      await Promise.all(uids.map(async (uid) => {
-        try {
-          const doc = await db.collection('user_progress').doc(uid).get();
-          if (!doc.exists) {
-            studentsMap.delete(uid);
-            return;
-          }
-          const u = doc.data() || {};
-          const name = (u.username || u.name || u.displayName || '').trim();
-          const phone = (u.phone || '').trim();
-          // لازم على الأقل اسم أو تليفون عشان نعتبره طالب مكتمل البيانات
-          if (!name && !phone) {
-            studentsMap.delete(uid);
-            return;
-          }
-          const entry = studentsMap.get(uid);
-          entry.name = name || 'بدون اسم';
-          entry.phone = phone;
-          entry.points = u.points || 0;
-          const lu = u.lastUpdated && u.lastUpdated.toDate ? u.lastUpdated.toDate() : null;
-          if (lu && (!entry.lastActivity || lu > entry.lastActivity)) entry.lastActivity = lu;
-        } catch (e) {
-          console.warn('user_progress doc read failed', uid, e);
-        }
-      }));
+  const overall = `
+    <div class="progress-overall">
+      <div class="progress-overall-label">
+        <span class="progress-overall-label-text"><i class="fas fa-chart-line"></i> نسبة إكمال المكتبة</span>
+        <span class="progress-overall-pct">${overallPct}%</span>
+      </div>
+      <div class="progress-overall-bar"><div class="progress-overall-fill" style="width:${overallPct}%"></div></div>
+      <div style="margin-top:.55rem;font-size:.8rem;color:#9690a8">${watchedCount} من أصل ${totalVideos} فيديو</div>
+    </div>`;
 
-      // الخطوة 3: نضيف نتائج الامتحانات للطلاب المسجلين فقط، بمطابقة صارمة
-      const norm = s => String(s || '').replace(/[^\d+]/g, '');
-      (examResults || []).forEach(r => {
-        const phoneN = norm(r.studentPhone);
-        const nameN = (r.studentName || '').trim();
-        let entry = null;
+  const tabs = `
+    <div class="progress-tabs">
+      <button class="progress-tab ${studentProgressTab === 'videos' ? 'active' : ''}" onclick="switchProgressTab('videos')"><i class="fas fa-video"></i> الفيديوهات</button>
+      <button class="progress-tab ${studentProgressTab === 'exams' ? 'active' : ''}" onclick="switchProgressTab('exams')"><i class="fas fa-clipboard-list"></i> الامتحانات</button>
+    </div>`;
 
-        if (r.userId && studentsMap.has(r.userId)) {
-          entry = studentsMap.get(r.userId);
-        }
-        if (!entry && phoneN.length >= 6) {
-          for (const v of studentsMap.values()) {
-            if (v.phone && norm(v.phone) === phoneN) { entry = v; break; }
-          }
-        }
-        if (!entry && nameN.length >= 3) {
-          for (const v of studentsMap.values()) {
-            if (v.name && v.name.trim() === nameN) { entry = v; break; }
-          }
-        }
-
-        if (!entry) return;
-        const sDate = r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : null;
-        entry.examResults.push({ ...r, submittedDate: sDate || new Date() });
-        if (sDate && (!entry.lastActivity || sDate > entry.lastActivity)) entry.lastActivity = sDate;
-      });
-
-      // الخطوة 4: الفلتر النهائي — لازم يكون الطالب شاف فيديو حقيقي
-      const totalVideos = (videos || []).filter(v => !v.private).length;
-      const list = Array.from(studentsMap.values()).map(s => {
-        const watchedCount = s.watchedIds.size;
-        const examCount = s.examResults.length;
-        const avgScore = examCount ? Math.round(s.examResults.reduce((a, r) => a + (r.percentage || 0), 0) / examCount) : 0;
-        const overallPct = totalVideos ? Math.min(100, Math.round((watchedCount / totalVideos) * 100)) : 0;
-        return { ...s, watchedCount, examCount, avgScore, overallPct };
-      }).filter(s => s.watchedCount > 0); // لازم شاف فيديو واحد على الأقل
-
-      list.sort((a, b) => (b.overallPct - a.overallPct) || (b.avgScore - a.avgScore));
-      __allStudentsCache = { list, totalVideos };
-      return __allStudentsCache;
-    }
-
-    function getStudentLevel(pct, points) {
-      if (pct >= 80 || points >= 200) return { name: 'مستكشف خبير', icon: 'fa-rocket' };
-      if (pct >= 50 || points >= 100) return { name: 'مستكشف نشط', icon: 'fa-meteor' };
-      if (pct >= 20 || points >= 30) return { name: 'مستكشف صاعد', icon: 'fa-star' };
-      return { name: 'مستكشف مبتدئ', icon: 'fa-seedling' };
-    }
-
-    function adminToggleHtml() {
-      if (typeof isAdmin === 'undefined' || !isAdmin) return '';
-      return `
-        <div class="progress-admin-toggle">
-          <button class="progress-tab ${studentProgressView==='all'?'active':''}" onclick="setProgressView('all')"><i class="fas fa-users"></i> كل الطلاب</button>
-          <button class="progress-tab ${studentProgressView==='me'?'active':''}" onclick="setProgressView('me')"><i class="fas fa-user"></i> تقدمي</button>
-        </div>`;
-    }
-
-    function renderStudentProgress(data) {
-      const { student, watched, myExamResults, points, totalVideos, watchedCount, examCount, avgScore, overallPct } = data;
-      const level = getStudentLevel(overallPct, points);
-      const displayName = student.name || currentUser || 'الطالب';
-      const initial = (displayName || '?').trim().charAt(0).toUpperCase();
-      document.getElementById('studentProgressTitle').innerHTML =
-        `<i class="fas fa-trophy" style="color:#fde047"></i> ${__studentDetailFor ? 'تقدم: ' + escapeHtml(displayName) : 'تقدم الطالب'}`;
-
-      const backBtn = __studentDetailFor
-        ? `<button class="progress-back-btn" onclick="setProgressView('all')"><i class="fas fa-arrow-right"></i> رجوع لكل الطلاب</button>`
-        : '';
-
-      const hero = `
-        <div class="progress-hero">
-          <div class="progress-hero-row">
-            <div class="progress-avatar">${escapeHtml(initial)}</div>
-            <div class="progress-hero-info">
-              <h3>${escapeHtml(displayName)}</h3>
-              <p>${student.phone ? escapeHtml(student.phone) : 'رحلتك في عالم الفلك والفضاء'}</p>
-              <span class="progress-level-badge"><i class="fas ${level.icon}"></i> ${level.name}</span>
+  let listHtml = '';
+  if (studentProgressTab === 'videos') {
+    if (!watched.length) {
+      listHtml = `<div class="progress-empty"><i class="fas fa-video"></i><h4>لم يشاهد أي فيديو بعد</h4><p>بعد بدء المشاهدة، الفيديوهات هتظهر هنا.</p></div>`;
+    } else {
+      watched.sort((a, b) => b.watchedAt - a.watchedAt);
+      listHtml = `<div class="progress-list">` + watched.map(w => {
+        const v = (videos || []).find(x => x.id === w.videoId);
+        if (!v) return '';
+        const thumb = v.thumbnail ? `<img src="${escapeHtml(v.thumbnail)}" alt="">` : `<i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'fa-film'}"></i>`;
+        const date = w.watchedAt.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+        const isMe = !__studentDetailFor;
+        return `
+          <div class="progress-item" ${isMe ? `onclick="closeStudentProgress(); setTimeout(()=>playVideo('${v.id}'),250);" style="cursor:pointer"` : ''}>
+            <div class="progress-item-thumb">${thumb}</div>
+            <div class="progress-item-body">
+              <h4 class="progress-item-title">${escapeHtml(v.title || 'فيديو')}</h4>
+              <div class="progress-item-meta"><span><i class="fas fa-calendar"></i>${date}</span><span><i class="fas fa-check-circle" style="color:#10b981"></i>تم الإكمال</span></div>
             </div>
-          </div>
-        </div>`;
-
-      const stats = `
-        <div class="progress-stats-grid">
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#6366f1;--c2:#8b5cf6"><i class="fas fa-play-circle"></i></div>
-            <div class="progress-stat-num">${watchedCount}</div>
-            <div class="progress-stat-label">فيديو مكتمل</div>
-          </div>
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#10b981;--c2:#06b6d4"><i class="fas fa-clipboard-check"></i></div>
-            <div class="progress-stat-num">${examCount}</div>
-            <div class="progress-stat-label">امتحان</div>
-          </div>
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#fbbf24;--c2:#f59e0b"><i class="fas fa-percentage"></i></div>
-            <div class="progress-stat-num">${avgScore}%</div>
-            <div class="progress-stat-label">متوسط الدرجات</div>
-          </div>
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#ec4899;--c2:#a855f7"><i class="fas fa-gem"></i></div>
-            <div class="progress-stat-num">${points}</div>
-            <div class="progress-stat-label">نقطة</div>
-          </div>
-        </div>`;
-
-      const overall = `
-        <div class="progress-overall">
-          <div class="progress-overall-label">
-            <span class="progress-overall-label-text"><i class="fas fa-chart-line"></i> نسبة إكمال المكتبة</span>
-            <span class="progress-overall-pct">${overallPct}%</span>
-          </div>
-          <div class="progress-overall-bar"><div class="progress-overall-fill" style="width:${overallPct}%"></div></div>
-          <div style="margin-top:.55rem;font-size:.8rem;color:#9690a8">${watchedCount} من أصل ${totalVideos} فيديو</div>
-        </div>`;
-
-      const tabs = `
-        <div class="progress-tabs">
-          <button class="progress-tab ${studentProgressTab === 'videos' ? 'active' : ''}" onclick="switchProgressTab('videos')"><i class="fas fa-video"></i> الفيديوهات</button>
-          <button class="progress-tab ${studentProgressTab === 'exams' ? 'active' : ''}" onclick="switchProgressTab('exams')"><i class="fas fa-clipboard-list"></i> الامتحانات</button>
-        </div>`;
-
-      let listHtml = '';
-      if (studentProgressTab === 'videos') {
-        if (!watched.length) {
-          listHtml = `<div class="progress-empty"><i class="fas fa-video"></i><h4>لم يشاهد أي فيديو بعد</h4><p>بعد بدء المشاهدة، الفيديوهات هتظهر هنا.</p></div>`;
-        } else {
-          watched.sort((a, b) => b.watchedAt - a.watchedAt);
-          listHtml = `<div class="progress-list">` + watched.map(w => {
-            const v = (videos || []).find(x => x.id === w.videoId);
-            if (!v) return '';
-            const thumb = v.thumbnail ? `<img src="${escapeHtml(v.thumbnail)}" alt="">` : `<i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'fa-film'}"></i>`;
-            const date = w.watchedAt.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
-            const isMe = !__studentDetailFor;
-            return `
-              <div class="progress-item" ${isMe ? `onclick="closeStudentProgress(); setTimeout(()=>playVideo('${v.id}'),250);" style="cursor:pointer"` : ''}>
-                <div class="progress-item-thumb">${thumb}</div>
-                <div class="progress-item-body">
-                  <h4 class="progress-item-title">${escapeHtml(v.title || 'فيديو')}</h4>
-                  <div class="progress-item-meta"><span><i class="fas fa-calendar"></i>${date}</span><span><i class="fas fa-check-circle" style="color:#10b981"></i>تم الإكمال</span></div>
-                </div>
-                <span class="progress-item-badge done"><i class="fas fa-check"></i></span>
-              </div>`;
-          }).join('') + `</div>`;
-        }
-      } else {
-        if (!myExamResults.length) {
-          listHtml = `<div class="progress-empty"><i class="fas fa-clipboard-list"></i><h4>لا توجد امتحانات بعد</h4><p>بعد إكمال أول امتحان، النتائج هتظهر هنا.</p></div>`;
-        } else {
-          myExamResults.sort((a, b) => b.submittedDate - a.submittedDate);
-          listHtml = `<div class="progress-list">` + myExamResults.map(r => {
-            const v = (videos || []).find(x => x.id === r.videoId);
-            const title = v ? v.title : 'امتحان';
-            const pct = r.percentage || 0;
-            const cls = pct >= 75 ? 'high' : pct >= 50 ? 'mid' : 'low';
-            const date = r.submittedDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
-            return `
-              <div class="progress-item">
-                <div class="progress-item-thumb" style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(99,102,241,.15));color:#10b981"><i class="fas fa-clipboard-check"></i></div>
-                <div class="progress-item-body">
-                  <h4 class="progress-item-title">${escapeHtml(title)}</h4>
-                  <div class="progress-item-meta"><span><i class="fas fa-calendar"></i>${date}</span><span><i class="fas fa-check"></i>${r.score || 0}/${r.totalQuestions || 0}</span></div>
-                </div>
-                <span class="progress-item-badge ${cls}">${pct}%</span>
-              </div>`;
-          }).join('') + `</div>`;
-        }
-      }
-
-      document.getElementById('studentProgressBody').innerHTML =
-        adminToggleHtml() + backBtn + hero + stats + overall + tabs + listHtml;
+            <span class="progress-item-badge done"><i class="fas fa-check"></i></span>
+          </div>`;
+      }).join('') + `</div>`;
     }
-
-    function renderAllStudents(data) {
-      const { list, totalVideos } = data;
-      document.getElementById('studentProgressTitle').innerHTML =
-        `<i class="fas fa-users" style="color:#fde047"></i> تقدم كل الطلاب`;
-
-      const totalStudents = list.length;
-      const activeStudents = list.filter(s => s.watchedCount > 0).length;
-      const totalWatchEvents = list.reduce((a, s) => a + s.watchedCount, 0);
-      const totalExams = list.reduce((a, s) => a + s.examCount, 0);
-
-      const summary = `
-        <div class="progress-stats-grid">
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#6366f1;--c2:#8b5cf6"><i class="fas fa-users"></i></div>
-            <div class="progress-stat-num">${totalStudents}</div>
-            <div class="progress-stat-label">إجمالي الطلاب</div>
-          </div>
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#10b981;--c2:#06b6d4"><i class="fas fa-user-check"></i></div>
-            <div class="progress-stat-num">${activeStudents}</div>
-            <div class="progress-stat-label">طلاب نشطون</div>
-          </div>
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#fbbf24;--c2:#f59e0b"><i class="fas fa-play-circle"></i></div>
-            <div class="progress-stat-num">${totalWatchEvents}</div>
-            <div class="progress-stat-label">فيديوهات تمت مشاهدتها</div>
-          </div>
-          <div class="progress-stat-card">
-            <div class="progress-stat-icon" style="--c1:#ec4899;--c2:#a855f7"><i class="fas fa-clipboard-check"></i></div>
-            <div class="progress-stat-num">${totalExams}</div>
-            <div class="progress-stat-label">إجمالي الامتحانات</div>
-          </div>
-        </div>`;
-
-      const search = `
-        <div class="progress-search-row">
-          <div class="progress-search-input"><i class="fas fa-search"></i><input type="text" id="progressSearchInput" placeholder="ابحث باسم الطالب أو رقم الهاتف..." oninput="filterStudentsList()"></div>
-        </div>`;
-
-      let listHtml = '';
-      if (!list.length) {
-        listHtml = `<div class="progress-empty"><i class="fas fa-users-slash"></i><h4>لا يوجد نشاط بعد</h4><p>الطلاب لم يبدأوا المشاهدة أو الامتحانات بعد.</p></div>`;
-      } else {
-        listHtml = `<div class="progress-list" id="allStudentsList">` + list.map((s, idx) => {
-          const lvl = getStudentLevel(s.overallPct, s.points);
-          const initial = (s.name || '?').trim().charAt(0).toUpperCase();
-          const lastDate = s.lastActivity ? s.lastActivity.toLocaleDateString('ar-EG', { year:'numeric', month:'short', day:'numeric' }) : '—';
-          const cls = s.overallPct >= 75 ? 'high' : s.overallPct >= 40 ? 'mid' : 'low';
-          const rankIcon = idx === 0 ? '<i class="fas fa-crown" style="color:#fde047"></i>' : idx === 1 ? '<i class="fas fa-medal" style="color:#cbd5e1"></i>' : idx === 2 ? '<i class="fas fa-medal" style="color:#fb923c"></i>' : `<span style="color:#9690a8;font-size:.85rem">#${idx+1}</span>`;
-          return `
-            <div class="progress-student-row" data-uid="${escapeHtml(s.userId || '')}" data-search="${escapeHtml((s.name + ' ' + s.phone).toLowerCase())}">
-              <div class="progress-rank" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">${rankIcon}</div>
-              <div class="progress-avatar small" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">${escapeHtml(initial)}</div>
-              <div class="progress-student-info" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
-                <h4>${escapeHtml(s.name)}</h4>
-                <div class="progress-student-meta">
-                  <span><i class="fas fa-phone"></i> ${escapeHtml(s.phone || '—')}</span>
-                  <span><i class="fas ${lvl.icon}"></i> ${lvl.name}</span>
-                  <span><i class="fas fa-clock"></i> آخر نشاط: ${lastDate}</span>
-                </div>
-                <div class="progress-mini-bar"><div class="progress-mini-fill" style="width:${s.overallPct}%"></div></div>
-              </div>
-              <div class="progress-student-stats" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
-                <div class="psm"><b>${s.watchedCount}</b><span>فيديو</span></div>
-                <div class="psm"><b>${s.examCount}</b><span>امتحان</span></div>
-                <div class="psm"><b>${s.avgScore}%</b><span>متوسط</span></div>
-                <span class="progress-item-badge ${cls}">${s.overallPct}%</span>
-              </div>
-              <button class="student-delete-btn" title="حذف بيانات الطالب" onclick="event.stopPropagation(); deleteStudentRecord('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </div>`;
-        }).join('') + `</div>`;
-      }
-
-      document.getElementById('studentProgressBody').innerHTML =
-        adminToggleHtml() + summary + search + listHtml;
+  } else {
+    if (!myExamResults.length) {
+      listHtml = `<div class="progress-empty"><i class="fas fa-clipboard-list"></i><h4>لا توجد امتحانات بعد</h4><p>بعد إكمال أول امتحان، النتائج هتظهر هنا.</p></div>`;
+    } else {
+      myExamResults.sort((a, b) => b.submittedDate - a.submittedDate);
+      listHtml = `<div class="progress-list">` + myExamResults.map(r => {
+        const v = (videos || []).find(x => x.id === r.videoId);
+        const title = v ? v.title : 'امتحان';
+        const pct = r.percentage || 0;
+        const cls = pct >= 75 ? 'high' : pct >= 50 ? 'mid' : 'low';
+        const date = r.submittedDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+        return `
+          <div class="progress-item">
+            <div class="progress-item-thumb" style="background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(99,102,241,.15));color:#10b981"><i class="fas fa-clipboard-check"></i></div>
+            <div class="progress-item-body">
+              <h4 class="progress-item-title">${escapeHtml(title)}</h4>
+              <div class="progress-item-meta"><span><i class="fas fa-calendar"></i>${date}</span><span><i class="fas fa-check"></i>${r.score || 0}/${r.totalQuestions || 0}</span></div>
+            </div>
+            <span class="progress-item-badge ${cls}">${pct}%</span>
+          </div>`;
+      }).join('') + `</div>`;
     }
+  }
 
-    function filterStudentsList() {
-      const q = (document.getElementById('progressSearchInput').value || '').trim().toLowerCase();
-      document.querySelectorAll('#allStudentsList .progress-student-row').forEach(row => {
-        const txt = row.getAttribute('data-search') || '';
-        row.style.display = !q || txt.includes(q) ? '' : 'none';
+  document.getElementById('studentProgressBody').innerHTML =
+    adminToggleHtml() + backBtn + hero + stats + overall + tabs + listHtml;
+}
+
+function renderAllStudents(data) {
+  const { list, totalVideos } = data;
+  document.getElementById('studentProgressTitle').innerHTML =
+    `<i class="fas fa-users" style="color:#fde047"></i> تقدم كل الطلاب`;
+
+  const totalStudents = list.length;
+  const activeStudents = list.filter(s => s.watchedCount > 0).length;
+  const totalWatchEvents = list.reduce((a, s) => a + s.watchedCount, 0);
+  const totalExams = list.reduce((a, s) => a + s.examCount, 0);
+
+  const summary = `
+    <div class="progress-stats-grid">
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#6366f1;--c2:#8b5cf6"><i class="fas fa-users"></i></div>
+        <div class="progress-stat-num">${totalStudents}</div>
+        <div class="progress-stat-label">إجمالي الطلاب</div>
+      </div>
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#10b981;--c2:#06b6d4"><i class="fas fa-user-check"></i></div>
+        <div class="progress-stat-num">${activeStudents}</div>
+        <div class="progress-stat-label">طلاب نشطون</div>
+      </div>
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#fbbf24;--c2:#f59e0b"><i class="fas fa-play-circle"></i></div>
+        <div class="progress-stat-num">${totalWatchEvents}</div>
+        <div class="progress-stat-label">فيديوهات تمت مشاهدتها</div>
+      </div>
+      <div class="progress-stat-card">
+        <div class="progress-stat-icon" style="--c1:#ec4899;--c2:#a855f7"><i class="fas fa-clipboard-check"></i></div>
+        <div class="progress-stat-num">${totalExams}</div>
+        <div class="progress-stat-label">إجمالي الامتحانات</div>
+      </div>
+    </div>`;
+
+  const search = `
+    <div class="progress-search-row">
+      <div class="progress-search-input"><i class="fas fa-search"></i><input type="text" id="progressSearchInput" placeholder="ابحث باسم الطالب أو رقم الهاتف..." oninput="filterStudentsList()"></div>
+    </div>`;
+
+  let listHtml = '';
+  if (!list.length) {
+    listHtml = `<div class="progress-empty"><i class="fas fa-users-slash"></i><h4>لا يوجد نشاط بعد</h4><p>الطلاب لم يبدأوا المشاهدة أو الامتحانات بعد.</p></div>`;
+  } else {
+    listHtml = `<div class="progress-list" id="allStudentsList">` + list.map((s, idx) => {
+      const lvl = getStudentLevel(s.overallPct, s.points);
+      const initial = (s.name || '?').trim().charAt(0).toUpperCase();
+      const lastDate = s.lastActivity ? s.lastActivity.toLocaleDateString('ar-EG', { year:'numeric', month:'short', day:'numeric' }) : '—';
+      const cls = s.overallPct >= 75 ? 'high' : s.overallPct >= 40 ? 'mid' : 'low';
+      const rankIcon = idx === 0 ? '<i class="fas fa-crown" style="color:#fde047"></i>' : idx === 1 ? '<i class="fas fa-medal" style="color:#cbd5e1"></i>' : idx === 2 ? '<i class="fas fa-medal" style="color:#fb923c"></i>' : `<span style="color:#9690a8;font-size:.85rem">#${idx+1}</span>`;
+      return `
+        <div class="progress-student-row" data-uid="${escapeHtml(s.userId || '')}" data-search="${escapeHtml((s.name + ' ' + s.phone).toLowerCase())}">
+          <div class="progress-rank" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">${rankIcon}</div>
+          <div class="progress-avatar small" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">${escapeHtml(initial)}</div>
+          <div class="progress-student-info" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
+            <h4>${escapeHtml(s.name)}</h4>
+            <div class="progress-student-meta">
+              <span><i class="fas fa-phone"></i> ${escapeHtml(s.phone || '—')}</span>
+              <span><i class="fas ${lvl.icon}"></i> ${lvl.name}</span>
+              <span><i class="fas fa-clock"></i> آخر نشاط: ${lastDate}</span>
+            </div>
+            <div class="progress-mini-bar"><div class="progress-mini-fill" style="width:${s.overallPct}%"></div></div>
+          </div>
+          <div class="progress-student-stats" onclick="openStudentDetail('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
+            <div class="psm"><b>${s.watchedCount}</b><span>فيديو</span></div>
+            <div class="psm"><b>${s.examCount}</b><span>امتحان</span></div>
+            <div class="psm"><b>${s.avgScore}%</b><span>متوسط</span></div>
+            <span class="progress-item-badge ${cls}">${s.overallPct}%</span>
+          </div>
+          <button class="student-delete-btn" title="حذف بيانات الطالب" onclick="event.stopPropagation(); deleteStudentRecord('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>`;
+    }).join('') + `</div>`;
+  }
+
+  document.getElementById('studentProgressBody').innerHTML =
+    adminToggleHtml() + summary + search + listHtml;
+}
+
+function filterStudentsList() {
+  const q = (document.getElementById('progressSearchInput').value || '').trim().toLowerCase();
+  document.querySelectorAll('#allStudentsList .progress-student-row').forEach(row => {
+    const txt = row.getAttribute('data-search') || '';
+    row.style.display = !q || txt.includes(q) ? '' : 'none';
+  });
+}
+
+async function openStudentDetail(uid, name, phone) {
+  uid = decodeURIComponent(uid || '');
+  name = decodeURIComponent(name || '');
+  phone = decodeURIComponent(phone || '');
+  __studentDetailFor = { userId: uid, name, phone };
+  studentProgressTab = 'videos';
+  document.getElementById('studentProgressBody').innerHTML =
+    `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل بيانات الطالب...</h4></div>`;
+  try {
+    const data = await loadStudentProgressData({ userId: uid, name, phone });
+    renderStudentProgress(data);
+  } catch (e) {
+    console.error(e);
+    document.getElementById('studentProgressBody').innerHTML =
+      `<div class="progress-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i><h4>تعذر تحميل البيانات</h4></div>`;
+  }
+}
+
+async function deleteStudentRecord(uidEnc, nameEnc, phoneEnc) {
+  const uid = decodeURIComponent(uidEnc || '');
+  const name = decodeURIComponent(nameEnc || '');
+  const phone = decodeURIComponent(phoneEnc || '');
+  if (!uid && !name && !phone) { showToast('⚠️ بيانات الطالب غير متاحة'); return; }
+  const ok = confirm('هل تريد حذف بيانات الطالب "' + (name || 'بدون اسم') + '" نهائياً؟\n\nسيتم مسح:\n• ملف الطالب\n• كل سجل المشاهدة\n• كل نتائج الامتحانات\n\nلا يمكن التراجع عن هذا الإجراء.');
+  if (!ok) return;
+  const row = document.querySelector('#allStudentsList .progress-student-row[data-uid="' + uid + '"]');
+  if (row) row.style.opacity = '0.4';
+  try {
+    const tasks = [];
+    if (uid) tasks.push(db.collection('user_progress').doc(uid).delete().catch(e => console.warn('user_progress delete', e)));
+    if (uid) {
+      tasks.push((async () => {
+        const snap = await db.collection('watch_history').where('userId', '==', uid).get();
+        const batch = db.batch();
+        snap.forEach(d => batch.delete(d.ref));
+        if (!snap.empty) await batch.commit();
+      })().catch(e => console.warn('watch_history delete', e)));
+    }
+    const norm = s => String(s || '').replace(/[^\d+]/g, '');
+    const phoneN = norm(phone);
+    const nameT = (name || '').trim();
+    tasks.push((async () => {
+      const toDelete = new Set();
+      if (uid) {
+        const s1 = await db.collection('exam_results').where('userId', '==', uid).get();
+        s1.forEach(d => toDelete.add(d.id));
+      }
+      (examResults || []).forEach(r => {
+        const matchPhone = phoneN.length >= 6 && norm(r.studentPhone) === phoneN;
+        const matchName = nameT.length >= 3 && (r.studentName || '').trim() === nameT;
+        if (matchPhone || matchName) toDelete.add(r.id);
       });
-    }
-
-    async function openStudentDetail(uid, name, phone) {
-      uid = decodeURIComponent(uid || '');
-      name = decodeURIComponent(name || '');
-      phone = decodeURIComponent(phone || '');
-      __studentDetailFor = { userId: uid, name, phone };
-      studentProgressTab = 'videos';
-      document.getElementById('studentProgressBody').innerHTML =
-        `<div class="progress-empty"><i class="fas fa-spinner fa-spin"></i><h4>جاري تحميل بيانات الطالب...</h4></div>`;
-      try {
-        const data = await loadStudentProgressData({ userId: uid, name, phone });
-        renderStudentProgress(data);
-      } catch (e) {
-        console.error(e);
-        document.getElementById('studentProgressBody').innerHTML =
-          `<div class="progress-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i><h4>تعذر تحميل البيانات</h4></div>`;
+      const ids = Array.from(toDelete).filter(Boolean);
+      for (let i = 0; i < ids.length; i += 400) {
+        const batch = db.batch();
+        ids.slice(i, i + 400).forEach(id => batch.delete(db.collection('exam_results').doc(id)));
+        await batch.commit();
       }
+    })().catch(e => console.warn('exam_results delete', e)));
+    await Promise.all(tasks);
+    if (__allStudentsCache && Array.isArray(__allStudentsCache.list)) {
+      __allStudentsCache.list = __allStudentsCache.list.filter(s => s.userId !== uid);
     }
+    showToast('✅ تم حذف بيانات الطالب');
+    const data = await loadAllStudentsData();
+    renderAllStudents(data);
+  } catch (e) {
+    console.error(e);
+    if (row) row.style.opacity = '';
+    showToast('⚠️ حصل خطأ أثناء الحذف');
+  }
+}
 
-    async function deleteStudentRecord(uidEnc, nameEnc, phoneEnc) {
-      const uid = decodeURIComponent(uidEnc || '');
-      const name = decodeURIComponent(nameEnc || '');
-      const phone = decodeURIComponent(phoneEnc || '');
-      if (!uid && !name && !phone) { showToast('⚠️ بيانات الطالب غير متاحة'); return; }
-      const ok = confirm('هل تريد حذف بيانات الطالب "' + (name || 'بدون اسم') + '" نهائياً؟\n\nسيتم مسح:\n• ملف الطالب\n• كل سجل المشاهدة\n• كل نتائج الامتحانات\n\nلا يمكن التراجع عن هذا الإجراء.');
-      if (!ok) return;
-      const row = document.querySelector('#allStudentsList .progress-student-row[data-uid="' + uid + '"]');
-      if (row) row.style.opacity = '0.4';
-      try {
-        const tasks = [];
-        // 1) ملف الطالب
-        if (uid) tasks.push(db.collection('user_progress').doc(uid).delete().catch(e => console.warn('user_progress delete', e)));
-        // 2) سجل المشاهدة
-        if (uid) {
-          tasks.push((async () => {
-            const snap = await db.collection('watch_history').where('userId', '==', uid).get();
-            const batch = db.batch();
-            snap.forEach(d => batch.delete(d.ref));
-            if (!snap.empty) await batch.commit();
-          })().catch(e => console.warn('watch_history delete', e)));
-        }
-        // 3) نتائج الامتحانات (بالـ userId والتليفون والاسم)
-        const norm = s => String(s || '').replace(/[^\d+]/g, '');
-        const phoneN = norm(phone);
-        const nameT = (name || '').trim();
-        tasks.push((async () => {
-          const toDelete = new Set();
-          if (uid) {
-            const s1 = await db.collection('exam_results').where('userId', '==', uid).get();
-            s1.forEach(d => toDelete.add(d.id));
-          }
-          (examResults || []).forEach(r => {
-            const matchPhone = phoneN.length >= 6 && norm(r.studentPhone) === phoneN;
-            const matchName = nameT.length >= 3 && (r.studentName || '').trim() === nameT;
-            if (matchPhone || matchName) toDelete.add(r.id);
-          });
-          const ids = Array.from(toDelete).filter(Boolean);
-          for (let i = 0; i < ids.length; i += 400) {
-            const batch = db.batch();
-            ids.slice(i, i + 400).forEach(id => batch.delete(db.collection('exam_results').doc(id)));
-            await batch.commit();
-          }
-        })().catch(e => console.warn('exam_results delete', e)));
-        await Promise.all(tasks);
-        // امسح من الكاش المحلي وحدّث الواجهة
-        if (__allStudentsCache && Array.isArray(__allStudentsCache.list)) {
-          __allStudentsCache.list = __allStudentsCache.list.filter(s => s.userId !== uid);
-        }
-        showToast('✅ تم حذف بيانات الطالب');
-        const data = await loadAllStudentsData();
-        renderAllStudents(data);
-      } catch (e) {
-        console.error(e);
-        if (row) row.style.opacity = '';
-        showToast('⚠️ حصل خطأ أثناء الحذف');
-      }
-    }
-
-        function switchProgressTab(tab) {
-      studentProgressTab = tab;
-      if (__studentDetailFor) {
-        loadStudentProgressData(__studentDetailFor).then(renderStudentProgress).catch(e => console.error(e));
-      } else if (currentUserId || (currentUser && currentUserPhone)) {
-        loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
-          .then(renderStudentProgress).catch(e => console.error(e));
-      }
-    }
+function switchProgressTab(tab) {
+  studentProgressTab = tab;
+  if (__studentDetailFor) {
+    loadStudentProgressData(__studentDetailFor).then(renderStudentProgress).catch(e => console.error(e));
+  } else if (currentUserId || (currentUser && currentUserPhone)) {
+    loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
+      .then(renderStudentProgress).catch(e => console.error(e));
+  }
+}
+        
   </script>
 
   
