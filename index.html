@@ -1453,6 +1453,23 @@ async function isAdminUser(userId) {
         title: (videos.find(v => v.id === videoId) || {}).title || "",
         watchedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      // ====== ضمان وجود ملف الطالب في user_progress ======
+      // إذا كان المشرف قد حذف ملف الطالب سابقاً، نُعيد إنشاءه تلقائياً
+      // عند تسجيل أي مشاهدة جديدة حتى يظهر الطالب مرة أخرى في قائمة المتابعة.
+      try {
+        const userPatch = { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
+        if (currentUser) userPatch.username = currentUser;
+        if (currentUserPhone) userPatch.phone = currentUserPhone;
+        try {
+          const au = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+          if (au) {
+            if (au.email) userPatch.email = au.email;
+            if (au.displayName && !userPatch.username) userPatch.username = au.displayName;
+            if (au.photoURL) userPatch.photoURL = au.photoURL;
+          }
+        } catch(_){}
+        await db.collection("user_progress").doc(currentUserId).set(userPatch, { merge: true });
+      } catch (e) { console.warn("user_progress upsert (on watch) failed", e); }
       try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch (e) { console.warn("addPoints failed", e); }
       try {
         const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
@@ -3239,7 +3256,10 @@ function switchProgressTab(tab) {
       <div id="pacAdminList" class="pac-admin-list" style="display:none">
         <div class="pac-admin-list-header" style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
           <span><i class="fas fa-inbox"></i> المحادثات الخاصة الواردة</span>
-          <button onclick="pacAdminSendAsUser()" style="background:linear-gradient(135deg,#22c55e,#10b981);border:none;color:#fff;padding:.5rem .9rem;border-radius:.6rem;cursor:pointer;font-size:.85rem;font-weight:600"><i class="fas fa-pen"></i> أرسل رسالة كمستخدم</button>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button onclick="pacAdminSendAsUser()" style="background:linear-gradient(135deg,#22c55e,#10b981);border:none;color:#fff;padding:.5rem .9rem;border-radius:.6rem;cursor:pointer;font-size:.85rem;font-weight:600"><i class="fas fa-pen"></i> أرسل رسالة كمستخدم</button>
+            <button id="pacClearAllBtn" onclick="pacAdminClearAllThreads()" style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;padding:.5rem .9rem;border-radius:.6rem;cursor:pointer;font-size:.85rem;font-weight:600"><i class="fas fa-trash-alt"></i> مسح الكل</button>
+          </div>
         </div>
         <div id="pacAdminThreads" class="pac-threads"></div>
       </div>
@@ -3985,6 +4005,46 @@ function switchProgressTab(tab) {
       }
       if (window.showToast) showToast(msg.split('\n')[0]);
       input.value = text;
+    }
+  };
+
+  window.pacAdminClearAllThreads = async function(){
+    if (!pacIsAdmin()) { if (window.showToast) showToast('❌ صلاحيات المشرف فقط'); return; }
+    const dbi = pacGetDb();
+    if (!dbi) { if (window.showToast) showToast('❌ قاعدة البيانات غير متاحة'); return; }
+    if (!confirm('هل أنت متأكد من حذف جميع المحادثات الخاصة نهائياً؟\n\nسيتم مسح كل المحادثات والرسائل من جميع المستخدمين، ولا يمكن التراجع عن هذا الإجراء.')) return;
+    const btn = document.getElementById('pacClearAllBtn');
+    const oldHtml = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المسح...'; }
+    try {
+      const threadsSnap = await dbi.collection(PAC_COL).get();
+      let total = 0;
+      for (const threadDoc of threadsSnap.docs) {
+        try {
+          const msgsSnap = await threadDoc.ref.collection('messages').get();
+          if (!msgsSnap.empty) {
+            const msgs = msgsSnap.docs;
+            for (let i = 0; i < msgs.length; i += 400) {
+              const batch = dbi.batch();
+              msgs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+              await batch.commit();
+            }
+          }
+          await threadDoc.ref.delete();
+          total++;
+        } catch (e) { console.warn('clear thread failed', threadDoc.id, e); }
+      }
+      if (window.showToast) showToast('🗑️ تم مسح ' + total + ' محادثة بنجاح');
+    } catch(e) {
+      console.error('pac clear all err', e);
+      let msg = '❌ فشل المسح';
+      const code = (e && (e.code || e.message)) || '';
+      if (/permission|denied|insufficient/i.test(code)) {
+        msg = '❌ صلاحيات Firestore لا تسمح بالحذف. تأكد من قواعد private_admin_chats.';
+      }
+      if (window.showToast) showToast(msg);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = oldHtml; }
     }
   };
 
