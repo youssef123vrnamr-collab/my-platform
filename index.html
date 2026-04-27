@@ -1752,47 +1752,39 @@ async function updateAdminUI() {
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"); const g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
 
   function listenToVideosWithRetry(maxAttempts = 5) {
-  if (unsubscribeVideos) unsubscribeVideos();
-  let attempt = 0;
-  const attemptFn = () => {
-    attempt++;
-    // ✅ اختيار الاستعلام حسب صلاحية المستخدم
-    let queryRef;
-    if (isAdmin) {
-      // المشرف يشوف كل الفيديوهات (عامة وخاصة)
-      queryRef = db.collection("videos").orderBy("createdAt", "asc");
-    } else {
-      // المستخدم العادي يشوف الفيديوهات العامة بس
-      queryRef = db.collection("videos").where("private", "==", false).orderBy("createdAt", "asc");
-    }
-    unsubscribeVideos = queryRef.onSnapshot(snap => {
-      videos = [];
-      snap.forEach(d => {
-        let v = d.data();
-        v.id = d.id;
-        videos.push(v); 
+    if (unsubscribeVideos) unsubscribeVideos();
+    let attempt = 0;
+    const attemptFn = () => {
+      attempt++;
+      unsubscribeVideos = db.collection("videos").orderBy("createdAt", "asc").onSnapshot(snap => {
+        videos = [];
+        snap.forEach(d => {
+          let v = d.data();
+          v.id = d.id;
+          videos.push(v);
+        });
+        if (isLoadingVideos) isLoadingVideos = false;
+        loadAttemptFailed = false;
+        renderVideos();
+        updateStorageBar();
+        checkForResume();
+        checkUrlForShare();
+        if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات");
+      }, err => {
+        console.error("Error loading videos (attempt " + attempt + "):", err);
+        if (attempt < maxAttempts) {
+          setTimeout(attemptFn, 3000 * attempt);
+        } else {
+          isLoadingVideos = false;
+          loadAttemptFailed = true;
+          renderVideos(); 
+          showToast("⚫ تعذر الاتصال بالخادم. يبدو أن الثقب الأسود ابتلع البيانات!");
+        }
       });
-      if (isLoadingVideos) isLoadingVideos = false;
-      loadAttemptFailed = false;
-      renderVideos();
-      updateStorageBar();
-      checkForResume();
-      checkUrlForShare(); 
-      if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات");
-    }, err => {
-      console.error("Error loading videos (attempt " + attempt + "):", err);
-      if (attempt < maxAttempts) {
-        setTimeout(attemptFn, 3000 * attempt);
-      } else {
-        isLoadingVideos = false;
-        loadAttemptFailed = true;
-        renderVideos(); 
-        showToast("⚫ تعذر الاتصال بالخادم. يبدو أن الثقب الأسود ابتلع البيانات!");
-      }
-    });
-  };
-  attemptFn(); 
-}
+    };
+    attemptFn(); 
+  }
+
   // ===== Listen to courses to know which videos are locked behind a paid course =====
   function listenToCoursesAccess() {
     if (unsubscribeCoursesAccess) unsubscribeCoursesAccess();
