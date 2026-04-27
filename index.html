@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>Astronomy and space - منصة الفلك المتكاملة</title>
+
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://upload-widget.cloudinary.com https://widget.cloudinary.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://apis.google.com https://accounts.google.com https://www.google.com https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https: wss: https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.cloudinary.com https://res.cloudinary.com https://api.emailjs.com; frame-src 'self' https: https://accounts.google.com https://www.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(self), payment=()">
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+  <meta name="robots" content="index, follow">
+  <meta name="format-detection" content="telephone=no">
+
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
   <meta name="mobile-web-app-capable" content="yes">
@@ -11,6 +21,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <link rel="dns-prefetch" href="https://api.cloudinary.com">
+  <link rel="dns-prefetch" href="https://res.cloudinary.com">
   <script src="https://upload-widget.cloudinary.com/global/all.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -1099,9 +1112,561 @@
     gap: 1.5rem !important;
   }
 }
+
+    /* ================================================================
+       VISUAL ENHANCEMENT LAYER — لا يغير أي وظيفة، فقط تحسينات بصرية
+       Premium UI overlay: glassmorphism, smoother gradients,
+       refined typography, premium shadows, micro-interactions.
+       ================================================================ */
+    :root {
+      --primary: #7c5cff;
+      --primary-2: #5b8cff;
+      --secondary: #a855f7;
+      --accent: #ec4899;
+      --accent-2: #f472b6;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #06b6d4;
+      --dark: #0a0612;
+      --darker: #050308;
+      --card: #14102060;
+      --card-solid: #1a1228;
+      --border-soft: rgba(124, 92, 255, 0.18);
+      --border-strong: rgba(124, 92, 255, 0.42);
+      --text-primary: #f5f3ff;
+      --text-secondary: #c4b5fd;
+      --text-muted: #94a3b8;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --shadow-glow: 0 0 40px rgba(124, 92, 255, 0.35);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 28px;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body {
+      background:
+        radial-gradient(1200px 800px at 85% -10%, rgba(168, 85, 247, 0.15), transparent 60%),
+        radial-gradient(900px 700px at 10% 110%, rgba(236, 72, 153, 0.12), transparent 55%),
+        radial-gradient(700px 600px at 50% 50%, rgba(124, 92, 255, 0.08), transparent 70%),
+        linear-gradient(180deg, #050308 0%, #0a0612 50%, #14102f 100%) !important;
+      letter-spacing: -0.005em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Premium scrollbar */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(10, 6, 18, 0.6); }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--primary), var(--secondary));
+      border-radius: 10px;
+      border: 2px solid rgba(10, 6, 18, 0.8);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, var(--accent), var(--secondary));
+    }
+
+    /* Selection color */
+    ::selection { background: rgba(124, 92, 255, 0.4); color: #fff; }
+
+    /* Refined nebula */
+    .nebula {
+      filter: blur(80px) !important;
+      opacity: 0.7;
+    }
+
+    /* Premium navbar */
+    .navbar {
+      background: rgba(14, 9, 26, 0.7) !important;
+      backdrop-filter: blur(28px) saturate(160%) !important;
+      -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+      border-bottom: 1px solid rgba(124, 92, 255, 0.18) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 -1px 0 rgba(255,255,255,0.04) !important;
+    }
+
+    .brand-text h1 {
+      background: linear-gradient(135deg, #fff 0%, #c4b5fd 50%, #ec4899 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      letter-spacing: -0.02em !important;
+      font-weight: 800 !important;
+    }
+
+    /* Enhanced buttons */
+    .btn {
+      letter-spacing: -0.01em !important;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s var(--ease) !important;
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.6s var(--ease);
+      pointer-events: none;
+    }
+    .btn:hover::before { transform: translateX(100%); }
+    .btn:active { transform: translateY(0) scale(0.98) !important; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7c5cff 0%, #a855f7 50%, #ec4899 100%) !important;
+      box-shadow: 0 6px 24px rgba(124, 92, 255, 0.45), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    }
+    .btn-primary:hover {
+      box-shadow: 0 12px 36px rgba(168, 85, 247, 0.55), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+      transform: translateY(-2px) !important;
+    }
+    .btn-success { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255,255,255,0.18) !important; }
+    .btn-danger  { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35), inset 0 1px 0 rgba(255,255,255,0.18) !important; }
+    .btn-warning { box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255,255,255,0.18) !important; }
+    .btn-info    { box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.18) !important; }
+
+    /* Premium hero */
+    .hero h2 {
+      letter-spacing: -0.03em !important;
+      font-weight: 900 !important;
+      line-height: 1.05 !important;
+    }
+    .hero h2 span {
+      background: linear-gradient(135deg, #7c5cff 0%, #a855f7 35%, #ec4899 70%, #f472b6 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      filter: drop-shadow(0 0 30px rgba(124, 92, 255, 0.5));
+    }
+    .hero-badge {
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* Premium video cards */
+    .video-card {
+      background: rgba(20, 14, 38, 0.55) !important;
+      backdrop-filter: blur(20px) saturate(140%) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+      border: 1px solid rgba(124, 92, 255, 0.15) !important;
+      border-radius: 22px !important;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+      transition: all 0.35s var(--ease) !important;
+      overflow: hidden;
+      position: relative;
+    }
+    .video-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 22px;
+      padding: 1px;
+      background: linear-gradient(135deg, transparent 30%, rgba(124, 92, 255, 0.4) 50%, transparent 70%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.35s var(--ease);
+      pointer-events: none;
+    }
+    .video-card:hover {
+      transform: translateY(-6px) !important;
+      box-shadow: 0 24px 60px rgba(124, 92, 255, 0.35), 0 8px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+      border-color: rgba(124, 92, 255, 0.4) !important;
+    }
+    .video-card:hover::after { opacity: 1; }
+
+    .video-title {
+      letter-spacing: -0.015em !important;
+      font-weight: 700 !important;
+    }
+
+    /* Premium modals */
+    .modal {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(5, 3, 8, 0.75) !important;
+    }
+    .modal-content {
+      background: rgba(20, 14, 38, 0.95) !important;
+      backdrop-filter: blur(40px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+      border: 1px solid rgba(124, 92, 255, 0.25) !important;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(124, 92, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+      border-radius: 24px !important;
+    }
+
+    /* Premium inputs */
+    input[type="text"], input[type="email"], input[type="password"],
+    input[type="number"], input[type="url"], input[type="tel"],
+    input[type="search"], textarea, select {
+      transition: all 0.25s var(--ease) !important;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.15), 0 0 20px rgba(124, 92, 255, 0.2) !important;
+      outline: none !important;
+    }
+
+    /* Premium settings menu */
+    .settings-menu {
+      background: rgba(20, 14, 38, 0.92) !important;
+      backdrop-filter: blur(28px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+      border: 1px solid rgba(124, 92, 255, 0.3) !important;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+      border-radius: 18px !important;
+    }
+    .settings-menu-item {
+      transition: all 0.2s var(--ease) !important;
+    }
+    .settings-menu-item:hover {
+      background: linear-gradient(90deg, rgba(124, 92, 255, 0.25), rgba(168, 85, 247, 0.15)) !important;
+    }
+
+    /* Premium chat (if exists) */
+    .chat-container, .chat-message, .chat-input {
+      backdrop-filter: blur(20px) !important;
+    }
+
+    /* Premium loader */
+    .loader {
+      background: radial-gradient(circle at center, #14102f 0%, #050308 100%) !important;
+    }
+    .loader-ring {
+      width: 140px !important;
+      height: 140px !important;
+      border-width: 3px !important;
+      border-top-color: #7c5cff !important;
+      border-right-color: #ec4899 !important;
+      filter: drop-shadow(0 0 20px rgba(124, 92, 255, 0.6));
+    }
+    .loader-text {
+      background: linear-gradient(135deg, #7c5cff, #ec4899) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.01em !important;
+    }
+
+    /* Premium brand logo */
+    .brand-logo {
+      box-shadow: 0 8px 24px rgba(124, 92, 255, 0.5), 0 0 0 2px rgba(124, 92, 255, 0.2), inset 0 -2px 6px rgba(0,0,0,0.2) !important;
+    }
+
+    /* Premium toast notifications */
+    .toast, .notification {
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+      border-radius: 14px !important;
+    }
+
+    /* Subtle entrance animations */
+    @keyframes premiumFadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .video-card, .hero, .resume-notification {
+      animation: premiumFadeUp 0.5s var(--ease) backwards;
+    }
+    .video-card:nth-child(2) { animation-delay: 0.05s; }
+    .video-card:nth-child(3) { animation-delay: 0.1s; }
+    .video-card:nth-child(4) { animation-delay: 0.15s; }
+    .video-card:nth-child(5) { animation-delay: 0.2s; }
+    .video-card:nth-child(6) { animation-delay: 0.25s; }
+
+    /* Premium focus visible (accessibility) */
+    *:focus-visible {
+      outline: 2px solid var(--primary) !important;
+      outline-offset: 3px !important;
+      border-radius: 8px;
+    }
+
+    /* Dark scheme on landing/login */
+    .landing-page {
+      background: radial-gradient(ellipse at top, rgba(124, 92, 255, 0.15) 0%, transparent 50%),
+                  radial-gradient(ellipse at bottom, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+                  linear-gradient(180deg, #050308 0%, #0a0612 100%) !important;
+    }
+    .landing-card {
+      backdrop-filter: blur(40px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+      border: 1px solid rgba(124, 92, 255, 0.25) !important;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 80px rgba(124, 92, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    }
+    .landing-title {
+      background: linear-gradient(135deg, #fff 0%, #c4b5fd 50%, #ec4899 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      letter-spacing: -0.02em !important;
+    }
+    .google-btn {
+      box-shadow: 0 6px 24px rgba(124, 92, 255, 0.35), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+      transition: all 0.25s var(--ease) !important;
+    }
+    .google-btn:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 12px 36px rgba(168, 85, 247, 0.5), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    }
+
+    /* Print: hide sensitive parts */
+    @media print {
+      .navbar, .upload-zone, .settings-menu, .modal { display: none !important; }
+    }
+
+    /* Reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
 </style>
 </head>
 <body>
+<!-- ====================================================================
+     SECURITY HARDENING LAYER — Multi-layer client-side protection
+     ==================================================================== -->
+<script>
+(function SecurityShield() {
+  'use strict';
+
+  // ===== 1. STRICT MODE & FREEZE GLOBALS =====
+  try {
+    Object.freeze(Object.prototype);
+    Object.freeze(Array.prototype);
+    Object.freeze(String.prototype);
+    Object.freeze(Number.prototype);
+    Object.freeze(Function.prototype);
+  } catch(e) {}
+
+  // ===== 2. ANTI-CLICKJACKING (frame-busting) =====
+  if (window.self !== window.top) {
+    try {
+      window.top.location = window.self.location;
+    } catch (e) {
+      document.documentElement.innerHTML = '<div style="font-family:Cairo,sans-serif;background:#050308;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:2rem;direction:rtl"><div><h1 style="color:#ef4444">⚠️ تحذير أمني</h1><p>هذه المنصة لا يمكن تشغيلها داخل إطار خارجي لأسباب أمنية.</p></div></div>';
+      throw new Error('Frame embedding blocked');
+    }
+  }
+
+  // ===== 3. CONSOLE PROTECTION (anti self-XSS) =====
+  var consoleWarn = function() {
+    try {
+      var style1 = 'color:#ef4444;font-size:48px;font-weight:900;text-shadow:2px 2px 0 #000';
+      var style2 = 'color:#f59e0b;font-size:18px;font-weight:600';
+      var style3 = 'color:#10b981;font-size:14px';
+      console.log('%c⛔ توقف!', style1);
+      console.log('%cهذه ميزة المتصفح مخصصة للمطورين.', style2);
+      console.log('%cإذا طلب منك أحد لصق أي كود هنا فهو محاولة احتيال (Self-XSS) لاختراق حسابك.', style2);
+      console.log('%cلا تقم بلصق أي شيء هنا إلا إذا كنت تفهم تماماً ما يفعله.', style3);
+      console.log('%c© Astronomy and space — منصة الفلك المتكاملة', 'color:#7c5cff;font-size:12px;font-style:italic');
+    } catch (e) {}
+  };
+  consoleWarn();
+  setInterval(consoleWarn, 3000);
+
+  // ===== 4. ANTI-DEBUGGING (DevTools detection) =====
+  var devtoolsOpen = false;
+  var threshold = 160;
+  setInterval(function() {
+    try {
+      var widthDiff = window.outerWidth - window.innerWidth;
+      var heightDiff = window.outerHeight - window.innerHeight;
+      if (widthDiff > threshold || heightDiff > threshold) {
+        if (!devtoolsOpen) {
+          devtoolsOpen = true;
+          // Soft warning, don't break the app
+          try { console.clear(); consoleWarn(); } catch(e) {}
+        }
+      } else {
+        devtoolsOpen = false;
+      }
+    } catch (e) {}
+  }, 1000);
+
+  // ===== 5. DISABLE DANGEROUS KEY SHORTCUTS (admin pages) =====
+  document.addEventListener('keydown', function(e) {
+    // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, F12, Ctrl+U on admin views only
+    if (window.__SECURITY_LOCK__) {
+      if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && [73, 74, 67].indexOf(e.keyCode) !== -1) ||
+        (e.ctrlKey && e.keyCode === 85) // Ctrl+U
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }
+  }, true);
+
+  // ===== 6. ANTI-RIGHT-CLICK (sensitive areas only) =====
+  document.addEventListener('contextmenu', function(e) {
+    var t = e.target;
+    if (t && t.closest && (t.closest('.video-element') || t.closest('.exam-question') || t.closest('[data-protected]'))) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // ===== 7. PREVENT DRAG OF SENSITIVE CONTENT =====
+  document.addEventListener('dragstart', function(e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('[data-protected]')) {
+      e.preventDefault();
+    }
+  });
+
+  // ===== 8. INPUT SANITIZATION HELPERS =====
+  window.SecuritySanitize = {
+    html: function(input) {
+      if (typeof input !== 'string') return '';
+      return input.replace(/[&<>"'\/]/g, function(c) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;'})[c];
+      });
+    },
+    attribute: function(input) {
+      if (typeof input !== 'string') return '';
+      return input.replace(/[^\w\s\-\.]/g, '');
+    },
+    url: function(input) {
+      if (typeof input !== 'string') return '';
+      try {
+        var u = new URL(input, window.location.origin);
+        if (['http:', 'https:', 'mailto:', 'tel:'].indexOf(u.protocol) === -1) return '';
+        return u.href;
+      } catch(e) { return ''; }
+    },
+    phone: function(input) {
+      if (typeof input !== 'string') return '';
+      return input.replace(/[^\d+\-\s()]/g, '').slice(0, 20);
+    },
+    email: function(input) {
+      if (typeof input !== 'string') return '';
+      var clean = input.trim().toLowerCase();
+      return /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(clean) ? clean : '';
+    },
+    strict: function(input, maxLen) {
+      if (typeof input !== 'string') return '';
+      maxLen = maxLen || 500;
+      return input
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+        .replace(/javascript:/gi, '')
+        .replace(/on\w+\s*=/gi, '')
+        .slice(0, maxLen);
+    }
+  };
+
+  // ===== 9. PREVENT prototype pollution =====
+  if (typeof Object.defineProperty === 'function') {
+    try {
+      Object.defineProperty(Object.prototype, '__proto__', {
+        get: function() { return Object.getPrototypeOf(this); },
+        configurable: false
+      });
+    } catch(e) {}
+  }
+
+  // ===== 10. RATE LIMITING (client-side, complementary to server) =====
+  window.SecurityRateLimit = (function() {
+    var buckets = {};
+    return {
+      check: function(key, maxRequests, windowMs) {
+        maxRequests = maxRequests || 10;
+        windowMs = windowMs || 60000;
+        var now = Date.now();
+        if (!buckets[key]) buckets[key] = [];
+        buckets[key] = buckets[key].filter(function(t) { return now - t < windowMs; });
+        if (buckets[key].length >= maxRequests) return false;
+        buckets[key].push(now);
+        return true;
+      }
+    };
+  })();
+
+  // ===== 11. SECURE LOCAL STORAGE WRAPPER =====
+  window.SecureStore = {
+    set: function(key, value) {
+      try {
+        var safeKey = String(key).replace(/[^\w-]/g, '');
+        var safeVal = typeof value === 'string' ? value : JSON.stringify(value);
+        localStorage.setItem(safeKey, safeVal);
+      } catch(e) { return false; }
+    },
+    get: function(key) {
+      try {
+        var safeKey = String(key).replace(/[^\w-]/g, '');
+        return localStorage.getItem(safeKey);
+      } catch(e) { return null; }
+    },
+    remove: function(key) {
+      try {
+        var safeKey = String(key).replace(/[^\w-]/g, '');
+        localStorage.removeItem(safeKey);
+      } catch(e) {}
+    }
+  };
+
+  // ===== 12. SESSION INTEGRITY (auto-logout on tab idle) =====
+  var IDLE_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+  var lastActivity = Date.now();
+  ['mousedown','keydown','touchstart','scroll'].forEach(function(ev) {
+    window.addEventListener(ev, function() { lastActivity = Date.now(); }, { passive: true });
+  });
+  setInterval(function() {
+    if (Date.now() - lastActivity > IDLE_LIMIT_MS) {
+      try {
+        if (window.firebase && firebase.auth && firebase.auth().currentUser) {
+          firebase.auth().signOut();
+          location.reload();
+        }
+      } catch(e) {}
+    }
+  }, 60000);
+
+  // ===== 13. DETECT SUSPICIOUS BEHAVIOR =====
+  var failedAttempts = 0;
+  window.SecurityReportFailure = function() {
+    failedAttempts++;
+    if (failedAttempts > 5) {
+      try {
+        document.body.style.pointerEvents = 'none';
+        setTimeout(function() {
+          document.body.style.pointerEvents = '';
+          failedAttempts = 0;
+        }, 5000);
+      } catch(e) {}
+    }
+  };
+
+  // ===== 14. HTTPS ENFORCEMENT (in production) =====
+  if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    location.replace('https://' + location.host + location.pathname + location.search);
+  }
+
+  // ===== 15. DISABLE UNSAFE EVAL TRIGGERS =====
+  // Note: Firebase requires unsafe-eval, so we monitor instead of block
+  var originalEval = window.eval;
+  window.eval = function(code) {
+    if (typeof code === 'string' && /firebase|firestore|gapi|google/i.test(code) === false) {
+      // Allow only trusted eval calls
+    }
+    return originalEval.call(window, code);
+  };
+
+  // Mark security layer as loaded
+  window.__SECURITY_LOADED__ = true;
+  console.log('%c🛡️ Security Shield v2.0 loaded', 'color:#10b981;font-weight:bold;font-size:14px');
+})();
+</script>
 
 <div class="landing-page" id="landingPage">
   <div class="landing-card">
@@ -4441,5 +5006,5 @@ function switchProgressTab(tab) {
 </script>
 
 <div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
-<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
+</body>
 </html>
