@@ -1770,7 +1770,7 @@ async function updateAdminUI() {
       snap.forEach(d => {
         let v = d.data();
         v.id = d.id;
-        videos.push(v);
+        videos.push(v); 
       });
       if (isLoadingVideos) isLoadingVideos = false;
       loadAttemptFailed = false;
