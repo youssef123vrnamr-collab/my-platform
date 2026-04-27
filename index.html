@@ -1777,7 +1777,7 @@ async function updateAdminUI() {
       renderVideos();
       updateStorageBar();
       checkForResume();
-      checkUrlForShare();
+      checkUrlForShare(); 
       if (attempt > 1) showToast("✅ تم استعادة الاتصال بقاعدة البيانات");
     }, err => {
       console.error("Error loading videos (attempt " + attempt + "):", err);
