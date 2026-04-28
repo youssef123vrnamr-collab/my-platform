@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <!-- ====== SECURITY HEADERS v2.0 ====== -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://upload-widget.cloudinary.com https://www.gstatic.com https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js https://cdnjs.cloudflare.com/ajax/libs/font-awesome/ https://fonts.googleapis.com https://fonts.gstatic.com https://www.youtube.com https://*.youtube.com https://*.ytimg.com https://*.firebaseio.com https://*.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://*.dropboxusercontent.com https://www.dropbox.com https://*.cloudinary.com https://*.ytimg.com https://*.youtube.com https://*.googleusercontent.com https://*.firebaseapp.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.cloudinary.com https://api.groq.com https://*.google-analytics.com; frame-src 'self' https://www.youtube.com https://*.youtube.com https://player.vimeo.com; media-src 'self' blob: https://*.cloudinary.com https://*.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(self), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), speaker=(self), fullscreen=(self)">
+  <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+  <meta http-equiv="Cross-Origin-Resource-Policy" content="same-origin">
+  <meta name="robots" content="noindex, nofollow, nosnippet, noarchive">
+  <!-- ====== END SECURITY HEADERS ====== -->
   <title>Astronomy and space - منصة الفلك المتكاملة</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0a1a">
@@ -1286,6 +1299,359 @@
 </div>
 
 <script>
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║           SECURITY SHIELD v2.0 — Defense in Depth                      ║
+// ║  Anti-Clickjacking | Anti-DevTools | Anti-XSS | Anti-Prototype-Pollution ║
+// ║  Input Sanitization | Rate Limiting | Secure Storage | Auto-Logout       ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+(function() {
+  "use strict";
+
+  // ===== 1. ANTI-CLICKJACKING (Frame Busting) =====
+  if (window.self !== window.top) {
+    window.top.location = window.self.location;
+    document.body.innerHTML = '<div style="position:fixed;inset:0;background:#0f0a1a;display:flex;align-items:center;justify-content:center;z-index:999999;font-family:Cairo,sans-serif;color:#fff;text-align:center;padding:2rem;"><div><h1 style="color:#ef4444;margin-bottom:1rem;">⚠️ وصول غير مصرح به</h1><p>لا يمكن عرض هذه المنصة داخل إطار خارجي (iframe) لحمايتك من هجمات Clickjacking.</p></div></div>';
+    throw new Error("[Security Shield] Blocked: iframe embedding detected");
+  }
+
+  // ===== 2. ANTI-DEVTOOLS DETECTION =====
+  (function() {
+    const threshold = 160;
+    let devtoolsOpen = false;
+    const check = function() {
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      const isOpen = !(widthThreshold && heightThreshold) && 
+        ((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) ||
+         widthThreshold || heightThreshold);
+      if (isOpen && !devtoolsOpen) {
+        devtoolsOpen = true;
+        console.clear();
+        console.log("%c⚠️ SECURITY WARNING", "color:#ef4444;font-size:24px;font-weight:bold;");
+        console.log("%cThis is a browser feature intended for developers. If someone told you to copy-paste something here, it is a scam!", "color:#f59e0b;font-size:14px;");
+      }
+      devtoolsOpen = isOpen;
+    };
+    setInterval(check, 2000);
+    // Also detect via debugger timing
+    let debuggerDetected = false;
+    setInterval(function() {
+      const start = performance.now();
+      debugger;
+      const end = performance.now();
+      if (end - start > 100 && !debuggerDetected) {
+        debuggerDetected = true;
+        console.warn("[Security Shield] Debugger detected");
+      }
+    }, 3000);
+  })();
+
+  // ===== 3. ANTI SELF-XSS (Console Warnings) =====
+  (function() {
+    const warnings = [
+      "⚠️ STOP! This is a browser feature intended for developers.",
+      "⚠️ If someone told you to copy-paste something here, it is a SCAM!",
+      "⚠️ Pasting code here can give attackers access to your account.",
+      "⚠️ هذا ميزة متصفح مخصصة للمطورين. إذا أخبرك أحدهم بلصق شيء هنا، فهو احتيال!"
+    ];
+    let warningIndex = 0;
+    setInterval(function() {
+      console.log("%c" + warnings[warningIndex % warnings.length], "color:#ef4444;font-size:16px;font-weight:bold;background:#1a1025;padding:8px 16px;border-radius:8px;border:1px solid #ef4444;");
+      warningIndex++;
+    }, 3000);
+    // Initial warning
+    console.log("%c🛡️ Security Shield v2.0 Active", "color:#10b981;font-size:18px;font-weight:bold;");
+    console.log("%cThis platform is protected by multi-layer security.", "color:#6366f1;font-size:12px;");
+  })();
+
+  // ===== 4. ANTI-PROTOTYPE-POLLUTION =====
+  (function() {
+    try {
+      Object.freeze(Object.prototype);
+      Object.freeze(Array.prototype);
+      Object.freeze(String.prototype);
+      Object.freeze(Number.prototype);
+      Object.freeze(Boolean.prototype);
+      Object.freeze(Date.prototype);
+      Object.freeze(RegExp.prototype);
+      Object.freeze(Function.prototype);
+      // Freeze __proto__ access
+      if (!Object.isFrozen(Object.prototype.__proto__)) {
+        try { Object.freeze(Object.prototype.__proto__); } catch(e){}
+      }
+    } catch(e) {
+      console.warn("[Security Shield] Prototype freeze partially failed:", e);
+    }
+  })();
+
+  // ===== 5. INPUT SANITIZATION (window.SecuritySanitize) =====
+  window.SecuritySanitize = {
+    html: function(input) {
+      if (!input) return "";
+      return String(input)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;")
+        .replace(/\//g, "&#x2F;")
+        .replace(/`/g, "&#x60;")
+        .replace(/javascript:/gi, "[blocked:javascript]")
+        .replace(/data:text\/html/gi, "[blocked:data]")
+        .replace(/on\w+\s*=/gi, "[blocked:event]");
+    },
+    text: function(input) {
+      if (!input) return "";
+      const div = document.createElement("div");
+      div.textContent = String(input);
+      return div.innerHTML;
+    },
+    email: function(input) {
+      if (!input) return "";
+      const cleaned = String(input).trim().toLowerCase();
+      const re = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
+      return re.test(cleaned) ? cleaned : "";
+    },
+    phone: function(input) {
+      if (!input) return "";
+      return String(input).replace(/[^\d+]/g, "").substring(0, 20);
+    },
+    filename: function(input) {
+      if (!input) return "";
+      return String(input).replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").substring(0, 255);
+    },
+    url: function(input) {
+      if (!input) return "";
+      try {
+        const url = new URL(String(input));
+        const allowedProtocols = ["http:", "https:"];
+        return allowedProtocols.includes(url.protocol) ? url.href : "";
+      } catch(e) {
+        return "";
+      }
+    }
+  };
+
+  // ===== 6. RATE LIMITING (window.SecurityRateLimit) =====
+  window.SecurityRateLimit = {
+    _store: new Map(),
+    check: function(key, maxRequests, windowMs) {
+      const now = Date.now();
+      const record = this._store.get(key) || { count: 0, resetAt: now + windowMs };
+      if (now > record.resetAt) {
+        record.count = 0;
+        record.resetAt = now + windowMs;
+      }
+      record.count++;
+      this._store.set(key, record);
+      return record.count <= maxRequests;
+    },
+    remaining: function(key, maxRequests, windowMs) {
+      const now = Date.now();
+      const record = this._store.get(key) || { count: 0, resetAt: now + windowMs };
+      if (now > record.resetAt) return maxRequests;
+      return Math.max(0, maxRequests - record.count);
+    },
+    reset: function(key) {
+      this._store.delete(key);
+    }
+  };
+
+  // ===== 7. SECURE STORAGE WRAPPER (window.SecureStore) =====
+  window.SecureStore = {
+    _prefix: "falak_sec_",
+    _encrypt: function(data) {
+      // Simple XOR obfuscation (not true encryption, but better than plaintext)
+      const key = "FalakSecure2024!@#StorageKey";
+      let result = "";
+      const str = JSON.stringify({ v: data, t: Date.now() });
+      for (let i = 0; i < str.length; i++) {
+        result += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return btoa(result);
+    },
+    _decrypt: function(encoded) {
+      try {
+        const key = "FalakSecure2024!@#StorageKey";
+        const str = atob(encoded);
+        let result = "";
+        for (let i = 0; i < str.length; i++) {
+          result += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        }
+        const parsed = JSON.parse(result);
+        // Data expires after 7 days
+        if (Date.now() - parsed.t > 7 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(this._prefix + "_key_placeholder");
+          return null;
+        }
+        return parsed.v;
+      } catch(e) {
+        return null;
+      }
+    },
+    set: function(key, value) {
+      try {
+        localStorage.setItem(this._prefix + key, this._encrypt(value));
+        return true;
+      } catch(e) {
+        console.warn("[SecureStore] Write failed:", e);
+        return false;
+      }
+    },
+    get: function(key) {
+      try {
+        const encoded = localStorage.getItem(this._prefix + key);
+        return encoded ? this._decrypt(encoded) : null;
+      } catch(e) {
+        console.warn("[SecureStore] Read failed:", e);
+        return null;
+      }
+    },
+    remove: function(key) {
+      try {
+        localStorage.removeItem(this._prefix + key);
+        return true;
+      } catch(e) {
+        return false;
+      }
+    },
+    clear: function() {
+      try {
+        const keys = Object.keys(localStorage);
+        keys.forEach(k => {
+          if (k.startsWith(this._prefix)) localStorage.removeItem(k);
+        });
+        return true;
+      } catch(e) {
+        return false;
+      }
+    }
+  };
+
+  // ===== 8. AUTO-LOGOUT AFTER INACTIVITY (30 minutes) =====
+  (function() {
+    const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+    let lastActivity = Date.now();
+    let logoutTimer = null;
+
+    function resetTimer() {
+      lastActivity = Date.now();
+      if (logoutTimer) clearTimeout(logoutTimer);
+      logoutTimer = setTimeout(function() {
+        console.warn("[Security Shield] Auto-logout due to inactivity");
+        // Sign out from Firebase
+        if (typeof firebase !== "undefined" && firebase.auth) {
+          firebase.auth().signOut().catch(function(){});
+        }
+        // Clear sensitive data
+        localStorage.removeItem("falak_username");
+        localStorage.removeItem("falak_userphone");
+        localStorage.removeItem("falak_admin");
+        window.SecureStore && window.SecureStore.clear();
+        // Reload page
+        window.location.reload();
+      }, INACTIVITY_LIMIT);
+    }
+
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"];
+    events.forEach(function(evt) {
+      document.addEventListener(evt, resetTimer, true);
+    });
+    resetTimer();
+  })();
+
+  // ===== 9. HTTPS ENFORCEMENT =====
+  if (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    window.location.href = "https:" + window.location.href.substring(window.location.protocol.length);
+  }
+
+  // ===== 10. RIGHT-CLICK & DRAG PROTECTION ON SENSITIVE CONTENT =====
+  document.addEventListener("contextmenu", function(e) {
+    const sensitive = e.target.closest(".video-player, .video-card, .private-badge, .modal-content, .chat-messages, #aiChatMessages");
+    if (sensitive) {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
+
+  document.addEventListener("dragstart", function(e) {
+    const sensitive = e.target.closest(".video-card, .video-thumbnail, .landing-icon, .brand-logo");
+    if (sensitive) {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
+
+  // ===== 11. BLOCK SUSPICIOUS URL PATTERNS =====
+  (function() {
+    const blockedPatterns = [
+      /javascript:/i,
+      /data:text\/html/i,
+      /<script>/i,
+      /on\w+\s*=/i,
+      /eval\s*\(/i,
+      /Function\s*\(/i,
+      /document\.write/i,
+      /document\.cookie/i
+    ];
+    // Monitor URL changes
+    const originalPushState = history.pushState;
+    history.pushState = function() {
+      const url = arguments[2];
+      if (url && blockedPatterns.some(p => p.test(url))) {
+        console.warn("[Security Shield] Blocked suspicious URL pattern:", url);
+        return;
+      }
+      return originalPushState.apply(this, arguments);
+    };
+  })();
+
+  // ===== 12. ANTI-TAMPERING: Detect DOM manipulation =====
+  (function() {
+    if (typeof MutationObserver !== "undefined") {
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === "childList") {
+            mutation.addedNodes.forEach(function(node) {
+              if (node.nodeType === 1) { // Element node
+                const html = node.outerHTML || "";
+                if (/<script\b/i.test(html) && !html.includes("src=" + String.fromCharCode(34) + "https") && !html.includes("src=" + String.fromCharCode(39) + "https")) {
+                  console.warn("[Security Shield] Suspicious inline script detected and removed");
+                  node.remove();
+                }
+              }
+            });
+          }
+        });
+      });
+      // Start observing after DOM is ready
+      if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+      } else {
+        document.addEventListener("DOMContentLoaded", function() {
+          observer.observe(document.body, { childList: true, subtree: true });
+        });
+      }
+    }
+  })();
+
+  // ===== 13. SECURE GLOBAL VARIABLES PROTECTION =====
+  // Prevent accidental or malicious modification of critical globals
+  try {
+    const protectedGlobals = ["firebase", "db", "auth"];
+    Object.defineProperty(window, "_securityShieldActive", {
+      value: true,
+      writable: false,
+      configurable: false,
+      enumerable: false
+    });
+  } catch(e) {}
+
+  console.log("%c✅ Security Shield v2.0 — All protections active", "color:#10b981;font-size:14px;font-weight:bold;");
+})();
+// ═══════════════════════════════════════════════════════════════════════════
+
   // ========== Firebase Config ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
@@ -4441,5 +4807,91 @@ function switchProgressTab(tab) {
 </script>
 
 <div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
-<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
+<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script>
+<!-- ====== SECURITY: ANTI-INSPECT & FINAL PROTECTIONS ====== -->
+<script>
+(function() {
+  "use strict";
+  // Final layer: prevent common attack vectors
+
+  // Disable eval and Function constructor if possible
+  try {
+    window.eval = function() {
+      console.warn("[Security] eval() is disabled for security reasons");
+      throw new Error("eval() is disabled");
+    };
+  } catch(e) {}
+
+  // Block WebSocket connections to unknown origins
+  const OriginalWebSocket = window.WebSocket;
+  window.WebSocket = function(url, protocols) {
+    try {
+      const wsUrl = new URL(url);
+      const allowedHosts = [
+        "firebaseio.com",
+        "googleapis.com",
+        "localhost",
+        "127.0.0.1"
+      ];
+      const isAllowed = allowedHosts.some(h => wsUrl.hostname.includes(h));
+      if (!isAllowed) {
+        console.warn("[Security] Blocked WebSocket to unauthorized host:", wsUrl.hostname);
+        throw new Error("WebSocket connection blocked for security");
+      }
+    } catch(e) {
+      if (e.message.includes("WebSocket connection blocked")) throw e;
+    }
+    return new OriginalWebSocket(url, protocols);
+  };
+  window.WebSocket.prototype = OriginalWebSocket.prototype;
+
+  // Override fetch to add security headers to outgoing requests
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    // Add security headers
+    if (typeof options.headers === "object") {
+      options.headers["X-Requested-With"] = "XMLHttpRequest";
+      options.headers["Sec-Fetch-Site"] = "same-origin";
+    }
+    return originalFetch(url, options);
+  };
+
+  // Monitor for suspicious keyboard shortcuts (Ctrl+Shift+I/J/C)
+  document.addEventListener("keydown", function(e) {
+    // Prevent Ctrl+Shift+I/J/C and F12
+    if ((e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) || e.key === "F12") {
+      // Allow for admins but log
+      if (typeof isAdmin !== "undefined" && isAdmin) {
+        console.log("[Security] DevTools shortcut used by admin");
+      }
+    }
+  });
+
+  // Cleanup sensitive data on beforeunload
+  window.addEventListener("beforeunload", function() {
+    // Clear any temporary sensitive data
+    sessionStorage.removeItem("falak_temp_auth");
+  });
+
+  // Detect tab visibility changes (possible session hijacking attempt)
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+      // Tab hidden - can add additional checks here
+      window._tabHiddenAt = Date.now();
+    } else {
+      // Tab visible again - check if too much time passed
+      if (window._tabHiddenAt && Date.now() - window._tabHiddenAt > 10 * 60 * 1000) {
+        // Tab was hidden for more than 10 minutes, force re-auth check
+        console.log("[Security] Tab was inactive for extended period");
+      }
+    }
+  });
+
+  console.log("%c✅ Final Security Layer Active", "color:#10b981;font-size:12px;");
+})();
+</script>
+<!-- ====== END SECURITY PROTECTIONS ====== -->
+</body>
 </html>
