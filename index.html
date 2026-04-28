@@ -2542,21 +2542,33 @@ async function saveUserName() {
     return;
   }
   
-  // ⭐⭐ التعديل الجديد: تأكد من وجود حساب مجهول لتعيين currentUserId ⭐⭐
-  if (!currentUserId) {
+  // ========== ⭐ إنشاء الحساب المجهول مع إعادة المحاولة ⭐ ==========
+  if (!firebase.auth().currentUser) {
     try {
-      if (firebase.auth().currentUser) {
-        currentUserId = firebase.auth().currentUser.uid;
-      } else {
-        const cred = await firebase.auth().signInAnonymously();
+      let cred = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          cred = await firebase.auth().signInAnonymously();
+          break;
+        } catch(retryErr) {
+          console.warn(`Attempt ${attempt+1} failed:`, retryErr);
+          await new Promise(r => setTimeout(r, 500));
+        }
+      }
+      if (cred && cred.user) {
         currentUserId = cred.user.uid;
-        console.log("Anonymous user created:", currentUserId);
+        console.log("✅ Anonymous user created:", currentUserId);
+      } else {
+        throw new Error("Could not create anonymous user after retries");
       }
     } catch(e) {
-      console.warn("Anonymous auth failed", e);
-      // إذا فشل مجهول، نكمل بدون currentUserId (سيخزن محلياً فقط)
+      console.error("Anonymous auth failed:", e);
+      showToast("⚠️ سيتم حفظ تقدمك محلياً فقط لظروف تقنية");
     }
+  } else {
+    currentUserId = firebase.auth().currentUser.uid;
   }
+  // ================================================================
   
   saveUserDataToStorage(name, fullPhone);
   if (currentUserId) await saveUserDataToFirebase(currentUserId);
