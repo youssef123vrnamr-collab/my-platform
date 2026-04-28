@@ -1299,6 +1299,13 @@
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
+async function ensureAnonymousUser() {
+  if (firebase.auth().currentUser) return firebase.auth().currentUser.uid;
+  try {
+    const cred = await firebase.auth().signInAnonymously();
+    return cred.user.uid;
+  } catch(e) { return null; }
+}
 // ========== User Roles Functions ==========
 async function createUserRole(userId, role, creatorId = null) {
   if (!userId) return false;
@@ -2478,7 +2485,69 @@ async function updateAdminUI() {
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
   function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").value = currentUser || ""; document.getElementById("userPhoneInput").value = currentUserPhone || ""; document.getElementById("userNameInput").focus(); } }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
-  async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
+async function saveUserName() {
+  let name = document.getElementById("userNameInput").value.trim();
+  let countryCode = document.getElementById("userCountryCode").value;
+  let phoneNumber = document.getElementById("userPhoneInput").value.trim();
+  
+  if (!isValidName(name)) {
+    SoundEffects.error();
+    showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة");
+    return;
+  }
+  if (!phoneNumber) {
+    SoundEffects.error();
+    showToast("⚠️ رقم الهاتف مطلوب");
+    return;
+  }
+  let fullPhone = normalizePhone(phoneNumber, countryCode);
+  if (!validatePhone(fullPhone, countryCode)) {
+    SoundEffects.error();
+    showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)");
+    return;
+  }
+  
+  showToast("⏳ جاري التحقق من البيانات...");
+  const checkResult = await checkIfUserAlreadyActive(name, fullPhone);
+  if (!checkResult.allowed) {
+    SoundEffects.error();
+    showToast(checkResult.message);
+    return;
+  }
+  
+  // ⭐⭐ التعديل الجديد: تأكد من وجود حساب مجهول لتعيين currentUserId ⭐⭐
+  if (!currentUserId) {
+    try {
+      if (firebase.auth().currentUser) {
+        currentUserId = firebase.auth().currentUser.uid;
+      } else {
+        const cred = await firebase.auth().signInAnonymously();
+        currentUserId = cred.user.uid;
+        console.log("Anonymous user created:", currentUserId);
+      }
+    } catch(e) {
+      console.warn("Anonymous auth failed", e);
+      // إذا فشل مجهول، نكمل بدون currentUserId (سيخزن محلياً فقط)
+    }
+  }
+  
+  saveUserDataToStorage(name, fullPhone);
+  if (currentUserId) await saveUserDataToFirebase(currentUserId);
+  await registerActiveSession(name, fullPhone);
+  
+  document.getElementById("nameModal").classList.remove("active");
+  document.getElementById("chatModal").classList.add("active");
+  SoundEffects.join();
+  initPresenceSystem();
+  loadMessages();
+  db.collection("chat_users").add({
+    name: name,
+    phone: fullPhone,
+    userId: currentUserId || null,
+    joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(err => console.warn("Could not save chat user:", err));
+  updateAdminUI();
+}
   loadUserDashboard();
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
