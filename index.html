@@ -1571,39 +1571,46 @@ async function isAdminUser(userId) {
   // يستخدم Doc ID ثابت = userId_videoId لمنع التكرار، ويعمل بدون قراءة سابقة
   // ويتعامل مع فيديوهات YouTube والفيديوهات العادية بنفس الطريقة.
   let __markingWatched = new Set();
-  async function markVideoAsWatched(videoId) {
+async function markVideoAsWatched(videoId) {
+  const videoTitle = (videos.find(v => v.id === videoId) || {}).title || "فيديو";
+  
+  // إذا كان المستخدم مسجلاً (عبر Google أو Anonymous)
+  if (currentUserId) {
     try {
-      if (!currentUserId || !videoId) return;
       const key = currentUserId + "_" + videoId;
       if (__markingWatched.has(key)) return;
       __markingWatched.add(key);
       const docRef = db.collection("watch_history").doc(key);
       const existing = await docRef.get();
-      if (existing.exists) { __markingWatched.delete(key); return; }
+      if (existing.exists) {
+        __markingWatched.delete(key);
+        return;
+      }
       await docRef.set({
         userId: currentUserId,
         videoId: videoId,
-        title: (videos.find(v => v.id === videoId) || {}).title || "",
+        title: videoTitle,
         watchedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      // ====== ضمان وجود ملف الطالب في user_progress ======
-      // إذا كان المشرف قد حذف ملف الطالب سابقاً، نُعيد إنشاءه تلقائياً
-      // عند تسجيل أي مشاهدة جديدة حتى يظهر الطالب مرة أخرى في قائمة المتابعة.
+      
+      // تحديث user_progress
       try {
         const userPatch = { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
         if (currentUser) userPatch.username = currentUser;
         if (currentUserPhone) userPatch.phone = currentUserPhone;
-        try {
-          const au = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
-          if (au) {
-            if (au.email) userPatch.email = au.email;
-            if (au.displayName && !userPatch.username) userPatch.username = au.displayName;
-            if (au.photoURL) userPatch.photoURL = au.photoURL;
-          }
-        } catch(_){}
+        const au = auth.currentUser;
+        if (au) {
+          if (au.email) userPatch.email = au.email;
+          if (au.displayName && !userPatch.username) userPatch.username = au.displayName;
+          if (au.photoURL) userPatch.photoURL = au.photoURL;
+        }
         await db.collection("user_progress").doc(currentUserId).set(userPatch, { merge: true });
-      } catch (e) { console.warn("user_progress upsert (on watch) failed", e); }
-      try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch (e) { console.warn("addPoints failed", e); }
+      } catch (e) { console.warn("user_progress upsert failed", e); }
+      
+      // إضافة نقاط
+      try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch(e) {}
+      
+      // تحديث تقدم الكورسات
       try {
         const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
         for (const enroll of enrollments.docs) {
@@ -1611,22 +1618,42 @@ async function isAdminUser(userId) {
           const course = await db.collection("courses").doc(ed.courseId).get();
           if (course.exists && (course.data().videoIds || []).includes(videoId)) {
             if (!(ed.completedVideosIds || []).includes(videoId)) {
-              const completed = (ed.completedVideos || 0) + 1;
               await enroll.ref.update({
-                completedVideos: completed,
+                completedVideos: (ed.completedVideos || 0) + 1,
                 completedVideosIds: firebase.firestore.FieldValue.arrayUnion(videoId)
               });
             }
           }
         }
-      } catch (e) { console.warn("course progress update failed", e); }
-      try { if (typeof showToast === "function") showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك"); } catch(_){}
+      } catch(e) {}
+      
+      showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك");
       __markingWatched.delete(key);
     } catch (e) {
       console.error("markVideoAsWatched failed:", e);
-      try { __markingWatched.delete(currentUserId + "_" + videoId); } catch(_){}
+      __markingWatched.delete(currentUserId + "_" + videoId);
+    }
+  } 
+  // إذا كان المستخدم محلياً (ليس لديه currentUserId)
+  else {
+    try {
+      let localHistory = JSON.parse(localStorage.getItem("falak_watch_history") || "[]");
+      if (!localHistory.some(entry => entry.videoId === videoId)) {
+        localHistory.push({
+          videoId: videoId,
+          title: videoTitle,
+          watchedAt: new Date().toISOString(),
+          userPhone: currentUserPhone || null
+        });
+        localStorage.setItem("falak_watch_history", JSON.stringify(localHistory));
+        showToast("✅ تم تسجيل المشاهدة محلياً");
+      }
+    } catch(e) {
+      console.warn("localStorage save failed", e);
+      showToast("⚠️ تعذر حفظ التقدم محلياً");
     }
   }
+}
   window.markVideoAsWatched = markVideoAsWatched;
 
   // ====== تحميل YouTube IFrame API مرة واحدة ======
@@ -3203,6 +3230,7 @@ async function loadStudentProgressData(student) {
   const watched = [];
   const watchedIds = new Set();
 
+  // 1. جلب المشاهدات من Firestore إذا كان المستخدم مسجلاً (عبر Google أو Anonymous)
   if (student.userId) {
     try {
       const snap = await db.collection('watch_history').where('userId', '==', student.userId).get();
@@ -3216,6 +3244,22 @@ async function loadStudentProgressData(student) {
     } catch (e) { console.warn('watch_history read failed', e); }
   }
 
+  // 2. إذا كان المستخدم محلياً (ليس لديه userId) أو لم نجد شيئاً في Firestore، نبحث في localStorage
+  if (watched.length === 0 && student.phone) {
+    try {
+      const localHistory = JSON.parse(localStorage.getItem("falak_watch_history") || "[]");
+      // نفلتر حسب رقم الهاتف المحفوظ مع كل مشاهدة (سنضيفه لاحقاً)
+      // لكن حالياً localStorage يخزن videoId فقط بدون ربط بهاتف، لذلك سنعتبر أن كل المشاهدات المحفوظة تعود لهذا المستخدم
+      localHistory.forEach(item => {
+        if (!watchedIds.has(item.videoId)) {
+          watchedIds.add(item.videoId);
+          watched.push({ videoId: item.videoId, watchedAt: new Date(item.watchedAt || Date.now()) });
+        }
+      });
+    } catch(e) { console.warn('localStorage read failed', e); }
+  }
+
+  // باقي الكود كما هو (exam results, points, الخ)
   let myExamResults = [];
   try {
     const norm = s => String(s || '').replace(/[^\d+]/g, '');
@@ -3236,6 +3280,9 @@ async function loadStudentProgressData(student) {
       const userDoc = await db.collection('user_progress').doc(student.userId).get();
       if (userDoc.exists) points = userDoc.data().points || 0;
     } catch (e) { /* silent */ }
+  } else {
+    // قراءة النقاط من localStorage (اختياري)
+    points = parseInt(localStorage.getItem("falak_points_" + (student.phone || '')) || 0);
   }
 
   const totalVideos = (videos || []).filter(v => !v.private).length;
@@ -3249,6 +3296,8 @@ async function loadStudentProgressData(student) {
 
 async function loadAllStudentsData() {
   const studentsMap = new Map();
+
+  // 1. جلب البيانات من Firestore (المستخدمين المسجلين)
   try {
     const wh = await db.collection('watch_history').get();
     wh.forEach(d => {
@@ -3274,14 +3323,12 @@ async function loadAllStudentsData() {
     });
   } catch (e) { console.warn('watch_history read failed', e); }
 
+  // 2. جلب بيانات المستخدمين من user_progress
   const uids = Array.from(studentsMap.keys());
   await Promise.all(uids.map(async (uid) => {
     try {
       const doc = await db.collection('user_progress').doc(uid).get();
-      if (!doc.exists) {
-        studentsMap.delete(uid);
-        return;
-      }
+      if (!doc.exists) return;
       const u = doc.data() || {};
       const name = (u.username || u.name || u.displayName || '').trim();
       const phone = (u.phone || '').trim();
@@ -3295,19 +3342,51 @@ async function loadAllStudentsData() {
       entry.points = u.points || 0;
       const lu = u.lastUpdated && u.lastUpdated.toDate ? u.lastUpdated.toDate() : null;
       if (lu && (!entry.lastActivity || lu > entry.lastActivity)) entry.lastActivity = lu;
-    } catch (e) {
-      console.warn('user_progress doc read failed', uid, e);
-    }
+    } catch (e) { console.warn('user_progress doc read failed', uid, e); }
   }));
 
+  // 3. إضافة المستخدمين المحليين من localStorage (من سجل المشاهدة المحلي)
+  try {
+    const localHistory = JSON.parse(localStorage.getItem("falak_watch_history") || "[]");
+    if (localHistory.length > 0) {
+      // إنشاء مستخدم افتراضي لكل جهاز (نستخدم phone = 'local_' + deviceId)
+      let deviceId = localStorage.getItem("falak_device_id");
+      if (!deviceId) {
+        deviceId = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        localStorage.setItem("falak_device_id", deviceId);
+      }
+      let localUser = studentsMap.get(deviceId);
+      if (!localUser) {
+        localUser = {
+          userId: deviceId,
+          name: currentUser || 'زائر',
+          phone: currentUserPhone || deviceId,
+          watchedIds: new Set(),
+          examResults: [],
+          points: 0,
+          lastActivity: new Date(),
+        };
+        studentsMap.set(deviceId, localUser);
+      }
+      localHistory.forEach(item => {
+        if (item.videoId) localUser.watchedIds.add(item.videoId);
+      });
+      // تحديث آخر نشاط
+      const lastWatched = localHistory.reduce((latest, item) => {
+        const d = new Date(item.watchedAt || 0);
+        return d > latest ? d : latest;
+      }, localUser.lastActivity || new Date(0));
+      localUser.lastActivity = lastWatched;
+    }
+  } catch(e) { console.warn('localStorage merge failed', e); }
+
+  // 4. ربط نتائج الامتحانات (من Firestore) مع المستخدمين
   const norm = s => String(s || '').replace(/[^\d+]/g, '');
   (examResults || []).forEach(r => {
     const phoneN = norm(r.studentPhone);
     const nameN = (r.studentName || '').trim();
     let entry = null;
-    if (r.userId && studentsMap.has(r.userId)) {
-      entry = studentsMap.get(r.userId);
-    }
+    if (r.userId && studentsMap.has(r.userId)) entry = studentsMap.get(r.userId);
     if (!entry && phoneN.length >= 6) {
       for (const v of studentsMap.values()) {
         if (v.phone && norm(v.phone) === phoneN) { entry = v; break; }
