@@ -2031,7 +2031,10 @@ async function updateAdminUI() {
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
       // تسجيل المشاهدة عند نهاية الفيديو (يمنع التكرار من خلال markVideoAsWatched)
-      video.addEventListener("ended", () => { markVideoAsWatched(id); });
+   video.addEventListener("ended", () => { 
+  console.log("🔴 video ended, about to call markVideoAsWatched with id:", id);
+  markVideoAsWatched(id); 
+});   
       setupProgressTracking(id);
       
     }
