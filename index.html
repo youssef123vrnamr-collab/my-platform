@@ -1570,53 +1570,70 @@ async function isAdminUser(userId) {
   // ====== تسجيل مشاهدة فيديو (موحّد لكل أنواع الفيديوهات) ======
   // يستخدم Doc ID ثابت = userId_videoId لمنع التكرار، ويعمل بدون قراءة سابقة
   // ويتعامل مع فيديوهات YouTube والفيديوهات العادية بنفس الطريقة.
-  async function markVideoAsWatched(videoId) {
-  console.log("🔍 markVideoAsWatched called with videoId:", videoId, "currentUserId:", currentUserId);
-  if (!currentUserId || !videoId) {
-    console.warn("❌ missing currentUserId or videoId");
-    return;
-}
-    const key = currentUserId + "_" + videoId;
-    if (__markingWatched.has(key)) return;
-    __markingWatched.add(key);
-
-    const docRef = db.collection("watch_history").doc(key);
-    const videoTitle = (videos.find(v => v.id === videoId) || {}).title || "";
-
-    // ✅ استخدام set مع merge: true (سيُنشئ أو يُحدِّث بسلاسة)
-    await docRef.set({
-      userId: currentUserId,
-      videoId: videoId,
-      title: videoTitle,
-      watchedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });  // ← مهم جداً
-
-    // باقي الكود كما هو (إضافة نقاط، تحديث الكورسات، ...)
-    try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch(e) { console.warn(e); }
-    
+  let __markingWatched = new Set();
+async function markVideoAsWatched(videoId) {
+  const videoTitle = (videos.find(v => v.id === videoId) || {}).title || "فيديو";
+  
+  // إذا كان المستخدم مسجلاً (عبر Google أو Anonymous)
+  if (currentUserId) {
     try {
-      const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
-      for (const enroll of enrollments.docs) {
-        const ed = enroll.data();
-        const course = await db.collection("courses").doc(ed.courseId).get();
-        if (course.exists && (course.data().videoIds || []).includes(videoId)) {
-          if (!(ed.completedVideosIds || []).includes(videoId)) {
-            await enroll.ref.update({
-              completedVideos: firebase.firestore.FieldValue.increment(1),
-              completedVideosIds: firebase.firestore.FieldValue.arrayUnion(videoId)
-            });
+      const key = currentUserId + "_" + videoId;
+      if (__markingWatched.has(key)) return;
+      __markingWatched.add(key);
+      const docRef = db.collection("watch_history").doc(key);
+      const existing = await docRef.get();
+      if (existing.exists) {
+        __markingWatched.delete(key);
+        return;
+      }
+      await docRef.set({
+        userId: currentUserId,
+        videoId: videoId,
+        title: videoTitle,
+        watchedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      // تحديث user_progress
+      try {
+        const userPatch = { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
+        if (currentUser) userPatch.username = currentUser;
+        if (currentUserPhone) userPatch.phone = currentUserPhone;
+        const au = auth.currentUser;
+        if (au) {
+          if (au.email) userPatch.email = au.email;
+          if (au.displayName && !userPatch.username) userPatch.username = au.displayName;
+          if (au.photoURL) userPatch.photoURL = au.photoURL;
+        }
+        await db.collection("user_progress").doc(currentUserId).set(userPatch, { merge: true });
+      } catch (e) { console.warn("user_progress upsert failed", e); }
+      
+      // إضافة نقاط
+      try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch(e) {}
+      
+      // تحديث تقدم الكورسات
+      try {
+        const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
+        for (const enroll of enrollments.docs) {
+          const ed = enroll.data();
+          const course = await db.collection("courses").doc(ed.courseId).get();
+          if (course.exists && (course.data().videoIds || []).includes(videoId)) {
+            if (!(ed.completedVideosIds || []).includes(videoId)) {
+              await enroll.ref.update({
+                completedVideos: (ed.completedVideos || 0) + 1,
+                completedVideosIds: firebase.firestore.FieldValue.arrayUnion(videoId)
+              });
+            }
           }
         }
-      }
-    } catch(e) { console.warn("course progress update failed", e); }
-
-    __markingWatched.delete(key);
-    showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك");
-  } catch (e) {
-    console.error("markVideoAsWatched failed:", e);
-    __markingWatched.delete(currentUserId + "_" + videoId);
-  }
-}
+      } catch(e) {}
+      
+      showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك");
+      __markingWatched.delete(key);
+    } catch (e) {
+      console.error("markVideoAsWatched failed:", e);
+      __markingWatched.delete(currentUserId + "_" + videoId);
+    }
+  } 
   // إذا كان المستخدم محلياً (ليس لديه currentUserId)
   else {
     try {
