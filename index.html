@@ -2652,12 +2652,12 @@ async function updateAdminUI() {
       original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
     });
   } catch (e) {
-    console.error("فشل EmailJS:", e);
+    console.error(e);
     showToast("❌ فشل إرسال البريد الإلكتروني، تأكد من إعدادات EmailJS");
-    return; // توقف هنا، لا تكمل
+    return;
   }
 
-  // 2️⃣ تحديث قاعدة البيانات (إذا فشل هذا فقط، تظهر رسالة مختلفة ولا تمنع الأزرار الأخرى)
+  // 2️⃣ تحديث قاعدة البيانات - هذه هي الجملة التي تقصدها
   try {
     await db.collection("feedbacks").doc(currentReplyFeedbackId).update({
       replied: true,
@@ -2668,13 +2668,12 @@ async function updateAdminUI() {
     closeReplyModal();
     loadFeedbacksList();
   } catch (dbError) {
-    console.error("فشل تحديث Firestore:", dbError);
+    console.error(dbError);
     showToast("⚠️ تم إرسال البريد لكن فشل الحفظ في قاعدة البيانات (راجع صلاحيات المشرف)");
     closeReplyModal();
-    loadFeedbacksList(); // تحديث القائمة لإزالة التقييم من الواجهة إذا أردت
+    loadFeedbacksList();
   }
-}
-
+} 
   // PWA Install
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
   function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
