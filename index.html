@@ -2632,7 +2632,6 @@ async function updateAdminUI() {
   }
   let currentReplyFeedbackId = null, currentReplyEmail = null, currentReplyName = null;
   async function sendReplyEmail() {
-  console.log("تم استدعاء sendReplyEmail");
   let replyText = document.getElementById("replyMessage").value.trim();
   if (!replyText) {
     showToast("⚠️ اكتب نص الرد");
@@ -2642,9 +2641,8 @@ async function updateAdminUI() {
     showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
     return;
   }
-  
-  // إرسال البريد
-  let emailSent = false;
+
+  // 1️⃣ إرسال البريد
   try {
     emailjs.init(emailSettings.publicKey);
     await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
@@ -2653,20 +2651,18 @@ async function updateAdminUI() {
       reply_message: replyText,
       original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
     });
-    emailSent = true;
-    console.log("تم إرسال البريد");
   } catch (e) {
-    console.error("خطأ في EmailJS:", e);
+    console.error("فشل EmailJS:", e);
     showToast("❌ فشل إرسال البريد الإلكتروني، تأكد من إعدادات EmailJS");
-    return;
+    return; // توقف هنا، لا تكمل
   }
 
-  // تحديث قاعدة البيانات
+  // 2️⃣ تحديث قاعدة البيانات (إذا فشل هذا فقط، تظهر رسالة مختلفة ولا تمنع الأزرار الأخرى)
   try {
-    await db.collection("feedbacks").doc(currentReplyFeedbackId).update({ 
-      replied: true, 
-      repliedAt: firebase.firestore.FieldValue.serverTimestamp(), 
-      replyText: replyText 
+    await db.collection("feedbacks").doc(currentReplyFeedbackId).update({
+      replied: true,
+      repliedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      replyText: replyText
     });
     showToast("✅ تم إرسال الرد وحفظه بنجاح");
     closeReplyModal();
@@ -2675,7 +2671,7 @@ async function updateAdminUI() {
     console.error("فشل تحديث Firestore:", dbError);
     showToast("⚠️ تم إرسال البريد لكن فشل الحفظ في قاعدة البيانات (راجع صلاحيات المشرف)");
     closeReplyModal();
-    loadFeedbacksList();
+    loadFeedbacksList(); // تحديث القائمة لإزالة التقييم من الواجهة إذا أردت
   }
 }
 
