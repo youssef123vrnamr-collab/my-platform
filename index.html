@@ -2644,66 +2644,46 @@ async function updateAdminUI() {
     document.getElementById("replyFeedbackModal").classList.remove("active");
     currentReplyFeedbackId = null;
 }
-
 async function sendReplyEmail() {
-    let replyText = document.getElementById("replyMessage").value.trim();
-    if (!replyText) {
-        showToast("⚠️ اكتب نص الرد");
-        return;
-    }
-    if (!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
-        showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
-        return;
-    }
+  let replyText = document.getElementById("replyMessage").value.trim();
+  if (!replyText) { showToast("⚠️ اكتب نص الرد"); return; }
+  if (!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
+    showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
+    return;
+  }
 
-    try {
-        // 1. تهيئة EmailJS
-        emailjs.init(emailSettings.publicKey);
-
-        // 2. إرسال البريد
-        await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
-            to_name: currentReplyName,
-            to_email: currentReplyEmail,
-            reply_message: replyText,
-            original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
-        });
-
-        // 3. تحديث قاعدة البيانات (بعد نجاح الإرسال)
-        await db.collection("feedbacks").doc(currentReplyFeedbackId).update({
-            replied: true,
-            repliedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            replyText: replyText
-        });
-
-        // 4. كل شيء تم بنجاح
-        showToast("✅ تم إرسال الرد بنجاح");
-        closeReplyModal();
-        loadFeedbacksList();
-
-    } catch (error) {
-        console.error("خطأ في إرسال الرد:", error);
-        
-        // تمييز نوع الخطأ إن أمكن
-        let errorMsg = "❌ فشل إرسال البريد";
-        if (error.text) errorMsg += ": " + error.text;
-        else if (error.message) errorMsg += ": " + error.message;
-        else errorMsg += "، تأكد من إعدادات EmailJS";
-
-        showToast(errorMsg);
-    }
+  try {
+    emailjs.init(emailSettings.publicKey);
+    await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
+      to_name: currentReplyName,
+      to_email: currentReplyEmail,
+      reply_message: replyText,
+      original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
+    });
+    await db.collection("feedbacks").doc(currentReplyFeedbackId).update({
+      replied: true,
+      repliedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      replyText: replyText
+    });
+    showToast("✅ تم إرسال الرد بنجاح");
+    closeReplyModal();
+    loadFeedbacksList();
+  } catch(e) {
+    console.error(e);
+    showToast("❌ فشل الإرسال: مشكلة في البريد أو قاعدة البيانات");
+  }
 }
 
 async function deleteFeedback(id) {
-    if (!confirm("هل أنت متأكد من حذف هذا التقييم؟")) return;
-
-    try {
-        await db.collection("feedbacks").doc(id).delete();
-        showToast("🗑️ تم الحذف");
-        loadFeedbacksList(); // تحديث القائمة
-    } catch (error) {
-        console.error("خطأ في الحذف:", error);
-        showToast("❌ فشل الحذف، حاول مرة أخرى");
-    }
+  if (!confirm("هل أنت متأكد من حذف هذا التقييم؟")) return;
+  try {
+    await db.collection("feedbacks").doc(id).delete();
+    showToast("🗑️ تم الحذف");
+    loadFeedbacksList();
+  } catch(e) {
+    console.error(e);
+    showToast("❌ فشل الحذف");
+  }
 }
   // PWA Install
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
