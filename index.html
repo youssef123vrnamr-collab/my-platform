@@ -2846,7 +2846,43 @@ async function saveUserName() {
     if (teachAIMenuItem) teachAIMenuItem.addEventListener("click", openTeachAICircleModal);
   });
 
-  window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); try { loadAiKeyOnce(); listenAiKey(); } catch(_){} document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
+  window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore();  // استدعاء مرة واحدة
+
+if (user && !isAdmin) {
+    // ... حالة مستخدم Google ...
+} else if (!user && !isAdmin) {
+    let hasLocal = loadUserDataFromStorage();
+    if (hasLocal && !currentUserId) {
+        // تشغيل التطبيق بدون Google
+        document.getElementById("landingPage").style.display = "none";
+        document.getElementById("appWrapper").style.display = "flex";
+        document.getElementById("googleUserInfo").style.display = "none";
+        document.getElementById("googleLogoutBtn").style.display = "none";
+        
+        loadAdminPreference();
+        listenToVideosWithRetry();
+        listenToCoursesAccess();
+        listenToMaintenance();
+        loadAIKnowledgeFromFirebase();
+        loadExamsFromFirebase();
+        loadExamResultsFromFirebase();
+        loadAppsFromFirebase();
+        initCloudinaryWidget();
+        checkUrlForShare();
+    } else {
+        // لا توجد جلسة محلية
+        document.getElementById("landingPage").style.display = "flex";
+        document.getElementById("appWrapper").style.display = "none";
+        googleUser = null;
+        currentUserId = null;
+        currentUser = null;
+        currentUserPhone = null;
+        localStorage.removeItem("falak_username");
+        localStorage.removeItem("falak_userphone");
+        updateGoogleLogoutButtonsVisibility();
+    }
+    updateAdminUI();  // تحديث مرة واحدة بعد كل شيء
+}
   setTimeout(hideLoader, 5000);
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); if(feedbacksUnsubscribe) feedbacksUnsubscribe(); removePresence(); });
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "supervisorPayoutModal") closeSupervisorPayoutModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
