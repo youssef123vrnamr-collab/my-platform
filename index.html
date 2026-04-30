@@ -2642,32 +2642,51 @@ async function updateAdminUI() {
   }
   function closeReplyModal() { document.getElementById("replyFeedbackModal").classList.remove("active"); currentReplyFeedbackId = null; }
   async function sendReplyEmail() {
-    let replyText = document.getElementById("replyMessage").value.trim();
-    if(!replyText) { showToast("⚠️ اكتب نص الرد"); return; }
-    if(!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
-      showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
-      return;
-    }
-    try {
-      emailjs.init(emailSettings.publicKey);
-      await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
-        to_name: currentReplyName,
-        to_email: currentReplyEmail,
-        reply_message: replyText,
-        original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
-      });
-      await db.collection("feedbacks").doc(currentReplyFeedbackId).update({ replied: true, repliedAt: firebase.firestore.FieldValue.serverTimestamp(), replyText: replyText });
-      showToast("✅ تم إرسال الرد بنجاح");
-      closeReplyModal();
-      loadFeedbacksList();
-    } catch(e) { console.error(e); showToast("❌ فشل إرسال البريد، تأكد من إعدادات EmailJS"); }
+  let replyText = document.getElementById("replyMessage").value.trim();
+  if (!replyText) {
+    showToast("⚠️ اكتب نص الرد");
+    return;
   }
-  async function deleteFeedback(id) {
-    if(confirm("هل أنت متأكد من حذف هذا التقييم؟")) {
-      await db.collection("feedbacks").doc(id).delete();
-      showToast("🗑️ تم الحذف");
-    }
+  if (!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
+    showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
+    return;
   }
+
+  // 1️⃣ إرسال البريد
+  let emailError = false;
+  try {
+    emailjs.init(emailSettings.publicKey);
+    await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
+      to_name: currentReplyName,
+      to_email: currentReplyEmail,
+      reply_message: replyText,
+      original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
+    });
+  } catch (e) {
+    console.error(e);
+    showToast("❌ فشل إرسال البريد الإلكتروني، تأكد من إعدادات EmailJS");
+    return;
+  }
+
+  // 2️⃣ تحديث قاعدة البيانات (حاول، ولكن لا تظهر رسالة خطأ مضللة)
+  try {
+    await db.collection("feedbacks").doc(currentReplyFeedbackId).update({
+      replied: true,
+      repliedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      replyText: replyText
+    });
+    showToast("✅ تم إرسال الرد وتسجيله بنجاح");
+    closeReplyModal();
+    loadFeedbacksList();
+  } catch (dbError) {
+    console.error("فشل تحديث Firestore:", dbError);
+    // ✅ هنا الرسالة مختلفة: تُعلم أن البريد وصل لكن الحفظ فشل
+    showToast("⚠️ تم إرسال البريد، لكن فشل الحفظ في قاعدة البيانات (راجع صلاحيات المشرف)");
+    // مع ذلك نغلق المودال ونحدث القائمة لإخفاء التقييم من الواجهة إذا أردت
+    closeReplyModal();
+    loadFeedbacksList();
+  }
+}
 
   // PWA Install
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
