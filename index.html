@@ -2763,32 +2763,30 @@ async function saveUserName() {
   }
   function closeReplyModal() { document.getElementById("replyFeedbackModal").classList.remove("active"); currentReplyFeedbackId = null; }
   async function sendReplyEmail() {
-    let replyText = document.getElementById("replyMessage").value.trim();
-    if(!replyText) { showToast("⚠️ اكتب نص الرد"); return; }
-    if(!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
-      showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
-      return;
-    }
-    try {
-      emailjs.init(emailSettings.publicKey);
-      await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
-        to_name: currentReplyName,
-        to_email: currentReplyEmail,
-        reply_message: replyText,
-        original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
-      });
-      await db.collection("feedbacks").doc(currentReplyFeedbackId).update({ replied: true, repliedAt: firebase.firestore.FieldValue.serverTimestamp(), replyText: replyText });
-      showToast("✅ تم إرسال الرد بنجاح");
-      closeReplyModal();
-      loadFeedbacksList();
-    } catch(e) { console.error(e); showToast("❌ فشل إرسال البريد، تأكد من إعدادات EmailJS"); }
+  let replyText = document.getElementById("replyMessage").value.trim();
+  if (!replyText) { showToast("⚠️ اكتب نص الرد"); return; }
+
+  // تحميل الإعدادات مباشرة من Firestore أو localStorage
+  let settings = await loadEmailSettingsFresh(); // دالة جديدة تجلب آخر الإعدادات
+  if (!settings.publicKey || !settings.serviceId || !settings.templateId) {
+    showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً");
+    return;
   }
-  async function deleteFeedback(id) {
-    if(confirm("هل أنت متأكد من حذف هذا التقييم؟")) {
-      await db.collection("feedbacks").doc(id).delete();
-      showToast("🗑️ تم الحذف");
-    }
+
+  try {
+    emailjs.init(settings.publicKey);
+    await emailjs.send(settings.serviceId, settings.templateId, {
+      to_name: currentReplyName,
+      to_email: currentReplyEmail,
+      reply_message: replyText,
+      original_feedback: "..."
+    });
+    showToast("✅ تم إرسال الرد بنجاح");
+  } catch(e) {
+    console.error(e);
+    showToast("❌ فشل إرسال البريد: " + (e.text || e.message));
   }
+}
 
   // PWA Install
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
