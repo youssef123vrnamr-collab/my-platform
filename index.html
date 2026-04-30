@@ -1299,13 +1299,6 @@
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
-async function ensureAnonymousUser() {
-  if (firebase.auth().currentUser) return firebase.auth().currentUser.uid;
-  try {
-    const cred = await firebase.auth().signInAnonymously();
-    return cred.user.uid;
-  } catch(e) { return null; }
-}
 // ========== User Roles Functions ==========
 async function createUserRole(userId, role, creatorId = null) {
   if (!userId) return false;
@@ -1413,10 +1406,10 @@ async function isAdminUser(userId) {
 
   // ====== مفتاح الذكاء الاصطناعي (يُحفظ على السيرفر في Firestore: system/ai_settings) ======
   // قابل للتغيير من قائمة الترس بواسطة المشرف فقط، بدون لمس الكود.
- const AI_KEY_DEFAULT = ""; 
+  const AI_KEY_DEFAULT = "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";
   let _currentAiKey = AI_KEY_DEFAULT;
   let _aiKeyUnsub = null;
-  function _maskKey(k){ 
+  function _maskKey(k){
     const s = (k || "").toString();
     if (s.length <= 10) return s ? s[0] + "••••" : "(غير محدّد)";
     return s.slice(0, 5) + "•".repeat(Math.min(20, Math.max(6, s.length - 10))) + s.slice(-5);
@@ -1571,46 +1564,39 @@ async function isAdminUser(userId) {
   // يستخدم Doc ID ثابت = userId_videoId لمنع التكرار، ويعمل بدون قراءة سابقة
   // ويتعامل مع فيديوهات YouTube والفيديوهات العادية بنفس الطريقة.
   let __markingWatched = new Set();
-async function markVideoAsWatched(videoId) {
-  const videoTitle = (videos.find(v => v.id === videoId) || {}).title || "فيديو";
-  
-  // إذا كان المستخدم مسجلاً (عبر Google أو Anonymous)
-  if (currentUserId) {
+  async function markVideoAsWatched(videoId) {
     try {
+      if (!currentUserId || !videoId) return;
       const key = currentUserId + "_" + videoId;
       if (__markingWatched.has(key)) return;
       __markingWatched.add(key);
       const docRef = db.collection("watch_history").doc(key);
       const existing = await docRef.get();
-      if (existing.exists) {
-        __markingWatched.delete(key);
-        return;
-      }
+      if (existing.exists) { __markingWatched.delete(key); return; }
       await docRef.set({
         userId: currentUserId,
         videoId: videoId,
-        title: videoTitle,
+        title: (videos.find(v => v.id === videoId) || {}).title || "",
         watchedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      
-      // تحديث user_progress
+      // ====== ضمان وجود ملف الطالب في user_progress ======
+      // إذا كان المشرف قد حذف ملف الطالب سابقاً، نُعيد إنشاءه تلقائياً
+      // عند تسجيل أي مشاهدة جديدة حتى يظهر الطالب مرة أخرى في قائمة المتابعة.
       try {
         const userPatch = { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
         if (currentUser) userPatch.username = currentUser;
         if (currentUserPhone) userPatch.phone = currentUserPhone;
-        const au = auth.currentUser;
-        if (au) {
-          if (au.email) userPatch.email = au.email;
-          if (au.displayName && !userPatch.username) userPatch.username = au.displayName;
-          if (au.photoURL) userPatch.photoURL = au.photoURL;
-        }
+        try {
+          const au = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+          if (au) {
+            if (au.email) userPatch.email = au.email;
+            if (au.displayName && !userPatch.username) userPatch.username = au.displayName;
+            if (au.photoURL) userPatch.photoURL = au.photoURL;
+          }
+        } catch(_){}
         await db.collection("user_progress").doc(currentUserId).set(userPatch, { merge: true });
-      } catch (e) { console.warn("user_progress upsert failed", e); }
-      
-      // إضافة نقاط
-      try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch(e) {}
-      
-      // تحديث تقدم الكورسات
+      } catch (e) { console.warn("user_progress upsert (on watch) failed", e); }
+      try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch (e) { console.warn("addPoints failed", e); }
       try {
         const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
         for (const enroll of enrollments.docs) {
@@ -1618,42 +1604,22 @@ async function markVideoAsWatched(videoId) {
           const course = await db.collection("courses").doc(ed.courseId).get();
           if (course.exists && (course.data().videoIds || []).includes(videoId)) {
             if (!(ed.completedVideosIds || []).includes(videoId)) {
+              const completed = (ed.completedVideos || 0) + 1;
               await enroll.ref.update({
-                completedVideos: (ed.completedVideos || 0) + 1,
+                completedVideos: completed,
                 completedVideosIds: firebase.firestore.FieldValue.arrayUnion(videoId)
               });
             }
           }
         }
-      } catch(e) {}
-      
-      showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك");
+      } catch (e) { console.warn("course progress update failed", e); }
+      try { if (typeof showToast === "function") showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك"); } catch(_){}
       __markingWatched.delete(key);
     } catch (e) {
       console.error("markVideoAsWatched failed:", e);
-      __markingWatched.delete(currentUserId + "_" + videoId);
-    }
-  } 
-  // إذا كان المستخدم محلياً (ليس لديه currentUserId)
-  else {
-    try {
-      let localHistory = JSON.parse(localStorage.getItem("falak_watch_history") || "[]");
-      if (!localHistory.some(entry => entry.videoId === videoId)) {
-        localHistory.push({
-          videoId: videoId,
-          title: videoTitle,
-          watchedAt: new Date().toISOString(),
-          userPhone: currentUserPhone || null
-        });
-        localStorage.setItem("falak_watch_history", JSON.stringify(localHistory));
-        showToast("✅ تم تسجيل المشاهدة محلياً");
-      }
-    } catch(e) {
-      console.warn("localStorage save failed", e);
-      showToast("⚠️ تعذر حفظ التقدم محلياً");
+      try { __markingWatched.delete(currentUserId + "_" + videoId); } catch(_){}
     }
   }
-}
   window.markVideoAsWatched = markVideoAsWatched;
 
   // ====== تحميل YouTube IFrame API مرة واحدة ======
@@ -2031,10 +1997,7 @@ async function updateAdminUI() {
       playerContainer.appendChild(video);
       if (startTime > 0) video.currentTime = startTime;
       // تسجيل المشاهدة عند نهاية الفيديو (يمنع التكرار من خلال markVideoAsWatched)
-   video.addEventListener("ended", () => { 
-  console.log("🔴 video ended, about to call markVideoAsWatched with id:", id);
-  markVideoAsWatched(id); 
-});   
+      video.addEventListener("ended", () => { markVideoAsWatched(id); });
       setupProgressTracking(id);
       
     }
@@ -2460,41 +2423,31 @@ async function updateAdminUI() {
     if (!text) return;
     displayAIMessage(text, "user");
     input.value = "";
-
-    // جلب المفتاح من المتغير العمومي (الذي يتم تحديثه من Firestore)
-    const apiKey = getAiApiKey();
-    if (!apiKey || apiKey === "") {
-        displayAIMessage("⚠️ مفتاح الذكاء الاصطناعي غير مضبوط. تواصل مع المشرف.", "ai");
-        return;
-    }
-
     try {
-        // ✅ إرسال الطلب إلى Groq API باستخدام المفتاح
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + apiKey,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    { role: "system", content: "أنت مساعد فلكي محترف. جاوب بالعربية." },
-                    { role: "user", content: text }
-                ],
-                temperature: 0.3
-            })
-        });
-
-        const data = await response.json();
-        const answer = data.choices[0]?.message?.content || "عذراً، لم أستطع الإجابة.";
-        displayAIMessage(answer, "ai");
-        speakText(answer);
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + getAiApiKey(),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: "أنت مساعد متخصص في الفلك. جاوب بالعربية بدقة." },
+            { role: "user", content: text }
+          ],
+          temperature: 0.3
+        })
+      });
+      const data = await response.json();
+      const answer = data.choices[0].message.content;
+      displayAIMessage(answer, "ai");
+      speakText(answer);
     } catch (error) {
-        console.error(error);
-        displayAIMessage("عذراً، فشل الاتصال بالذكاء الاصطناعي.", "ai");
+      console.error(error);
+      displayAIMessage("عذراً، فشل الاتصال بالذكاء الاصطناعي.", "ai");
     }
-}
+  }
   function displayAIMessage(text, sender) { let cont = document.getElementById("aiChatMessages"); if (!cont) return; let msg = document.createElement("div"); msg.className = "message " + (sender === "user" ? "sent" : "received"); let time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }); let html = ""; if (sender === "received") html += '<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>'; html += '<div class="message-content">' + escapeHtml(text) + '</div><div class="message-time">' + time + '</div>'; msg.innerHTML = html; cont.appendChild(msg); cont.scrollTop = cont.scrollHeight; }
   function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
 
@@ -2515,81 +2468,7 @@ async function updateAdminUI() {
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
   function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").value = currentUser || ""; document.getElementById("userPhoneInput").value = currentUserPhone || ""; document.getElementById("userNameInput").focus(); } }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
-async function saveUserName() {
-  let name = document.getElementById("userNameInput").value.trim();
-  let countryCode = document.getElementById("userCountryCode").value;
-  let phoneNumber = document.getElementById("userPhoneInput").value.trim();
-  
-  if (!isValidName(name)) {
-    SoundEffects.error();
-    showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة");
-    return;
-  }
-  if (!phoneNumber) {
-    SoundEffects.error();
-    showToast("⚠️ رقم الهاتف مطلوب");
-    return;
-  }
-  let fullPhone = normalizePhone(phoneNumber, countryCode);
-  if (!validatePhone(fullPhone, countryCode)) {
-    SoundEffects.error();
-    showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)");
-    return;
-  }
-  
-  showToast("⏳ جاري التحقق من البيانات...");
-  const checkResult = await checkIfUserAlreadyActive(name, fullPhone);
-  if (!checkResult.allowed) {
-    SoundEffects.error();
-    showToast(checkResult.message);
-    return;
-  }
-  
-  // ========== ⭐ إنشاء الحساب المجهول مع إعادة المحاولة ⭐ ==========
-  if (!firebase.auth().currentUser) {
-    try {
-      let cred = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          cred = await firebase.auth().signInAnonymously();
-          break;
-        } catch(retryErr) {
-          console.warn(`Attempt ${attempt+1} failed:`, retryErr);
-          await new Promise(r => setTimeout(r, 500));
-        }
-      }
-      if (cred && cred.user) {
-        currentUserId = cred.user.uid;
-        console.log("✅ Anonymous user created:", currentUserId);
-      } else {
-        throw new Error("Could not create anonymous user after retries");
-      }
-    } catch(e) {
-      console.error("Anonymous auth failed:", e);
-      showToast("⚠️ سيتم حفظ تقدمك محلياً فقط لظروف تقنية");
-    }
-  } else {
-    currentUserId = firebase.auth().currentUser.uid;
-  }
-  // ================================================================
-  
-  saveUserDataToStorage(name, fullPhone);
-  if (currentUserId) await saveUserDataToFirebase(currentUserId);
-  await registerActiveSession(name, fullPhone);
-  
-  document.getElementById("nameModal").classList.remove("active");
-  document.getElementById("chatModal").classList.add("active");
-  SoundEffects.join();
-  initPresenceSystem();
-  loadMessages();
-  db.collection("chat_users").add({
-    name: name,
-    phone: fullPhone,
-    userId: currentUserId || null,
-    joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(err => console.warn("Could not save chat user:", err));
-  updateAdminUI();
-}
+  async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   loadUserDashboard();
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
@@ -2763,51 +2642,32 @@ async function saveUserName() {
   }
   function closeReplyModal() { document.getElementById("replyFeedbackModal").classList.remove("active"); currentReplyFeedbackId = null; }
   async function sendReplyEmail() {
-  let replyText = document.getElementById("replyMessage").value.trim();
-  if (!replyText) {
-    showToast("⚠️ اكتب نص الرد");
-    return;
+    let replyText = document.getElementById("replyMessage").value.trim();
+    if(!replyText) { showToast("⚠️ اكتب نص الرد"); return; }
+    if(!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
+      showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
+      return;
+    }
+    try {
+      emailjs.init(emailSettings.publicKey);
+      await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
+        to_name: currentReplyName,
+        to_email: currentReplyEmail,
+        reply_message: replyText,
+        original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
+      });
+      await db.collection("feedbacks").doc(currentReplyFeedbackId).update({ replied: true, repliedAt: firebase.firestore.FieldValue.serverTimestamp(), replyText: replyText });
+      showToast("✅ تم إرسال الرد بنجاح");
+      closeReplyModal();
+      loadFeedbacksList();
+    } catch(e) { console.error(e); showToast("❌ فشل إرسال البريد، تأكد من إعدادات EmailJS"); }
   }
-
-  // تحميل الإعدادات من Firebase (أو التخزين المحلي)
-  let settings = await loadEmailSettingsFresh();
-  if (!settings.publicKey || !settings.serviceId || !settings.templateId) {
-    showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
-    return;
-  } 
-
-  try {
-    // تهيئة EmailJS
-    emailjs.init(settings.publicKey);
-    
-    // إرسال البريد الإلكتروني
-    await emailjs.send(settings.serviceId, settings.templateId, {
-      to_name: currentReplyName,
-      to_email: currentReplyEmail,
-      reply_message: replyText,
-      original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
-    });
-    
-    // تحديث قاعدة البيانات (تعليم التقييم كـ "تم الرد")
-    await db.collection("feedbacks").doc(currentReplyFeedbackId).update({
-      replied: true,
-      repliedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      replyText: replyText
-    });
-    
-    showToast("✅ تم إرسال الرد بنجاح");
-    closeReplyModal();
-    loadFeedbacksList(); // تحديث قائمة التقييمات
-  } catch(e) {
-    console.error("Error in sendReplyEmail:", e);
-    // تمييز سبب الخطأ
-    if (e.code === "permission-denied") {
-      showToast("⚠️ تم إرسال البريد لكن فشل تحديث قاعدة البيانات (تحقق من صلاحيات المشرف)");
-    } else {
-      showToast("❌ فشل إرسال البريد: " + (e.text || e.message || "خطأ غير معروف"));
+  async function deleteFeedback(id) {
+    if(confirm("هل أنت متأكد من حذف هذا التقييم؟")) {
+      await db.collection("feedbacks").doc(id).delete();
+      showToast("🗑️ تم الحذف");
     }
   }
-}
 
   // PWA Install
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
@@ -2846,43 +2706,7 @@ async function saveUserName() {
     if (teachAIMenuItem) teachAIMenuItem.addEventListener("click", openTeachAICircleModal);
   });
 
-  window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore();  // استدعاء مرة واحدة
-
-if (user && !isAdmin) {
-    // ... حالة مستخدم Google ...
-} else if (!user && !isAdmin) {
-    let hasLocal = loadUserDataFromStorage();
-    if (hasLocal && !currentUserId) {
-        // تشغيل التطبيق بدون Google
-        document.getElementById("landingPage").style.display = "none";
-        document.getElementById("appWrapper").style.display = "flex";
-        document.getElementById("googleUserInfo").style.display = "none";
-        document.getElementById("googleLogoutBtn").style.display = "none";
-        
-        loadAdminPreference();
-        listenToVideosWithRetry();
-        listenToCoursesAccess();
-        listenToMaintenance();
-        loadAIKnowledgeFromFirebase();
-        loadExamsFromFirebase();
-        loadExamResultsFromFirebase();
-        loadAppsFromFirebase();
-        initCloudinaryWidget();
-        checkUrlForShare();
-    } else {
-        // لا توجد جلسة محلية
-        document.getElementById("landingPage").style.display = "flex";
-        document.getElementById("appWrapper").style.display = "none";
-        googleUser = null;
-        currentUserId = null;
-        currentUser = null;
-        currentUserPhone = null;
-        localStorage.removeItem("falak_username");
-        localStorage.removeItem("falak_userphone");
-        updateGoogleLogoutButtonsVisibility();
-    }
-    updateAdminUI();  // تحديث مرة واحدة بعد كل شيء
-}
+  window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); try { loadAiKeyOnce(); listenAiKey(); } catch(_){} document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
   setTimeout(hideLoader, 5000);
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); if(feedbacksUnsubscribe) feedbacksUnsubscribe(); removePresence(); });
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "supervisorPayoutModal") closeSupervisorPayoutModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
@@ -3300,7 +3124,6 @@ async function loadStudentProgressData(student) {
   const watched = [];
   const watchedIds = new Set();
 
-  // 1. جلب المشاهدات من Firestore إذا كان المستخدم مسجلاً (عبر Google أو Anonymous)
   if (student.userId) {
     try {
       const snap = await db.collection('watch_history').where('userId', '==', student.userId).get();
@@ -3314,22 +3137,6 @@ async function loadStudentProgressData(student) {
     } catch (e) { console.warn('watch_history read failed', e); }
   }
 
-  // 2. إذا كان المستخدم محلياً (ليس لديه userId) أو لم نجد شيئاً في Firestore، نبحث في localStorage
-  if (watched.length === 0 && student.phone) {
-    try {
-      const localHistory = JSON.parse(localStorage.getItem("falak_watch_history") || "[]");
-      // نفلتر حسب رقم الهاتف المحفوظ مع كل مشاهدة (سنضيفه لاحقاً)
-      // لكن حالياً localStorage يخزن videoId فقط بدون ربط بهاتف، لذلك سنعتبر أن كل المشاهدات المحفوظة تعود لهذا المستخدم
-      localHistory.forEach(item => {
-        if (!watchedIds.has(item.videoId)) {
-          watchedIds.add(item.videoId);
-          watched.push({ videoId: item.videoId, watchedAt: new Date(item.watchedAt || Date.now()) });
-        }
-      });
-    } catch(e) { console.warn('localStorage read failed', e); }
-  }
-
-  // باقي الكود كما هو (exam results, points, الخ)
   let myExamResults = [];
   try {
     const norm = s => String(s || '').replace(/[^\d+]/g, '');
@@ -3350,9 +3157,6 @@ async function loadStudentProgressData(student) {
       const userDoc = await db.collection('user_progress').doc(student.userId).get();
       if (userDoc.exists) points = userDoc.data().points || 0;
     } catch (e) { /* silent */ }
-  } else {
-    // قراءة النقاط من localStorage (اختياري)
-    points = parseInt(localStorage.getItem("falak_points_" + (student.phone || '')) || 0);
   }
 
   const totalVideos = (videos || []).filter(v => !v.private).length;
@@ -3366,8 +3170,6 @@ async function loadStudentProgressData(student) {
 
 async function loadAllStudentsData() {
   const studentsMap = new Map();
-
-  // 1. جلب البيانات من Firestore (المستخدمين المسجلين)
   try {
     const wh = await db.collection('watch_history').get();
     wh.forEach(d => {
@@ -3393,12 +3195,14 @@ async function loadAllStudentsData() {
     });
   } catch (e) { console.warn('watch_history read failed', e); }
 
-  // 2. جلب بيانات المستخدمين من user_progress
   const uids = Array.from(studentsMap.keys());
   await Promise.all(uids.map(async (uid) => {
     try {
       const doc = await db.collection('user_progress').doc(uid).get();
-      if (!doc.exists) return;
+      if (!doc.exists) {
+        studentsMap.delete(uid);
+        return;
+      }
       const u = doc.data() || {};
       const name = (u.username || u.name || u.displayName || '').trim();
       const phone = (u.phone || '').trim();
@@ -3412,51 +3216,19 @@ async function loadAllStudentsData() {
       entry.points = u.points || 0;
       const lu = u.lastUpdated && u.lastUpdated.toDate ? u.lastUpdated.toDate() : null;
       if (lu && (!entry.lastActivity || lu > entry.lastActivity)) entry.lastActivity = lu;
-    } catch (e) { console.warn('user_progress doc read failed', uid, e); }
+    } catch (e) {
+      console.warn('user_progress doc read failed', uid, e);
+    }
   }));
 
-  // 3. إضافة المستخدمين المحليين من localStorage (من سجل المشاهدة المحلي)
-  try {
-    const localHistory = JSON.parse(localStorage.getItem("falak_watch_history") || "[]");
-    if (localHistory.length > 0) {
-      // إنشاء مستخدم افتراضي لكل جهاز (نستخدم phone = 'local_' + deviceId)
-      let deviceId = localStorage.getItem("falak_device_id");
-      if (!deviceId) {
-        deviceId = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        localStorage.setItem("falak_device_id", deviceId);
-      }
-      let localUser = studentsMap.get(deviceId);
-      if (!localUser) {
-        localUser = {
-          userId: deviceId,
-          name: currentUser || 'زائر',
-          phone: currentUserPhone || deviceId,
-          watchedIds: new Set(),
-          examResults: [],
-          points: 0,
-          lastActivity: new Date(),
-        };
-        studentsMap.set(deviceId, localUser);
-      }
-      localHistory.forEach(item => {
-        if (item.videoId) localUser.watchedIds.add(item.videoId);
-      });
-      // تحديث آخر نشاط
-      const lastWatched = localHistory.reduce((latest, item) => {
-        const d = new Date(item.watchedAt || 0);
-        return d > latest ? d : latest;
-      }, localUser.lastActivity || new Date(0));
-      localUser.lastActivity = lastWatched;
-    }
-  } catch(e) { console.warn('localStorage merge failed', e); }
-
-  // 4. ربط نتائج الامتحانات (من Firestore) مع المستخدمين
   const norm = s => String(s || '').replace(/[^\d+]/g, '');
   (examResults || []).forEach(r => {
     const phoneN = norm(r.studentPhone);
     const nameN = (r.studentName || '').trim();
     let entry = null;
-    if (r.userId && studentsMap.has(r.userId)) entry = studentsMap.get(r.userId);
+    if (r.userId && studentsMap.has(r.userId)) {
+      entry = studentsMap.get(r.userId);
+    }
     if (!entry && phoneN.length >= 6) {
       for (const v of studentsMap.values()) {
         if (v.phone && norm(v.phone) === phoneN) { entry = v; break; }
