@@ -2632,13 +2632,19 @@ async function updateAdminUI() {
   }
   let currentReplyFeedbackId = null, currentReplyEmail = null, currentReplyName = null;
   async function sendReplyEmail() {
+  console.log("تم استدعاء sendReplyEmail");
   let replyText = document.getElementById("replyMessage").value.trim();
-  if(!replyText) { showToast("⚠️ اكتب نص الرد"); return; }
-  if(!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
+  if (!replyText) {
+    showToast("⚠️ اكتب نص الرد");
+    return;
+  }
+  if (!emailSettings.publicKey || !emailSettings.serviceId || !emailSettings.templateId) {
     showToast("⚠️ يرجى ضبط إعدادات البريد الإلكتروني أولاً من قائمة الإعدادات");
     return;
   }
-  // 1️⃣ إرسال البريد
+  
+  // إرسال البريد
+  let emailSent = false;
   try {
     emailjs.init(emailSettings.publicKey);
     await emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
@@ -2647,25 +2653,29 @@ async function updateAdminUI() {
       reply_message: replyText,
       original_feedback: document.querySelector(`.feedback-card[data-id="${currentReplyFeedbackId}"] .feedback-message`)?.innerText || ""
     });
-  } catch(e) {
-    console.error(e);
+    emailSent = true;
+    console.log("تم إرسال البريد");
+  } catch (e) {
+    console.error("خطأ في EmailJS:", e);
     showToast("❌ فشل إرسال البريد الإلكتروني، تأكد من إعدادات EmailJS");
     return;
   }
 
-  // 2️⃣ تحديث قاعدة البيانات (إذا فشل هذا، تظهر رسالة منفصلة ولا نحذف نجاح البريد)
+  // تحديث قاعدة البيانات
   try {
     await db.collection("feedbacks").doc(currentReplyFeedbackId).update({ 
       replied: true, 
       repliedAt: firebase.firestore.FieldValue.serverTimestamp(), 
       replyText: replyText 
     });
-    showToast("✅ تم إرسال الرد وحفظه في قاعدة البيانات");
+    showToast("✅ تم إرسال الرد وحفظه بنجاح");
     closeReplyModal();
     loadFeedbacksList();
-  } catch(dbError) {
-    console.error("Firestore update failed:", dbError);
+  } catch (dbError) {
+    console.error("فشل تحديث Firestore:", dbError);
     showToast("⚠️ تم إرسال البريد لكن فشل الحفظ في قاعدة البيانات (راجع صلاحيات المشرف)");
+    closeReplyModal();
+    loadFeedbacksList();
   }
 }
 
