@@ -2941,7 +2941,7 @@ async function updateAdminUI() {
   function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
   function openAppsModal() { document.getElementById("appsModal").classList.add("active"); renderAppsList(); }
   function closeAppsModal() { document.getElementById("appsModal").classList.remove("active"); }
-
+ 
   document.addEventListener("DOMContentLoaded", function() {
     const dropdownBtn = document.getElementById("settingsDropdownBtn"); if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu);
     document.addEventListener("click", closeSettingsMenuOnClickOutside);
