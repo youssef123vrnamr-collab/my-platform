@@ -2475,13 +2475,97 @@ async function updateAdminUI() {
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
   function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
-  function sendMessage() { let inp = document.getElementById("messageInput"); if (!inp) return; let text = inp.value.trim(); if (!text || !currentUser) return; db.collection("messages").add({ type: "text", text: text, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.send(); inp.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الإرسال"); }); }
+function sendMessage() {
+  let inp = document.getElementById("messageInput");
+  if (!inp) return;
+  let text = inp.value.trim();
+  if (!text || !currentUser) return;
+  db.collection("messages").add({
+    type: "text",
+    text: text,
+    sender: currentUser,
+    senderPhone: currentUserPhone,
+    senderId: currentUserId,   // 🔥 أضف هذا السطر
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    SoundEffects.send();
+    inp.value = "";
+  }).catch(() => {
+    SoundEffects.error();
+    showToast("فشل الإرسال");
+  });
+}
   function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
-  function sendImage(input) { let file = input.files[0]; if (!file || !currentUser) return; if (file.size > 5 * 1024 * 1024) { SoundEffects.error(); showToast("الصورة كبيرة (الحد 5 ميجا)"); return; } showToast("جاري الرفع..."); let fd = new FormData(); fd.append("file", file); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", { method: "POST", body: fd }).then(r => r.json()).then(d => { db.collection("messages").add({ type: "image", imageUrl: d.secure_url, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("تم إرسال الصورة"); input.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الرفع"); }); }
+  function sendImage(input) {
+  let file = input.files[0];
+  if (!file || !currentUser) return;
+  if (file.size > 5 * 1024 * 1024) {
+    SoundEffects.error();
+    showToast("الصورة كبيرة (الحد 5 ميجا)");
+    return;
+  }
+  showToast("جاري الرفع...");
+  let fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
+  fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
+  fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", {
+    method: "POST",
+    body: fd
+  }).then(r => r.json()).then(d => {
+    db.collection("messages").add({
+      type: "image",
+      imageUrl: d.secure_url,
+      sender: currentUser,
+      senderPhone: currentUserPhone,
+      senderId: currentUserId,   // 🔥 أضف هذا السطر
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    SoundEffects.send();
+    showToast("تم إرسال الصورة");
+    input.value = "";
+  }).catch(() => {
+    SoundEffects.error();
+    showToast("فشل الرفع");
+  });
+}
   async function toggleRecording() { if (isRecording) stopRecording(); else await startRecording(); }
   async function startRecording() { if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; } try { let stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = e => e.data.size && audioChunks.push(e.data); mediaRecorder.onstop = () => { uploadVoice(new Blob(audioChunks, { type: "audio/webm" })); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; document.getElementById("recordBtn").classList.add("recording"); document.getElementById("recordingIndicator").classList.add("active"); SoundEffects.recordStart(); let sec = 0; recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000); } catch (e) { showToast("❌ لا يمكن الوصول للميكروفون"); } }
   function stopRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); clearInterval(recordingTimer); isRecording = false; document.getElementById("recordBtn").classList.remove("recording"); document.getElementById("recordingIndicator").classList.remove("active"); document.getElementById("recordingTime").textContent = "0:00"; } }
-  async function uploadVoice(blob) { if (!currentUser) { showToast("❌ يجب تسجيل الدخول أولاً"); return; } showToast("📤 جاري رفع الرسالة الصوتية..."); let fd = new FormData(); fd.append("file", blob, "voice.webm"); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); try { let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, { method: "POST", body: fd }); if (!res.ok) throw new Error(`HTTP ${res.status}`); let data = await res.json(); if (!data.secure_url) throw new Error("لم يتم استلام الرابط"); await db.collection("messages").add({ type: "voice", audioUrl: data.secure_url, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("✅ تم إرسال الرسالة الصوتية"); } catch (e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إرسال الصوت"); } }
+async function uploadVoice(blob) {
+  if (!currentUser) {
+    showToast("❌ يجب تسجيل الدخول أولاً");
+    return;
+  }
+  showToast("📤 جاري رفع الرسالة الصوتية...");
+  let fd = new FormData();
+  fd.append("file", blob, "voice.webm");
+  fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
+  fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
+  try {
+    let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, {
+      method: "POST",
+      body: fd
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    let data = await res.json();
+    if (!data.secure_url) throw new Error("لم يتم استلام الرابط");
+    await db.collection("messages").add({
+      type: "voice",
+      audioUrl: data.secure_url,
+      sender: currentUser,
+      senderPhone: currentUserPhone,
+      senderId: currentUserId,   // 🔥 أضف هذا السطر
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    SoundEffects.send();
+    showToast("✅ تم إرسال الرسالة الصوتية");
+  } catch (e) {
+    console.error(e);
+    SoundEffects.error();
+    showToast("❌ فشل إرسال الصوت");
+  }
+}
   async function startVoiceCall() { if (!currentUser) return; try { localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); document.getElementById("callModal").classList.add("active"); document.getElementById("callStatus").textContent = "مكالمة - " + currentUser; callSeconds = 0; callTimer = setInterval(() => { callSeconds++; let el = document.getElementById("callTimer"); if (el) el.textContent = Math.floor(callSeconds / 60).toString().padStart(2, "0") + ":" + (callSeconds % 60).toString().padStart(2, "0"); }, 1000); SoundEffects.join(); } catch (e) { SoundEffects.error(); showToast("لا يمكن الوصول للميكروفون"); } }
   function toggleMute() { if (!localStream) return; let track = localStream.getAudioTracks()[0]; track.enabled = !track.enabled; let btn = document.getElementById("muteBtn"); btn && (btn.classList.toggle("active"), btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'); }
   function endCall() { if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } clearInterval(callTimer); document.getElementById("callModal").classList.remove("active"); document.getElementById("callTimer").textContent = "00:00"; }
