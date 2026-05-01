@@ -1277,7 +1277,7 @@
   <div class="modal" id="addQuizModal"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-list" style="color:#10b981"></i> إضافة امتحان للفيديو</h3><button class="modal-close" onclick="closeAddExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">اختر الفيديو ثم أضف الأسئلة والإجابات (يمكن إضافة صورة اختيارية لكل سؤال)</p><div class="form-group"><label>اختر الفيديو</label><select id="quizVideoSelect" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"><option value="">-- اختر فيديو --</option></select></div><div id="questionsContainer"></div><button class="btn btn-secondary" onclick="addQuestion()" style="width:100%;margin:1rem 0"><i class="fas fa-plus"></i> إضافة سؤال جديد</button><button class="btn btn-success" onclick="saveExam()" style="width:100%"><i class="fas fa-save"></i> حفظ الامتحان</button></div></div></div>
   <div class="modal" id="viewResultsModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-chart-bar" style="color:#f59e0b"></i> نتائج الامتحانات</h3><button class="modal-close" onclick="closeViewResultsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الفيديو لعرض النتائج</label><select id="resultsVideoSelect" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem" onchange="loadResultsForVideo()"><option value="">-- اختر فيديو --</option></select></div><div id="resultsContainer" style="margin-top:1.5rem"><p style="text-align:center;color:#888;padding:2rem">اختر فيديو لعرض النتائج</p></div></div></div></div>
   <div class="modal" id="takeQuizModal"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-check" style="color:#6366f1"></i> امتحان الفيديو</h3><button class="modal-close" onclick="closeTakeExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div id="studentNameSection"><p style="margin-bottom:1rem;color:#aaa">أدخل بياناتك قبل بدء الامتحان</p><input id="studentNameInput" placeholder="الاسم الكامل" class="student-name-input" maxlength="50"><input id="studentPhoneInput" placeholder="رقم الهاتف" class="student-name-input" maxlength="20" type="tel" style="margin-top:.5rem"><button class="btn btn-primary" onclick="startExam()" style="width:100%"><i class="fas fa-play"></i> بدء الامتحان</button></div><div id="quizSection" style="display:none"></div></div></div></div>
-  <div class="modal" id="nameModal"><div class="modal-content name-modal-content"><div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div><h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2><p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p><div class="name-input-group"><input id="userNameInput" placeholder="الاسم" class="name-input" maxlength="20"><div style="display: flex; gap: 10px; margin-top: 0.5rem;"><select id="userCountryCode" class="phone-input" style="width: 35%; text-align: center; direction: ltr;"><option value="+20">🇪🇬 +20 (مصر)</option><option value="+966">🇸🇦 +966 (السعودية)</option><option value="+971">🇦🇪 +971 (الإمارات)</option><option value="+965">🇰🇼 +965 (الكويت)</option><option value="+974">🇶🇦 +974 (قطر)</option><option value="+973">🇧🇭 +973 (البحرين)</option><option value="+968">🇴🇲 +968 (عمان)</option><option value="+962">🇯🇴 +962 (الأردن)</option><option value="+961">🇱🇧 +961 (لبنان)</option><option value="+963">🇸🇾 +963 (سوريا)</option><option value="+970">🇵🇸 +970 (فلسطين)</option><option value="+218">🇱🇾 +218 (ليبيا)</option><option value="+213">🇩🇿 +213 (الجزائر)</option><option value="+212">🇲🇦 +212 (المغرب)</option><option value="+216">🇹🇳 +216 (تونس)</option><option value="+1">🇺🇸 +1 (الولايات المتحدة)</option><option value="+44">🇬🇧 +44 (المملكة المتحدة)</option><option value="+49">🇩🇪 +49 (ألمانيا)</option><option value="+33">🇫🇷 +33 (فرنسا)</option></select><input id="userPhoneInput" placeholder="رقم الهاتف" class="phone-input" style="width: 65%;" maxlength="15" type="tel"></div></div><button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button></div></div>
+  <div class="modal" id="nameModal"><div class="modal-content name-modal-content"><div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div><h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2><p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p><div class="name-input-group"><input id="userNameInput" placeholder="الاسم" class="name-input" maxlength="20"><div style="display: flex; gap: 10px; margin-top: 0.5rem;"><select id="userCountryCode" class="phone-input" style="width: 35%; text-align: center; direction: ltr;"><option value="+20">🇪🇬 +20 (مصر)</option><option value="+966">🇸🇦 +966 (السعودية)</option><option value="+971">🇦🇪 +971 (الإمارات)</option><option value="+965">🇰🇼 +965 (الكويت)</option><option value="+974">🇶🇦 +974 (قطر)</option><option value="+973">🇧🇭 +973 (البحرين)</option><option value="+968">🇴🇲 +968 (عمان)</option><option value="+962">🇯🇴 +962 (الأردن)</option><option value="+961">🇱🇧 +961 (لبنان)</option><option value="+963">🇸🇾 +963 (سوريا)</option><option value="+970">??🇸 +970 (فلسطين)</option><option value="+218">🇱🇾 +218 (ليبيا)</option><option value="+213">🇩🇿 +213 (الجزائر)</option><option value="+212">🇲🇦 +212 (المغرب)</option><option value="+216">🇹🇳 +216 (تونس)</option><option value="+1">🇺🇸 +1 (الولايات المتحدة)</option><option value="+44">🇬🇧 +44 (المملكة المتحدة)</option><option value="+49">🇩🇪 +49 (ألمانيا)</option><option value="+33">🇫🇷 +33 (فرنسا)</option></select><input id="userPhoneInput" placeholder="رقم الهاتف" class="phone-input" style="width: 65%;" maxlength="15" type="tel"></div></div><button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button></div></div>
   <div class="modal" id="callModal"><div class="modal-content call-modal-content"><div class="call-avatar"><i class="fas fa-users"></i></div><div class="call-status" id="callStatus">مكالمة جماعية</div><div class="call-timer" id="callTimer">00:00</div><div class="call-actions"><button class="call-action mute" onclick="toggleMute()" id="muteBtn"><i class="fas fa-microphone"></i></button><button class="call-action end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div></div></div>
   <div class="modal" id="appsModal"><div class="modal-content apps-modal-content"><div class="modal-header"><h3><i class="fas fa-th-large" style="color:#6366f1"></i> تطبيقات المنصة</h3><button class="modal-close" onclick="closeAppsModal()"><i class="fas fa-times"></i></button></div><div class="apps-list" id="appsList"></div></div></div>
   <div class="modal" id="teachAICircleModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-robot" style="color:#06b6d4"></i> تعليم الذكاء الاصطناعي</h3><button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="margin-bottom:2rem;"><h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle"></i> إضافة معلومة جديدة</h4><div class="form-group"><label>السؤال</label><input type="text" id="aiQuestionInput" placeholder="مثال: ما هي سرعة الضوء؟" class="student-name-input"></div><div class="form-group"><label>الإجابة</label><textarea id="aiAnswerInput" placeholder="اكتب الإجابة..." class="student-name-input" rows="3"></textarea></div><button class="btn btn-primary" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button></div><div><h4><i class="fas fa-database"></i> قاعدة المعرفة الحالية</h4><div id="aiKnowledgeList"></div></div></div></div></div>
@@ -2618,22 +2618,24 @@ async function updateAdminUI() {
   function startGoogleSessionHeartbeat(email, deviceId) { if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); } window.googleSessionHeartbeat = setInterval(async () => { try { const _hbUid = currentUserId || (auth && auth.currentUser ? auth.currentUser.uid : null);
         if (!_hbUid) return;
         const sessions = await db.collection("active_sessions").where("userId", "==", _hbUid).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch (error) { console.error("Google heartbeat error:", error); } }, 30000); }
-  async function googleLogin() { try { showToast("⏳ جاري تسجيل الدخول...");
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) { await auth.signInWithRedirect(provider); return; }
-    const result = await auth.signInWithPopup(provider); googleUser = result.user; currentUserId = googleUser.uid; let name = googleUser.displayName; let email = googleUser.email; let phone = googleUser.phoneNumber || ""; const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); await auth.signOut(); googleUser = null; currentUserId = null; return; } currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } try { await registerActiveSessionGoogle(email, currentUser, currentUserPhone); } catch(_se){ console.warn("session register failed (non-fatal):", _se); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); SoundEffects.join(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); showToast(`مرحباً بعودتك ${currentUser}! 🚀`); } catch(error) { console.error(error); SoundEffects.error();
+  async function googleLogin() {
+  try {
+    showToast("⏳ جاري تسجيل الدخول...");
+    // استخدام redirect بدلاً من popup (تجنب حظر النوافذ المنبثقة)
+    await auth.signInWithRedirect(provider);
+    // سيتم معالجة النتيجة في onAuthStateChanged أو getRedirectResult
+  } catch(error) {
+    console.error("Google login error:", error);
+    let errorMessage = "❌ فشل تسجيل الدخول: ";
     if (error.code === "auth/unauthorized-domain") {
-      showToast("❌ الدومين غير مصرح به في Firebase. يرجى إضافته في Console → Authentication → Authorized domains");
-      alert("⚠️ لإصلاح تسجيل الدخول، أضف هذا الدومين في Firebase Console:\n" + location.hostname + "\n\nAuthentication → Settings → Authorized domains");
-    } else if (error.code === "auth/popup-blocked") {
-      showToast("❌ النافذة مُحجوبة - جاري إعادة المحاولة...");
-      try { await auth.signInWithRedirect(provider); } catch(e2) { showToast("❌ فشل تسجيل الدخول: " + e2.message); }
-    } else if (error.code === "auth/popup-closed-by-user") {
-      showToast("تم إغلاق نافذة تسجيل الدخول");
+      errorMessage = "❌ النطاق غير مصرح به. أضف هذا النطاق في Firebase Console:\n" + location.hostname;
     } else {
-      showToast("❌ فشل تسجيل الدخول: " + (error.message || error.code || "خطأ غير معروف"));
+      errorMessage += error.message || error.code;
     }
-  } }
+    showToast(errorMessage);
+    SoundEffects.error();
+  }
+}
   loadUserDashboard();
   async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
@@ -2846,7 +2848,106 @@ async function updateAdminUI() {
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
   function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
+  function initAuthState() {
+  // + تعريف دالة مساعدة لمعالجة تسجيل الدخول الناجح (لتجنب تكرار الكود)
+  async function handleSuccessfulLogin(user) {
+    try {
+      googleUser = user;
+      currentUserId = user.uid;
+      let name = user.displayName;
+      let email = user.email;
+      let phone = user.phoneNumber || "";
+      currentUser = name;
+      currentUserPhone = phone || "";
+      await loadUserDataFromFirebase(currentUserId);
+      if (!currentUser) {
+        currentUser = name;
+        currentUserPhone = phone || "";
+        await saveUserDataToFirebase(currentUserId);
+      }
+      if (currentUser) localStorage.setItem("falak_username", currentUser);
+      if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
+      document.getElementById("landingPage").style.display = "none";
+      document.getElementById("appWrapper").style.display = "flex";
+      document.getElementById("googleUserInfo").style.display = "flex";
+      document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`;
+      document.getElementById("googleLogoutBtn").style.display = "block";
+      updateGoogleLogoutButtonsVisibility();
+      try { await refreshAdminStatusFromFirestore(); } catch(_) {}
+      loadAdminPreference();
+      listenToVideosWithRetry();
+      listenToCoursesAccess();
+      listenToUserEnrollmentsAccess();
+      listenToMaintenance();
+      loadAIKnowledgeFromFirebase();
+      loadExamsFromFirebase();
+      loadExamResultsFromFirebase();
+      loadAppsFromFirebase();
+      initCloudinaryWidget();
+      checkUrlForShare();
+      loadEmailSettingsFromFirestore();
+      updateAdminUI();
+      showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
+      SoundEffects.join();
+    } catch (error) {
+      console.error("Error in handleSuccessfulLogin:", error);
+    }
+  }
+
+  // + معالجة نتيجة الـ Redirect (بعد العودة من Google)
+  auth.getRedirectResult().then((result) => {
+    if (result.user && !result.user.isAnonymous) {
+      // تم تسجيل الدخول بنجاح عبر redirect
+      handleSuccessfulLogin(result.user);
+    }
+  }).catch((error) => {
+    console.error("Redirect result error:", error);
+    if (error.code !== "auth/unauthorized-domain") {
+      showToast("❌ فشل تسجيل الدخول: " + error.message);
+    } else {
+      showToast("⚠️ النطاق غير مصرح به. أضف هذا النطاق في Firebase Console (Authorized domains): " + location.hostname);
+    }
+  });
+
+  // كود onAuthStateChanged الأصلي (مع تعديل بسيط لاستخدام handleSuccessfulLogin)
+  auth.onAuthStateChanged(async user => {
+    if (user && !isAdmin) {
+      // استخدم الدالة المساعدة لتجنب تكرار الكود
+      await handleSuccessfulLogin(user);
+    } else if (!user && !isAdmin) {
+      let hasLocal = loadUserDataFromStorage();
+      if (hasLocal && !currentUserId) {
+        document.getElementById("landingPage").style.display = "none";
+        document.getElementById("appWrapper").style.display = "flex";
+        document.getElementById("googleUserInfo").style.display = "none";
+        document.getElementById("googleLogoutBtn").style.display = "none";
+        loadAdminPreference();
+        listenToVideosWithRetry();
+        listenToCoursesAccess();
+        listenToMaintenance();
+        loadAIKnowledgeFromFirebase();
+        loadExamsFromFirebase();
+        loadExamResultsFromFirebase();
+        loadAppsFromFirebase();
+        initCloudinaryWidget();
+        checkUrlForShare();
+        loadEmailSettingsFromFirestore();
+        updateAdminUI();
+      } else {
+        document.getElementById("landingPage").style.display = "flex";
+        document.getElementById("appWrapper").style.display = "none";
+        googleUser = null;
+        currentUserId = null;
+        currentUser = null;
+        currentUserPhone = null;
+        localStorage.removeItem("falak_username");
+        localStorage.removeItem("falak_userphone");
+        updateGoogleLogoutButtonsVisibility();
+        updateAdminUI();
+      }
+    }
+  });
+}
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
