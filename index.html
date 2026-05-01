@@ -1564,36 +1564,63 @@ async function isAdminUser(userId) {
   // يستخدم Doc ID ثابت = userId_videoId لمنع التكرار، ويعمل بدون قراءة سابقة
   // ويتعامل مع فيديوهات YouTube والفيديوهات العادية بنفس الطريقة.
   let __markingWatched = new Set();
-  function setupProgressTracking(videoIdForWatch) {
-  let p = document.getElementById("videoPlayer");
-  if (!p || p.tagName !== "VIDEO") return;
-
-  // إزالة أي interval قديم
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
+  async function markVideoAsWatched(videoId) {
+    try {
+      if (!currentUserId || !videoId) return;
+      const key = currentUserId + "_" + videoId;
+      if (__markingWatched.has(key)) return;
+      __markingWatched.add(key);
+      const docRef = db.collection("watch_history").doc(key);
+      const existing = await docRef.get();
+      if (existing.exists) { __markingWatched.delete(key); return; }
+      await docRef.set({
+        userId: currentUserId,
+        videoId: videoId,
+        title: (videos.find(v => v.id === videoId) || {}).title || "",
+        watchedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // ====== ضمان وجود ملف الطالب في user_progress ======
+      // إذا كان المشرف قد حذف ملف الطالب سابقاً، نُعيد إنشاءه تلقائياً
+      // عند تسجيل أي مشاهدة جديدة حتى يظهر الطالب مرة أخرى في قائمة المتابعة.
+      try {
+        const userPatch = { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
+        if (currentUser) userPatch.username = currentUser;
+        if (currentUserPhone) userPatch.phone = currentUserPhone;
+        try {
+          const au = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser : null;
+          if (au) {
+            if (au.email) userPatch.email = au.email;
+            if (au.displayName && !userPatch.username) userPatch.username = au.displayName;
+            if (au.photoURL) userPatch.photoURL = au.photoURL;
+          }
+        } catch(_){}
+        await db.collection("user_progress").doc(currentUserId).set(userPatch, { merge: true });
+      } catch (e) { console.warn("user_progress upsert (on watch) failed", e); }
+      try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch (e) { console.warn("addPoints failed", e); }
+      try {
+        const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
+        for (const enroll of enrollments.docs) {
+          const ed = enroll.data();
+          const course = await db.collection("courses").doc(ed.courseId).get();
+          if (course.exists && (course.data().videoIds || []).includes(videoId)) {
+            if (!(ed.completedVideosIds || []).includes(videoId)) {
+              const completed = (ed.completedVideos || 0) + 1;
+              await enroll.ref.update({
+                completedVideos: completed,
+                completedVideosIds: firebase.firestore.FieldValue.arrayUnion(videoId)
+              });
+            }
+          }
+        }
+      } catch (e) { console.warn("course progress update failed", e); }
+      try { if (typeof showToast === "function") showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك"); } catch(_){}
+      __markingWatched.delete(key);
+    } catch (e) {
+      console.error("markVideoAsWatched failed:", e);
+      try { __markingWatched.delete(currentUserId + "_" + videoId); } catch(_){}
+    }
   }
-
-  // فقط لحفظ وقت التوقف (لا يسجل المشاهدة الكاملة)
-  progressInterval = setInterval(() => {
-    if (!p.paused && !p.ended && p.duration > 0) {
-      saveVideoProgress();   // يحفظ مكان التوقف فقط، لا يسجل كـ "تم المشاهدة"
-    }
-  }, 5000);
-
-  // ✅ عند انتهاء الفيديو بالكامل (100%) نسجل المشاهدة
-  p.addEventListener("ended", () => {
-    markVideoAsWatched(videoIdForWatch);
-    if (progressInterval) {
-      clearInterval(progressInterval);
-      progressInterval = null;
-    }
-  });
-
-  // حفظ التقدم عند التوقف
-  p.addEventListener("pause", saveVideoProgress);
-  window.addEventListener("beforeunload", saveVideoProgress);
-}
+  window.markVideoAsWatched = markVideoAsWatched;
   // ====== تحميل YouTube IFrame API مرة واحدة ======
   let __ytApiReadyPromise = null;
   function loadYouTubeAPI() {
