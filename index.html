@@ -1113,7 +1113,7 @@
   <div class="landing-card">
     <div class="landing-header"><div class="landing-icon"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div><div class="landing-title">Astronomy and space</div></div>
     <div class="landing-sub">سجل الدخول لاستكشاف الكون</div>
-    <button class="google-btn" id="googleSignInBtn"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>
+    <button class="google-btn" id="googleSignInBtn" onclick="googleLogin()"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>
     <div id="googleUserInfo" style="display: none;" class="user-info"></div>
     <button class="google-btn" id="googleLogoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
   </div>
@@ -2517,6 +2517,8 @@ async function updateAdminUI() {
   window.openSetAdminsModal = openSetAdminsModal; window.closeSetAdminsModal = closeSetAdminsModal;
   window.addAdminAccount = addAdminAccount; window.removeAdminAccount = removeAdminAccount;
   window.undoDrawing = undoDrawing;
+  window.googleLogin = googleLogin;
+  window.googleLogout = googleLogout;
   window.refreshAdminStatusFromFirestore = refreshAdminStatusFromFirestore;
   window.fetchMyAdminInfo = fetchMyAdminInfo;
   window.closeAdminPasswordModal = closeAdminPasswordModal;
