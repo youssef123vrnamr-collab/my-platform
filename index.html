@@ -4409,10 +4409,10 @@ function switchProgressTab(tab) {
 
     try {
       await dbi.collection(PAC_COL).doc(threadId).collection('messages').add({
-        text, sender, senderName,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
+  text, sender, senderName,
+  senderId: pacUserId(),   // 🔥 أضف هذا السطر
+  timestamp: firebase.firestore.FieldValue.serverTimestamp()
+});
       const meta = {
         lastMessage: text,
         lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
