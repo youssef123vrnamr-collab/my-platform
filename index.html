@@ -2406,7 +2406,59 @@ async function updateAdminUI() {
   function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); if (!name) { showToast("⚠️ أدخل اسمك أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يكون بين 2 و 50 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let countryCode = '+20'; let normalizedPhone; if (phone.includes("@")) { if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح"); return; } normalizedPhone = phone.toLowerCase(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يكون مكوناً من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
   function updateExamTimer() { let mins = Math.floor(examTimeRemaining / 60); let secs = examTimeRemaining % 60; let d = document.getElementById("timerDisplay"); d && (d.textContent = mins + ":" + secs.toString().padStart(2, "0")); let timer = document.getElementById("quizTimer"); timer && (examTimeRemaining < 60 ? timer.classList.add("warning") : timer.classList.remove("warning")); }
   function selectExamAnswer(q, a) { currentExamAnswers[q] = a; }
-  function submitExam() { if (examTimer) { clearInterval(examTimer); examTimer = null; } let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); let countryCode = '+20'; let normalizedPhone = phone.includes("@") ? phone.toLowerCase() : normalizePhone(phone, countryCode); let total = currentExam.questions.length; let answered = Object.keys(currentExamAnswers).length; if (answered < total && !confirm(`لم تجب على ${total - answered} سؤال. هل تريد التسليم؟`)) { examTimeRemaining = Math.max(examTimeRemaining, 1); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); return; } let correct = 0; let ansList = []; for (let i = 0; i < total; i++) { let a = currentExamAnswers[i] !== undefined ? currentExamAnswers[i] : -1; ansList.push(a); if (a === currentExam.questions[i].correctAnswer) correct++; } let percent = Math.round(correct / total * 100); db.collection("exam_results").add({ examId: currentExam.id, videoId: currentVideoIdForExam, studentName: sanitizeInput(name), studentPhone: normalizedPhone, answers: ansList, score: correct, totalQuestions: total, percentage: percent, submittedAt: firebase.firestore.FieldValue.serverTimestamp(), gradeSent: false, resultVisible: false }).then(() => { SoundEffects.success(); showExamResult(correct, total, percent); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التسليم"); }); }
+  function submitExam() {
+  if (examTimer) {
+    clearInterval(examTimer);
+    examTimer = null;
+  }
+  let name = document.getElementById("studentNameInput").value.trim();
+  let phone = document.getElementById("studentPhoneInput").value.trim();
+  let countryCode = '+20';
+  let normalizedPhone = phone.includes("@") ? phone.toLowerCase() : normalizePhone(phone, countryCode);
+  let total = currentExam.questions.length;
+  let answered = Object.keys(currentExamAnswers).length;
+  if (answered < total && !confirm(`لم تجب على ${total - answered} سؤال. هل تريد التسليم؟`)) {
+    examTimeRemaining = Math.max(examTimeRemaining, 1);
+    examTimer = setInterval(() => {
+      examTimeRemaining--;
+      updateExamTimer();
+      if (examTimeRemaining <= 0) {
+        clearInterval(examTimer);
+        submitExam();
+      }
+    }, 1000);
+    return;
+  }
+  let correct = 0;
+  let ansList = [];
+  for (let i = 0; i < total; i++) {
+    let a = currentExamAnswers[i] !== undefined ? currentExamAnswers[i] : -1;
+    ansList.push(a);
+    if (a === currentExam.questions[i].correctAnswer) correct++;
+  }
+  let percent = Math.round(correct / total * 100);
+  db.collection("exam_results").add({
+    examId: currentExam.id,
+    videoId: currentVideoIdForExam,
+    studentName: sanitizeInput(name),
+    studentPhone: normalizedPhone,
+    userId: currentUserId,          // ✅ هذا هو التعديل الوحيد الذي أضفته
+    answers: ansList,
+    score: correct,
+    totalQuestions: total,
+    percentage: percent,
+    submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    gradeSent: false,
+    resultVisible: false
+  }).then(() => {
+    SoundEffects.success();
+    showExamResult(correct, total, percent);
+  }).catch(e => {
+    console.error(e);
+    SoundEffects.error();
+    showToast("❌ فشل التسليم");
+  });
+}
   function showExamResult(correct, total, percent) { let qSec = document.getElementById("quizSection"); if (!qSec) return; let msg = "", icon = ""; if (percent >= 90) { msg = "ممتاز! أداء رائع جداً"; icon = "🏆"; } else if (percent >= 75) { msg = "جيد جداً! استمر في التقدم"; icon = "👏"; } else if (percent >= 60) { msg = "جيد، يمكنك تحسين أدائك"; icon = "👍"; } else { msg = "حاول مرة أخرى، يمكنك التحسن"; icon = "💪"; } qSec.innerHTML = `<div class="quiz-result"><div class="result-icon">${icon}</div><div class="result-score">${percent}%</div><div class="result-message">${msg}</div><p style="color:#aaa; margin-bottom:1rem;">إجابات صحيحة: ${correct} من ${total}</p><button class="quiz-btn" onclick="closeTakeExamModal()"><i class="fas fa-times"></i> إغلاق</button></div>`; }
 
   // AI Functions
@@ -2475,13 +2527,100 @@ async function updateAdminUI() {
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
   function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
-  function sendMessage() { let inp = document.getElementById("messageInput"); if (!inp) return; let text = inp.value.trim(); if (!text || !currentUser) return; db.collection("messages").add({ type: "text", text: text, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.send(); inp.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الإرسال"); }); }
+  function sendMessage() {
+  let inp = document.getElementById("messageInput");
+  if (!inp) return;
+  let text = inp.value.trim();
+  if (!text || !currentUser) return;
+  db.collection("messages").add({
+    type: "text",
+    text: text,
+    sender: currentUser,
+    senderPhone: currentUserPhone,
+    userId: currentUserId,          // <-- أضف هذا
+    senderId: currentUserId,        // <-- أضف هذا (احتياطي)
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    SoundEffects.send();
+    inp.value = "";
+  }).catch(() => {
+    SoundEffects.error();
+    showToast("فشل الإرسال");
+  });
+}
   function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
-  function sendImage(input) { let file = input.files[0]; if (!file || !currentUser) return; if (file.size > 5 * 1024 * 1024) { SoundEffects.error(); showToast("الصورة كبيرة (الحد 5 ميجا)"); return; } showToast("جاري الرفع..."); let fd = new FormData(); fd.append("file", file); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", { method: "POST", body: fd }).then(r => r.json()).then(d => { db.collection("messages").add({ type: "image", imageUrl: d.secure_url, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("تم إرسال الصورة"); input.value = ""; }).catch(() => { SoundEffects.error(); showToast("فشل الرفع"); }); }
+  function sendImage(input) {
+  let file = input.files[0];
+  if (!file || !currentUser) return;
+  if (file.size > 5 * 1024 * 1024) {
+    SoundEffects.error();
+    showToast("الصورة كبيرة (الحد 5 ميجا)");
+    return;
+  }
+  showToast("جاري الرفع...");
+  let fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
+  fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
+  fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CONFIG.cloudName + "/image/upload", {
+    method: "POST",
+    body: fd
+  }).then(r => r.json()).then(d => {
+    db.collection("messages").add({
+      type: "image",
+      imageUrl: d.secure_url,
+      sender: currentUser,
+      senderPhone: currentUserPhone,
+      userId: currentUserId,        // <-- أضف هذا
+      senderId: currentUserId,      // <-- أضف هذا
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    SoundEffects.send();
+    showToast("تم إرسال الصورة");
+    input.value = "";
+  }).catch(() => {
+    SoundEffects.error();
+    showToast("فشل الرفع");
+  });
+}
   async function toggleRecording() { if (isRecording) stopRecording(); else await startRecording(); }
   async function startRecording() { if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; } try { let stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = e => e.data.size && audioChunks.push(e.data); mediaRecorder.onstop = () => { uploadVoice(new Blob(audioChunks, { type: "audio/webm" })); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; document.getElementById("recordBtn").classList.add("recording"); document.getElementById("recordingIndicator").classList.add("active"); SoundEffects.recordStart(); let sec = 0; recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000); } catch (e) { showToast("❌ لا يمكن الوصول للميكروفون"); } }
   function stopRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); clearInterval(recordingTimer); isRecording = false; document.getElementById("recordBtn").classList.remove("recording"); document.getElementById("recordingIndicator").classList.remove("active"); document.getElementById("recordingTime").textContent = "0:00"; } }
-  async function uploadVoice(blob) { if (!currentUser) { showToast("❌ يجب تسجيل الدخول أولاً"); return; } showToast("📤 جاري رفع الرسالة الصوتية..."); let fd = new FormData(); fd.append("file", blob, "voice.webm"); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); try { let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, { method: "POST", body: fd }); if (!res.ok) throw new Error(`HTTP ${res.status}`); let data = await res.json(); if (!data.secure_url) throw new Error("لم يتم استلام الرابط"); await db.collection("messages").add({ type: "voice", audioUrl: data.secure_url, sender: currentUser, senderPhone: currentUserPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); SoundEffects.send(); showToast("✅ تم إرسال الرسالة الصوتية"); } catch (e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إرسال الصوت"); } }
+  async function uploadVoice(blob) {
+  if (!currentUser) {
+    showToast("❌ يجب تسجيل الدخول أولاً");
+    return;
+  }
+  showToast("📤 جاري رفع الرسالة الصوتية...");
+  let fd = new FormData();
+  fd.append("file", blob, "voice.webm");
+  fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
+  fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
+  try {
+    let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`, {
+      method: "POST",
+      body: fd
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    let data = await res.json();
+    if (!data.secure_url) throw new Error("لم يتم استلام الرابط");
+    await db.collection("messages").add({
+      type: "voice",
+      audioUrl: data.secure_url,
+      sender: currentUser,
+      senderPhone: currentUserPhone,
+      userId: currentUserId,        // <-- أضف هذا
+      senderId: currentUserId,      // <-- أضف هذا
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    SoundEffects.send();
+    showToast("✅ تم إرسال الرسالة الصوتية");
+  } catch (e) {
+    console.error(e);
+    SoundEffects.error();
+    showToast("❌ فشل إرسال الصوت");
+  }
+}
   async function startVoiceCall() { if (!currentUser) return; try { localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); document.getElementById("callModal").classList.add("active"); document.getElementById("callStatus").textContent = "مكالمة - " + currentUser; callSeconds = 0; callTimer = setInterval(() => { callSeconds++; let el = document.getElementById("callTimer"); if (el) el.textContent = Math.floor(callSeconds / 60).toString().padStart(2, "0") + ":" + (callSeconds % 60).toString().padStart(2, "0"); }, 1000); SoundEffects.join(); } catch (e) { SoundEffects.error(); showToast("لا يمكن الوصول للميكروفون"); } }
   function toggleMute() { if (!localStream) return; let track = localStream.getAudioTracks()[0]; track.enabled = !track.enabled; let btn = document.getElementById("muteBtn"); btn && (btn.classList.toggle("active"), btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'); }
   function endCall() { if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } clearInterval(callTimer); document.getElementById("callModal").classList.remove("active"); document.getElementById("callTimer").textContent = "00:00"; }
@@ -2495,7 +2634,62 @@ async function updateAdminUI() {
   // Exam Result Functions
   function openExamResultModal() { document.getElementById("examResultModal").classList.add("active"); document.getElementById("examResultName").value = currentUser || ""; const ep = document.getElementById("examResultPhone"); ep.value = getStudentIdentifier(); if (currentUserId && ep.value.includes("@")) { ep.placeholder = "البريد الإلكتروني"; ep.type = "email"; } else { ep.placeholder = "رقم الهاتف"; ep.type = "tel"; } }
   function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
-  function checkExamResult() { let name = document.getElementById("examResultName").value.trim(); let phone = document.getElementById("examResultPhone").value.trim(); if (!name || !phone) { showToast("⚠️ أدخل الاسم ورقم الهاتف أو البريد الإلكتروني"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم غير صالح"); return; } let countryCode = '+20'; let normalizedPhone; if (phone.includes("@")) { if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح"); return; } normalizedPhone = phone.toLowerCase(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح"); return; } } db.collection("exam-result-queries").add({ name: sanitizeInput(name), phone: normalizedPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); db.collection("exam_results").where("studentName", "==", name).where("studentPhone", "==", normalizedPhone).where("resultVisible", "==", true).get().then(snap => { if (snap.empty) { alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف."); closeExamResultModal(); return; } let results = []; snap.forEach(d => results.push({ id: d.id, ...d.data() })); results.sort((a, b) => { let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0; let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0; return tb - ta; }); let r = results[0]; alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`); closeExamResultModal(); }).catch(e => { console.error("Error fetching exam result:", e); alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً."); }); }
+  function checkExamResult() {
+  let name = document.getElementById("examResultName").value.trim();
+  let phone = document.getElementById("examResultPhone").value.trim();
+  if (!name || !phone) {
+    showToast("⚠️ أدخل الاسم ورقم الهاتف أو البريد الإلكتروني");
+    return;
+  }
+  if (!isValidName(name)) {
+    showToast("⚠️ الاسم غير صالح");
+    return;
+  }
+  let countryCode = '+20';
+  let normalizedPhone;
+  if (phone.includes("@")) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone)) {
+      showToast("⚠️ البريد الإلكتروني غير صحيح");
+      return;
+    }
+    normalizedPhone = phone.toLowerCase();
+  } else {
+    normalizedPhone = normalizePhone(phone, countryCode);
+    if (!validatePhone(normalizedPhone, countryCode)) {
+      showToast("⚠️ رقم الهاتف غير صحيح");
+      return;
+    }
+  }
+
+  // ✅ تم حذف السطر الذي يضيف مستند "exam-result-queries"
+
+  db.collection("exam_results")
+    .where("studentName", "==", name)
+    .where("studentPhone", "==", normalizedPhone)
+    .where("resultVisible", "==", true)
+    .get()
+    .then(snap => {
+      if (snap.empty) {
+        alert("لم يتم العثور على نتيجة لك بعد. يرجى التواصل مع المشرف.");
+        closeExamResultModal();
+        return;
+      }
+      let results = [];
+      snap.forEach(d => results.push({ id: d.id, ...d.data() }));
+      results.sort((a, b) => {
+        let ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0;
+        let tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      let r = results[0];
+      alert(`نتيجة الامتحان: ${r.score} من ${r.totalQuestions} (${r.percentage}%) - تهانينا ${name}!`);
+      closeExamResultModal();
+    })
+    .catch(e => {
+      console.error("Error fetching exam result:", e);
+      alert("حدث خطأ أثناء البحث عن النتيجة. الرجاء التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً.");
+    });
+}
 
   // YouTube Functions
   function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
