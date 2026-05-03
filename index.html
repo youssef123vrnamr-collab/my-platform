@@ -4471,61 +4471,54 @@ function switchProgressTab(tab) {
   window.pacInputKeydown = function(ev){
     if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); window.pacSendMessage(); }
   };
-
-  window.pacSendMessage = async function(){
-    const input = document.getElementById('pacInput');
-    const text = (input.value || '').trim();
-    if (!text) return;
-    const dbi = pacGetDb(); if (!dbi) return;
-
-    const threadId = pacCurrentThreadUserId;
-    if (!threadId) { if (window.showToast) showToast('❌ لم يتم اختيار محادثة'); return; }
-
-    const sender = pacIsAdminView ? 'admin' : 'user';
-    const senderName = pacIsAdminView ? 'المشرف' : pacUserName();
-
-    input.value = '';
-    input.style.height = 'auto';
-
-    try {
-      await dbi.collection(PAC_COL).doc(threadId).collection('messages').add({
-        text, sender, senderName,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      const meta = {
-        lastMessage: text,
-        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
-        lastSender: sender
-      };
-      if (pacIsAdminView) {
-        meta.unreadByUser = firebase.firestore.FieldValue.increment(1);
-        meta.unreadByAdmin = 0;
-      } else {
-        meta.unreadByAdmin = firebase.firestore.FieldValue.increment(1);
-        meta.unreadByUser = 0;
-        meta.userName = pacUserName();
-        meta.userEmail = pacUserEmail();
-        meta.userPhone = pacUserPhone();
-      }
-      await dbi.collection(PAC_COL).doc(threadId).set(meta, { merge: true });
-
-      if (window.SoundEffects && SoundEffects.success) try{SoundEffects.success();}catch(e){}
-    } catch(e){
-      console.error('pac send err', e);
-      let msg = '❌ فشل إرسال الرسالة';
-      const code = (e && (e.code || e.message)) || '';
-      if (/permission|denied|insufficient/i.test(code)) {
-        msg = '❌ صلاحيات Firestore لا تسمح بإرسال الرسالة. أضف هذه القاعدة في Firebase Console → Firestore → Rules:\n\nmatch /private_admin_chats/{doc=**} { allow read, write: if request.auth != null; }';
-        alert(msg);
-      } else if (/network|offline|unavailable/i.test(code)) {
-        msg = '❌ تحقق من اتصال الإنترنت';
-      }
-      if (window.showToast) showToast(msg.split('\n')[0]);
-      input.value = text;
+window.pacSendMessage = async function(){
+  const input = document.getElementById('pacInput');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  const dbi = pacGetDb(); if (!dbi) return;
+  const threadId = pacCurrentThreadUserId;
+  if (!threadId) { if (window.showToast) showToast('❌ لم يتم اختيار محادثة'); return; }
+  const sender = pacIsAdminView ? 'admin' : 'user';
+  const senderName = pacIsAdminView ? 'المشرف' : pacUserName();
+  input.value = '';
+  input.style.height = 'auto';
+  try {
+    await dbi.collection(PAC_COL).doc(threadId).collection('messages').add({
+      text, sender, senderName,
+      senderId: currentUserId,   // ✅ هذا هو التعديل الوحيد
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const meta = {
+      lastMessage: text,
+      lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+      lastSender: sender
+    };
+    if (pacIsAdminView) {
+      meta.unreadByUser = firebase.firestore.FieldValue.increment(1);
+      meta.unreadByAdmin = 0;
+    } else {
+      meta.unreadByAdmin = firebase.firestore.FieldValue.increment(1);
+      meta.unreadByUser = 0;
+      meta.userName = pacUserName();
+      meta.userEmail = pacUserEmail();
+      meta.userPhone = pacUserPhone();
     }
-  };
-
+    await dbi.collection(PAC_COL).doc(threadId).set(meta, { merge: true });
+    if (window.SoundEffects && SoundEffects.success) try{SoundEffects.success();}catch(e){}
+  } catch(e){
+    console.error('pac send err', e);
+    let msg = '❌ فشل إرسال الرسالة';
+    const code = (e && (e.code || e.message)) || '';
+    if (/permission|denied|insufficient/i.test(code)) {
+      msg = '❌ صلاحيات Firestore لا تسمح بإرسال الرسالة. أضف القاعدة المناسبة في Firebase Console → Firestore → Rules.';
+      alert(msg);
+    } else if (/network|offline|unavailable/i.test(code)) {
+      msg = '❌ تحقق من اتصال الإنترنت';
+    }
+    if (window.showToast) showToast(msg.split('\n')[0]);
+    input.value = text;
+  }
+};
   window.pacAdminClearAllThreads = async function(){
     if (!pacIsAdmin()) { if (window.showToast) showToast('❌ صلاحيات المشرف فقط'); return; }
     const dbi = pacGetDb();
