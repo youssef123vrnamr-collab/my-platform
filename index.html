@@ -1313,6 +1313,24 @@
   .vr-participants { grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: .75rem; }
   .vr-header { padding: .85rem 1rem; }
 }
+/* إخفاء الأقسام العلوية الكبيرة تماماً */
+.hero,
+.cosmos-carousel-section,
+.dashboard-container {
+  display: none !important;
+}
+
+/* تقليل padding الحاوية */
+.container {
+  padding-top: 0.5rem !important;
+}
+
+/* تقليل حجم الشريط */
+.navbar {
+  margin-bottom: 0 !important;
+  padding: 0.5rem 1rem !important;
+}
+</style>
 </style>
 </head>
 <body>
