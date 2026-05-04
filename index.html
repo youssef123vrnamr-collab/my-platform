@@ -3663,6 +3663,21 @@ async function enrollInCourse(courseId) {
   </div>
 
   <script>
+  .app-wrapper {
+  position: relative;
+  z-index: 1;
+}
+.videos-grid, #videosContainer, .course-section {
+  position: relative;
+  z-index: 10;
+}
+.upload-zone, .course-actions-toolbar {
+  position: relative;
+  z-index: 15;
+}
+.loader, .maintenance-overlay {
+  z-index: -1; /* عشان متغطيش حاجة */
+}
     let studentProgressTab = 'videos';
 let studentProgressView = 'me';
 let __allStudentsCache = null;
