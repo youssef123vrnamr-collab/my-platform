@@ -2402,17 +2402,21 @@ async function updateAdminUI() {
 
   // ===================== نظام دخول المشرف عبر حساب Google =====================
   // لا يوجد كلمات مرور في الكود إطلاقاً. الحسابات المسموح لها تُحفظ في Firestore (admin_accounts).
-  async function fetchMyAdminInfo(){
-    try {
-      const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
-      const uid = au && au.uid;
-      if (!uid || typeof db === "undefined" || !db) return { isAdmin:false, isSuperAdmin:false, uid: uid || "" };
-      const snap = await db.collection(ADMIN_ACCOUNTS_COL).doc(uid).get();
-      if (!snap.exists) return { isAdmin:false, isSuperAdmin:false, uid };
-      const role = (snap.data() || {}).role || "admin";
-      return { isAdmin:true, isSuperAdmin: role === "super_admin", uid };
-    } catch(e){ console.warn("fetchMyAdminInfo failed", e); return { isAdmin:false, isSuperAdmin:false, uid:"" }; }
+  async function fetchMyAdminInfo() {
+  try {
+    const au = auth.currentUser;
+    const uid = au && au.uid;
+    if (!uid || typeof db === "undefined" || !db) 
+      return { isAdmin: false, isSuperAdmin: false, uid: uid || "" };
+    const snap = await db.collection(ADMIN_ACCOUNTS_COL).doc(uid).get();
+    if (!snap.exists) return { isAdmin: false, isSuperAdmin: false, uid };
+    const role = (snap.data() || {}).role || "admin";
+    return { isAdmin: true, isSuperAdmin: role === "super_admin", uid };
+  } catch (e) {
+    console.warn("fetchMyAdminInfo failed", e);
+    return { isAdmin: false, isSuperAdmin: false, uid: "" };
   }
+}
   async function refreshAdminStatusFromFirestore(){
     const info = await fetchMyAdminInfo();
     isAdmin = !!info.isAdmin;
@@ -2425,66 +2429,75 @@ async function updateAdminUI() {
   async function adminAccountsCount(){
     try { const s = await db.collection(ADMIN_ACCOUNTS_COL).limit(1).get(); return s.size; } catch(e){ return -1; }
   }
-  async function showLogin(){
-    const modal = document.getElementById("loginModal");
-    const body = document.getElementById("adminLoginBody");
-    if (!modal || !body) return;
-    modal.classList.add("active");
-    body.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem"><i class="fas fa-spinner fa-spin"></i> جاري التحضير...</div>';
-    const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
-    if (!au || !au.email) {
-      body.innerHTML = '<p style="color:#ddd;text-align:center;margin-bottom:1rem;line-height:1.7">سجّل الدخول بحساب Google أولاً، وسيتم التحقق تلقائياً من صلاحياتك كمشرف.</p>'
-        + '<button class="google-btn" onclick="closeLogin();googleLogin();" style="width:100%"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>'
-        + '<button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button>';
-      return;
-    }
-    const email = _normEmail(au.email);
-    const info = await fetchMyAdminInfo();
-    if (info.isAdmin) {
-      isAdmin = true; isSuperAdmin = !!info.isSuperAdmin;
-      localStorage.setItem("falak_admin","true");
-      try { updateAdminUI(); renderVideos(); loadAIKnowledgeFromFirebase(); } catch(_){}
-      if (document.getElementById("maintenanceOverlay")?.classList.contains("active")) document.getElementById("cancelMaintenanceBtn")?.classList.add("active");
-      closeLogin();
-      SoundEffects.success(); showToast("🔓 مرحباً أيها المشرف!");
-      updateGoogleLogoutButtonsVisibility();
-      return;
-    }
-    const cnt = await adminAccountsCount();
-    if (cnt === 0) {
-      const _bUid  = au.uid || '';
+  async function showLogin() {
+  const modal = document.getElementById("loginModal");
+  const body = document.getElementById("adminLoginBody");
+  if (!modal || !body) return;
+  modal.classList.add("active");
+  body.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem"><i class="fas fa-spinner fa-spin"></i> جاري التحضير...</div>';
+  
+  const au = auth.currentUser;
+  if (!au) {
+    body.innerHTML = '<p style="color:#ddd;text-align:center;margin-bottom:1rem;line-height:1.7">سجّل الدخول بحساب Google أولاً، وسيتم التحقق تلقائياً من صلاحياتك كمشرف.</p>'
+      + '<button class="google-btn" onclick="closeLogin();googleLogin();" style="width:100%"><i class="fab fa-google"></i> تسجيل الدخول بحساب Google</button>'
+      + '<button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button>';
+    return;
+  }
+
+  const uid = au.uid;
+  const info = await fetchMyAdminInfo();  // الآن تبحث بالـ uid
+
+  if (info.isAdmin) {
+    isAdmin = true;
+    isSuperAdmin = info.isSuperAdmin;
+    localStorage.setItem("falak_admin", "true");
+    try { updateAdminUI(); renderVideos(); loadAIKnowledgeFromFirebase(); } catch(_) {}
+    if (document.getElementById("maintenanceOverlay")?.classList.contains("active"))
+      document.getElementById("cancelMaintenanceBtn")?.classList.add("active");
+    closeLogin();
+    SoundEffects.success();
+    showToast("🔓 مرحباً أيها المشرف!");
+    updateGoogleLogoutButtonsVisibility();
+    return;
+  }
+
+  const cnt = await adminAccountsCount();
+  if (cnt === 0) {
+    const _bUid = uid;
     const _bName = escapeHtml(au.displayName || au.email || 'مستخدم');
     body.innerHTML =
-      '<div style="background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(34,197,94,.12));'+'border:1px solid rgba(99,102,241,.4);border-radius:16px;padding:1.2rem;margin-bottom:1.2rem">'
-      +'<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.8rem">'
-      +'<div style="width:42px;height:42px;background:linear-gradient(135deg,#6366f1,#22c55e);'+'border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;flex-shrink:0">'
-      +'<i class="fas fa-star"></i></div>'
-      +'<div><div style="color:#a5b4fc;font-weight:700;font-size:1rem">أنت أول شخص يدخل المنصة!</div>'
-      +'<div style="color:#86efac;font-size:.82rem;margin-top:.2rem">سجّل نفسك مشرفاً رئيسياً للمنصة</div></div></div>'
-      +'<div style="display:flex;flex-direction:column;gap:.5rem">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;'+'background:rgba(0,0,0,.2);padding:.65rem .9rem;border-radius:10px">'
-      +'<span style="color:#94a3b8;font-size:.8rem">الاسم</span>'
-      +'<span style="color:#fff;font-weight:600">'+_bName+'</span></div>'
-      +'<div style="background:rgba(0,0,0,.2);padding:.65rem .9rem;border-radius:10px">'
-      +'<div style="color:#94a3b8;font-size:.75rem;margin-bottom:.3rem">Firebase UID — احتفظ به لإضافة مشرفين آخرين</div>'
-      +'<div style="color:#c7d2fe;font-family:monospace;font-size:.8rem;direction:ltr;word-break:break-all;user-select:all;cursor:text">'+escapeHtml(_bUid)+'</div></div>'
-      +'</div></div>'
-      +'<button class="btn btn-success" onclick="bootstrapFirstAdmin()"'
-      +' style="width:100%;padding:.9rem;font-size:1rem;border-radius:12px;margin-top:.5rem">'
-      +'<i class="fas fa-user-shield"></i> تسجيلي كمشرف رئيسي</button>'
-      +'<button onclick="closeLogin()"'
-      +' style="width:100%;background:0 0;border:none;color:#888;margin-top:.75rem;cursor:pointer;font-family:Cairo;font-size:.9rem">إلغاء</button>';
-      return;
-    }
-    body.innerHTML = '<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:.9rem;margin-bottom:1rem;color:#fca5a5;font-size:.92rem;line-height:1.7">'
-      + '<i class="fas fa-exclamation-triangle"></i> هذا البريد <b>غير مسجَّل</b> ضمن قائمة المشرفين المعتمدين على السيرفر.'
-      + '</div>'
-      + '<p style="color:#ccc;margin-bottom:.6rem">البريد الإلكتروني الحالي:</p>'
-      + '<div style="background:rgba(255,255,255,.04);padding:.85rem;border-radius:10px;border:1px solid rgba(255,255,255,.08);color:#fff;text-align:center;font-family:monospace;direction:ltr;margin-bottom:1rem;overflow-wrap:anywhere">'+escapeHtml(email)+'</div>'
-      + '<p style="color:#aaa;font-size:.88rem;text-align:center;margin-bottom:1rem;line-height:1.6">إذا كنت مشرفاً جديداً، اطلب من المشرف الرئيسي إضافة هذا البريد إلى قائمة المشرفين من شاشة "إدارة حسابات المشرفين".</p>'
-      + '<button class="btn btn-primary" onclick="showLogin()" style="width:100%"><i class="fas fa-sync"></i> إعادة المحاولة</button>'
-      + '<button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إغلاق</button>';
+      '<div style="background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(34,197,94,.12));border:1px solid rgba(99,102,241,.4);border-radius:16px;padding:1.2rem;margin-bottom:1.2rem">'
+      + '<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.8rem">'
+      + '<div style="width:42px;height:42px;background:linear-gradient(135deg,#6366f1,#22c55e);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;flex-shrink:0">'
+      + '<i class="fas fa-star"></i></div>'
+      + '<div><div style="color:#a5b4fc;font-weight:700;font-size:1rem">أنت أول شخص يدخل المنصة!</div>'
+      + '<div style="color:#86efac;font-size:.82rem;margin-top:.2rem">سجّل نفسك مشرفاً رئيسياً للمنصة</div></div></div>'
+      + '<div style="display:flex;flex-direction:column;gap:.5rem">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.2);padding:.65rem .9rem;border-radius:10px">'
+      + '<span style="color:#94a3b8;font-size:.8rem">الاسم</span>'
+      + '<span style="color:#fff;font-weight:600">' + _bName + '</span></div>'
+      + '<div style="background:rgba(0,0,0,.2);padding:.65rem .9rem;border-radius:10px">'
+      + '<div style="color:#94a3b8;font-size:.75rem;margin-bottom:.3rem">Firebase UID — احتفظ به لإضافة مشرفين آخرين</div>'
+      + '<div style="color:#c7d2fe;font-family:monospace;font-size:.8rem;direction:ltr;word-break:break-all;user-select:all;cursor:text">' + escapeHtml(_bUid) + '</div></div>'
+      + '</div></div>'
+      + '<button class="btn btn-success" onclick="bootstrapFirstAdmin()" style="width:100%;padding:.9rem;font-size:1rem;border-radius:12px;margin-top:.5rem">'
+      + '<i class="fas fa-user-shield"></i> تسجيلي كمشرف رئيسي</button>'
+      + '<button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:.75rem;cursor:pointer;font-family:Cairo;font-size:.9rem">إلغاء</button>';
+    return;
   }
+
+  // يوجد مشرفون بالفعل وهذا الحساب ليس مشرفاً
+  body.innerHTML = `
+    <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:.9rem;margin-bottom:1rem;color:#fca5a5;font-size:.92rem;line-height:1.7">
+      <i class="fas fa-exclamation-triangle"></i> هذا الحساب <b>غير مسجَّل</b> ضمن قائمة المشرفين المعتمدين على السيرفر.
+    </div>
+    <p style="color:#ccc;margin-bottom:.6rem">UID الخاص بك:</p>
+    <div style="background:rgba(255,255,255,.04);padding:.85rem;border-radius:10px;border:1px solid rgba(255,255,255,.08);color:#fff;text-align:center;font-family:monospace;direction:ltr;margin-bottom:1rem;overflow-wrap:anywhere">${escapeHtml(uid)}</div>
+    <p style="color:#aaa;font-size:.88rem;text-align:center;margin-bottom:1rem;line-height:1.6">إذا كنت مشرفاً جديداً، اطلب من المشرف الرئيسي إضافة هذا UID إلى قائمة المشرفين من شاشة "إدارة حسابات المشرفين".</p>
+    <button class="btn btn-primary" onclick="showLogin()" style="width:100%"><i class="fas fa-sync"></i> إعادة المحاولة</button>
+    <button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إغلاق</button>
+  `;
+}
   function closeLogin(){ document.getElementById("loginModal").classList.remove("active"); }
   async function bootstrapFirstAdmin(){
     const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
@@ -2513,7 +2526,7 @@ async function updateAdminUI() {
         msg = "❌ صلاحيات Firestore لا تسمح بالكتابة. أضف قاعدة تسمح بالكتابة في admin_accounts للحسابات المصرَّح بها.";
       }
       showToast(msg);
-    }
+    } 
   }
   function logout() {
     isAdmin = false; isSuperAdmin = false;
