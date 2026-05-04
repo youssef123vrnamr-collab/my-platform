@@ -2774,78 +2774,22 @@ async function updateAdminUI() {
   try {
     showToast("⏳ جاري تسجيل الدخول...");
     const result = await auth.signInWithPopup(provider);
-    
-    // إزالة شاشة تسجيل الدخول بالكامل
-    const landing = document.getElementById("landingPage");
-    if (landing) landing.remove();
-    
-    // إزالة الخلفية المتحركة والمؤثرات البصرية العالقة
-    const bgAnimation = document.querySelector(".bg-animation");
-    if (bgAnimation) bgAnimation.remove();  // حذف وليس إخفاء
-    
-    // إظهار المحتوى الرئيسي
-    const wrapper = document.getElementById("appWrapper");
-    wrapper.style.display = "flex";
-    wrapper.style.position = "relative";
-    wrapper.style.zIndex = "10";
-    wrapper.style.background = "linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%)";
-    
-    // إجبار إعادة تعيين خلفية body لتجنب أي شفافية متبقية
-    document.body.style.background = "#0f0a1a";
-    document.body.style.backgroundAttachment = "fixed";
-    
-    // باقي الكود الأصلي (تعيين googleUser، currentUserId، الحصول على البيانات...)
     googleUser = result.user;
     currentUserId = googleUser.uid;
     let name = googleUser.displayName;
     let email = googleUser.email;
     let phone = googleUser.phoneNumber || "";
     
-    const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone);
-    if (!checkResult.allowed) {
-      SoundEffects.error();
-      showToast(checkResult.message);
-      await auth.signOut();
-      googleUser = null;
-      currentUserId = null;
-      wrapper.style.display = "none";
-      if (landing) document.body.appendChild(landing); // استرجاعها مؤقتاً
-      return;
-    }
+    // ... (الكود المتعلق بتحقق الجلسة وحفظ البيانات) ...
+
+    // إخفاء شاشة تسجيل الدخول وإظهار التطبيق
+    document.getElementById("landingPage").style.display = "none";
+    document.getElementById("appWrapper").style.display = "flex";
     
-    currentUser = name;
-    currentUserPhone = phone || "";
-    await loadUserDataFromFirebase(currentUserId);
-    if (!currentUser) {
-      currentUser = name;
-      currentUserPhone = phone || "";
-      await saveUserDataToFirebase(currentUserId);
-    }
-    await registerActiveSessionGoogle(email, currentUser, currentUserPhone);
-    if (currentUser) localStorage.setItem("falak_username", currentUser);
-    if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
+    // ✅ أضف هذا السطر هنا بالضبط
+    document.querySelector('.bg-animation')?.remove();
     
-    document.getElementById("googleUserInfo").style.display = "flex";
-    document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`;
-    document.getElementById("googleLogoutBtn").style.display = "block";
-    updateGoogleLogoutButtonsVisibility();
-    SoundEffects.join();
-    
-    try { await refreshAdminStatusFromFirestore(); } catch(_){}
-    loadAdminPreference();
-    listenToVideosWithRetry();
-    listenToCoursesAccess();
-    listenToUserEnrollmentsAccess();
-    listenToMaintenance();
-    loadAIKnowledgeFromFirebase();
-    loadExamsFromFirebase();
-    loadExamResultsFromFirebase();
-    loadAppsFromFirebase();
-    initCloudinaryWidget();
-    checkUrlForShare();
-    loadEmailSettingsFromFirestore();
-    updateAdminUI();
-    showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
+    // ... (باقي الكود: تسجيل الجلسة، تحميل البيانات، إلخ) ...
   } catch(error) {
     console.error(error);
     SoundEffects.error();
