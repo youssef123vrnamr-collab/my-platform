@@ -2782,10 +2782,10 @@ async function updateAdminUI() {
     
     // ... (الكود المتعلق بتحقق الجلسة وحفظ البيانات) ...
 
-    // إخفاء شاشة تسجيل الدخول وإظهار التطبيق
-    document.getElementById("landingPage").style.display = "none";
-    document.getElementById("appWrapper").style.display = "flex";
-    
+const bg = document.querySelector('.bg-animation');
+if (bg) bg.remove();
+document.body.style.background = "#0f0a1a";  // لون ثابت
+document.getElementById("appWrapper").style.background = "#0f0a1a";
     // ✅ أضف هذا السطر هنا بالضبط
     document.querySelector('.bg-animation')?.remove();
     
