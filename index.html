@@ -2774,24 +2774,80 @@ async function updateAdminUI() {
   try {
     showToast("⏳ جاري تسجيل الدخول...");
     const result = await auth.signInWithPopup(provider);
+    
+    // ==========================================
+    // 🔥 إخفاء الخلفية السوداء نهائياً
+    // ==========================================
+    // إخفاء شاشة تسجيل الدخول
+    const landingPage = document.getElementById("landingPage");
+    if (landingPage) landingPage.style.display = "none";
+    
+    // حذف عنصر الخلفية المتحركة (المسبب الرئيسي)
+    const bgElement = document.querySelector('.bg-animation');
+    if (bgElement) bgElement.remove();
+    
+    // إظهار المحتوى الرئيسي
+    const appWrapper = document.getElementById("appWrapper");
+    if (appWrapper) appWrapper.style.display = "flex";
+    
+    // تغيير خلفية الصفحة إلى لون عادي (احتياطي)
+    document.body.style.background = "#0f0a1a";
+    // ==========================================
+    
+    // أكمل باقي الكود الأصلي (بدون تغيير)
     googleUser = result.user;
     currentUserId = googleUser.uid;
     let name = googleUser.displayName;
     let email = googleUser.email;
     let phone = googleUser.phoneNumber || "";
     
-    // ... (الكود المتعلق بتحقق الجلسة وحفظ البيانات) ...
-
-const bg = document.querySelector('.bg-animation');
-if (bg) bg.remove();
-document.body.style.background = "#0f0a1a";  // لون ثابت
-document.getElementById("appWrapper").style.background = "#0f0a1a";
-    // ✅ أضف هذا السطر هنا بالضبط
-    document.querySelector('.bg-animation')?.remove();
+    const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone);
+    if (!checkResult.allowed) {
+      SoundEffects.error();
+      showToast(checkResult.message);
+      await auth.signOut();
+      googleUser = null;
+      currentUserId = null;
+      appWrapper.style.display = "none";
+      if (landingPage) landingPage.style.display = "flex";
+      return;
+    }
     
-    // ... (باقي الكود: تسجيل الجلسة، تحميل البيانات، إلخ) ...
+    currentUser = name;
+    currentUserPhone = phone || "";
+    await loadUserDataFromFirebase(currentUserId);
+    if (!currentUser) {
+      currentUser = name;
+      currentUserPhone = phone || "";
+      await saveUserDataToFirebase(currentUserId);
+    }
+    await registerActiveSessionGoogle(email, currentUser, currentUserPhone);
+    if (currentUser) localStorage.setItem("falak_username", currentUser);
+    if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone);
+    
+    document.getElementById("googleUserInfo").style.display = "flex";
+    document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`;
+    document.getElementById("googleLogoutBtn").style.display = "block";
+    updateGoogleLogoutButtonsVisibility();
+    SoundEffects.join();
+    
+    try { await refreshAdminStatusFromFirestore(); } catch(_){}
+    loadAdminPreference();
+    listenToVideosWithRetry();
+    listenToCoursesAccess();
+    listenToUserEnrollmentsAccess();
+    listenToMaintenance();
+    loadAIKnowledgeFromFirebase();
+    loadExamsFromFirebase();
+    loadExamResultsFromFirebase();
+    loadAppsFromFirebase();
+    initCloudinaryWidget();
+    checkUrlForShare();
+    loadEmailSettingsFromFirestore();
+    updateAdminUI();
+    showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
   } catch(error) {
-    console.error(error);
+    console.error("Login error:", error);
     SoundEffects.error();
     showToast("❌ فشل تسجيل الدخول بحساب Google");
   }
