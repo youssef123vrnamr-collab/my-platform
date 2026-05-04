@@ -1159,6 +1159,160 @@
   text-align: center;
   flex-shrink: 0;
 }
+
+/* ===== Voice Room Modal ===== */
+.voice-room-modal {
+  position: fixed; inset: 0; z-index: 10100;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.88); backdrop-filter: blur(18px);
+  padding: 1rem;
+}
+.voice-room-modal.active { display: flex; }
+.voice-room-container {
+  width: 100%; max-width: 680px; max-height: 90vh;
+  background: linear-gradient(160deg, rgba(15,10,30,.98) 0%, rgba(10,5,20,.98) 100%);
+  border: 1px solid rgba(99,102,241,.35);
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(99,102,241,.1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.vr-header {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(99,102,241,.1);
+  border-bottom: 1px solid rgba(99,102,241,.2);
+  flex-shrink: 0;
+}
+.vr-header-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg,#6366f1,#ec4899);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: #fff; flex-shrink: 0;
+  animation: vr-pulse 2s infinite;
+}
+@keyframes vr-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,.6); }
+  50%      { box-shadow: 0 0 0 10px rgba(99,102,241,0); }
+}
+.vr-header-info { flex: 1; min-width: 0; }
+.vr-header-info h3 {
+  font-size: 1rem; font-weight: 700; color: #fff; margin: 0 0 .15rem;
+}
+.vr-header-info p { font-size: .8rem; color: #94a3b8; margin: 0; }
+.vr-timer-badge {
+  background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3);
+  color: #34d399; font-family: monospace; font-size: .95rem;
+  padding: .3rem .8rem; border-radius: 30px;
+}
+.vr-leave-btn {
+  width: 40px; height: 40px; border: none;
+  background: linear-gradient(135deg,#ef4444,#dc2626);
+  color: #fff; border-radius: 50%; cursor: pointer;
+  font-size: 1rem; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 4px 12px rgba(239,68,68,.4);
+}
+.vr-leave-btn:hover { transform: scale(1.1); box-shadow: 0 6px 18px rgba(239,68,68,.6); }
+.vr-participants {
+  flex: 1; overflow-y: auto; padding: 1.25rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+  gap: 1rem; align-content: start;
+}
+.vr-participants::-webkit-scrollbar { width: 5px; }
+.vr-participants::-webkit-scrollbar-thumb { background: rgba(99,102,241,.4); border-radius: 3px; }
+.vr-card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px; padding: 1.1rem .85rem;
+  display: flex; flex-direction: column; align-items: center;
+  gap: .55rem; position: relative; text-align: center;
+  transition: border-color .25s, background .25s;
+}
+.vr-card.speaking {
+  border-color: rgba(34,197,94,.5);
+  background: rgba(34,197,94,.07);
+}
+.vr-avatar {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: linear-gradient(135deg,#6366f1,#ec4899);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 700; color: #fff;
+  position: relative; flex-shrink: 0;
+}
+.vr-avatar.admin-avatar {
+  background: linear-gradient(135deg,#f59e0b,#d97706);
+}
+.vr-speaking-ring {
+  position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid #22c55e; opacity: 0;
+  animation: vr-speaking-ring .8s ease-in-out infinite;
+}
+.vr-card.speaking .vr-speaking-ring { opacity: 1; }
+@keyframes vr-speaking-ring {
+  0%,100% { transform: scale(1); opacity: .8; }
+  50%      { transform: scale(1.12); opacity: .3; }
+}
+.vr-muted-badge {
+  position: absolute; bottom: -2px; right: -2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #ef4444; display: flex; align-items: center;
+  justify-content: center; font-size: .6rem; color: #fff;
+  border: 2px solid rgba(15,10,30,.9);
+}
+.vr-name {
+  font-size: .82rem; font-weight: 600; color: #e2e8f0;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vr-role-badge {
+  font-size: .68rem; padding: .15rem .55rem; border-radius: 20px;
+  font-weight: 600;
+}
+.vr-role-badge.admin { background: rgba(245,158,11,.2); color: #fbbf24; }
+.vr-role-badge.student { background: rgba(99,102,241,.2); color: #a5b4fc; }
+.vr-kick-btn {
+  position: absolute; top: 6px; left: 6px;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: none; background: rgba(239,68,68,.2);
+  color: #f87171; font-size: .7rem; cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.vr-kick-btn:hover { background: rgba(239,68,68,.6); color: #fff; }
+.vr-admin-mode .vr-kick-btn { display: flex; }
+.vr-admin-mode .vr-kick-btn.self-card { display: none; }
+.vr-empty-state {
+  grid-column: 1 / -1; text-align: center; color: #64748b;
+  padding: 2.5rem 1rem; font-size: .9rem;
+}
+.vr-empty-state i { font-size: 2rem; display: block; margin-bottom: .75rem; color: #374151; }
+.vr-controls {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1rem; padding: 1rem 1.4rem;
+  background: rgba(0,0,0,.3);
+  border-top: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.vr-ctrl-btn {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .3rem; background: none; border: none; cursor: pointer;
+  color: #94a3b8; transition: color .2s;
+}
+.vr-ctrl-btn .vr-btn-circle {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; transition: background .2s, transform .2s;
+}
+.vr-ctrl-btn:hover .vr-btn-circle { background: rgba(255,255,255,.15); transform: scale(1.08); }
+.vr-ctrl-btn.muted .vr-btn-circle { background: rgba(239,68,68,.2); color: #f87171; }
+.vr-ctrl-btn span { font-size: .72rem; font-family: 'Cairo', sans-serif; }
+.vr-ctrl-btn.active .vr-btn-circle { background: rgba(16,185,129,.2); color: #34d399; }
+@media (max-width: 480px) {
+  .vr-participants { grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: .75rem; }
+  .vr-header { padding: .85rem 1rem; }
+}
 </style>
 </head>
 <body>
@@ -1349,7 +1503,7 @@
   <div class="modal" id="viewResultsModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-chart-bar" style="color:#f59e0b"></i> نتائج الامتحانات</h3><button class="modal-close" onclick="closeViewResultsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الفيديو لعرض النتائج</label><select id="resultsVideoSelect" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem" onchange="loadResultsForVideo()"><option value="">-- اختر فيديو --</option></select></div><div id="resultsContainer" style="margin-top:1.5rem"><p style="text-align:center;color:#888;padding:2rem">اختر فيديو لعرض النتائج</p></div></div></div></div>
   <div class="modal" id="takeQuizModal"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-check" style="color:#6366f1"></i> امتحان الفيديو</h3><button class="modal-close" onclick="closeTakeExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div id="studentNameSection"><p style="margin-bottom:1rem;color:#aaa">أدخل بياناتك قبل بدء الامتحان</p><input id="studentNameInput" placeholder="الاسم الكامل" class="student-name-input" maxlength="50"><input id="studentPhoneInput" placeholder="رقم الهاتف" class="student-name-input" maxlength="20" type="tel" style="margin-top:.5rem"><button class="btn btn-primary" onclick="startExam()" style="width:100%"><i class="fas fa-play"></i> بدء الامتحان</button></div><div id="quizSection" style="display:none"></div></div></div></div>
   <div class="modal" id="nameModal"><div class="modal-content name-modal-content"><div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div><h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2><p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p><div class="name-input-group"><input id="userNameInput" placeholder="الاسم" class="name-input" maxlength="20"><div style="display: flex; gap: 10px; margin-top: 0.5rem;"><select id="userCountryCode" class="phone-input" style="width: 35%; text-align: center; direction: ltr;"><option value="+20">🇪🇬 +20 (مصر)</option><option value="+966">🇸🇦 +966 (السعودية)</option><option value="+971">🇦🇪 +971 (الإمارات)</option><option value="+965">🇰🇼 +965 (الكويت)</option><option value="+974">🇶🇦 +974 (قطر)</option><option value="+973">🇧🇭 +973 (البحرين)</option><option value="+968">🇴🇲 +968 (عمان)</option><option value="+962">🇯🇴 +962 (الأردن)</option><option value="+961">🇱🇧 +961 (لبنان)</option><option value="+963">🇸🇾 +963 (سوريا)</option><option value="+970">🇵🇸 +970 (فلسطين)</option><option value="+218">🇱🇾 +218 (ليبيا)</option><option value="+213">🇩🇿 +213 (الجزائر)</option><option value="+212">🇲🇦 +212 (المغرب)</option><option value="+216">🇹🇳 +216 (تونس)</option><option value="+1">🇺🇸 +1 (الولايات المتحدة)</option><option value="+44">🇬🇧 +44 (المملكة المتحدة)</option><option value="+49">🇩🇪 +49 (ألمانيا)</option><option value="+33">🇫🇷 +33 (فرنسا)</option></select><input id="userPhoneInput" placeholder="رقم الهاتف" class="phone-input" style="width: 65%;" maxlength="15" type="tel"></div></div><button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button></div></div>
-  <div class="modal" id="callModal"><div class="modal-content call-modal-content"><div class="call-avatar"><i class="fas fa-users"></i></div><div class="call-status" id="callStatus">مكالمة جماعية</div><div class="call-timer" id="callTimer">00:00</div><div class="call-actions"><button class="call-action mute" onclick="toggleMute()" id="muteBtn"><i class="fas fa-microphone"></i></button><button class="call-action end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div></div></div>
+  <div class="voice-room-modal" id="callModal"><div class="voice-room-container"><div class="vr-header"><div class="vr-header-icon"><i class="fas fa-microphone-alt"></i></div><div class="vr-header-info"><h3>غرفة الصوت الجماعي</h3><p id="vrParticipantCount">جاري التحميل...</p></div><div class="vr-timer-badge" id="callTimer">00:00</div><button class="vr-leave-btn" onclick="endCall()" title="مغادرة الغرفة"><i class="fas fa-phone-slash"></i></button></div><div class="vr-participants" id="vrParticipantsGrid"></div><div class="vr-controls"><button class="vr-ctrl-btn" id="vrMuteBtn" onclick="toggleMute()"><div class="vr-btn-circle"><i class="fas fa-microphone" id="vrMuteIcon"></i></div><span id="vrMuteLabel">كتم</span></button></div></div></div>
   <div class="modal" id="appsModal"><div class="modal-content apps-modal-content"><div class="modal-header"><h3><i class="fas fa-th-large" style="color:#6366f1"></i> تطبيقات المنصة</h3><button class="modal-close" onclick="closeAppsModal()"><i class="fas fa-times"></i></button></div><div class="apps-list" id="appsList"></div></div></div>
   <div class="modal" id="teachAICircleModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-robot" style="color:#06b6d4"></i> تعليم الذكاء الاصطناعي</h3><button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="margin-bottom:2rem;"><h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle"></i> إضافة معلومة جديدة</h4><div class="form-group"><label>السؤال</label><input type="text" id="aiQuestionInput" placeholder="مثال: ما هي سرعة الضوء؟" class="student-name-input"></div><div class="form-group"><label>الإجابة</label><textarea id="aiAnswerInput" placeholder="اكتب الإجابة..." class="student-name-input" rows="3"></textarea></div><button class="btn btn-primary" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button></div><div><h4><i class="fas fa-database"></i> قاعدة المعرفة الحالية</h4><div id="aiKnowledgeList"></div></div></div></div></div>
   <div class="modal" id="feedbackModal"><div class="modal-content" style="max-width: 550px;"><div class="modal-header"><h3><i class="fas fa-star"></i> تقييم المنصة</h3><button class="modal-close" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>الاسم الكامل</label><input id="fbName" placeholder="الاسم الكامل"></div><div class="form-group"><label>رقم الهاتف</label><input id="fbPhone" placeholder="رقم الهاتف" type="tel"></div><div class="form-group"><label>البريد الإلكتروني (للاستلام الرد)</label><input id="fbEmail" placeholder="البريد الإلكتروني" type="email"></div><div class="form-group"><label>المحافظة</label><input id="fbGovernorate" placeholder="المحافظة"></div><div class="form-group"><label>القرية / المركز</label><input id="fbVillage" placeholder="القرية / المركز"></div><div class="form-group"><label>رأيك وتقييمك</label><textarea id="fbMessage" rows="5" placeholder="اكتب رأيك هنا"></textarea></div><button class="btn btn-primary" onclick="submitFeedback()" style="width:100%"><i class="fas fa-paper-plane"></i> إرسال التقييم</button></div></div></div>
@@ -2697,9 +2851,65 @@ async function updateAdminUI() {
     showToast("❌ فشل إرسال الصوت");
   }
 }
-  async function startVoiceCall() { if (!currentUser) return; try { localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); document.getElementById("callModal").classList.add("active"); document.getElementById("callStatus").textContent = "مكالمة - " + currentUser; callSeconds = 0; callTimer = setInterval(() => { callSeconds++; let el = document.getElementById("callTimer"); if (el) el.textContent = Math.floor(callSeconds / 60).toString().padStart(2, "0") + ":" + (callSeconds % 60).toString().padStart(2, "0"); }, 1000); SoundEffects.join(); } catch (e) { SoundEffects.error(); showToast("لا يمكن الوصول للميكروفون"); } }
-  function toggleMute() { if (!localStream) return; let track = localStream.getAudioTracks()[0]; track.enabled = !track.enabled; let btn = document.getElementById("muteBtn"); btn && (btn.classList.toggle("active"), btn.innerHTML = track.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'); }
-  function endCall() { if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } clearInterval(callTimer); document.getElementById("callModal").classList.remove("active"); document.getElementById("callTimer").textContent = "00:00"; }
+  async function startVoiceCall() {
+  if (!currentUser) { showToast("\u26a0\ufe0f \u0633\u062c\u0644 \u062f\u062e\u0648\u0644\u0643 \u0623\u0648\u0644\u0627\u064b"); return; }
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    SoundEffects.error();
+    showToast("\u274c \u0644\u0627 \u064a\u0645\u0643\u0646 \u0627\u0644\u0648\u0635\u0648\u0644 \u0644\u0644\u0645\u064a\u0643\u0631\u0648\u0641\u0648\u0646");
+    return;
+  }
+  vrIsMuted = false;
+  document.getElementById("callModal").classList.add("active");
+  callSeconds = 0;
+  if (callTimer) clearInterval(callTimer);
+  callTimer = setInterval(() => {
+    callSeconds++;
+    let el = document.getElementById("callTimer");
+    if (el) el.textContent = Math.floor(callSeconds/60).toString().padStart(2,"0") + ":" + (callSeconds%60).toString().padStart(2,"0");
+  }, 1000);
+  // register in Firestore voice_room
+  let deviceId = localStorage.getItem("falak_device_id") || ("dev_" + Date.now());
+  vrMyId = currentUserId || deviceId;
+  try {
+    await db.collection("voice_room").doc(vrMyId).set({
+      name: currentUser,
+      userId: currentUserId || null,
+      phone: currentUserPhone || "",
+      isAdmin: isAdmin,
+      isMuted: false,
+      joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    listenToVoiceRoom();
+    listenForKick();
+    SoundEffects.join();
+  } catch(e) { console.error("voice_room join error", e); }
+  updateVRMuteUI();
+}
+  function toggleMute() {
+  if (!localStream) return;
+  let track = localStream.getAudioTracks()[0];
+  vrIsMuted = !vrIsMuted;
+  track.enabled = !vrIsMuted;
+  if (vrMyId) {
+    db.collection("voice_room").doc(vrMyId).update({ isMuted: vrIsMuted }).catch(e=>console.warn(e));
+  }
+  updateVRMuteUI();
+}
+  function endCall() {
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  clearInterval(callTimer);
+  document.getElementById("callTimer").textContent = "00:00";
+  document.getElementById("callModal").classList.remove("active");
+  // remove from Firestore
+  if (vrMyId) {
+    db.collection("voice_room").doc(vrMyId).delete().catch(e => console.warn(e));
+    vrMyId = null;
+  }
+  if (vrUnsubscribe) { vrUnsubscribe(); vrUnsubscribe = null; }
+  SoundEffects.recordStop();
+}
   function viewImage(src) { let viewer = document.getElementById("imageViewer"); let img = document.getElementById("viewerImage"); viewer && img && (img.src = src, viewer.classList.add("active")); }
   function closeImageViewer() { document.getElementById("imageViewer").classList.remove("active"); }
   function scrollToBottom() { let c = document.getElementById("chatMessages"); c && (c.scrollTop = c.scrollHeight); }
@@ -2985,9 +3195,108 @@ async function updateAdminUI() {
     if (teachAIMenuItem) teachAIMenuItem.addEventListener("click", openTeachAICircleModal);
   });
 
+  
+  // ===== Voice Room Global =====
+  let vrMyId = null, vrUnsubscribe = null, vrIsMuted = false;
+
+  function listenToVoiceRoom() {
+    if (vrUnsubscribe) vrUnsubscribe();
+    vrUnsubscribe = db.collection("voice_room")
+      .orderBy("joinedAt", "asc")
+      .onSnapshot(snap => {
+        let participants = [];
+        snap.forEach(doc => participants.push({ id: doc.id, ...doc.data() }));
+        renderVoiceRoom(participants);
+      }, err => console.error("voice_room listen error", err));
+  }
+
+  function renderVoiceRoom(participants) {
+    const grid = document.getElementById("vrParticipantsGrid");
+    const countEl = document.getElementById("vrParticipantCount");
+    if (!grid) return;
+    const n = participants.length;
+    if (countEl) countEl.textContent = n === 0 ? "\u0644\u0627 \u064a\u0648\u062c\u062f \u0623\u062d\u062f \u0641\u064a \u0627\u0644\u063a\u0631\u0641\u0629" :
+      n === 1 ? "\u0645\u0634\u0627\u0631\u0643 \u0648\u0627\u062d\u062f" : n + " \u0645\u0634\u0627\u0631\u0643\u064a\u0646";
+    if (n === 0) {
+      grid.innerHTML = '<div class="vr-empty-state"><i class="fas fa-microphone-slash"></i>\u0644\u0627 \u064a\u0648\u062c\u062f \u0623\u062d\u062f \u0641\u064a \u0627\u0644\u063a\u0631\u0641\u0629 \u062d\u0627\u0644\u064a\u0627\u064b</div>';
+      return;
+    }
+    const adminMode = isAdmin ? ' vr-admin-mode' : '';
+    grid.className = 'vr-participants' + adminMode;
+    grid.innerHTML = participants.map(p => {
+      const isSelf = (p.id === vrMyId);
+      const isAdminP = !!p.isAdmin;
+      const initials = (p.name || '?').charAt(0).toUpperCase();
+      const mutedBadge = p.isMuted ? '<div class="vr-muted-badge"><i class="fas fa-microphone-slash"></i></div>' : '';
+      const kickBtn = (!isSelf && isAdmin)
+        ? `<button class="vr-kick-btn${isSelf?' self-card':''}" onclick="kickFromVoiceRoom('${p.id}','${escapeHtml(p.name || '')}')" title="\u0637\u0631\u062f \u0645\u0646 \u0627\u0644\u063a\u0631\u0641\u0629"><i class="fas fa-times"></i></button>`
+        : '';
+      const roleBadge = isAdminP
+        ? '<span class="vr-role-badge admin"><i class="fas fa-shield-alt"></i> \u0645\u0634\u0631\u0641</span>'
+        : '<span class="vr-role-badge student"><i class="fas fa-user"></i> \u0637\u0627\u0644\u0628</span>';
+      const selfLabel = isSelf ? ' <span style="color:#6366f1;font-size:.7rem">(\u0623\u0646\u062a)</span>' : '';
+      return `<div class="vr-card${isSelf?' speaking':''}">
+        ${kickBtn}
+        <div class="vr-avatar${isAdminP?' admin-avatar':''}">
+          ${initials}
+          <div class="vr-speaking-ring"></div>
+          ${mutedBadge}
+        </div>
+        <div class="vr-name">${escapeHtml(p.name || '\u0645\u062c\u0647\u0648\u0644')}${selfLabel}</div>
+        ${roleBadge}
+      </div>`;
+    }).join('');
+  }
+
+  async function kickFromVoiceRoom(participantId, name) {
+    if (!isAdmin) { showToast("\u274c \u0644\u0644\u0645\u0634\u0631\u0641\u064a\u0646 \u0641\u0642\u0637"); return; }
+    if (!confirm("\u0637\u0631\u062f " + (name || participantId) + " \u0645\u0646 \u0627\u0644\u063a\u0631\u0641\u0629\u061f")) return;
+    try {
+      await db.collection("voice_room").doc(participantId).delete();
+      // also write a kick signal so that client can detect and leave
+      await db.collection("voice_room_kicks").add({
+        kickedId: participantId, kickedName: name,
+        kickedBy: currentUser || "admin",
+        kickedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      SoundEffects.delete();
+      showToast("\u2705 \u062a\u0645 \u0637\u0631\u062f " + (name || participantId));
+    } catch(e) { console.error(e); showToast("\u274c \u0641\u0634\u0644 \u0627\u0644\u0637\u0631\u062f"); }
+  }
+
+  function updateVRMuteUI() {
+    const btn = document.getElementById("vrMuteBtn");
+    const icon = document.getElementById("vrMuteIcon");
+    const label = document.getElementById("vrMuteLabel");
+    if (!btn || !icon || !label) return;
+    if (vrIsMuted) {
+      btn.classList.add("muted");
+      icon.className = "fas fa-microphone-slash";
+      label.textContent = "\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u0643\u062a\u0645";
+    } else {
+      btn.classList.remove("muted");
+      icon.className = "fas fa-microphone";
+      label.textContent = "\u0643\u062a\u0645";
+    }
+  }
+
+  // Self-kick detection: if admin removes the user, auto-leave
+  function listenForKick() {
+    if (!vrMyId) return;
+    db.collection("voice_room_kicks")
+      .where("kickedId","==",vrMyId)
+      .orderBy("kickedAt","desc").limit(1)
+      .onSnapshot(snap => {
+        if (!snap.empty && vrMyId) {
+          showToast("\u26a0\ufe0f \u062a\u0645 \u0637\u0631\u062f\u0643 \u0645\u0646 \u0627\u0644\u063a\u0631\u0641\u0629 \u0645\u0646 \u0642\u0628\u0644 \u0627\u0644\u0645\u0634\u0631\u0641");
+          endCall();
+        }
+      });
+  }
+
   window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); try { loadAiKeyOnce(); listenAiKey(); } catch(_){} document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
   setTimeout(hideLoader, 5000);
-  window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); if(feedbacksUnsubscribe) feedbacksUnsubscribe(); removePresence(); });
+  window.addEventListener("unload", function() { if (vrMyId) { try { db.collection("voice_room").doc(vrMyId).delete(); } catch(_){} } if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); if(feedbacksUnsubscribe) feedbacksUnsubscribe(); removePresence(); });
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "supervisorPayoutModal") closeSupervisorPayoutModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
   document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeSupervisorPayoutModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); closeFeedbackModal(); closeViewFeedbacksModal(); closeReplyModal(); } });
   // ========== Dashboard Functions ==========
