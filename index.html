@@ -366,7 +366,7 @@
     .chat-messages::-webkit-scrollbar { width: 6px; }
     .chat-messages::-webkit-scrollbar-track { background: rgba(255,255,255,.05); }
     .chat-messages::-webkit-scrollbar-thumb { background: rgba(99,102,241,.5); border-radius: 3px; }
-    .message { max-width: 75%; padding: 1rem 1.25rem; border-radius: 20px; position: relative; animation: messageSlide .3s ease; }
+    .message { max-width: 75%; padding: .75rem 1rem; border-radius: 14px; position: relative; animation: messageSlide .3s ease; border: 1px solid rgba(255,255,255,.07); }
     @keyframes messageSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .message.sent { align-self: flex-end; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-bottom-right-radius: 5px; }
     .message.received { align-self: flex-start; background: rgba(255,255,255,.1); border-bottom-left-radius: 5px; }
@@ -1085,19 +1085,79 @@
     gap: 1rem !important;
   }
 }
-/* التابلت: عمودين */
-@media (min-width: 768px) and (max-width: 1023px) {
+/* اللابتوب (768-1439px): ثلاث فيديوهات في الصف */
+@media (min-width: 768px) and (max-width: 1439px) {
   .course-section-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 1.25rem !important;
   }
 }
-/* الكمبيوتر: ثلاث فيديوهات في الصف */
-@media (min-width: 1024px) {
+/* الشاشات الكبيرة (1440px+): أربع فيديوهات في الصف */
+@media (min-width: 1440px) {
   .course-section-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(4, 1fr) !important;
     gap: 1.5rem !important;
   }
+}
+/* ===== Hamburger cosmos dropdown ===== */
+.cosmos-hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(99,102,241,.18);
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background .25s;
+}
+.cosmos-hamburger-btn:hover { background: rgba(99,102,241,.4); }
+.cosmos-hamburger-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.cosmos-hamburger-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 230px;
+  background: rgba(15,10,30,.97);
+  border: 1px solid rgba(99,102,241,.3);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  z-index: 9999;
+  padding: .5rem 0;
+  backdrop-filter: blur(12px);
+}
+.cosmos-hamburger-dropdown.open { display: block; }
+.cosmos-hamburger-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  width: 100%;
+  padding: .7rem 1.1rem;
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  font-family: 'Cairo', sans-serif;
+  font-size: .93rem;
+  cursor: pointer;
+  text-align: right;
+  direction: rtl;
+  transition: background .2s;
+}
+.cosmos-hamburger-dropdown button:hover {
+  background: rgba(99,102,241,.2);
+  color: #fff;
+}
+.cosmos-hamburger-dropdown button i {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
 }
 </style>
 </head>
@@ -1122,7 +1182,25 @@
       <div class="brand-logo"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
       <div class="brand-text">
         <h1>Astronomy and space</h1>
-        <div class="settings-dropdown" id="settingsDropdown">
+        <div style="display:flex;align-items:center;gap:.35rem">
+          <div class="cosmos-hamburger-wrapper">
+            <button class="cosmos-hamburger-btn" id="cosmosHamburgerBtn" onclick="toggleCosmosHamburger(event)" title="استكشف أقسام الكون"><i class="fas fa-bars"></i></button>
+            <div class="cosmos-hamburger-dropdown" id="cosmosHamburgerDropdown">
+              <button onclick="openCosmosCategory('stars');closeCosmosHamburger()"><i class="fas fa-star" style="color:#fbbf24"></i> النجوم</button>
+              <button onclick="openCosmosCategory('planets');closeCosmosHamburger()"><i class="fas fa-globe" style="color:#3b82f6"></i> الكواكب</button>
+              <button onclick="openCosmosCategory('universe');closeCosmosHamburger()"><i class="fas fa-infinity" style="color:#a855f7"></i> الكون</button>
+              <button onclick="openCosmosCategory('galaxies');closeCosmosHamburger()"><i class="fas fa-circle-notch" style="color:#8b5cf6"></i> المجرات</button>
+              <button onclick="openCosmosCategory('blackholes');closeCosmosHamburger()"><i class="fas fa-circle" style="color:#6366f1"></i> الثقوب السوداء</button>
+              <button onclick="openCosmosCategory('missions');closeCosmosHamburger()"><i class="fas fa-rocket" style="color:#ef4444"></i> مهمات فضائية</button>
+              <button onclick="openCosmosCategory('astronauts');closeCosmosHamburger()"><i class="fas fa-user-astronaut" style="color:#10b981"></i> رواد الفضاء</button>
+              <button onclick="openCosmosCategory('news');closeCosmosHamburger()"><i class="fas fa-newspaper" style="color:#ec4899"></i> أخبار الكون</button>
+              <button onclick="openCosmosCategory('telescopes');closeCosmosHamburger()"><i class="fas fa-search" style="color:#06b6d4"></i> التلسكوبات</button>
+              <button onclick="openCosmosCategory('phenomena');closeCosmosHamburger()"><i class="fas fa-bolt" style="color:#f59e0b"></i> ظواهر فلكية</button>
+              <button onclick="openStudentProgress();closeCosmosHamburger()"><i class="fas fa-trophy" style="color:#fde047"></i> تقدم الطالب</button>
+              <button onclick="openPrivateAdminChat();closeCosmosHamburger()"><i class="fas fa-user-shield" style="color:#22c55e"></i> تواصل خاص مع المشرفين</button>
+            </div>
+          </div>
+          <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
             <div class="settings-menu-item" id="installAppMenuItem" style="display: none;"><i class="fas fa-download"></i> تثبيت التطبيق</div>
@@ -1141,6 +1219,8 @@
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
+          </div>
+        </div>
           </div>
         </div>
       </div>
@@ -1200,9 +1280,6 @@
 
     <!-- ===== Cosmos Explorer carousel ===== -->
     <section class="cosmos-carousel-section" id="cosmosCarouselSection">
-      <div class="cosmos-carousel-header">
-        <p>اختر قسم وابدأ رحلتك بين النجوم والكواكب وأخبار الفضاء الحقيقية</p>
-      </div>
       <div class="cosmos-carousel-wrapper">
         <button type="button" class="carousel-nav carousel-nav-right" onclick="scrollCosmosCarousel(1)" aria-label="التالي"><i class="fas fa-chevron-right"></i></button>
         <button type="button" class="carousel-nav carousel-nav-left" onclick="scrollCosmosCarousel(-1)" aria-label="السابق"><i class="fas fa-chevron-left"></i></button>
@@ -1262,7 +1339,7 @@
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:480px"><div class="modal-header"><h3><i class="fas fa-user-shield"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="adminLoginBody"><div style="text-align:center;color:#aaa;padding:1rem"><i class="fas fa-spinner fa-spin"></i> جاري التحضير...</div></div></div></div>
   <div class="modal" id="adminPasswordModal" style="display:none"></div>
   <div class="modal" id="aiKeyModal"><div class="modal-content" style="max-width:520px"><div class="modal-header"><h3><i class="fas fa-key" style="color:#06b6d4"></i> مفتاح الذكاء الاصطناعي</h3><button class="modal-close" onclick="closeAiKeyModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#9ad6e6;line-height:1.7"><i class="fas fa-shield-halved"></i> المفتاح بيتحفظ على السيرفر في Firestore (مش في الكود). تقدر تغيّره في أي وقت لو حسّيت إنه اتسرّب، والكل هيستخدم الجديد فوراً.</div><label style="color:#ccc;display:block;margin-bottom:.4rem;font-size:.9rem">المفتاح الحالي:</label><div id="currentAiKeyDisplay" style="padding:.75rem 1rem;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12);border-radius:10px;color:#aaa;font-family:monospace;direction:ltr;text-align:left;margin-bottom:1.2rem;word-break:break-all">…</div><label style="color:#ccc;display:block;margin-bottom:.4rem;font-size:.9rem">المفتاح الجديد:</label><div style="position:relative;margin-bottom:.5rem"><input id="newAiKeyInput" placeholder="ابدأ بـ gsk_…" type="password" style="width:100%;padding:1rem 3rem 1rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:monospace;direction:ltr;text-align:left;font-size:.95rem"><button type="button" onclick="toggleAiKeyVisibility()" style="position:absolute;top:50%;transform:translateY(-50%);left:.5rem;background:none;border:none;color:#888;cursor:pointer;padding:.4rem;font-size:1rem" title="إظهار/إخفاء"><i id="aiKeyEyeIcon" class="fas fa-eye"></i></button></div><div style="font-size:.78rem;color:#888;margin-bottom:1rem"><i class="fas fa-circle-info"></i> اطلع المفتاح من <span style="color:#06b6d4">console.groq.com/keys</span></div><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-success" onclick="saveAiKey()" style="flex:1;min-width:120px"><i class="fas fa-save"></i> حفظ</button><button class="btn" onclick="testAiKey()" style="flex:1;min-width:120px;background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.3)"><i class="fas fa-flask"></i> اختبار</button><button class="btn" onclick="resetAiKey()" style="flex:1;min-width:120px;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)" title="إرجاع المفتاح الافتراضي"><i class="fas fa-undo"></i> الافتراضي</button></div></div></div></div>
-  <div class="modal" id="setAdminsModal"><div class="modal-content" style="max-width:640px"><div class="modal-header"><h3><i class="fas fa-users-cog"></i> إدارة حسابات المشرفين</h3><button class="modal-close" onclick="closeSetAdminsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1rem;color:#aaa;font-size:.9rem;line-height:1.6"><i class="fas fa-info-circle"></i> هذه الحسابات هي الوحيدة التي يُسمَح لها بالدخول كمشرفين عبر تسجيل الدخول بـ Google. يتم التحقق من صلاحياتك تلقائياً بعد تسجيل دخولك.</p><div id="adminAccountsList" style="margin-bottom:1rem;max-height:320px;overflow:auto"></div><div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch"><input id="newAdminEmailInput" placeholder="بريد جوجل (example@gmail.com)" type="email" style="flex:1;min-width:200px;padding:.85rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:1rem;direction:ltr;text-align:left"><select id="newAdminRoleSelect" style="padding:.85rem;background:rgba(20,20,30,.95);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo"><option value="admin">مشرف</option><option value="super_admin">مشرف رئيسي</option></select><button class="btn btn-success" onclick="addAdminAccount()" style="padding:.85rem 1.2rem"><i class="fas fa-plus"></i> أضف</button></div></div></div></div>
+  <div class="modal" id="setAdminsModal"><div class="modal-content" style="max-width:640px"><div class="modal-header"><h3><i class="fas fa-users-cog"></i> إدارة حسابات المشرفين</h3><button class="modal-close" onclick="closeSetAdminsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1rem;color:#aaa;font-size:.9rem;line-height:1.6"><i class="fas fa-info-circle"></i> هذه الحسابات هي الوحيدة التي يُسمَح لها بالدخول كمشرفين عبر تسجيل الدخول بـ Google. يتم التحقق من صلاحياتك تلقائياً بعد تسجيل دخولك.</p><div id="adminAccountsList" style="margin-bottom:1rem;max-height:320px;overflow:auto"></div><div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch"><input id="newAdminUidInput" placeholder="UID من Firebase Auth (e.g. abc123xyz)" type="text" style="flex:1;min-width:200px;padding:.85rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:1rem;direction:ltr;text-align:left"><select id="newAdminRoleSelect" style="padding:.85rem;background:rgba(20,20,30,.95);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo"><option value="admin">مشرف</option><option value="super_admin">مشرف رئيسي</option></select><button class="btn btn-success" onclick="addAdminAccount()" style="padding:.85rem 1.2rem"><i class="fas fa-plus"></i> أضف</button></div></div></div></div>
   <div class="modal" id="manageAppsModal"><div class="modal-content" style="max-width:600px"><div class="modal-header"><h3><i class="fas fa-th-large"></i> إدارة التطبيقات</h3><button class="modal-close" onclick="closeManageAppsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="manage-apps-header"><button class="btn btn-success" onclick="showAddAppForm()"><i class="fas fa-plus"></i> إضافة تطبيق جديد</button></div><div id="appsManageList" style="max-height:500px;overflow-y:auto"></div></div></div></div>
   <div class="modal" id="addAppModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3 id="addAppModalTitle"><i class="fas fa-plus"></i> إضافة تطبيق</h3><button class="modal-close" onclick="closeAddAppModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم التطبيق</label><input id="appNameInput" placeholder="اسم التطبيق"></div><div class="form-group"><label>الوصف</label><input id="appDescInput" placeholder="الوصف"></div><div class="form-group"><label>الرابط (URL)</label><input id="appUrlInput" placeholder="الرابط"></div><div class="form-group"><label>رابط الصورة (اختياري)</label><input id="appIconUrlInput" placeholder="رابط الصورة" type="url"><button type="button" class="btn btn-secondary" style="margin-top:0.5rem;" onclick="previewAppIcon()"><i class="fas fa-eye"></i> معاينة الصورة</button><div id="iconPreviewContainer" class="icon-preview" style="display:none;"><img id="iconPreviewImg" src="" alt="معاينة"><p style="font-size:0.8rem; margin-top:0.3rem;">الصورة المعاينة</p></div></div><input type="hidden" id="editAppId"><button class="btn btn-primary" onclick="saveApp()" style="width:100%"><i class="fas fa-save"></i> حفظ</button></div></div></div>
   <div class="modal" id="descriptionModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-edit"></i> تفاصيل الفيديو</h3><button class="modal-close" onclick="closeDescriptionModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>عنوان الفيديو</label><input id="videoTitleInput" placeholder="أدخل عنوان الفيديو"></div><div class="form-group"><label>وصف الفيديو <span id="descCharCount" style="color:#888;font-size:.85rem">(0 / 5000 حرف)</span></label><textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5000"></textarea></div><button class="btn btn-success" onclick="saveVideoWithDescription()" style="width:100%"><i class="fas fa-save"></i> حفظ الفيديو</button></div></div></div>
@@ -2174,13 +2251,13 @@ async function updateAdminUI() {
   async function fetchMyAdminInfo(){
     try {
       const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
-      const email = _normEmail(au && au.email);
-      if (!email || typeof db === "undefined" || !db) return { isAdmin:false, isSuperAdmin:false, email: email || "" };
-      const snap = await db.collection(ADMIN_ACCOUNTS_COL).doc(email).get();
-      if (!snap.exists) return { isAdmin:false, isSuperAdmin:false, email };
+      const uid = au && au.uid;
+      if (!uid || typeof db === "undefined" || !db) return { isAdmin:false, isSuperAdmin:false, uid: uid || "" };
+      const snap = await db.collection(ADMIN_ACCOUNTS_COL).doc(uid).get();
+      if (!snap.exists) return { isAdmin:false, isSuperAdmin:false, uid };
       const role = (snap.data() || {}).role || "admin";
-      return { isAdmin:true, isSuperAdmin: role === "super_admin", email };
-    } catch(e){ console.warn("fetchMyAdminInfo failed", e); return { isAdmin:false, isSuperAdmin:false, email:"" }; }
+      return { isAdmin:true, isSuperAdmin: role === "super_admin", uid };
+    } catch(e){ console.warn("fetchMyAdminInfo failed", e); return { isAdmin:false, isSuperAdmin:false, uid:"" }; }
   }
   async function refreshAdminStatusFromFirestore(){
     const info = await fetchMyAdminInfo();
@@ -2242,13 +2319,13 @@ async function updateAdminUI() {
   function closeLogin(){ document.getElementById("loginModal").classList.remove("active"); }
   async function bootstrapFirstAdmin(){
     const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
-    const email = _normEmail(au && au.email);
-    if (!email) { SoundEffects.error(); showToast("❌ سجّل الدخول بحساب Google أولاً"); return; }
+    const uid = au && au.uid;
+    if (!uid) { SoundEffects.error(); showToast("❌ سجّل الدخول بحساب Google أولاً"); return; }
     try {
       const cnt = await adminAccountsCount();
       if (cnt !== 0) { showToast("⚠️ يوجد مشرف مسجَّل بالفعل"); showLogin(); return; }
-      await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({
-        email: email, role: "super_admin",
+      await db.collection(ADMIN_ACCOUNTS_COL).doc(uid).set({
+        uid: uid, role: "super_admin",
         addedAt: firebase.firestore.FieldValue.serverTimestamp(),
         addedBy: "bootstrap"
       });
@@ -2287,7 +2364,7 @@ async function updateAdminUI() {
       if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف الرئيسي فقط"); return; }
     }
     document.getElementById("setAdminsModal").classList.add("active");
-    const inp = document.getElementById("newAdminEmailInput"); if (inp) inp.value = "";
+    const inp = document.getElementById("newAdminUidInput"); if (inp) inp.value = "";
     await renderAdminAccountsList();
   }
   function closeSetAdminsModal(){ document.getElementById("setAdminsModal").classList.remove("active"); }
@@ -2298,13 +2375,13 @@ async function updateAdminUI() {
     try {
       const snap = await db.collection(ADMIN_ACCOUNTS_COL).get();
       if (snap.empty) { el.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem">لا توجد حسابات مسجّلة بعد.</div>'; return; }
-      const myEmail = _normEmail(auth.currentUser && auth.currentUser.email);
+      const myUid = auth.currentUser && auth.currentUser.uid;
       const rows = [];
       snap.forEach(doc => {
         const d = doc.data() || {};
         const em = doc.id;
         const role = d.role || "admin";
-        const isMe = em === myEmail;
+        const isMe = em === myUid;
         const roleBadge = role === "super_admin"
           ? '<span style="background:rgba(168,85,247,.2);color:#c4b5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف رئيسي</span>'
           : '<span style="background:rgba(59,130,246,.2);color:#93c5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف</span>';
@@ -2324,19 +2401,19 @@ async function updateAdminUI() {
   }
   async function addAdminAccount(){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
-    const inp = document.getElementById("newAdminEmailInput");
+    const inp = document.getElementById("newAdminUidInput");
     const roleSel = document.getElementById("newAdminRoleSelect");
-    const email = _normEmail(inp && inp.value);
+    const uid = (inp && inp.value.trim()) || "";
     const role = (roleSel && roleSel.value) || "admin";
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { SoundEffects.error(); showToast("❌ بريد إلكتروني غير صالح"); return; }
+    if (!uid || uid.length < 6) { SoundEffects.error(); showToast("❌ UID غير صالح"); return; }
     try {
-      const ref = db.collection(ADMIN_ACCOUNTS_COL).doc(email);
+      const ref = db.collection(ADMIN_ACCOUNTS_COL).doc(uid);
       const ex = await ref.get();
-      if (ex.exists) { showToast("⚠️ هذا البريد مسجَّل بالفعل"); return; }
+      if (ex.exists) { showToast("⚠️ هذا UID مسجَّل بالفعل"); return; }
       await ref.set({
-        email: email, role: role,
+        uid: uid, role: role,
         addedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown"
+        addedBy: (auth.currentUser && auth.currentUser.uid) || "unknown"
       });
       if (inp) inp.value = "";
       SoundEffects.success();
@@ -2344,14 +2421,13 @@ async function updateAdminUI() {
       renderAdminAccountsList();
     } catch(e){ console.error(e); showToast("❌ فشل الإضافة (تحقق من قواعد Firestore)"); }
   }
-  async function removeAdminAccount(email){
+  async function removeAdminAccount(uid){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
-    email = _normEmail(email);
-    const myEmail = _normEmail(auth.currentUser && auth.currentUser.email);
-    if (email === myEmail) { showToast("❌ لا يمكنك حذف نفسك"); return; }
+    const myUid = auth.currentUser && auth.currentUser.uid;
+    if (uid === myUid) { showToast("❌ لا يمكنك حذف نفسك"); return; }
     if (!confirm("حذف " + email + " من قائمة المشرفين؟")) return;
     try {
-      await db.collection(ADMIN_ACCOUNTS_COL).doc(email).delete();
+      await db.collection(ADMIN_ACCOUNTS_COL).doc(uid).delete();
       SoundEffects.delete();
       showToast("🗑️ تم الحذف");
       renderAdminAccountsList();
@@ -2874,7 +2950,16 @@ async function updateAdminUI() {
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
 
   function toggleSettingsMenu(e) { e.stopPropagation(); const menu = document.getElementById("settingsMenu"); if (menu) menu.classList.toggle("active"); }
-  function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
+  function toggleCosmosHamburger(e) { e.stopPropagation(); const dd = document.getElementById("cosmosHamburgerDropdown"); if (dd) dd.classList.toggle("open"); }
+  function closeCosmosHamburger() { const dd = document.getElementById("cosmosHamburgerDropdown"); if (dd) dd.classList.remove("open"); }
+  function closeSettingsMenuOnClickOutside(e) {
+    const dropdown = document.getElementById("settingsDropdown");
+    const menu = document.getElementById("settingsMenu");
+    if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); }
+    const hWrapper = document.getElementById("cosmosHamburgerBtn") && document.getElementById("cosmosHamburgerBtn").closest(".cosmos-hamburger-wrapper");
+    const hDd = document.getElementById("cosmosHamburgerDropdown");
+    if (hDd && hWrapper && !hWrapper.contains(e.target)) { hDd.classList.remove("open"); }
+  }
   function openAppsModal() { document.getElementById("appsModal").classList.add("active"); renderAppsList(); }
   function closeAppsModal() { document.getElementById("appsModal").classList.remove("active"); }
 
