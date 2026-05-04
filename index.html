@@ -2775,13 +2775,16 @@ async function updateAdminUI() {
     showToast("⏳ جاري تسجيل الدخول...");
     const result = await auth.signInWithPopup(provider);
     
-    // ✅ هنا نخفي الـ landing-page ونظهر المحتوى فوراً
-    document.getElementById("landingPage").style.display = "none";
+    // ✅ إزالة شاشة تسجيل الدخول نهائياً
+    const landing = document.getElementById("landingPage");
+    if (landing) landing.remove();
+    
+    // ✅ إظهار المحتوى الرئيسي
     document.getElementById("appWrapper").style.display = "flex";
 
     googleUser = result.user;
     currentUserId = googleUser.uid;
-    // ... باقي الكود (تحقق من الجلسة، حفظ البيانات، إلخ)
+    // ... باقي الكود كما هو
   } catch(error) {
     console.error(error);
     SoundEffects.error();
