@@ -1219,40 +1219,13 @@
 </div>
     <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube"><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
-    <div class="course-actions-toolbar">
-      <div class="course-actions-spacer" aria-hidden="true"></div>
-      <div class="course-actions-center">
-        <button class="btn btn-info" onclick="showCoursesList()"><i class="fas fa-layer-group"></i> استعراض الكورسات</button>
-      </div>
-      <div class="course-actions-side">
+    <div class="course-actions-toolbar" style="display:flex;justify-content:flex-end;padding:.5rem 0">
+      <div>
         <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
       </div>
     </div>
 
-    <!-- ===== Cosmos Explorer carousel ===== -->
-    <section class="cosmos-carousel-section" id="cosmosCarouselSection">
-      <div class="cosmos-carousel-header">
-        <div></div>
-      </div>
-      <div class="cosmos-carousel-wrapper">
-        <button type="button" class="carousel-nav carousel-nav-right" onclick="scrollCosmosCarousel(1)" aria-label="التالي"><i class="fas fa-chevron-right"></i></button>
-        <button type="button" class="carousel-nav carousel-nav-left" onclick="scrollCosmosCarousel(-1)" aria-label="السابق"><i class="fas fa-chevron-left"></i></button>
-        <div class="cosmos-carousel" id="cosmosCarousel">
-          <button type="button" class="cosmos-pill" style="--pill-c1:#fbbf24;--pill-c2:#f97316" onclick="openCosmosCategory('stars')"><span class="pill-icon"><i class="fas fa-star"></i></span><span>النجوم</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#3b82f6;--pill-c2:#06b6d4" onclick="openCosmosCategory('planets')"><span class="pill-icon"><i class="fas fa-globe"></i></span><span>الكواكب</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#a855f7;--pill-c2:#ec4899" onclick="openCosmosCategory('universe')"><span class="pill-icon"><i class="fas fa-infinity"></i></span><span>الكون</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#8b5cf6;--pill-c2:#6366f1" onclick="openCosmosCategory('galaxies')"><span class="pill-icon"><i class="fas fa-circle-notch"></i></span><span>المجرات</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#0f172a;--pill-c2:#6366f1" onclick="openCosmosCategory('blackholes')"><span class="pill-icon"><i class="fas fa-circle"></i></span><span>الثقوب السوداء</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#ef4444;--pill-c2:#f97316" onclick="openCosmosCategory('missions')"><span class="pill-icon"><i class="fas fa-rocket"></i></span><span>مهمات فضائية</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#10b981;--pill-c2:#06b6d4" onclick="openCosmosCategory('astronauts')"><span class="pill-icon"><i class="fas fa-user-astronaut"></i></span><span>رواد الفضاء</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#ec4899;--pill-c2:#a855f7" onclick="openCosmosCategory('news')"><span class="pill-icon"><i class="fas fa-newspaper"></i></span><span>أخبار الكون</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#06b6d4;--pill-c2:#3b82f6" onclick="openCosmosCategory('telescopes')"><span class="pill-icon"><i class="fas fa-search"></i></span><span>التلسكوبات</span></button>
-          <button type="button" class="cosmos-pill" style="--pill-c1:#f59e0b;--pill-c2:#ef4444" onclick="openCosmosCategory('phenomena')"><span class="pill-icon"><i class="fas fa-bolt"></i></span><span>ظواهر فلكية</span></button>
-          <button type="button" class="cosmos-pill cosmos-pill-progress" style="--pill-c1:#fde047;--pill-c2:#f59e0b" onclick="openStudentProgress()"><span class="pill-icon"><i class="fas fa-trophy"></i></span><span>تقدم الطالب</span></button>
-          <button type="button" class="cosmos-pill cosmos-pill-contact" style="--pill-c1:#22c55e;--pill-c2:#10b981" onclick="openPrivateAdminChat()"><span class="pill-icon"><i class="fas fa-user-shield"></i></span><span>تواصل خاص مع المشرفين</span><span id="privateAdminChatBadge" class="cosmos-pill-badge" style="display:none">0</span></button>
-        </div>
-      </div>
-    </section>
+    <!-- cosmos carousel removed - accessible via hamburger menu -->
 
     <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
     <div class="videos-grid" id="videosContainer"></div>
@@ -4984,4 +4957,4 @@ window.scrollToSectionAndOpen = scrollToSectionAndOpen;
 
 <div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
 <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
-</html> 
+</html>
