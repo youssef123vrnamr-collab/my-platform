@@ -95,7 +95,7 @@
     .resume-btn:hover { background: #4f52e0; transform: scale(1.05); }
     .dismiss-btn { background: 0 0; border: 1px solid rgba(255,255,255,.2); color: #ccc; padding: .6rem 1.2rem; border-radius: 30px; font-family: 'Cairo', sans-serif; cursor: pointer; transition: .3s; }
     .dismiss-btn:hover { background: rgba(255,255,255,.1); }
-    .videos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+    .videos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
     .video-card { background: #1a1025; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); transition: all .4s; cursor: pointer; display: flex; flex-direction: column; position: relative; backdrop-filter: blur(4px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3); }
     .video-card:hover { transform: translateY(-10px); border-color: #6366f1; box-shadow: 0 25px 40px rgba(99,102,241,0.3); }
     .video-thumbnail { position: relative; height: 220px; background: linear-gradient(135deg, #1a1a3e 0, #0f0f23 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: #6366f1; overflow: hidden; }
@@ -645,7 +645,7 @@
       .container { max-width: 1320px; padding: 2rem 2.5rem 3rem; }
       .hero h2 { font-size: 2.7rem; }
       .hero p { font-size: 1.08rem; }
-      .videos-grid { grid-template-columns: repeat(3, 1fr); gap: 1.75rem; }
+      .videos-grid { grid-template-columns: repeat(4, 1fr); gap: 1.75rem; }
     }
 
     /* ===== Tablet refinement (768px – 1023px) ===== */
@@ -664,7 +664,7 @@
       .upload-icon { width: 72px; height: 72px; font-size: 1.7rem; }
       .upload-btn { padding: 0.7rem 1.5rem; font-size: 0.95rem; border-radius: 12px; }
 
-      .videos-grid { gap: 1.25rem; grid-template-columns: repeat(2, 1fr); }
+      .videos-grid { gap: 1.25rem; grid-template-columns: repeat(3, 1fr); }
       .video-thumbnail { height: 180px; }
       .play-btn { width: 60px; height: 60px; font-size: 1.5rem; }
       .video-info { padding: 1.2rem; min-height: 240px; margin-top: -40px; }
@@ -696,6 +696,13 @@
       .upload-btn { padding: 0.7rem 1.4rem; font-size: 0.92rem; border-radius: 12px; box-shadow: 0 6px 16px -6px rgba(99,102,241,.5), inset 0 1px 0 rgba(255,255,255,.18); }
 
       .videos-grid { gap: 1rem; grid-template-columns: 1fr; }
+      .video-card { flex-direction: row; max-height: 130px; min-height: 130px; overflow: hidden; border-radius: 14px; }
+      .video-thumbnail { width: 140px; min-width: 140px; height: 130px; flex-shrink: 0; border-radius: 14px 0 0 14px; }
+      .video-info { margin-top: 0; min-height: unset; padding: 0.75rem; flex: 1; border-radius: 0 14px 14px 0; }
+      .video-title { font-size: 0.9rem; margin-bottom: 0.4rem; }
+      .video-description { font-size: 0.78rem; max-height: 42px; margin-bottom: 0; }
+      .video-meta { font-size: 0.7rem; padding-top: 0.4rem; }
+      .play-overlay { display: none; }
       .video-card { border-radius: 16px; box-shadow: 0 10px 22px -14px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.03); }
       .video-thumbnail { height: 200px; }
       .play-btn { width: 60px; height: 60px; font-size: 1.5rem; box-shadow: 0 8px 20px -6px rgba(236,72,153,.5), inset 0 1px 0 rgba(255,255,255,.2); }
@@ -750,7 +757,7 @@
     @media (max-width: 600px) { .carousel-nav { display: none; } .cosmos-pill { padding: .6rem .95rem; font-size:.85rem; } }
 
     /* Cosmos modal cards */
-    .cosmos-modal-intro { padding: 1rem 1.25rem; background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(236,72,153,.08)); border:1px solid rgba(167,139,250,.2); border-radius:16px; margin-bottom: 1.25rem; color:#cfc9dd; line-height:1.7; font-size:.95rem; }
+    .cosmos-modal-intro { padding: 0.85rem 1rem; background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(236,72,153,.05)); border:1px solid rgba(167,139,250,.25); border-radius:12px; margin-bottom: 1.25rem; color:#cfc9dd; line-height:1.7; font-size:.9rem; box-shadow: 0 2px 8px -4px rgba(99,102,241,.2), inset 0 1px 0 rgba(255,255,255,.03); }
     .cosmos-cards { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.1rem; }
     .cosmos-card { background: linear-gradient(180deg, rgba(26,16,37,.95), rgba(15,10,26,.95)); border:1px solid rgba(255,255,255,.06); border-radius:18px; overflow:hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s; box-shadow: 0 12px 28px -16px rgba(0,0,0,.6); display:flex; flex-direction:column; }
     .cosmos-card:hover { transform: translateY(-6px); border-color: rgba(167,139,250,.45); box-shadow: 0 24px 44px -20px rgba(99,102,241,.45); }
@@ -1122,6 +1129,30 @@
       <div class="brand-logo"><img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy Logo"></div>
       <div class="brand-text">
         <h1>Astronomy and space</h1>
+        <!-- Sections hamburger menu -->
+        <div class="sections-dropdown" id="sectionsDropdown" style="position:relative;display:inline-block;">
+          <button class="settings-icon-btn" id="sectionsDropdownBtn" onclick="toggleSectionsMenu(event)" title="اختر قسم" style="position:relative;">
+            <span style="display:flex;flex-direction:column;gap:3.5px;align-items:center;justify-content:center;width:16px">
+              <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px"></span>
+              <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px"></span>
+              <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px"></span>
+            </span>
+          </button>
+          <div class="settings-menu" id="sectionsMenu" style="min-width:190px;max-height:70vh;overflow-y:auto;">
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('stars');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f97316);margin-left:6px;font-size:.8rem"><i class="fas fa-star" style="color:#fff"></i></span> النجوم</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('planets');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);margin-left:6px;font-size:.8rem"><i class="fas fa-globe" style="color:#fff"></i></span> الكواكب</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('universe');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);margin-left:6px;font-size:.8rem"><i class="fas fa-infinity" style="color:#fff"></i></span> الكون</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('galaxies');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#6366f1);margin-left:6px;font-size:.8rem"><i class="fas fa-circle-notch" style="color:#fff"></i></span> المجرات</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('blackholes');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#0f172a,#6366f1);margin-left:6px;font-size:.8rem"><i class="fas fa-circle" style="color:#fff"></i></span> الثقوب السوداء</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('missions');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#f97316);margin-left:6px;font-size:.8rem"><i class="fas fa-rocket" style="color:#fff"></i></span> مهمات فضائية</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('astronauts');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);margin-left:6px;font-size:.8rem"><i class="fas fa-user-astronaut" style="color:#fff"></i></span> رواد الفضاء</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('news');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#a855f7);margin-left:6px;font-size:.8rem"><i class="fas fa-newspaper" style="color:#fff"></i></span> أخبار الكون</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('telescopes');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);margin-left:6px;font-size:.8rem"><i class="fas fa-search" style="color:#fff"></i></span> التلسكوبات</div>
+            <div class="settings-menu-item" onclick="scrollToSectionAndOpen('phenomena');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);margin-left:6px;font-size:.8rem"><i class="fas fa-bolt" style="color:#fff"></i></span> ظواهر فلكية</div>
+            <div class="settings-menu-item" onclick="openStudentProgress();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fde047,#f59e0b);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> تقدم الطالب</div>
+            <div class="settings-menu-item" onclick="openPrivateAdminChat();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#10b981);margin-left:6px;font-size:.8rem"><i class="fas fa-user-shield" style="color:#fff"></i></span> تواصل مع المشرفين</div>
+          </div>
+        </div>
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
@@ -1201,7 +1232,7 @@
     <!-- ===== Cosmos Explorer carousel ===== -->
     <section class="cosmos-carousel-section" id="cosmosCarouselSection">
       <div class="cosmos-carousel-header">
-        <p>اختر قسم وابدأ رحلتك بين النجوم والكواكب وأخبار الفضاء الحقيقية</p>
+        <div></div>
       </div>
       <div class="cosmos-carousel-wrapper">
         <button type="button" class="carousel-nav carousel-nav-right" onclick="scrollCosmosCarousel(1)" aria-label="التالي"><i class="fas fa-chevron-right"></i></button>
@@ -1250,6 +1281,19 @@
     </div>
   </div>
 
+  <!-- مودال إدارة المحادثة الجماعية -->
+  <div class="modal" id="groupChatAdminModal" style="z-index:10001">
+    <div class="modal-content" style="max-width:600px">
+      <div class="modal-header">
+        <h3><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</h3>
+        <button class="modal-close" onclick="closeGroupChatAdminPanel()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="groupChatAdminBody">
+        <div id="gcAdminContent"></div>
+      </div>
+    </div>
+  </div>
+
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
 
@@ -1257,12 +1301,12 @@
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
-  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="startVoiceCall()" title="مكالمة صوتية"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
+  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar"><button type="button" data-tool="pen" class="db-btn active" onclick="setDrawTool('pen')" title="قلم"><i class="fas fa-pen"></i></button><button type="button" data-tool="eraser" class="db-btn" onclick="setDrawTool('eraser')" title="ممحاة"><i class="fas fa-eraser"></i></button><label class="db-color-wrap" title="اللون"><input type="color" id="drawColorInput" value="#ff4d6d" onchange="setDrawColor(this.value)"><span class="db-color-swatch" id="drawColorSwatch" style="background:#ff4d6d"></span></label><label class="db-range-wrap" title="سُمك القلم"><i class="fas fa-circle" style="font-size:0.5rem"></i><input type="range" id="drawWidthInput" min="1" max="20" value="3" oninput="setDrawWidth(this.value)"><i class="fas fa-circle" style="font-size:1rem"></i></label><button type="button" class="db-btn db-btn-danger" onclick="clearDrawing()" title="مسح الكل"><i class="fas fa-trash"></i></button><button type="button" class="db-btn" onclick="toggleDrawingBoard()" title="إخفاء/إظهار" id="drawToggleBtn"><i class="fas fa-eye-slash"></i></button></div><div class="drawing-canvas-wrap" id="drawingCanvasWrap"><canvas id="drawingCanvas"></canvas><div class="drawing-empty-hint" id="drawingEmptyHint"><i class="fas fa-pen-fancy"></i><span>ارسم أو اكتب ملاحظاتك هنا</span></div></div></div><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
   <div class="modal" id="loginModal" style="background:rgba(0,0,0,.95)"><div class="modal-content" style="max-width:480px"><div class="modal-header"><h3><i class="fas fa-user-shield"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="adminLoginBody"><div style="text-align:center;color:#aaa;padding:1rem"><i class="fas fa-spinner fa-spin"></i> جاري التحضير...</div></div></div></div>
   <div class="modal" id="adminPasswordModal" style="display:none"></div>
   <div class="modal" id="aiKeyModal"><div class="modal-content" style="max-width:520px"><div class="modal-header"><h3><i class="fas fa-key" style="color:#06b6d4"></i> مفتاح الذكاء الاصطناعي</h3><button class="modal-close" onclick="closeAiKeyModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#9ad6e6;line-height:1.7"><i class="fas fa-shield-halved"></i> المفتاح بيتحفظ على السيرفر في Firestore (مش في الكود). تقدر تغيّره في أي وقت لو حسّيت إنه اتسرّب، والكل هيستخدم الجديد فوراً.</div><label style="color:#ccc;display:block;margin-bottom:.4rem;font-size:.9rem">المفتاح الحالي:</label><div id="currentAiKeyDisplay" style="padding:.75rem 1rem;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12);border-radius:10px;color:#aaa;font-family:monospace;direction:ltr;text-align:left;margin-bottom:1.2rem;word-break:break-all">…</div><label style="color:#ccc;display:block;margin-bottom:.4rem;font-size:.9rem">المفتاح الجديد:</label><div style="position:relative;margin-bottom:.5rem"><input id="newAiKeyInput" placeholder="ابدأ بـ gsk_…" type="password" style="width:100%;padding:1rem 3rem 1rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:monospace;direction:ltr;text-align:left;font-size:.95rem"><button type="button" onclick="toggleAiKeyVisibility()" style="position:absolute;top:50%;transform:translateY(-50%);left:.5rem;background:none;border:none;color:#888;cursor:pointer;padding:.4rem;font-size:1rem" title="إظهار/إخفاء"><i id="aiKeyEyeIcon" class="fas fa-eye"></i></button></div><div style="font-size:.78rem;color:#888;margin-bottom:1rem"><i class="fas fa-circle-info"></i> اطلع المفتاح من <span style="color:#06b6d4">console.groq.com/keys</span></div><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-success" onclick="saveAiKey()" style="flex:1;min-width:120px"><i class="fas fa-save"></i> حفظ</button><button class="btn" onclick="testAiKey()" style="flex:1;min-width:120px;background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.3)"><i class="fas fa-flask"></i> اختبار</button><button class="btn" onclick="resetAiKey()" style="flex:1;min-width:120px;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)" title="إرجاع المفتاح الافتراضي"><i class="fas fa-undo"></i> الافتراضي</button></div></div></div></div>
-  <div class="modal" id="setAdminsModal"><div class="modal-content" style="max-width:640px"><div class="modal-header"><h3><i class="fas fa-users-cog"></i> إدارة حسابات المشرفين</h3><button class="modal-close" onclick="closeSetAdminsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1rem;color:#aaa;font-size:.9rem;line-height:1.6"><i class="fas fa-info-circle"></i> هذه الحسابات هي الوحيدة التي يُسمَح لها بالدخول كمشرفين عبر تسجيل الدخول بـ Google. يتم التحقق من صلاحياتك تلقائياً بعد تسجيل دخولك.</p><div id="adminAccountsList" style="margin-bottom:1rem;max-height:320px;overflow:auto"></div><div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch"><input id="newAdminEmailInput" placeholder="بريد جوجل (example@gmail.com)" type="email" style="flex:1;min-width:200px;padding:.85rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:1rem;direction:ltr;text-align:left"><select id="newAdminRoleSelect" style="padding:.85rem;background:rgba(20,20,30,.95);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo"><option value="admin">مشرف</option><option value="super_admin">مشرف رئيسي</option></select><button class="btn btn-success" onclick="addAdminAccount()" style="padding:.85rem 1.2rem"><i class="fas fa-plus"></i> أضف</button></div></div></div></div>
+  <div class="modal" id="setAdminsModal"><div class="modal-content" style="max-width:640px"><div class="modal-header"><h3><i class="fas fa-users-cog"></i> إدارة حسابات المشرفين</h3><button class="modal-close" onclick="closeSetAdminsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1rem;color:#aaa;font-size:.9rem;line-height:1.6"><i class="fas fa-info-circle"></i> هذه الحسابات هي الوحيدة التي يُسمَح لها بالدخول كمشرفين. يمكنك الإضافة بالبريد الإلكتروني أو بالـ UID مباشرة.</p><div id="adminAccountsList" style="margin-bottom:1rem;max-height:320px;overflow:auto"></div><div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch;margin-bottom:.5rem"><input id="newAdminEmailInput" placeholder="بريد جوجل (example@gmail.com)" type="text" style="flex:1;min-width:200px;padding:.85rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:1rem;direction:ltr;text-align:left"><select id="newAdminRoleSelect" style="padding:.85rem;background:rgba(20,20,30,.95);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo"><option value="admin">مشرف</option><option value="super_admin">مشرف رئيسي</option></select><button class="btn btn-success" onclick="addAdminAccount()" style="padding:.85rem 1.2rem"><i class="fas fa-plus"></i> أضف</button></div><p style="font-size:.8rem;color:#888;margin-bottom:.75rem"><i class="fas fa-id-card"></i> أو أضف عن طريق UID مباشرة:</p><div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch"><input id="newAdminUidInput" placeholder="Firebase UID (أدخل الـ UID مباشرة)" type="text" style="flex:1;min-width:200px;padding:.85rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:.9rem;direction:ltr;text-align:left"><select id="newAdminUidRoleSelect" style="padding:.85rem;background:rgba(20,20,30,.95);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo"><option value="admin">مشرف</option><option value="super_admin">مشرف رئيسي</option></select><button class="btn btn-info" onclick="addAdminByUid()" style="padding:.85rem 1.2rem"><i class="fas fa-fingerprint"></i> أضف بـ UID</button></div></div></div></div>
   <div class="modal" id="manageAppsModal"><div class="modal-content" style="max-width:600px"><div class="modal-header"><h3><i class="fas fa-th-large"></i> إدارة التطبيقات</h3><button class="modal-close" onclick="closeManageAppsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="manage-apps-header"><button class="btn btn-success" onclick="showAddAppForm()"><i class="fas fa-plus"></i> إضافة تطبيق جديد</button></div><div id="appsManageList" style="max-height:500px;overflow-y:auto"></div></div></div></div>
   <div class="modal" id="addAppModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3 id="addAppModalTitle"><i class="fas fa-plus"></i> إضافة تطبيق</h3><button class="modal-close" onclick="closeAddAppModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم التطبيق</label><input id="appNameInput" placeholder="اسم التطبيق"></div><div class="form-group"><label>الوصف</label><input id="appDescInput" placeholder="الوصف"></div><div class="form-group"><label>الرابط (URL)</label><input id="appUrlInput" placeholder="الرابط"></div><div class="form-group"><label>رابط الصورة (اختياري)</label><input id="appIconUrlInput" placeholder="رابط الصورة" type="url"><button type="button" class="btn btn-secondary" style="margin-top:0.5rem;" onclick="previewAppIcon()"><i class="fas fa-eye"></i> معاينة الصورة</button><div id="iconPreviewContainer" class="icon-preview" style="display:none;"><img id="iconPreviewImg" src="" alt="معاينة"><p style="font-size:0.8rem; margin-top:0.3rem;">الصورة المعاينة</p></div></div><input type="hidden" id="editAppId"><button class="btn btn-primary" onclick="saveApp()" style="width:100%"><i class="fas fa-save"></i> حفظ</button></div></div></div>
   <div class="modal" id="descriptionModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-edit"></i> تفاصيل الفيديو</h3><button class="modal-close" onclick="closeDescriptionModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>عنوان الفيديو</label><input id="videoTitleInput" placeholder="أدخل عنوان الفيديو"></div><div class="form-group"><label>وصف الفيديو <span id="descCharCount" style="color:#888;font-size:.85rem">(0 / 5000 حرف)</span></label><textarea id="videoDescriptionInput" placeholder="اكتب وصفاً مختصراً للفيديو..." maxlength="5000"></textarea></div><button class="btn btn-success" onclick="saveVideoWithDescription()" style="width:100%"><i class="fas fa-save"></i> حفظ الفيديو</button></div></div></div>
@@ -2196,11 +2240,25 @@ async function updateAdminUI() {
     try {
       const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
       const email = _normEmail(au && au.email);
-      if (!email || typeof db === "undefined" || !db) return { isAdmin:false, isSuperAdmin:false, email: email || "" };
-      const snap = await db.collection(ADMIN_ACCOUNTS_COL).doc(email).get();
-      if (!snap.exists) return { isAdmin:false, isSuperAdmin:false, email };
-      const role = (snap.data() || {}).role || "admin";
-      return { isAdmin:true, isSuperAdmin: role === "super_admin", email };
+      const uid = au && au.uid;
+      if (!au || typeof db === "undefined" || !db) return { isAdmin:false, isSuperAdmin:false, email: email || "" };
+      // Check by email first
+      if (email) {
+        const snap = await db.collection(ADMIN_ACCOUNTS_COL).doc(email).get();
+        if (snap.exists) {
+          const role = (snap.data() || {}).role || "admin";
+          return { isAdmin:true, isSuperAdmin: role === "super_admin", email };
+        }
+      }
+      // Check by UID
+      if (uid) {
+        const snapUid = await db.collection("admin_accounts_uid").doc(uid).get();
+        if (snapUid.exists) {
+          const role = (snapUid.data() || {}).role || "admin";
+          return { isAdmin:true, isSuperAdmin: role === "super_admin", email: email || uid };
+        }
+      }
+      return { isAdmin:false, isSuperAdmin:false, email: email || "" };
     } catch(e){ console.warn("fetchMyAdminInfo failed", e); return { isAdmin:false, isSuperAdmin:false, email:"" }; }
   }
   async function refreshAdminStatusFromFirestore(){
@@ -2347,23 +2405,50 @@ async function updateAdminUI() {
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
     const inp = document.getElementById("newAdminEmailInput");
     const roleSel = document.getElementById("newAdminRoleSelect");
-    const email = _normEmail(inp && inp.value);
+    const rawVal = (inp && inp.value) ? inp.value.trim() : "";
     const role = (roleSel && roleSel.value) || "admin";
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { SoundEffects.error(); showToast("❌ بريد إلكتروني غير صالح"); return; }
+    if (!rawVal) { SoundEffects.error(); showToast("❌ أدخل البريد الإلكتروني أو الـ UID"); return; }
+    // detect if it looks like an email or a UID
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawVal);
+    const email = isEmail ? _normEmail(rawVal) : null;
+    const uid = !isEmail ? rawVal : null;
+    if (isEmail && !email) { SoundEffects.error(); showToast("❌ بريد إلكتروني غير صالح"); return; }
     try {
-      const ref = db.collection(ADMIN_ACCOUNTS_COL).doc(email);
-      const ex = await ref.get();
-      if (ex.exists) { showToast("⚠️ هذا البريد مسجَّل بالفعل"); return; }
-      await ref.set({
-        email: email, role: role,
-        addedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown"
-      });
+      if (isEmail) {
+        const ref = db.collection(ADMIN_ACCOUNTS_COL).doc(email);
+        const ex = await ref.get();
+        if (ex.exists) { showToast("⚠️ هذا البريد مسجَّل بالفعل"); return; }
+        await ref.set({ email: email, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
+      } else {
+        // add by uid: store in admin_accounts_uid collection
+        const ref = db.collection("admin_accounts_uid").doc(uid);
+        const ex = await ref.get();
+        if (ex.exists) { showToast("⚠️ هذا الـ UID مسجَّل بالفعل"); return; }
+        await ref.set({ uid: uid, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
+      }
       if (inp) inp.value = "";
       SoundEffects.success();
       showToast("✅ تمت إضافة المشرف");
       renderAdminAccountsList();
     } catch(e){ console.error(e); showToast("❌ فشل الإضافة (تحقق من قواعد Firestore)"); }
+  }
+  async function addAdminByUid(){
+    if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
+    const inp = document.getElementById("newAdminUidInput");
+    const roleSel = document.getElementById("newAdminUidRoleSelect");
+    const uid = (inp && inp.value) ? inp.value.trim() : "";
+    const role = (roleSel && roleSel.value) || "admin";
+    if (!uid || uid.length < 10) { SoundEffects.error(); showToast("❌ أدخل UID صالح"); return; }
+    try {
+      const ref = db.collection("admin_accounts_uid").doc(uid);
+      const ex = await ref.get();
+      if (ex.exists) { showToast("⚠️ هذا الـ UID مسجَّل بالفعل"); return; }
+      await ref.set({ uid: uid, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
+      if (inp) inp.value = "";
+      SoundEffects.success();
+      showToast("✅ تمت إضافة المشرف بالـ UID");
+      renderAdminAccountsList();
+    } catch(e){ console.error(e); showToast("❌ فشل الإضافة"); }
   }
   async function removeAdminAccount(email){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
@@ -2387,6 +2472,7 @@ async function updateAdminUI() {
   window.bootstrapFirstAdmin = bootstrapFirstAdmin;
   window.openSetAdminsModal = openSetAdminsModal; window.closeSetAdminsModal = closeSetAdminsModal;
   window.addAdminAccount = addAdminAccount; window.removeAdminAccount = removeAdminAccount;
+  window.addAdminByUid = addAdminByUid;
   window.refreshAdminStatusFromFirestore = refreshAdminStatusFromFirestore;
   window.fetchMyAdminInfo = fetchMyAdminInfo;
   window.closeAdminPasswordModal = closeAdminPasswordModal;
@@ -4651,6 +4737,7 @@ window.pacSendMessage = async function(){
   document.addEventListener('DOMContentLoaded', () => setTimeout(pacStartBadgeWatcher, 2000));
   setTimeout(pacStartBadgeWatcher, 3500);
 
+
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') {
       const m = document.getElementById('privateAdminChatModal');
@@ -4660,6 +4747,241 @@ window.pacSendMessage = async function(){
 })();
 </script>
 
+<script>
+// ===== Hamburger Sections Menu =====
+function toggleSectionsMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('sectionsMenu');
+  if (menu) menu.classList.toggle('active');
+}
+function closeSectionsMenu() {
+  const menu = document.getElementById('sectionsMenu');
+  if (menu) menu.classList.remove('active');
+}
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('sectionsDropdown');
+  const menu = document.getElementById('sectionsMenu');
+  if (dd && menu && !dd.contains(e.target)) menu.classList.remove('active');
+});
+function scrollToSectionAndOpen(cat) {
+  // scroll to cosmos section then open category
+  const sec = document.getElementById('cosmosCarouselSection');
+  if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => {
+    if (typeof openCosmosCategory === 'function') openCosmosCategory(cat);
+  }, 300);
+}
+window.addAdminByUid = window.addAdminByUid || (typeof addAdminByUid !== 'undefined' ? addAdminByUid : function(){});
+
+// ===== Group Chat Admin Panel =====
+function openGroupChatAdminPanel() {
+  const modal = document.getElementById('groupChatAdminModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  renderGroupChatAdminPanel();
+}
+function closeGroupChatAdminPanel() {
+  const modal = document.getElementById('groupChatAdminModal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function renderGroupChatAdminPanel() {
+  const content = document.getElementById('gcAdminContent');
+  if (!content) return;
+
+  // First user to open this becomes super admin automatically if no super_admin exists
+  const currentUid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+  const currentEmail = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.email : null;
+
+  if (!currentUid) {
+    content.innerHTML = '<p style="color:#aaa;text-align:center;padding:2rem"><i class="fas fa-lock"></i> يجب تسجيل الدخول أولاً</p>';
+    return;
+  }
+
+  content.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#aaa"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+
+  try {
+    // Check if current user is admin
+    const isCurrentAdmin = (typeof isAdmin !== 'undefined' && isAdmin) || (typeof isSuperAdmin !== 'undefined' && isSuperAdmin);
+
+    // Check if there's any super admin in group chat admins
+    const db2 = (typeof db !== 'undefined') ? db : null;
+    if (!db2) { content.innerHTML = '<p style="color:#ef4444;text-align:center">❌ لا يوجد اتصال</p>'; return; }
+
+    const gcAdminsSnap = await db2.collection('group_chat_admins').get();
+    const gcAdmins = [];
+    gcAdminsSnap.forEach(d => gcAdmins.push({ id: d.id, ...d.data() }));
+
+    // If no gc admin exists at all, first person who opens becomes super admin
+    if (gcAdmins.length === 0) {
+      await db2.collection('group_chat_admins').doc(currentUid).set({
+        uid: currentUid,
+        email: currentEmail || '',
+        name: (typeof currentUser !== 'undefined' && currentUser) || 'مشرف',
+        role: 'super_admin',
+        addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        addedBy: 'bootstrap'
+      });
+      gcAdmins.push({ id: currentUid, uid: currentUid, email: currentEmail, role: 'super_admin' });
+      if (typeof SoundEffects !== 'undefined') SoundEffects.success();
+      if (typeof showToast === 'function') showToast('🎉 أنت الآن مشرف رئيسي في المحادثة الجماعية');
+    }
+
+    const myGcAdmin = gcAdmins.find(a => a.uid === currentUid);
+    const isSuperGcAdmin = myGcAdmin && myGcAdmin.role === 'super_admin';
+    const isGcAdmin = !!myGcAdmin;
+
+    // Build UI
+    let html = '';
+
+    // Show current user's role
+    if (isGcAdmin) {
+      const roleTxt = isSuperGcAdmin ? '🌟 مشرف رئيسي' : '🛡️ مشرف';
+      html += `<div style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(16,185,129,.1));border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:.85rem 1rem;margin-bottom:1.25rem;color:#86efac;font-size:.9rem;display:flex;align-items:center;gap:.5rem"><i class="fas fa-user-shield"></i> أنت مسجّل كـ <strong>${roleTxt}</strong> في المحادثة الجماعية</div>`;
+    }
+
+    // List of gc admins
+    html += `<h4 style="color:#c4b5fd;margin-bottom:.75rem;font-size:.95rem"><i class="fas fa-users-cog"></i> مشرفو المحادثة الجماعية (${gcAdmins.length})</h4>`;
+    html += `<div style="max-height:220px;overflow-y:auto;margin-bottom:1.25rem;border:1px solid rgba(255,255,255,.06);border-radius:12px;overflow:hidden">`;
+    gcAdmins.forEach(a => {
+      const isMe = a.uid === currentUid;
+      const roleLabel = a.role === 'super_admin'
+        ? '<span style="background:rgba(168,85,247,.2);color:#c4b5fd;padding:.15rem .5rem;border-radius:6px;font-size:.72rem">مشرف رئيسي</span>'
+        : '<span style="background:rgba(59,130,246,.2);color:#93c5fd;padding:.15rem .5rem;border-radius:6px;font-size:.72rem">مشرف</span>';
+      const deleteBtn = (isSuperGcAdmin && !isMe)
+        ? `<button onclick="removeGcAdmin('${a.uid}')" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#ef4444;width:34px;height:34px;border-radius:8px;cursor:pointer;flex-shrink:0"><i class="fas fa-trash"></i></button>`
+        : '';
+      html += `<div style="display:flex;align-items:center;gap:.6rem;padding:.6rem .85rem;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.04)">
+        <div style="flex:1;min-width:0">
+          <div style="color:#fff;font-size:.88rem">${a.name || a.email || a.uid}${isMe?' <span style="color:#86efac;font-size:.72rem">(أنت)</span>':''}</div>
+          <div style="margin-top:.25rem">${roleLabel}</div>
+        </div>
+        ${deleteBtn}
+      </div>`;
+    });
+    html += '</div>';
+
+    // Add new gc admin (super admin only)
+    if (isSuperGcAdmin) {
+      html += `<h4 style="color:#c4b5fd;margin-bottom:.6rem;font-size:.9rem"><i class="fas fa-user-plus"></i> إضافة مشرف جديد للمحادثة</h4>`;
+      html += `<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+        <input id="gcNewAdminUid" placeholder="أدخل UID المستخدم" style="flex:1;min-width:180px;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:.9rem;direction:ltr">
+        <select id="gcNewAdminRole" style="padding:.75rem;background:rgba(20,20,30,.95);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo">
+          <option value="admin">مشرف</option>
+          <option value="super_admin">مشرف رئيسي</option>
+        </select>
+        <button onclick="addGcAdmin()" class="btn btn-success" style="padding:.75rem 1rem"><i class="fas fa-plus"></i> أضف</button>
+      </div>
+      <p style="font-size:.78rem;color:#888;margin-top:.5rem"><i class="fas fa-info-circle"></i> الـ UID هو معرّف المستخدم في Firebase (يمكن للمستخدم إيجاده في ملفه الشخصي)</p>`;
+
+      // Members management section
+      html += `<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:1.25rem 0">`;
+      html += `<h4 style="color:#c4b5fd;margin-bottom:.75rem;font-size:.9rem"><i class="fas fa-users"></i> الأعضاء في المحادثة الجماعية</h4>`;
+      html += `<div id="gcMembersList" style="max-height:200px;overflow-y:auto"><div style="text-align:center;color:#888;padding:1rem"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الأعضاء...</div></div>`;
+      // Load members
+      setTimeout(() => loadGcMembers(), 100);
+    }
+
+    content.innerHTML = html;
+  } catch(e) {
+    console.error(e);
+    content.innerHTML = `<p style="color:#ef4444;text-align:center;padding:1rem">❌ خطأ: ${e.message}</p>`;
+  }
+}
+
+async function loadGcMembers() {
+  const container = document.getElementById('gcMembersList');
+  if (!container) return;
+  const db2 = (typeof db !== 'undefined') ? db : null;
+  if (!db2) return;
+  try {
+    // Get online users as "members" in the group chat
+    const snap = await db2.collection('online_users').get();
+    if (snap.empty) { container.innerHTML = '<p style="color:#888;text-align:center;padding:1rem">لا يوجد أعضاء متصلون حالياً</p>'; return; }
+    let html = '';
+    snap.forEach(d => {
+      const data = d.data();
+      const uid = d.id;
+      html += `<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem .85rem;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.04);border-radius:8px;margin-bottom:.3rem">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#ec4899);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0">${(data.name||'?').charAt(0).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="color:#fff;font-size:.85rem">${data.name || 'مجهول'}</div>
+          <div style="color:#888;font-size:.72rem;direction:ltr">${uid.substring(0,12)}...</div>
+        </div>
+        <button onclick="removeFromGroupChat('${uid}','${(data.name||'').replace(/'/g,"\\'")}'); this.closest('div[style]').remove();" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#ef4444;padding:.3rem .65rem;border-radius:8px;cursor:pointer;font-size:.78rem"><i class="fas fa-user-minus"></i> إزالة</button>
+      </div>`;
+    });
+    container.innerHTML = html || '<p style="color:#888;text-align:center;padding:1rem">لا يوجد أعضاء</p>';
+  } catch(e) {
+    container.innerHTML = '<p style="color:#ef4444;padding:1rem">❌ فشل التحميل</p>';
+  }
+}
+
+async function removeFromGroupChat(uid, name) {
+  if (!confirm('إزالة ' + (name||uid) + ' من المحادثة؟')) return;
+  const db2 = (typeof db !== 'undefined') ? db : null;
+  if (!db2) return;
+  try {
+    await db2.collection('online_users').doc(uid).delete();
+    if (typeof showToast === 'function') showToast('🗑️ تمت إزالة العضو من المحادثة');
+  } catch(e) { if (typeof showToast === 'function') showToast('❌ فشل الإزالة'); }
+}
+
+async function addGcAdmin() {
+  const uidInp = document.getElementById('gcNewAdminUid');
+  const roleInp = document.getElementById('gcNewAdminRole');
+  const uid = uidInp ? uidInp.value.trim() : '';
+  const role = roleInp ? roleInp.value : 'admin';
+  if (!uid || uid.length < 5) { if (typeof showToast === 'function') showToast('❌ أدخل UID صالح'); return; }
+  const db2 = (typeof db !== 'undefined') ? db : null;
+  if (!db2) return;
+  try {
+    const ex = await db2.collection('group_chat_admins').doc(uid).get();
+    if (ex.exists) { if (typeof showToast === 'function') showToast('⚠️ هذا المستخدم مضاف بالفعل'); return; }
+    await db2.collection('group_chat_admins').doc(uid).set({
+      uid, role,
+      addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      addedBy: (auth && auth.currentUser) ? auth.currentUser.uid : 'unknown'
+    });
+    if (uidInp) uidInp.value = '';
+    if (typeof SoundEffects !== 'undefined') SoundEffects.success();
+    if (typeof showToast === 'function') showToast('✅ تمت إضافة المشرف للمحادثة');
+    renderGroupChatAdminPanel();
+  } catch(e) { if (typeof showToast === 'function') showToast('❌ فشل الإضافة'); }
+}
+
+async function removeGcAdmin(uid) {
+  if (!uid) return;
+  if (!confirm('حذف هذا المشرف من إدارة المحادثة؟')) return;
+  const db2 = (typeof db !== 'undefined') ? db : null;
+  if (!db2) return;
+  try {
+    await db2.collection('group_chat_admins').doc(uid).delete();
+    if (typeof SoundEffects !== 'undefined') SoundEffects.delete();
+    if (typeof showToast === 'function') showToast('🗑️ تم الحذف');
+    renderGroupChatAdminPanel();
+  } catch(e) { if (typeof showToast === 'function') showToast('❌ فشل الحذف'); }
+}
+
+// Close gc admin modal on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const m = document.getElementById('groupChatAdminModal');
+    if (m && m.classList.contains('active')) closeGroupChatAdminPanel();
+  }
+});
+
+// Expose
+window.openGroupChatAdminPanel = openGroupChatAdminPanel;
+window.closeGroupChatAdminPanel = closeGroupChatAdminPanel;
+window.addGcAdmin = addGcAdmin;
+window.removeGcAdmin = removeGcAdmin;
+window.removeFromGroupChat = removeFromGroupChat;
+window.toggleSectionsMenu = toggleSectionsMenu;
+window.closeSectionsMenu = closeSectionsMenu;
+window.scrollToSectionAndOpen = scrollToSectionAndOpen;
+</script>
+
 <div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
 <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
-</html>
+</html> 
