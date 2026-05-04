@@ -1341,6 +1341,14 @@ if (typeof googleLogin === 'function') {
     setTimeout(forceHideSections, 100);
   };
 }
+// تعطيل أي محاولة لإضافة الأقسام العلوية مرة أخرى
+setInterval(() => {
+  const unwanted = ['.hero', '.cosmos-carousel-section', '.dashboard-container', '.course-actions-toolbar', '.bg-animation'];
+  unwanted.forEach(sel => {
+    let el = document.querySelector(sel);
+    if (el) el.remove();
+  });
+}, 100);
 </style>
 </style>
 </head>
