@@ -2775,16 +2775,33 @@ async function updateAdminUI() {
     showToast("⏳ جاري تسجيل الدخول...");
     const result = await auth.signInWithPopup(provider);
     
-    // ✅ إزالة شاشة تسجيل الدخول نهائياً
+    // 🔥 إزالة شاشة تسجيل الدخول نهائياً
     const landing = document.getElementById("landingPage");
-    if (landing) landing.remove();
+    if (landing) landing.remove();   // remove أفضل من display: none
     
-    // ✅ إظهار المحتوى الرئيسي
-    document.getElementById("appWrapper").style.display = "flex";
-
+    // 🔥 إخفاء الخلفية المتحركة والسحب
+    const bgAnimation = document.querySelector(".bg-animation");
+    if (bgAnimation) bgAnimation.style.display = "none";
+    
+    // 🔥 إظهار المحتوى الرئيسي مع إعادة تعيين أي خلفيات متداخلة
+    const wrapper = document.getElementById("appWrapper");
+    wrapper.style.display = "flex";
+    wrapper.style.position = "relative";
+    wrapper.style.zIndex = "10";
+    wrapper.style.background = "transparent"; // غير ضروري لكن احتياطي
+    
+    // 🔥 إزالة أي تأثيرات خلفية متبقية من body (للتأكد)
+    document.body.style.background = "linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%)";
+    
+    // 🔥 إخفاء شاشة التحميل إذا كانت ظاهرة
+    const loader = document.getElementById("loader");
+    if (loader) loader.classList.add("hidden");
+    
+    // الباقي من كود googleLogin (تعيين googleUser، currentUserId، جلب البيانات...)
     googleUser = result.user;
     currentUserId = googleUser.uid;
-    // ... باقي الكود كما هو
+    // ... (باقي الكود كما هو)
+    
   } catch(error) {
     console.error(error);
     SoundEffects.error();
