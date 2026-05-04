@@ -2145,25 +2145,46 @@ async function updateAdminUI() {
   function resumeWatching() { let data = lastWatchedData || (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; } })(); if (!data) return; if (!videos.find(v => v.id === data.videoId)) { showToast("❌ الفيديو غير متوفر"); dismissResume(); return; } playVideo(data.videoId, data.currentTime); dismissResume(); }
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking(videoIdForWatch) {
-    let p = document.getElementById("videoPlayer");
-    if (!p || p.tagName !== "VIDEO") return;
-    progressInterval && clearInterval(progressInterval);
-    progressInterval = setInterval(() => {
-      if (!p.paused && !p.ended) {
-        saveVideoProgress();
-        // إذا تجاوز المستخدم 80% من الفيديو نسجلها في تقدم الطالب
-        if (videoIdForWatch && currentUserId && p.duration > 0 && (p.currentTime / p.duration) >= 0.8) {
-          markVideoAsWatched(videoIdForWatch);
-        }
-      }
-    }, 5000);
-    p.addEventListener("pause", saveVideoProgress);
-    window.addEventListener("beforeunload", saveVideoProgress);
-    p.addEventListener("ended", () => {
-      if (currentUserId) saveUserDataToFirebase(currentUserId);
-      else localStorage.removeItem(STORAGE_KEY);
-    });
+  let p = document.getElementById("videoPlayer");
+  if (!p || p.tagName !== "VIDEO") {
+    console.warn("setupProgressTracking: video element not found");
+    return;
   }
+  
+  if (progressInterval) clearInterval(progressInterval);
+  
+  progressInterval = setInterval(() => {
+    if (!p.paused && !p.ended) {
+      saveVideoProgress();
+      
+      // تحقق من شروط التسجيل
+      const condition = (videoIdForWatch && currentUserId && p.duration > 0 && (p.currentTime / p.duration) >= 0.8);
+      console.log("Tracking:", { 
+        videoIdForWatch, 
+        currentUserId, 
+        duration: p.duration, 
+        currentTime: p.currentTime,
+        percent: (p.currentTime / p.duration * 100).toFixed(1) + "%",
+        condition 
+      });
+      
+      if (condition) {
+        console.log("✅ Calling markVideoAsWatched for video", videoIdForWatch);
+        markVideoAsWatched(videoIdForWatch);
+      }
+    }
+  }, 5000);
+  
+  p.addEventListener("pause", saveVideoProgress);
+  window.addEventListener("beforeunload", saveVideoProgress);
+  
+  p.addEventListener("ended", () => {
+    console.log("Video ended event fired, marking as watched");
+    markVideoAsWatched(videoIdForWatch);
+    if (currentUserId) saveUserDataToFirebase(currentUserId);
+    else localStorage.removeItem(STORAGE_KEY);
+  });
+}
 
   function toggleFullscreenVideo() { const video = document.getElementById("videoPlayer"); if (!video) return; if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); }
   function shareCurrentTime() { let currentTime = 0; let videoId = null; let video = document.getElementById("videoPlayer"); if (video && video.tagName === "VIDEO" && video.src) { currentTime = Math.floor(video.currentTime); let foundVideo = videos.find(v => v.url === video.src || v.originalUrl === video.src); if (foundVideo) videoId = foundVideo.id; } if (!videoId) { let iframe = document.getElementById("videoPlayer"); if (iframe && iframe.tagName === "IFRAME" && iframe.src) { let match = iframe.src.match(/embed\/([^?&]+)/); if (match && match[1]) { let foundVideo = videos.find(v => v.type === "youtube" && v.videoId === match[1]); if (foundVideo) videoId = foundVideo.id; } } } if (!videoId) { showToast("⚠️ لا يمكن مشاركة هذا الفيديو"); return; } let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime; navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ")"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); }); }
