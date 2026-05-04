@@ -1313,22 +1313,33 @@
   .vr-participants { grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: .75rem; }
   .vr-header { padding: .85rem 1rem; }
 }
-/* إخفاء الأقسام العلوية الكبيرة تماماً */
-.hero,
-.cosmos-carousel-section,
-.dashboard-container {
-  display: none !important;
+// دالة لإخفاء الأقسام العلوية بقوة
+function forceHideSections() {
+  const sections = ['.hero', '.cosmos-carousel-section', '.dashboard-container', '.course-actions-toolbar', '.bg-animation'];
+  sections.forEach(selector => {
+    const elem = document.querySelector(selector);
+    if (elem) {
+      elem.style.cssText = 'display: none !important';
+      // منع أي محاولة لإظهاره مرة أخرى
+      elem.setAttribute('data-force-hidden', 'true');
+    }
+  });
 }
 
-/* تقليل padding الحاوية */
-.container {
-  padding-top: 0.5rem !important;
-}
+// استدعاء الدالة بعد تحميل الصفحة
+window.addEventListener('DOMContentLoaded', forceHideSections);
 
-/* تقليل حجم الشريط */
-.navbar {
-  margin-bottom: 0 !important;
-  padding: 0.5rem 1rem !important;
+// مراقبة التغييرات في DOM (لأن الكود قد يعيد إضافة الأقسام بعد تسجيل الدخول)
+const observer = new MutationObserver(() => forceHideSections());
+observer.observe(document.body, { childList: true, subtree: true });
+
+// إذا كانت دالة googleLogin موجودة، نضيف استدعاء forceHideSections داخلها أيضاً
+if (typeof googleLogin === 'function') {
+  const originalLogin = googleLogin;
+  window.googleLogin = async function(...args) {
+    await originalLogin(...args);
+    setTimeout(forceHideSections, 100);
+  };
 }
 </style>
 </style>
