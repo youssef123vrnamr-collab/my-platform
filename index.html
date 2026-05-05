@@ -1218,26 +1218,13 @@
   <div class="container">
     <div class="hero"><div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div><h2>اكتشف أسرار <span>الكون</span></h2><p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p></div>
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
-    <!-- Dashboard شخصي -->
-<div class="dashboard-container" id="dashboardContainer" style="display: none; background: rgba(26,16,37,0.7); border-radius: 28px; padding: 1.5rem; margin-bottom: 2rem; backdrop-filter: blur(12px);">
-  <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-    <h3><i class="fas fa-chart-line"></i> لوحة التحكم الخاصة بي</h3>
-    <div class="dashboard-stats" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-      <span class="stat-badge" style="background: #6366f1; padding: 0.3rem 0.8rem; border-radius: 30px;"><i class="fas fa-video"></i> <span id="userWatchedVideos">0</span> فيديو شاهدته</span>
-      <span class="stat-badge" style="background: #10b981; padding: 0.3rem 0.8rem; border-radius: 30px;"><i class="fas fa-star"></i> نقاطي: <span id="userPoints">0</span></span>
-      <span class="stat-badge" style="background: #f59e0b;"><i class="fas fa-trophy"></i> الترتيب: #<span id="userRank">-</span></span>
-    </div>
-  </div>
-  <div style="display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1.5rem;">
-    <div style="flex: 1; min-width: 200px;">
-      <h4><i class="fas fa-chart-simple"></i> تقدمي في الكورسات</h4>
-      <div id="coursesProgressList" style="margin-top: 1rem;"></div>
-    </div>
-    <div style="flex: 2;">
-      <h4><i class="fas fa-clock"></i> آخر النشاطات</h4>
-      <div id="recentActivities" style="margin-top: 1rem;"></div>
-    </div>
-  </div>
+    <!-- Dashboard شخصي (مخفي بناءً على طلب المستخدم) -->
+<div id="dashboardContainer" style="display:none">
+  <span id="userWatchedVideos" style="display:none">0</span>
+  <span id="userPoints" style="display:none">0</span>
+  <span id="userRank" style="display:none">-</span>
+  <div id="coursesProgressList" style="display:none"></div>
+  <div id="recentActivities" style="display:none"></div>
 </div>
     <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube"><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
@@ -1822,8 +1809,13 @@ async function isAdminUser(userId) {
         }
       } catch (e) { console.warn("course progress update failed", e); }
       try { if (typeof showToast === "function") showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك"); } catch(_){}
-      // ✅ تحديث الداشبورد بعد تسجيل المشاهدة
-      try { if (!isAdmin && typeof loadUserDashboard === "function") setTimeout(loadUserDashboard, 500); } catch(_){}
+      // ✅ تحديث بيانات تقدم الطالب إذا كان المودال مفتوح
+      try {
+        const progModal = document.getElementById('studentProgressModal');
+        if (progModal && progModal.classList.contains('active') && typeof openStudentProgress === 'function') {
+          setTimeout(openStudentProgress, 600);
+        }
+      } catch(_) {}
       __markingWatched.delete(key);
     } catch (e) {
       console.error("markVideoAsWatched failed:", e);
@@ -1952,14 +1944,7 @@ async function updateAdminUI() {
         }
         if (uploadZone) uploadZone.classList.remove("active");
         if (storageBar) storageBar.style.display = "none";
-        // ✅ إظهار Dashboard للطلاب المسجلين بجوجل
-        const dashboardContainer = document.getElementById("dashboardContainer");
-        if (dashboardContainer && isGoogleUser && currentUserId) {
-            dashboardContainer.style.display = "block";
-            loadUserDashboard();
-        } else if (dashboardContainer) {
-            dashboardContainer.style.display = "none";
-        }
+        // Dashboard مخفي بناءً على طلب المستخدم
     }
     updateGoogleLogoutButtonsVisibility();
     const createCourseBtn = document.getElementById("createCourseBtn");
@@ -2318,68 +2303,9 @@ async function updateAdminUI() {
   let __drawCtx = null, __drawing = false, __drawLastX = 0, __drawLastY = 0;
   let __drawTool = "pen", __drawColor = "#ff4d6d", __drawWidth = 3, __drawHasContent = false;
   function initDrawingBoard() {
-    const canvas = document.getElementById("drawingCanvas");
-    const wrap = document.getElementById("drawingCanvasWrap");
-    if (!canvas || !wrap) return;
-    const sizeCanvas = () => {
-      const rect = wrap.getBoundingClientRect();
-      if (rect.width < 2 || rect.height < 2) return;
-      let prev = null;
-      if (canvas.width > 0 && canvas.height > 0) {
-        prev = document.createElement("canvas");
-        prev.width = canvas.width; prev.height = canvas.height;
-        prev.getContext("2d").drawImage(canvas, 0, 0);
-      }
-      canvas.width = Math.floor(rect.width);
-      canvas.height = Math.floor(rect.height);
-      __drawCtx = canvas.getContext("2d");
-      __drawCtx.lineCap = "round";
-      __drawCtx.lineJoin = "round";
-      __drawCtx.fillStyle = "#fdfdfd";
-      __drawCtx.fillRect(0, 0, canvas.width, canvas.height);
-      if (prev) __drawCtx.drawImage(prev, 0, 0, canvas.width, canvas.height);
-    };
-    sizeCanvas();
-    if (canvas._dbResizeObs) try { canvas._dbResizeObs.disconnect(); } catch(_){}
-    try { canvas._dbResizeObs = new ResizeObserver(sizeCanvas); canvas._dbResizeObs.observe(wrap); } catch(_){}
-    const getPos = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const t = (e.touches && e.touches[0]) ? e.touches[0] : (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : e;
-      const sx = canvas.width / rect.width;
-      const sy = canvas.height / rect.height;
-      return { x: (t.clientX - rect.left) * sx, y: (t.clientY - rect.top) * sy };
-    };
-    const start = (e) => {
-      e.preventDefault();
-      __drawing = true;
-      const p = getPos(e);
-      __drawLastX = p.x; __drawLastY = p.y;
-      const hint = document.getElementById("drawingEmptyHint");
-      if (hint) hint.classList.add("hidden");
-      __drawHasContent = true;
-    };
-    const move = (e) => {
-      if (!__drawing || !__drawCtx) return;
-      e.preventDefault();
-      const p = getPos(e);
-      if (__drawTool === "eraser") {
-        __drawCtx.strokeStyle = "#fdfdfd";
-        __drawCtx.lineWidth = Math.max(__drawWidth * 4, 12);
-      } else {
-        __drawCtx.strokeStyle = __drawColor;
-        __drawCtx.lineWidth = __drawWidth;
-      }
-      __drawCtx.beginPath();
-      __drawCtx.moveTo(__drawLastX, __drawLastY);
-      __drawCtx.lineTo(p.x, p.y);
-      __drawCtx.stroke();
-      __drawLastX = p.x; __drawLastY = p.y;
-    };
-    const end = () => { __drawing = false; };
-    canvas.onmousedown = start; canvas.onmousemove = move;
-    canvas.onmouseup = end; canvas.onmouseleave = end;
-    canvas.ontouchstart = start; canvas.ontouchmove = move;
-    canvas.ontouchend = end; canvas.ontouchcancel = end;
+    // ✅ تم الاستبدال بـ initEnhancedDrawing في السكريبت المحسّن
+    // هذه الدالة أصبحت فارغة لتجنب التعارض
+    return;
   }
   function setDrawTool(t) {
     __drawTool = t;
@@ -3462,8 +3388,7 @@ async function updateAdminUI() {
   function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
 
   function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI();
-          // ✅ عرض الداشبورد للطالب المسجل بجوجل
-          if (!isAdmin) { setTimeout(async () => { const dash = document.getElementById("dashboardContainer"); if (dash) { dash.style.display = "block"; if (typeof loadUserDashboard === "function") await loadUserDashboard(); } }, 1000); }
+
         } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
@@ -5499,16 +5424,18 @@ window.playChatSound = function() {
      =================================================== -->
 <script>
 // ============================
-// 1. DRAWING BOARD - ENHANCED
+// 1. DRAWING BOARD - ENHANCED (FIXED)
 // ============================
 (function() {
   let drawState = { tool: 'pen', color: '#ff4d6d', fill: null, width: 3, opacity: 1 };
   let drawHistory = [], drawRedo = [];
   let isDrawing = false, startX, startY, snapshot;
+  let currentPath = [];
 
   function getCanvas() { return document.getElementById('drawingCanvas'); }
   function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
 
+  // ===== ضبط الأداة =====
   window.setDrawTool = function(tool) {
     drawState.tool = tool;
     document.querySelectorAll('.drawing-toolbar .db-btn[data-tool]').forEach(b => b.classList.remove('active'));
@@ -5516,8 +5443,8 @@ window.playChatSound = function() {
     if (btn) btn.classList.add('active');
     const canvas = getCanvas();
     if (canvas) {
-      canvas.style.cursor = tool === 'eraser' ? 'cell' : 
-                            tool === 'text' || tool === 'textbox' ? 'text' : 'crosshair';
+      canvas.style.cursor = tool === 'eraser' ? 'cell' :
+                            (tool === 'text' || tool === 'textbox') ? 'text' : 'crosshair';
     }
   };
 
@@ -5526,175 +5453,247 @@ window.playChatSound = function() {
     const sw = document.getElementById('drawColorSwatch');
     if (sw) sw.style.background = v;
   };
-
   window.setDrawFill = function(v) {
     drawState.fill = v;
     const sw = document.getElementById('drawFillSwatch');
     if (sw) sw.style.background = v;
   };
+  window.setDrawWidth = function(v) { drawState.width = parseInt(v) || 3; };
+  window.setDrawOpacity = function(v) { drawState.opacity = parseFloat(v) || 1; };
 
-  window.setDrawWidth = function(v) { drawState.width = parseInt(v); };
-  window.setDrawOpacity = function(v) { drawState.opacity = parseFloat(v); };
-
+  // ===== Undo / Redo =====
   window.undoDraw = function() {
     const ctx = getCtx(), canvas = getCanvas();
-    if (!ctx || drawHistory.length === 0) return;
+    if (!ctx || drawHistory.length === 0) { if (typeof showToast==='function') showToast('⚠️ لا يوجد شيء للتراجع عنه'); return; }
     drawRedo.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    const prev = drawHistory.pop();
-    ctx.putImageData(prev, 0, 0);
+    ctx.putImageData(drawHistory.pop(), 0, 0);
   };
-
   window.redoDraw = function() {
     const ctx = getCtx(), canvas = getCanvas();
-    if (!ctx || drawRedo.length === 0) return;
+    if (!ctx || drawRedo.length === 0) { if (typeof showToast==='function') showToast('⚠️ لا يوجد شيء للإعادة'); return; }
     drawHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    const next = drawRedo.pop();
-    ctx.putImageData(next, 0, 0);
+    ctx.putImageData(drawRedo.pop(), 0, 0);
   };
 
+  // ===== حفظ كصورة (يعمل على موبايل) =====
   window.saveDrawingAsImage = function() {
     const canvas = getCanvas(); if (!canvas) return;
-    const link = document.createElement('a');
-    link.download = 'astronomy-notes-' + Date.now() + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    try {
+      // طريقة 1: link download
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'astronomy-drawing-' + Date.now() + '.png';
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (typeof showToast==='function') showToast('✅ تم تحميل الرسم');
+    } catch(e) {
+      if (typeof showToast==='function') showToast('⚠️ افتح الصورة في تبويب جديد للحفظ');
+      try { window.open(canvas.toDataURL('image/png'), '_blank'); } catch(_) {}
+    }
   };
 
+  // ===== نسخ للـ Clipboard =====
   window.copyDrawingToClipboard = async function() {
     const canvas = getCanvas(); if (!canvas) return;
+    // طريقة 1: Clipboard API الحديثة
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        await new Promise((resolve, reject) => {
+          canvas.toBlob(async (blob) => {
+            try {
+              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+              if (typeof showToast==='function') showToast('✅ تم نسخ الرسم للحافظة');
+              resolve();
+            } catch(e) { reject(e); }
+          }, 'image/png');
+        });
+        return;
+      } catch(e) { /* fallback */ }
+    }
+    // طريقة 2: فتح في تبويب جديد (موبايل)
     try {
-      canvas.toBlob(async (blob) => {
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        if (typeof showToast === 'function') showToast('✅ تم نسخ الرسم');
-      });
-    } catch(e) { if (typeof showToast === 'function') showToast('⚠️ لم يتم النسخ'); }
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.write('<img src="' + canvas.toDataURL() + '" style="max-width:100%">');
+        win.document.title = 'Astronomy Drawing';
+        if (typeof showToast==='function') showToast('📋 افتح الصورة في التبويب الجديد واحفظها');
+      }
+    } catch(e) {
+      if (typeof showToast==='function') showToast('⚠️ يرجى استخدام زر التحميل');
+    }
   };
 
-  // Enhanced drawing with shapes support
+  // ===== مسح الكل =====
+  window.clearDrawing = function() {
+    const ctx = getCtx(), canvas = getCanvas();
+    if (!ctx) return;
+    // حفظ في التاريخ قبل المسح
+    drawHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    if (drawHistory.length > 50) drawHistory.shift();
+    drawRedo = [];
+    ctx.fillStyle = '#fdfdfd';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const hint = document.getElementById('drawingEmptyHint');
+    if (hint) hint.classList.remove('hidden');
+  };
+
+  // ===== التهيئة الرئيسية =====
   function initEnhancedDrawing() {
     const canvas = getCanvas(); if (!canvas) return;
-    const ctx = getCtx();
+    // إزالة listeners قديمة باستخدام clone
+    const newCanvas = canvas.cloneNode(true);
+    canvas.parentNode.replaceChild(newCanvas, canvas);
+    const c = newCanvas;
+    const ctx = c.getContext('2d');
+
+    // ضبط حجم الـ canvas
+    function resizeCanvas() {
+      const wrap = document.getElementById('drawingCanvasWrap');
+      if (!wrap) return;
+      const rect = wrap.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) return;
+      // حفظ المحتوى الحالي
+      let saved = null;
+      if (c.width > 0 && c.height > 0) {
+        try { saved = ctx.getImageData(0, 0, c.width, c.height); } catch(_) {}
+      }
+      c.width = Math.floor(rect.width);
+      c.height = Math.floor(rect.height);
+      ctx.fillStyle = '#fdfdfd';
+      ctx.fillRect(0, 0, c.width, c.height);
+      if (saved) { try { ctx.putImageData(saved, 0, 0); } catch(_) {} }
+    }
+    resizeCanvas();
+    try {
+      const ro = new ResizeObserver(resizeCanvas);
+      ro.observe(document.getElementById('drawingCanvasWrap'));
+    } catch(_) {}
 
     function saveSnapshot() {
-      drawHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+      drawHistory.push(ctx.getImageData(0, 0, c.width, c.height));
       if (drawHistory.length > 50) drawHistory.shift();
       drawRedo = [];
     }
 
     function getPos(e) {
-      const r = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / r.width;
-      const scaleY = canvas.height / r.height;
-      const src = e.touches ? e.touches[0] : e;
-      return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+      const r = c.getBoundingClientRect();
+      const sx = c.width / r.width;
+      const sy = c.height / r.height;
+      const src = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
     }
 
-    function drawShape(ctx, tool, x0, y0, x1, y1) {
+    function applyCtxStyle() {
+      ctx.globalAlpha = drawState.opacity;
+      ctx.strokeStyle = drawState.color;
+      ctx.lineWidth = drawState.tool === 'brush' ? drawState.width * 3 :
+                      drawState.tool === 'marker' ? drawState.width * 2 :
+                      drawState.tool === 'eraser' ? drawState.width * 4 : drawState.width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (drawState.tool === 'marker') ctx.globalAlpha = Math.min(drawState.opacity * 0.55, 0.55);
+      if (drawState.tool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+
+    function drawShapePreview(tool, x0, y0, x1, y1) {
       ctx.beginPath();
       const w = x1 - x0, h = y1 - y0;
-      if (tool === 'line') { ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); }
-      else if (tool === 'rect') { ctx.rect(x0, y0, w, h); }
-      else if (tool === 'circle') { 
-        const r = Math.sqrt(w*w + h*h) / 2;
-        ctx.arc(x0 + w/2, y0 + h/2, r, 0, Math.PI * 2); 
-      }
-      else if (tool === 'arrow') {
-        const ang = Math.atan2(h, w);
-        const len = Math.sqrt(w*w + h*h);
+      if (tool === 'line') {
         ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
-        const aLen = Math.min(len * 0.3, 25);
+      } else if (tool === 'rect') {
+        ctx.rect(x0, y0, w, h);
+      } else if (tool === 'circle') {
+        const r = Math.sqrt(w * w + h * h) / 2;
+        ctx.arc(x0 + w / 2, y0 + h / 2, r, 0, Math.PI * 2);
+      } else if (tool === 'arrow') {
+        const ang = Math.atan2(h, w);
+        const len = Math.sqrt(w * w + h * h);
+        ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+        const aLen = Math.min(len * 0.3, 30);
         ctx.lineTo(x1 - aLen * Math.cos(ang - 0.4), y1 - aLen * Math.sin(ang - 0.4));
         ctx.moveTo(x1, y1);
         ctx.lineTo(x1 - aLen * Math.cos(ang + 0.4), y1 - aLen * Math.sin(ang + 0.4));
-      }
-      else if (tool === 'triangle') {
-        ctx.moveTo(x0 + w/2, y0); ctx.lineTo(x1, y1); ctx.lineTo(x0, y1); ctx.closePath();
+      } else if (tool === 'triangle') {
+        ctx.moveTo(x0 + w / 2, y0); ctx.lineTo(x1, y1); ctx.lineTo(x0, y1); ctx.closePath();
       }
     }
 
     function startDraw(e) {
       e.preventDefault();
-      isDrawing = true;
       const pos = getPos(e);
       startX = pos.x; startY = pos.y;
-      saveSnapshot();
-      snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      ctx.globalAlpha = drawState.opacity;
-      ctx.strokeStyle = drawState.color;
-      ctx.fillStyle = drawState.fill || 'transparent';
-      ctx.lineWidth = drawState.width;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
+      // أداة النص
       if (drawState.tool === 'text' || drawState.tool === 'textbox') {
-        // ✅ إدخال النص مباشرة على السبورة بدون prompt مزعج
         const existing = document.getElementById('__drawTextInput');
         if (existing) existing.remove();
+        const wrap = document.getElementById('drawingCanvasWrap');
         const inp = document.createElement('input');
         inp.id = '__drawTextInput';
         inp.type = 'text';
-        inp.placeholder = 'اكتب النص ثم اضغط Enter';
-        const canvasRect = canvas.getBoundingClientRect();
-        const xPx = (startX / (canvas.width / canvasRect.width)) + canvasRect.left;
-        const yPx = (startY / (canvas.height / canvasRect.height)) + canvasRect.top + window.scrollY;
+        inp.placeholder = 'اكتب ثم Enter أو Esc للإلغاء';
+        const wrapRect = wrap ? wrap.getBoundingClientRect() : c.getBoundingClientRect();
+        const xPx = startX / (c.width / wrapRect.width);
+        const yPx = startY / (c.height / wrapRect.height) - 20;
         Object.assign(inp.style, {
-          position: 'fixed',
-          left: Math.min(xPx, window.innerWidth - 200) + 'px',
-          top: (yPx - canvasRect.top + document.getElementById('drawingCanvasWrap').getBoundingClientRect().top) + 'px',
+          position: 'absolute',
+          left: Math.min(xPx, wrapRect.width - 180) + 'px',
+          top: Math.max(0, yPx) + 'px',
           zIndex: '9999',
-          background: 'rgba(15,10,26,.95)',
+          background: 'rgba(15,10,26,.97)',
           border: '2px solid ' + drawState.color,
           borderRadius: '8px',
           color: drawState.color,
           fontFamily: 'Cairo, sans-serif',
-          fontSize: (drawState.width * 5 + 10) + 'px',
+          fontSize: Math.max(12, drawState.width * 4 + 10) + 'px',
           padding: '4px 10px',
-          minWidth: '140px',
+          minWidth: '150px',
+          maxWidth: (wrapRect.width - xPx - 10) + 'px',
           outline: 'none',
           direction: 'rtl',
-          boxShadow: '0 4px 20px rgba(0,0,0,.5)'
+          boxShadow: '0 4px 20px rgba(0,0,0,.6)'
         });
-        // ضع الـ input داخل wrapper السبورة مش الـ body
-        const wrap = document.getElementById('drawingCanvasWrap');
-        if (wrap) {
-          inp.style.position = 'absolute';
-          const wrapRect = wrap.getBoundingClientRect();
-          inp.style.left = Math.min(startX / (canvas.width / wrapRect.width), wrapRect.width - 160) + 'px';
-          inp.style.top = (startY / (canvas.height / wrapRect.height) - 18) + 'px';
-          wrap.style.position = 'relative';
-          wrap.appendChild(inp);
-        } else {
-          document.body.appendChild(inp);
-        }
-        inp.focus();
-        const commitText = () => {
+        if (wrap) { wrap.style.position = 'relative'; wrap.appendChild(inp); }
+        else document.body.appendChild(inp);
+        requestAnimationFrame(() => inp.focus());
+        const commit = () => {
           const txt = inp.value.trim();
-          if (txt) {
-            ctx.font = `bold ${drawState.width * 5 + 10}px Cairo`;
-            ctx.fillStyle = drawState.color;
-            ctx.globalAlpha = drawState.opacity;
-            ctx.fillText(txt, startX, startY);
-            ctx.globalAlpha = 1;
-            saveSnapshot();
-            const hint = document.getElementById('drawingEmptyHint');
-            if (hint) hint.classList.add('hidden');
-          }
           inp.remove();
+          if (!txt) return;
+          saveSnapshot();
+          ctx.globalAlpha = drawState.opacity;
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.font = `bold ${Math.max(12, drawState.width * 4 + 10)}px Cairo`;
+          ctx.fillStyle = drawState.color;
+          ctx.fillText(txt, startX, startY);
+          ctx.globalAlpha = 1;
+          const hint = document.getElementById('drawingEmptyHint');
+          if (hint) hint.classList.add('hidden');
         };
-        inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); commitText(); } if (ev.key === 'Escape') inp.remove(); });
-        inp.addEventListener('blur', commitText);
-        isDrawing = false;
+        inp.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+          else if (ev.key === 'Escape') inp.remove();
+        });
+        inp.addEventListener('blur', commit);
         return;
       }
 
-      if (drawState.tool === 'pen' || drawState.tool === 'marker' || drawState.tool === 'brush') {
+      saveSnapshot();
+      snapshot = ctx.getImageData(0, 0, c.width, c.height);
+      isDrawing = true;
+
+      if (['pen','brush','marker','eraser'].includes(drawState.tool)) {
+        applyCtxStyle();
         ctx.beginPath();
         ctx.moveTo(startX, startY);
-        if (drawState.tool === 'marker') ctx.globalAlpha = 0.5;
-        if (drawState.tool === 'brush') ctx.lineWidth = drawState.width * 3;
       }
-
       const hint = document.getElementById('drawingEmptyHint');
       if (hint) hint.classList.add('hidden');
     }
@@ -5703,32 +5702,23 @@ window.playChatSound = function() {
       if (!isDrawing) return;
       e.preventDefault();
       const pos = getPos(e);
-      const ctx = getCtx();
-      const tool = drawState.tool;
 
-      ctx.globalAlpha = drawState.opacity;
-      ctx.strokeStyle = drawState.color;
-      ctx.lineWidth = drawState.width;
-      ctx.lineCap = 'round';
-
-      if (tool === 'pen' || tool === 'marker' || tool === 'brush') {
-        if (tool === 'marker') ctx.globalAlpha = 0.5;
-        if (tool === 'brush') ctx.lineWidth = drawState.width * 3;
+      if (['pen','brush','marker','eraser'].includes(drawState.tool)) {
+        applyCtxStyle();
         ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
-      } else if (tool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = drawState.width * 3;
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
-        ctx.globalCompositeOperation = 'source-over';
       } else {
+        // أشكال: رسم preview
         ctx.putImageData(snapshot, 0, 0);
-        drawShape(ctx, tool, startX, startY, pos.x, pos.y);
+        applyCtxStyle();
+        ctx.globalCompositeOperation = 'source-over';
+        drawShapePreview(drawState.tool, startX, startY, pos.x, pos.y);
         ctx.stroke();
-        if (drawState.fill && tool !== 'line' && tool !== 'arrow') {
+        if (drawState.fill && drawState.fill !== '#00000000' && drawState.tool !== 'line' && drawState.tool !== 'arrow') {
           ctx.fillStyle = drawState.fill;
+          ctx.globalAlpha = drawState.opacity * 0.5;
           ctx.fill();
+          ctx.globalAlpha = drawState.opacity;
         }
       }
     }
@@ -5736,35 +5726,35 @@ window.playChatSound = function() {
     function endDraw(e) {
       if (!isDrawing) return;
       isDrawing = false;
-      const ctx = getCtx();
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', doDraw);
-    canvas.addEventListener('mouseup', endDraw);
-    canvas.addEventListener('touchstart', startDraw, { passive: false });
-    canvas.addEventListener('touchmove', doDraw, { passive: false });
-    canvas.addEventListener('touchend', endDraw);
+    c.addEventListener('mousedown', startDraw);
+    c.addEventListener('mousemove', doDraw);
+    c.addEventListener('mouseup', endDraw);
+    c.addEventListener('mouseleave', endDraw);
+    c.addEventListener('touchstart', startDraw, { passive: false });
+    c.addEventListener('touchmove', doDraw, { passive: false });
+    c.addEventListener('touchend', endDraw);
+    c.addEventListener('touchcancel', endDraw);
   }
 
-  // Re-init when drawing board opens
-  const origSetDrawTool = window.setDrawTool;
+  // تهيئة عند فتح مودال الفيديو
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initEnhancedDrawing, 500);
+    setTimeout(initEnhancedDrawing, 600);
   });
 
-  // Watch for video modal open
-  const observer = new MutationObserver((muts) => {
-    muts.forEach(m => {
-      if (m.target.id === 'videoModal' && m.target.classList.contains('active')) {
-        setTimeout(initEnhancedDrawing, 300);
-      }
-    });
-  });
   const vm = document.getElementById('videoModal');
-  if (vm) observer.observe(vm, { attributes: true, attributeFilter: ['class'] });
+  if (vm) {
+    new MutationObserver((muts) => {
+      muts.forEach(m => {
+        if (m.target.id === 'videoModal' && m.target.classList.contains('active')) {
+          setTimeout(initEnhancedDrawing, 350);
+        }
+      });
+    }).observe(vm, { attributes: true, attributeFilter: ['class'] });
+  }
 })();
 
 // ============================
