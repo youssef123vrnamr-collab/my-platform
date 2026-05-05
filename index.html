@@ -2431,7 +2431,7 @@ async function updateAdminUI() {
           return { isAdmin:true, isSuperAdmin: role === "super_admin", email: email || uid };
         }
       }
-      // Fallback: scan all admin_accounts for matching email variations
+      // Fallback: scan all admin_accounts for matching email (handles random-ID docs)
       if (email) {
         const allSnap = await db.collection(ADMIN_ACCOUNTS_COL).get();
         console.log("🔍 Scanning all admin_accounts:", allSnap.docs.map(d => d.id));
@@ -2440,6 +2440,25 @@ async function updateAdminUI() {
           if (storedEmail === email) {
             const role = (doc.data() || {}).role || "admin";
             console.log("✅ Found via scan:", storedEmail, "role:", role);
+            // ✅ إصلاح تلقائي: إذا كان المستند بمعرف عشوائي، أنشئ واحداً بالبريد كمفتاح وأزل القديم
+            if (doc.id !== email) {
+              console.log("🔧 Auto-fix: إنشاء مستند بالبريد ومسح المعرف العشوائي:", doc.id);
+              try {
+                await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({
+                  email, uid: uid || doc.data().uid || "", role,
+                  addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: "auto_fix"
+                });
+                await doc.ref.delete();
+                // تحديث admin_accounts_uid أيضاً
+                if (uid) {
+                  await db.collection("admin_accounts_uid").doc(uid).set({
+                    uid, email, role,
+                    addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: "auto_fix"
+                  });
+                }
+                console.log("✅ Auto-fix اكتمل بنجاح");
+              } catch(fixErr) { console.warn("Auto-fix failed:", fixErr); }
+            }
             return { isAdmin:true, isSuperAdmin: role === "super_admin", email };
           }
         }
@@ -2456,6 +2475,33 @@ async function updateAdminUI() {
     try { updateGoogleLogoutButtonsVisibility(); } catch(_){}
     return info;
   }
+
+  // ✅ دالة إصلاح صلاحيات المشرف الرئيسي — تُستدعى تلقائياً أو من Console
+  window.fixSuperAdminDocs = async function() {
+    const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
+    if (!au) { alert("الرجاء تسجيل الدخول بـ Google أولاً"); return; }
+    const email = _normEmail(au.email);
+    const uid = au.uid;
+    try {
+      const allDocs = await db.collection(ADMIN_ACCOUNTS_COL).get();
+      for (const doc of allDocs.docs) {
+        if (doc.id !== email) { await doc.ref.delete(); console.log("deleted old doc:", doc.id); }
+      }
+      await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({
+        email, uid, role: "super_admin",
+        addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: "fix_auto"
+      });
+      await db.collection("admin_accounts_uid").doc(uid).set({
+        uid, email, role: "super_admin",
+        addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: "fix_auto"
+      });
+      isAdmin = true; isSuperAdmin = true;
+      localStorage.setItem("falak_admin","true");
+      try { updateAdminUI(); renderVideos(); } catch(_){}
+      console.log("fixSuperAdminDocs: done");
+      showToast("تم إصلاح الصلاحيات. أعِد التحميل إذا لزم.");
+    } catch(e) { console.error("fixSuperAdminDocs failed:", e); showToast("فشل الإصلاح: " + (e.message||e)); }
+  };
   async function adminAccountsCount(){
     try { const s = await db.collection(ADMIN_ACCOUNTS_COL).limit(1).get(); return s.size; } catch(e){ return -1; }
   }
@@ -2514,11 +2560,52 @@ async function updateAdminUI() {
     const email = _normEmail(au && au.email);
     if (!uid) { SoundEffects.error(); showToast("❌ سجّل الدخول بحساب Google أولاً"); return; }
     try {
-      const cnt = await adminAccountsCount();
-      const uidSnap = await db.collection("admin_accounts_uid").limit(1).get();
-      if (cnt !== 0 || !uidSnap.empty) { showToast("⚠️ يوجد مشرف مسجَّل بالفعل"); showLogin(); return; }
+      // ✅ تنظيف: حذف أي مستندات قديمة بمعرف عشوائي في admin_accounts
+      try {
+        const allOld = await db.collection(ADMIN_ACCOUNTS_COL).get();
+        for (const doc of allOld.docs) {
+          // احذف أي مستند ليس مفتاحه البريد الإلكتروني الصحيح
+          if (email && doc.id !== email) {
+            await doc.ref.delete();
+            console.log("🗑️ حُذف مستند قديم:", doc.id);
+          }
+        }
+        // حذف أي مستندات uid قديمة أيضاً
+        const allUid = await db.collection("admin_accounts_uid").get();
+        for (const doc of allUid.docs) {
+          if (doc.id !== uid) {
+            await doc.ref.delete();
+            console.log("🗑️ حُذف uid قديم:", doc.id);
+          }
+        }
+      } catch(cleanErr) { console.warn("تنظيف المستندات القديمة:", cleanErr); }
 
-      // تسجيل بالـ UID أولاً
+      const cnt = await adminAccountsCount();
+      const uidSnap = await db.collection("admin_accounts_uid").doc(uid).get();
+      if (cnt !== 0 || uidSnap.exists) {
+        // إذا وُجد مستند بالبريد الصحيح أو بالـ UID — أكمل كمشرف
+        const info = await fetchMyAdminInfo();
+        if (info.isAdmin) {
+          isAdmin = true; isSuperAdmin = !!info.isSuperAdmin;
+          localStorage.setItem("falak_admin","true");
+          closeLogin();
+          try { updateAdminUI(); renderVideos(); loadAIKnowledgeFromFirebase(); } catch(_){}
+          SoundEffects.success(); showToast("✅ تم التعرف عليك كمشرف رئيسي");
+          updateGoogleLogoutButtonsVisibility(); return;
+        }
+        showToast("⚠️ يوجد مشرف مسجَّل بالفعل"); showLogin(); return;
+      }
+
+      // تسجيل بالبريد الإلكتروني كمفتاح (ID) أولاً — هذا هو الأساس
+      if (email) {
+        await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({
+          email: email, uid: uid, role: "super_admin",
+          addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          addedBy: "bootstrap"
+        });
+      }
+
+      // تسجيل بالـ UID أيضاً كطبقة ثانية
       await db.collection("admin_accounts_uid").doc(uid).set({
         uid: uid,
         email: email || "",
@@ -2527,30 +2614,19 @@ async function updateAdminUI() {
         addedBy: "bootstrap"
       });
 
-      // تسجيل بالإيميل أيضاً لو توفّر
-      if (email) {
-        try {
-          await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({
-            email: email, uid: uid, role: "super_admin",
-            addedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            addedBy: "bootstrap"
-          });
-        } catch(_) { /* الإيميل اختياري */ }
-      }
-
       isAdmin = true; isSuperAdmin = true;
       localStorage.setItem("falak_admin","true");
       closeLogin();
       try { updateAdminUI(); renderVideos(); loadAIKnowledgeFromFirebase(); } catch(_){}
       SoundEffects.success();
-      showToast("🎉 تم تسجيلك كمشرف رئيسي عبر الـ UID");
+      showToast("🎉 تم تسجيلك كمشرف رئيسي بنجاح");
       updateGoogleLogoutButtonsVisibility();
     } catch(e){
       console.error("bootstrap admin failed", e);
       let msg = "❌ فشل التسجيل";
       const code = (e && (e.code || e.message)) || "";
       if (/permission|denied|insufficient/i.test(code)) {
-        msg = "❌ صلاحيات Firestore لا تسمح. تأكد من Rules الـ admin_accounts_uid.";
+        msg = "❌ صلاحيات Firestore لا تسمح. تأكد من Rules الـ admin_accounts و admin_accounts_uid.";
       }
       SoundEffects.error();
       showToast(msg);
