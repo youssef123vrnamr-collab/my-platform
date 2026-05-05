@@ -5401,66 +5401,95 @@ window.playChatSound = function() {
 // ============================
 (function() {
   let aiIsMuted = false;
-  let currentAISpeech = null;
+  // المتغير ده بيتتبع النص اللي بيتقرأ دلوقتي
+  let _currentSpeakingBtn = null;
 
+  function stopAllSpeech() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (_currentSpeakingBtn) {
+      _currentSpeakingBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      _currentSpeakingBtn.classList.remove('muted');
+      _currentSpeakingBtn = null;
+    }
+  }
+
+  // زرار الكتم/التشغيل العام في الـ header
   window.toggleAIMute = function() {
     aiIsMuted = !aiIsMuted;
     const btn = document.getElementById('aiGlobalMuteBtn');
     if (btn) {
-      btn.innerHTML = aiIsMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
-      btn.style.color = aiIsMuted ? '#ef4444' : '';
+      btn.innerHTML = aiIsMuted
+        ? '<i class="fas fa-volume-mute"></i>'
+        : '<i class="fas fa-volume-up"></i>';
+      btn.style.color = aiIsMuted ? '#ef4444' : '#10b981';
       btn.title = aiIsMuted ? 'تشغيل الصوت' : 'كتم الصوت';
     }
-    if (window.speechSynthesis) {
-      if (aiIsMuted) {
-        // إيقاف القراءة فوراً
-        window.speechSynthesis.pause();
-        window.speechSynthesis.cancel();
-      } else {
-        // لو كان في نص بيتقرأ، أكمله
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-        }
-      }
+    if (aiIsMuted) {
+      stopAllSpeech();
+      showToast('🔇 تم كتم الصوت');
+    } else {
+      showToast('🔊 تم تشغيل الصوت');
     }
-    showToast(aiIsMuted ? '🔇 تم إيقاف الصوت' : '🔊 تم تشغيل الصوت');
   };
 
-  // Add mute button to each AI message
+  // زرار الصوت على كل رسالة من الـ AI
   window.addAIMuteButton = function(msgEl, text) {
     if (!text || !text.trim()) return;
     const btn = document.createElement('button');
     btn.className = 'ai-msg-mute-btn';
-    btn.title = 'تشغيل / إيقاف هذا الرد';
+    btn.title = 'اقرأ الرسالة';
     btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-    let speaking = false;
+
     btn.onclick = function(e) {
       e.stopPropagation();
-      if (speaking) {
-        // إيقاف القراءة
-        window.speechSynthesis && window.speechSynthesis.cancel();
-        speaking = false;
-        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        btn.classList.remove('muted');
-      } else {
-        // إيقاف أي قراءة حالية وابدأ هذه
-        window.speechSynthesis && window.speechSynthesis.cancel();
-        if (aiIsMuted) {
-          showToast('🔇 الصوت مكتوم، اضغط زر الصوت في الأعلى لتشغيله');
-          return;
-        }
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.lang = 'ar-SA'; utt.rate = 0.9;
-        utt.onend = () => { speaking = false; btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.classList.remove('muted'); };
-        utt.onpause = () => { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; };
-        utt.onresume = () => { btn.innerHTML = '<i class="fas fa-volume-xmark"></i>'; };
-        currentAISpeech = utt;
-        window.speechSynthesis.speak(utt);
-        speaking = true;
+
+      // لو الصوت مكتوم عالمياً
+      if (aiIsMuted) {
+        showToast('🔇 الصوت مكتوم — اضغط زرار الصوت في الأعلى لتشغيله');
+        return;
+      }
+
+      const synth = window.speechSynthesis;
+      if (!synth) { showToast('⚠️ الصوت غير مدعوم في هذا المتصفح'); return; }
+
+      // لو الزرار ده نفسه بيقرأ → وقّف
+      if (_currentSpeakingBtn === btn) {
+        stopAllSpeech();
+        return;
+      }
+
+      // وقّف أي قراءة تانية
+      stopAllSpeech();
+
+      // ابدأ القراءة
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'ar-SA';
+      utt.rate = 0.9;
+      utt.pitch = 1;
+
+      utt.onstart = function() {
         btn.innerHTML = '<i class="fas fa-stop"></i>';
         btn.classList.add('muted');
-      }
+        btn.title = 'إيقاف القراءة';
+        _currentSpeakingBtn = btn;
+      };
+
+      utt.onend = function() {
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        btn.classList.remove('muted');
+        btn.title = 'اقرأ الرسالة';
+        if (_currentSpeakingBtn === btn) _currentSpeakingBtn = null;
+      };
+
+      utt.onerror = function() {
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        btn.classList.remove('muted');
+        if (_currentSpeakingBtn === btn) _currentSpeakingBtn = null;
+      };
+
+      synth.speak(utt);
     };
+
     msgEl.style.position = 'relative';
     msgEl.appendChild(btn);
   };
