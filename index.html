@@ -3020,7 +3020,22 @@ async function updateAdminUI() {
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
-  function openChat() { if (checkUserName()) { document.getElementById("chatModal").classList.add("active"); document.getElementById("chatBadge").style.display = "none"; unreadMessages = 0; loadMessages(); scrollToBottom(); initPresenceSystem(); } else { document.getElementById("nameModal").classList.add("active"); document.getElementById("userNameInput").value = currentUser || ""; document.getElementById("userPhoneInput").value = currentUserPhone || ""; document.getElementById("userNameInput").focus(); } }
+  function openChat() {
+  // التأكد من وجود مستخدم مسجل الدخول بحساب Google
+  if (googleUser && currentUserId) {
+    document.getElementById("chatModal").classList.add("active");
+    document.getElementById("chatBadge").style.display = "none";
+    unreadMessages = 0;
+    loadMessages();
+    scrollToBottom();
+    initPresenceSystem();
+  } else {
+    // إذا مش مسجل، نطلب تسجيل الدخول ب Google
+    showToast("❌ يجب تسجيل الدخول بحساب Google أولاً للمشاركة في الدردشة");
+    // نفتح نافذة تسجيل الدخول تلقائياً (اختياري)
+    googleLogin();
+  }
+}
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
   async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   loadUserDashboard();
@@ -3033,14 +3048,14 @@ async function updateAdminUI() {
   let inp = document.getElementById("messageInput");
   if (!inp) return;
   let text = inp.value.trim();
-  if (!text || !currentUser) return;
+  if (!text || !googleUser) return;
   db.collection("messages").add({
     type: "text",
     text: text,
-    sender: currentUser,
-    senderPhone: currentUserPhone,
-    userId: currentUserId,          // <-- أضف هذا
-    senderId: currentUserId,        // <-- أضف هذا (احتياطي)
+    sender: googleUser.displayName,
+    senderPhone: googleUser.email || googleUser.phoneNumber || "",
+    userId: currentUserId,
+    senderId: currentUserId,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   }).then(() => {
     SoundEffects.send();
@@ -3053,7 +3068,7 @@ async function updateAdminUI() {
   function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
   function sendImage(input) {
   let file = input.files[0];
-  if (!file || !currentUser) return;
+  if (!file || !googleUser) return;
   if (file.size > 5 * 1024 * 1024) {
     SoundEffects.error();
     showToast("الصورة كبيرة (الحد 5 ميجا)");
@@ -3071,10 +3086,10 @@ async function updateAdminUI() {
     db.collection("messages").add({
       type: "image",
       imageUrl: d.secure_url,
-      sender: currentUser,
-      senderPhone: currentUserPhone,
-      userId: currentUserId,        // <-- أضف هذا
-      senderId: currentUserId,      // <-- أضف هذا
+      sender: googleUser.displayName,
+      senderPhone: googleUser.email || googleUser.phoneNumber || "",
+      userId: currentUserId,
+      senderId: currentUserId,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
     SoundEffects.send();
@@ -3089,7 +3104,7 @@ async function updateAdminUI() {
   async function startRecording() { if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; } try { let stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = e => e.data.size && audioChunks.push(e.data); mediaRecorder.onstop = () => { uploadVoice(new Blob(audioChunks, { type: "audio/webm" })); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; document.getElementById("recordBtn").classList.add("recording"); document.getElementById("recordingIndicator").classList.add("active"); SoundEffects.recordStart(); let sec = 0; recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000); } catch (e) { showToast("❌ لا يمكن الوصول للميكروفون"); } }
   function stopRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); clearInterval(recordingTimer); isRecording = false; document.getElementById("recordBtn").classList.remove("recording"); document.getElementById("recordingIndicator").classList.remove("active"); document.getElementById("recordingTime").textContent = "0:00"; } }
   async function uploadVoice(blob) {
-  if (!currentUser) {
+  if (!googleUser) {
     showToast("❌ يجب تسجيل الدخول أولاً");
     return;
   }
@@ -3109,10 +3124,10 @@ async function updateAdminUI() {
     await db.collection("messages").add({
       type: "voice",
       audioUrl: data.secure_url,
-      sender: currentUser,
-      senderPhone: currentUserPhone,
-      userId: currentUserId,        // <-- أضف هذا
-      senderId: currentUserId,      // <-- أضف هذا
+      sender: googleUser.displayName,
+      senderPhone: googleUser.email || googleUser.phoneNumber || "",
+      userId: currentUserId,
+      senderId: currentUserId,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
     SoundEffects.send();
