@@ -2787,7 +2787,96 @@ async function updateAdminUI() {
   async function checkIfUserAlreadyActiveGoogle(email, phone) { try { const activeUserQuery = await db.collection("active_sessions").where("email", "==", email).where("active", "==", true).get(); if (!activeUserQuery.empty) { const currentDeviceId = localStorage.getItem("falak_device_id"); if (!currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } const session = activeUserQuery.docs[0].data(); if (session.deviceId !== currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } } return { allowed: true }; } catch (error) { console.error("Error checking active user:", error); return { allowed: true }; } }
   async function registerActiveSessionGoogle(email, name, phone) { try { let deviceId = localStorage.getItem("falak_device_id"); if (!deviceId) { deviceId = "device_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9); localStorage.setItem("falak_device_id", deviceId); } const existingSessions = await db.collection("active_sessions").where("email", "==", email).get(); for (const doc of existingSessions.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } await db.collection("active_sessions").add({ email: email, name: name, phone: phone, deviceId: deviceId, active: true, loginType: "google", userAgent: navigator.userAgent, startedAt: firebase.firestore.FieldValue.serverTimestamp(), lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); startGoogleSessionHeartbeat(email, deviceId); } catch (error) { console.error("Error registering Google session:", error); } }
   function startGoogleSessionHeartbeat(email, deviceId) { if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); } window.googleSessionHeartbeat = setInterval(async () => { try { const sessions = await db.collection("active_sessions").where("email", "==", email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch (error) { console.error("Google heartbeat error:", error); } }, 30000); }
-  async function googleLogin() { try { showToast("⏳ جاري تسجيل الدخول..."); const result = await auth.signInWithPopup(provider); googleUser = result.user; currentUserId = googleUser.uid; let name = googleUser.displayName; let email = googleUser.email; let phone = googleUser.phoneNumber || ""; const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); await auth.signOut(); googleUser = null; currentUserId = null; return; } currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } await registerActiveSessionGoogle(email, currentUser, currentUserPhone); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); SoundEffects.join(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); showToast(`مرحباً بعودتك ${currentUser}! 🚀`); } catch(error) { console.error(error); SoundEffects.error(); showToast("❌ فشل تسجيل الدخول بحساب Google"); } }
+  async function googleLogin() { 
+    try { 
+        showToast("⏳ جاري تسجيل الدخول..."); 
+        const result = await auth.signInWithPopup(provider); 
+        googleUser = result.user; 
+        currentUserId = googleUser.uid; 
+        let name = googleUser.displayName; 
+        let email = googleUser.email; 
+        let phone = googleUser.phoneNumber || ""; 
+        const checkResult = await checkIfUserAlreadyActiveGoogle(email, phone); 
+        if (!checkResult.allowed) { 
+            SoundEffects.error(); 
+            showToast(checkResult.message); 
+            await auth.signOut(); 
+            googleUser = null; 
+            currentUserId = null; 
+            return; 
+        } 
+        currentUser = name; 
+        currentUserPhone = phone || ""; 
+
+        // ✅ التعديل الجديد: التحقق من أول مشرف وتعيين صلاحيات Super Admin تلقائياً
+        const adminSnap = await db.collection("admin_accounts").limit(1).get();
+        if (adminSnap.empty) {
+            // أول مستخدم في النظام يصبح Super Admin
+            await db.collection("admin_accounts").doc(email).set({
+                email: email,
+                role: "super_admin",
+                addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                addedBy: "auto_first_user"
+            });
+            console.log("✅ تم تعيين أول مستخدم كمشرف رئيسي:", email);
+            isSuperAdmin = true;
+            isAdmin = true;
+            localStorage.setItem("falak_admin", "true");
+        } else {
+            // التحقق من دور المستخدم الحالي
+            const myDoc = await db.collection("admin_accounts").doc(email).get();
+            if (myDoc.exists && myDoc.data().role === "super_admin") {
+                isSuperAdmin = true;
+                isAdmin = true;
+                localStorage.setItem("falak_admin", "true");
+            } else if (myDoc.exists) {
+                isAdmin = true;
+                isSuperAdmin = false;
+                localStorage.setItem("falak_admin", "true");
+            } else {
+                isAdmin = false;
+                isSuperAdmin = false;
+                localStorage.removeItem("falak_admin");
+            }
+        }
+
+        await loadUserDataFromFirebase(currentUserId); 
+        if (!currentUser) { 
+            currentUser = name; 
+            currentUserPhone = phone || ""; 
+            await saveUserDataToFirebase(currentUserId); 
+        } 
+        await registerActiveSessionGoogle(email, currentUser, currentUserPhone); 
+        if (currentUser) localStorage.setItem("falak_username", currentUser); 
+        if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); 
+        document.getElementById("landingPage").style.display = "none"; 
+        document.getElementById("appWrapper").style.display = "flex"; 
+        document.getElementById("googleUserInfo").style.display = "flex"; 
+        document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(googleUser.displayName)}`; 
+        document.getElementById("googleLogoutBtn").style.display = "block"; 
+        updateGoogleLogoutButtonsVisibility(); 
+        SoundEffects.join(); 
+        try { await refreshAdminStatusFromFirestore(); } catch(_){} 
+        loadAdminPreference(); 
+        listenToVideosWithRetry(); 
+        listenToCoursesAccess(); 
+        listenToUserEnrollmentsAccess(); 
+        listenToMaintenance(); 
+        loadAIKnowledgeFromFirebase(); 
+        loadExamsFromFirebase(); 
+        loadExamResultsFromFirebase(); 
+        loadAppsFromFirebase(); 
+        initCloudinaryWidget(); 
+        checkUrlForShare(); 
+        loadEmailSettingsFromFirestore(); 
+        updateAdminUI(); 
+        showToast(`مرحباً بعودتك ${currentUser}! 🚀`); 
+    } catch(error) { 
+        console.error(error); 
+        SoundEffects.error(); 
+        showToast("❌ فشل تسجيل الدخول بحساب Google"); 
+    } 
+}
   loadUserDashboard();
   async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
