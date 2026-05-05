@@ -1822,6 +1822,8 @@ async function isAdminUser(userId) {
         }
       } catch (e) { console.warn("course progress update failed", e); }
       try { if (typeof showToast === "function") showToast("✅ تم تسجيل مشاهدة الفيديو في تقدمك"); } catch(_){}
+      // ✅ تحديث الداشبورد بعد تسجيل المشاهدة
+      try { if (!isAdmin && typeof loadUserDashboard === "function") setTimeout(loadUserDashboard, 500); } catch(_){}
       __markingWatched.delete(key);
     } catch (e) {
       console.error("markVideoAsWatched failed:", e);
@@ -1950,6 +1952,14 @@ async function updateAdminUI() {
         }
         if (uploadZone) uploadZone.classList.remove("active");
         if (storageBar) storageBar.style.display = "none";
+        // ✅ إظهار Dashboard للطلاب المسجلين بجوجل
+        const dashboardContainer = document.getElementById("dashboardContainer");
+        if (dashboardContainer && isGoogleUser && currentUserId) {
+            dashboardContainer.style.display = "block";
+            loadUserDashboard();
+        } else if (dashboardContainer) {
+            dashboardContainer.style.display = "none";
+        }
     }
     updateGoogleLogoutButtonsVisibility();
     const createCourseBtn = document.getElementById("createCourseBtn");
@@ -1961,6 +1971,74 @@ async function updateAdminUI() {
     try { refreshAdminStatusFromFirestore(); } catch(_){}
   }
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"); const g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
+
+  // ✅ تحميل بيانات Dashboard الطالب
+  async function loadUserDashboard() {
+    if (!currentUserId) return;
+    try {
+      // عدد الفيديوهات المشاهدة
+      const watchSnap = await db.collection("watch_history").where("userId", "==", currentUserId).get();
+      const watchedCount = watchSnap.size;
+      const watchedEl = document.getElementById("userWatchedVideos");
+      if (watchedEl) watchedEl.textContent = watchedCount;
+
+      // النقاط
+      try {
+        const ptDoc = await db.collection("user_points").doc(currentUserId).get();
+        const pts = ptDoc.exists ? (ptDoc.data().points || 0) : 0;
+        const ptEl = document.getElementById("userPoints");
+        if (ptEl) ptEl.textContent = pts;
+      } catch(e) {}
+
+      // تقدم الكورسات
+      const enrollSnap = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
+      let courseHtml = "";
+      for (const doc of enrollSnap.docs) {
+        const ed = doc.data();
+        const courseDoc = await db.collection("courses").doc(ed.courseId).get().catch(()=>null);
+        if (!courseDoc || !courseDoc.exists) continue;
+        const cd = courseDoc.data();
+        const total = cd.videoIds ? cd.videoIds.length : (ed.totalVideos || 0);
+        const done = ed.completedVideos || 0;
+        const pct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
+        courseHtml += `<div style="margin-bottom:1rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.9rem">
+            <span><i class="fas fa-graduation-cap" style="color:#6366f1"></i> ${escapeHtml(cd.title||'كورس')}</span>
+            <span style="color:#10b981;font-weight:700">${pct}%</span>
+          </div>
+          <div style="background:rgba(255,255,255,.1);border-radius:6px;height:8px;overflow:hidden">
+            <div style="height:100%;background:linear-gradient(90deg,#6366f1,#10b981);width:${pct}%;border-radius:6px;transition:width .5s"></div>
+          </div>
+          <div style="font-size:.75rem;color:#888;margin-top:.25rem">${done} من ${total} فيديو</div>
+        </div>`;
+      }
+      const coursesList = document.getElementById("coursesProgressList");
+      if (coursesList) coursesList.innerHTML = courseHtml || '<p style="color:#888;font-size:.85rem">لم تسجّل في أي كورس بعد</p>';
+
+      // آخر النشاطات (آخر 5 فيديوهات مشاهدة)
+      const recent = [];
+      watchSnap.forEach(d => recent.push(d.data()));
+      recent.sort((a, b) => {
+        const ta = a.watchedAt ? a.watchedAt.toDate().getTime() : 0;
+        const tb = b.watchedAt ? b.watchedAt.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      let actHtml = "";
+      for (const r of recent.slice(0, 5)) {
+        const v = (videos || []).find(x => x.id === r.videoId);
+        const title = v ? v.title : (r.title || 'فيديو');
+        const dateStr = r.watchedAt ? r.watchedAt.toDate().toLocaleDateString("ar-EG", {day:"numeric",month:"short"}) : '';
+        actHtml += `<div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.06)">
+          <span style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-check" style="font-size:.75rem"></i></span>
+          <span style="flex:1;font-size:.85rem;color:#ddd">${escapeHtml(title)}</span>
+          <span style="font-size:.75rem;color:#888">${dateStr}</span>
+        </div>`;
+      }
+      const actEl = document.getElementById("recentActivities");
+      if (actEl) actEl.innerHTML = actHtml || '<p style="color:#888;font-size:.85rem">لا يوجد نشاط بعد</p>';
+
+    } catch(e) { console.warn("loadUserDashboard failed", e); }
+  }
 
   function listenToVideosWithRetry(maxAttempts = 5) {
     if (unsubscribeVideos) unsubscribeVideos();
@@ -3383,7 +3461,10 @@ async function updateAdminUI() {
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
   function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI();
+          // ✅ عرض الداشبورد للطالب المسجل بجوجل
+          if (!isAdmin) { setTimeout(async () => { const dash = document.getElementById("dashboardContainer"); if (dash) { dash.style.display = "block"; if (typeof loadUserDashboard === "function") await loadUserDashboard(); } }, 1000); }
+        } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
@@ -5547,13 +5628,62 @@ window.playChatSound = function() {
       ctx.lineJoin = 'round';
 
       if (drawState.tool === 'text' || drawState.tool === 'textbox') {
-        const txt = prompt('أدخل النص:');
-        if (txt) {
-          ctx.font = `${drawState.width * 5 + 10}px Cairo`;
-          ctx.fillStyle = drawState.color;
-          ctx.fillText(txt, startX, startY);
-          ctx.globalAlpha = 1;
+        // ✅ إدخال النص مباشرة على السبورة بدون prompt مزعج
+        const existing = document.getElementById('__drawTextInput');
+        if (existing) existing.remove();
+        const inp = document.createElement('input');
+        inp.id = '__drawTextInput';
+        inp.type = 'text';
+        inp.placeholder = 'اكتب النص ثم اضغط Enter';
+        const canvasRect = canvas.getBoundingClientRect();
+        const xPx = (startX / (canvas.width / canvasRect.width)) + canvasRect.left;
+        const yPx = (startY / (canvas.height / canvasRect.height)) + canvasRect.top + window.scrollY;
+        Object.assign(inp.style, {
+          position: 'fixed',
+          left: Math.min(xPx, window.innerWidth - 200) + 'px',
+          top: (yPx - canvasRect.top + document.getElementById('drawingCanvasWrap').getBoundingClientRect().top) + 'px',
+          zIndex: '9999',
+          background: 'rgba(15,10,26,.95)',
+          border: '2px solid ' + drawState.color,
+          borderRadius: '8px',
+          color: drawState.color,
+          fontFamily: 'Cairo, sans-serif',
+          fontSize: (drawState.width * 5 + 10) + 'px',
+          padding: '4px 10px',
+          minWidth: '140px',
+          outline: 'none',
+          direction: 'rtl',
+          boxShadow: '0 4px 20px rgba(0,0,0,.5)'
+        });
+        // ضع الـ input داخل wrapper السبورة مش الـ body
+        const wrap = document.getElementById('drawingCanvasWrap');
+        if (wrap) {
+          inp.style.position = 'absolute';
+          const wrapRect = wrap.getBoundingClientRect();
+          inp.style.left = Math.min(startX / (canvas.width / wrapRect.width), wrapRect.width - 160) + 'px';
+          inp.style.top = (startY / (canvas.height / wrapRect.height) - 18) + 'px';
+          wrap.style.position = 'relative';
+          wrap.appendChild(inp);
+        } else {
+          document.body.appendChild(inp);
         }
+        inp.focus();
+        const commitText = () => {
+          const txt = inp.value.trim();
+          if (txt) {
+            ctx.font = `bold ${drawState.width * 5 + 10}px Cairo`;
+            ctx.fillStyle = drawState.color;
+            ctx.globalAlpha = drawState.opacity;
+            ctx.fillText(txt, startX, startY);
+            ctx.globalAlpha = 1;
+            saveSnapshot();
+            const hint = document.getElementById('drawingEmptyHint');
+            if (hint) hint.classList.add('hidden');
+          }
+          inp.remove();
+        };
+        inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); commitText(); } if (ev.key === 'Escape') inp.remove(); });
+        inp.addEventListener('blur', commitText);
         isDrawing = false;
         return;
       }
