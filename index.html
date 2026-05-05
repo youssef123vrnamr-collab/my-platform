@@ -2172,57 +2172,70 @@ async function updateAdminUI() {
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
 
   function playVideo(id, startTime = 0) {
-    let v = videos.find(v => v.id === id);
-    if (!v) return;
-    if (!isAdmin && v.private) { SoundEffects.error(); showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله"); return; }
-    const playerContainer = document.getElementById("videoPlayerContainer");
-    const modal = document.getElementById("videoModal");
-    if (playerContainer) playerContainer.classList.add("video-playing");
-    if (modal) modal.classList.add("video-active");
-    let oldVideo = document.getElementById("videoPlayer");
-    if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause();
-    if (v.type === "youtube") {
-      let iframe = document.createElement("iframe");
-      iframe.classList.add("youtube-iframe");
-      iframe.width = "100%";
-      iframe.height = "100%";
-      iframe.style.aspectRatio = "16 / 9";
-      iframe.style.border = "none";
-      iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1`;
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-      iframe.allowFullscreen = true;
-      iframe.id = "videoPlayer";
-      playerContainer.innerHTML = "";
-      playerContainer.appendChild(iframe);
-      // تتبع تقدم فيديوهات YouTube لتسجيلها في "تقدم الطالب"
-      if (currentUserId) setupYouTubeProgressTracking(id);
-    } else {
-      let video = document.createElement("video");
-      video.controls = true;
-      video.src = v.url;
-      video.poster = v.thumbnail || "";
-      video.className = "video-player";
-      video.id = "videoPlayer";
-      video.playsInline = true;
-      playerContainer.innerHTML = "";
-      playerContainer.appendChild(video);
-      if (startTime > 0) video.currentTime = startTime;
-      // تسجيل المشاهدة عند نهاية الفيديو (يمنع التكرار من خلال markVideoAsWatched)
-      video.addEventListener("ended", () => { markVideoAsWatched(id); });
-      setupProgressTracking(id);
-      
-    }
-    document.getElementById("videoModal").classList.add("active");
-    setTimeout(() => { try { initDrawingBoard(); } catch(e) { console.warn("drawing init failed", e); } }, 100);
-    let quizContainer = document.getElementById("videoQuizContainer");
-    if (exams.some(e => e.videoId === id)) {
-      quizContainer.style.display = "block";
-      quizContainer.innerHTML = `<div style="padding:2rem; text-align:center; background:rgba(16,185,129,0.1); border-top:1px solid rgba(16,185,129,0.3);"><h3 style="color:#10b981; margin-bottom:1rem;"><i class="fas fa-clipboard-check"></i> يوجد امتحان لهذا الفيديو</h3><p style="color:#aaa; margin-bottom:1.5rem;">اختبر فهمك لمشاهدتك من خلال امتحان تفاعلي</p><button class="quiz-btn" onclick="closeModal(); setTimeout(()=>openTakeExamModal('${id}'),300);"><i class="fas fa-play-circle"></i> دخول الامتحان الآن</button></div>`;
-    } else {
-      quizContainer.style.display = "none";
-      quizContainer.innerHTML = "";
-    }
+  // ✅ منع تشغيل الفيديو إذا لم يكن هناك مستخدم مسجل بحساب Google
+  if (!googleUser || !currentUserId) {
+    showToast("❌ يجب تسجيل الدخول بحساب Google أولاً لمشاهدة الفيديوهات");
+    googleLogin();
+    return;
   }
+
+  let v = videos.find(v => v.id === id);
+  if (!v) return;
+  if (!isAdmin && v.private) {
+    SoundEffects.error();
+    showToast("🔒 هذا الفيديو خاص ولا يمكن تشغيله");
+    return;
+  }
+
+  const playerContainer = document.getElementById("videoPlayerContainer");
+  const modal = document.getElementById("videoModal");
+  if (playerContainer) playerContainer.classList.add("video-playing");
+  if (modal) modal.classList.add("video-active");
+
+  let oldVideo = document.getElementById("videoPlayer");
+  if (oldVideo && oldVideo.tagName === "VIDEO") oldVideo.pause();
+
+  if (v.type === "youtube") {
+    let iframe = document.createElement("iframe");
+    iframe.classList.add("youtube-iframe");
+    iframe.width = "100%";
+    iframe.height = "100%";
+    iframe.style.aspectRatio = "16 / 9";
+    iframe.style.border = "none";
+    iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1`;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.id = "videoPlayer";
+    playerContainer.innerHTML = "";
+    playerContainer.appendChild(iframe);
+    if (currentUserId) setupYouTubeProgressTracking(id);
+  } else {
+    let video = document.createElement("video");
+    video.controls = true;
+    video.src = v.url;
+    video.poster = v.thumbnail || "";
+    video.className = "video-player";
+    video.id = "videoPlayer";
+    video.playsInline = true;
+    playerContainer.innerHTML = "";
+    playerContainer.appendChild(video);
+    if (startTime > 0) video.currentTime = startTime;
+    video.addEventListener("ended", () => { markVideoAsWatched(id); });
+    setupProgressTracking(id);
+  }
+
+  document.getElementById("videoModal").classList.add("active");
+  setTimeout(() => { try { initDrawingBoard(); } catch(e) { console.warn("drawing init failed", e); } }, 100);
+
+  let quizContainer = document.getElementById("videoQuizContainer");
+  if (exams.some(e => e.videoId === id)) {
+    quizContainer.style.display = "block";
+    quizContainer.innerHTML = `<div style="padding:2rem; text-align:center; background:rgba(16,185,129,0.1); border-top:1px solid rgba(16,185,129,0.3);"><h3 style="color:#10b981; margin-bottom:1rem;"><i class="fas fa-clipboard-check"></i> يوجد امتحان لهذا الفيديو</h3><p style="color:#aaa; margin-bottom:1.5rem;">اختبر فهمك لمشاهدتك من خلال امتحان تفاعلي</p><button class="quiz-btn" onclick="closeModal(); setTimeout(()=>openTakeExamModal('${id}'),300);"><i class="fas fa-play-circle"></i> دخول الامتحان الآن</button></div>`;
+  } else {
+    quizContainer.style.display = "none";
+    quizContainer.innerHTML = "";
+  }
+}
 
   let __drawCtx = null, __drawing = false, __drawLastX = 0, __drawLastY = 0;
   let __drawTool = "pen", __drawColor = "#ff4d6d", __drawWidth = 3, __drawHasContent = false;
