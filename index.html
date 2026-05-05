@@ -2486,11 +2486,14 @@ async function updateAdminUI() {
     }
     const cnt = await adminAccountsCount();
     if (cnt === 0) {
+      const uid = au && au.uid ? au.uid : "غير متاح";
       body.innerHTML = '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:.9rem;margin-bottom:1rem;color:#86efac;font-size:.92rem;line-height:1.7">'
-        + '<i class="fas fa-info-circle"></i> لا يوجد أي مشرف مسجَّل بعد. يمكنك تسجيل بريدك الحالي كأول مشرف رئيسي للمنصة.'
+        + '<i class="fas fa-info-circle"></i> لا يوجد أي مشرف مسجَّل بعد. سيتم تسجيلك كأول مشرف رئيسي عبر الـ UID.'
         + '</div>'
-        + '<p style="color:#ccc;margin-bottom:.6rem">البريد الإلكتروني الحالي:</p>'
-        + '<div style="background:rgba(255,255,255,.04);padding:.85rem;border-radius:10px;border:1px solid rgba(255,255,255,.08);color:#fff;text-align:center;font-family:monospace;direction:ltr;margin-bottom:1rem;overflow-wrap:anywhere">'+escapeHtml(email)+'</div>'
+        + '<p style="color:#ccc;margin-bottom:.4rem;font-size:.9rem">الـ UID الحالي:</p>'
+        + '<div style="background:rgba(255,255,255,.04);padding:.85rem;border-radius:10px;border:1px solid rgba(255,255,255,.08);color:#fff;text-align:center;font-family:monospace;direction:ltr;margin-bottom:.7rem;overflow-wrap:anywhere;font-size:.85rem">'+escapeHtml(uid)+'</div>'
+        + '<p style="color:#ccc;margin-bottom:.4rem;font-size:.9rem">البريد الإلكتروني:</p>'
+        + '<div style="background:rgba(255,255,255,.04);padding:.85rem;border-radius:10px;border:1px solid rgba(255,255,255,.08);color:#fff;text-align:center;font-family:monospace;direction:ltr;margin-bottom:1rem;overflow-wrap:anywhere;font-size:.85rem">'+escapeHtml(email)+'</div>'
         + '<button class="btn btn-success" onclick="bootstrapFirstAdmin()" style="width:100%"><i class="fas fa-user-shield"></i> تسجيل كأول مشرف رئيسي</button>'
         + '<button onclick="closeLogin()" style="width:100%;background:0 0;border:none;color:#888;margin-top:1rem;cursor:pointer;font-family:Cairo">إلغاء</button>';
       return;
@@ -2507,30 +2510,49 @@ async function updateAdminUI() {
   function closeLogin(){ document.getElementById("loginModal").classList.remove("active"); }
   async function bootstrapFirstAdmin(){
     const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
+    const uid = au && au.uid;
     const email = _normEmail(au && au.email);
-    if (!email) { SoundEffects.error(); showToast("❌ سجّل الدخول بحساب Google أولاً"); return; }
+    if (!uid) { SoundEffects.error(); showToast("❌ سجّل الدخول بحساب Google أولاً"); return; }
     try {
       const cnt = await adminAccountsCount();
-      if (cnt !== 0) { showToast("⚠️ يوجد مشرف مسجَّل بالفعل"); showLogin(); return; }
-      await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({
-        email: email, role: "super_admin",
+      const uidSnap = await db.collection("admin_accounts_uid").limit(1).get();
+      if (cnt !== 0 || !uidSnap.empty) { showToast("⚠️ يوجد مشرف مسجَّل بالفعل"); showLogin(); return; }
+
+      // تسجيل بالـ UID أولاً
+      await db.collection("admin_accounts_uid").doc(uid).set({
+        uid: uid,
+        email: email || "",
+        role: "super_admin",
         addedAt: firebase.firestore.FieldValue.serverTimestamp(),
         addedBy: "bootstrap"
       });
+
+      // تسجيل بالإيميل أيضاً لو توفّر
+      if (email) {
+        try {
+          await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({
+            email: email, uid: uid, role: "super_admin",
+            addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            addedBy: "bootstrap"
+          });
+        } catch(_) { /* الإيميل اختياري */ }
+      }
+
       isAdmin = true; isSuperAdmin = true;
       localStorage.setItem("falak_admin","true");
       closeLogin();
       try { updateAdminUI(); renderVideos(); loadAIKnowledgeFromFirebase(); } catch(_){}
       SoundEffects.success();
-      showToast("🎉 تم تسجيلك كمشرف رئيسي");
+      showToast("🎉 تم تسجيلك كمشرف رئيسي عبر الـ UID");
       updateGoogleLogoutButtonsVisibility();
     } catch(e){
       console.error("bootstrap admin failed", e);
       let msg = "❌ فشل التسجيل";
       const code = (e && (e.code || e.message)) || "";
       if (/permission|denied|insufficient/i.test(code)) {
-        msg = "❌ صلاحيات Firestore لا تسمح بالكتابة. أضف قاعدة تسمح بالكتابة في admin_accounts للحسابات المصرَّح بها.";
+        msg = "❌ صلاحيات Firestore لا تسمح. تأكد من Rules الـ admin_accounts_uid.";
       }
+      SoundEffects.error();
       showToast(msg);
     }
   }
