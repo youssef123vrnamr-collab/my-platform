@@ -2303,9 +2303,12 @@ async function updateAdminUI() {
   let __drawCtx = null, __drawing = false, __drawLastX = 0, __drawLastY = 0;
   let __drawTool = "pen", __drawColor = "#ff4d6d", __drawWidth = 3, __drawHasContent = false;
   function initDrawingBoard() {
-    // ✅ تم الاستبدال بـ initEnhancedDrawing في السكريبت المحسّن
-    // هذه الدالة أصبحت فارغة لتجنب التعارض
-    return;
+    // يستدعي النسخة المحسّنة إذا كانت محملة، وإلا ينتظر ويحاول مجدداً
+    if (typeof window.initEnhancedDrawing === 'function') {
+      window.initEnhancedDrawing();
+    } else {
+      setTimeout(() => { if (typeof window.initEnhancedDrawing === 'function') window.initEnhancedDrawing(); }, 500);
+    }
   }
   function setDrawTool(t) {
     __drawTool = t;
@@ -5740,17 +5743,19 @@ window.playChatSound = function() {
     c.addEventListener('touchcancel', endDraw);
   }
 
-  // تهيئة عند فتح مودال الفيديو
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initEnhancedDrawing, 600);
-  });
+  // تعريض initEnhancedDrawing للـ window حتى يمكن استدعاؤها من playVideo
+  window.initEnhancedDrawing = initEnhancedDrawing;
 
+  // تهيئة فورية عند تشغيل السكريبت (الـ DOM جاهز لأن السكريبت في آخر الصفحة)
+  setTimeout(initEnhancedDrawing, 300);
+
+  // تهيئة عند فتح مودال الفيديو عبر MutationObserver
   const vm = document.getElementById('videoModal');
   if (vm) {
     new MutationObserver((muts) => {
       muts.forEach(m => {
-        if (m.target.id === 'videoModal' && m.target.classList.contains('active')) {
-          setTimeout(initEnhancedDrawing, 350);
+        if (m.target.classList.contains('active')) {
+          setTimeout(initEnhancedDrawing, 300);
         }
       });
     }).observe(vm, { attributes: true, attributeFilter: ['class'] });
@@ -6559,6 +6564,7 @@ window.playChatSound = function() {
 
 console.log('✅ جميع الميزات الجديدة تم تحميلها بنجاح');
 console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطناعي محسّن | زوم كامل | فلترة أمان | أخبار متجددة');
+</script>
 
 <!-- ===== Group Voice Room Modal ===== -->
 <div class="modal" id="groupVoiceRoomModal" style="z-index:10004">
