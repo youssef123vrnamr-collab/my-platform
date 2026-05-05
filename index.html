@@ -62,6 +62,7 @@
     .refresh-btn:hover i { transform: rotate(360deg); }
     .settings-dropdown { position: relative; display: inline-block; }
     .settings-menu { position: absolute; top: calc(100% + 8px); left: 0; background: rgba(26,16,37,.98); backdrop-filter: blur(16px); border-radius: 16px; border: 1px solid rgba(99,102,241,.5); min-width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 1100; display: none; flex-direction: column; overflow: hidden; animation: fadeInUp 0.2s ease; }
+    .settings-menu.scrollable { overflow-y: auto; max-height: 70vh; overflow-x: hidden; }
     .settings-menu.active { display: flex; }
     .settings-menu-item { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,.05); }
     .settings-menu-item:last-child { border-bottom: none; }
@@ -1143,7 +1144,7 @@
               <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px"></span>
             </span>
           </button>
-          <div class="settings-menu" id="sectionsMenu" style="min-width:190px;max-height:70vh;overflow-y:auto;">
+          <div class="settings-menu scrollable" id="sectionsMenu" style="min-width:190px;max-height:70vh;overflow-y:auto;">
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('stars');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f97316);margin-left:6px;font-size:.8rem"><i class="fas fa-star" style="color:#fff"></i></span> النجوم</div>
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('planets');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);margin-left:6px;font-size:.8rem"><i class="fas fa-globe" style="color:#fff"></i></span> الكواكب</div>
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('universe');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);margin-left:6px;font-size:.8rem"><i class="fas fa-infinity" style="color:#fff"></i></span> الكون</div>
@@ -1279,7 +1280,7 @@
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="openAIVoiceChat()" title="دردشة صوتية مع الذكاء الاصطناعي" style="background:rgba(6,182,212,.2);color:#06b6d4"><i class="fas fa-headphones"></i></button><button class="chat-action-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="كتم/تشغيل الصوت"><i class="fas fa-volume-up"></i></button><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div id="aiFilePreview" style="display:none;padding:.5rem;margin-bottom:.5rem;background:rgba(6,182,212,.1);border-radius:10px;border:1px solid rgba(6,182,212,.3);position:relative"><span id="aiFilePreviewName" style="color:#06b6d4;font-size:.85rem"></span><button onclick="clearAIFile()" style="position:absolute;top:.3rem;left:.3rem;background:rgba(239,68,68,.3);border:none;color:#ef4444;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem"><i class="fas fa-times"></i></button></div><div class="chat-input-container"><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick="document.getElementById('aiFileInput').click()" title="إرسال ملف أو صورة"><i class="fas fa-paperclip"></i></button><input id="aiFileInput" type="file" style="display:none" accept="image/*,.pdf,.txt,.doc,.docx" onchange="handleAIFileSelect(this)"><button class="chat-tool-btn" onclick="toggleAIVoiceInput()" id="aiVoiceInputBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="aiChatInput" placeholder="اكتب سؤالك أو أرسل ملف..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
-  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
+  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="openGroupVideoCall()" title="بدء محادثة جماعية بالفيديو" style="background:rgba(16,185,129,.25);color:#10b981;border:1px solid rgba(16,185,129,.4)"><i class="fas fa-video"></i></button><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة"><i class="fas fa-phone"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar" id="drawingToolbar">
   <!-- أدوات الرسم الأساسية -->
   <span class="db-tool-label">رسم</span>
@@ -2718,6 +2719,7 @@ async function updateAdminUI() {
   function deleteAIKnowledge(id) { if (confirm("هل أنت متأكد؟")) db.collection("ai_knowledge").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   function openAIChat() { document.getElementById("aiChatModal").classList.add("active"); let msgs = document.getElementById("aiChatMessages"); if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai"); setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100); }
   function closeAIChat() { document.getElementById("aiChatModal").classList.remove("active"); }
+  function clearAIChat() { if (!confirm("هل تريد مسح المحادثة مع الذكاء الاصطناعي؟")) return; let cont = document.getElementById("aiChatMessages"); if (cont) cont.innerHTML = ""; if (typeof showToast === "function") showToast("🗑️ تم مسح المحادثة"); }
   async function sendAIMessage() {
     let input = document.getElementById("aiChatInput");
     let text = input.value.trim();
@@ -5425,46 +5427,49 @@ window.scrollToSectionAndOpen = scrollToSectionAndOpen;
   };
 
   // Override sendAIMessage to support file uploads
-  const _origSendAI = window.sendAIMessage;
-  window.sendAIMessage = async function() {
-    if (aiSelectedFile) {
-      const file = aiSelectedFile;
-      aiSelectedFile = null;
-      const p = document.getElementById('aiFilePreview');
-      if (p) p.style.display = 'none';
-      
-      // Read file
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const content = e.target.result;
-        const inputEl = document.getElementById('aiChatInput');
-        const userText = inputEl ? inputEl.value.trim() : '';
-        const combined = userText 
-          ? `${userText}\n\n[محتوى الملف "${file.name}"]:\n${typeof content === 'string' ? content.substring(0, 3000) : '[ملف صورة]'}`
-          : `حلل هذا الملف: "${file.name}"`;
-        if (inputEl) { inputEl.value = combined; }
-        if (_origSendAI) await _origSendAI();
-      };
-      if (file.type.startsWith('image/')) {
-        // Show image in chat
-        const msgs = document.getElementById('aiChatMessages');
-        if (msgs) {
-          const div = document.createElement('div');
-          div.className = 'message sent';
-          const imgUrl = URL.createObjectURL(file);
-          div.innerHTML = `<img src="${imgUrl}" class="message-image" style="max-width:200px;border-radius:8px">`;
-          window.addAIMuteButton && window.addAIMuteButton(div, '');
-          msgs.appendChild(div);
-          msgs.scrollTop = msgs.scrollHeight;
+  window.sendAIMessage = (function(origFn) {
+    return async function() {
+      if (aiSelectedFile) {
+        const file = aiSelectedFile;
+        aiSelectedFile = null;
+        const p = document.getElementById('aiFilePreview');
+        if (p) p.style.display = 'none';
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const content = e.target.result;
+          const inputEl = document.getElementById('aiChatInput');
+          const userText = inputEl ? inputEl.value.trim() : '';
+
+          // Show image preview in chat
+          if (file.type.startsWith('image/')) {
+            const msgs = document.getElementById('aiChatMessages');
+            if (msgs) {
+              const div = document.createElement('div');
+              div.className = 'message sent';
+              div.innerHTML = `<img src="${content}" class="message-image" style="max-width:200px;border-radius:8px;display:block">`;
+              msgs.appendChild(div);
+              msgs.scrollTop = msgs.scrollHeight;
+            }
+          }
+
+          const combined = userText
+            ? `${userText}\n\n[محتوى الملف "${file.name}"]:\n${typeof content === 'string' && !content.startsWith('data:image') ? content.substring(0, 3000) : '[ملف صورة - تم إرساله]'}`
+            : (file.type.startsWith('image/') ? `صف هذه الصورة: "${file.name}"` : `حلل هذا الملف: "${file.name}"`);
+          if (inputEl) { inputEl.value = combined; }
+          if (origFn) await origFn.call(window);
+          if (inputEl) inputEl.value = '';
+        };
+        if (file.type.startsWith('image/')) {
+          reader.readAsDataURL(file);
+        } else {
+          reader.readAsText(file, 'UTF-8');
         }
-        reader.readAsDataURL(file);
-      } else {
-        reader.readAsText(file, 'UTF-8');
+        return;
       }
-      return;
-    }
-    if (_origSendAI) await _origSendAI();
-  };
+      if (origFn) await origFn.call(window);
+    };
+  })(window.sendAIMessage);
 
   // Patch AI message rendering to add mute button
   const _origRenderAI = window.renderAIMessage;
@@ -5553,29 +5558,65 @@ window.scrollToSectionAndOpen = scrollToSectionAndOpen;
       if (avatar) avatar.style.animation = 'pulse 0.5s infinite';
 
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        if (typeof showToast === 'function') showToast('⚠️ غير مدعوم'); aiVoiceActive = false; return;
+        if (typeof showToast === 'function') showToast('⚠️ غير مدعوم في هذا المتصفح');
+        aiVoiceActive = false;
+        return;
       }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       aiVoiceRecognition = new SR();
       aiVoiceRecognition.lang = 'ar-SA';
+      aiVoiceRecognition.continuous = false;
+      aiVoiceRecognition.interimResults = false;
       aiVoiceRecognition.onresult = async (e) => {
         const text = e.results[0][0].transcript;
         const transcript = document.getElementById('aiVoiceTranscript');
-        if (transcript) transcript.innerHTML += `<p style="color:#fff;margin-bottom:.5rem">🧑 ${text}</p>`;
-        // Send to AI
-        const inp = document.getElementById('aiChatInput');
-        if (inp) {
-          inp.value = text;
-          if (document.getElementById('aiChatModal')?.classList.contains('active')) {
-            // Send to existing AI chat
-          } else {
-            // Process voice here
-            if (status) status.textContent = 'الذكاء الاصطناعي يفكر...';
+        if (transcript) transcript.innerHTML += `<p style="color:#fff;margin-bottom:.5rem;text-align:right">🧑 ${text}</p>`;
+        if (status) status.textContent = 'الذكاء الاصطناعي يفكر...';
+        // Send to AI and show response
+        try {
+          const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + (typeof getAiApiKey === 'function' ? getAiApiKey() : ''),
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: "llama-3.3-70b-versatile",
+              messages: [
+                { role: "system", content: "أنت مساعد متخصص في الفلك. جاوب بالعربية بشكل واضح ومختصر." },
+                { role: "user", content: text }
+              ],
+              temperature: 0.3,
+              max_tokens: 500
+            })
+          });
+          const data = await response.json();
+          const answer = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'عذراً، لم أفهم سؤالك.';
+          if (transcript) transcript.innerHTML += `<p style="color:#06b6d4;margin-bottom:.5rem;text-align:right">🤖 ${answer}</p><div id="voiceTranscriptScroll"></div>`;
+          const scrollEl = document.getElementById('voiceTranscriptScroll');
+          if (scrollEl) scrollEl.scrollIntoView({ behavior: 'smooth' });
+          // Speak the answer
+          if (typeof speakText === 'function' && !aiIsMuted) speakText(answer);
+          else if (!aiIsMuted && window.speechSynthesis) {
+            const utt = new SpeechSynthesisUtterance(answer);
+            utt.lang = 'ar-SA'; utt.rate = 0.9;
+            window.speechSynthesis.speak(utt);
           }
+          if (status) status.textContent = 'اضغط على الميكروفون للتحدث';
+        } catch(err) {
+          if (transcript) transcript.innerHTML += `<p style="color:#ef4444;margin-bottom:.5rem">❌ فشل الاتصال بالذكاء الاصطناعي</p>`;
+          if (status) status.textContent = 'فشل الاتصال - حاول مرة أخرى';
         }
       };
       aiVoiceRecognition.onend = () => {
-        if (aiVoiceActive) aiVoiceRecognition.start();
+        if (aiVoiceActive) {
+          try { aiVoiceRecognition.start(); } catch(e) {}
+        }
+      };
+      aiVoiceRecognition.onerror = (e) => {
+        if (e.error !== 'aborted') {
+          if (status) status.textContent = 'خطأ في الميكروفون: ' + e.error;
+        }
       };
       aiVoiceRecognition.start();
     } else {
@@ -5585,7 +5626,7 @@ window.scrollToSectionAndOpen = scrollToSectionAndOpen;
       if (status) status.textContent = 'اضغط على الميكروفون للتحدث';
       if (listening) listening.style.display = 'none';
       if (avatar) avatar.style.animation = 'glow 3s infinite';
-      if (aiVoiceRecognition) { aiVoiceRecognition.stop(); aiVoiceRecognition = null; }
+      if (aiVoiceRecognition) { try { aiVoiceRecognition.stop(); } catch(e){} aiVoiceRecognition = null; }
     }
   };
 })();
