@@ -2236,7 +2236,7 @@ async function updateAdminUI() {
 
   function playVideo(id, startTime = 0) {
   // ✅ منع تشغيل الفيديو إذا لم يكن هناك مستخدم مسجل بحساب Google
-  if (!googleUser || !currentUserId) {
+  if (!googleUser) {
     showToast("❌ يجب تسجيل الدخول بحساب Google أولاً لمشاهدة الفيديوهات");
     googleLogin();
     return;
@@ -3064,6 +3064,7 @@ async function updateAdminUI() {
     showToast("فشل الإرسال");
   });
 }
+  window.sendMessage = sendMessage;
   function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
   function sendImage(input) {
   let file = input.files[0];
@@ -6020,7 +6021,7 @@ window.playChatSound = function() {
     };
   }
   setTimeout(() => {
-    ['sendMessage', 'sendAIMessage'].forEach(patchSendFn);
+    ['sendAIMessage'].forEach(patchSendFn);
   }, 2000);
 
   // Realtime input monitoring
