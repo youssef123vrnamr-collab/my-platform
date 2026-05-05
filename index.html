@@ -2377,31 +2377,20 @@ async function updateAdminUI() {
   function dismissResume() { document.getElementById("resumeNotification").style.display = "none"; }
   function setupProgressTracking(videoIdForWatch) {
   let p = document.getElementById("videoPlayer");
-  if (!p || p.tagName !== "VIDEO") {
-    console.warn("setupProgressTracking: video element not found");
-    return;
-  }
-  
+  if (!p || p.tagName !== "VIDEO") { console.warn("setupProgressTracking: video element not found"); return; }
+  if (p._timeupdateHandler) p.removeEventListener("timeupdate", p._timeupdateHandler);
+  if (p._endedHandler) p.removeEventListener("ended", p._endedHandler);
+  if (p._pauseHandler) p.removeEventListener("pause", p._pauseHandler);
+  if (window._beforeUnloadHandler) window.removeEventListener("beforeunload", window._beforeUnloadHandler);
   let watchedFlag = false;
-  
-  // حدث التقدم
-  p.addEventListener("timeupdate", function() {
-    if (!watchedFlag && p.duration > 0 && (p.currentTime / p.duration) >= 0.8) {
-      watchedFlag = true;
-      markVideoAsWatched(videoIdForWatch);
-    }
-  });
-  
-  // حدث الانتهاء
-  p.addEventListener("ended", function() {
-    if (!watchedFlag) markVideoAsWatched(videoIdForWatch);
-    if (currentUserId) saveUserDataToFirebase(currentUserId);
-    else localStorage.removeItem(STORAGE_KEY);
-  });
-  
-  // حفظ التقدم عند الإيقاف المؤقت أو إغلاق الصفحة
-  p.addEventListener("pause", saveVideoProgress);
-  window.addEventListener("beforeunload", saveVideoProgress);
+  p._timeupdateHandler = function() { if (!watchedFlag && p.duration > 0 && (p.currentTime / p.duration) >= 0.8) { watchedFlag = true; markVideoAsWatched(videoIdForWatch); } };
+  p._endedHandler = function() { if (!watchedFlag) markVideoAsWatched(videoIdForWatch); if (currentUserId) saveUserDataToFirebase(currentUserId); else localStorage.removeItem(STORAGE_KEY); };
+  p._pauseHandler = saveVideoProgress;
+  window._beforeUnloadHandler = saveVideoProgress;
+  p.addEventListener("timeupdate", p._timeupdateHandler);
+  p.addEventListener("ended", p._endedHandler);
+  p.addEventListener("pause", p._pauseHandler);
+  window.addEventListener("beforeunload", window._beforeUnloadHandler);
 }
   function toggleFullscreenVideo() { const video = document.getElementById("videoPlayer"); if (!video) return; if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); }
   function shareCurrentTime() { let currentTime = 0; let videoId = null; let video = document.getElementById("videoPlayer"); if (video && video.tagName === "VIDEO" && video.src) { currentTime = Math.floor(video.currentTime); let foundVideo = videos.find(v => v.url === video.src || v.originalUrl === video.src); if (foundVideo) videoId = foundVideo.id; } if (!videoId) { let iframe = document.getElementById("videoPlayer"); if (iframe && iframe.tagName === "IFRAME" && iframe.src) { let match = iframe.src.match(/embed\/([^?&]+)/); if (match && match[1]) { let foundVideo = videos.find(v => v.type === "youtube" && v.videoId === match[1]); if (foundVideo) videoId = foundVideo.id; } } } if (!videoId) { showToast("⚠️ لا يمكن مشاركة هذا الفيديو"); return; } let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime; navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ")"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); }); }
@@ -3054,12 +3043,16 @@ async function updateAdminUI() {
   let inp = document.getElementById("messageInput");
   if (!inp) return;
   let text = inp.value.trim();
-  if (!text || !googleUser) return;
+  if (!text) return;
+  // يقبل Google أو الاسم+هاتف العادي
+  const senderName = (googleUser && googleUser.displayName) || currentUser || "مجهول";
+  const senderPhone = (googleUser && (googleUser.email || googleUser.phoneNumber)) || currentUserPhone || "";
+  if (!senderName || senderName === "مجهول" && !senderPhone) { showToast("⚠️ الرجاء تسجيل الدخول أولاً"); return; }
   db.collection("messages").add({
     type: "text",
     text: text,
-    sender: googleUser.displayName,
-    senderPhone: googleUser.email || googleUser.phoneNumber || "",
+    sender: senderName,
+    senderPhone: senderPhone,
     userId: currentUserId,
     senderId: currentUserId,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
