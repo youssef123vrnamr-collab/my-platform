@@ -2375,41 +2375,24 @@ async function updateAdminUI() {
     return;
   }
   
-  if (progressInterval) clearInterval(progressInterval);
+  let watchedFlag = false;
   
-  progressInterval = setInterval(() => {
-    if (!p.paused && !p.ended) {
-      saveVideoProgress();
-      
-      // تحقق من شروط التسجيل
-      const condition = (videoIdForWatch && currentUserId && p.duration > 0 && (p.currentTime / p.duration) >= 0.8);
-      console.log("Tracking:", { 
-        videoIdForWatch, 
-        currentUserId, 
-        duration: p.duration, 
-        currentTime: p.currentTime,
-        percent: (p.currentTime / p.duration * 100).toFixed(1) + "%",
-        condition 
-      });
-      
-      if (condition) {
-        console.log("✅ Calling markVideoAsWatched for video", videoIdForWatch);
-        markVideoAsWatched(videoIdForWatch);
-      }
+  p.addEventListener("timeupdate", function() {
+    if (!watchedFlag && p.duration > 0 && (p.currentTime / p.duration) >= 0.8) {
+      watchedFlag = true;
+      markVideoAsWatched(videoIdForWatch);
     }
-  }, 5000);
+  });
   
-  p.addEventListener("pause", saveVideoProgress);
-  window.addEventListener("beforeunload", saveVideoProgress);
-  
-  p.addEventListener("ended", () => {
-    console.log("Video ended event fired, marking as watched");
-    markVideoAsWatched(videoIdForWatch);
+  p.addEventListener("ended", function() {
+    if (!watchedFlag) markVideoAsWatched(videoIdForWatch);
     if (currentUserId) saveUserDataToFirebase(currentUserId);
     else localStorage.removeItem(STORAGE_KEY);
   });
+  
+  p.addEventListener("pause", saveVideoProgress);
+  window.addEventListener("beforeunload", saveVideoProgress);
 }
-
   function toggleFullscreenVideo() { const video = document.getElementById("videoPlayer"); if (!video) return; if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); }
   function shareCurrentTime() { let currentTime = 0; let videoId = null; let video = document.getElementById("videoPlayer"); if (video && video.tagName === "VIDEO" && video.src) { currentTime = Math.floor(video.currentTime); let foundVideo = videos.find(v => v.url === video.src || v.originalUrl === video.src); if (foundVideo) videoId = foundVideo.id; } if (!videoId) { let iframe = document.getElementById("videoPlayer"); if (iframe && iframe.tagName === "IFRAME" && iframe.src) { let match = iframe.src.match(/embed\/([^?&]+)/); if (match && match[1]) { let foundVideo = videos.find(v => v.type === "youtube" && v.videoId === match[1]); if (foundVideo) videoId = foundVideo.id; } } } if (!videoId) { showToast("⚠️ لا يمكن مشاركة هذا الفيديو"); return; } let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime; navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ")"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); }); }
   function checkUrlForShare() { let params = new URLSearchParams(window.location.search); let vid = params.get("video"); let t = params.get("t"); if (vid && videos.length > 0) { if (videos.find(v => v.id === vid)) { window.history.replaceState({}, document.title, window.location.href.split("?")[0]); playVideo(vid, parseInt(t) || 0); } else showToast("❌ الفيديو غير موجود"); } }
