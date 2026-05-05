@@ -1290,7 +1290,12 @@
   </div>
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
-  <button class="chat-btn" onclick="openChat()" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
+  <button class="chat-btn" onclick="playChatSound(); openChat();" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
+  <!-- زر إدارة المحادثة الجماعية - للمشرف الرئيسي فقط -->
+  <button id="groupAdminBtn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة الجماعية"
+    style="display:none;position:fixed;bottom:7.5rem;left:2rem;width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;border:none;color:#fff;font-size:1rem;cursor:pointer;box-shadow:0 6px 20px rgba(99,102,241,.5);z-index:999;align-items:center;justify-content:center;transition:all .3s;">
+    <i class="fas fa-cog"></i>
+  </button>
 
   <!-- جميع المودالات (نفس الكود الأصلي مع إبقاء الوظائف) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
@@ -1925,9 +1930,9 @@ async function updateAdminUI() {
         if (manageAppsMenuItem) manageAppsMenuItem.style.display = "flex";
         if (viewFeedbacksMenuItem) viewFeedbacksMenuItem.style.display = "flex";
         if (emailSettingsMenuItem) emailSettingsMenuItem.style.display = "flex";
-        // Show admin chat manage button
+        // Show admin chat manage button (super admin only)
         const adminChatBtn = document.getElementById('groupAdminBtn');
-        if (adminChatBtn) adminChatBtn.style.display = 'flex';
+        if (adminChatBtn) adminChatBtn.style.display = isSuperAdmin ? 'flex' : 'none';
         updateStorageBar();
         loadAIKnowledgeFromFirebase();
         const cancelBtn = document.getElementById("cancelMaintenanceBtn");
@@ -2440,7 +2445,7 @@ async function updateAdminUI() {
     const body = document.getElementById("adminLoginBody");
     if (!modal || !body) return;
     modal.classList.add("active");
-    body.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem"><i class="fas fa-spinner fa-spin"></i> جاري التحضير...</div>';
+    body.innerHTML = '';
     const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
     if (!au || !au.email) {
       body.innerHTML = '<p style="color:#ddd;text-align:center;margin-bottom:1rem;line-height:1.7">سجّل الدخول بحساب Google أولاً، وسيتم التحقق تلقائياً من صلاحياتك كمشرف.</p>'
@@ -5036,13 +5041,6 @@ async function renderGroupChatAdminPanel() {
         <button onclick="addGcAdmin()" class="btn btn-success" style="padding:.75rem 1rem"><i class="fas fa-plus"></i> أضف</button>
       </div>
       <p style="font-size:.78rem;color:#888;margin-top:.5rem"><i class="fas fa-info-circle"></i> الـ UID هو معرّف المستخدم في Firebase (يمكن للمستخدم إيجاده في ملفه الشخصي)</p>`;
-
-      // Members management section
-      html += `<hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:1.25rem 0">`;
-      html += `<h4 style="color:#c4b5fd;margin-bottom:.75rem;font-size:.9rem"><i class="fas fa-users"></i> الأعضاء في المحادثة الجماعية</h4>`;
-      html += `<div id="gcMembersList" style="max-height:200px;overflow-y:auto"><div style="text-align:center;color:#888;padding:1rem"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الأعضاء...</div></div>`;
-      // Load members
-      setTimeout(() => loadGcMembers(), 100);
     }
 
     content.innerHTML = html;
@@ -5091,6 +5089,12 @@ async function removeFromGroupChat(uid, name) {
 }
 
 async function addGcAdmin() {
+  // المشرف الرئيسي فقط يقدر يضيف مشرفين
+  const isCurrentSuperAdmin = (typeof isSuperAdmin !== 'undefined' && isSuperAdmin);
+  if (!isCurrentSuperAdmin) {
+    if (typeof showToast === 'function') showToast('❌ المشرف الرئيسي فقط يمكنه إضافة مشرفين');
+    return;
+  }
   const uidInp = document.getElementById('gcNewAdminUid');
   const roleInp = document.getElementById('gcNewAdminRole');
   const uid = uidInp ? uidInp.value.trim() : '';
@@ -5143,6 +5147,25 @@ window.removeFromGroupChat = removeFromGroupChat;
 window.toggleSectionsMenu = toggleSectionsMenu;
 window.closeSectionsMenu = closeSectionsMenu;
 window.scrollToSectionAndOpen = scrollToSectionAndOpen;
+
+// ===== صوت زر المحادثة الجماعية =====
+window.playChatSound = function() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // نغمة "تاك" خفيفة ومميزة
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+  } catch(e) {}
+};
 </script>
 
 <!-- ===================================================
@@ -6033,10 +6056,10 @@ window.scrollToSectionAndOpen = scrollToSectionAndOpen;
       });
   });
 
-  // Show admin button only for admins
+  // Show admin button only for super admins
   setTimeout(() => {
     const adminBtn = document.getElementById('groupAdminBtn');
-    if (adminBtn && typeof isAdmin !== 'undefined' && isAdmin) {
+    if (adminBtn && typeof isSuperAdmin !== 'undefined' && isSuperAdmin) {
       adminBtn.style.display = 'flex';
     }
   }, 2000);
@@ -6146,9 +6169,6 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       </div>
       <!-- Controls -->
       <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.08)">
-        <button id="voiceMuteBtn" onclick="toggleVoiceMute()" style="background:rgba(16,185,129,.25);color:#10b981;border:1px solid rgba(16,185,129,.5);border-radius:12px;padding:.7rem 1.4rem;cursor:pointer;font-family:Cairo;font-weight:700;display:flex;align-items:center;gap:.5rem;font-size:.9rem;transition:all .2s">
-          <i class="fas fa-microphone"></i><span>كتم الصوت</span>
-        </button>
         <button onclick="closeGroupVoiceRoom()" style="background:rgba(239,68,68,.25);color:#ef4444;border:1px solid rgba(239,68,68,.5);border-radius:12px;padding:.7rem 1.4rem;cursor:pointer;font-family:Cairo;font-weight:700;display:flex;align-items:center;gap:.5rem;font-size:.9rem">
           <i class="fas fa-phone-slash"></i><span>مغادرة</span>
         </button>
