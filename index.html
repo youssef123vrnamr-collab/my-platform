@@ -1761,6 +1761,10 @@ async function isAdminUser(userId) {
   let __markingWatched = new Set();
   async function markVideoAsWatched(videoId) {
     try {
+      // ضمان إن currentUserId موجود من Firebase Auth
+      if (!currentUserId && auth && auth.currentUser) {
+        currentUserId = auth.currentUser.uid;
+      }
       if (!currentUserId || !videoId) return;
       const key = currentUserId + "_" + videoId;
       if (__markingWatched.has(key)) return;
@@ -2369,7 +2373,7 @@ async function updateAdminUI() {
     document.getElementById("videoQuizContainer").style.display = "none";
   }
 
-  async function saveVideoProgress() { let p = document.getElementById("videoPlayer"); if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); if (v && currentUserId) { await saveWatchProgressToFirebase(currentUserId, v.id, p.currentTime, p.duration || 0); } else if (v) { localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() })); } }
+  async function saveVideoProgress() { let p = document.getElementById("videoPlayer"); if (!p || !p.src || p.tagName !== "VIDEO" || p.paused) return; if (!currentUserId && auth && auth.currentUser) currentUserId = auth.currentUser.uid; let v = videos.find(v => v.url === p.src || v.originalUrl === p.src); if (v && currentUserId) { await saveWatchProgressToFirebase(currentUserId, v.id, p.currentTime, p.duration || 0); } else if (v) { localStorage.setItem(STORAGE_KEY, JSON.stringify({ videoId: v.id, title: v.title, thumbnail: v.thumbnail || "", currentTime: p.currentTime, duration: p.duration || 0, timestamp: Date.now() })); } }
 
   function checkForResume() { let d = localStorage.getItem(STORAGE_KEY); if (!d && !lastWatchedData) return; try { let data = lastWatchedData || JSON.parse(d); if (!videos.some(v => v.id === data.videoId)) { localStorage.removeItem(STORAGE_KEY); return; } if (data.duration > 0 && data.currentTime / data.duration > 0.95) { localStorage.removeItem(STORAGE_KEY); return; } document.getElementById("resumeVideoTitle").textContent = data.title; document.getElementById("resumeTimeDisplay").textContent = "توقفت عند: " + formatDuration(data.currentTime); document.getElementById("resumeNotification").style.display = "flex"; } catch (e) { localStorage.removeItem(STORAGE_KEY); } }
 
@@ -6009,7 +6013,9 @@ window.playChatSound = function() {
     const orig = window[fnName];
     if (typeof orig !== 'function') return;
     window[fnName] = function(...args) {
-      const inputEl = document.getElementById('messageInput') || document.getElementById('aiChatInput');
+      // كل دالة بتستخدم الـ input الخاص بها
+      const inputId = fnName === 'sendAIMessage' ? 'aiChatInput' : 'messageInput';
+      const inputEl = document.getElementById(inputId);
       if (inputEl) {
         const v = window.secureValidateMessage(inputEl.value);
         if (!v.valid) {
@@ -6283,19 +6289,31 @@ window.playChatSound = function() {
 // ============================
 (function() {
   // ---- State ----
+  // ============================================================
+  // غرفة الصوت الجماعية — WebRTC Mesh عبر Firestore Signaling
+  // كل مستخدم يعمل RTCPeerConnection مع كل مستخدم آخر
+  // ============================================================
+  const VOICE_STUN = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
   let voiceRoomStream = null;
   let voiceRoomActive = false;
   let voiceRoomParticipants = new Map(); // uid -> {name, muted}
+  let voiceRoomPeers = {};              // uid -> RTCPeerConnection
+  let voiceRoomAudioEls = {};          // uid -> <audio>
   let voiceRoomUnsubscribe = null;
+  let voiceRoomSignalUnsub = null;
   let voiceRoomMyRef = null;
   let voiceRoomInterval = null;
   let myVoiceMuted = false;
+  let myVoiceUID = null;
+
+  const voiceRoomRef = () => db.collection('voice_room').doc('main_room');
+  const signalRef = (from, to) => voiceRoomRef().collection('signals').doc(from + '__' + to);
 
   // ---- Open/Close Room ----
   window.openGroupVoiceRoom = async function() {
     if (!currentUser) { showToast('❌ يجب تسجيل الدخول أولاً'); return; }
     const modal = document.getElementById('groupVoiceRoomModal');
-    if (modal) { modal.classList.add('active'); }
+    if (modal) modal.classList.add('active');
     await joinVoiceRoom();
   };
 
@@ -6308,51 +6326,65 @@ window.playChatSound = function() {
   // ---- Join Room ----
   async function joinVoiceRoom() {
     try {
-      voiceRoomStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      voiceRoomStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       voiceRoomActive = true;
       myVoiceMuted = false;
+      myVoiceUID = currentUserId || ('guest_' + Math.random().toString(36).substr(2,9));
       updateMyMuteUI();
 
-      const uid = currentUserId || ('guest_' + Math.random().toString(36).substr(2,9));
-      const roomRef = db.collection('voice_room').doc('main_room');
-      voiceRoomMyRef = roomRef.collection('participants').doc(uid);
-
+      // سجّل نفسك في قائمة المشاركين
+      voiceRoomMyRef = voiceRoomRef().collection('participants').doc(myVoiceUID);
       await voiceRoomMyRef.set({
-        name: currentUser,
-        uid: uid,
+        name: currentUser || 'مستخدم',
+        uid: myVoiceUID,
         muted: false,
         isAdmin: !!isAdmin,
-        joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // Listen to participants
-      voiceRoomUnsubscribe = roomRef.collection('participants').onSnapshot(snap => {
-        voiceRoomParticipants.clear();
+      // اسمع المشاركين الجدد وابدأ معهم WebRTC
+      voiceRoomUnsubscribe = voiceRoomRef().collection('participants').onSnapshot(async snap => {
+        const currentUIDs = new Set();
         snap.forEach(doc => {
+          currentUIDs.add(doc.id);
           voiceRoomParticipants.set(doc.id, doc.data());
         });
+        // احذف المغادرين
+        for (const uid of voiceRoomParticipants.keys()) {
+          if (!currentUIDs.has(uid)) { voiceRoomParticipants.delete(uid); closePeer(uid); }
+        }
         renderVoiceParticipants();
         updateVoiceRoomBadge();
+
+        // ابدأ اتصال مع كل مستخدم جديد (من جانبنا فقط لو uid أكبر)
+        for (const uid of currentUIDs) {
+          if (uid === myVoiceUID) continue;
+          if (!voiceRoomPeers[uid]) {
+            if (myVoiceUID > uid) {
+              await createOffer(uid);
+            }
+          }
+        }
       });
+
+      // اسمع الـ signals الواردة لي
+      voiceRoomSignalUnsub = voiceRoomRef().collection('signals')
+        .where('to', '==', myVoiceUID)
+        .onSnapshot(async snap => {
+          for (const change of snap.docChanges()) {
+            if (change.type === 'added' || change.type === 'modified') {
+              const data = change.doc.data();
+              if (!data) continue;
+              try { await handleSignal(data, change.doc.id); } catch(e) { console.warn('signal error', e); }
+            }
+          }
+        });
 
       // Heartbeat
       voiceRoomInterval = setInterval(() => {
         if (voiceRoomMyRef) voiceRoomMyRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
-      }, 15000);
-
-      // Auto-cleanup stale participants every 30s
-      setInterval(async () => {
-        try {
-          const now = Date.now();
-          const snap = await roomRef.collection('participants').get();
-          snap.forEach(async doc => {
-            const d = doc.data();
-            if (d.lastSeen && (now - d.lastSeen.toMillis()) > 60000) {
-              await doc.ref.delete();
-            }
-          });
-        } catch(e) {}
-      }, 30000);
+      }, 10000);
 
       showToast('🎙️ انضممت للمكالمة الصوتية');
     } catch(e) {
@@ -6361,14 +6393,108 @@ window.playChatSound = function() {
     }
   }
 
+  // ---- WebRTC: إنشاء Offer ----
+  async function createOffer(remoteUID) {
+    const pc = createPeerConnection(remoteUID);
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await signalRef(myVoiceUID, remoteUID).set({ from: myVoiceUID, to: remoteUID, type: 'offer', sdp: offer.sdp, ts: firebase.firestore.FieldValue.serverTimestamp() });
+    } catch(e) { console.warn('createOffer error', e); }
+  }
+
+  // ---- WebRTC: معالجة Signal وارد ----
+  async function handleSignal(data, docId) {
+    const from = data.from;
+    if (!from || from === myVoiceUID) return;
+
+    if (data.type === 'offer') {
+      let pc = voiceRoomPeers[from];
+      if (!pc) pc = createPeerConnection(from);
+      if (pc.signalingState !== 'stable') return;
+      await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await signalRef(myVoiceUID, from).set({ from: myVoiceUID, to: from, type: 'answer', sdp: answer.sdp, ts: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+    else if (data.type === 'answer') {
+      const pc = voiceRoomPeers[from];
+      if (pc && pc.signalingState === 'have-local-offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
+      }
+    }
+    else if (data.type === 'candidate') {
+      const pc = voiceRoomPeers[from];
+      if (pc && data.candidate) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {}
+      }
+    }
+  }
+
+  // ---- WebRTC: إنشاء PeerConnection ----
+  function createPeerConnection(remoteUID) {
+    if (voiceRoomPeers[remoteUID]) return voiceRoomPeers[remoteUID];
+    const pc = new RTCPeerConnection(VOICE_STUN);
+    voiceRoomPeers[remoteUID] = pc;
+
+    // أضف الـ tracks بتاعتنا
+    if (voiceRoomStream) {
+      voiceRoomStream.getTracks().forEach(track => pc.addTrack(track, voiceRoomStream));
+    }
+
+    // لما نستقبل صوت المستخدم الآخر
+    pc.ontrack = (event) => {
+      let audio = voiceRoomAudioEls[remoteUID];
+      if (!audio) {
+        audio = document.createElement('audio');
+        audio.autoplay = true;
+        audio.style.display = 'none';
+        document.body.appendChild(audio);
+        voiceRoomAudioEls[remoteUID] = audio;
+      }
+      audio.srcObject = event.streams[0];
+    };
+
+    // إرسال ICE candidates
+    pc.onicecandidate = async (event) => {
+      if (event.candidate) {
+        const candRef = voiceRoomRef().collection('signals').doc(myVoiceUID + '__' + remoteUID + '_ice_' + Date.now());
+        await candRef.set({ from: myVoiceUID, to: remoteUID, type: 'candidate', candidate: event.candidate.toJSON(), ts: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (['disconnected','failed','closed'].includes(pc.connectionState)) { closePeer(remoteUID); }
+    };
+
+    return pc;
+  }
+
+  // ---- إغلاق اتصال مع مستخدم ----
+  function closePeer(uid) {
+    if (voiceRoomPeers[uid]) { try { voiceRoomPeers[uid].close(); } catch(e){} delete voiceRoomPeers[uid]; }
+    if (voiceRoomAudioEls[uid]) { voiceRoomAudioEls[uid].srcObject = null; try { voiceRoomAudioEls[uid].remove(); } catch(e){} delete voiceRoomAudioEls[uid]; }
+  }
+
   // ---- Leave Room ----
   async function leaveVoiceRoom() {
     voiceRoomActive = false;
+    // أغلق كل الـ peers
+    Object.keys(voiceRoomPeers).forEach(uid => closePeer(uid));
+    // احذف الـ signals بتاعتنا
+    try {
+      const sigSnap = await voiceRoomRef().collection('signals').where('from','==',myVoiceUID).get();
+      sigSnap.forEach(d => d.ref.delete());
+      const sigSnap2 = await voiceRoomRef().collection('signals').where('to','==',myVoiceUID).get();
+      sigSnap2.forEach(d => d.ref.delete());
+    } catch(e){}
     if (voiceRoomStream) { voiceRoomStream.getTracks().forEach(t => t.stop()); voiceRoomStream = null; }
     if (voiceRoomInterval) { clearInterval(voiceRoomInterval); voiceRoomInterval = null; }
     if (voiceRoomUnsubscribe) { voiceRoomUnsubscribe(); voiceRoomUnsubscribe = null; }
+    if (voiceRoomSignalUnsub) { voiceRoomSignalUnsub(); voiceRoomSignalUnsub = null; }
     if (voiceRoomMyRef) { try { await voiceRoomMyRef.delete(); } catch(e){} voiceRoomMyRef = null; }
     voiceRoomParticipants.clear();
+    myVoiceUID = null;
     updateVoiceRoomBadge();
     showToast('📴 غادرت المكالمة');
   }
@@ -6399,11 +6525,8 @@ window.playChatSound = function() {
     if (!isAdmin) { showToast('❌ للمشرف فقط'); return; }
     if (!confirm(`هل تريد إخراج "${name}" من المكالمة؟`)) return;
     try {
-      await db.collection('voice_room').doc('main_room').collection('participants').doc(uid).delete();
-      // Notify them via Firestore kick flag
-      await db.collection('voice_room').doc('main_room').collection('kicked').doc(uid).set({
-        kickedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      await voiceRoomRef().collection('participants').doc(uid).delete();
+      await voiceRoomRef().collection('kicked').doc(uid).set({ kickedAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast(`✅ تم إخراج ${name}`);
     } catch(e) { showToast('❌ فشل الإخراج'); }
   };
@@ -6416,25 +6539,24 @@ window.playChatSound = function() {
       container.innerHTML = '<div style="text-align:center;color:#666;padding:2rem"><i class="fas fa-microphone-slash"></i><p>لا يوجد مشاركون</p></div>';
       return;
     }
-    const myUid = currentUserId || '';
+    const myUid = myVoiceUID || '';
     let html = '';
     voiceRoomParticipants.forEach((p, uid) => {
       const isMe = uid === myUid;
       const initial = (p.name||'?').charAt(0).toUpperCase();
       const colors = ['#6366f1','#ec4899','#10b981','#f59e0b','#06b6d4','#8b5cf6'];
       const color = colors[Math.abs(uid.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % colors.length];
-      html += `
-        <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem;background:rgba(255,255,255,.05);border-radius:12px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.08)">
-          <div style="width:44px;height:44px;background:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0;position:relative">
-            ${initial}
-            ${p.muted ? '<span style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;background:#ef4444;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem">🔇</span>' : '<span style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem">🎙</span>'}
-          </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name||'مستخدم'}${isMe?' <span style="font-size:.75rem;color:#888">(أنت)</span>':''}</div>
-            <div style="font-size:.78rem;color:${p.muted?'#ef4444':'#10b981'}">${p.muted?'🔇 صوت مكتوم':'🎙️ يتحدث'}</div>
-          </div>
-          ${(isAdmin && !isMe) ? `<button onclick="kickVoiceParticipant('${uid}','${(p.name||'').replace(/'/g,"\\'")}')" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#ef4444;border-radius:8px;padding:.3rem .7rem;cursor:pointer;font-size:.78rem;white-space:nowrap"><i class="fas fa-times"></i> إخراج</button>` : ''}
-        </div>`;
+      html += `<div style="display:flex;align-items:center;gap:.75rem;padding:.75rem;background:rgba(255,255,255,.05);border-radius:12px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.08)">
+        <div style="width:44px;height:44px;background:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0;position:relative">
+          ${initial}
+          ${p.muted ? '<span style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;background:#ef4444;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem">🔇</span>' : '<span style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem">🎙</span>'}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name||'مستخدم'}${isMe?' <span style="font-size:.75rem;color:#888">(أنت)</span>':''}</div>
+          <div style="font-size:.78rem;color:${p.muted?'#ef4444':'#10b981'}">${p.muted?'🔇 صوت مكتوم':'🎙️ يتحدث'}</div>
+        </div>
+        ${(isAdmin && !isMe) ? `<button onclick="kickVoiceParticipant('${uid}','${(p.name||'').replace(/'/g,"\\'")}')" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#ef4444;border-radius:8px;padding:.3rem .7rem;cursor:pointer;font-size:.78rem;white-space:nowrap"><i class="fas fa-times"></i> إخراج</button>` : ''}
+      </div>`;
     });
     container.innerHTML = html;
   }
