@@ -430,6 +430,60 @@
     .message-time { font-size: .75rem; color: #888; margin-top: .5rem; text-align: left; direction: ltr; }
     .message.sent .message-time { color: rgba(255,255,255,.7); text-align: right; }
     @media (max-width:768px) { .chat-container { height: 100vh; max-width: 100%; border-radius: 0; } .chat-btn { bottom: 1rem; left: 1rem; width: 55px; height: 55px; } .message { max-width: 85%; padding: .875rem 1rem; } .chat-header { padding: 1rem; } .chat-avatar { width: 40px; height: 40px; font-size: 1.2rem; } .message-delete-btn { display: flex; } .voice-message { min-width: 200px; } }
+
+    /* ===== تحسينات المحادثة الجماعية ===== */
+    #chatModal .message {
+      padding: .75rem 1rem;
+      border-radius: 18px;
+      max-width: 80%;
+      position: relative;
+      word-wrap: break-word;
+      line-height: 1.5;
+      font-size: .9rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+      transition: transform .15s;
+      animation: msgSlideIn .25s ease;
+    }
+    @keyframes msgSlideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    #chatModal .message.received {
+      background: linear-gradient(135deg, rgba(30,20,50,.95), rgba(40,25,65,.9));
+      border: 1px solid rgba(99,102,241,.2);
+      border-bottom-right-radius: 6px;
+      align-self: flex-start;
+    }
+    #chatModal .message.sent {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-bottom-left-radius: 6px;
+      align-self: flex-end;
+      box-shadow: 0 4px 15px rgba(99,102,241,.35);
+    }
+    #chatModal .message-sender-name {
+      font-size: .72rem;
+      font-weight: 700;
+      color: #a78bfa;
+      margin-bottom: .3rem;
+      display: block;
+    }
+    #chatModal .message-text { color: #f1f1f1; }
+    #chatModal .message-time {
+      font-size: .65rem;
+      color: rgba(255,255,255,.5);
+      margin-top: .35rem;
+      display: flex;
+      align-items: center;
+      gap: .25rem;
+    }
+    #chatModal .message.sent .message-time { justify-content: flex-end; color: rgba(255,255,255,.65); }
+
+    /* مودال المحادثة الجماعية - تحسين الشكل */
+    #groupChatAdminModal .modal-content {
+      animation: slideUpModal .35s cubic-bezier(.34,1.2,.64,1);
+    }
+    @keyframes slideUpModal { from { transform: translateY(100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+    /* قائمة نوع المكالمة */
+    #callTypeMenu { animation: fadeInUp .2s ease; }
+    #callTypeMenu button:active { transform: scale(.97); }
     .maintenance-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.95); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 100000; flex-direction: column; text-align: center; padding: 2rem; }
     .maintenance-overlay.active { display: flex; animation: fadeIn .5s; }
     .maintenance-icon { width: 150px; height: 150px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 4rem; margin-bottom: 2rem; box-shadow: 0 20px 60px rgba(99,102,241,.4); animation: glow 3s infinite; }
@@ -1194,6 +1248,7 @@
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
+            <div class="settings-menu-item admin-only" id="groupChatAdminMenuItem" style="display:none" onclick="openGroupChatAdminPanel();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-users-cog" style="color:#a855f7"></i> إدارة المحادثة الجماعية</div>
           </div>
         </div>
       </div>
@@ -1264,13 +1319,13 @@
   </div>
 
   <!-- مودال إدارة المحادثة الجماعية -->
-  <div class="modal" id="groupChatAdminModal" style="z-index:10001">
-    <div class="modal-content" style="max-width:600px">
-      <div class="modal-header">
-        <h3><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</h3>
+  <div class="modal" id="groupChatAdminModal" style="z-index:10001;align-items:flex-end">
+    <div class="modal-content" style="max-width:600px;width:100%;max-height:92dvh;display:flex;flex-direction:column;border-radius:24px 24px 0 0;margin:0">
+      <div class="modal-header" style="flex-shrink:0;background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(168,85,247,.15));border-bottom:1px solid rgba(99,102,241,.3);padding:1rem 1.25rem">
+        <h3 style="display:flex;align-items:center;gap:.6rem;font-size:1rem"><i class="fas fa-users-cog" style="color:#a855f7"></i> إدارة المحادثة الجماعية</h3>
         <button class="modal-close" onclick="closeGroupChatAdminPanel()"><i class="fas fa-times"></i></button>
       </div>
-      <div class="modal-body" id="groupChatAdminBody">
+      <div class="modal-body" id="groupChatAdminBody" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1rem">
         <div id="gcAdminContent"></div>
       </div>
     </div>
@@ -1278,17 +1333,65 @@
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="playChatSound(); openChat();" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
-  <!-- زر إدارة المحادثة الجماعية - للمشرف الرئيسي فقط -->
-  <button id="groupAdminBtn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة الجماعية"
-    style="display:none;position:fixed;bottom:7.5rem;left:2rem;width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;border:none;color:#fff;font-size:1rem;cursor:pointer;box-shadow:0 6px 20px rgba(99,102,241,.5);z-index:999;align-items:center;justify-content:center;transition:all .3s;">
-    <i class="fas fa-cog"></i>
-  </button>
+  <!-- زر إدارة المحادثة الجماعية مدمج في قائمة الترس - لا يظهر هنا -->
 
   <!-- جميع المودالات (نفس الكود الأصلي مع إبقاء الوظائف) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="openAIVoiceChat()" title="دردشة صوتية مع الذكاء الاصطناعي" style="background:rgba(6,182,212,.2);color:#06b6d4"><i class="fas fa-headphones"></i></button><button class="chat-action-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="إيقاف الصوت" style="color:#10b981"><i class="fas fa-volume-up"></i></button><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div id="aiFilePreview" style="display:none;padding:.5rem;margin-bottom:.5rem;background:rgba(6,182,212,.1);border-radius:10px;border:1px solid rgba(6,182,212,.3);position:relative"><span id="aiFilePreviewName" style="color:#06b6d4;font-size:.85rem"></span><button onclick="clearAIFile()" style="position:absolute;top:.3rem;left:.3rem;background:rgba(239,68,68,.3);border:none;color:#ef4444;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem"><i class="fas fa-times"></i></button></div><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
-  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions"><button class="chat-action-btn" id="groupVoiceCallBtn" onclick="openGroupVoiceRoom()" title="مكالمة صوتية جماعية" style="background:rgba(16,185,129,.25);color:#10b981;border:1px solid rgba(16,185,129,.5);position:relative"><i class="fas fa-microphone"></i><span id="voiceRoomBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:50%;width:16px;height:16px;font-size:.65rem;align-items:center;justify-content:center">0</span></button><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
+  <div class="modal chat-modal" id="chatModal">
+    <div class="chat-container" style="border-radius:0;display:flex;flex-direction:column;height:100vh">
+      <!-- هيدر المحادثة الجماعية -->
+      <div class="chat-header" style="background:linear-gradient(135deg,rgba(26,16,37,.98),rgba(30,20,50,.98));backdrop-filter:blur(20px);border-bottom:1px solid rgba(99,102,241,.25);padding:.75rem 1rem;flex-shrink:0">
+        <div class="chat-header-info">
+          <div class="chat-avatar" style="background:linear-gradient(135deg,#6366f1,#ec4899);width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 15px rgba(99,102,241,.4)"><i class="fas fa-users"></i></div>
+          <div class="chat-header-text">
+            <h3 style="font-size:.95rem;font-weight:700;color:#fff">دردشة Astronomy and space</h3>
+            <p style="font-size:.75rem;color:#86efac;display:flex;align-items:center;gap:.3rem"><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p>
+          </div>
+        </div>
+        <div class="chat-actions" style="gap:.4rem">
+          <!-- زر المكالمة مع قائمة منسدلة -->
+          <div style="position:relative" id="callTypeDropdown">
+            <button class="chat-action-btn" id="groupVoiceCallBtn" onclick="toggleCallTypeMenu()" title="بدء مكالمة" style="background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(6,182,212,.2));color:#10b981;border:1px solid rgba(16,185,129,.5);position:relative;border-radius:10px">
+              <i class="fas fa-phone"></i>
+              <span id="voiceRoomBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:50%;width:16px;height:16px;font-size:.65rem;align-items:center;justify-content:center">0</span>
+            </button>
+            <div id="callTypeMenu" style="display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(20,12,35,.98);backdrop-filter:blur(16px);border:1px solid rgba(99,102,241,.4);border-radius:14px;padding:.4rem;min-width:170px;z-index:999;box-shadow:0 15px 40px rgba(0,0,0,.6)">
+              <button onclick="openGroupVoiceRoom();closeCallTypeMenu()" style="display:flex;align-items:center;gap:.6rem;width:100%;padding:.6rem .85rem;background:none;border:none;color:#fff;font-family:Cairo;font-size:.85rem;cursor:pointer;border-radius:10px;transition:.2s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='none'">
+                <span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.8rem"><i class="fas fa-microphone"></i></span> صوتية
+              </button>
+              <button onclick="openGroupVideoCall();closeCallTypeMenu()" style="display:flex;align-items:center;gap:.6rem;width:100%;padding:.6rem .85rem;background:none;border:none;color:#fff;font-family:Cairo;font-size:.85rem;cursor:pointer;border-radius:10px;transition:.2s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='none'">
+                <span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:.8rem"><i class="fas fa-video"></i></span> فيديو
+              </button>
+              <button onclick="switchToTextOnly();closeCallTypeMenu()" style="display:flex;align-items:center;gap:.6rem;width:100%;padding:.6rem .85rem;background:none;border:none;color:#fff;font-family:Cairo;font-size:.85rem;cursor:pointer;border-radius:10px;transition:.2s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='none'">
+                <span style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:.8rem"><i class="fas fa-comment-dots"></i></span> نصية فقط
+              </button>
+            </div>
+          </div>
+          <button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none;border-radius:10px" id="groupAdminBtn"><i class="fas fa-cog"></i></button>
+          <button class="chat-action-btn" onclick="closeChat()" title="إغلاق" style="border-radius:10px"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <!-- منطقة الرسائل -->
+      <div class="chat-messages" id="chatMessages" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.5rem"></div>
+
+      <!-- منطقة الإدخال -->
+      <div class="chat-input-area" style="flex-shrink:0;background:rgba(15,10,26,.95);border-top:1px solid rgba(99,102,241,.2);padding:.65rem .75rem .65rem">
+        <div class="recording-indicator" id="recordingIndicator" style="margin-bottom:.4rem">
+          <span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span>
+        </div>
+        <div class="chat-input-wrapper" style="background:rgba(30,20,50,.8);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:.35rem .5rem;gap:.3rem;align-items:center">
+          <button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة" style="border-radius:10px;color:#a78bfa;background:rgba(99,102,241,.15)"><i class="fas fa-image"></i></button>
+          <input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)">
+          <button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية" style="border-radius:10px;color:#10b981;background:rgba(16,185,129,.12)"><i class="fas fa-microphone"></i></button>
+          <textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)" style="background:transparent;border:none;flex:1;resize:none;color:#fff;font-family:Cairo;font-size:.9rem;padding:.3rem .4rem;max-height:120px;overflow-y:auto"></textarea>
+          <button class="chat-send-btn" onclick="sendMessage()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;width:38px;height:38px;flex-shrink:0;box-shadow:0 4px 15px rgba(99,102,241,.4)"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar" id="drawingToolbar">
   <!-- أدوات الرسم الأساسية -->
   <span class="db-tool-label">رسم</span>
@@ -1931,6 +2034,9 @@ async function updateAdminUI() {
         // Show admin chat manage button (super admin only)
         const adminChatBtn = document.getElementById('groupAdminBtn');
         if (adminChatBtn) adminChatBtn.style.display = isSuperAdmin ? 'flex' : 'none';
+        // إظهار زر إدارة المحادثة في الترس
+        const gcAdminMenuItem = document.getElementById('groupChatAdminMenuItem');
+        if (gcAdminMenuItem) gcAdminMenuItem.style.display = isSuperAdmin ? 'flex' : 'none';
         updateStorageBar();
         loadAIKnowledgeFromFirebase();
         const cancelBtn = document.getElementById("cancelMaintenanceBtn");
@@ -5388,6 +5494,103 @@ document.addEventListener('keydown', function(e) {
 
 // Expose
 window.openGroupChatAdminPanel = openGroupChatAdminPanel;
+
+// ===== وظائف قائمة نوع المكالمة =====
+window.toggleCallTypeMenu = function() {
+  const menu = document.getElementById('callTypeMenu');
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) menu.style.flexDirection = 'column';
+  // إغلاق عند الضغط خارجها
+  if (!isOpen) {
+    setTimeout(() => {
+      document.addEventListener('click', function closeMenu(e) {
+        if (!document.getElementById('callTypeDropdown')?.contains(e.target)) {
+          closeCallTypeMenu();
+          document.removeEventListener('click', closeMenu);
+        }
+      });
+    }, 50);
+  }
+};
+
+window.closeCallTypeMenu = function() {
+  const menu = document.getElementById('callTypeMenu');
+  if (menu) menu.style.display = 'none';
+};
+
+// مكالمة فيديو جماعية
+window.openGroupVideoCall = async function() {
+  if (!currentUser) { showToast('❌ سجل دخولك أولاً'); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    // إنشاء مودال بسيط لعرض الفيديو
+    let vidModal = document.getElementById('groupVideoCallModal');
+    if (!vidModal) {
+      vidModal = document.createElement('div');
+      vidModal.id = 'groupVideoCallModal';
+      vidModal.style.cssText = 'position:fixed;inset:0;background:#050308;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+      vidModal.innerHTML = \`
+        <div style="position:relative;width:100%;max-width:500px;padding:1rem">
+          <div style="background:rgba(26,16,37,.95);border-radius:20px;overflow:hidden;border:1px solid rgba(99,102,241,.3);box-shadow:0 20px 60px rgba(0,0,0,.8)">
+            <div style="padding:1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(99,102,241,.2)">
+              <div style="display:flex;align-items:center;gap:.5rem;color:#fff;font-weight:700"><i class="fas fa-video" style="color:#6366f1"></i> مكالمة فيديو جماعية</div>
+              <span id="videoCallTimer" style="color:#10b981;font-size:.85rem;font-weight:700">00:00</span>
+            </div>
+            <video id="localVideoEl" autoplay muted playsinline style="width:100%;max-height:60vh;object-fit:cover;background:#000"></video>
+            <div style="padding:.75rem;display:flex;justify-content:center;gap:1rem">
+              <button onclick="toggleVideoMic()" id="vidMicBtn" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 15px rgba(99,102,241,.4)"><i class="fas fa-microphone"></i></button>
+              <button onclick="endVideoCall()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 15px rgba(239,68,68,.5)"><i class="fas fa-phone-slash"></i></button>
+              <button onclick="toggleVideoCamera()" id="vidCamBtn" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);border:none;color:#fff;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 15px rgba(16,185,129,.4)"><i class="fas fa-video"></i></button>
+            </div>
+          </div>
+        </div>\`;
+      document.body.appendChild(vidModal);
+    } else {
+      vidModal.style.display = 'flex';
+    }
+    const videoEl = document.getElementById('localVideoEl');
+    if (videoEl) videoEl.srcObject = stream;
+    window._videoCallStream = stream;
+    // مؤقت
+    let secs = 0;
+    window._videoCallTimer = setInterval(() => {
+      secs++;
+      const el = document.getElementById('videoCallTimer');
+      if (el) el.textContent = Math.floor(secs/60).toString().padStart(2,'0') + ':' + (secs%60).toString().padStart(2,'0');
+    }, 1000);
+    SoundEffects && SoundEffects.join();
+  } catch(e) {
+    showToast('❌ لا يمكن الوصول للكاميرا أو الميكروفون');
+  }
+};
+
+window.endVideoCall = function() {
+  if (window._videoCallStream) { window._videoCallStream.getTracks().forEach(t => t.stop()); window._videoCallStream = null; }
+  clearInterval(window._videoCallTimer);
+  const modal = document.getElementById('groupVideoCallModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.toggleVideoMic = function() {
+  if (!window._videoCallStream) return;
+  const track = window._videoCallStream.getAudioTracks()[0];
+  if (track) { track.enabled = !track.enabled; const btn = document.getElementById('vidMicBtn'); if (btn) btn.style.background = track.enabled ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'linear-gradient(135deg,#ef4444,#dc2626)'; btn.innerHTML = \`<i class="fas fa-microphone\${track.enabled?'':'-slash'}"></i>\`; }
+};
+
+window.toggleVideoCamera = function() {
+  if (!window._videoCallStream) return;
+  const track = window._videoCallStream.getVideoTracks()[0];
+  if (track) { track.enabled = !track.enabled; const btn = document.getElementById('vidCamBtn'); if (btn) { btn.style.background = track.enabled ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#64748b,#475569)'; btn.innerHTML = \`<i class="fas fa-video\${track.enabled?'':'-slash'}"></i>\`; } }
+};
+
+window.switchToTextOnly = function() {
+  // وضع نص فقط - إغلاق المكالمة إن وجدت
+  endVideoCall();
+  if (typeof endCall === 'function') endCall();
+  showToast('✅ تم التبديل لوضع النص فقط');
+};
 window.closeGroupChatAdminPanel = closeGroupChatAdminPanel;
 window.addGcAdmin = addGcAdmin;
 window.removeGcAdmin = removeGcAdmin;
