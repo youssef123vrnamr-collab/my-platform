@@ -1889,15 +1889,9 @@ async function isAdminUser(userId) {
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
   // ========== Admin & UI ==========
-// ========== Admin & UI ==========
 async function updateAdminUI() {
-    // ✅ أول حاجة: لو في مستخدم جوجل مسجل، أجب token جديد عشان نعرف صلاحياته
-    if (googleUser && googleUser.getIdTokenResult) {
-        try {
-            const tokenResult = await googleUser.getIdTokenResult();
-            window.isAdminClaim = tokenResult.claims.admin === true;
-        } catch(e) { console.warn("token error", e); }
-    }
+    // تحديث صلاحيات المشرف من Firestore أولاً
+    await refreshAdminStatusFromFirestore();
 
     const adminOnlyItems = document.querySelectorAll('.admin-only');
     const userOnlyItems = document.querySelectorAll('.user-only');
@@ -1909,36 +1903,51 @@ async function updateAdminUI() {
     const emailSettingsMenuItem = document.getElementById("emailSettingsMenuItem");
     const setAdminsMenuItem = document.getElementById("setAdminsMenuItem");
     const teachAIMenuItem = document.getElementById("teachAIMenuItem");
+    const supervisorPayoutMenuItem = document.getElementById("supervisorPayoutMenuItem");
+    
+    // زر إدارة المحادثة الجماعية (للمشرف الرئيسي فقط)
+    const groupAdminBtn = document.getElementById('groupAdminBtn');
 
     const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
     const isLocalOnly = (currentUser && currentUserPhone) && !googleUser;
     const isGoogleUser = !!googleUser;
 
-    // ✅ صلاحية المشرف: تُحدَّد فقط من Firestore (admin_accounts) بناءً على بريد جوجل المسجَّل
-    // window.isAdminClaim مازالت محترمة لمن لديه custom claim من Firebase Admin SDK
-    if (window.isAdminClaim === true) isAdmin = true;
-    // ملحوظة: localStorage لم يعد موثوقاً وحده — الرجوع لـ Firestore يتم في refreshAdminStatusFromFirestore()
-
     if (isAdmin) {
-        userOnlyItems.forEach(el => el.style.display = "none");
-        if(localOnlyItem) localOnlyItem.style.display = "none";
+        // إظهار عناصر المشرف
         adminOnlyItems.forEach(el => el.style.display = "flex");
-        if (setAdminsMenuItem) setAdminsMenuItem.style.display = "flex";
-        if (teachAIMenuItem) teachAIMenuItem.style.display = "flex";
+        if(localOnlyItem) localOnlyItem.style.display = "none";
+        userOnlyItems.forEach(el => el.style.display = "none");
+        
         if (uploadZone) uploadZone.classList.add("active");
         if (storageBar) storageBar.style.display = "block";
         if (manageAppsMenuItem) manageAppsMenuItem.style.display = "flex";
         if (viewFeedbacksMenuItem) viewFeedbacksMenuItem.style.display = "flex";
         if (emailSettingsMenuItem) emailSettingsMenuItem.style.display = "flex";
-        // Show admin chat manage button (super admin only)
-        const adminChatBtn = document.getElementById('groupAdminBtn');
-        if (adminChatBtn) adminChatBtn.style.display = isSuperAdmin ? 'flex' : 'none';
+        if (supervisorPayoutMenuItem) supervisorPayoutMenuItem.style.display = "flex";
+        if (teachAIMenuItem) teachAIMenuItem.style.display = "flex";
+        
+        // زر "تحديد المشرفين" يظهر فقط للمشرف الرئيسي (super_admin)
+        if (setAdminsMenuItem) {
+            setAdminsMenuItem.style.display = isSuperAdmin ? "flex" : "none";
+        }
+        
+        // زر إدارة المحادثة الجماعية يظهر فقط للمشرف الرئيسي
+        if (groupAdminBtn) {
+            groupAdminBtn.style.display = isSuperAdmin ? "flex" : "none";
+        }
+        
         updateStorageBar();
         loadAIKnowledgeFromFirebase();
+        
         const cancelBtn = document.getElementById("cancelMaintenanceBtn");
-        if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
+        if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) {
+            cancelBtn.classList.add("active");
+        }
     } else {
+        // مستخدم عادي
         adminOnlyItems.forEach(el => el.style.display = "none");
+        if (groupAdminBtn) groupAdminBtn.style.display = "none";
+        
         if (isUserLoggedIn) {
             userOnlyItems.forEach(el => el.style.display = "flex");
             const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
