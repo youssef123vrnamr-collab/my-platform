@@ -2377,6 +2377,7 @@ async function updateAdminUI() {
   
   let watchedFlag = false;
   
+  // حدث التقدم
   p.addEventListener("timeupdate", function() {
     if (!watchedFlag && p.duration > 0 && (p.currentTime / p.duration) >= 0.8) {
       watchedFlag = true;
@@ -2384,12 +2385,14 @@ async function updateAdminUI() {
     }
   });
   
+  // حدث الانتهاء
   p.addEventListener("ended", function() {
     if (!watchedFlag) markVideoAsWatched(videoIdForWatch);
     if (currentUserId) saveUserDataToFirebase(currentUserId);
     else localStorage.removeItem(STORAGE_KEY);
   });
   
+  // حفظ التقدم عند الإيقاف المؤقت أو إغلاق الصفحة
   p.addEventListener("pause", saveVideoProgress);
   window.addEventListener("beforeunload", saveVideoProgress);
 }
