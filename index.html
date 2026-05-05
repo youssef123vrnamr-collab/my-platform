@@ -2408,10 +2408,15 @@ async function updateAdminUI() {
       const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
       const email = _normEmail(au && au.email);
       const uid = au && au.uid;
-      if (!au || typeof db === "undefined" || !db) return { isAdmin:false, isSuperAdmin:false, email: email || "" };
+      console.log("🔍 fetchMyAdminInfo — auth.currentUser:", au ? au.email : "NULL", "| uid:", uid);
+      if (!au || typeof db === "undefined" || !db) {
+        console.warn("⚠️ fetchMyAdminInfo: auth.currentUser is NULL أو db غير جاهز");
+        return { isAdmin:false, isSuperAdmin:false, email: email || "" };
+      }
       // Check by email first
       if (email) {
         const snap = await db.collection(ADMIN_ACCOUNTS_COL).doc(email).get();
+        console.log("🔍 email check:", email, "| exists:", snap.exists, snap.exists ? snap.data() : "");
         if (snap.exists) {
           const role = (snap.data() || {}).role || "admin";
           return { isAdmin:true, isSuperAdmin: role === "super_admin", email };
@@ -2420,9 +2425,23 @@ async function updateAdminUI() {
       // Check by UID
       if (uid) {
         const snapUid = await db.collection("admin_accounts_uid").doc(uid).get();
+        console.log("🔍 UID check:", uid, "| exists:", snapUid.exists);
         if (snapUid.exists) {
           const role = (snapUid.data() || {}).role || "admin";
           return { isAdmin:true, isSuperAdmin: role === "super_admin", email: email || uid };
+        }
+      }
+      // Fallback: scan all admin_accounts for matching email variations
+      if (email) {
+        const allSnap = await db.collection(ADMIN_ACCOUNTS_COL).get();
+        console.log("🔍 Scanning all admin_accounts:", allSnap.docs.map(d => d.id));
+        for (const doc of allSnap.docs) {
+          const storedEmail = (doc.data().email || doc.id || "").trim().toLowerCase();
+          if (storedEmail === email) {
+            const role = (doc.data() || {}).role || "admin";
+            console.log("✅ Found via scan:", storedEmail, "role:", role);
+            return { isAdmin:true, isSuperAdmin: role === "super_admin", email };
+          }
         }
       }
       return { isAdmin:false, isSuperAdmin:false, email: email || "" };
@@ -2528,8 +2547,29 @@ async function updateAdminUI() {
   async function openSetAdminsModal(){
     if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
     if (!isSuperAdmin) {
+      // إعادة التحقق من Firestore مباشرة
       const info = await fetchMyAdminInfo();
       isSuperAdmin = !!info.isSuperAdmin;
+      // إذا فشل التحقق عبر Google، نتحقق إذا كان هو المشرف الرئيسي الوحيد
+      if (!isSuperAdmin) {
+        try {
+          const snap = await db.collection(ADMIN_ACCOUNTS_COL).get();
+          const allAdmins = snap.docs.map(d => d.data());
+          const superAdmins = allAdmins.filter(a => a.role === 'super_admin');
+          // إذا كان في مشرف رئيسي واحد فقط وهو المسجّل حالياً
+          if (superAdmins.length === 1) {
+            const au = (typeof auth !== "undefined" && auth && auth.currentUser) ? auth.currentUser : null;
+            const myEmail = au && au.email ? au.email.trim().toLowerCase() : null;
+            if (myEmail && superAdmins[0].email && superAdmins[0].email.trim().toLowerCase() === myEmail) {
+              isSuperAdmin = true;
+            }
+          }
+          // إذا كانت قائمة المشرفين فارغة تماماً وأنت مشرف = أنت الأول
+          if (allAdmins.length === 0 && isAdmin) {
+            isSuperAdmin = true;
+          }
+        } catch(e) { console.warn("openSetAdminsModal fallback check failed", e); }
+      }
       if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف الرئيسي فقط"); return; }
     }
     document.getElementById("setAdminsModal").classList.add("active");
