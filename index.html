@@ -6924,11 +6924,17 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       // my own tile
       gvcRenderMyTile();
 
-      // Firestore presence
-      gvcMyRef = gvcRoomRef().collection('participants').doc(gvcMyUID);
-      await gvcMyRef.set({ name:currentUser||'مستخدم', uid:gvcMyUID, muted:false, camOff:false, isAdmin:!!isAdmin, joinedAt:firebase.firestore.FieldValue.serverTimestamp(), lastSeen:firebase.firestore.FieldValue.serverTimestamp() });
+      // ====== الترتيب المهم ======
+      // 1️⃣ الأول: ابدأ الـ signal listener عشان متضيعش أي offer
+      gvcSignalUnsub = gvcRoomRef().collection('signals').where('to','==',gvcMyUID).onSnapshot(async snap=>{
+        for (const ch of snap.docChanges()) {
+          if (ch.type==='added'||ch.type==='modified') {
+            try { await gvcHandleSignal(ch.doc.data()); } catch(e){ console.error('signal err',e); }
+          }
+        }
+      });
 
-      // Watch participants
+      // 2️⃣ تاني: ابدأ الـ participants listener
       let gvcKnownUIDs = new Set();
       gvcUnsub = gvcRoomRef().collection('participants').onSnapshot(async snap => {
         const live = new Set();
@@ -6942,30 +6948,30 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
             gvcKnownUIDs.delete(uid);
           }
         }
-
         gvcUpdateGrid();
         gvcUpdateCount();
 
-        // كل شخص جديد في الأوضة — ابعتله offer
+        // كل شخص جديد — ابعتله offer
         for (const uid of live) {
           if (uid === gvcMyUID) continue;
           if (gvcKnownUIDs.has(uid)) continue;
           gvcKnownUIDs.add(uid);
-          // تأخير صغير عشان الطرف التاني يبقى signal listener شغال
           setTimeout(async () => {
             if (gvcActive && !gvcPeers[uid]) {
               await gvcCreateOffer(uid);
             }
-          }, 1500);
+          }, 800);
         }
         gvcKnownUIDs.add(gvcMyUID);
       });
 
-      // Watch signals
-      gvcSignalUnsub = gvcRoomRef().collection('signals').where('to','==',gvcMyUID).onSnapshot(async snap=>{
-        for (const ch of snap.docChanges()) {
-          if (ch.type==='added'||ch.type==='modified') { try{ await gvcHandleSignal(ch.doc.data(),ch.doc.id); }catch(e){} }
-        }
+      // 3️⃣ أخيراً: اكتب نفسك في Firestore — دلوقتي التانيين هيشوفوك
+      gvcMyRef = gvcRoomRef().collection('participants').doc(gvcMyUID);
+      await gvcMyRef.set({
+        name: currentUser||'مستخدم', uid: gvcMyUID,
+        muted: false, camOff: false, isAdmin: !!isAdmin,
+        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
       });
 
       // Heartbeat
