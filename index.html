@@ -1190,6 +1190,7 @@
             <div class="settings-menu-item admin-only" id="manageAppsMenuItem" style="display: none;"><i class="fas fa-th-large"></i> إدارة التطبيقات</div>
             <div class="settings-menu-item admin-only" id="viewFeedbacksMenuItem" style="display: none;"><i class="fas fa-chart-simple"></i> معرفة رأي الجمهور</div>
             <div class="settings-menu-item admin-only" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد الإلكتروني</div>
+            <div class="settings-menu-item admin-only" id="zoomLinkMenuItem" style="display: none;" onclick="openZoomLinkSettings();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-video" style="color:#2d8cff"></i> رابط Zoom للمحاضرات</div>
             <div class="settings-menu-item admin-only" id="supervisorPayoutMenuItem" style="display: none;"><i class="fas fa-credit-card"></i> ربط استلام المدفوعات (مشرف)</div>
             <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
@@ -1291,7 +1292,7 @@
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div id="aiFilePreview" style="display:none;padding:.5rem;margin-bottom:.5rem;background:rgba(6,182,212,.1);border-radius:10px;border:1px solid rgba(6,182,212,.3);position:relative"><span id="aiFilePreviewName" style="color:#06b6d4;font-size:.85rem"></span><button onclick="clearAIFile()" style="position:absolute;top:.3rem;left:.3rem;background:rgba(239,68,68,.3);border:none;color:#ef4444;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem"><i class="fas fa-times"></i></button></div><div class="chat-input-container"><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="إيقاف/تشغيل الصوت" style="color:#10b981;flex-shrink:0"><i class="fas fa-volume-up"></i></button><button class="chat-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية" style="color:#06b6d4;flex-shrink:0"><i class="fas fa-headphones"></i></button><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
-  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions" style="flex-direction:column;gap:.4rem;align-items:center"><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button><button class="chat-action-btn" id="groupVoiceCallBtn" onclick="openGroupVoiceRoom()" title="مكالمة صوتية جماعية" style="background:rgba(16,185,129,.25);color:#10b981;border:1px solid rgba(16,185,129,.5);position:relative"><i class="fas fa-microphone"></i><span id="voiceRoomBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:50%;width:16px;height:16px;font-size:.65rem;align-items:center;justify-content:center">0</span></button><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
+  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions" style="flex-direction:column;gap:.4rem;align-items:center"><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button><button class="chat-action-btn" id="zoomJoinBtn" onclick="joinZoomFromChat()" title="انضم لمحاضرة Zoom" style="background:rgba(45,140,255,.25);color:#2d8cff;border:1px solid rgba(45,140,255,.5);position:relative;display:none"><i class="fas fa-video"></i></button><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar" id="drawingToolbar">
   <!-- أدوات الرسم الأساسية -->
   <span class="db-tool-label">رسم</span>
@@ -6746,6 +6747,135 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
 #groupVoiceRoomModal { align-items: center !important; justify-content: center !important; background: rgba(0,0,0,.75) !important; }
 </style>
 
+
+<!-- ===== Zoom Link Settings Modal ===== -->
+<div class="modal" id="zoomLinkModal" style="z-index:10005">
+  <div class="modal-content" style="max-width:480px">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(45,140,255,.25),rgba(99,102,241,.2))">
+      <h3><i class="fas fa-video" style="color:#2d8cff"></i> رابط Zoom للمحاضرات</h3>
+      <button class="modal-close" onclick="closeZoomLinkSettings()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem">
+      <p style="color:#aaa;font-size:.9rem;line-height:1.7">أدخل رابط Zoom للمحاضرة. سيظهر زرار <b style="color:#2d8cff">انضم للمحاضرة</b> للجميع في الدردشة الجماعية ويفتح الرابط مباشرةً.</p>
+      <div class="form-group">
+        <label style="font-weight:600;margin-bottom:.5rem;display:block"><i class="fas fa-link" style="color:#2d8cff"></i> رابط Zoom</label>
+        <input id="zoomLinkInput" type="url" placeholder="https://zoom.us/j/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(45,140,255,.4);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem;direction:ltr">
+      </div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="saveZoomLink()" style="flex:1;justify-content:center;background:linear-gradient(135deg,#2d8cff,#6366f1)">
+          <i class="fas fa-save"></i> حفظ الرابط
+        </button>
+        <button class="btn btn-danger" onclick="clearZoomLink()" style="flex:1;justify-content:center">
+          <i class="fas fa-trash"></i> إزالة الرابط
+        </button>
+      </div>
+      <div id="zoomCurrentStatus" style="background:rgba(45,140,255,.1);border:1px solid rgba(45,140,255,.3);border-radius:10px;padding:.75rem 1rem;font-size:.85rem;color:#aaa;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+#zoomLinkModal { align-items: center !important; justify-content: center !important; background: rgba(0,0,0,.8) !important; padding: 1rem !important; }
+#zoomLinkModal > .modal-content { width: 94% !important; max-width: 480px !important; min-height: unset !important; height: auto !important; max-height: 92dvh !important; border-radius: 20px !important; overflow: hidden !important; }
+</style>
+
+<script>
+// ===== ZOOM LINK FEATURE =====
+(function() {
+  const ZOOM_DOC = 'platform_settings';
+  const ZOOM_FIELD = 'zoomLink';
+
+  // Listen to zoom link from Firestore and update button visibility
+  function listenZoomLink() {
+    if (!db) { setTimeout(listenZoomLink, 1000); return; }
+    db.collection('settings').doc(ZOOM_DOC).onSnapshot(snap => {
+      const link = snap.exists && snap.data()[ZOOM_FIELD] ? snap.data()[ZOOM_FIELD].trim() : '';
+      const btn = document.getElementById('zoomJoinBtn');
+      if (btn) btn.style.display = link ? 'flex' : 'none';
+      // Save to window for use in joinZoomFromChat
+      window._zoomLink = link;
+      // Update status in modal if open
+      const statusEl = document.getElementById('zoomCurrentStatus');
+      if (statusEl) {
+        if (link) {
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> الرابط الحالي: <span style="color:#2d8cff;direction:ltr;word-break:break-all">' + link + '</span>';
+        } else {
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = '<i class="fas fa-times-circle" style="color:#ef4444"></i> لا يوجد رابط محفوظ حالياً';
+        }
+      }
+    }, () => {});
+  }
+
+  window.openZoomLinkSettings = function() {
+    const modal = document.getElementById('zoomLinkModal');
+    if (modal) modal.classList.add('active');
+    const inp = document.getElementById('zoomLinkInput');
+    if (inp) inp.value = window._zoomLink || '';
+    const statusEl = document.getElementById('zoomCurrentStatus');
+    if (statusEl) {
+      const link = window._zoomLink || '';
+      if (link) {
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> الرابط الحالي: <span style="color:#2d8cff;direction:ltr;word-break:break-all">' + link + '</span>';
+      } else {
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<i class="fas fa-times-circle" style="color:#ef4444"></i> لا يوجد رابط محفوظ حالياً';
+      }
+    }
+  };
+
+  window.closeZoomLinkSettings = function() {
+    const modal = document.getElementById('zoomLinkModal');
+    if (modal) modal.classList.remove('active');
+  };
+
+  window.saveZoomLink = async function() {
+    const inp = document.getElementById('zoomLinkInput');
+    const link = inp ? inp.value.trim() : '';
+    if (!link) { showToast('❌ أدخل الرابط أولاً'); return; }
+    if (!link.startsWith('http')) { showToast('❌ رابط غير صالح'); return; }
+    try {
+      await db.collection('settings').doc(ZOOM_DOC).set({ [ZOOM_FIELD]: link }, { merge: true });
+      showToast('✅ تم حفظ رابط Zoom');
+      closeZoomLinkSettings();
+    } catch(e) { showToast('❌ فشل الحفظ'); }
+  };
+
+  window.clearZoomLink = async function() {
+    if (!confirm('هل تريد إزالة رابط Zoom؟ سيختفي الزرار من الدردشة.')) return;
+    try {
+      await db.collection('settings').doc(ZOOM_DOC).set({ [ZOOM_FIELD]: '' }, { merge: true });
+      const inp = document.getElementById('zoomLinkInput');
+      if (inp) inp.value = '';
+      showToast('🗑️ تم إزالة الرابط');
+    } catch(e) { showToast('❌ فشل الحذف'); }
+  };
+
+  window.joinZoomFromChat = function() {
+    const link = window._zoomLink || '';
+    if (!link) { showToast('❌ لا يوجد رابط محاضرة حالياً'); return; }
+    window.open(link, '_blank');
+  };
+
+  // Start listening when db is ready
+  if (typeof db !== 'undefined' && db) {
+    listenZoomLink();
+  } else {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(listenZoomLink, 2000));
+    setTimeout(listenZoomLink, 2000);
+  }
+
+  // Also show zoomLinkMenuItem for admins (hook into updateAdminUI)
+  const _origUpdateAdminUI = window.updateAdminUI;
+  window.updateAdminUI = function() {
+    if (_origUpdateAdminUI) _origUpdateAdminUI.apply(this, arguments);
+    const el = document.getElementById('zoomLinkMenuItem');
+    if (el) el.style.display = (window.isAdmin) ? 'flex' : 'none';
+  };
+})();
+</script>
 
 <div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
 <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
