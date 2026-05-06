@@ -1099,15 +1099,25 @@
 
 /* ===== تكبير الصورة على الموبايل ===== */
 @media (max-width: 767px) {
+  .hero {
+    overflow: visible !important;
+  }
+  .container {
+    overflow-x: hidden;
+  }
   .hero-banner-img {
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     margin-top: 1.2rem !important;
-    box-shadow: 0 16px 48px rgba(99,102,241,0.5), 0 6px 18px rgba(0,0,0,0.5) !important;
-    /* تكبير الصورة بجعلها تتجاوز حدود الـ container قليلاً */
-    width: calc(100% + 2rem) !important;
-    margin-left: -1rem !important;
-    margin-right: -1rem !important;
-    max-width: calc(100% + 2rem) !important;
+    box-shadow: 0 16px 48px rgba(99,102,241,0.55), 0 6px 18px rgba(0,0,0,0.5) !important;
+    /* كسر حدود الـ hero والـ container كاملاً - عرض الشاشة بالكامل */
+    display: block !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    position: relative !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 }
 
@@ -1440,7 +1450,7 @@
       <div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div>
       <h2>اكتشف أسرار <span>الكون</span></h2>
       <p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
-      <img src="welcome-banner.svg" alt="منصة متكاملة لتعليم علم الفلك" class="hero-banner-img" style="width:100%;max-width:100%;height:auto;aspect-ratio:900/380;border-radius:18px;box-shadow:0 24px 70px rgba(99,102,241,0.45),0 8px 24px rgba(0,0,0,0.4);display:block;margin:1.5rem auto 0;"/>
+      <img src="welcome-banner.svg" alt="منصة متكاملة لتعليم علم الفلك" class="hero-banner-img" style="height:auto;aspect-ratio:900/380;border-radius:18px;box-shadow:0 24px 70px rgba(99,102,241,0.45),0 8px 24px rgba(0,0,0,0.4);display:block;margin:1.5rem auto 0;width:100%;max-width:100%;"/>
     </div>
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
     <!-- Dashboard شخصي (مخفي بناءً على طلب المستخدم) -->
