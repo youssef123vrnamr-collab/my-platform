@@ -6871,9 +6871,10 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'turn:openrelay.metered.ca:80',              username:'openrelayproject', credential:'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443',             username:'openrelayproject', credential:'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject', credential:'openrelayproject' }
+      { urls: 'turn:astronomy.metered.live:80',               username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
+      { urls: 'turn:astronomy.metered.live:443',              username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
+      { urls: 'turn:astronomy.metered.live:443?transport=tcp',username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
+      { urls: 'turns:astronomy.metered.live:443',             username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' }
     ]
   };
 
@@ -7002,7 +7003,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     // استقبل tracks من التاني
     pc.ontrack = e => {
       if (!participants[remoteUID]) participants[remoteUID] = {};
-      const st = e.streams[0];
+      const st = (e.streams && e.streams[0]) ? e.streams[0] : new MediaStream([e.track]);
       renderRemoteTile(remoteUID, st);
     };
 
