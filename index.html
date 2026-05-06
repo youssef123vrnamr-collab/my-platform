@@ -1123,6 +1123,111 @@
   }
 }
 
+
+/* ===== PDF Files Feature ===== */
+.pdf-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+.pdf-card {
+  background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.07));
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.25s;
+  cursor: pointer;
+  position: relative;
+}
+.pdf-card:hover {
+  border-color: rgba(239,68,68,0.6);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(239,68,68,0.2);
+}
+.pdf-card-icon {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; color: #fff;
+  box-shadow: 0 6px 18px rgba(239,68,68,0.4);
+  flex-shrink: 0;
+}
+.pdf-card-info { flex: 1; min-width: 0; }
+.pdf-card-title {
+  font-size: 0.95rem; font-weight: 700;
+  color: #f1f5f9; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+.pdf-card-desc {
+  font-size: 0.78rem; color: #94a3b8; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.pdf-card-meta {
+  font-size: 0.72rem; color: #64748b;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.pdf-open-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 0.55rem 1rem; font-family: Cairo,sans-serif;
+  font-weight: 700; font-size: 0.82rem; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem;
+  width: 100%;  justify-content: center;
+}
+.pdf-open-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.pdf-delete-btn {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4);
+  color: #ef4444; border-radius: 8px; width: 30px; height: 30px;
+  display: none; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.75rem; transition: all 0.2s;
+}
+.pdf-card:hover .pdf-delete-btn { display: flex; }
+.pdf-delete-btn:hover { background: rgba(239,68,68,0.8); color: #fff; }
+.pdf-empty-state {
+  text-align: center; padding: 3rem 2rem; color: #64748b;
+}
+.pdf-empty-state i { font-size: 3rem; color: #ef4444; margin-bottom: 1rem; opacity: 0.5; }
+.pdf-add-form {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 16px; padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.pdf-add-form h4 {
+  color: #fca5a5; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem;
+}
+.pdf-input {
+  width: 100%; padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; color: #fff;
+  font-family: Cairo,sans-serif; font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+.pdf-input:focus { outline: none; border-color: rgba(239,68,68,0.6); }
+.pdf-save-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 0.7rem 1.5rem; font-family: Cairo,sans-serif;
+  font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.25s; display: inline-flex;
+  align-items: center; gap: 0.5rem;
+}
+.pdf-save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(239,68,68,0.4); }
+@media (max-width:767px) {
+  .pdf-modal-grid { grid-template-columns: 1fr; }
+}
+
 /* ===== الفوتر الاحترافي ===== */
 .platform-footer {
   background: linear-gradient(180deg, transparent 0%, rgba(5,3,8,0.95) 20%, #050308 100%);
@@ -1390,6 +1495,7 @@
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('telescopes');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);margin-left:6px;font-size:.8rem"><i class="fas fa-search" style="color:#fff"></i></span> التلسكوبات</div>
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('phenomena');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);margin-left:6px;font-size:.8rem"><i class="fas fa-bolt" style="color:#fff"></i></span> ظواهر فلكية</div>
             <div class="settings-menu-item" onclick="openStudentProgress();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fde047,#f59e0b);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> تقدم الطالب</div>
+            <div class="settings-menu-item" onclick="openPdfFilesModal();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);margin-left:6px;font-size:.8rem"><i class="fas fa-file-pdf" style="color:#fff"></i></span> ملفات الدروس</div>
             <div class="settings-menu-item" onclick="openPrivateAdminChat();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#10b981);margin-left:6px;font-size:.8rem"><i class="fas fa-user-shield" style="color:#fff"></i></span> تواصل مع المشرفين</div>
           </div>
         </div>
@@ -1412,6 +1518,7 @@
             <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item admin-only" id="groupAdminMenuItem" style="display: none;" onclick="openGroupChatAdminPanel();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</div>
+            <div class="settings-menu-item admin-only" id="pdfFilesMenuItem" style="display: none;" onclick="openPdfManagerModal();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-file-pdf" style="color:#ef4444"></i> إدارة ملفات PDF</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
@@ -1440,12 +1547,7 @@
       <div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div>
       <h2>اكتشف أسرار <span>الكون</span></h2>
       <p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
-      <div class="hero-banner-wrapper">
-  <picture>
-    <source media="(max-width: 767px)" srcset="welcome-banner-mobile.svg">
-    <img src="welcome-banner.svg" alt="منصة متكاملة لتعليم علم الفلك" class="hero-banner-img"/>
-  </picture>
-</div>
+      <img src="welcome-banner.svg" alt="منصة متكاملة لتعليم علم الفلك" style="width:100%;height:auto;border-radius:14px;box-shadow:0 20px 60px rgba(99,102,241,0.45);display:block;margin-top:1.5rem;"/>
     </div>
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
     <!-- Dashboard شخصي (مخفي بناءً على طلب المستخدم) -->
@@ -7176,5 +7278,274 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
 </script>
 
 <div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
+
+<!-- ===== مودال ملفات PDF للطلاب ===== -->
+<div class="modal" id="pdfFilesModal" style="z-index:9998">
+  <div class="modal-content" style="max-width:100%">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-pdf" style="color:#ef4444"></i> ملفات الدروس</h3>
+      <button class="modal-close" onclick="closePdfFilesModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="pdfFilesLoading" style="text-align:center;padding:3rem;color:#aaa"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#ef4444"></i><p style="margin-top:1rem">جاري تحميل الملفات...</p></div>
+      <div id="pdfFilesGrid" class="pdf-modal-grid" style="display:none"></div>
+      <div id="pdfFilesEmpty" class="pdf-empty-state" style="display:none">
+        <i class="fas fa-file-pdf"></i>
+        <h3>لا توجد ملفات بعد</h3>
+        <p>لم يتم رفع أي ملفات PDF حتى الآن</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== مودال إدارة PDF للمشرف ===== -->
+<div class="modal" id="pdfManagerModal" style="z-index:9999">
+  <div class="modal-content" style="max-width:100%">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-pdf" style="color:#ef4444"></i> إدارة ملفات PDF</h3>
+      <button class="modal-close" onclick="closePdfManagerModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <!-- فورم الإضافة -->
+      <div class="pdf-add-form">
+        <h4><i class="fas fa-plus-circle"></i> إضافة ملف PDF جديد</h4>
+        <input id="pdfTitleInput" class="pdf-input" placeholder="عنوان الملف (مثال: الدرس الأول - المصفوفات)" maxlength="100"/>
+        <input id="pdfDescInput" class="pdf-input" placeholder="وصف مختصر (اختياري)" maxlength="200"/>
+        <input id="pdfUrlInput" class="pdf-input" placeholder="رابط ملف PDF (Google Drive, Dropbox, ...)" dir="ltr"/>
+        <p style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.75rem">
+          <i class="fas fa-info-circle"></i> ارفع الملف على Google Drive أو Dropbox وانسخ رابط المشاركة هنا
+        </p>
+        <button class="pdf-save-btn" onclick="savePdfFile()"><i class="fas fa-save"></i> حفظ الملف</button>
+      </div>
+      <!-- قائمة الملفات -->
+      <h4 style="color:#c4b5fd;margin-bottom:1rem"><i class="fas fa-list"></i> الملفات المضافة</h4>
+      <div id="pdfManagerLoading" style="text-align:center;padding:2rem;color:#aaa"><i class="fas fa-spinner fa-spin" style="color:#ef4444"></i></div>
+      <div id="pdfManagerGrid" class="pdf-modal-grid" style="display:none"></div>
+      <div id="pdfManagerEmpty" class="pdf-empty-state" style="display:none">
+        <i class="fas fa-file-pdf"></i>
+        <h3>لا توجد ملفات</h3>
+        <p>أضف أول ملف من الفورم أعلاه</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PDF Viewer Modal ===== -->
+<div class="modal" id="pdfViewerModal" style="z-index:10005">
+  <div class="modal-content" style="max-width:100%;background:#000">
+    <div class="modal-header" style="background:rgba(239,68,68,0.2)">
+      <h3 id="pdfViewerTitle"><i class="fas fa-file-pdf" style="color:#ef4444"></i> عرض الملف</h3>
+      <div style="display:flex;gap:0.5rem">
+        <button onclick="downloadCurrentPdf()" style="background:rgba(16,185,129,0.2);border:1px solid #10b981;color:#10b981;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-family:Cairo;font-size:0.82rem;display:flex;align-items:center;gap:0.4rem"><i class="fas fa-download"></i> تحميل</button>
+        <button class="modal-close" onclick="closePdfViewerModal()"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:0;height:calc(100vh - 70px)">
+      <iframe id="pdfViewerFrame" style="width:100%;height:100%;border:none;background:#fff" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ===== PDF Files Feature =====
+(function() {
+  const PDF_COL = 'pdf_files';
+
+  // ---- Open/Close modals ----
+  window.openPdfFilesModal = function() {
+    const m = document.getElementById('pdfFilesModal');
+    if (m) m.classList.add('active');
+    loadPdfFilesForStudents();
+  };
+  window.closePdfFilesModal = function() {
+    const m = document.getElementById('pdfFilesModal');
+    if (m) m.classList.remove('active');
+  };
+  window.openPdfManagerModal = function() {
+    const m = document.getElementById('pdfManagerModal');
+    if (m) m.classList.add('active');
+    loadPdfFilesForManager();
+  };
+  window.closePdfManagerModal = function() {
+    const m = document.getElementById('pdfManagerModal');
+    if (m) m.classList.remove('active');
+  };
+  window.closePdfViewerModal = function() {
+    const m = document.getElementById('pdfViewerModal');
+    if (m) m.classList.remove('active');
+    const frame = document.getElementById('pdfViewerFrame');
+    if (frame) frame.src = '';
+  };
+
+  // ---- Convert share link to direct/embed link ----
+  function convertToEmbedUrl(url) {
+    if (!url) return url;
+    // Google Drive share link -> embed
+    const gdriveMath = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (gdriveMath) return `https://drive.google.com/file/d/${gdriveMath[1]}/preview`;
+    // Dropbox -> direct
+    if (url.includes('dropbox.com')) return url.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
+    return url;
+  }
+
+  function convertToDownloadUrl(url) {
+    if (!url) return url;
+    const gdriveMath = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (gdriveMath) return `https://drive.google.com/uc?export=download&id=${gdriveMath[1]}`;
+    if (url.includes('dropbox.com')) return url.replace('?dl=0', '?dl=1');
+    return url;
+  }
+
+  window._currentPdfDownloadUrl = '';
+
+  window.downloadCurrentPdf = function() {
+    if (window._currentPdfDownloadUrl) window.open(window._currentPdfDownloadUrl, '_blank');
+  };
+
+  // ---- Open PDF viewer ----
+  window.openPdfViewer = function(title, url) {
+    const m = document.getElementById('pdfViewerModal');
+    const frame = document.getElementById('pdfViewerFrame');
+    const titleEl = document.getElementById('pdfViewerTitle');
+    if (!m || !frame) return;
+    const embedUrl = convertToEmbedUrl(url);
+    window._currentPdfDownloadUrl = convertToDownloadUrl(url);
+    if (titleEl) titleEl.innerHTML = '<i class="fas fa-file-pdf" style="color:#ef4444"></i> ' + title;
+    frame.src = embedUrl;
+    m.classList.add('active');
+  };
+
+  // ---- Load PDFs for students ----
+  async function loadPdfFilesForStudents() {
+    const loading = document.getElementById('pdfFilesLoading');
+    const grid = document.getElementById('pdfFilesGrid');
+    const empty = document.getElementById('pdfFilesEmpty');
+    if (loading) loading.style.display = 'block';
+    if (grid) grid.style.display = 'none';
+    if (empty) empty.style.display = 'none';
+    try {
+      const snap = await db.collection(PDF_COL).orderBy('createdAt', 'desc').get();
+      const files = [];
+      snap.forEach(d => files.push({ id: d.id, ...d.data() }));
+      if (loading) loading.style.display = 'none';
+      if (!files.length) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+      if (grid) {
+        grid.style.display = 'grid';
+        grid.innerHTML = files.map(f => `
+          <div class="pdf-card" onclick="openPdfViewer('${escapeHtml(f.title)}', '${escapeHtml(f.url)}')">
+            <div style="display:flex;gap:0.75rem;align-items:flex-start">
+              <div class="pdf-card-icon"><i class="fas fa-file-pdf"></i></div>
+              <div class="pdf-card-info">
+                <div class="pdf-card-title">${escapeHtml(f.title)}</div>
+                ${f.description ? `<div class="pdf-card-desc">${escapeHtml(f.description)}</div>` : ''}
+                <div class="pdf-card-meta"><i class="fas fa-calendar-alt"></i> ${f.createdAt?.toDate ? f.createdAt.toDate().toLocaleDateString('ar-EG') : ''}</div>
+              </div>
+            </div>
+            <button class="pdf-open-btn"><i class="fas fa-eye"></i> فتح الملف</button>
+          </div>
+        `).join('');
+      }
+    } catch(e) {
+      console.error('loadPdfFiles error:', e);
+      if (loading) loading.innerHTML = '<p style="color:#ef4444">❌ فشل تحميل الملفات</p>';
+    }
+  }
+
+  // ---- Load PDFs for manager ----
+  async function loadPdfFilesForManager() {
+    const loading = document.getElementById('pdfManagerLoading');
+    const grid = document.getElementById('pdfManagerGrid');
+    const empty = document.getElementById('pdfManagerEmpty');
+    if (loading) loading.style.display = 'block';
+    if (grid) grid.style.display = 'none';
+    if (empty) empty.style.display = 'none';
+    try {
+      const snap = await db.collection(PDF_COL).orderBy('createdAt', 'desc').get();
+      const files = [];
+      snap.forEach(d => files.push({ id: d.id, ...d.data() }));
+      if (loading) loading.style.display = 'none';
+      if (!files.length) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+      if (grid) {
+        grid.style.display = 'grid';
+        grid.innerHTML = files.map(f => `
+          <div class="pdf-card">
+            <button class="pdf-delete-btn" onclick="event.stopPropagation();deletePdfFile('${f.id}','${escapeHtml(f.title)}')">
+              <i class="fas fa-trash"></i>
+            </button>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start">
+              <div class="pdf-card-icon"><i class="fas fa-file-pdf"></i></div>
+              <div class="pdf-card-info">
+                <div class="pdf-card-title">${escapeHtml(f.title)}</div>
+                ${f.description ? `<div class="pdf-card-desc">${escapeHtml(f.description)}</div>` : ''}
+                <div class="pdf-card-meta"><i class="fas fa-calendar-alt"></i> ${f.createdAt?.toDate ? f.createdAt.toDate().toLocaleDateString('ar-EG') : ''}</div>
+              </div>
+            </div>
+            <button class="pdf-open-btn" onclick="openPdfViewer('${escapeHtml(f.title)}', '${escapeHtml(f.url)}')"><i class="fas fa-eye"></i> معاينة</button>
+          </div>
+        `).join('');
+      }
+    } catch(e) {
+      console.error('loadPdfManager error:', e);
+      if (loading) loading.innerHTML = '<p style="color:#ef4444">❌ فشل التحميل</p>';
+    }
+  }
+
+  // ---- Save PDF ----
+  window.savePdfFile = async function() {
+    if (!isAdmin) { showToast('❌ المشرف فقط يمكنه الإضافة'); return; }
+    const title = document.getElementById('pdfTitleInput')?.value.trim();
+    const desc  = document.getElementById('pdfDescInput')?.value.trim();
+    const url   = document.getElementById('pdfUrlInput')?.value.trim();
+    if (!title) { showToast('⚠️ أدخل عنوان الملف'); return; }
+    if (!url)   { showToast('⚠️ أدخل رابط الملف'); return; }
+    if (!url.startsWith('http')) { showToast('❌ الرابط غير صالح'); return; }
+    try {
+      await db.collection(PDF_COL).add({
+        title, description: desc || '', url,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        addedBy: currentUser || 'مشرف'
+      });
+      document.getElementById('pdfTitleInput').value = '';
+      document.getElementById('pdfDescInput').value = '';
+      document.getElementById('pdfUrlInput').value = '';
+      showToast('✅ تم إضافة الملف بنجاح');
+      loadPdfFilesForManager();
+    } catch(e) {
+      console.error('savePdf error:', e);
+      showToast('❌ فشل الحفظ: ' + (e.message || ''));
+    }
+  };
+
+  // ---- Delete PDF ----
+  window.deletePdfFile = async function(id, title) {
+    if (!isAdmin) { showToast('❌ المشرف فقط'); return; }
+    if (!confirm('حذف الملف: ' + title + '؟')) return;
+    try {
+      await db.collection(PDF_COL).doc(id).delete();
+      showToast('🗑️ تم الحذف');
+      loadPdfFilesForManager();
+    } catch(e) {
+      showToast('❌ فشل الحذف');
+    }
+  };
+
+  // ---- Show PDF button in updateAdminUI ----
+  const _origUpdateAdminUI2 = window.updateAdminUI;
+  window.updateAdminUI = function() {
+    if (_origUpdateAdminUI2) _origUpdateAdminUI2.apply(this, arguments);
+    const el = document.getElementById('pdfFilesMenuItem');
+    if (el) el.style.display = (window.isAdmin) ? 'flex' : 'none';
+  };
+
+})();
+</script>
+
 <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
 </html>
