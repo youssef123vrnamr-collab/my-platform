@@ -1519,7 +1519,7 @@
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item admin-only" id="groupAdminMenuItem" style="display: none;" onclick="openGroupChatAdminPanel();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</div>
             <div class="settings-menu-item admin-only" id="pdfFilesMenuItem" style="display: none;" onclick="openPdfManagerModal();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-file-pdf" style="color:#ef4444"></i> إدارة ملفات PDF</div>
-            <div class="settings-menu-item admin-only" id="manageCoursesMenuItem" style="display: none;" onclick="openManageCoursesAdmin();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-graduation-cap" style="color:#f59e0b"></i> إدارة الكورسات</div>
+            <div class="settings-menu-item admin-only" id="manageCoursesMenuItem" style="display: none;" onclick="showCoursesList();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-graduation-cap" style="color:#f59e0b"></i> إدارة الكورسات</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
@@ -1563,7 +1563,7 @@
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
     <div class="course-actions-toolbar" style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;gap:.75rem;flex-wrap:wrap">
       <!-- زرار الكورسات المدفوعة — ظاهر للجميع دائماً -->
-      <button class="btn" id="showCoursesBtn" onclick="showCoursesList()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;display:flex;align-items:center;gap:.45rem;font-weight:700;box-shadow:0 4px 16px rgba(245,158,11,.4)"><i class="fas fa-graduation-cap"></i> الكورسات المدفوعة</button>
+      <button class="btn" id="showCoursesBtn" onclick="showCoursesList()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;display:flex;align-items:center;gap:.45rem;font-weight:700;box-shadow:0 4px 16px rgba(245,158,11,.4)"><i class="fas fa-graduation-cap"></i> الكورسات</button>
       <div>
         <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
       </div>
@@ -2488,14 +2488,15 @@ async function updateAdminUI() {
           if (isPaid) paidSet.add(id);
           else freeSet.add(id);
         });
-        if (isPaid && ids.length) {
+        // كل الكورسات تظهر كبطاقات في المكتبة (مدفوعة ومجانية)
+        if (ids.length) {
           paidArr.push({ id: d.id, title: c.title || 'كورس بدون اسم', videoIds: ids, price: c.price || 0 });
         }
       });
       paidCourseVideoIds = paidSet;
       freeCourseVideoIds = freeSet;
       paidCoursesData = paidArr;
-      // Show/hide "الكورسات المدفوعة" button based on whether paid courses exist
+      // Show/hide "الكورسات" button based on whether any courses exist
       const coursesBtn = document.getElementById('showCoursesBtn');
       if (coursesBtn) coursesBtn.style.display = paidArr.length > 0 ? '' : 'none';
       renderVideos();
