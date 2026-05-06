@@ -1097,6 +1097,223 @@
 }
 .student-delete-btn i { font-size: 0.95rem; }
 
+/* ===== تكبير الصورة على الموبايل ===== */
+@media (max-width: 767px) {
+  .hero-banner-img {
+    border-radius: 12px !important;
+    margin-top: 1.2rem !important;
+    box-shadow: 0 16px 48px rgba(99,102,241,0.5), 0 6px 18px rgba(0,0,0,0.5) !important;
+    /* تكبير الصورة بجعلها تتجاوز حدود الـ container قليلاً */
+    width: calc(100% + 2rem) !important;
+    margin-left: -1rem !important;
+    margin-right: -1rem !important;
+    max-width: calc(100% + 2rem) !important;
+  }
+}
+
+/* ===== تكبير أيقونة الفيديوهات على الكمبيوتر فقط ===== */
+@media (min-width: 768px) {
+  .videos-heading-icon {
+    font-size: 2rem !important;
+    filter: drop-shadow(0 0 8px rgba(236,72,153,0.6));
+  }
+  .videos-library-heading {
+    font-size: 1.5rem !important;
+    align-items: center;
+  }
+}
+
+/* ===== الفوتر الاحترافي ===== */
+.platform-footer {
+  background: linear-gradient(180deg, transparent 0%, rgba(5,3,8,0.95) 20%, #050308 100%);
+  border-top: 1px solid rgba(99,102,241,0.25);
+  padding: 3rem 2rem 1.5rem;
+  margin-top: 4rem;
+  position: relative;
+  overflow: hidden;
+}
+.platform-footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.6), rgba(236,72,153,0.5), rgba(99,102,241,0.6), transparent);
+}
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+.footer-brand-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.footer-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.footer-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(99,102,241,0.5);
+  box-shadow: 0 0 18px rgba(99,102,241,0.35);
+}
+.footer-logo img { width: 100%; height: 100%; object-fit: cover; }
+.footer-brand-name {
+  font-size: 1.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #fff, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.footer-tagline {
+  color: #9690a8;
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+.footer-col-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.footer-col-title i { color: #ec4899; font-size: 0.85rem; }
+.footer-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #aaa;
+  font-size: 0.88rem;
+  margin-bottom: 0.75rem;
+  transition: color 0.25s;
+}
+.footer-contact-item i {
+  width: 30px;
+  height: 30px;
+  background: rgba(99,102,241,0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6366f1;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.footer-contact-item a {
+  color: #a5b4fc;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-contact-item a:hover { color: #c4b5fd; }
+.footer-phone-highlight {
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.12));
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #e0e7ff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  direction: ltr;
+  width: fit-content;
+}
+.footer-phone-highlight i { color: #10b981; font-size: 1rem; }
+.footer-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-links-list li {
+  margin-bottom: 0.6rem;
+}
+.footer-links-list li a, .footer-links-list li span {
+  color: #9690a8;
+  font-size: 0.88rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color 0.2s, padding-right 0.2s;
+  cursor: default;
+}
+.footer-links-list li a::before, .footer-links-list li span::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  background: #6366f1;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.footer-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  margin: 0 0 1.5rem;
+}
+.footer-bottom {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.footer-copyright {
+  color: #6b6783;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.footer-copyright span.brand-highlight {
+  color: #a5b4fc;
+  font-weight: 700;
+}
+.footer-copyright i { color: #ec4899; }
+.footer-badges {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: #a5b4fc;
+}
+.footer-badge.green { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.25); color: #6ee7b7; }
+.footer-badge i { font-size: 0.7rem; }
+
+@media (max-width: 767px) {
+  .footer-inner {
+    grid-template-columns: 1fr !important;
+    gap: 2rem;
+  }
+  .platform-footer { padding: 2.5rem 1.25rem 1.25rem; margin-top: 2.5rem; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
 /* ===== Responsive videos grid (override earlier rules) ===== */
 /* الحاوي الخارجي: الأقسام تحت بعض (مش جريد) */
 .videos-grid, #videosContainer {
@@ -1223,7 +1440,7 @@
       <div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div>
       <h2>اكتشف أسرار <span>الكون</span></h2>
       <p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
-      <img src="welcome-banner.svg" alt="منصة متكاملة لتعليم علم الفلك" style="width:100%;max-width:100%;height:auto;aspect-ratio:900/380;border-radius:18px;box-shadow:0 24px 70px rgba(99,102,241,0.45),0 8px 24px rgba(0,0,0,0.4);display:block;margin:1.5rem auto 0;"/>
+      <img src="welcome-banner.svg" alt="منصة متكاملة لتعليم علم الفلك" class="hero-banner-img" style="width:100%;max-width:100%;height:auto;aspect-ratio:900/380;border-radius:18px;box-shadow:0 24px 70px rgba(99,102,241,0.45),0 8px 24px rgba(0,0,0,0.4);display:block;margin:1.5rem auto 0;"/>
     </div>
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
     <!-- Dashboard شخصي (مخفي بناءً على طلب المستخدم) -->
@@ -1244,7 +1461,7 @@
 
     <!-- cosmos carousel removed - accessible via hamburger menu -->
 
-    <h3 style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
+    <h3 class="videos-library-heading" style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle videos-heading-icon" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
     <div class="videos-grid" id="videosContainer"></div>
     <div id="loadingIndicator" class="loading-videos" style="display: none;">
       <!-- تأثير الثقب الأسود أثناء التحميل -->
@@ -1270,6 +1487,74 @@
       <button class="retry-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> محاولة السحب من الثقب مرة أخرى</button>
     </div>
   </div>
+
+
+  <!-- ===== الفوتر الاحترافي ===== -->
+  <footer class="platform-footer">
+    <div class="footer-inner">
+      <!-- العمود الأول: الهوية -->
+      <div class="footer-brand-col">
+        <div class="footer-logo-wrap">
+          <div class="footer-logo">
+            <img src="https://www.dropbox.com/scl/fi/1ve6jc5zqojwqzg8tlvjn/1774547945457.png?rlkey=mfmudk5fo36a7b3ny99aydwwl&raw=1" alt="Astronomy and space">
+          </div>
+          <span class="footer-brand-name">Astronomy and space</span>
+        </div>
+        <p class="footer-tagline">منصة متكاملة لتعليم علم الفلك والفضاء بأسلوب علمي مبسّط وتفاعلي. استكشف الكون، تعلم، واكتشف أسراره.</p>
+        <div class="footer-badges">
+          <span class="footer-badge"><i class="fas fa-shield-alt"></i> تعليم موثوق</span>
+          <span class="footer-badge green"><i class="fas fa-check-circle"></i> محتوى مجاني</span>
+        </div>
+      </div>
+      <!-- العمود الثاني: روابط سريعة -->
+      <div>
+        <div class="footer-col-title"><i class="fas fa-link"></i> روابط سريعة</div>
+        <ul class="footer-links-list">
+          <li><span>مكتبة الفيديوهات</span></li>
+          <li><span>النجوم والكواكب</span></li>
+          <li><span>المجرات والثقوب السوداء</span></li>
+          <li><span>مهمات فضائية</span></li>
+          <li><span>أخبار الكون</span></li>
+          <li><span>الامتحانات والتقييم</span></li>
+        </ul>
+      </div>
+      <!-- العمود الثالث: التواصل -->
+      <div>
+        <div class="footer-col-title"><i class="fas fa-headset"></i> تواصل معنا</div>
+        <div class="footer-contact-item">
+          <i class="fas fa-phone-alt"></i>
+          <span>للتواصل والاستفسار:</span>
+        </div>
+        <div class="footer-phone-highlight">
+          <i class="fas fa-phone-alt"></i>
+          <span dir="ltr">01557823683</span>
+        </div>
+        <div class="footer-contact-item" style="margin-top: 1rem;">
+          <i class="fas fa-clock"></i>
+          <span>متاح للرد طوال أيام الأسبوع</span>
+        </div>
+        <div class="footer-contact-item">
+          <i class="fas fa-globe"></i>
+          <span>Astronomy and space Platform</span>
+        </div>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <div class="footer-copyright">
+        <i class="fas fa-copyright"></i>
+        <span>جميع الحقوق محفوظة</span>
+        <span class="brand-highlight">Astronomy and space</span>
+        <span>© 2025</span>
+        <span style="color:#6b6783">—</span>
+        <span>لا يُسمح بإعادة النشر أو النسخ بدون إذن مسبق</span>
+      </div>
+      <div class="footer-badges">
+        <span class="footer-badge"><i class="fas fa-rocket"></i> منصة فلكية</span>
+        <span class="footer-badge green"><i class="fas fa-star"></i> علم وترفيه</span>
+      </div>
+    </div>
+  </footer>
 
   <!-- مودال إدارة المحادثة الجماعية -->
   <div class="modal" id="groupChatAdminModal" style="z-index:10001">
