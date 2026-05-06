@@ -6871,10 +6871,10 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'turn:astronomy.metered.live:80',               username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
-      { urls: 'turn:astronomy.metered.live:443',              username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
-      { urls: 'turn:astronomy.metered.live:443?transport=tcp',username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
-      { urls: 'turns:astronomy.metered.live:443',             username:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' }
+      { urls: 'turn:astronomy.metered.live:80',                username:'astronomy', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
+      { urls: 'turn:astronomy.metered.live:443',               username:'astronomy', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
+      { urls: 'turn:astronomy.metered.live:443?transport=tcp', username:'astronomy', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' },
+      { urls: 'turns:astronomy.metered.live:443',              username:'astronomy', credential:'x4-pICHStDUOyX78RV5NaLFOiZhoY_seiSFttyEqzFpfzGHR' }
     ]
   };
 
@@ -6957,11 +6957,12 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       renderGrid();
       updateCount();
 
-      // أي شخص جديد مش أنا ومعندناش peer معاه → ابعتله offer
+      // الـ UID الأكبر هو اللي يبعت offer — عشان نتجنب glare
       live.forEach(uid => {
         if (uid === myUID) return;
         if (peers[uid]) return;
-        makePeer(uid, true); // true = أنا اللي بيعمل offer
+        const iInitiate = myUID > uid;
+        makePeer(uid, iInitiate);
       });
     });
 
@@ -7020,15 +7021,23 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed') {
+      console.log('Connection state [' + remoteUID + ']:', pc.connectionState);
+      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
         closePeer(remoteUID);
-        // retry
         setTimeout(() => {
           if (isActive && participants[remoteUID] && !peers[remoteUID]) {
-            makePeer(remoteUID, true);
+            const iInitiate = myUID > remoteUID;
+            makePeer(remoteUID, iInitiate);
           }
         }, 3000);
       }
+      if (pc.connectionState === 'connected') {
+        console.log('✅ Connected to', remoteUID);
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('ICE state [' + remoteUID + ']:', pc.iceConnectionState);
     };
 
     if (createOffer) {
