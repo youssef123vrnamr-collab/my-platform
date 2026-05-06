@@ -6864,452 +6864,419 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
 <script>
 // ============================================================
 //  GROUP VIDEO CALL  —  WebRTC Mesh via Firestore Signaling
+//  Clean rewrite — correct signaling order
 // ============================================================
 (function(){
-  const GVC_STUN = {
+  const ICE_CONFIG = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'turn:openrelay.metered.ca:80',    username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443',   username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-    ],
-    iceCandidatePoolSize: 10
+      { urls: 'turn:openrelay.metered.ca:80',              username:'openrelayproject', credential:'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443',             username:'openrelayproject', credential:'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject', credential:'openrelayproject' }
+    ]
   };
-  let gvcStream = null;       // local camera+mic stream
-  let gvcScreenStream = null; // screen share stream
-  let gvcActive = false;
-  let gvcMuted = false;
-  let gvcCamOff = false;
-  let gvcSharing = false;
-  let gvcMyUID = null;
-  let gvcMyRef = null;
-  let gvcPeers = {};          // uid -> RTCPeerConnection
-  let gvcRemoteStreams = {};  // uid -> MediaStream
-  let gvcParticipants = new Map();
-  let gvcUnsub = null;
-  let gvcSignalUnsub = null;
-  let gvcInterval = null;
-  let gvcTimerInterval = null;
-  let gvcSeconds = 0;
-  let gvcIceCandidateBuffer = {}; // buffer ICE candidates until remote desc is ready
 
-  const gvcRoomRef = () => db.collection('video_room').doc('main_room');
-  const gvcSignalRef = (from, to) => gvcRoomRef().collection('signals').doc(from+'__'+to);
+  // ── State ──────────────────────────────────────────────────
+  let localStream    = null;
+  let screenStream   = null;
+  let myUID          = null;
+  let myRef          = null;
+  let peers          = {};   // uid → RTCPeerConnection
+  let pendingICE     = {};   // uid → RTCIceCandidate[]  (buffered before remoteDesc)
+  let participants   = {};   // uid → {name, muted, camOff}
+  let isMuted        = false;
+  let isCamOff       = false;
+  let isSharing      = false;
+  let isActive       = false;
+  let unsubParts     = null;
+  let unsubSigs      = null;
+  let heartbeat      = null;
+  let timerInterval  = null;
+  let seconds        = 0;
 
-  // -------- OPEN --------
+  const room   = () => db.collection('gvc_room').doc('main');
+  const parts  = () => room().collection('participants');
+  const sigs   = () => room().collection('signals');
+
+  // ── OPEN / CLOSE ───────────────────────────────────────────
   window.openGroupVideoRoom = async function() {
     if (!currentUser) { showToast('❌ يجب تسجيل الدخول أولاً'); return; }
-    const modal = document.getElementById('groupVoiceRoomModal');
-    if (modal) modal.classList.add('active');
-    await gvcJoin();
+    document.getElementById('groupVoiceRoomModal').classList.add('active');
+    await join();
   };
-
-  // -------- CLOSE --------
   window.closeGroupVideoRoom = function() {
-    gvcLeave();
-    const modal = document.getElementById('groupVoiceRoomModal');
-    if (modal) modal.classList.remove('active');
+    leave();
+    document.getElementById('groupVoiceRoomModal').classList.remove('active');
   };
-  // backward compat
-  window.closeGroupVoiceRoom = window.closeGroupVideoRoom;
+  window.closeGroupVoiceRoom   = window.closeGroupVideoRoom;
+  window.openGroupVoiceRoom    = window.openGroupVideoRoom;
 
-  // -------- JOIN --------
-  async function gvcJoin() {
+  // ── JOIN ───────────────────────────────────────────────────
+  async function join() {
     try {
-      gvcStream = await navigator.mediaDevices.getUserMedia({ audio:true, video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:720} } });
-      gvcActive = true; gvcMuted = false; gvcCamOff = false;
-      gvcMyUID = currentUserId || ('g_'+Math.random().toString(36).substr(2,9));
-
-      // my own tile
-      gvcRenderMyTile();
-
-      // ====== الترتيب المهم ======
-      // 1️⃣ الأول: ابدأ الـ signal listener عشان متضيعش أي offer
-      gvcSignalUnsub = gvcRoomRef().collection('signals').where('to','==',gvcMyUID).onSnapshot(async snap=>{
-        for (const ch of snap.docChanges()) {
-          if (ch.type==='added'||ch.type==='modified') {
-            try { await gvcHandleSignal(ch.doc.data()); } catch(e){ console.error('signal err',e); }
-          }
-        }
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: { facingMode:'user', width:{ideal:1280}, height:{ideal:720} }
       });
-
-      // 2️⃣ تاني: ابدأ الـ participants listener
-      let gvcKnownUIDs = new Set();
-      gvcUnsub = gvcRoomRef().collection('participants').onSnapshot(async snap => {
-        const live = new Set();
-        snap.forEach(doc=>{ live.add(doc.id); gvcParticipants.set(doc.id, doc.data()); });
-
-        // حذف اللي خرجوا
-        for (const uid of [...gvcKnownUIDs]) {
-          if (uid !== gvcMyUID && !live.has(uid)) {
-            gvcParticipants.delete(uid);
-            gvcClosePeer(uid);
-            gvcKnownUIDs.delete(uid);
-          }
-        }
-        gvcUpdateGrid();
-        gvcUpdateCount();
-
-        // كل شخص جديد — ابعتله offer
-        for (const uid of live) {
-          if (uid === gvcMyUID) continue;
-          if (gvcKnownUIDs.has(uid)) continue;
-          gvcKnownUIDs.add(uid);
-          setTimeout(async () => {
-            if (gvcActive && !gvcPeers[uid]) {
-              await gvcCreateOffer(uid);
-            }
-          }, 800);
-        }
-        gvcKnownUIDs.add(gvcMyUID);
-      });
-
-      // 3️⃣ أخيراً: اكتب نفسك في Firestore — دلوقتي التانيين هيشوفوك
-      gvcMyRef = gvcRoomRef().collection('participants').doc(gvcMyUID);
-      await gvcMyRef.set({
-        name: currentUser||'مستخدم', uid: gvcMyUID,
-        muted: false, camOff: false, isAdmin: !!isAdmin,
-        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      // Heartbeat
-      gvcInterval = setInterval(()=>{ if(gvcMyRef) gvcMyRef.update({lastSeen:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{}); },10000);
-
-      // Timer
-      gvcSeconds = 0;
-      gvcTimerInterval = setInterval(()=>{
-        gvcSeconds++;
-        const m = String(Math.floor(gvcSeconds/60)).padStart(2,'0');
-        const s = String(gvcSeconds%60).padStart(2,'0');
-        const el = document.getElementById('gvcTimer'); if(el) el.textContent=m+':'+s;
-      },1000);
-
-      showToast('📹 انضممت لمكالمة الفيديو الجماعية');
     } catch(e) {
-      showToast('❌ لا يمكن الوصول للكاميرا أو الميكروفون: '+(e.message||''));
-      gvcActive=false;
+      showToast('❌ تعذّر الوصول للكاميرا أو الميكروفون');
+      return;
     }
-  }
 
-  // -------- MY TILE --------
-  function gvcRenderMyTile() {
-    const grid = document.getElementById('gvcGrid');
-    if (!grid) return;
-    let tile = document.getElementById('gvc-tile-me');
-    if (!tile) {
-      tile = document.createElement('div');
-      tile.className = 'gvc-tile me';
-      tile.id = 'gvc-tile-me';
-      grid.appendChild(tile);
-    }
-    tile.innerHTML = '';
-    if (!gvcCamOff && gvcStream) {
-      const vid = document.createElement('video');
-      vid.autoplay = true; vid.muted = true; vid.playsInline = true;
-      vid.srcObject = gvcStream;
-      vid.style.transform = 'scaleX(-1)'; // mirror
-      tile.appendChild(vid);
-    } else {
-      const av = document.createElement('div');
-      av.className = 'gvc-tile-avatar';
-      const colors=['#6366f1','#ec4899','#10b981','#f59e0b','#06b6d4'];
-      av.style.background = colors[0];
-      av.textContent = (currentUser||'أ').charAt(0).toUpperCase();
-      tile.appendChild(av);
-    }
-    const label = document.createElement('div');
-    label.className = 'gvc-tile-label';
-    label.innerHTML = `<i class="fas fa-${gvcMuted?'microphone-slash':'microphone'}" style="color:${gvcMuted?'#ef4444':'#10b981'}"></i> ${currentUser||'أنت'} <span style="font-size:.7rem;color:#94a3b8">(أنت)</span>`;
-    tile.appendChild(label);
-    gvcUpdateCount();
-  }
+    isActive = true;
+    isMuted  = false;
+    isCamOff = false;
+    myUID    = currentUserId || ('u_' + Math.random().toString(36).slice(2,10));
 
-  // -------- REMOTE TILE --------
-  function gvcRenderRemoteTile(uid, stream) {
-    const grid = document.getElementById('gvcGrid');
-    if (!grid) return;
-    let tile = document.getElementById('gvc-tile-'+uid);
-    if (!tile) { tile=document.createElement('div'); tile.className='gvc-tile'; tile.id='gvc-tile-'+uid; grid.appendChild(tile); gvcUpdateGrid(); }
+    renderMyTile();
 
-    const p = gvcParticipants.get(uid)||{};
-    const hasVideo = stream && stream.getVideoTracks().length > 0 && !p.camOff;
-
-    // Only rebuild tile if needed (avoid flickering)
-    let vid = tile.querySelector('video');
-    if (!vid) {
-      tile.innerHTML = '';
-      if (hasVideo) {
-        vid = document.createElement('video');
-        vid.autoplay = true; vid.playsInline = true;
-        // BUG FIX 3: explicit play() for iOS/Android autoplay policy
-        vid.srcObject = stream;
-        vid.play().catch(()=>{});
-        tile.appendChild(vid);
-      } else {
-        const av=document.createElement('div'); av.className='gvc-tile-avatar';
-        const colors=['#6366f1','#ec4899','#10b981','#f59e0b','#06b6d4','#8b5cf6'];
-        av.style.background=colors[Math.abs((uid||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0))%colors.length];
-        av.textContent=(p.name||'؟').charAt(0).toUpperCase();
-        tile.appendChild(av);
-      }
-      const label=document.createElement('div'); label.className='gvc-tile-label';
-      label.innerHTML=`<i class="fas fa-${p.muted?'microphone-slash':'microphone'}" style="color:${p.muted?'#ef4444':'#10b981'}"></i> ${p.name||'مستخدم'}`;
-      tile.appendChild(label);
-    } else {
-      // just update stream if video already exists
-      if (vid.srcObject !== stream) { vid.srcObject = stream; vid.play().catch(()=>{}); }
-    }
-  }
-
-  // -------- GRID LAYOUT --------
-  function gvcUpdateGrid() {
-    const grid = document.getElementById('gvcGrid'); if(!grid) return;
-    const total = grid.querySelectorAll('.gvc-tile:not(.screenshare)').length;
-    grid.dataset.count = Math.min(total,9);
-  }
-  function gvcUpdateCount() {
-    const el=document.getElementById('gvcCount'); if(!el) return;
-    const count = gvcParticipants.size + (gvcActive?1:0);
-    el.textContent = count+' مشارك';
-    const badge=document.getElementById('voiceRoomBadge');
-    if(badge){ if(count>0){badge.style.display='flex';badge.textContent=count;}else{badge.style.display='none';} }
-  }
-
-  // -------- WEBRTC --------
-  async function gvcCreateOffer(remoteUID) {
-    const pc=gvcCreatePC(remoteUID);
-    try {
-      const offer=await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await gvcSignalRef(gvcMyUID,remoteUID).set({from:gvcMyUID,to:remoteUID,type:'offer',sdp:offer.sdp,ts:firebase.firestore.FieldValue.serverTimestamp()});
-    }catch(e){console.warn('gvc offer err',e);}
-  }
-
-  async function gvcHandleSignal(data) {
-    const from = data.from;
-    if (!from || from === gvcMyUID) return;
-
-    if (data.type === 'offer') {
-      let pc = gvcPeers[from];
-
-      // Glare condition: الاتنين بعتوا offer في نفس الوقت
-      // الـ UID الأصغر يتراجع ويقبل الـ offer بتاع التاني
-      if (pc && pc.signalingState === 'have-local-offer') {
-        if (gvcMyUID > from) {
-          // أنا الأكبر — أتراجع وأقبل offer التاني
-          try { pc.close(); } catch(e){}
-          delete gvcPeers[from];
-          delete gvcRemoteStreams[from];
-          pc = null;
-        } else {
-          // أنا الأصغر — أتجاهل offer التاني وأستنى الـ answer
-          return;
-        }
-      }
-
-      if (!pc) pc = gvcCreatePC(from);
-
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
-        const ans = await pc.createAnswer();
-        await pc.setLocalDescription(ans);
-        await gvcSignalRef(gvcMyUID, from).set({
-          from: gvcMyUID, to: from, type: 'answer', sdp: ans.sdp,
-          ts: firebase.firestore.FieldValue.serverTimestamp()
+    // ── الترتيب الصح ──
+    // 1) اشترك في الـ signals أولاً — عشان متضيعش أي offer
+    unsubSigs = sigs()
+      .where('to', '==', myUID)
+      .onSnapshot(snap => {
+        snap.docChanges().forEach(ch => {
+          if (ch.type === 'added' || ch.type === 'modified') {
+            handleSignal(ch.doc.data()).catch(console.error);
+          }
         });
-        // flush buffered ICE
-        if (gvcIceCandidateBuffer[from]) {
-          for (const c of gvcIceCandidateBuffer[from]) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
-          delete gvcIceCandidateBuffer[from];
-        }
-      } catch(e) { console.error('GVC handle offer error:', e); }
+      });
 
-    } else if (data.type === 'answer') {
-      const pc = gvcPeers[from];
-      if (pc && pc.signalingState === 'have-local-offer') {
-        try {
-          await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
-          if (gvcIceCandidateBuffer[from]) {
-            for (const c of gvcIceCandidateBuffer[from]) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
-            delete gvcIceCandidateBuffer[from];
-          }
-        } catch(e) { console.error('GVC handle answer error:', e); }
-      }
+    // 2) اشترك في الـ participants
+    unsubParts = parts().onSnapshot(snap => {
+      const live = new Set();
+      snap.forEach(d => { live.add(d.id); participants[d.id] = d.data(); });
 
-    } else if (data.type === 'candidate') {
-      const pc = gvcPeers[from];
-      if (pc && pc.remoteDescription && pc.remoteDescription.type) {
-        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){}
-      } else {
-        if (!gvcIceCandidateBuffer[from]) gvcIceCandidateBuffer[from] = [];
-        if (data.candidate) gvcIceCandidateBuffer[from].push(data.candidate);
-      }
-    }
+      // اللي خرجوا
+      Object.keys(peers).forEach(uid => {
+        if (!live.has(uid)) closePeer(uid);
+      });
+
+      renderGrid();
+      updateCount();
+
+      // أي شخص جديد مش أنا ومعندناش peer معاه → ابعتله offer
+      live.forEach(uid => {
+        if (uid === myUID) return;
+        if (peers[uid]) return;
+        makePeer(uid, true); // true = أنا اللي بيعمل offer
+      });
+    });
+
+    // 3) أخيراً — سجّل نفسك (ده اللي هيخلي التانيين يشوفوك)
+    myRef = parts().doc(myUID);
+    await myRef.set({
+      name:     currentUser || 'مستخدم',
+      uid:      myUID,
+      muted:    false,
+      camOff:   false,
+      joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    heartbeat = setInterval(() => {
+      myRef && myRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+    }, 10000);
+
+    seconds = 0;
+    timerInterval = setInterval(() => {
+      seconds++;
+      const el = document.getElementById('gvcTimer');
+      if (el) el.textContent = String(Math.floor(seconds/60)).padStart(2,'0') + ':' + String(seconds%60).padStart(2,'0');
+    }, 1000);
+
+    showToast('📹 انضممت للمحاضرة المباشرة');
   }
 
-  function gvcCreatePC(remoteUID) {
-    if(gvcPeers[remoteUID]) return gvcPeers[remoteUID];
-    const pc=new RTCPeerConnection(GVC_STUN);
-    gvcPeers[remoteUID]=pc;
+  // ── PEER ───────────────────────────────────────────────────
+  function makePeer(remoteUID, createOffer) {
+    if (peers[remoteUID]) return peers[remoteUID];
 
-    // add local tracks
-    if(gvcStream) gvcStream.getTracks().forEach(t=>pc.addTrack(t,gvcStream));
+    const pc = new RTCPeerConnection(ICE_CONFIG);
+    peers[remoteUID] = pc;
 
-    // BUG FIX 1: ontrack — always attach the stream to the video tile
-    // regardless of camOff flag. The remote side decides what it sends.
-    pc.ontrack=(e)=>{
-      const stream = e.streams[0] || new MediaStream([e.track]);
-      // merge all tracks into one stream per peer
-      if(!gvcRemoteStreams[remoteUID]) gvcRemoteStreams[remoteUID] = new MediaStream();
-      gvcRemoteStreams[remoteUID].addTrack(e.track);
-      gvcRenderRemoteTile(remoteUID, gvcRemoteStreams[remoteUID]);
+    // أضف tracks المحلية
+    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+    // استقبل tracks من التاني
+    pc.ontrack = e => {
+      if (!participants[remoteUID]) participants[remoteUID] = {};
+      const st = e.streams[0];
+      renderRemoteTile(remoteUID, st);
     };
 
-    pc.onicecandidate=async(e)=>{
-      if(e.candidate){
-        const ref=gvcRoomRef().collection('signals').doc(gvcMyUID+'__'+remoteUID+'_ice_'+Date.now());
-        await ref.set({from:gvcMyUID,to:remoteUID,type:'candidate',candidate:e.candidate.toJSON(),ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
-      }
+    // ابعت ICE candidates لـ Firestore
+    pc.onicecandidate = e => {
+      if (!e.candidate) return;
+      sigs().add({
+        from: myUID,
+        to:   remoteUID,
+        type: 'candidate',
+        candidate: e.candidate.toJSON(),
+        ts: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(()=>{});
     };
 
-    // BUG FIX 2: on failed/disconnected — retry offer instead of closing immediately
-    pc.onconnectionstatechange=()=>{
-      console.log('GVC connection state ['+remoteUID+']:', pc.connectionState);
-      if(pc.connectionState==='failed'){
-        gvcClosePeer(remoteUID);
-        // retry after short delay if both still in room
-        setTimeout(()=>{
-          if(gvcActive && gvcParticipants.has(remoteUID) && !gvcPeers[remoteUID]){
-            if(gvcMyUID > remoteUID) gvcCreateOffer(remoteUID);
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'failed') {
+        closePeer(remoteUID);
+        // retry
+        setTimeout(() => {
+          if (isActive && participants[remoteUID] && !peers[remoteUID]) {
+            makePeer(remoteUID, true);
           }
-        }, 2000);
+        }, 3000);
       }
-      if(pc.connectionState==='closed') gvcClosePeer(remoteUID);
     };
 
-    pc.oniceconnectionstatechange=()=>{
-      console.log('GVC ICE state ['+remoteUID+']:', pc.iceConnectionState);
-    };
+    if (createOffer) {
+      pc.createOffer()
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => sigs().doc(myUID + '__' + remoteUID).set({
+          from: myUID, to: remoteUID,
+          type: 'offer', sdp: pc.localDescription.sdp,
+          ts: firebase.firestore.FieldValue.serverTimestamp()
+        }))
+        .catch(console.error);
+    }
 
     return pc;
   }
 
-  function gvcClosePeer(uid) {
-    if(gvcPeers[uid]){try{gvcPeers[uid].close();}catch(e){} delete gvcPeers[uid];}
-    delete gvcRemoteStreams[uid];
-    const tile=document.getElementById('gvc-tile-'+uid); if(tile) tile.remove();
-    gvcUpdateGrid();
-    gvcUpdateCount();
-  }
+  // ── HANDLE SIGNAL ──────────────────────────────────────────
+  async function handleSignal(data) {
+    const { from, type, sdp, candidate } = data;
+    if (!from || from === myUID) return;
 
-  // -------- LEAVE --------
-  async function gvcLeave() {
-    gvcActive=false; gvcSharing=false;
-    Object.keys(gvcPeers).forEach(uid=>gvcClosePeer(uid));
-    gvcIceCandidateBuffer = {};
-    try {
-      const s1=await gvcRoomRef().collection('signals').where('from','==',gvcMyUID).get(); s1.forEach(d=>d.ref.delete());
-      const s2=await gvcRoomRef().collection('signals').where('to','==',gvcMyUID).get(); s2.forEach(d=>d.ref.delete());
-    }catch(e){}
-    [gvcStream,gvcScreenStream].forEach(s=>{ if(s) s.getTracks().forEach(t=>t.stop()); });
-    gvcStream=null; gvcScreenStream=null;
-    if(gvcInterval){clearInterval(gvcInterval);gvcInterval=null;}
-    if(gvcTimerInterval){clearInterval(gvcTimerInterval);gvcTimerInterval=null;}
-    if(gvcUnsub){gvcUnsub();gvcUnsub=null;}
-    if(gvcSignalUnsub){gvcSignalUnsub();gvcSignalUnsub=null;}
-    if(gvcMyRef){try{await gvcMyRef.delete();}catch(e){} gvcMyRef=null;}
-    gvcParticipants.clear();
-    const grid=document.getElementById('gvcGrid'); if(grid) grid.innerHTML='';
-    const el=document.getElementById('gvcTimer'); if(el) el.textContent='00:00';
-    gvcMyUID=null;
-    gvcUpdateCount();
-    showToast('📴 غادرت مكالمة الفيديو');
-  }
+    if (type === 'offer') {
+      // لو عندنا peer بالفعل وفيه offer جاية تاني → glare
+      // الـ UID الأكبر يتراجع
+      if (peers[from]) {
+        if (myUID > from) {
+          // أنا أكبر → امسح الـ peer بتاعي وقبل offer التاني
+          peers[from].close();
+          delete peers[from];
+          delete pendingICE[from];
+        } else {
+          // أنا أصغر → تجاهل offer التاني، أنا اللي بعتت offer
+          return;
+        }
+      }
 
-  // -------- CONTROLS --------
-  window.gvcToggleMic = function() {
-    if(!gvcStream) return;
-    gvcMuted=!gvcMuted;
-    gvcStream.getAudioTracks().forEach(t=>t.enabled=!gvcMuted);
-    if(gvcMyRef) gvcMyRef.update({muted:gvcMuted}).catch(()=>{});
-    const btn=document.getElementById('gvcMuteBtn');
-    if(btn){
-      btn.innerHTML=gvcMuted?'<i class="fas fa-microphone-slash"></i>':'<i class="fas fa-microphone"></i>';
-      btn.style.background=gvcMuted?'rgba(239,68,68,.25)':'rgba(16,185,129,.2)';
-      btn.style.color=gvcMuted?'#ef4444':'#10b981';
-      btn.style.borderColor=gvcMuted?'rgba(239,68,68,.5)':'rgba(16,185,129,.5)';
+      const pc = makePeer(from, false);
+      await pc.setRemoteDescription({ type: 'offer', sdp });
+
+      // flush pending ICE
+      if (pendingICE[from]) {
+        for (const c of pendingICE[from]) {
+          await pc.addIceCandidate(c).catch(()=>{});
+        }
+        delete pendingICE[from];
+      }
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await sigs().doc(myUID + '__' + from).set({
+        from: myUID, to: from,
+        type: 'answer', sdp: answer.sdp,
+        ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    } else if (type === 'answer') {
+      const pc = peers[from];
+      if (!pc || pc.signalingState !== 'have-local-offer') return;
+      await pc.setRemoteDescription({ type: 'answer', sdp });
+
+      // flush pending ICE
+      if (pendingICE[from]) {
+        for (const c of pendingICE[from]) {
+          await pc.addIceCandidate(c).catch(()=>{});
+        }
+        delete pendingICE[from];
+      }
+
+    } else if (type === 'candidate') {
+      const pc = peers[from];
+      const ice = new RTCIceCandidate(candidate);
+      if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+        await pc.addIceCandidate(ice).catch(()=>{});
+      } else {
+        // buffer
+        if (!pendingICE[from]) pendingICE[from] = [];
+        pendingICE[from].push(ice);
+      }
     }
-    gvcRenderMyTile();
-    showToast(gvcMuted?'🔇 تم كتم الميكروفون':'🎙️ تم تفعيل الميكروفون');
+  }
+
+  // ── CLOSE PEER ─────────────────────────────────────────────
+  function closePeer(uid) {
+    if (peers[uid]) { try { peers[uid].close(); } catch(e){} delete peers[uid]; }
+    delete pendingICE[uid];
+    delete participants[uid];
+    const tile = document.getElementById('gvc-tile-' + uid);
+    if (tile) tile.remove();
+    renderGrid();
+    updateCount();
+  }
+
+  // ── LEAVE ──────────────────────────────────────────────────
+  async function leave() {
+    isActive = false;
+    clearInterval(heartbeat);
+    clearInterval(timerInterval);
+    if (unsubParts) { unsubParts(); unsubParts = null; }
+    if (unsubSigs)  { unsubSigs();  unsubSigs  = null; }
+    Object.keys(peers).forEach(uid => { try { peers[uid].close(); } catch(e){} });
+    peers = {}; pendingICE = {}; participants = {};
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+    // امسح signals و presence
+    if (myUID) {
+      sigs().where('from','==',myUID).get().then(s=>s.forEach(d=>d.ref.delete())).catch(()=>{});
+      sigs().where('to','==',myUID).get().then(s=>s.forEach(d=>d.ref.delete())).catch(()=>{});
+      if (myRef) myRef.delete().catch(()=>{});
+    }
+    myUID = null; myRef = null;
+    const grid = document.getElementById('gvcGrid');
+    if (grid) grid.innerHTML = '';
+    const timer = document.getElementById('gvcTimer');
+    if (timer) timer.textContent = '00:00';
+    updateCount();
+    showToast('📴 غادرت المحاضرة');
+  }
+
+  // ── TILES ──────────────────────────────────────────────────
+  function renderMyTile() {
+    const grid = document.getElementById('gvcGrid'); if (!grid) return;
+    let tile = document.getElementById('gvc-tile-me');
+    if (!tile) { tile = document.createElement('div'); tile.className = 'gvc-tile me'; tile.id = 'gvc-tile-me'; grid.appendChild(tile); }
+    tile.innerHTML = '';
+    if (!isCamOff && localStream) {
+      const v = document.createElement('video');
+      v.autoplay = true; v.muted = true; v.playsInline = true; v.srcObject = localStream;
+      v.style.transform = 'scaleX(-1)';
+      tile.appendChild(v);
+    } else {
+      const av = document.createElement('div'); av.className = 'gvc-tile-avatar';
+      av.style.background = '#6366f1'; av.textContent = (currentUser||'أ')[0].toUpperCase();
+      tile.appendChild(av);
+    }
+    const lbl = document.createElement('div'); lbl.className = 'gvc-tile-label';
+    lbl.innerHTML = `<i class="fas fa-${isMuted?'microphone-slash':'microphone'}" style="color:${isMuted?'#ef4444':'#10b981'}"></i> ${currentUser||'أنت'} <span style="font-size:.7rem;color:#94a3b8">(أنت)</span>`;
+    tile.appendChild(lbl);
+    renderGrid(); updateCount();
+  }
+
+  function renderRemoteTile(uid, stream) {
+    const grid = document.getElementById('gvcGrid'); if (!grid) return;
+    let tile = document.getElementById('gvc-tile-' + uid);
+    if (!tile) { tile = document.createElement('div'); tile.className = 'gvc-tile'; tile.id = 'gvc-tile-' + uid; grid.appendChild(tile); }
+    const p = participants[uid] || {};
+    // دايماً اعرض الفيديو لو فيه video tracks
+    const hasVideo = stream && stream.getVideoTracks().length > 0;
+    let vid = tile.querySelector('video');
+    if (hasVideo) {
+      if (!vid) { vid = document.createElement('video'); vid.autoplay = true; vid.playsInline = true; tile.innerHTML = ''; tile.appendChild(vid); }
+      if (vid.srcObject !== stream) { vid.srcObject = stream; vid.play().catch(()=>{}); }
+    } else if (!vid) {
+      tile.innerHTML = '';
+      const av = document.createElement('div'); av.className = 'gvc-tile-avatar';
+      const cols = ['#6366f1','#ec4899','#10b981','#f59e0b','#06b6d4','#8b5cf6'];
+      av.style.background = cols[uid.charCodeAt(0) % cols.length];
+      av.textContent = (p.name||'؟')[0].toUpperCase();
+      tile.appendChild(av);
+    }
+    // label
+    let lbl = tile.querySelector('.gvc-tile-label');
+    if (!lbl) { lbl = document.createElement('div'); lbl.className = 'gvc-tile-label'; tile.appendChild(lbl); }
+    lbl.innerHTML = `<i class="fas fa-${p.muted?'microphone-slash':'microphone'}" style="color:${p.muted?'#ef4444':'#10b981'}"></i> ${p.name||'مستخدم'}`;
+    renderGrid(); updateCount();
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('gvcGrid'); if (!grid) return;
+    const n = grid.querySelectorAll('.gvc-tile:not(.screenshare)').length;
+    grid.dataset.count = Math.min(n, 9);
+  }
+
+  function updateCount() {
+    const el = document.getElementById('gvcCount');
+    const n = Object.keys(participants).filter(u=>u!==myUID).length + (isActive?1:0);
+    if (el) el.textContent = n + ' مشارك';
+    const badge = document.getElementById('voiceRoomBadge');
+    if (badge) { badge.style.display = n > 0 ? 'flex' : 'none'; badge.textContent = n; }
+  }
+
+  // ── CONTROLS ───────────────────────────────────────────────
+  window.gvcToggleMic = function() {
+    if (!localStream) return;
+    isMuted = !isMuted;
+    localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+    if (myRef) myRef.update({ muted: isMuted }).catch(()=>{});
+    const btn = document.getElementById('gvcMuteBtn');
+    if (btn) {
+      btn.innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
+      btn.style.background = isMuted ? 'rgba(239,68,68,.25)' : 'rgba(16,185,129,.2)';
+      btn.style.color = isMuted ? '#ef4444' : '#10b981';
+      btn.style.borderColor = isMuted ? 'rgba(239,68,68,.5)' : 'rgba(16,185,129,.5)';
+    }
+    renderMyTile();
+    showToast(isMuted ? '🔇 الميكروفون مكتوم' : '🎙️ الميكروفون شغال');
   };
 
   window.gvcToggleCam = function() {
-    if(!gvcStream) return;
-    gvcCamOff=!gvcCamOff;
-    gvcStream.getVideoTracks().forEach(t=>t.enabled=!gvcCamOff);
-    if(gvcMyRef) gvcMyRef.update({camOff:gvcCamOff}).catch(()=>{});
-    const btn=document.getElementById('gvcCamBtn');
-    if(btn){
-      btn.innerHTML=gvcCamOff?'<i class="fas fa-video-slash"></i>':'<i class="fas fa-video"></i>';
-      btn.style.background=gvcCamOff?'rgba(239,68,68,.2)':'rgba(99,102,241,.2)';
-      btn.style.color=gvcCamOff?'#ef4444':'#818cf8';
-      btn.style.borderColor=gvcCamOff?'rgba(239,68,68,.4)':'rgba(99,102,241,.5)';
+    if (!localStream) return;
+    isCamOff = !isCamOff;
+    localStream.getVideoTracks().forEach(t => t.enabled = !isCamOff);
+    if (myRef) myRef.update({ camOff: isCamOff }).catch(()=>{});
+    const btn = document.getElementById('gvcCamBtn');
+    if (btn) {
+      btn.innerHTML = isCamOff ? '<i class="fas fa-video-slash"></i>' : '<i class="fas fa-video"></i>';
+      btn.style.background = isCamOff ? 'rgba(239,68,68,.2)' : 'rgba(99,102,241,.2)';
+      btn.style.color = isCamOff ? '#ef4444' : '#818cf8';
+      btn.style.borderColor = isCamOff ? 'rgba(239,68,68,.4)' : 'rgba(99,102,241,.5)';
     }
-    gvcRenderMyTile();
-    showToast(gvcCamOff?'📷 تم إيقاف الكاميرا':'📸 تم تشغيل الكاميرا');
+    renderMyTile();
+    showToast(isCamOff ? '📷 الكاميرا مغلقة' : '📸 الكاميرا شغالة');
   };
 
   window.gvcToggleScreen = async function() {
-    const btn=document.getElementById('gvcShareBtn');
-    if(gvcSharing) {
-      // stop sharing
-      if(gvcScreenStream){ gvcScreenStream.getTracks().forEach(t=>t.stop()); gvcScreenStream=null; }
-      // remove screen tile
-      const stile=document.getElementById('gvc-tile-screen'); if(stile) stile.remove();
-      gvcSharing=false;
-      if(btn){ btn.style.background='rgba(6,182,212,.2)'; btn.style.color='#22d3ee'; btn.style.borderColor='rgba(6,182,212,.4)'; }
-      // replace screen track with cam in peers
-      Object.values(gvcPeers).forEach(pc=>{
-        const senders=pc.getSenders();
-        senders.forEach(s=>{
-          if(s.track&&s.track.kind==='video'&&gvcStream){
-            const camTrack=gvcStream.getVideoTracks()[0];
-            if(camTrack) s.replaceTrack(camTrack).catch(()=>{});
-          }
-        });
+    const btn = document.getElementById('gvcShareBtn');
+    if (isSharing) {
+      if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+      const st = document.getElementById('gvc-tile-screen'); if (st) st.remove();
+      isSharing = false;
+      // ارجع للكاميرا
+      Object.values(peers).forEach(pc => {
+        const vs = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        const camTrack = localStream && localStream.getVideoTracks()[0];
+        if (vs && camTrack) vs.replaceTrack(camTrack).catch(()=>{});
       });
-      gvcUpdateGrid();
-      showToast('🖥️ تم إيقاف مشاركة الشاشة');
+      if (btn) { btn.style.background='rgba(6,182,212,.2)'; btn.style.color='#22d3ee'; btn.style.borderColor='rgba(6,182,212,.4)'; }
+      renderGrid();
+      showToast('🖥️ توقفت عن مشاركة الشاشة');
     } else {
       try {
-        gvcScreenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
-        gvcSharing=true;
-        // screen tile in grid
-        const grid=document.getElementById('gvcGrid');
-        let stile=document.getElementById('gvc-tile-screen');
-        if(!stile){stile=document.createElement('div');stile.className='gvc-tile screenshare';stile.id='gvc-tile-screen';grid.insertBefore(stile,grid.firstChild);}
-        stile.innerHTML='';
-        const vid=document.createElement('video'); vid.autoplay=true; vid.playsInline=true; vid.srcObject=gvcScreenStream;
-        stile.appendChild(vid);
-        const label=document.createElement('div'); label.className='gvc-tile-label';
-        label.innerHTML='<i class="fas fa-desktop" style="color:#22d3ee"></i> شاشتك';
-        stile.appendChild(label);
-        // replace video track in peers
-        Object.values(gvcPeers).forEach(pc=>{
-          const screenTrack=gvcScreenStream.getVideoTracks()[0];
-          if(!screenTrack) return;
-          const senders=pc.getSenders();
-          const vs=senders.find(s=>s.track&&s.track.kind==='video');
-          if(vs) vs.replaceTrack(screenTrack).catch(()=>{});
-          else pc.addTrack(screenTrack,gvcScreenStream);
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        isSharing = true;
+        const grid = document.getElementById('gvcGrid');
+        let st = document.getElementById('gvc-tile-screen');
+        if (!st) { st = document.createElement('div'); st.className = 'gvc-tile screenshare'; st.id = 'gvc-tile-screen'; grid.insertBefore(st, grid.firstChild); }
+        st.innerHTML = '';
+        const sv = document.createElement('video'); sv.autoplay = true; sv.playsInline = true; sv.srcObject = screenStream; st.appendChild(sv);
+        const sl = document.createElement('div'); sl.className = 'gvc-tile-label'; sl.innerHTML = '<i class="fas fa-desktop" style="color:#22d3ee"></i> شاشتك'; st.appendChild(sl);
+        const screenTrack = screenStream.getVideoTracks()[0];
+        Object.values(peers).forEach(pc => {
+          const vs = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (vs) vs.replaceTrack(screenTrack).catch(()=>{});
+          else pc.addTrack(screenTrack, screenStream);
         });
-        gvcScreenStream.getVideoTracks()[0].onended=()=>{ gvcSharing=true; window.gvcToggleScreen(); };
-        if(btn){ btn.style.background='rgba(6,182,212,.35)'; btn.style.color='#fff'; btn.style.borderColor='#22d3ee'; }
-        gvcUpdateGrid();
+        screenTrack.onended = () => { isSharing = true; window.gvcToggleScreen(); };
+        if (btn) { btn.style.background='rgba(6,182,212,.35)'; btn.style.color='#fff'; btn.style.borderColor='#22d3ee'; }
+        renderGrid();
         showToast('🖥️ جاري مشاركة الشاشة');
-      } catch(e){ showToast('❌ تعذّر مشاركة الشاشة'); }
+      } catch(e) { showToast('❌ تعذّر مشاركة الشاشة'); }
     }
   };
 
