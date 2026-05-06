@@ -61,7 +61,7 @@
     .refresh-btn i { transition: transform 0.5s ease; }
     .refresh-btn:hover i { transform: rotate(360deg); }
     .settings-dropdown { position: relative; display: inline-block; }
-    .settings-menu { position: absolute; top: calc(100% + 8px); left: 0; background: rgba(26,16,37,.98); backdrop-filter: blur(16px); border-radius: 16px; border: 1px solid rgba(99,102,241,.5); min-width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 1100; display: none; flex-direction: column; overflow: hidden; animation: fadeInUp 0.2s ease; }
+    .settings-menu { position: absolute; top: calc(100% + 8px); left: 0; background: rgba(26,16,37,.98); backdrop-filter: blur(16px); border-radius: 16px; border: 1px solid rgba(99,102,241,.5); min-width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 1100; display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden; max-height: 80dvh; animation: fadeInUp 0.2s ease; scrollbar-width: thin; scrollbar-color: rgba(99,102,241,.4) transparent; }
     .settings-menu.active { display: flex; }
     .settings-menu-item { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,.05); }
     .settings-menu-item:last-child { border-bottom: none; }
@@ -1192,6 +1192,7 @@
             <div class="settings-menu-item admin-only" id="supervisorPayoutMenuItem" style="display: none;"><i class="fas fa-credit-card"></i> ربط استلام المدفوعات (مشرف)</div>
             <div class="settings-menu-item admin-only" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
+            <div class="settings-menu-item admin-only" id="groupAdminMenuItem" style="display: none;" onclick="openGroupChatAdminPanel();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
@@ -1278,11 +1279,7 @@
 
   <button class="ai-chat-btn" id="aiChatBtn" onclick="openAIChat()" title="تحدث مع الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
   <button class="chat-btn" onclick="playChatSound(); openChat();" id="chatBtn"><i class="fas fa-comments"></i> <span id="chatBadge" style="display:none" class="notification-badge">0</span></button>
-  <!-- زر إدارة المحادثة الجماعية - للمشرف الرئيسي فقط -->
-  <button id="groupAdminBtn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة الجماعية"
-    style="display:none;position:fixed;bottom:7.5rem;left:2rem;width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;border:none;color:#fff;font-size:1rem;cursor:pointer;box-shadow:0 6px 20px rgba(99,102,241,.5);z-index:999;align-items:center;justify-content:center;transition:all .3s;">
-    <i class="fas fa-cog"></i>
-  </button>
+
 
   <!-- جميع المودالات (نفس الكود الأصلي مع إبقاء الوظائف) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
@@ -1928,9 +1925,9 @@ async function updateAdminUI() {
         if (manageAppsMenuItem) manageAppsMenuItem.style.display = "flex";
         if (viewFeedbacksMenuItem) viewFeedbacksMenuItem.style.display = "flex";
         if (emailSettingsMenuItem) emailSettingsMenuItem.style.display = "flex";
-        // Show admin chat manage button (super admin only)
-        const adminChatBtn = document.getElementById('groupAdminBtn');
-        if (adminChatBtn) adminChatBtn.style.display = isSuperAdmin ? 'flex' : 'none';
+        // Show admin chat manage item in settings menu (super admin only)
+        const adminChatMenuItem = document.getElementById('groupAdminMenuItem');
+        if (adminChatMenuItem) adminChatMenuItem.style.display = isSuperAdmin ? 'flex' : 'none';
         updateStorageBar();
         loadAIKnowledgeFromFirebase();
         const cancelBtn = document.getElementById("cancelMaintenanceBtn");
@@ -6588,11 +6585,11 @@ window.playChatSound = function() {
       });
   });
 
-  // Show admin button only for super admins
+  // Show admin chat manage item in settings menu only for super admins
   setTimeout(() => {
-    const adminBtn = document.getElementById('groupAdminBtn');
-    if (adminBtn && typeof isSuperAdmin !== 'undefined' && isSuperAdmin) {
-      adminBtn.style.display = 'flex';
+    const adminMenuItem = document.getElementById('groupAdminMenuItem');
+    if (adminMenuItem && typeof isSuperAdmin !== 'undefined' && isSuperAdmin) {
+      adminMenuItem.style.display = 'flex';
     }
   }, 2000);
 
