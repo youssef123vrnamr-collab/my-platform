@@ -1561,8 +1561,12 @@
 </div>
     <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube"><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
-    <div class="course-actions-toolbar" style="display:flex;justify-content:flex-end;align-items:center;padding:.5rem 0;gap:.75rem;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
+    <div class="course-actions-toolbar" style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;gap:.75rem;flex-wrap:wrap">
+      <!-- زرار الكورسات المدفوعة — ظاهر للجميع دائماً -->
+      <button class="btn" id="showCoursesBtn" onclick="showCoursesList()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;display:flex;align-items:center;gap:.45rem;font-weight:700;box-shadow:0 4px 16px rgba(245,158,11,.4)"><i class="fas fa-graduation-cap"></i> الكورسات</button>
+      <div>
+        <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
+      </div>
     </div>
 
     <!-- cosmos carousel removed - accessible via hamburger menu -->
@@ -4089,17 +4093,34 @@ window.openPaidCourseModal = async function(courseId) {
       let thumb = v.thumbnail;
       if (!thumb && v.type === 'youtube') thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
       const duration = v.duration ? formatDuration(v.duration) : '';
-      return `<div style="display:flex;align-items:center;gap:.85rem;padding:.75rem;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid rgba(255,255,255,.07)">
-        <div style="position:relative;width:90px;min-width:90px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#0a0512">
-          ${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555"><i class="fas fa-film"></i></div>'}
-          <div style="position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center"><i class="fas fa-lock" style="color:#f59e0b;font-size:.85rem"></i></div>
-          ${duration ? `<div style="position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.8);color:#fff;font-size:.65rem;padding:.1rem .35rem;border-radius:4px">${duration}</div>` : ''}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:.88rem;font-weight:600;color:#e2e8f0;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(v.title)}</div>
-          ${v.description ? `<div style="font-size:.75rem;color:#94a3b8;margin-top:.2rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical">${escapeHtml(v.description)}</div>` : ''}
-        </div>
-      </div>`;
+      if (isEnrolled) {
+        // مشترك → قابل للضغط والتشغيل مباشرة
+        return `<div onclick="this.closest('.modal').remove(); playVideo('${v.id}')" style="display:flex;align-items:center;gap:.85rem;padding:.75rem;background:rgba(99,102,241,.08);border-radius:12px;border:1px solid rgba(99,102,241,.2);cursor:pointer;transition:background .2s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='rgba(99,102,241,.08)'">
+          <div style="position:relative;width:90px;min-width:90px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#0a0512">
+            ${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555"><i class="fas fa-film"></i></div>'}
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center"><i class="fas fa-play-circle" style="color:#fff;font-size:1.6rem;opacity:.9"></i></div>
+            ${duration ? `<div style="position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.8);color:#fff;font-size:.65rem;padding:.1rem .35rem;border-radius:4px">${duration}</div>` : ''}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.88rem;font-weight:600;color:#e2e8f0;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(v.title)}</div>
+            ${v.description ? `<div style="font-size:.75rem;color:#94a3b8;margin-top:.2rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical">${escapeHtml(v.description)}</div>` : ''}
+          </div>
+          <i class="fas fa-play" style="color:#6366f1;font-size:1rem;flex-shrink:0"></i>
+        </div>`;
+      } else {
+        // غير مشترك → مقفول
+        return `<div style="display:flex;align-items:center;gap:.85rem;padding:.75rem;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid rgba(255,255,255,.07)">
+          <div style="position:relative;width:90px;min-width:90px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#0a0512">
+            ${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover;filter:blur(2px)" loading="lazy">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555"><i class="fas fa-film"></i></div>'}
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center"><i class="fas fa-lock" style="color:#f59e0b;font-size:1rem"></i></div>
+            ${duration ? `<div style="position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.8);color:#fff;font-size:.65rem;padding:.1rem .35rem;border-radius:4px">${duration}</div>` : ''}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.88rem;font-weight:600;color:#94a3b8;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(v.title)}</div>
+          </div>
+          <i class="fas fa-lock" style="color:#f59e0b;font-size:.9rem;flex-shrink:0"></i>
+        </div>`;
+      }
     }).join('');
 
     const modal = document.createElement('div');
@@ -4116,14 +4137,15 @@ window.openPaidCourseModal = async function(courseId) {
           ${desc ? `<p style="color:#cbd5e1;font-size:.92rem;line-height:1.7;margin-bottom:1.25rem;padding:.75rem 1rem;background:rgba(255,255,255,.04);border-radius:10px;border-right:3px solid #f59e0b">${escapeHtml(desc)}</p>` : ''}
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
             <span style="font-size:.9rem;color:#94a3b8"><i class="fas fa-photo-film" style="color:#6366f1"></i> ${courseVideos.length} فيديو في الكورس</span>
-            <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.25rem .85rem;border-radius:20px;font-size:.85rem;font-weight:700">${price > 0 ? price + ' جنيه' : 'مجاني'}</span>
+            <span style="background:linear-gradient(135deg,${price>0?'#f59e0b,#d97706':'#10b981,#059669'});color:#fff;padding:.25rem .85rem;border-radius:20px;font-size:.85rem;font-weight:700">${price > 0 ? price + ' جنيه' : 'مجاني'}</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:.6rem;max-height:340px;overflow-y:auto;padding-left:.25rem;scrollbar-width:thin;scrollbar-color:rgba(245,158,11,.4) transparent;margin-bottom:1.25rem">
+          ${isEnrolled ? `<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:.6rem 1rem;margin-bottom:.75rem;color:#6ee7b7;font-size:.85rem;font-weight:600"><i class="fas fa-check-circle"></i> مشترك — اضغط على أي فيديو لتشغيله</div>` : ''}
+          <div style="display:flex;flex-direction:column;gap:.6rem;max-height:340px;overflow-y:auto;padding-left:.25rem;scrollbar-width:thin;scrollbar-color:rgba(99,102,241,.4) transparent;margin-bottom:1.25rem">
             ${videosHtml || '<p style="color:#666;text-align:center;padding:1rem">لا توجد فيديوهات</p>'}
           </div>
-          ${isEnrolled
-            ? `<button onclick="this.closest('.modal').remove()" style="width:100%;padding:1rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(16,185,129,.4);display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas fa-check-circle"></i> مشترك بالفعل — الفيديوهات في مكتبتك</button>`
-            : `<button onclick="this.closest('.modal').remove(); enrollInCourse('${courseId}')" style="width:100%;padding:1rem;background:${price > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#10b981,#059669)'};color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(245,158,11,.4);display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas ${price > 0 ? 'fa-shopping-cart' : 'fa-unlock'}"></i> ${price > 0 ? 'اشترك الآن · ' + price + ' جنيه' : 'ادخل مجاناً'}</button>`
+          ${!isEnrolled
+            ? `<button onclick="this.closest('.modal').remove(); enrollInCourse('${courseId}')" style="width:100%;padding:1rem;background:${price > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#10b981,#059669)'};color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px ${price>0?'rgba(245,158,11,.4)':'rgba(16,185,129,.4)'};display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas ${price > 0 ? 'fa-shopping-cart' : 'fa-unlock'}"></i> ${price > 0 ? 'اشترك الآن · ' + price + ' جنيه' : 'ادخل مجاناً'}</button>`
+            : ''
           }
         </div>
       </div>`;
@@ -4274,11 +4296,7 @@ async function enrollInCourse(courseId) {
   const courseDoc = await db.collection("courses").doc(courseId).get();
   const courseData = courseDoc.data();
   const existing = await db.collection("course_enrollments").where("userId", "==", currentUserId).where("courseId", "==", courseId).get();
-  if (!existing.empty) {
-    // مشترك بالفعل — افتح الفيديوهات على طول
-    openCourseVideos(courseId);
-    return;
-  }
+  if (!existing.empty) { showToast("أنت مسجل بالفعل في هذا الكورس"); return; }
   if (courseData.price > 0) {
     let link = (courseData.paymentLink && String(courseData.paymentLink).trim()) || "";
     if (!link) link = await getGlobalPaymentLink();
@@ -4298,9 +4316,7 @@ async function enrollInCourse(courseId) {
       completedVideosIds: [],
       paidEnrollment: true
     });
-    showToast("✅ تم تفعيل اشتراكك!");
-    // افتح الفيديوهات على طول
-    openCourseVideos(courseId);
+    showToast("✅ تم تفعيل اشتراكك بعد الدفع");
     return;
   }
   await db.collection("course_enrollments").add({
@@ -4311,9 +4327,7 @@ async function enrollInCourse(courseId) {
     totalVideos: courseData.videoIds.length,
     completedVideosIds: []
   });
-  showToast("✅ تم التسجيل في الكورس!");
-  // افتح الفيديوهات على طول
-  openCourseVideos(courseId);
+  showToast("✅ تم التسجيل في الكورس بنجاح");
 }
 </script>
 <!-- Modal إنشاء / تعديل كورس -->
