@@ -1563,7 +1563,7 @@
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
     <div class="course-actions-toolbar" style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;gap:.75rem;flex-wrap:wrap">
       <!-- زرار الكورسات المدفوعة — ظاهر للجميع دائماً -->
-      <button class="btn" id="showCoursesBtn" onclick="showCoursesList()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;display:flex;align-items:center;gap:.45rem;font-weight:700;box-shadow:0 4px 16px rgba(245,158,11,.4)"><i class="fas fa-graduation-cap"></i> الكورسات</button>
+
       <div>
         <button class="btn btn-primary" onclick="showCreateCourseModal()" id="createCourseBtn" style="display: none;"><i class="fas fa-plus-circle"></i> إنشاء كورس جديد</button>
       </div>
@@ -2496,9 +2496,7 @@ async function updateAdminUI() {
       paidCourseVideoIds = paidSet;
       freeCourseVideoIds = freeSet;
       paidCoursesData = paidArr;
-      // Always show "الكورسات" button for regular users
-      const coursesBtn = document.getElementById('showCoursesBtn');
-      if (coursesBtn) coursesBtn.style.display = '';
+      // زرار الكورسات اتشال
       renderVideos();
     }, err => console.error("Error loading courses access:", err));
   }
@@ -4144,7 +4142,7 @@ window.openPaidCourseModal = async function(courseId) {
             ${videosHtml || '<p style="color:#666;text-align:center;padding:1rem">لا توجد فيديوهات</p>'}
           </div>
           ${!isEnrolled
-            ? `<button onclick="this.closest('.modal').remove(); enrollInCourse('${courseId}')" style="width:100%;padding:1rem;background:${price > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#10b981,#059669)'};color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px ${price>0?'rgba(245,158,11,.4)':'rgba(16,185,129,.4)'};display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas ${price > 0 ? 'fa-shopping-cart' : 'fa-unlock'}"></i> ${price > 0 ? 'اشترك الآن · ' + price + ' جنيه' : 'ادخل مجاناً'}</button>`
+            ? `<button onclick="this.closest('.modal').remove(); enrollInCourseAndOpen('${courseId}')" style="width:100%;padding:1rem;background:${price > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#10b981,#059669)'};color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px ${price>0?'rgba(245,158,11,.4)':'rgba(16,185,129,.4)'};display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas ${price > 0 ? 'fa-shopping-cart' : 'fa-unlock'}"></i> ${price > 0 ? 'اشترك الآن · ' + price + ' جنيه' : 'ادخل مجاناً'}</button>`
             : ''
           }
         </div>
@@ -4306,6 +4304,48 @@ async function getGlobalPaymentLink() {
   } catch (e) { console.error(e); }
   return "";
 }
+// ===== اشتراك من داخل موديل الكورس ثم فتح الفيديوهات مباشرة =====
+async function enrollInCourseAndOpen(courseId) {
+  if (!currentUserId) { showToast("سجل دخولك أولاً"); return; }
+  const courseDoc = await db.collection("courses").doc(courseId).get();
+  if (!courseDoc.exists) return;
+  const courseData = courseDoc.data();
+  const existing = await db.collection("course_enrollments")
+    .where("userId","==",currentUserId).where("courseId","==",courseId).get();
+  if (!existing.empty) {
+    // مشترك بالفعل → افتح مباشرة
+    openPaidCourseModal(courseId);
+    return;
+  }
+  if (courseData.price > 0) {
+    let link = (courseData.paymentLink && String(courseData.paymentLink).trim()) || "";
+    if (!link) link = await getGlobalPaymentLink();
+    if (!link) { showToast("لم يُضبط رابط دفع"); return; }
+    try {
+      const w = window.open(link, "_blank", "noopener,noreferrer");
+      if (!w) showToast("اسمح بالنوافذ المنبثقة لإتمام الدفع");
+    } catch(e) { showToast("تعذر فتح صفحة الدفع"); return; }
+    const ok = confirm("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟");
+    if (!ok) { showToast("يمكنك الضغط على اشترك مرة أخرى بعد إتمام الدفع"); return; }
+    await db.collection("course_enrollments").add({
+      userId: currentUserId, courseId,
+      enrolledAt: firebase.firestore.FieldValue.serverTimestamp(),
+      completedVideos: 0, totalVideos: courseData.videoIds.length,
+      completedVideosIds: [], paidEnrollment: true
+    });
+  } else {
+    await db.collection("course_enrollments").add({
+      userId: currentUserId, courseId,
+      enrolledAt: firebase.firestore.FieldValue.serverTimestamp(),
+      completedVideos: 0, totalVideos: courseData.videoIds.length,
+      completedVideosIds: []
+    });
+  }
+  showToast("✅ تم الاشتراك بنجاح");
+  // افتح الكورس مباشرة بعد الاشتراك مع الفيديوهات
+  openPaidCourseModal(courseId);
+}
+
 async function enrollInCourseFromList(courseId) {
   // نفس enrollInCourse بس بعد النجاح يفتح الفيديوهات مباشرة
   if (!currentUserId) { showToast("سجل دخولك أولاً"); return; }
