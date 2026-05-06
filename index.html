@@ -2496,9 +2496,9 @@ async function updateAdminUI() {
       paidCourseVideoIds = paidSet;
       freeCourseVideoIds = freeSet;
       paidCoursesData = paidArr;
-      // Show/hide "الكورسات" button based on whether any courses exist
+      // Always show "الكورسات" button for regular users
       const coursesBtn = document.getElementById('showCoursesBtn');
-      if (coursesBtn) coursesBtn.style.display = paidArr.length > 0 ? '' : 'none';
+      if (coursesBtn) coursesBtn.style.display = '';
       renderVideos();
     }, err => console.error("Error loading courses access:", err));
   }
@@ -4160,6 +4160,16 @@ window.openPaidCourseModal = async function(courseId) {
 async function showCoursesList() {
   const coursesSnap = await db.collection("courses").get();
   if (coursesSnap.empty) { showToast("لا توجد كورسات بعد"); return; }
+
+  // جلب اشتراكات المستخدم الحالي
+  let userEnrolledCourseIds = new Set();
+  if (currentUserId) {
+    try {
+      const enSnap = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
+      enSnap.forEach(d => { const data = d.data(); if (data.courseId) userEnrolledCourseIds.add(data.courseId); });
+    } catch(e) {}
+  }
+
   let payoutNote = "";
   try {
     const ps = await db.collection("system").doc("supervisor_payout").get();
@@ -4173,15 +4183,20 @@ async function showCoursesList() {
     const paid = (c.price || 0) > 0;
     const nLessons = (c.videoIds && c.videoIds.length) ? c.videoIds.length : 0;
     const safeTitle = escapeHtml(c.title || '').replace(/'/g, "\\'");
+    const isEnrolledInThis = userEnrolledCourseIds.has(doc.id);
     const paidBadge = paid ? `<span style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.15rem .55rem;border-radius:8px;font-size:.7rem;margin-right:.4rem;vertical-align:middle">مدفوع</span>` : '';
-    listHtml += `<div class="course-card-item" style="position:relative; background: rgba(255,255,255,0.06); border-radius: 20px; padding: 1.25rem 1.5rem; border: 1px solid ${paid ? 'rgba(245,158,11,.35)' : 'rgba(255,255,255,.08)'};">
+    const enrolledBadge = isEnrolledInThis ? `<span style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:.15rem .55rem;border-radius:8px;font-size:.7rem;margin-right:.4rem;vertical-align:middle"><i class="fas fa-check" style="font-size:.6rem"></i> مشترك</span>` : '';
+    listHtml += `<div class="course-card-item" style="position:relative; background: rgba(255,255,255,0.06); border-radius: 20px; padding: 1.25rem 1.5rem; border: 1px solid ${isEnrolledInThis ? 'rgba(16,185,129,.4)' : paid ? 'rgba(245,158,11,.35)' : 'rgba(255,255,255,.08)'};">
       ${isAdmin ? `<button type="button" aria-label="حذف الكورس" title="حذف الكورس" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="position:absolute;top:.65rem;left:.65rem;width:34px;height:34px;border-radius:50%;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(239,68,68,.4);z-index:2"><i class="fas fa-times"></i></button>` : ''}
-      <h4 style="font-size:1.25rem;margin-bottom:.5rem;${isAdmin ? 'padding-left:2.5rem;' : ''}"><i class="fas fa-book-open"></i> ${escapeHtml(c.title)} ${paidBadge}</h4>
+      <h4 style="font-size:1.25rem;margin-bottom:.5rem;${isAdmin ? 'padding-left:2.5rem;' : ''}"><i class="fas fa-book-open"></i> ${escapeHtml(c.title)} ${paidBadge}${enrolledBadge}</h4>
       <p style="line-height:1.7;color:#ddd">${escapeHtml(c.description || '')}</p>
       <p style="margin-top:.75rem"><strong>عدد الدروس:</strong> ${nLessons}</p>
       <p><strong>السعر:</strong> ${c.price === 0 ? "مجاني" : c.price + " جنيه"}${paid && c.paymentLink ? ' <span style="color:#10b981;font-size:.85rem">(دفع عبر رابط آمن)</span>' : ''}</p>
       <div style="display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1rem">
-      <button type="button" class="btn btn-primary" onclick="enrollInCourse('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>
+      ${isEnrolledInThis
+        ? `<button type="button" onclick="this.closest('.modal').remove(); openPaidCourseModal('${doc.id}')" style="padding:.65rem 1.2rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;font-family:Cairo;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-shadow:0 4px 14px rgba(16,185,129,.4)"><i class="fas fa-play-circle"></i> مشاهدة الفيديوهات <i class="fas fa-check-circle" style="font-size:.8rem;opacity:.85"></i></button>`
+        : `<button type="button" class="btn btn-primary" onclick="enrollInCourseFromList('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>`
+      }
       ${isAdmin ? `<button type="button" class="btn btn-warning" onclick="editCourse('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>` : ''}
       ${isAdmin && paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="background:linear-gradient(135deg,#ef4444,#b91c1c);font-weight:700"><i class="fas fa-trash"></i> حذف الكورس المدفوع</button>` : ''}
       ${isAdmin && !paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
@@ -4291,12 +4306,63 @@ async function getGlobalPaymentLink() {
   } catch (e) { console.error(e); }
   return "";
 }
+async function enrollInCourseFromList(courseId) {
+  // نفس enrollInCourse بس بعد النجاح يفتح الفيديوهات مباشرة
+  if (!currentUserId) { showToast("سجل دخولك أولاً"); return; }
+  const courseDoc = await db.collection("courses").doc(courseId).get();
+  const courseData = courseDoc.data();
+  const existing = await db.collection("course_enrollments").where("userId", "==", currentUserId).where("courseId", "==", courseId).get();
+  if (!existing.empty) {
+    // مشترك بالفعل → افتح الفيديوهات مباشرة
+    document.querySelectorAll('.courses-list-modal').forEach(m => m.remove());
+    openPaidCourseModal(courseId);
+    return;
+  }
+  if (courseData.price > 0) {
+    let link = (courseData.paymentLink && String(courseData.paymentLink).trim()) || "";
+    if (!link) link = await getGlobalPaymentLink();
+    if (!link) { showToast("لم يُضبط رابط دفع. المشرف يضيفه من الإعدادات أو من بيانات الكورس"); return; }
+    try {
+      const w = window.open(link, "_blank", "noopener,noreferrer");
+      if (!w) showToast("اسمح بالنوافذ المنبثقة لإتمام الدفع");
+    } catch (e) { console.error(e); showToast("تعذر فتح صفحة الدفع"); return; }
+    const ok = confirm("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟\n\nسيتم تفعيل اشتراكك في المنصة. يُفضّل أن يتحقق المشرف من استلام المبلغ عند مزوّد الدفع.");
+    if (!ok) { showToast("يمكنك الضغط على اشتراك مرة أخرى بعد إتمام الدفع"); return; }
+    await db.collection("course_enrollments").add({
+      userId: currentUserId,
+      courseId: courseId,
+      enrolledAt: firebase.firestore.FieldValue.serverTimestamp(),
+      completedVideos: 0,
+      totalVideos: courseData.videoIds.length,
+      completedVideosIds: [],
+      paidEnrollment: true
+    });
+    showToast("✅ تم تفعيل اشتراكك");
+    // افتح الفيديوهات مباشرة
+    document.querySelectorAll('.courses-list-modal').forEach(m => m.remove());
+    openPaidCourseModal(courseId);
+    return;
+  }
+  await db.collection("course_enrollments").add({
+    userId: currentUserId,
+    courseId: courseId,
+    enrolledAt: firebase.firestore.FieldValue.serverTimestamp(),
+    completedVideos: 0,
+    totalVideos: courseData.videoIds.length,
+    completedVideosIds: []
+  });
+  showToast("✅ تم التسجيل في الكورس بنجاح");
+  // افتح الفيديوهات مباشرة
+  document.querySelectorAll('.courses-list-modal').forEach(m => m.remove());
+  openPaidCourseModal(courseId);
+}
+
 async function enrollInCourse(courseId) {
   if (!currentUserId) { showToast("سجل دخولك أولاً"); return; }
   const courseDoc = await db.collection("courses").doc(courseId).get();
   const courseData = courseDoc.data();
   const existing = await db.collection("course_enrollments").where("userId", "==", currentUserId).where("courseId", "==", courseId).get();
-  if (!existing.empty) { showToast("أنت مسجل بالفعل في هذا الكورس"); return; }
+  if (!existing.empty) { return; } // مشترك بالفعل — بدون رسالة
   if (courseData.price > 0) {
     let link = (courseData.paymentLink && String(courseData.paymentLink).trim()) || "";
     if (!link) link = await getGlobalPaymentLink();
