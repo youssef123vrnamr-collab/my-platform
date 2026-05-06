@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 380" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="100%" height="auto" preserveAspectRatio="xMidYMid meet">
   <defs>
     <!-- خلفية متدرجة -->
     <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
@@ -62,16 +62,16 @@
       <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
     <clipPath id="bannerClip">
-      <rect width="900" height="380" rx="24"/>
+      <rect width="900" height="520" rx="24"/>
     </clipPath>
   </defs>
 
   <g clip-path="url(#bannerClip)">
     <!-- خلفية -->
-    <rect width="900" height="380" fill="url(#bgGrad)"/>
-    <rect width="900" height="380" fill="url(#glowPurple)"/>
-    <rect width="900" height="380" fill="url(#glowPink)"/>
-    <rect width="900" height="380" fill="url(#glowCyan)"/>
+    <rect width="900" height="520" fill="url(#bgGrad)"/>
+    <rect width="900" height="520" fill="url(#glowPurple)"/>
+    <rect width="900" height="520" fill="url(#glowPink)"/>
+    <rect width="900" height="520" fill="url(#glowCyan)"/>
 
     <!-- نجوم صغيرة -->
     <g filter="url(#starGlow)" opacity="0.9">
@@ -113,21 +113,21 @@
     <!-- كوكب كبير يمين -->
     <g filter="url(#softGlow)">
       <!-- الكوكب -->
-      <circle cx="760" cy="175" r="90" fill="url(#planetGrad)" opacity="0.9"/>
+      <circle cx="760" cy="245" r="90" fill="url(#planetGrad)" opacity="0.9"/>
       <!-- خطوط الكوكب -->
-      <ellipse cx="760" cy="155" rx="75" ry="15" fill="none" stroke="#818cf8" stroke-width="1.5" opacity="0.3"/>
-      <ellipse cx="760" cy="175" rx="82" ry="18" fill="none" stroke="#6366f1" stroke-width="1" opacity="0.25"/>
-      <ellipse cx="760" cy="200" rx="70" ry="12" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.2"/>
+      <ellipse cx="760" cy="225" rx="75" ry="15" fill="none" stroke="#818cf8" stroke-width="1.5" opacity="0.3"/>
+      <ellipse cx="760" cy="245" rx="82" ry="18" fill="none" stroke="#6366f1" stroke-width="1" opacity="0.25"/>
+      <ellipse cx="760" cy="270" rx="70" ry="12" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.2"/>
       <!-- إضاءة الكوكب -->
-      <ellipse cx="730" cy="140" rx="35" ry="28" fill="#ffffff" opacity="0.07"/>
+      <ellipse cx="730" cy="210" rx="35" ry="28" fill="#ffffff" opacity="0.07"/>
     </g>
 
     <!-- حلقة الكوكب -->
-    <ellipse cx="760" cy="175" rx="140" ry="28" fill="none" stroke="url(#ringGrad)" stroke-width="10" opacity="0.85" transform="rotate(-15 760 175)"/>
-    <ellipse cx="760" cy="175" rx="140" ry="28" fill="none" stroke="url(#ringGrad)" stroke-width="3" opacity="0.5" transform="rotate(-15 760 175)"/>
+    <ellipse cx="760" cy="245" rx="140" ry="28" fill="none" stroke="url(#ringGrad)" stroke-width="10" opacity="0.85" transform="rotate(-15 760 245)"/>
+    <ellipse cx="760" cy="245" rx="140" ry="28" fill="none" stroke="url(#ringGrad)" stroke-width="3" opacity="0.5" transform="rotate(-15 760 245)"/>
 
     <!-- الجزء الأمامي من الحلقة (يغطي الكوكب) -->
-    <path d="M 630 210 Q 760 245 890 185" fill="none" stroke="url(#ringGrad)" stroke-width="9" opacity="0.7"/>
+    <path d="M 630 280 Q 760 315 890 255" fill="none" stroke="url(#ringGrad)" stroke-width="9" opacity="0.7"/>
 
     <!-- نجمة كبيرة بريق -->
     <g filter="url(#glow)" opacity="0.85">
@@ -148,28 +148,28 @@
     </g>
 
     <!-- الخط الفاصل العلوي للمحتوى النصي -->
-    <rect x="60" y="128" width="520" height="1.5" fill="url(#lineGrad)" rx="1"/>
+    <rect x="60" y="198" width="520" height="1.5" fill="url(#lineGrad)" rx="1"/>
 
     <!-- شارة صغيرة -->
     <rect x="60" y="80" width="200" height="34" rx="17" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1"/>
     <text x="80" y="102" font-family="Cairo, Arial" font-size="13" fill="#10b981" font-weight="600">✦ Astronomy and Space</text>
 
     <!-- العنوان الرئيسي -->
-    <text x="60" y="200" font-family="Cairo, Arial" font-size="46" font-weight="900" fill="url(#titleGrad)" filter="url(#glow)">منصة متكاملة</text>
-    <text x="60" y="255" font-family="Cairo, Arial" font-size="36" font-weight="700" fill="#e0e7ff" opacity="0.9">لتعليم علم الفلك</text>
+    <text x="60" y="270" font-family="Cairo, Arial" font-size="46" font-weight="900" fill="url(#titleGrad)" filter="url(#glow)">منصة متكاملة</text>
+    <text x="60" y="325" font-family="Cairo, Arial" font-size="36" font-weight="700" fill="#e0e7ff" opacity="0.9">لتعليم علم الفلك</text>
 
     <!-- الخط الفاصل السفلي -->
-    <rect x="60" y="272" width="420" height="1.5" fill="url(#lineGrad)" rx="1"/>
+    <rect x="60" y="342" width="420" height="1.5" fill="url(#lineGrad)" rx="1"/>
 
     <!-- الوصف -->
-    <text x="62" y="305" font-family="Cairo, Arial" font-size="17" fill="#94a3b8" letter-spacing="0.5">بشكل مجاني — اكتشف أسرار الكون معنا</text>
+    <text x="62" y="375" font-family="Cairo, Arial" font-size="17" fill="#94a3b8" letter-spacing="0.5">بشكل مجاني — اكتشف أسرار الكون معنا</text>
 
     <!-- نقاط زخرفية -->
-    <circle cx="62" cy="330" r="4" fill="#6366f1" opacity="0.8" filter="url(#glow)"/>
-    <circle cx="80" cy="330" r="3" fill="#8b5cf6" opacity="0.6"/>
-    <circle cx="95" cy="330" r="2" fill="#a78bfa" opacity="0.4"/>
+    <circle cx="62" cy="400" r="4" fill="#6366f1" opacity="0.8" filter="url(#glow)"/>
+    <circle cx="80" cy="400" r="3" fill="#8b5cf6" opacity="0.6"/>
+    <circle cx="95" cy="400" r="2" fill="#a78bfa" opacity="0.4"/>
 
     <!-- حدود الـ banner -->
-    <rect width="900" height="380" rx="24" fill="none" stroke="rgba(99,102,241,0.35)" stroke-width="1.5"/>
+    <rect width="900" height="520" rx="24" fill="none" stroke="rgba(99,102,241,0.35)" stroke-width="1.5"/>
   </g>
 </svg>
