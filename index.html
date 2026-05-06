@@ -1519,6 +1519,7 @@
             <div class="settings-menu-item admin-only" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
             <div class="settings-menu-item admin-only" id="groupAdminMenuItem" style="display: none;" onclick="openGroupChatAdminPanel();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</div>
             <div class="settings-menu-item admin-only" id="pdfFilesMenuItem" style="display: none;" onclick="openPdfManagerModal();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-file-pdf" style="color:#ef4444"></i> إدارة ملفات PDF</div>
+            <div class="settings-menu-item admin-only" id="manageCoursesMenuItem" style="display: none;" onclick="openManageCoursesAdmin();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-graduation-cap" style="color:#f59e0b"></i> إدارة الكورسات</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
@@ -2610,29 +2611,62 @@ async function updateAdminUI() {
     }
     empty.style.display = "none";
     countSpan.textContent = visibleVideos.length + " فيديو";
-    const visibleById = new Map(visibleVideos.map(v => [v.id, v]));
-    const usedInPaidGroup = new Set();
-    const courseSections = [];
-    paidCoursesData.forEach(course => {
-      const courseVideos = [];
-      course.videoIds.forEach(vid => {
-        const v = visibleById.get(vid);
-        if (v) courseVideos.push(v);
-      });
-      if (courseVideos.length === 0) return;
-      courseVideos.forEach(v => usedInPaidGroup.add(v.id));
-      const cardsHtml = courseVideos.map(renderVideoCardHtml).join("");
-      const lockBadge = isAdmin ? '<span class="course-section-badge"><i class="fas fa-coins"></i> مدفوع</span>' : '<span class="course-section-badge unlocked"><i class="fas fa-unlock"></i> مفتوح لك</span>';
-      courseSections.push(`<section class="course-section"><header class="course-section-header"><div class="course-section-title"><i class="fas fa-graduation-cap"></i> ${escapeHtml(course.title)} ${lockBadge}</div><span class="course-section-count">${courseVideos.length} فيديو</span></header><div class="course-section-grid">${cardsHtml}</div></section>`);
-    });
-    const ungrouped = visibleVideos.filter(v => !usedInPaidGroup.has(v.id));
+    // ======= جمع IDs الفيديوهات المحجوزة لكورسات =======
+    const usedInCourse = new Set();
+    paidCoursesData.forEach(course => course.videoIds.forEach(id => usedInCourse.add(id)));
+
+    // ======= بطاقات الكورسات =======
+    let coursesCardsHtml = "";
+    if (paidCoursesData.length > 0) {
+      const courseCards = paidCoursesData.map(course => {
+        const price = course.price || 0;
+        const isPaid = price > 0;
+        const isUnlocked = !isPaidLockedForViewer({ id: course.videoIds[0] || "" }) || !isPaid;
+        // أول تامبنيل متاح في الكورس
+        const firstThumb = (() => {
+          for (const vid of course.videoIds) {
+            const v = videos.find(x => x.id === vid);
+            if (!v) continue;
+            if (v.thumbnail) return v.thumbnail;
+            if (v.type === "youtube" && v.videoId) return `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
+          }
+          return "";
+        })();
+        const thumbStyle = firstThumb ? `background-image:url('${firstThumb}');background-size:cover;background-position:center` : "background:linear-gradient(135deg,#1a1025,#2d1b4e)";
+        const adminDeleteBtn = isAdmin ? `<button onclick="event.stopPropagation();deleteCourse('${course.id}','${escapeHtml(course.title).replace(/'/g,"\\'")}'); document.getElementById('courseLibrarySection') && document.getElementById('courseLibrarySection').remove();" style="position:absolute;top:.5rem;left:.5rem;width:30px;height:30px;border-radius:50%;border:none;background:rgba(239,68,68,.85);color:#fff;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 8px rgba(239,68,68,.5)"><i class="fas fa-trash"></i></button>` : "";
+        const statusBadge = isPaid
+          ? `<span style="position:absolute;top:.5rem;right:.5rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.2rem .55rem;border-radius:8px;font-size:.7rem;font-weight:700;z-index:5"><i class="fas fa-lock" style="font-size:.6rem"></i> ${price} جنيه</span>`
+          : `<span style="position:absolute;top:.5rem;right:.5rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:.2rem .55rem;border-radius:8px;font-size:.7rem;font-weight:700;z-index:5"><i class="fas fa-unlock" style="font-size:.6rem"></i> مجاني</span>`;
+        return `<div class="video-card" onclick="openPaidCourseModal('${course.id}')" style="cursor:pointer;position:relative">
+          <div class="video-thumbnail" style="${thumbStyle}">
+            ${statusBadge}
+            ${adminDeleteBtn}
+            <div class="play-overlay"><div class="play-btn" style="${isPaid ? "background:rgba(245,158,11,.85);border-color:rgba(255,255,255,.9)" : ""}"><i class="fas ${isPaid ? "fa-lock" : "fa-play"}"></i></div></div>
+          </div>
+          <div class="video-info">
+            <h4 class="video-title">${escapeHtml(course.title)}</h4>
+            <div class="video-meta"><span><i class="fas fa-photo-film"></i> ${course.videoIds.length} فيديو</span><span style="color:${isPaid ? "#f59e0b" : "#10b981"};font-weight:700">${isPaid ? price + " جنيه" : "مجاني"}</span></div>
+          </div>
+        </div>`;
+      }).join("");
+      coursesCardsHtml = `<section class="course-section" id="courseLibrarySection">
+        <header class="course-section-header">
+          <div class="course-section-title"><i class="fas fa-graduation-cap" style="color:#f59e0b"></i> الكورسات</div>
+          <span class="course-section-count">${paidCoursesData.length} كورس</span>
+        </header>
+        <div class="course-section-grid">${courseCards}</div>
+      </section>`;
+    }
+
+    // ======= الفيديوهات العامة (غير المرتبطة بكورس) =======
+    const ungrouped = visibleVideos.filter(v => !usedInCourse.has(v.id));
     let ungroupedHtml = "";
     if (ungrouped.length) {
       const cardsHtml = ungrouped.map(renderVideoCardHtml).join("");
-      const headerHtml = courseSections.length ? `<header class="course-section-header"><div class="course-section-title"><i class="fas fa-photo-film"></i> فيديوهات عامة</div><span class="course-section-count">${ungrouped.length} فيديو</span></header>` : "";
+      const headerHtml = paidCoursesData.length > 0 ? `<header class="course-section-header"><div class="course-section-title"><i class="fas fa-photo-film"></i> فيديوهات عامة</div><span class="course-section-count">${ungrouped.length} فيديو</span></header>` : "";
       ungroupedHtml = `<section class="course-section">${headerHtml}<div class="course-section-grid">${cardsHtml}</div></section>`;
     }
-    container.innerHTML = ungroupedHtml + courseSections.join("");
+    container.innerHTML = coursesCardsHtml + ungroupedHtml;
     return;
   }
 
@@ -3990,6 +4024,46 @@ async function saveCourse() {
 function closeCourseModal() { document.getElementById("courseModal").classList.remove("active"); }
 
 // ===== فتح مودال تفاصيل الكورس المدفوع مع قائمة الفيديوهات =====
+// ===== إدارة الكورسات للمشرف =====
+window.openManageCoursesAdmin = async function() {
+  try {
+    const snap = await db.collection('courses').get();
+    if (snap.empty) { showToast('لا توجد كورسات بعد'); return; }
+    let rows = '';
+    snap.forEach(doc => {
+      const c = doc.data() || {};
+      const price = c.price || 0;
+      const nV = (c.videoIds || []).length;
+      const safeTitle = escapeHtml(c.title || '').replace(/'/g,"\\'");
+      rows += `<div style="display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid rgba(255,255,255,.07);margin-bottom:.6rem">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.95rem;color:#e2e8f0">${escapeHtml(c.title||'بدون اسم')}</div>
+          <div style="font-size:.78rem;color:#94a3b8;margin-top:.2rem"><i class="fas fa-photo-film"></i> ${nV} فيديو &nbsp;·&nbsp; <span style="color:${price>0?'#f59e0b':'#10b981'}">${price>0?price+' جنيه':'مجاني'}</span></div>
+        </div>
+        <button onclick="if(confirm('حذف كورس ${safeTitle}؟')){db.collection('courses').doc('${doc.id}').delete().then(()=>{showToast('🗑️ تم الحذف');this.closest('div').parentElement.remove()}).catch(()=>showToast('❌ فشل'))}" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.5);color:#f87171;border-radius:8px;padding:.4rem .75rem;cursor:pointer;font-family:Cairo;font-size:.82rem;white-space:nowrap"><i class="fas fa-trash"></i> حذف</button>
+      </div>`;
+    });
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.style.zIndex = '10010';
+    modal.innerHTML = `<div class="modal-content" style="max-width:520px">
+      <div class="modal-header" style="background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(217,119,6,.12));border-bottom:1px solid rgba(245,158,11,.3)">
+        <h3 style="color:#fbbf24"><i class="fas fa-graduation-cap"></i> إدارة الكورسات</h3>
+        <button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:1rem;display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end">
+          <button onclick="if(confirm('حذف كل الكورسات المدفوعة؟')){deleteAllPaidCourses()}" class="btn btn-warning" style="font-size:.82rem"><i class="fas fa-coins"></i> مسح المدفوعة</button>
+          <button onclick="if(confirm('حذف كل الكورسات؟')){deleteAllCourses()}" class="btn btn-danger" style="font-size:.82rem"><i class="fas fa-trash"></i> مسح الكل</button>
+        </div>
+        <div>${rows}</div>
+      </div>
+    </div>`;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+  } catch(e) { console.error(e); showToast('❌ فشل تحميل الكورسات'); }
+};
+
 window.openPaidCourseModal = async function(courseId) {
   if (!courseId) { showCoursesList(); return; }
   try {
@@ -4003,6 +4077,15 @@ window.openPaidCourseModal = async function(courseId) {
     const desc = c.description || '';
 
     // بناء قائمة الفيديوهات
+    // هل المستخدم مشترك بالفعل؟
+    let isEnrolled = false;
+    if (currentUserId) {
+      try {
+        const enSnap = await db.collection('course_enrollments')
+          .where('userId','==',currentUserId).where('courseId','==',courseId).limit(1).get();
+        isEnrolled = !enSnap.empty;
+      } catch(_) {}
+    }
     const courseVideos = videoIds.map(id => videos.find(v => v.id === id)).filter(Boolean);
 
     let videosHtml = courseVideos.map(v => {
@@ -4041,9 +4124,10 @@ window.openPaidCourseModal = async function(courseId) {
           <div style="display:flex;flex-direction:column;gap:.6rem;max-height:340px;overflow-y:auto;padding-left:.25rem;scrollbar-width:thin;scrollbar-color:rgba(245,158,11,.4) transparent;margin-bottom:1.25rem">
             ${videosHtml || '<p style="color:#666;text-align:center;padding:1rem">لا توجد فيديوهات</p>'}
           </div>
-          <button onclick="this.closest('.modal').remove(); enrollInCourse('${courseId}')" style="width:100%;padding:1rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(245,158,11,.45);display:flex;align-items:center;justify-content:center;gap:.6rem">
-            <i class="fas fa-shopping-cart"></i> اشترك الآن ${price > 0 ? '· ' + price + ' جنيه' : '(مجاني)'}
-          </button>
+          ${isEnrolled
+            ? `<button onclick="this.closest('.modal').remove()" style="width:100%;padding:1rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(16,185,129,.4);display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas fa-check-circle"></i> مشترك بالفعل — الفيديوهات في مكتبتك</button>`
+            : `<button onclick="this.closest('.modal').remove(); enrollInCourse('${courseId}')" style="width:100%;padding:1rem;background:${price > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#10b981,#059669)'};color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(245,158,11,.4);display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas ${price > 0 ? 'fa-shopping-cart' : 'fa-unlock'}"></i> ${price > 0 ? 'اشترك الآن · ' + price + ' جنيه' : 'ادخل مجاناً'}</button>`
+          }
         </div>
       </div>`;
     modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
@@ -7631,6 +7715,8 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     if (_origUpdateAdminUI2) _origUpdateAdminUI2.apply(this, arguments);
     const el = document.getElementById('pdfFilesMenuItem');
     if (el) el.style.display = (window.isAdmin) ? 'flex' : 'none';
+    const mcEl = document.getElementById('manageCoursesMenuItem');
+    if (mcEl) mcEl.style.display = (window.isAdmin) ? 'flex' : 'none';
   };
 
 })();
