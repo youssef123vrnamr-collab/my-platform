@@ -1201,10 +1201,7 @@
     </div>
     <div class="center-action" style="display:flex;align-items:center;gap:.5rem">
       <button class="btn btn-ghost refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> تحديث</button>
-      <button class="btn btn-primary" id="liveRoomBtn" onclick="openGroupVideoRoom()" title="انضم للمحاضرة المباشرة" style="position:relative;background:linear-gradient(135deg,#6366f1,#ec4899);border:none;padding:.45rem .9rem;border-radius:10px;font-size:.82rem;display:flex;align-items:center;gap:.4rem">
-        <i class="fas fa-video"></i> محاضرة مباشرة
-        <span id="voiceRoomBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;min-width:18px;height:18px;border-radius:999px;font-size:.65rem;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span>
-      </button>
+      
     </div>
     <div class="nav-actions" style="display: none;"></div>
   </nav>
@@ -7000,6 +6997,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       myRef && myRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
     }, 10000);
 
+    // ابدأ العداد
     seconds = 0;
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     const timerEl = document.getElementById('gvcTimer');
@@ -7007,7 +7005,10 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     timerInterval = setInterval(() => {
       seconds++;
       const el = document.getElementById('gvcTimer');
-      if (el) el.textContent = String(Math.floor(seconds/60)).padStart(2,'0') + ':' + String(seconds%60).padStart(2,'0');
+      if (el) {
+        el.textContent = String(Math.floor(seconds/60)).padStart(2,'0') + ':' + String(seconds%60).padStart(2,'0');
+        el.style.color = '#10b981'; // لون أخضر عشان تبان
+      }
     }, 1000);
 
     showToast('📹 انضممت للمحاضرة المباشرة');
