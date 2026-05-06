@@ -6928,17 +6928,32 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       gvcMyRef = gvcRoomRef().collection('participants').doc(gvcMyUID);
       await gvcMyRef.set({ name:currentUser||'مستخدم', uid:gvcMyUID, muted:false, camOff:false, isAdmin:!!isAdmin, joinedAt:firebase.firestore.FieldValue.serverTimestamp(), lastSeen:firebase.firestore.FieldValue.serverTimestamp() });
 
-      // Watch participants
+      // Watch participants — الجديد يبعت offer لكل الموجودين
+      let gvcKnownUIDs = new Set();
       gvcUnsub = gvcRoomRef().collection('participants').onSnapshot(async snap => {
         const live = new Set();
         snap.forEach(doc=>{ live.add(doc.id); gvcParticipants.set(doc.id, doc.data()); });
-        for (const uid of gvcParticipants.keys()) if (!live.has(uid)) { gvcParticipants.delete(uid); gvcClosePeer(uid); }
+
+        // حذف اللي خرجوا
+        for (const uid of [...gvcKnownUIDs]) {
+          if (!live.has(uid)) { gvcParticipants.delete(uid); gvcClosePeer(uid); gvcKnownUIDs.delete(uid); }
+        }
+
         gvcUpdateGrid();
         gvcUpdateCount();
+
+        // أنا بس اللي بيبدأ الـ offer — لكل شخص موجود قبلي
+        // (الشخص الأقدم يستنى الـ offer من الجديد)
         for (const uid of live) {
-          if (uid===gvcMyUID||gvcPeers[uid]) continue;
-          if (gvcMyUID > uid) await gvcCreateOffer(uid);
+          if (uid === gvcMyUID) continue;
+          if (gvcKnownUIDs.has(uid)) continue; // عارفه خلاص
+          gvcKnownUIDs.add(uid);
+          if (!gvcPeers[uid]) {
+            // انا الجديد — ابعت offer لكل الموجودين
+            await gvcCreateOffer(uid);
+          }
         }
+        gvcKnownUIDs.add(gvcMyUID);
       });
 
       // Watch signals
@@ -7062,37 +7077,54 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   }
 
   async function gvcHandleSignal(data) {
-    const from=data.from; if(!from||from===gvcMyUID) return;
-    if (data.type==='offer') {
-      let pc=gvcPeers[from]; if(!pc) pc=gvcCreatePC(from);
-      if(pc.signalingState!=='stable') return;
-      await pc.setRemoteDescription(new RTCSessionDescription({type:'offer',sdp:data.sdp}));
-      const ans=await pc.createAnswer();
-      await pc.setLocalDescription(ans);
-      await gvcSignalRef(gvcMyUID,from).set({from:gvcMyUID,to:from,type:'answer',sdp:ans.sdp,ts:firebase.firestore.FieldValue.serverTimestamp()});
-      // flush buffered ICE candidates
-      if(gvcIceCandidateBuffer[from]){
-        for(const c of gvcIceCandidateBuffer[from]){ try{await pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){} }
-        delete gvcIceCandidateBuffer[from];
+    const from = data.from;
+    if (!from || from === gvcMyUID) return;
+
+    if (data.type === 'offer') {
+      // لو فيه peer قديم وحالته مش stable، امسحه وابدأ جديد
+      if (gvcPeers[from] && gvcPeers[from].signalingState !== 'stable') {
+        try { gvcPeers[from].close(); } catch(e){}
+        delete gvcPeers[from];
+        delete gvcRemoteStreams[from];
       }
-    } else if(data.type==='answer') {
-      const pc=gvcPeers[from];
-      if(pc&&pc.signalingState==='have-local-offer'){
-        await pc.setRemoteDescription(new RTCSessionDescription({type:'answer',sdp:data.sdp}));
-        // flush buffered ICE candidates
-        if(gvcIceCandidateBuffer[from]){
-          for(const c of gvcIceCandidateBuffer[from]){ try{await pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){} }
+      let pc = gvcPeers[from];
+      if (!pc) pc = gvcCreatePC(from);
+
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
+        const ans = await pc.createAnswer();
+        await pc.setLocalDescription(ans);
+        await gvcSignalRef(gvcMyUID, from).set({
+          from: gvcMyUID, to: from, type: 'answer', sdp: ans.sdp,
+          ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        // flush buffered ICE
+        if (gvcIceCandidateBuffer[from]) {
+          for (const c of gvcIceCandidateBuffer[from]) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
           delete gvcIceCandidateBuffer[from];
         }
+      } catch(e) { console.error('GVC handle offer error:', e); }
+
+    } else if (data.type === 'answer') {
+      const pc = gvcPeers[from];
+      if (pc && pc.signalingState === 'have-local-offer') {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
+          // flush buffered ICE
+          if (gvcIceCandidateBuffer[from]) {
+            for (const c of gvcIceCandidateBuffer[from]) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
+            delete gvcIceCandidateBuffer[from];
+          }
+        } catch(e) { console.error('GVC handle answer error:', e); }
       }
-    } else if(data.type==='candidate') {
-      const pc=gvcPeers[from];
-      if(pc && pc.remoteDescription && pc.remoteDescription.type){
-        try{await pc.addIceCandidate(new RTCIceCandidate(data.candidate));}catch(e){}
+
+    } else if (data.type === 'candidate') {
+      const pc = gvcPeers[from];
+      if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){}
       } else {
-        // buffer until remote description is ready
-        if(!gvcIceCandidateBuffer[from]) gvcIceCandidateBuffer[from]=[];
-        if(data.candidate) gvcIceCandidateBuffer[from].push(data.candidate);
+        if (!gvcIceCandidateBuffer[from]) gvcIceCandidateBuffer[from] = [];
+        if (data.candidate) gvcIceCandidateBuffer[from].push(data.candidate);
       }
     }
   }
