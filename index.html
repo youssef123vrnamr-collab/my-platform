@@ -260,22 +260,21 @@
       gap: 1rem;
       padding: 1.5rem !important;
     }
-    /* Voice room modal - centered dialog */
+    /* Voice room modal - fullscreen */
     #groupVoiceRoomModal {
-      align-items: center !important;
-      justify-content: center !important;
-      background: rgba(0,0,0,.8) !important;
-      padding: 1rem !important;
+      align-items: stretch !important;
+      justify-content: stretch !important;
+      background: #080510 !important;
+      padding: 0 !important;
     }
     #groupVoiceRoomModal > .modal-content {
-      width: 94% !important;
-      max-width: 480px !important;
-      min-height: unset !important;
-      height: auto !important;
-      max-height: 92dvh !important;
-      border-radius: 20px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 100dvh !important;
+      height: 100dvh !important;
+      max-height: 100dvh !important;
+      border-radius: 0 !important;
       overflow: hidden !important;
-      animation: fadeInUp .25s ease;
     }
 
     .course-actions-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; width: 100%; align-items: center; gap: 0.75rem; margin: 1rem 0; min-height: 3rem; }
@@ -1200,7 +1199,13 @@
         </div>
       </div>
     </div>
-    <div class="center-action"><button class="btn btn-ghost refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> تحديث</button></div>
+    <div class="center-action" style="display:flex;align-items:center;gap:.5rem">
+      <button class="btn btn-ghost refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> تحديث</button>
+      <button class="btn btn-primary" id="liveRoomBtn" onclick="openGroupVideoRoom()" title="انضم للمحاضرة المباشرة" style="position:relative;background:linear-gradient(135deg,#6366f1,#ec4899);border:none;padding:.45rem .9rem;border-radius:10px;font-size:.82rem;display:flex;align-items:center;gap:.4rem">
+        <i class="fas fa-video"></i> محاضرة مباشرة
+        <span id="voiceRoomBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;min-width:18px;height:18px;border-radius:999px;font-size:.65rem;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span>
+      </button>
+    </div>
     <div class="nav-actions" style="display: none;"></div>
   </nav>
 
@@ -6861,7 +6866,16 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
 //  GROUP VIDEO CALL  —  WebRTC Mesh via Firestore Signaling
 // ============================================================
 (function(){
-  const GVC_STUN = { iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}] };
+  const GVC_STUN = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'turn:openrelay.metered.ca:80',    username: 'openrelayproject', credential: 'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443',   username: 'openrelayproject', credential: 'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+    ],
+    iceCandidatePoolSize: 10
+  };
   let gvcStream = null;       // local camera+mic stream
   let gvcScreenStream = null; // screen share stream
   let gvcActive = false;
@@ -6878,6 +6892,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   let gvcInterval = null;
   let gvcTimerInterval = null;
   let gvcSeconds = 0;
+  let gvcIceCandidateBuffer = {}; // buffer ICE candidates until remote desc is ready
 
   const gvcRoomRef = () => db.collection('video_room').doc('main_room');
   const gvcSignalRef = (from, to) => gvcRoomRef().collection('signals').doc(from+'__'+to);
@@ -6990,23 +7005,36 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     const grid = document.getElementById('gvcGrid');
     if (!grid) return;
     let tile = document.getElementById('gvc-tile-'+uid);
-    if (!tile) { tile=document.createElement('div'); tile.className='gvc-tile'; tile.id='gvc-tile-'+uid; grid.appendChild(tile); }
-    tile.innerHTML='';
-    const p = gvcParticipants.get(uid)||{};
+    if (!tile) { tile=document.createElement('div'); tile.className='gvc-tile'; tile.id='gvc-tile-'+uid; grid.appendChild(tile); gvcUpdateGrid(); }
 
-    if (!p.camOff && stream) {
-      const vid=document.createElement('video'); vid.autoplay=true; vid.playsInline=true; vid.srcObject=stream;
-      tile.appendChild(vid);
+    const p = gvcParticipants.get(uid)||{};
+    const hasVideo = stream && stream.getVideoTracks().length > 0 && !p.camOff;
+
+    // Only rebuild tile if needed (avoid flickering)
+    let vid = tile.querySelector('video');
+    if (!vid) {
+      tile.innerHTML = '';
+      if (hasVideo) {
+        vid = document.createElement('video');
+        vid.autoplay = true; vid.playsInline = true;
+        // BUG FIX 3: explicit play() for iOS/Android autoplay policy
+        vid.srcObject = stream;
+        vid.play().catch(()=>{});
+        tile.appendChild(vid);
+      } else {
+        const av=document.createElement('div'); av.className='gvc-tile-avatar';
+        const colors=['#6366f1','#ec4899','#10b981','#f59e0b','#06b6d4','#8b5cf6'];
+        av.style.background=colors[Math.abs((uid||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0))%colors.length];
+        av.textContent=(p.name||'؟').charAt(0).toUpperCase();
+        tile.appendChild(av);
+      }
+      const label=document.createElement('div'); label.className='gvc-tile-label';
+      label.innerHTML=`<i class="fas fa-${p.muted?'microphone-slash':'microphone'}" style="color:${p.muted?'#ef4444':'#10b981'}"></i> ${p.name||'مستخدم'}`;
+      tile.appendChild(label);
     } else {
-      const av=document.createElement('div'); av.className='gvc-tile-avatar';
-      const colors=['#6366f1','#ec4899','#10b981','#f59e0b','#06b6d4','#8b5cf6'];
-      av.style.background=colors[Math.abs((uid||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0))%colors.length];
-      av.textContent=(p.name||'؟').charAt(0).toUpperCase();
-      tile.appendChild(av);
+      // just update stream if video already exists
+      if (vid.srcObject !== stream) { vid.srcObject = stream; vid.play().catch(()=>{}); }
     }
-    const label=document.createElement('div'); label.className='gvc-tile-label';
-    label.innerHTML=`<i class="fas fa-${p.muted?'microphone-slash':'microphone'}" style="color:${p.muted?'#ef4444':'#10b981'}"></i> ${p.name||'مستخدم'}`;
-    tile.appendChild(label);
   }
 
   // -------- GRID LAYOUT --------
@@ -7042,12 +7070,30 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       const ans=await pc.createAnswer();
       await pc.setLocalDescription(ans);
       await gvcSignalRef(gvcMyUID,from).set({from:gvcMyUID,to:from,type:'answer',sdp:ans.sdp,ts:firebase.firestore.FieldValue.serverTimestamp()});
+      // flush buffered ICE candidates
+      if(gvcIceCandidateBuffer[from]){
+        for(const c of gvcIceCandidateBuffer[from]){ try{await pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){} }
+        delete gvcIceCandidateBuffer[from];
+      }
     } else if(data.type==='answer') {
       const pc=gvcPeers[from];
-      if(pc&&pc.signalingState==='have-local-offer') await pc.setRemoteDescription(new RTCSessionDescription({type:'answer',sdp:data.sdp}));
+      if(pc&&pc.signalingState==='have-local-offer'){
+        await pc.setRemoteDescription(new RTCSessionDescription({type:'answer',sdp:data.sdp}));
+        // flush buffered ICE candidates
+        if(gvcIceCandidateBuffer[from]){
+          for(const c of gvcIceCandidateBuffer[from]){ try{await pc.addIceCandidate(new RTCIceCandidate(c));}catch(e){} }
+          delete gvcIceCandidateBuffer[from];
+        }
+      }
     } else if(data.type==='candidate') {
       const pc=gvcPeers[from];
-      if(pc&&data.candidate) try{await pc.addIceCandidate(new RTCIceCandidate(data.candidate));}catch(e){}
+      if(pc && pc.remoteDescription && pc.remoteDescription.type){
+        try{await pc.addIceCandidate(new RTCIceCandidate(data.candidate));}catch(e){}
+      } else {
+        // buffer until remote description is ready
+        if(!gvcIceCandidateBuffer[from]) gvcIceCandidateBuffer[from]=[];
+        if(data.candidate) gvcIceCandidateBuffer[from].push(data.candidate);
+      }
     }
   }
 
@@ -7057,23 +7103,44 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     gvcPeers[remoteUID]=pc;
 
     // add local tracks
-    const streams=[gvcStream, gvcScreenStream].filter(Boolean);
-    streams.forEach(s=>s.getTracks().forEach(t=>pc.addTrack(t,s)));
+    if(gvcStream) gvcStream.getTracks().forEach(t=>pc.addTrack(t,gvcStream));
 
+    // BUG FIX 1: ontrack — always attach the stream to the video tile
+    // regardless of camOff flag. The remote side decides what it sends.
     pc.ontrack=(e)=>{
-      const stream=e.streams[0];
-      gvcRemoteStreams[remoteUID]=stream;
-      gvcRenderRemoteTile(remoteUID,stream);
+      const stream = e.streams[0] || new MediaStream([e.track]);
+      // merge all tracks into one stream per peer
+      if(!gvcRemoteStreams[remoteUID]) gvcRemoteStreams[remoteUID] = new MediaStream();
+      gvcRemoteStreams[remoteUID].addTrack(e.track);
+      gvcRenderRemoteTile(remoteUID, gvcRemoteStreams[remoteUID]);
     };
+
     pc.onicecandidate=async(e)=>{
       if(e.candidate){
         const ref=gvcRoomRef().collection('signals').doc(gvcMyUID+'__'+remoteUID+'_ice_'+Date.now());
         await ref.set({from:gvcMyUID,to:remoteUID,type:'candidate',candidate:e.candidate.toJSON(),ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
       }
     };
+
+    // BUG FIX 2: on failed/disconnected — retry offer instead of closing immediately
     pc.onconnectionstatechange=()=>{
-      if(['disconnected','failed','closed'].includes(pc.connectionState)) gvcClosePeer(remoteUID);
+      console.log('GVC connection state ['+remoteUID+']:', pc.connectionState);
+      if(pc.connectionState==='failed'){
+        gvcClosePeer(remoteUID);
+        // retry after short delay if both still in room
+        setTimeout(()=>{
+          if(gvcActive && gvcParticipants.has(remoteUID) && !gvcPeers[remoteUID]){
+            if(gvcMyUID > remoteUID) gvcCreateOffer(remoteUID);
+          }
+        }, 2000);
+      }
+      if(pc.connectionState==='closed') gvcClosePeer(remoteUID);
     };
+
+    pc.oniceconnectionstatechange=()=>{
+      console.log('GVC ICE state ['+remoteUID+']:', pc.iceConnectionState);
+    };
+
     return pc;
   }
 
@@ -7089,6 +7156,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   async function gvcLeave() {
     gvcActive=false; gvcSharing=false;
     Object.keys(gvcPeers).forEach(uid=>gvcClosePeer(uid));
+    gvcIceCandidateBuffer = {};
     try {
       const s1=await gvcRoomRef().collection('signals').where('from','==',gvcMyUID).get(); s1.forEach(d=>d.ref.delete());
       const s2=await gvcRoomRef().collection('signals').where('to','==',gvcMyUID).get(); s2.forEach(d=>d.ref.delete());
