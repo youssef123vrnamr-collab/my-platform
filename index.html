@@ -1101,34 +1101,32 @@
 @media (max-width: 767px) {
   .hero {
     overflow: visible !important;
-  }
-  .container {
-    overflow-x: hidden;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
   .hero-banner-img {
-    border-radius: 10px !important;
+    border-radius: 0 !important;
     margin-top: 1.2rem !important;
     box-shadow: 0 16px 48px rgba(99,102,241,0.55), 0 6px 18px rgba(0,0,0,0.5) !important;
-    /* كسر حدود الـ hero والـ container كاملاً - عرض الشاشة بالكامل */
     display: block !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    position: relative !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    margin-left: 0 !important;
+    margin-left: calc(-1 * (100vw - 100%) / 2) !important;
     margin-right: 0 !important;
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
   }
 }
 
 /* ===== تكبير أيقونة الفيديوهات على الكمبيوتر فقط ===== */
 @media (min-width: 768px) {
   .videos-heading-icon {
-    font-size: 2rem !important;
-    filter: drop-shadow(0 0 8px rgba(236,72,153,0.6));
+    font-size: 2.5rem !important;
+    filter: drop-shadow(0 0 10px rgba(236,72,153,0.7));
   }
   .videos-library-heading {
-    font-size: 1.5rem !important;
+    font-size: 1.6rem !important;
     align-items: center;
   }
 }
