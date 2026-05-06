@@ -390,6 +390,7 @@
     .chat-messages::-webkit-scrollbar-track { background: rgba(255,255,255,.05); }
     .chat-messages::-webkit-scrollbar-thumb { background: rgba(99,102,241,.5); border-radius: 3px; }
     .message { max-width: 75%; padding: 1rem 1.25rem; border-radius: 20px; position: relative; animation: messageSlide .3s ease; }
+    .message:has(.voice-message) { padding: .4rem .5rem; }
     @keyframes messageSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .message.sent { align-self: flex-end; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-bottom-right-radius: 5px; }
     .message.received { align-self: flex-start; background: rgba(255,255,255,.1); border-bottom-left-radius: 5px; }
