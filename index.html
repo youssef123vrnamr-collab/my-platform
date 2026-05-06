@@ -6982,6 +6982,9 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     }, 10000);
 
     seconds = 0;
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    const timerEl = document.getElementById('gvcTimer');
+    if (timerEl) timerEl.textContent = '00:00';
     timerInterval = setInterval(() => {
       seconds++;
       const el = document.getElementById('gvcTimer');
