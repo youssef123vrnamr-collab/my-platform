@@ -6928,7 +6928,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       gvcMyRef = gvcRoomRef().collection('participants').doc(gvcMyUID);
       await gvcMyRef.set({ name:currentUser||'مستخدم', uid:gvcMyUID, muted:false, camOff:false, isAdmin:!!isAdmin, joinedAt:firebase.firestore.FieldValue.serverTimestamp(), lastSeen:firebase.firestore.FieldValue.serverTimestamp() });
 
-      // Watch participants — الجديد يبعت offer لكل الموجودين
+      // Watch participants
       let gvcKnownUIDs = new Set();
       gvcUnsub = gvcRoomRef().collection('participants').onSnapshot(async snap => {
         const live = new Set();
@@ -6936,22 +6936,27 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
 
         // حذف اللي خرجوا
         for (const uid of [...gvcKnownUIDs]) {
-          if (!live.has(uid)) { gvcParticipants.delete(uid); gvcClosePeer(uid); gvcKnownUIDs.delete(uid); }
+          if (uid !== gvcMyUID && !live.has(uid)) {
+            gvcParticipants.delete(uid);
+            gvcClosePeer(uid);
+            gvcKnownUIDs.delete(uid);
+          }
         }
 
         gvcUpdateGrid();
         gvcUpdateCount();
 
-        // أنا بس اللي بيبدأ الـ offer — لكل شخص موجود قبلي
-        // (الشخص الأقدم يستنى الـ offer من الجديد)
+        // كل شخص جديد في الأوضة — ابعتله offer
         for (const uid of live) {
           if (uid === gvcMyUID) continue;
-          if (gvcKnownUIDs.has(uid)) continue; // عارفه خلاص
+          if (gvcKnownUIDs.has(uid)) continue;
           gvcKnownUIDs.add(uid);
-          if (!gvcPeers[uid]) {
-            // انا الجديد — ابعت offer لكل الموجودين
-            await gvcCreateOffer(uid);
-          }
+          // تأخير صغير عشان الطرف التاني يبقى signal listener شغال
+          setTimeout(async () => {
+            if (gvcActive && !gvcPeers[uid]) {
+              await gvcCreateOffer(uid);
+            }
+          }, 1500);
         }
         gvcKnownUIDs.add(gvcMyUID);
       });
@@ -7081,13 +7086,23 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     if (!from || from === gvcMyUID) return;
 
     if (data.type === 'offer') {
-      // لو فيه peer قديم وحالته مش stable، امسحه وابدأ جديد
-      if (gvcPeers[from] && gvcPeers[from].signalingState !== 'stable') {
-        try { gvcPeers[from].close(); } catch(e){}
-        delete gvcPeers[from];
-        delete gvcRemoteStreams[from];
-      }
       let pc = gvcPeers[from];
+
+      // Glare condition: الاتنين بعتوا offer في نفس الوقت
+      // الـ UID الأصغر يتراجع ويقبل الـ offer بتاع التاني
+      if (pc && pc.signalingState === 'have-local-offer') {
+        if (gvcMyUID > from) {
+          // أنا الأكبر — أتراجع وأقبل offer التاني
+          try { pc.close(); } catch(e){}
+          delete gvcPeers[from];
+          delete gvcRemoteStreams[from];
+          pc = null;
+        } else {
+          // أنا الأصغر — أتجاهل offer التاني وأستنى الـ answer
+          return;
+        }
+      }
+
       if (!pc) pc = gvcCreatePC(from);
 
       try {
@@ -7110,7 +7125,6 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       if (pc && pc.signalingState === 'have-local-offer') {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
-          // flush buffered ICE
           if (gvcIceCandidateBuffer[from]) {
             for (const c of gvcIceCandidateBuffer[from]) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
             delete gvcIceCandidateBuffer[from];
