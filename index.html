@@ -5949,6 +5949,9 @@ window.playChatSound = function() {
         const text = ev.results[0][0].transcript;
         if (transcript) transcript.innerHTML += `<p style="color:#e2e8f0;margin-bottom:.4rem;text-align:right">🧑 ${text}</p>`;
         if (status) status.textContent = 'الذكاء الاصطناعي يفكر...';
+        // أوقف الاستماع أثناء رد الـ AI
+        aiVoiceActive = false;
+        try { aiVoiceRecognition.stop(); } catch(e){}
         try {
           const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -5958,14 +5961,29 @@ window.playChatSound = function() {
           const data = await res.json();
           const answer = (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'عذراً، حدث خطأ.';
           if (transcript) { transcript.innerHTML += `<p style="color:#06b6d4;margin-bottom:.4rem;text-align:right">🤖 ${answer}</p>`; transcript.scrollTop = transcript.scrollHeight; }
-          if (!aiIsMuted && window.speechSynthesis) { const u = new SpeechSynthesisUtterance(answer); u.lang='ar-SA'; u.rate=0.9; window.speechSynthesis.speak(u); }
-          if (status) status.textContent = 'اضغط للتحدث';
+          if (!aiIsMuted && window.speechSynthesis) {
+            const u = new SpeechSynthesisUtterance(answer);
+            u.lang='ar-SA'; u.rate=0.9;
+            // ابدأ الاستماع تاني بس لما يخلص الكلام
+            u.onend = () => {
+              if (status) status.textContent = 'اضغط للتحدث';
+              aiVoiceActive = true;
+              try { aiVoiceRecognition.start(); } catch(e){}
+            };
+            window.speechSynthesis.speak(u);
+          } else {
+            if (status) status.textContent = 'اضغط للتحدث';
+            aiVoiceActive = true;
+            try { aiVoiceRecognition.start(); } catch(e){}
+          }
         } catch(err) {
           if (transcript) transcript.innerHTML += `<p style="color:#ef4444;margin-bottom:.4rem">❌ فشل الاتصال</p>`;
           if (status) status.textContent = 'فشل - حاول مرة أخرى';
+          aiVoiceActive = true;
+          try { aiVoiceRecognition.start(); } catch(e){}
         }
       };
-      aiVoiceRecognition.onend = () => { if (aiVoiceActive) { try { aiVoiceRecognition.start(); } catch(e){} } };
+      aiVoiceRecognition.onend = () => { /* لا تعيد التشغيل تلقائياً — بيتحكم فيه onresult */ };
       aiVoiceRecognition.onerror = (e) => { if (e.error !== 'aborted') { if (status) status.textContent = 'خطأ: ' + e.error; } };
       aiVoiceRecognition.start();
     } else {
