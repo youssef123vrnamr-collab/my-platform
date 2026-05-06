@@ -1416,23 +1416,28 @@
 
   <!-- ===== AI Voice Chat Modal ===== -->
   <div class="modal" id="aiVoiceChatModal" style="z-index:10003">
-    <div class="modal-content" style="max-width:500px;text-align:center">
+    <div class="modal-content" style="max-width:500px;display:flex;flex-direction:column">
       <div class="modal-header">
         <h3><i class="fas fa-headphones" style="color:#06b6d4"></i> دردشة صوتية مع الذكاء الاصطناعي</h3>
         <button class="modal-close" onclick="closeAIVoiceChat()"><i class="fas fa-times"></i></button>
       </div>
-      <div class="modal-body" style="padding:2rem 1.5rem">
-        <div style="width:120px;height:120px;background:linear-gradient(135deg,#06b6d4,#0891b2);border-radius:50%;margin:0 auto 1.5rem;display:flex;align-items:center;justify-content:center;font-size:3rem;animation:glow 3s infinite" id="aiVoiceAvatar">
-          <i class="fas fa-robot" style="color:#fff"></i>
+      <div class="modal-body" style="padding:1rem 1.5rem;display:flex;flex-direction:column;gap:1rem;flex:1;min-height:0">
+        <!-- أفاتار + حالة -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;flex-shrink:0">
+          <div style="width:80px;height:80px;background:linear-gradient(135deg,#06b6d4,#0891b2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:glow 3s infinite" id="aiVoiceAvatar">
+            <i class="fas fa-robot" style="color:#fff"></i>
+          </div>
+          <div id="aiVoiceStatus" style="color:#06b6d4;font-size:.95rem">اضغط على الميكروفون للتحدث</div>
+          <div id="aiVoiceListening" style="display:none;color:#10b981;animation:pulse 1s infinite;font-size:.9rem"><i class="fas fa-circle" style="font-size:.5rem"></i> جاري الاستماع...</div>
         </div>
-        <div id="aiVoiceStatus" style="color:#06b6d4;margin-bottom:1.5rem;font-size:1rem">اضغط على الميكروفون للتحدث</div>
-        <div id="aiVoiceTranscript" style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:12px;padding:1rem;margin-bottom:1.5rem;color:#aaa;font-size:.9rem;min-height:80px;text-align:right;direction:rtl">ستظهر هنا نصوص المحادثة...</div>
-        <div style="display:flex;justify-content:center;gap:1rem">
-          <button onclick="toggleAIVoiceRecord()" id="aiVoiceRecordBtn" style="width:70px;height:70px;background:linear-gradient(135deg,#06b6d4,#0891b2);border:none;color:#fff;border-radius:50%;font-size:1.8rem;cursor:pointer;box-shadow:0 8px 25px rgba(6,182,212,.4);transition:all .3s">
+        <!-- منطقة المحادثة الثابتة القابلة للتمرير -->
+        <div id="aiVoiceTranscript" style="flex:1;min-height:0;max-height:45vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:14px;padding:.85rem 1rem;color:#aaa;font-size:.92rem;text-align:right;direction:rtl;scrollbar-width:thin;scrollbar-color:rgba(6,182,212,.3) transparent">ستظهر هنا نصوص المحادثة...</div>
+        <!-- زرار التسجيل -->
+        <div style="display:flex;justify-content:center;flex-shrink:0;padding-bottom:.5rem">
+          <button onclick="toggleAIVoiceRecord()" id="aiVoiceRecordBtn" style="width:65px;height:65px;background:linear-gradient(135deg,#06b6d4,#0891b2);border:none;color:#fff;border-radius:50%;font-size:1.6rem;cursor:pointer;box-shadow:0 8px 25px rgba(6,182,212,.4);transition:all .3s">
             <i class="fas fa-microphone" id="aiVoiceRecordIcon"></i>
           </button>
         </div>
-        <div id="aiVoiceListening" style="display:none;color:#10b981;margin-top:1rem;animation:pulse 1s infinite"><i class="fas fa-waveform"></i> جاري الاستماع...</div>
       </div>
     </div>
   </div>
