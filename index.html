@@ -1292,7 +1292,7 @@
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div id="aiFilePreview" style="display:none;padding:.5rem;margin-bottom:.5rem;background:rgba(6,182,212,.1);border-radius:10px;border:1px solid rgba(6,182,212,.3);position:relative"><span id="aiFilePreviewName" style="color:#06b6d4;font-size:.85rem"></span><button onclick="clearAIFile()" style="position:absolute;top:.3rem;left:.3rem;background:rgba(239,68,68,.3);border:none;color:#ef4444;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem"><i class="fas fa-times"></i></button></div><div class="chat-input-container"><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="إيقاف/تشغيل الصوت" style="color:#10b981;flex-shrink:0"><i class="fas fa-volume-up"></i></button><button class="chat-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية" style="color:#06b6d4;flex-shrink:0"><i class="fas fa-headphones"></i></button><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
-  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions" style="flex-direction:column;gap:.4rem;align-items:center"><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button><button class="chat-action-btn" id="zoomJoinBtn" onclick="joinZoomFromChat()" title="انضم لمحاضرة Zoom" style="background:rgba(45,140,255,.25);color:#2d8cff;border:1px solid rgba(45,140,255,.5);position:relative;display:none"><i class="fas fa-video"></i></button><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
+  <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions" style="flex-direction:column;gap:.4rem;align-items:center"><button class="chat-action-btn" onclick="closeChat()" title="إغلاق"><i class="fas fa-times"></i></button><button class="chat-action-btn" id="zoomJoinBtn" onclick="joinZoomFromChat()" title="انضم لمحاضرة Zoom" style="background:linear-gradient(135deg,#2d8cff,#1a6fd4);color:#fff;border:1px solid rgba(45,140,255,.7);display:none;gap:.3rem;padding:0 .6rem;font-size:.8rem;width:auto;min-width:40px"><i class="fas fa-video"></i><span style="font-family:Cairo,sans-serif;font-weight:600;font-size:.75rem">انضم</span></button><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div>
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar" id="drawingToolbar">
   <!-- أدوات الرسم الأساسية -->
   <span class="db-tool-label">رسم</span>
@@ -6782,13 +6782,14 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
 <script>
 // ===== ZOOM LINK FEATURE =====
 (function() {
-  const ZOOM_DOC = 'platform_settings';
+  const ZOOM_DOC = 'zoom_settings';
   const ZOOM_FIELD = 'zoomLink';
+  const ZOOM_COL = 'system';
 
   // Listen to zoom link from Firestore and update button visibility
   function listenZoomLink() {
     if (!db) { setTimeout(listenZoomLink, 1000); return; }
-    db.collection('settings').doc(ZOOM_DOC).onSnapshot(snap => {
+    db.collection(ZOOM_COL).doc(ZOOM_DOC).onSnapshot(snap => {
       const link = snap.exists && snap.data()[ZOOM_FIELD] ? snap.data()[ZOOM_FIELD].trim() : '';
       const btn = document.getElementById('zoomJoinBtn');
       if (btn) btn.style.display = link ? 'flex' : 'none';
@@ -6837,20 +6838,26 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     if (!link) { showToast('❌ أدخل الرابط أولاً'); return; }
     if (!link.startsWith('http')) { showToast('❌ رابط غير صالح'); return; }
     try {
-      await db.collection('settings').doc(ZOOM_DOC).set({ [ZOOM_FIELD]: link }, { merge: true });
-      showToast('✅ تم حفظ رابط Zoom');
+      await db.collection(ZOOM_COL).doc(ZOOM_DOC).set({ [ZOOM_FIELD]: link, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      window._zoomLink = link;
+      const btn = document.getElementById('zoomJoinBtn');
+      if (btn) btn.style.display = 'flex';
+      showToast('✅ تم حفظ رابط Zoom بنجاح');
       closeZoomLinkSettings();
-    } catch(e) { showToast('❌ فشل الحفظ'); }
+    } catch(e) { console.error('saveZoomLink error:', e); showToast('❌ فشل الحفظ: ' + (e.message || e)); }
   };
 
   window.clearZoomLink = async function() {
     if (!confirm('هل تريد إزالة رابط Zoom؟ سيختفي الزرار من الدردشة.')) return;
     try {
-      await db.collection('settings').doc(ZOOM_DOC).set({ [ZOOM_FIELD]: '' }, { merge: true });
+      await db.collection(ZOOM_COL).doc(ZOOM_DOC).set({ [ZOOM_FIELD]: '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      window._zoomLink = '';
+      const btn = document.getElementById('zoomJoinBtn');
+      if (btn) btn.style.display = 'none';
       const inp = document.getElementById('zoomLinkInput');
       if (inp) inp.value = '';
       showToast('🗑️ تم إزالة الرابط');
-    } catch(e) { showToast('❌ فشل الحذف'); }
+    } catch(e) { console.error('clearZoomLink error:', e); showToast('❌ فشل الحذف'); }
   };
 
   window.joinZoomFromChat = function() {
