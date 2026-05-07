@@ -69,6 +69,7 @@
     html { width: 100%; min-height: 100%; min-height: 100dvh; background: #020010 !important; }
     html, body { width: 100%; min-height: 100%; background: #020010; }
     body { font-family: 'Cairo', sans-serif; background: #020010 !important; color: #fff; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    #spaceCanvas { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; min-width: 100vw !important; height: 100vh !important; min-height: 100vh !important; z-index: -1 !important; pointer-events: none !important; }
     .app-wrapper { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; background: transparent; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; pointer-events: none; z-index: -1; overflow: hidden; background: #020010; }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
@@ -1554,7 +1555,7 @@
 </div>
 
 <div class="app-wrapper" id="appWrapper" style="display: none;">
-  <canvas id="spaceCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;width:100vw;height:100vh;height:100dvh;z-index:-1;pointer-events:none;display:block;min-width:100%;min-height:100%"></canvas>
+  <canvas id="spaceCanvas" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;height:100dvh;min-width:100vw;min-height:100vh;z-index:-1;pointer-events:none;display:block"></canvas>
   <div class="loader" id="loader"><div class="loader-ring"></div><div class="loader-text">مرحباً بك في عالم الفلك 🌌</div></div>
 
   <nav class="navbar">
@@ -8435,8 +8436,13 @@ function showCertificateModal(courseTitle, certUrl, courseLevel, courseId) {
   const today = new Date();
   const certDate = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
   const level = courseLevel || 'متوسط';
-  // اسم الطالب من حسابه
-  const autoName = (typeof currentUser !== 'undefined' && currentUser) || '';
+  // اسم الطالب من حسابه — بيجيب من كل المصادر المتاحة
+  const autoName = (typeof currentUser !== 'undefined' && currentUser && String(currentUser).trim())
+    || (typeof googleUser !== 'undefined' && googleUser && googleUser.displayName && String(googleUser.displayName).trim())
+    || (window.googleUser && window.googleUser.displayName && String(window.googleUser.displayName).trim())
+    || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.displayName && String(firebase.auth().currentUser.displayName).trim())
+    || (typeof localStorage !== 'undefined' && localStorage.getItem('falak_username') && String(localStorage.getItem('falak_username')).trim())
+    || '';
 
   const modal = document.createElement('div');
   modal.id = 'certViewModal';
@@ -8710,10 +8716,14 @@ window.handleCertDownload = function(certUrl, certNumber) {
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
   function getVP() {
-    if (window.visualViewport) return { w: window.visualViewport.width, h: window.visualViewport.height };
+    // استخدم أكبر قيمة ممكنة عشان يغطي كل الشاشة
+    const sw = screen.width || 0;
+    const sh = screen.height || 0;
+    const vvw = window.visualViewport ? window.visualViewport.width : 0;
+    const vvh = window.visualViewport ? window.visualViewport.height : 0;
     return {
-      w: Math.max(window.innerWidth, document.documentElement.clientWidth, screen.width || 0),
-      h: Math.max(window.innerHeight, document.documentElement.clientHeight)
+      w: Math.max(sw, vvw, window.innerWidth, document.documentElement.clientWidth),
+      h: Math.max(sh, vvh, window.innerHeight, document.documentElement.clientHeight)
     };
   }
 
