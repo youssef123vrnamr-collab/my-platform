@@ -1552,7 +1552,7 @@
 </div>
 
 <div class="app-wrapper" id="appWrapper" style="display: none;">
-  <div class="bg-animation"><div class="nebula"></div><div class="nebula"></div></div>
+  <canvas id="spaceCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;"></canvas>
   <div class="loader" id="loader"><div class="loader-ring"></div><div class="loader-text">مرحباً بك في عالم الفلك 🌌</div></div>
 
   <nav class="navbar">
@@ -1631,11 +1631,42 @@
   </div>
 
   <div class="container">
-    <div class="hero" style="padding:2rem 1rem 2rem">
-      <div class="hero-badge"><i class="fas fa-cloud"></i> Astronomy and space</div>
-      <h2>اكتشف أسرار <span>الكون</span></h2>
-      <p>منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
-      <img src="welcome-banner.svg" alt="منصة متكاملة لتعليم علم الفلك" style="width:min(100%,900px);height:auto;border-radius:14px;box-shadow:0 20px 60px rgba(99,102,241,0.45);display:block;margin:1.5rem auto 0;"/>
+    <div class="hero epic-hero" style="padding:3rem 1rem 2.5rem;position:relative;overflow:hidden;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+
+      <!-- Floating planets -->
+      <div class="planet planet-1"></div>
+      <div class="planet planet-2"></div>
+      <div class="planet planet-3"></div>
+
+      <!-- Laser rings -->
+      <div class="laser-ring laser-ring-1"></div>
+      <div class="laser-ring laser-ring-2"></div>
+      <div class="laser-ring laser-ring-3"></div>
+
+      <!-- Shooting stars -->
+      <div class="shooting-star s1"></div>
+      <div class="shooting-star s2"></div>
+      <div class="shooting-star s3"></div>
+
+      <!-- Content -->
+      <div class="hero-badge epic-badge" style="position:relative;z-index:2;">
+        <span class="badge-dot"></span>
+        <i class="fas fa-satellite-dish"></i>&nbsp; Astronomy and space &nbsp;
+        <span class="badge-dot"></span>
+      </div>
+
+      <h2 style="position:relative;z-index:2;margin-top:1rem;">اكتشف أسرار <span>الكون</span></h2>
+      <p style="position:relative;z-index:2;">منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
+
+      <!-- Astronaut floating -->
+      <div class="astronaut-float" style="position:relative;z-index:2;margin-top:1.5rem;font-size:4rem;animation:astronautFloat 6s ease-in-out infinite;">🚀</div>
+
+      <!-- Stats bar -->
+      <div class="hero-stats" style="position:relative;z-index:2;display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center;">
+        <div class="hero-stat"><span class="stat-icon">🌟</span><span class="stat-num">∞</span><span class="stat-label">درس فلكي</span></div>
+        <div class="hero-stat"><span class="stat-icon">🪐</span><span class="stat-num">8</span><span class="stat-label">كواكب</span></div>
+        <div class="hero-stat"><span class="stat-icon">🌌</span><span class="stat-num">∞</span><span class="stat-label">مجرة</span></div>
+      </div>
     </div>
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
     <!-- Dashboard شخصي (مخفي بناءً على طلب المستخدم) -->
@@ -1949,6 +1980,190 @@
   .ai-msg-mute-btn { position:absolute; top:-8px; right:-8px; width:26px; height:26px; background:rgba(6,182,212,.3); border:1px solid rgba(6,182,212,.5); color:#06b6d4; border-radius:50%; cursor:pointer; font-size:.75rem; display:flex; align-items:center; justify-content:center; transition:all .2s; z-index:5; }
   .ai-msg-mute-btn:hover { background:rgba(6,182,212,.6); color:#fff; }
   .ai-msg-mute-btn.muted { background:rgba(239,68,68,.3); border-color:rgba(239,68,68,.5); color:#ef4444; }
+
+    /* ===== EPIC HERO STYLES ===== */
+
+    /* Space canvas background */
+    body { background: #020010 !important; }
+
+    /* Epic hero */
+    .epic-hero { background: transparent !important; }
+
+    /* Floating planets */
+    .planet { position: absolute; border-radius: 50%; pointer-events: none; }
+    .planet-1 {
+      width: 120px; height: 120px;
+      background: radial-gradient(circle at 35% 35%, #a78bfa, #4c1d95 60%, #1e0050);
+      box-shadow: 0 0 40px rgba(139,92,246,0.6), 0 0 80px rgba(99,102,241,0.3), inset -20px -20px 40px rgba(0,0,0,0.5);
+      top: 5%; left: -30px;
+      animation: planetOrbit1 20s ease-in-out infinite;
+    }
+    .planet-1::after {
+      content:''; position:absolute; top:50%; left:-40%; width:180%; height:30%;
+      border:2px solid rgba(167,139,250,0.4); border-radius:50%;
+      transform:translateY(-50%) rotateX(75deg);
+    }
+    .planet-2 {
+      width: 70px; height: 70px;
+      background: radial-gradient(circle at 35% 35%, #fb923c, #991b1b 60%, #3d0000);
+      box-shadow: 0 0 30px rgba(251,146,60,0.7), 0 0 60px rgba(239,68,68,0.3);
+      top: 60%; right: -15px;
+      animation: planetOrbit2 15s ease-in-out infinite;
+    }
+    .planet-3 {
+      width: 50px; height: 50px;
+      background: radial-gradient(circle at 35% 35%, #67e8f9, #0e7490 60%, #002030);
+      box-shadow: 0 0 25px rgba(6,182,212,0.8);
+      top: 20%; right: 5%;
+      animation: planetOrbit3 12s ease-in-out infinite;
+    }
+
+    @keyframes planetOrbit1 {
+      0%,100% { transform: translate(0,0) rotate(0deg); }
+      25% { transform: translate(20px,-30px) rotate(5deg); }
+      50% { transform: translate(-10px,20px) rotate(-3deg); }
+      75% { transform: translate(15px,10px) rotate(4deg); }
+    }
+    @keyframes planetOrbit2 {
+      0%,100% { transform: translate(0,0); }
+      33% { transform: translate(-25px,-20px); }
+      66% { transform: translate(10px,15px); }
+    }
+    @keyframes planetOrbit3 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(-20px,25px) scale(1.15); }
+    }
+
+    /* Laser rings */
+    .laser-ring {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      border: 1px solid transparent; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    }
+    .laser-ring-1 {
+      width: 300px; height: 300px;
+      border-color: rgba(99,102,241,0.25);
+      box-shadow: 0 0 15px rgba(99,102,241,0.2), inset 0 0 15px rgba(99,102,241,0.1);
+      animation: laserSpin 8s linear infinite;
+    }
+    .laser-ring-2 {
+      width: 450px; height: 200px;
+      border-color: rgba(236,72,153,0.2);
+      animation: laserSpin 12s linear infinite reverse;
+    }
+    .laser-ring-3 {
+      width: 600px; height: 120px;
+      border-color: rgba(6,182,212,0.15);
+      animation: laserSpin 18s linear infinite;
+    }
+    @keyframes laserSpin {
+      from { transform: translate(-50%,-50%) rotateX(75deg) rotate(0deg); }
+      to   { transform: translate(-50%,-50%) rotateX(75deg) rotate(360deg); }
+    }
+
+    /* Shooting stars */
+    .shooting-star {
+      position: absolute; pointer-events: none;
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+      animation: shoot 4s ease-in-out infinite;
+      opacity: 0;
+    }
+    .s1 { top: 15%; left: 10%; animation-delay: 0s; transform: rotate(-30deg); }
+    .s2 { top: 35%; right: 15%; animation-delay: 1.5s; transform: rotate(-20deg); width:80px; }
+    .s3 { top: 70%; left: 30%; animation-delay: 3s; transform: rotate(-25deg); width:60px; }
+    @keyframes shoot {
+      0% { opacity:0; transform: translateX(-60px) rotate(-30deg); }
+      10%,30% { opacity:1; }
+      60% { opacity:0; transform: translateX(120px) rotate(-30deg); }
+      100% { opacity:0; }
+    }
+
+    /* Epic badge */
+    .epic-badge {
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.15)) !important;
+      border: 1px solid rgba(167,139,250,0.5) !important;
+      box-shadow: 0 0 20px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.1) !important;
+      color: #c4b5fd !important;
+      font-weight: 700 !important;
+      letter-spacing: 1px;
+      animation: badgePulse 3s ease-in-out infinite;
+    }
+    .badge-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: #a78bfa; box-shadow: 0 0 6px #a78bfa;
+      animation: dotBlink 1.5s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%,100% { box-shadow: 0 0 20px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.1); }
+      50% { box-shadow: 0 0 35px rgba(99,102,241,0.5), 0 0 60px rgba(236,72,153,0.2), inset 0 1px 0 rgba(255,255,255,0.15); }
+    }
+    @keyframes dotBlink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    /* Astronaut float */
+    @keyframes astronautFloat {
+      0%,100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-15px) rotate(5deg); }
+      50% { transform: translateY(-8px) rotate(-3deg); }
+      75% { transform: translateY(-18px) rotate(4deg); }
+    }
+
+    /* Hero stats */
+    .hero-stats { gap: 1.5rem; }
+    .hero-stat {
+      display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 16px; padding: 0.75rem 1.25rem;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+    .hero-stat:hover {
+      background: rgba(99,102,241,0.15);
+      border-color: rgba(167,139,250,0.5);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(99,102,241,0.2);
+    }
+    .stat-icon { font-size: 1.4rem; }
+    .stat-num { font-size: 1.3rem; font-weight: 900; background: linear-gradient(135deg,#a5b4fc,#f0abfc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-label { font-size: 0.72rem; color: #94a3b8; font-weight: 600; }
+
+    /* Navbar enhancement */
+    .navbar {
+      background: rgba(5,2,20,0.85) !important;
+      border-bottom: 1px solid rgba(99,102,241,0.4) !important;
+      box-shadow: 0 4px 30px rgba(99,102,241,0.15) !important;
+    }
+
+    /* Video cards enhancement */
+    .video-card {
+      border: 1px solid rgba(99,102,241,0.2) !important;
+      transition: all 0.4s ease !important;
+      background: rgba(15,10,26,0.8) !important;
+      backdrop-filter: blur(10px) !important;
+    }
+    .video-card:hover {
+      border-color: rgba(139,92,246,0.6) !important;
+      box-shadow: 0 0 30px rgba(99,102,241,0.3), 0 20px 40px rgba(0,0,0,0.4) !important;
+      transform: translateY(-6px) !important;
+    }
+
+    /* Section headers glow */
+    .course-section-header {
+      box-shadow: 0 4px 20px rgba(99,102,241,0.2) !important;
+      border: 1px solid rgba(139,92,246,0.4) !important;
+    }
+
+    @media (max-width:480px) {
+      .planet-1 { width:80px; height:80px; }
+      .planet-2 { width:50px; height:50px; }
+      .planet-3 { width:35px; height:35px; }
+      .laser-ring-1 { width:220px; height:220px; }
+      .laser-ring-2 { width:320px; height:150px; }
+      .laser-ring-3 { width:420px; height:90px; }
+      .hero-stats { gap:0.75rem; }
+      .hero-stat { padding: 0.6rem 0.9rem; }
+    }
+    /* ===== END EPIC HERO ===== */
   </style>
 
 <div class="modal" id="loginModal"><div class="modal-content" style="max-width:480px"><div class="modal-header"><h3><i class="fas fa-user-shield"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="adminLoginBody"></div></div></div>
@@ -8299,5 +8514,121 @@ function showCertificateModal(courseTitle, certUrl) {
 
 </script>
 
-<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
+<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script>
+<script>
+// ===== EPIC SPACE CANVAS =====
+(function() {
+  const canvas = document.getElementById('spaceCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], nebulas = [], meteors = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    initStars();
+  }
+
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+
+  function initStars() {
+    stars = [];
+    const count = Math.min(220, Math.floor(W * H / 5000));
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: rand(0, W), y: rand(0, H),
+        r: rand(0.2, 1.8),
+        alpha: rand(0.3, 1),
+        speed: rand(0.0003, 0.002),
+        twinkle: rand(0, Math.PI * 2),
+        color: Math.random() > 0.85 ? '#a5b4fc' : Math.random() > 0.7 ? '#f0abfc' : '#ffffff'
+      });
+    }
+    nebulas = [
+      { x: W * 0.15, y: H * 0.25, r: 250, color: 'rgba(99,102,241,0.07)' },
+      { x: W * 0.8,  y: H * 0.6,  r: 300, color: 'rgba(236,72,153,0.05)' },
+      { x: W * 0.5,  y: H * 0.8,  r: 200, color: 'rgba(6,182,212,0.04)' },
+    ];
+  }
+
+  function spawnMeteor() {
+    meteors.push({
+      x: rand(0, W), y: rand(-50, H * 0.3),
+      vx: rand(3, 7), vy: rand(2, 5),
+      len: rand(60, 140), alpha: 1, life: 1
+    });
+  }
+
+  setInterval(spawnMeteor, 3000);
+
+  function draw(t) {
+    // Deep space background
+    ctx.fillStyle = '#020010';
+    ctx.fillRect(0, 0, W, H);
+
+    // Nebulas
+    nebulas.forEach(n => {
+      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+      g.addColorStop(0, n.color);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Stars
+    stars.forEach(s => {
+      s.twinkle += s.speed * 60;
+      const a = s.alpha * (0.5 + 0.5 * Math.sin(s.twinkle));
+      ctx.globalAlpha = a;
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Star glow for bigger stars
+      if (s.r > 1.2) {
+        const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
+        glow.addColorStop(0, s.color.replace(')', ',0.3)').replace('rgb','rgba'));
+        glow.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    ctx.globalAlpha = 1;
+
+    // Meteors
+    meteors = meteors.filter(m => m.alpha > 0);
+    meteors.forEach(m => {
+      ctx.save();
+      ctx.globalAlpha = m.alpha;
+      const g = ctx.createLinearGradient(m.x, m.y, m.x - m.vx * m.len / m.vy, m.y - m.len);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.3, 'rgba(167,139,250,0.8)');
+      g.addColorStop(1, 'transparent');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(m.x, m.y);
+      ctx.lineTo(m.x - m.vx * (m.len / m.vy), m.y - m.len);
+      ctx.stroke();
+      ctx.restore();
+      m.x += m.vx;
+      m.y += m.vy;
+      m.alpha -= 0.012;
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(draw);
+})();
+// ===== END SPACE CANVAS =====
+</script>
+</body>
 </html>
