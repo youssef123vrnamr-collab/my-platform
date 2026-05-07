@@ -4179,9 +4179,16 @@ window.openPaidCourseModal = async function(courseId) {
 
 
 // ===== إدارة امتحانات الكورس =====
-async function showCourseExamsManager(courseId, courseTitle, videoIds) {
+async function showCourseExamsManager(courseId, courseTitle) {
   if (!isAdmin) { showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
-  if (!videoIds || videoIds.length === 0) { showToast('⚠️ لا توجد فيديوهات في هذا الكورس'); return; }
+
+  // جلب بيانات الكورس من Firestore
+  let videoIds = [];
+  try {
+    const courseDoc = await db.collection('courses').doc(courseId).get();
+    if (courseDoc.exists) videoIds = courseDoc.data().videoIds || [];
+  } catch(e) { console.warn(e); }
+  if (videoIds.length === 0) { showToast('⚠️ لا توجد فيديوهات في هذا الكورس'); return; }
 
   let courseExams = {};
   try {
@@ -4199,7 +4206,6 @@ async function showCourseExamsManager(courseId, courseTitle, videoIds) {
     const examQCount = hasExam ? (courseExams[vid].questions || []).length : 0;
     const examId = hasExam ? courseExams[vid].id : '';
     const safeCourseTitleJs = courseTitle.replace(/'/g, "\\'");
-    const videoIdsJson = JSON.stringify(videoIds);
     return `<div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;padding:.85rem 1rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-bottom:.6rem">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;color:#e0e7ff;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
@@ -4215,7 +4221,7 @@ async function showCourseExamsManager(courseId, courseTitle, videoIds) {
           ? `<button onclick="closeCourseExamsManager();openAddExamModal('${vid}')"
                style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;padding:.4rem .85rem;font-family:Cairo;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem">
                <i class="fas fa-edit"></i> تعديل</button>
-             <button onclick="deleteCourseVideoExam('${examId}','${vid}','${courseId}','${safeCourseTitleJs}',${videoIdsJson})"
+             <button onclick="deleteCourseVideoExam('${examId}','${vid}','${courseId}','${safeCourseTitleJs}')"
                style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;padding:.4rem .75rem;font-family:Cairo;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem">
                <i class="fas fa-trash"></i></button>`
           : `<button onclick="closeCourseExamsManager();openAddExamModal('${vid}')"
@@ -4259,13 +4265,13 @@ function closeCourseExamsManager() {
   if (m) m.remove();
 }
 
-async function deleteCourseVideoExam(examId, videoId, courseId, courseTitle, videoIds) {
+async function deleteCourseVideoExam(examId, videoId, courseId, courseTitle) {
   if (!confirm('هل تريد حذف امتحان هذا الفيديو؟')) return;
   try {
     await db.collection('exams').doc(examId).delete();
     showToast('🗑️ تم حذف الامتحان');
     closeCourseExamsManager();
-    showCourseExamsManager(courseId, courseTitle, videoIds);
+    showCourseExamsManager(courseId, courseTitle);
   } catch(e) { console.warn(e); showToast('❌ فشل الحذف'); }
 }
 
@@ -4310,7 +4316,7 @@ async function showCoursesList() {
         : `<button type="button" class="btn btn-primary" onclick="enrollInCourseFromList('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>`
       }
       ${isAdmin ? `<button type="button" class="btn btn-warning" onclick="editCourse('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>` : ''}
-      ${isAdmin ? `<button type="button" class="btn btn-info" onclick="showCourseExamsManager('${doc.id}','${safeTitle}',${JSON.stringify(c.videoIds||[])})"><i class="fas fa-clipboard-list"></i> امتحانات الكورس</button>` : ''}
+      ${isAdmin ? `<button type="button" class="btn btn-info" onclick="showCourseExamsManager('${doc.id}','${safeTitle}')"><i class="fas fa-clipboard-list"></i> امتحانات الكورس</button>` : ''}
       ${isAdmin && paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="background:linear-gradient(135deg,#ef4444,#b91c1c);font-weight:700"><i class="fas fa-trash"></i> حذف الكورس المدفوع</button>` : ''}
       ${isAdmin && !paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
       </div>
