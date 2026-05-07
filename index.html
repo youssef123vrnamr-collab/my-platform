@@ -4217,7 +4217,7 @@ window.openPaidCourseModal = async function(courseId) {
           </div>
           ${!isEnrolled
             ? `<button onclick="this.closest('.modal').remove(); enrollInCourseAndOpen('${courseId}')" style="width:100%;padding:1rem;background:${price > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#10b981,#059669)'};color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px ${price>0?'rgba(245,158,11,.4)':'rgba(16,185,129,.4)'};display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas ${price > 0 ? 'fa-shopping-cart' : 'fa-unlock'}"></i> ${price > 0 ? 'اشترك الآن · ' + price + ' جنيه' : 'ادخل مجاناً'}</button>`
-            : ''
+            : (c.certificateUrl ? `<button class="cert-btn" onclick="checkAndShowCertificate('${courseId}',this)" style="width:100%;margin-top:.5rem"><i class="fas fa-certificate"></i> 🏆 استلام شهادتك</button>` : '')
           }
         </div>
       </div>`;
