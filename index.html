@@ -68,7 +68,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; background-attachment: fixed; }
-    .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; max-width: 100%; background: transparent; overflow-x: hidden; margin: 0; padding: 0; }
+    .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; background: transparent; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
     .nebula { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,.15) 0, transparent 70%); border-radius: 50%; filter: blur(60px); animation: float 20s infinite ease-in-out; }
@@ -1630,45 +1630,64 @@
     <button class="maintenance-cancel" onclick="cancelMaintenance()" id="cancelMaintenanceBtn"><i class="fas fa-times"></i> إلغاء التحديث</button>
   </div>
 
-  <!-- HERO: full-bleed خارج الـ container عشان يملأ عرض الشاشة كامل -->
-  <div class="hero epic-hero" style="padding:clamp(2rem,6vh,5rem) clamp(1rem,4vw,3rem);position:relative;overflow:hidden;min-height:100svh;min-height:calc(100vh - 80px);display:flex;flex-direction:column;align-items:center;justify-content:center;width:100vw;max-width:100vw;box-sizing:border-box;">
+  <div class="container">
+    <div class="hero epic-hero" style="padding:clamp(3rem,8vh,6rem) clamp(1rem,4vw,3rem);position:relative;overflow:hidden;min-height:100svh;min-height:calc(100vh - 72px);display:flex;flex-direction:column;align-items:center;justify-content:center;width:100vw;max-width:100vw;box-sizing:border-box;">
 
-      <!-- Floating planets -->
+      <!-- ═══ كواكب عائمة ═══ -->
       <div class="planet planet-1"></div>
       <div class="planet planet-2"></div>
       <div class="planet planet-3"></div>
+      <div class="planet planet-4"></div>
 
-      <!-- Laser rings -->
+      <!-- ═══ حلقات مدارية ═══ -->
       <div class="laser-ring laser-ring-1"></div>
       <div class="laser-ring laser-ring-2"></div>
       <div class="laser-ring laser-ring-3"></div>
 
-      <!-- Shooting stars -->
+      <!-- ═══ شهب ═══ -->
       <div class="shooting-star s1"></div>
       <div class="shooting-star s2"></div>
       <div class="shooting-star s3"></div>
+      <div class="shooting-star s4"></div>
 
-      <!-- Content -->
-      <div class="hero-badge epic-badge" style="position:relative;z-index:2;">
+      <!-- ═══ المحتوى الرئيسي ═══ -->
+
+      <!-- Badge -->
+      <div class="hero-badge epic-badge">
         <span class="badge-dot"></span>
-        <i class="fas fa-satellite-dish"></i>&nbsp; Astronomy and space &nbsp;
+        <i class="fas fa-satellite-dish"></i>&nbsp;&nbsp;Astronomy and space&nbsp;&nbsp;
         <span class="badge-dot"></span>
       </div>
 
-      <h2 style="position:relative;z-index:2;margin-top:1rem;">اكتشف أسرار <span>الكون</span></h2>
-      <p style="position:relative;z-index:2;">منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
+      <!-- العنوان -->
+      <h2 style="text-align:center;">اكتشف أسرار <span>الكون</span></h2>
 
-      <!-- Astronaut floating -->
-      <div class="astronaut-float" style="position:relative;z-index:2;margin-top:1.5rem;font-size:4rem;animation:astronautFloat 6s ease-in-out infinite;">🚀</div>
+      <!-- الوصف -->
+      <p style="text-align:center;">منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
 
-      <!-- Stats bar -->
-      <div class="hero-stats" style="position:relative;z-index:2;display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center;">
-        <div class="hero-stat"><span class="stat-icon">🌟</span><span class="stat-num">∞</span><span class="stat-label">درس فلكي</span></div>
-        <div class="hero-stat"><span class="stat-icon">🪐</span><span class="stat-num">8</span><span class="stat-label">كواكب</span></div>
-        <div class="hero-stat"><span class="stat-icon">🌌</span><span class="stat-num">∞</span><span class="stat-label">مجرة</span></div>
+      <!-- الصاروخ -->
+      <div class="astronaut-float">🚀</div>
+
+      <!-- إحصائيات -->
+      <div class="hero-stats" style="display:flex;flex-wrap:wrap;justify-content:center;">
+        <div class="hero-stat">
+          <span class="stat-icon">🌟</span>
+          <span class="stat-num">∞</span>
+          <span class="stat-label">درس فلكي</span>
+        </div>
+        <div class="hero-stat">
+          <span class="stat-icon">🪐</span>
+          <span class="stat-num">8</span>
+          <span class="stat-label">كواكب</span>
+        </div>
+        <div class="hero-stat">
+          <span class="stat-icon">🌌</span>
+          <span class="stat-num">∞</span>
+          <span class="stat-label">مجرة</span>
+        </div>
       </div>
+
     </div>
-  <div class="container" id="mainContainer">
     <div class="storage-bar-container" id="storageBar" style="display:none"><div class="storage-header"><div class="storage-title"><i class="fas fa-hdd" style="color:#6366f1"></i> مساحة التخزين</div><div class="storage-stats"><span id="usedSpace">0 GB</span> / <span id="totalSpace">25 GB</span> (<span id="percentage" class="storage-percentage">0%</span>)</div></div><div class="storage-bar-wrapper"><div class="low storage-bar" id="storageProgress" style="width:0%"></div></div><div class="storage-footer"><span id="remainingText">المتبقي: 25 GB</span> <span id="videosCount">0 فيديو</span></div></div>
     <!-- Dashboard شخصي (مخفي بناءً على طلب المستخدم) -->
 <div id="dashboardContainer" style="display:none">
@@ -1984,169 +2003,331 @@
 
     /* ===== EPIC HERO STYLES ===== */
 
-    /* Space canvas background */
+    /* ===== LEGENDARY HERO — منصة عالمية أسطورية ===== */
     body { background: #020010 !important; }
 
-    /* Epic hero */
+    /* ---- HERO WRAPPER ---- */
     .epic-hero {
       background: transparent !important;
-      width: 100vw !important;
-      max-width: 100vw !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-      left: 0 !important;
-      position: relative !important;
+      width: 100vw !important; max-width: 100vw !important;
+      margin-left: 0 !important; margin-right: 0 !important;
       box-sizing: border-box !important;
+      position: relative !important;
+      overflow: hidden !important;
     }
-    /* Remove left/right overflow from app-wrapper */
     .app-wrapper { overflow-x: hidden !important; }
 
-    /* Floating planets */
+    /* ---- DEEP SPACE GRADIENT OVERLAY ---- */
+    .epic-hero::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%,   rgba(99,102,241,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 15% 60%,  rgba(139,92,246,0.14) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 35% at 85% 40%,  rgba(236,72,153,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 60% at 50% 100%,rgba(6,182,212,0.08)  0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ---- HORIZON GLOW LINE ---- */
+    .epic-hero::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px; z-index: 1;
+      background: linear-gradient(90deg,
+        transparent 0%, rgba(99,102,241,0.6) 25%,
+        rgba(236,72,153,0.8) 50%,
+        rgba(99,102,241,0.6) 75%, transparent 100%);
+      box-shadow: 0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(236,72,153,0.2);
+    }
+
+    /* ---- PLANETS ---- */
     .planet { position: absolute; border-radius: 50%; pointer-events: none; }
+
+    /* Planet 1 — بنفسجي كبير يسار */
     .planet-1 {
-      width: 120px; height: 120px;
-      background: radial-gradient(circle at 35% 35%, #a78bfa, #4c1d95 60%, #1e0050);
-      box-shadow: 0 0 40px rgba(139,92,246,0.6), 0 0 80px rgba(99,102,241,0.3), inset -20px -20px 40px rgba(0,0,0,0.5);
-      top: 5%; left: -30px;
-      animation: planetOrbit1 20s ease-in-out infinite;
+      width: clamp(140px, 18vw, 280px);
+      height: clamp(140px, 18vw, 280px);
+      background: radial-gradient(circle at 30% 30%,
+        #d8b4fe 0%, #7c3aed 35%, #3b0764 65%, #0d0020 100%);
+      box-shadow:
+        0 0 60px  rgba(139,92,246,0.7),
+        0 0 120px rgba(99,102,241,0.4),
+        0 0 200px rgba(139,92,246,0.15),
+        inset -30px -30px 60px rgba(0,0,0,0.6),
+        inset 10px 10px 30px rgba(216,180,254,0.1);
+      top: 4%; left: clamp(-60px, -4vw, -20px);
+      animation: pOrbit1 25s ease-in-out infinite;
+      z-index: 1;
     }
+    /* حلقة الكوكب */
+    .planet-1::before {
+      content: ''; position: absolute;
+      top: 50%; left: -55%; width: 210%; height: 40%;
+      border: 3px solid rgba(192,132,252,0.35);
+      border-radius: 50%;
+      transform: translateY(-50%) rotateX(72deg);
+      box-shadow: 0 0 20px rgba(192,132,252,0.2);
+    }
+    /* ظل الكوكب */
     .planet-1::after {
-      content:''; position:absolute; top:50%; left:-40%; width:180%; height:30%;
-      border:2px solid rgba(167,139,250,0.4); border-radius:50%;
-      transform:translateY(-50%) rotateX(75deg);
+      content: ''; position: absolute; inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 70% 70%, rgba(0,0,0,0.5) 0%, transparent 60%);
     }
+
+    /* Planet 2 — برتقالي ناري يمين */
     .planet-2 {
-      width: 70px; height: 70px;
-      background: radial-gradient(circle at 35% 35%, #fb923c, #991b1b 60%, #3d0000);
-      box-shadow: 0 0 30px rgba(251,146,60,0.7), 0 0 60px rgba(239,68,68,0.3);
-      top: 60%; right: -15px;
-      animation: planetOrbit2 15s ease-in-out infinite;
+      width: clamp(90px, 11vw, 170px);
+      height: clamp(90px, 11vw, 170px);
+      background: radial-gradient(circle at 30% 30%,
+        #fed7aa 0%, #ea580c 30%, #7c1d06 65%, #1c0400 100%);
+      box-shadow:
+        0 0 50px  rgba(251,146,60,0.8),
+        0 0 100px rgba(239,68,68,0.4),
+        0 0 160px rgba(251,146,60,0.15),
+        inset -20px -20px 40px rgba(0,0,0,0.5);
+      bottom: 8%; right: clamp(-30px, -2vw, 0px);
+      animation: pOrbit2 18s ease-in-out infinite;
+      z-index: 1;
     }
+    .planet-2::after {
+      content: ''; position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 65% 65%, rgba(0,0,0,0.45) 0%, transparent 55%);
+    }
+
+    /* Planet 3 — سماوي يمين أعلى */
     .planet-3 {
-      width: 50px; height: 50px;
-      background: radial-gradient(circle at 35% 35%, #67e8f9, #0e7490 60%, #002030);
-      box-shadow: 0 0 25px rgba(6,182,212,0.8);
-      top: 20%; right: 5%;
-      animation: planetOrbit3 12s ease-in-out infinite;
+      width: clamp(60px, 7vw, 110px);
+      height: clamp(60px, 7vw, 110px);
+      background: radial-gradient(circle at 30% 30%,
+        #a5f3fc 0%, #0891b2 40%, #164e63 70%, #001e2e 100%);
+      box-shadow:
+        0 0 40px rgba(6,182,212,0.9),
+        0 0 80px  rgba(6,182,212,0.4),
+        0 0 130px rgba(6,182,212,0.15),
+        inset -10px -10px 20px rgba(0,0,0,0.4);
+      top: 12%; right: clamp(20px, 5vw, 80px);
+      animation: pOrbit3 14s ease-in-out infinite;
+      z-index: 1;
     }
 
-    @keyframes planetOrbit1 {
+    /* Planet 4 — صغير وردي يسار أسفل (جديد!) */
+    .planet-4 {
+      width: clamp(35px, 4vw, 65px);
+      height: clamp(35px, 4vw, 65px);
+      background: radial-gradient(circle at 30% 30%,
+        #fbcfe8 0%, #db2777 40%, #831843 70%, #200010 100%);
+      box-shadow: 0 0 30px rgba(236,72,153,0.8), 0 0 60px rgba(236,72,153,0.3);
+      bottom: 20%; left: clamp(20px, 8vw, 120px);
+      animation: pOrbit4 10s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    @keyframes pOrbit1 {
       0%,100% { transform: translate(0,0) rotate(0deg); }
-      25% { transform: translate(20px,-30px) rotate(5deg); }
-      50% { transform: translate(-10px,20px) rotate(-3deg); }
-      75% { transform: translate(15px,10px) rotate(4deg); }
+      25% { transform: translate(25px,-35px) rotate(4deg); }
+      50% { transform: translate(-12px,18px) rotate(-2deg); }
+      75% { transform: translate(18px,12px) rotate(3deg); }
     }
-    @keyframes planetOrbit2 {
+    @keyframes pOrbit2 {
       0%,100% { transform: translate(0,0); }
-      33% { transform: translate(-25px,-20px); }
-      66% { transform: translate(10px,15px); }
+      33% { transform: translate(-30px,-25px); }
+      66% { transform: translate(15px,20px); }
     }
-    @keyframes planetOrbit3 {
+    @keyframes pOrbit3 {
       0%,100% { transform: translate(0,0) scale(1); }
-      50% { transform: translate(-20px,25px) scale(1.15); }
+      50% { transform: translate(-25px,30px) scale(1.12); }
+    }
+    @keyframes pOrbit4 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(20px,-20px) scale(1.2); }
     }
 
-    /* Laser rings */
+    /* ---- ORBITAL RINGS ---- */
     .laser-ring {
       position: absolute; border-radius: 50%; pointer-events: none;
-      border: 1px solid transparent; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      left: 50%; top: 50%;
     }
     .laser-ring-1 {
-      width: 300px; height: 300px;
-      border-color: rgba(99,102,241,0.25);
-      box-shadow: 0 0 15px rgba(99,102,241,0.2), inset 0 0 15px rgba(99,102,241,0.1);
-      animation: laserSpin 8s linear infinite;
+      width: clamp(260px, 35vw, 520px);
+      height: clamp(260px, 35vw, 520px);
+      border: 1.5px solid rgba(99,102,241,0.3);
+      box-shadow: 0 0 20px rgba(99,102,241,0.2), inset 0 0 20px rgba(99,102,241,0.08);
+      transform: translate(-50%,-50%) rotateX(72deg);
+      animation: ringPulse1 4s ease-in-out infinite, laserSpin 10s linear infinite;
     }
     .laser-ring-2 {
-      width: 450px; height: 200px;
-      border-color: rgba(236,72,153,0.2);
-      animation: laserSpin 12s linear infinite reverse;
+      width: clamp(380px, 52vw, 750px);
+      height: clamp(160px, 18vw, 280px);
+      border: 1px solid rgba(236,72,153,0.22);
+      box-shadow: 0 0 15px rgba(236,72,153,0.15);
+      transform: translate(-50%,-50%) rotateX(72deg);
+      animation: laserSpin 14s linear infinite reverse;
     }
     .laser-ring-3 {
-      width: 600px; height: 120px;
-      border-color: rgba(6,182,212,0.15);
-      animation: laserSpin 18s linear infinite;
+      width: clamp(500px, 70vw, 1000px);
+      height: clamp(100px, 13vw, 200px);
+      border: 1px solid rgba(6,182,212,0.18);
+      box-shadow: 0 0 12px rgba(6,182,212,0.12);
+      transform: translate(-50%,-50%) rotateX(72deg);
+      animation: laserSpin 20s linear infinite;
     }
     @keyframes laserSpin {
-      from { transform: translate(-50%,-50%) rotateX(75deg) rotate(0deg); }
-      to   { transform: translate(-50%,-50%) rotateX(75deg) rotate(360deg); }
+      from { transform: translate(-50%,-50%) rotateX(72deg) rotate(0deg); }
+      to   { transform: translate(-50%,-50%) rotateX(72deg) rotate(360deg); }
+    }
+    @keyframes ringPulse1 {
+      0%,100% { opacity: 0.7; } 50% { opacity: 1; }
     }
 
-    /* Shooting stars */
+    /* ---- SHOOTING STARS ---- */
     .shooting-star {
-      position: absolute; pointer-events: none;
-      width: 120px; height: 1px;
-      background: linear-gradient(90deg, transparent, #fff, transparent);
-      animation: shoot 4s ease-in-out infinite;
-      opacity: 0;
+      position: absolute; pointer-events: none; height: 1.5px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 50%, transparent 100%);
+      opacity: 0; border-radius: 99px;
     }
-    .s1 { top: 15%; left: 10%; animation-delay: 0s; transform: rotate(-30deg); }
-    .s2 { top: 35%; right: 15%; animation-delay: 1.5s; transform: rotate(-20deg); width:80px; }
-    .s3 { top: 70%; left: 30%; animation-delay: 3s; transform: rotate(-25deg); width:60px; }
+    .s1 { width: clamp(100px,15vw,200px); top: 12%; left:  8%; animation: shoot 5s ease-in-out infinite 0s;    transform: rotate(-35deg); }
+    .s2 { width: clamp( 70px,10vw,140px); top: 28%; right: 12%; animation: shoot 5s ease-in-out infinite 1.8s; transform: rotate(-20deg); }
+    .s3 { width: clamp( 60px, 8vw,110px); top: 65%; left:  25%; animation: shoot 5s ease-in-out infinite 3.5s; transform: rotate(-28deg); }
+    .s4 { width: clamp( 50px, 7vw, 90px); top: 45%; right: 30%; animation: shoot 5s ease-in-out infinite 0.9s; transform: rotate(-15deg); }
     @keyframes shoot {
-      0% { opacity:0; transform: translateX(-60px) rotate(-30deg); }
-      10%,30% { opacity:1; }
-      60% { opacity:0; transform: translateX(120px) rotate(-30deg); }
-      100% { opacity:0; }
+      0%   { opacity: 0; transform: translateX(-80px) rotate(-35deg); }
+      8%,25%  { opacity: 1; }
+      55%  { opacity: 0; transform: translateX(160px) rotate(-35deg); }
+      100% { opacity: 0; }
     }
 
-    /* Epic badge */
+    /* ---- BADGE ---- */
     .epic-badge {
-      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.15)) !important;
-      border: 1px solid rgba(167,139,250,0.5) !important;
-      box-shadow: 0 0 20px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.1) !important;
-      color: #c4b5fd !important;
+      position: relative; z-index: 3;
+      background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(236,72,153,0.12)) !important;
+      border: 1px solid rgba(192,132,252,0.6) !important;
+      box-shadow:
+        0 0 0 1px rgba(192,132,252,0.1),
+        0 0 25px rgba(99,102,241,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.12) !important;
+      color: #e9d5ff !important;
       font-weight: 700 !important;
-      letter-spacing: 1px;
-      animation: badgePulse 3s ease-in-out infinite;
+      letter-spacing: 2px;
+      font-size: clamp(0.7rem, 1.5vw, 0.95rem) !important;
+      padding: clamp(0.4rem,1vh,0.7rem) clamp(1rem,2vw,1.5rem) !important;
+      border-radius: 999px !important;
+      backdrop-filter: blur(12px);
+      animation: badgePulse 4s ease-in-out infinite;
     }
     .badge-dot {
-      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-      background: #a78bfa; box-shadow: 0 0 6px #a78bfa;
+      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background: #a78bfa;
+      box-shadow: 0 0 8px #a78bfa, 0 0 16px rgba(167,139,250,0.5);
       animation: dotBlink 1.5s ease-in-out infinite;
     }
     @keyframes badgePulse {
-      0%,100% { box-shadow: 0 0 20px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.1); }
-      50% { box-shadow: 0 0 35px rgba(99,102,241,0.5), 0 0 60px rgba(236,72,153,0.2), inset 0 1px 0 rgba(255,255,255,0.15); }
+      0%,100% { box-shadow: 0 0 25px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.12); }
+      50%      { box-shadow: 0 0 50px rgba(99,102,241,0.6), 0 0 80px rgba(236,72,153,0.25), inset 0 1px 0 rgba(255,255,255,0.18); }
     }
-    @keyframes dotBlink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    @keyframes dotBlink { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.8); } }
 
-    /* Astronaut float */
-    @keyframes astronautFloat {
-      0%,100% { transform: translateY(0) rotate(0deg); }
-      25% { transform: translateY(-15px) rotate(5deg); }
-      50% { transform: translateY(-8px) rotate(-3deg); }
-      75% { transform: translateY(-18px) rotate(4deg); }
+    /* ---- HERO TITLE ---- */
+    .epic-hero h2 {
+      position: relative; z-index: 3;
+      font-size: clamp(2.4rem, 7vw, 6.5rem) !important;
+      font-weight: 900 !important;
+      line-height: 1.1 !important;
+      margin-top: clamp(0.8rem, 2vh, 1.5rem) !important;
+      letter-spacing: -1px;
+      text-shadow:
+        0 0 80px rgba(99,102,241,0.6),
+        0 0 160px rgba(99,102,241,0.3),
+        0 6px 30px rgba(0,0,0,0.5);
+      background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 60%, #c4b5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .epic-hero h2 span {
+      background: linear-gradient(120deg,
+        #a5b4fc 0%, #c4b5fd 25%, #f0abfc 50%, #fb7185 75%, #fbbf24 100%) !important;
+      background-size: 200% 100% !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      animation: shimmerTitle 6s ease-in-out infinite !important;
+      filter: drop-shadow(0 0 30px rgba(167,139,250,0.6)) !important;
+    }
+    @keyframes shimmerTitle {
+      0%,100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
     }
 
-    /* Hero stats */
-    .hero-stats { gap: 1.5rem; }
+    /* ---- HERO SUBTITLE ---- */
+    .epic-hero p {
+      position: relative; z-index: 3;
+      font-size: clamp(1rem, 2.2vw, 1.5rem) !important;
+      color: #c4b5fd !important;
+      max-width: 680px;
+      line-height: 1.7;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.6);
+      letter-spacing: 0.3px;
+    }
+
+    /* ---- ROCKET ---- */
+    .astronaut-float {
+      position: relative; z-index: 3;
+      margin-top: clamp(1rem, 3vh, 2.5rem) !important;
+      font-size: clamp(3.5rem, 9vw, 8rem) !important;
+      animation: rocketFloat 5s ease-in-out infinite !important;
+      filter: drop-shadow(0 0 30px rgba(251,191,36,0.7))
+              drop-shadow(0 0 60px rgba(251,191,36,0.3));
+    }
+    @keyframes rocketFloat {
+      0%,100% { transform: translateY(0) rotate(0deg) scale(1); }
+      20%      { transform: translateY(-22px) rotate(6deg) scale(1.04); }
+      50%      { transform: translateY(-10px) rotate(-4deg) scale(1.02); }
+      75%      { transform: translateY(-28px) rotate(5deg) scale(1.05); }
+    }
+
+    /* ---- STATS BAR ---- */
+    .hero-stats {
+      gap: clamp(0.8rem, 2.5vw, 2rem) !important;
+      margin-top: clamp(1rem, 3vh, 2.5rem) !important;
+    }
     .hero-stat {
-      display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(167,139,250,0.2);
-      border-radius: 16px; padding: 0.75rem 1.25rem;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s;
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(236,72,153,0.06));
+      border: 1px solid rgba(192,132,252,0.25);
+      border-radius: 20px;
+      padding: clamp(0.8rem,2.5vh,1.4rem) clamp(1.2rem,3vw,2.2rem);
+      backdrop-filter: blur(16px);
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative; overflow: hidden;
+    }
+    .hero-stat::before {
+      content: ''; position: absolute; inset: 0; border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+      pointer-events: none;
     }
     .hero-stat:hover {
-      background: rgba(99,102,241,0.15);
-      border-color: rgba(167,139,250,0.5);
-      transform: translateY(-4px);
-      box-shadow: 0 10px 30px rgba(99,102,241,0.2);
+      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(236,72,153,0.15));
+      border-color: rgba(192,132,252,0.6);
+      transform: translateY(-8px) scale(1.05);
+      box-shadow: 0 20px 50px rgba(99,102,241,0.35), 0 0 0 1px rgba(192,132,252,0.3);
     }
-    .stat-icon { font-size: 1.4rem; }
-    .stat-num { font-size: 1.3rem; font-weight: 900; background: linear-gradient(135deg,#a5b4fc,#f0abfc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .stat-label { font-size: 0.72rem; color: #94a3b8; font-weight: 600; }
+    .stat-icon { font-size: clamp(1.5rem, 3.5vw, 2.5rem); }
+    .stat-num  {
+      font-size: clamp(1.4rem, 3.5vw, 2.2rem); font-weight: 900;
+      background: linear-gradient(135deg, #e9d5ff, #f0abfc, #a5b4fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .stat-label { font-size: clamp(0.7rem, 1.4vw, 0.9rem); color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; }
 
-    /* Navbar enhancement */
+    /* ---- NAVBAR ---- */
     .navbar {
-      background: rgba(5,2,20,0.85) !important;
-      border-bottom: 1px solid rgba(99,102,241,0.4) !important;
-      box-shadow: 0 4px 30px rgba(99,102,241,0.15) !important;
+      background: rgba(2,0,16,0.8) !important;
+      backdrop-filter: blur(24px) !important;
+      border-bottom: 1px solid rgba(99,102,241,0.35) !important;
+      box-shadow: 0 4px 40px rgba(99,102,241,0.12), 0 1px 0 rgba(255,255,255,0.04) !important;
     }
 
-    /* Video cards enhancement */
+    /* ---- VIDEO CARDS ---- */
     .video-card {
       border: 1px solid rgba(99,102,241,0.2) !important;
       transition: all 0.4s ease !important;
@@ -2159,23 +2340,22 @@
       transform: translateY(-6px) !important;
     }
 
-    /* Section headers glow */
+    /* ---- SECTION HEADERS ---- */
     .course-section-header {
       box-shadow: 0 4px 20px rgba(99,102,241,0.2) !important;
       border: 1px solid rgba(139,92,246,0.4) !important;
     }
 
-    @media (max-width:480px) {
-      .planet-1 { width:80px; height:80px; }
-      .planet-2 { width:50px; height:50px; }
-      .planet-3 { width:35px; height:35px; }
-      .laser-ring-1 { width:220px; height:220px; }
-      .laser-ring-2 { width:320px; height:150px; }
-      .laser-ring-3 { width:420px; height:90px; }
-      .hero-stats { gap:0.75rem; }
-      .hero-stat { padding: 0.6rem 0.9rem; }
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 480px) {
+      .planet-1 { width: 90px; height: 90px; }
+      .planet-2 { width: 60px; height: 60px; }
+      .planet-3 { width: 40px; height: 40px; }
+      .planet-4 { width: 28px; height: 28px; }
+      .hero-stats { gap: 0.5rem !important; }
+      .hero-stat  { padding: 0.6rem 0.9rem; border-radius: 14px; }
     }
-    /* ===== END EPIC HERO ===== */
+    /* ===== END LEGENDARY HERO ===== */
   </style>
 
 <div class="modal" id="loginModal"><div class="modal-content" style="max-width:480px"><div class="modal-header"><h3><i class="fas fa-user-shield"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="adminLoginBody"></div></div></div>
