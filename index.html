@@ -8504,130 +8504,50 @@ function showCertificateModal(courseTitle, certUrl, courseLevel, courseId) {
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 
-  // === رسم الشهادة على Canvas ===
+  // === رسم الشهادة على Canvas — فوري بدون انتظار صورة ===
   const canvas = document.getElementById('certCanvas');
   const ctx = canvas.getContext('2d');
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
 
-  // تحويل رابط Google Drive/Docs لرابط صورة مباشرة
-  let imgSrc = certUrl;
-  if (certUrl.includes('drive.google.com/file/d/')) {
-    const idMatch = certUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (idMatch) imgSrc = 'https://drive.google.com/uc?export=view&id=' + idMatch[1];
-  } else if (certUrl.includes('docs.google.com')) {
-    imgSrc = certUrl.replace('/edit', '/export?format=png').replace('/pub', '/export?format=png');
-  }
+  // أبعاد ثابتة احترافية
+  canvas.width  = 1600;
+  canvas.height = 1130;
 
-  img.onload = function() {
-    canvas.width = img.naturalWidth || img.width;
-    canvas.height = img.naturalHeight || img.height;
-    const overlay = document.getElementById('certLoadingOverlay');
-    if (overlay) overlay.style.display = 'none';
-    window._certImg = img;
-    window._certCanvas = canvas;
-    window._certCtx = ctx;
-    window._certCourseTitle = courseTitle;
-    window._certLevel = level;
-    window._certDateShort = certDateShort;
-    window._certNumber = certNumber;
-    drawCertificateCanvas(autoName);
-  };
+  // إخفاء overlay التحميل فوراً
+  const overlay = document.getElementById('certLoadingOverlay');
+  if (overlay) overlay.style.display = 'none';
 
-  img.onerror = function() {
-    // لو فشل التحميل كصورة، ارسم خلفية افتراضية واكتب البيانات
-    const overlay = document.getElementById('certLoadingOverlay');
-    if (overlay) overlay.style.display = 'none';
-    canvas.width = 1600;
-    canvas.height = 1130;
-    window._certImg = null;
-    window._certCanvas = canvas;
-    window._certCtx = ctx;
-    window._certCourseTitle = courseTitle;
-    window._certLevel = level;
-    window._certDateShort = certDateShort;
-    window._certNumber = certNumber;
-    drawCertificateCanvas(autoName);
-    // أيضاً فتح الرابط الأصلي في تبويب جديد كبديل
-    const wrap = document.getElementById('certCanvasWrap');
-    if (wrap) {
-      const hint = document.createElement('a');
-      hint.href = certUrl;
-      hint.target = '_blank';
-      hint.rel = 'noopener';
-      hint.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:.4rem;background:rgba(245,158,11,.1);color:#fbbf24;padding:.5rem;font-family:Cairo;font-size:.8rem;text-decoration:none;border-top:1px solid rgba(245,158,11,.2)';
-      hint.innerHTML = '<i class="fas fa-external-link-alt"></i> فتح الشهادة الأصلية في تبويب جديد';
-      wrap.appendChild(hint);
-    }
-  };
+  // حفظ مرجع الـ canvas
+  window._certImg    = null;  // لا نعتمد على صورة خارجية
+  window._certCanvas = canvas;
+  window._certCtx    = ctx;
+  window._certCourseTitle = courseTitle;
+  window._certLevel       = level;
+  window._certDateShort   = certDateShort;
+  window._certNumber      = certNumber;
 
-  // محاولة تحميل الصورة مع fallback
-  function tryLoadImg(src, fallbackSrc) {
-    img.crossOrigin = 'anonymous';
-    img.src = src;
-    // لو فشل بـ CORS جرب بدون crossOrigin
-    img.onerror = function() {
-      if (fallbackSrc && img.src !== fallbackSrc) {
-        const img2 = new Image();
-        img2.onload = function() {
-          canvas.width = img2.naturalWidth || img2.width || 1600;
-          canvas.height = img2.naturalHeight || img2.height || 1130;
-          const overlay = document.getElementById('certLoadingOverlay');
-          if (overlay) overlay.style.display = 'none';
-          window._certImg = img2;
-          window._certCanvas = canvas;
-          window._certCtx = ctx;
-          window._certCourseTitle = courseTitle;
-          window._certLevel = level;
-          window._certDateShort = certDateShort;
-          window._certNumber = certNumber;
-          drawCertificateCanvas(autoName);
-        };
-        img2.onerror = function() {
-          // رسم بدون صورة
-          const overlay = document.getElementById('certLoadingOverlay');
-          if (overlay) overlay.style.display = 'none';
-          canvas.width = 1600; canvas.height = 1130;
-          window._certImg = null;
-          window._certCanvas = canvas; window._certCtx = ctx;
-          window._certCourseTitle = courseTitle; window._certLevel = level;
-          window._certDateShort = certDateShort; window._certNumber = certNumber;
-          drawCertificateCanvas(autoName);
-          addOriginalLink(certUrl);
-        };
-        img2.src = fallbackSrc;
-      } else {
-        const overlay = document.getElementById('certLoadingOverlay');
-        if (overlay) overlay.style.display = 'none';
-        canvas.width = 1600; canvas.height = 1130;
-        window._certImg = null;
-        window._certCanvas = canvas; window._certCtx = ctx;
-        window._certCourseTitle = courseTitle; window._certLevel = level;
-        window._certDateShort = certDateShort; window._certNumber = certNumber;
-        drawCertificateCanvas(autoName);
-        addOriginalLink(certUrl);
-      }
+  // ارسم الشهادة فوراً
+  drawCertificateCanvas(autoName);
+
+  // محاولة تحميل الصورة في الخلفية — لو نجحت ارسم فوقها
+  if (certUrl) {
+    const bgImg = new Image();
+    bgImg.crossOrigin = 'anonymous';
+    bgImg.onload = function() {
+      window._certImg = bgImg;
+      canvas.width  = bgImg.naturalWidth  || 1600;
+      canvas.height = bgImg.naturalHeight || 1130;
+      drawCertificateCanvas(document.getElementById('certNameInput')?.value?.trim() || autoName);
     };
-  }
-  function addOriginalLink(url) {
-    const wrap = document.getElementById('certCanvasWrap');
-    if (wrap && !wrap.querySelector('.cert-orig-link')) {
-      const hint = document.createElement('a');
-      hint.className = 'cert-orig-link';
-      hint.href = url; hint.target = '_blank'; hint.rel = 'noopener';
-      hint.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:.4rem;background:rgba(245,158,11,.1);color:#fbbf24;padding:.5rem;font-family:Cairo;font-size:.8rem;text-decoration:none;border-top:1px solid rgba(245,158,11,.2)';
-      hint.innerHTML = '<i class="fas fa-external-link-alt"></i> فتح الشهادة الأصلية في تبويب جديد';
-      wrap.appendChild(hint);
+    // تحويل رابط Google Drive لصورة مباشرة
+    let imgSrc = certUrl;
+    if (certUrl.includes('drive.google.com/file/d/')) {
+      const idMatch = certUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (idMatch) imgSrc = 'https://drive.google.com/uc?export=view&id=' + idMatch[1];
+    } else if (certUrl.includes('docs.google.com')) {
+      imgSrc = certUrl.replace('/edit','/export?format=png').replace('/pub','/export?format=png');
     }
+    bgImg.src = imgSrc;
   }
-
-  // جرب الرابط الأصلي أولاً، ثم proxy
-  let fallback = null;
-  if (imgSrc.includes('drive.google.com')) {
-    const idM = imgSrc.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    if (idM) fallback = 'https://lh3.googleusercontent.com/d/' + idM[1];
-  }
-  tryLoadImg(imgSrc, fallback);
 
   // دالة تحديث المعاينة عند تغيير الاسم
   window._certUpdatePreview = function() {
@@ -8642,7 +8562,7 @@ function showCertificateModal(courseTitle, certUrl, courseLevel, courseId) {
   }, 300);
 }
 
-// ===== رسم الشهادة الكاملة على Canvas =====
+// ===== رسم الشهادة الكاملة على Canvas — مطابقة للتصميم الأصلي =====
 function drawCertificateCanvas(studentName) {
   const canvas = window._certCanvas;
   const ctx = window._certCtx;
@@ -8654,191 +8574,296 @@ function drawCertificateCanvas(studentName) {
 
   ctx.clearRect(0, 0, W, H);
 
-  // ===== إذا كانت الصورة متاحة ارسمها =====
-  if (window._certImg) {
-    ctx.drawImage(window._certImg, 0, 0, W, H);
-  } else {
-    // ===== رسم شهادة كاملة من الصفر (بديل احترافي لو الصورة فشلت) =====
-    // خلفية فضائية
-    const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, '#000308');
-    bg.addColorStop(0.4, '#04001a');
-    bg.addColorStop(1, '#000820');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
+  // ======================================================
+  // 1. BACKGROUND — خلفية فضائية داكنة مثل التصميم الأصلي
+  // ======================================================
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0,   '#010208');
+  bg.addColorStop(0.3, '#03001a');
+  bg.addColorStop(0.7, '#060020');
+  bg.addColorStop(1,   '#000510');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
 
-    // كواكب وسديم
-    const neb1 = ctx.createRadialGradient(W*0.15, H*0.3, 0, W*0.15, H*0.3, W*0.35);
-    neb1.addColorStop(0, 'rgba(80,30,160,0.18)'); neb1.addColorStop(1, 'transparent');
-    ctx.fillStyle = neb1; ctx.fillRect(0, 0, W, H);
-    const neb2 = ctx.createRadialGradient(W*0.85, H*0.6, 0, W*0.85, H*0.6, W*0.3);
-    neb2.addColorStop(0, 'rgba(160,20,80,0.14)'); neb2.addColorStop(1, 'transparent');
-    ctx.fillStyle = neb2; ctx.fillRect(0, 0, W, H);
+  // سديم يسار (أزرق بنفسجي)
+  const neb1 = ctx.createRadialGradient(W*0.08, H*0.4, 0, W*0.08, H*0.4, W*0.45);
+  neb1.addColorStop(0,'rgba(60,20,140,0.5)'); neb1.addColorStop(0.5,'rgba(30,10,80,0.2)'); neb1.addColorStop(1,'transparent');
+  ctx.fillStyle = neb1; ctx.fillRect(0,0,W,H);
 
-    // نجوم عشوائية
-    ctx.fillStyle = '#fff';
-    for (let i = 0; i < 180; i++) {
-      const sx = (Math.sin(i*137.5)*0.5+0.5)*W;
-      const sy = (Math.cos(i*97.3)*0.5+0.5)*H;
-      const sr = (i%5===0)?1.5:(i%3===0)?1:0.5;
-      ctx.globalAlpha = 0.3+Math.random()*0.6;
-      ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+  // سديم يمين (وردي مجري)
+  const neb2 = ctx.createRadialGradient(W*0.88, H*0.55, 0, W*0.88, H*0.55, W*0.38);
+  neb2.addColorStop(0,'rgba(120,30,100,0.45)'); neb2.addColorStop(0.5,'rgba(60,10,60,0.2)'); neb2.addColorStop(1,'transparent');
+  ctx.fillStyle = neb2; ctx.fillRect(0,0,W,H);
 
-    // كوكب يمين
-    const pl = ctx.createRadialGradient(W*0.88, H*0.18, 0, W*0.88, H*0.18, W*0.13);
-    pl.addColorStop(0,'#7c3aed'); pl.addColorStop(0.6,'#4c1d95'); pl.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle = pl;
-    ctx.beginPath(); ctx.arc(W*0.88, H*0.18, W*0.13, 0, Math.PI*2); ctx.fill();
+  // كوكب يمين أعلى (مثل الصورة)
+  const plg = ctx.createRadialGradient(W*0.87, H*0.22, 0, W*0.87, H*0.22, W*0.14);
+  plg.addColorStop(0,'rgba(100,40,180,0.9)'); plg.addColorStop(0.5,'rgba(50,10,100,0.6)'); plg.addColorStop(1,'transparent');
+  ctx.fillStyle = plg;
+  ctx.beginPath(); ctx.arc(W*0.87, H*0.22, W*0.14, 0, Math.PI*2); ctx.fill();
 
-    // إطار ذهبي خارجي
-    ctx.strokeStyle = '#c8973a'; ctx.lineWidth = 5*sc;
-    ctx.strokeRect(22*sc, 22*sc, W-44*sc, H-44*sc);
-    ctx.strokeStyle = 'rgba(200,151,58,0.35)'; ctx.lineWidth = 2*sc;
-    ctx.strokeRect(34*sc, 34*sc, W-68*sc, H-68*sc);
+  // كوكب يسار (أرضي أزرق)
+  const plg2 = ctx.createRadialGradient(W*0.12, H*0.35, 0, W*0.12, H*0.35, W*0.12);
+  plg2.addColorStop(0,'rgba(30,60,140,0.8)'); plg2.addColorStop(0.6,'rgba(10,20,80,0.4)'); plg2.addColorStop(1,'transparent');
+  ctx.fillStyle = plg2;
+  ctx.beginPath(); ctx.arc(W*0.12, H*0.35, W*0.12, 0, Math.PI*2); ctx.fill();
 
-    // شريط ذهبي علوي
-    const topBar = ctx.createLinearGradient(0, 0, W, 0);
-    topBar.addColorStop(0,'transparent'); topBar.addColorStop(0.2,'rgba(200,151,58,0.5)');
-    topBar.addColorStop(0.5,'rgba(253,230,138,0.8)'); topBar.addColorStop(0.8,'rgba(200,151,58,0.5)'); topBar.addColorStop(1,'transparent');
-    ctx.fillStyle = topBar; ctx.fillRect(0, 60*sc, W, 3*sc);
-    ctx.fillRect(0, H-60*sc, W, 3*sc);
-
-    // عنوان المنصة
-    ctx.save();
-    ctx.font = `bold ${Math.round(38*sc)}px Cairo, Arial, sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(200,151,58,0.7)';
-    ctx.fillText('ASTRONOMY AND SPACE PLATFORM', W/2, 45*sc);
-    ctx.restore();
-
-    // شهادة إتمام
-    ctx.save();
-    ctx.font = `${Math.round(44*sc)}px Cairo, Arial, sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e2c87a';
-    ctx.fillText('شهادة إتمام دورة', W/2, H*0.14);
-    ctx.restore();
-
-    // خط فاصل
-    ctx.save();
-    const divLine = ctx.createLinearGradient(W*0.25,0,W*0.75,0);
-    divLine.addColorStop(0,'transparent'); divLine.addColorStop(0.5,'rgba(200,151,58,0.8)'); divLine.addColorStop(1,'transparent');
-    ctx.strokeStyle = divLine; ctx.lineWidth = 2*sc;
-    ctx.beginPath(); ctx.moveTo(W*0.25, H*0.19); ctx.lineTo(W*0.75, H*0.19); ctx.stroke();
-    ctx.restore();
-
-    // اسم الكورس
-    ctx.save();
-    ctx.font = `bold ${Math.round(68*sc)}px Cairo, Arial, sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff';
-    ctx.shadowColor = 'rgba(99,102,241,0.6)'; ctx.shadowBlur = 20*sc;
-    const courseText = window._certCourseTitle || 'الكورس';
-    ctx.fillText(courseText.length > 30 ? courseText.slice(0,28)+'...' : courseText, W/2, H*0.31);
-    ctx.restore();
-
-    // نص تقديمي
-    ctx.save();
-    ctx.font = `${Math.round(34*sc)}px Cairo, Arial, sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillText('قد أتم بنجاح جميع متطلبات دورة', W/2, H*0.42);
-    ctx.restore();
-
-    // اليسار: مدة + مستوى + حالة
-    ctx.save();
-    ctx.font = `bold ${Math.round(28*sc)}px Cairo, Arial, sans-serif`;
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#e2c87a';
-    ctx.fillText('مستوى الدورة', W*0.24, H*0.43);
-    ctx.font = `${Math.round(26*sc)}px Cairo, Arial, sans-serif`;
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillText(window._certLevel || 'متوسط', W*0.24, H*0.50);
-    ctx.font = `bold ${Math.round(28*sc)}px Cairo, Arial, sans-serif`;
-    ctx.fillStyle = '#e2c87a';
-    ctx.fillText('حالة الإنجاز', W*0.24, H*0.58);
-    ctx.font = `${Math.round(26*sc)}px Cairo, Arial, sans-serif`;
-    ctx.fillStyle = '#10b981';
-    ctx.fillText('مكتمل بنجاح ✓', W*0.24, H*0.65);
-    ctx.restore();
-
-    // ختم
-    ctx.save();
-    ctx.translate(W*0.18, H*0.78);
-    ctx.beginPath(); ctx.arc(0, 0, 80*sc, 0, Math.PI*2);
-    ctx.strokeStyle = '#c8973a'; ctx.lineWidth = 3*sc; ctx.stroke();
-    ctx.font = `bold ${Math.round(22*sc)}px Cairo,Arial`; ctx.textAlign='center'; ctx.fillStyle='#c8973a';
-    ctx.fillText('ASTRONOMY', 0, -10*sc); ctx.fillText('AND SPACE', 0, 15*sc);
-    ctx.restore();
-
-    // توقيع
-    ctx.save();
-    ctx.font = `italic ${Math.round(36*sc)}px Georgia, serif`;
-    ctx.textAlign = 'center'; ctx.fillStyle = '#c8973a';
-    ctx.fillText('إدارة المنصة', W*0.5, H*0.84);
-    ctx.font = `${Math.round(24*sc)}px Cairo`; ctx.fillStyle = '#94a3b8';
-    ctx.fillText('ASTRONOMY AND SPACE', W*0.5, H*0.89);
-    ctx.restore();
+  // نجوم
+  for (let i = 0; i < 220; i++) {
+    const sx = (Math.sin(i*137.508)*0.5+0.5)*W;
+    const sy = (Math.cos(i*97.31)*0.5+0.5)*H;
+    const sr = i%7===0 ? 1.8 : i%3===0 ? 1.1 : 0.5;
+    ctx.globalAlpha = 0.25 + (i%5)*0.12;
+    ctx.fillStyle = i%11===0 ? '#a5b4fc' : i%7===0 ? '#f0abfc' : '#fff';
+    ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2); ctx.fill();
   }
+  ctx.globalAlpha = 1;
 
-  // ===== الكتابة فوق الصورة / الخلفية =====
-  const sc2 = W / 1600;
+  // ======================================================
+  // 2. BORDER — إطار ذهبي مزدوج
+  // ======================================================
+  // إطار خارجي
+  ctx.strokeStyle = '#c8973a'; ctx.lineWidth = 5*sc;
+  ctx.strokeRect(18*sc, 18*sc, W-36*sc, H-36*sc);
+  // إطار داخلي
+  ctx.strokeStyle = 'rgba(200,151,58,0.45)'; ctx.lineWidth = 2*sc;
+  ctx.strokeRect(30*sc, 30*sc, W-60*sc, H-60*sc);
+  // خطوط زخرفية أفقية
+  const barGrad = ctx.createLinearGradient(0,0,W,0);
+  barGrad.addColorStop(0,'transparent'); barGrad.addColorStop(0.15,'rgba(200,151,58,0.4)');
+  barGrad.addColorStop(0.5,'rgba(253,230,138,0.75)'); barGrad.addColorStop(0.85,'rgba(200,151,58,0.4)'); barGrad.addColorStop(1,'transparent');
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, 58*sc, W, 2.5*sc);
+  ctx.fillRect(0, H-58*sc, W, 2.5*sc);
 
-  // --- اسم الطالب ---
-  if (studentName && studentName.length >= 1) {
+  // ======================================================
+  // 3. HEADER — الجزء العلوي
+  // ======================================================
+  // شريط عنوان علوي شبه شفاف
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(18*sc, 18*sc, W-36*sc, 95*sc);
+  ctx.restore();
+
+  // عنوان "شهادة إتمام"
+  ctx.save();
+  ctx.font = `bold ${Math.round(72*sc)}px Cairo, Arial, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const titleGrad = ctx.createLinearGradient(W/2-300*sc,0,W/2+300*sc,0);
+  titleGrad.addColorStop(0,'#c8973a'); titleGrad.addColorStop(0.5,'#fde68a'); titleGrad.addColorStop(1,'#c8973a');
+  ctx.fillStyle = titleGrad;
+  ctx.shadowColor = 'rgba(200,151,58,0.6)'; ctx.shadowBlur = 15*sc;
+  ctx.fillText('شهادة إتمام', W/2, 65*sc);
+  ctx.restore();
+
+  // ======================================================
+  // 4. LOGO منطقة — "تشهد منصة ASTRONOMY AND SPACE"
+  // ======================================================
+  ctx.save();
+  ctx.font = `${Math.round(28*sc)}px Cairo, Arial, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('تشهد منصة', W/2, H*0.175);
+  ctx.restore();
+
+  ctx.save();
+  ctx.font = `bold ${Math.round(38*sc)}px Cairo, Arial, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('ASTRONOMY AND SPACE', W/2, H*0.225);
+  ctx.restore();
+
+  // "بأن الطالب"
+  ctx.save();
+  ctx.font = `${Math.round(26*sc)}px Cairo, Arial, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('بأن الطالب', W/2, H*0.275);
+  ctx.restore();
+
+  // ======================================================
+  // 5. اسم الطالب — داخل مستطيل ذهبي
+  // ======================================================
+  const boxX = W*0.28; const boxY = H*0.295;
+  const boxW = W*0.44; const boxH = 60*sc;
+  ctx.save();
+  // ظل تحت الصندوق
+  ctx.shadowColor = 'rgba(200,151,58,0.4)'; ctx.shadowBlur = 20*sc;
+  // خلفية الصندوق
+  const boxBg = ctx.createLinearGradient(boxX, boxY, boxX+boxW, boxY);
+  boxBg.addColorStop(0,'rgba(200,151,58,0.08)'); boxBg.addColorStop(0.5,'rgba(200,151,58,0.18)'); boxBg.addColorStop(1,'rgba(200,151,58,0.08)');
+  ctx.fillStyle = boxBg;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(boxX, boxY, boxW, boxH, 6*sc) : ctx.rect(boxX, boxY, boxW, boxH);
+  ctx.fill();
+  // حدود الصندوق
+  ctx.strokeStyle = '#c8973a'; ctx.lineWidth = 1.5*sc;
+  ctx.stroke();
+  ctx.restore();
+
+  // اسم الطالب
+  if (studentName && studentName.trim().length >= 1) {
     ctx.save();
-    const fs = Math.round(window._certImg ? 66*sc2 : 74*sc2);
-    ctx.font = `bold ${fs}px Cairo, Arial, sans-serif`;
+    const fs = Math.min(Math.round(56*sc), Math.round((boxW*0.85) / (studentName.length * 0.55)));
+    ctx.font = `bold ${Math.max(28*sc, fs)}px Cairo, Arial, sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 12*sc2;
-    const ng = ctx.createLinearGradient(W/2-350*sc2,0,W/2+350*sc2,0);
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 10*sc;
+    const ng = ctx.createLinearGradient(W/2-280*sc,0,W/2+280*sc,0);
     ng.addColorStop(0,'#c8973a'); ng.addColorStop(0.5,'#fde68a'); ng.addColorStop(1,'#c8973a');
     ctx.fillStyle = ng;
-    // موضع الاسم — وسط الشهادة حسب الصورة الأصلية
-    const nameY = window._certImg ? H*0.305 : H*0.22;
-    ctx.fillText(studentName, W/2, nameY);
+    ctx.fillText(studentName, W/2, boxY + boxH/2);
     ctx.restore();
   }
 
-  // --- التاريخ ---
-  if (window._certDateShort) {
+  // ======================================================
+  // 6. "قد أتم بنجاح متطلبات دورة" + اسم الكورس
+  // ======================================================
+  ctx.save();
+  ctx.font = `${Math.round(28*sc)}px Cairo, Arial, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('قد أتم بنجاح جميع متطلبات دورة', W/2, H*0.415);
+  ctx.restore();
+
+  // اسم الكورس بخط كبير
+  ctx.save();
+  const courseText = (window._certCourseTitle || 'الكورس').trim();
+  const cfs = Math.min(Math.round(72*sc), Math.round((W*0.7) / (courseText.length * 0.55)));
+  ctx.font = `bold ${Math.max(32*sc, cfs)}px Cairo, Arial, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = 'rgba(80,80,255,0.5)'; ctx.shadowBlur = 18*sc;
+  ctx.fillText(courseText.length > 28 ? courseText.slice(0,26)+'...' : courseText, W/2, H*0.48);
+  ctx.restore();
+
+  // "ويمنح هذه الشهادة بتاريخ"
+  ctx.save();
+  ctx.font = `${Math.round(26*sc)}px Cairo, Arial, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('ويُمنح هذه الشهادة بتاريخ', W/2, H*0.545);
+  ctx.restore();
+
+  // التاريخ
+  const certDateShort = window._certDateShort || '';
+  if (certDateShort) {
     ctx.save();
-    const fs = Math.round(32*sc2);
-    ctx.font = `bold ${fs}px Cairo, Arial, sans-serif`;
+    ctx.font = `bold ${Math.round(32*sc)}px Cairo, Arial, sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fde68a';
-    ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 8*sc2;
-    const dateY = window._certImg ? H*0.565 : H*0.54;
-    ctx.fillText(window._certDateShort, W*0.5, dateY);
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 6*sc;
+    ctx.fillText(certDateShort, W/2, H*0.59);
     ctx.restore();
   }
 
-  // --- مستوى الدورة ---
-  if (window._certImg && window._certLevel) {
+  // ======================================================
+  // 7. LEFT PANEL — مدة + مستوى + حالة
+  // ======================================================
+  const leftX = W*0.175;
+  function drawLeftItem(icon, label, value, yPos, valueColor) {
     ctx.save();
-    const fs = Math.round(30*sc2);
-    ctx.font = `${fs}px Cairo, Arial, sans-serif`;
+    ctx.font = `${Math.round(22*sc)}px Cairo, Arial, sans-serif`;
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fde68a';
-    ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 6*sc2;
-    ctx.fillText(window._certLevel, W*0.22, H*0.475);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText(icon, leftX + 14*sc, yPos - 14*sc);
+    ctx.font = `bold ${Math.round(22*sc)}px Cairo, Arial, sans-serif`;
+    ctx.fillStyle = '#e2c87a';
+    ctx.fillText(label, leftX, yPos);
+    ctx.font = `${Math.round(20*sc)}px Cairo, Arial, sans-serif`;
+    ctx.fillStyle = valueColor || '#cbd5e1';
+    ctx.fillText(value, leftX, yPos + 22*sc);
     ctx.restore();
   }
+  drawLeftItem('🕐','مدة الدورة','ساعات تدريبية', H*0.415);
+  drawLeftItem('📊','مستوى الدورة', window._certLevel || 'متوسط', H*0.49);
+  drawLeftItem('🏅','حالة الإنجاز','مكتمل بنجاح', H*0.565, '#10b981');
 
-  // --- رقم الشهادة ---
+  // ======================================================
+  // 8. RIGHT PANEL — QR code placeholder + رقم الشهادة
+  // ======================================================
+  const qrX = W*0.82; const qrY = H*0.38; const qrSize = 130*sc;
+  // خلفية QR
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.strokeStyle = '#c8973a'; ctx.lineWidth = 1.5*sc;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(qrX - qrSize/2, qrY - qrSize/2, qrSize, qrSize, 6*sc) : ctx.rect(qrX - qrSize/2, qrY - qrSize/2, qrSize, qrSize);
+  ctx.fill(); ctx.stroke();
+  // رمز QR وهمي (مربعات صغيرة)
+  ctx.fillStyle = 'rgba(200,151,58,0.5)';
+  const grid = 7; const cell = qrSize / (grid+2);
+  for (let r=0;r<grid;r++) for (let c=0;c<grid;c++) {
+    if ((r<2&&c<2)||(r<2&&c>grid-3)||(r>grid-3&&c<2)||Math.random()>0.5) {
+      ctx.fillRect(qrX - qrSize/2 + (c+1)*cell, qrY - qrSize/2 + (r+1)*cell, cell*0.8, cell*0.8);
+    }
+  }
+  ctx.restore();
+  // نص QR
+  ctx.save();
+  ctx.font = `${Math.round(18*sc)}px Cairo`; ctx.textAlign='center'; ctx.fillStyle='#94a3b8';
+  ctx.fillText('للتحقق من صحة الشهادة', qrX, qrY + qrSize/2 + 20*sc);
+  ctx.fillText('امسح الكود أو قم بزيارة', qrX, qrY + qrSize/2 + 40*sc);
+  ctx.fillText('الموقع الإلكتروني', qrX, qrY + qrSize/2 + 60*sc);
+  ctx.restore();
+
+  // ======================================================
+  // 9. SEALS / STAMPS — أختام في الأسفل
+  // ======================================================
+  function drawSeal(cx, cy, r, lines, color) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    // دائرة خارجية
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5*sc;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    // دائرة داخلية
+    ctx.strokeStyle = color+'88'; ctx.lineWidth = 1.5*sc;
+    ctx.beginPath(); ctx.arc(0,0,r*0.78,0,Math.PI*2); ctx.stroke();
+    // نص
+    ctx.font = `bold ${Math.round(r*0.22)}px Cairo,Arial`;
+    ctx.textAlign='center'; ctx.fillStyle=color;
+    lines.forEach((l,i) => ctx.fillText(l, 0, (i-(lines.length-1)/2)*r*0.26));
+    ctx.restore();
+  }
+  const sealY = H*0.835; const sr2 = 65*sc;
+  drawSeal(W*0.18, sealY, sr2, ['ASTRONOMY','AND SPACE','PLATFORM'], '#c8973a');
+  drawSeal(W*0.36, sealY, sr2, ['معتمدة من','منصة','ASP'], '#fbbf24');
+  drawSeal(W*0.82, sealY, sr2, ['ASTRONOMY','AND SPACE','VERIFIED'], '#c8973a');
+
+  // توقيع
+  ctx.save();
+  ctx.font = `italic bold ${Math.round(38*sc)}px Georgia,'Times New Roman',serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(200,151,58,0.85)';
+  ctx.shadowColor='rgba(0,0,0,0.5)'; ctx.shadowBlur=8*sc;
+  ctx.fillText('إدارة المنصة', W*0.55, H*0.82);
+  ctx.restore();
+  ctx.save();
+  ctx.font=`${Math.round(22*sc)}px Cairo`; ctx.textAlign='center'; ctx.fillStyle='#6b7280';
+  ctx.fillText('ASTRONOMY AND SPACE', W*0.55, H*0.86);
+  ctx.restore();
+
+  // ======================================================
+  // 10. FOOTER — رقم الشهادة
+  // ======================================================
+  ctx.save();
+  ctx.font = `${Math.round(21*sc)}px Cairo`; ctx.textAlign='right'; ctx.textBaseline='middle';
+  ctx.fillStyle='#94a3b8';
+  ctx.fillText('رقم الشهادة', W*0.79, H*0.925);
+  ctx.restore();
   if (window._certNumber) {
     ctx.save();
-    const fs = Math.round(26*sc2);
-    ctx.font = `bold ${fs}px monospace, Cairo`;
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fbbf24';
-    ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 6*sc2;
-    const numX = window._certImg ? W*0.685 : W*0.62;
-    const numY = window._certImg ? H*0.942 : H*0.93;
-    ctx.fillText(window._certNumber, numX, numY);
+    ctx.font = `bold ${Math.round(24*sc)}px monospace,Cairo`;
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillStyle='#fbbf24';
+    ctx.shadowColor='rgba(0,0,0,0.7)'; ctx.shadowBlur=5*sc;
+    ctx.fillText(window._certNumber, W*0.79, H*0.958);
     ctx.restore();
   }
+  // موقع الكتروني
+  ctx.save();
+  ctx.font=`${Math.round(19*sc)}px Cairo`; ctx.textAlign='center'; ctx.fillStyle='#4b5563';
+  ctx.fillText('https://astronomy-and-space.vercel.app/', W*0.5, H*0.96);
+  ctx.restore();
 }
 
 window.handleCertDownload = function() {
