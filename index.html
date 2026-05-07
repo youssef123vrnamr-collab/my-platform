@@ -4177,6 +4177,98 @@ window.openPaidCourseModal = async function(courseId) {
   }
 };
 
+
+// ===== إدارة امتحانات الكورس =====
+async function showCourseExamsManager(courseId, courseTitle, videoIds) {
+  if (!isAdmin) { showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
+  if (!videoIds || videoIds.length === 0) { showToast('⚠️ لا توجد فيديوهات في هذا الكورس'); return; }
+
+  let courseExams = {};
+  try {
+    for (let i = 0; i < videoIds.length; i += 10) {
+      const chunk = videoIds.slice(i, i + 10);
+      const s = await db.collection('exams').where('videoId', 'in', chunk).get();
+      s.forEach(d => { courseExams[d.data().videoId] = { id: d.id, ...d.data() }; });
+    }
+  } catch(e) { console.warn(e); }
+
+  let rowsHtml = videoIds.map(vid => {
+    const v = videos.find(x => x.id === vid);
+    const vTitle = v ? escapeHtml(v.title) : '(فيديو محذوف)';
+    const hasExam = !!courseExams[vid];
+    const examQCount = hasExam ? (courseExams[vid].questions || []).length : 0;
+    const examId = hasExam ? courseExams[vid].id : '';
+    const safeCourseTitleJs = courseTitle.replace(/'/g, "\\'");
+    const videoIdsJson = JSON.stringify(videoIds);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;padding:.85rem 1rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-bottom:.6rem">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:#e0e7ff;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          <i class="fas fa-play-circle" style="color:#6366f1;margin-left:.4rem"></i>${vTitle}
+        </div>
+        ${hasExam
+          ? `<div style="color:#10b981;font-size:.78rem;margin-top:.25rem"><i class="fas fa-check-circle"></i> يوجد امتحان — ${examQCount} سؤال</div>`
+          : `<div style="color:#94a3b8;font-size:.78rem;margin-top:.25rem"><i class="fas fa-times-circle" style="color:#ef4444"></i> لا يوجد امتحان</div>`
+        }
+      </div>
+      <div style="display:flex;gap:.5rem;flex-shrink:0">
+        ${hasExam
+          ? `<button onclick="closeCourseExamsManager();openAddExamModal('${vid}')"
+               style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;padding:.4rem .85rem;font-family:Cairo;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem">
+               <i class="fas fa-edit"></i> تعديل</button>
+             <button onclick="deleteCourseVideoExam('${examId}','${vid}','${courseId}','${safeCourseTitleJs}',${videoIdsJson})"
+               style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;padding:.4rem .75rem;font-family:Cairo;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem">
+               <i class="fas fa-trash"></i></button>`
+          : `<button onclick="closeCourseExamsManager();openAddExamModal('${vid}')"
+               style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:.4rem .85rem;font-family:Cairo;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.35rem">
+               <i class="fas fa-plus-circle"></i> إضافة امتحان</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'courseExamsManagerModal';
+  modal.className = 'modal active';
+  modal.style.cssText = 'z-index:10060;align-items:center;justify-content:center;background:rgba(0,0,0,.8);padding:1rem';
+  modal.innerHTML = `
+    <div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.4);border-radius:20px;width:95%;max-width:600px;max-height:88dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,.6)">
+      <div style="padding:1.1rem 1.25rem;background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.15));border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-shrink:0">
+        <h3 style="margin:0;font-size:1.05rem;color:#e0e7ff;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+          <i class="fas fa-clipboard-list" style="color:#6366f1"></i>
+          امتحانات كورس:
+          <span style="color:#a5b4fc">${escapeHtml(courseTitle)}</span>
+        </h3>
+        <button onclick="closeCourseExamsManager()" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div style="padding:1rem 1.1rem;overflow-y:auto;flex:1">
+        <p style="color:#94a3b8;font-size:.85rem;margin-bottom:1rem;line-height:1.6">
+          <i class="fas fa-info-circle" style="color:#6366f1"></i>
+          يمكنك إضافة أو تعديل امتحان لكل فيديو في هذا الكورس.
+        </p>
+        ${rowsHtml}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeCourseExamsManager(); });
+}
+
+function closeCourseExamsManager() {
+  const m = document.getElementById('courseExamsManagerModal');
+  if (m) m.remove();
+}
+
+async function deleteCourseVideoExam(examId, videoId, courseId, courseTitle, videoIds) {
+  if (!confirm('هل تريد حذف امتحان هذا الفيديو؟')) return;
+  try {
+    await db.collection('exams').doc(examId).delete();
+    showToast('🗑️ تم حذف الامتحان');
+    closeCourseExamsManager();
+    showCourseExamsManager(courseId, courseTitle, videoIds);
+  } catch(e) { console.warn(e); showToast('❌ فشل الحذف'); }
+}
+
 async function showCoursesList() {
   const coursesSnap = await db.collection("courses").get();
   if (coursesSnap.empty) { showToast("لا توجد كورسات بعد"); return; }
@@ -4218,6 +4310,7 @@ async function showCoursesList() {
         : `<button type="button" class="btn btn-primary" onclick="enrollInCourseFromList('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>`
       }
       ${isAdmin ? `<button type="button" class="btn btn-warning" onclick="editCourse('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>` : ''}
+      ${isAdmin ? `<button type="button" class="btn btn-info" onclick="showCourseExamsManager('${doc.id}','${safeTitle}',${JSON.stringify(c.videoIds||[])})"><i class="fas fa-clipboard-list"></i> امتحانات الكورس</button>` : ''}
       ${isAdmin && paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="background:linear-gradient(135deg,#ef4444,#b91c1c);font-weight:700"><i class="fas fa-trash"></i> حذف الكورس المدفوع</button>` : ''}
       ${isAdmin && !paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
       </div>
