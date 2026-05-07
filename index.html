@@ -7482,6 +7482,14 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
           <i class="fas fa-trash"></i> إزالة الرابط
         </button>
       </div>
+      <!-- زرار تبديل ظهور زرار المحاضرة -->
+      <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(45,140,255,.08);border:1px solid rgba(45,140,255,.25);border-radius:12px;padding:.75rem 1rem;flex-wrap:wrap;gap:.5rem">
+        <span style="color:#ccc;font-size:.88rem"><i class="fas fa-eye" style="color:#2d8cff;margin-left:.4rem"></i> زرار &quot;انضم للمحاضرة&quot; في الدردشة</span>
+        <button id="zoomVisibleToggleBtn" onclick="toggleZoomVisibility()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:20px;padding:.35rem .9rem;font-family:Cairo,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .3s">
+          <i class="fas fa-eye" id="zoomVisibleIcon"></i>
+          <span id="zoomVisibleLabel">ظاهر</span>
+        </button>
+      </div>
       <div id="zoomCurrentStatus" style="background:rgba(45,140,255,.1);border:1px solid rgba(45,140,255,.3);border-radius:10px;padding:.75rem 1rem;font-size:.85rem;color:#aaa;display:none"></div>
     </div>
   </div>
@@ -7505,7 +7513,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
     db.collection(ZOOM_COL).doc(ZOOM_DOC).onSnapshot(snap => {
       const link = snap.exists && snap.data()[ZOOM_FIELD] ? snap.data()[ZOOM_FIELD].trim() : '';
       const btn = document.getElementById('zoomJoinBtn');
-      if (btn) btn.style.display = link ? 'flex' : 'none';
+      if (btn) btn.style.display = (link && window._zoomVisible !== false) ? 'flex' : 'none';
       // Save to window for use in joinZoomFromChat
       window._zoomLink = link;
       // Update status in modal if open
@@ -7554,7 +7562,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       await db.collection(ZOOM_COL).doc(ZOOM_DOC).set({ [ZOOM_FIELD]: link, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
       window._zoomLink = link;
       const btn = document.getElementById('zoomJoinBtn');
-      if (btn) btn.style.display = 'flex';
+      if (btn) btn.style.display = (window._zoomVisible !== false) ? 'flex' : 'none';
       showToast('✅ تم حفظ رابط Zoom بنجاح');
       closeZoomLinkSettings();
     } catch(e) { console.error('saveZoomLink error:', e); showToast('❌ فشل الحفظ: ' + (e.message || e)); }
@@ -7571,6 +7579,51 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
       if (inp) inp.value = '';
       showToast('🗑️ تم إزالة الرابط');
     } catch(e) { console.error('clearZoomLink error:', e); showToast('❌ فشل الحذف'); }
+  };
+
+  // ===== Zoom Visibility Toggle =====
+  const ZOOM_VISIBLE_FIELD = 'zoomVisible';
+  window._zoomVisible = true; // default visible
+
+  function updateZoomVisibleUI(visible) {
+    const btn = document.getElementById('zoomJoinBtn');
+    const toggleBtn = document.getElementById('zoomVisibleToggleBtn');
+    const icon = document.getElementById('zoomVisibleIcon');
+    const label = document.getElementById('zoomVisibleLabel');
+    const link = window._zoomLink || '';
+    if (btn) btn.style.display = (link && visible) ? 'flex' : 'none';
+    if (toggleBtn) {
+      toggleBtn.style.background = visible
+        ? 'linear-gradient(135deg,#10b981,#059669)'
+        : 'linear-gradient(135deg,#64748b,#475569)';
+    }
+    if (icon) icon.className = visible ? 'fas fa-eye' : 'fas fa-eye-slash';
+    if (label) label.textContent = visible ? 'ظاهر' : 'مخفي';
+  }
+
+  // Listen to zoom visibility from Firestore
+  function listenZoomVisible() {
+    if (!db) { setTimeout(listenZoomVisible, 1000); return; }
+    db.collection(ZOOM_COL).doc(ZOOM_DOC).onSnapshot(snap => {
+      const v = snap.exists && snap.data()[ZOOM_VISIBLE_FIELD] !== undefined
+        ? snap.data()[ZOOM_VISIBLE_FIELD] : true;
+      window._zoomVisible = v;
+      updateZoomVisibleUI(v);
+    }, () => {});
+  }
+  setTimeout(listenZoomVisible, 2500);
+
+  window.toggleZoomVisibility = async function() {
+    const newVal = !window._zoomVisible;
+    try {
+      await db.collection(ZOOM_COL).doc(ZOOM_DOC).set(
+        { [ZOOM_VISIBLE_FIELD]: newVal, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+        { merge: true }
+      );
+      window._zoomVisible = newVal;
+      updateZoomVisibleUI(newVal);
+      showToast(newVal ? '👁️ تم إظهار زرار المحاضرة' : '🙈 تم إخفاء زرار المحاضرة');
+    } catch(e) { showToast('❌ فشل التحديث'); }
   };
 
   window.joinZoomFromChat = function() {
