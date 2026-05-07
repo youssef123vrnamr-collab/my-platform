@@ -1989,6 +1989,8 @@
     /* Space canvas background */
     body { background: #020010 !important; }
     html { background: #020010 !important; }
+    /* تحميل خط Cairo للـ Canvas */
+    @font-face { font-family: 'Cairo'; src: url('https://fonts.gstatic.com/s/cairo/v28/SLXgc1nY6HkvalIkTpu0xg.woff2') format('woff2'); font-weight: 700; }
 
     /* Epic hero */
     .epic-hero { background: transparent !important; }
@@ -8431,12 +8433,18 @@ function showCertificateModal(courseTitle, certUrl, courseLevel, courseId) {
   const old = document.getElementById('certViewModal');
   if (old) old.remove();
 
-  // ===== بيانات تتملى تلقائياً =====
+  // ===== بيانات الشهادة =====
   const certNumber = 'ASP-' + new Date().getFullYear() + '-' + String(Math.floor(1000 + Math.random() * 9000));
   const today = new Date();
   const certDate = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+  // التاريخ بصيغة dd/mm/yyyy للكتابة على الشهادة
+  const dd = String(today.getDate()).padStart(2,'0');
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const yyyy = today.getFullYear();
+  const certDateShort = dd + '/' + mm + '/' + yyyy;
   const level = courseLevel || 'متوسط';
-  // اسم الطالب من حسابه — بيجيب من كل المصادر المتاحة
+
+  // اسم الطالب من كل المصادر المتاحة
   const autoName = (typeof currentUser !== 'undefined' && currentUser && String(currentUser).trim())
     || (typeof googleUser !== 'undefined' && googleUser && googleUser.displayName && String(googleUser.displayName).trim())
     || (window.googleUser && window.googleUser.displayName && String(window.googleUser.displayName).trim())
@@ -8444,90 +8452,225 @@ function showCertificateModal(courseTitle, certUrl, courseLevel, courseId) {
     || (typeof localStorage !== 'undefined' && localStorage.getItem('falak_username') && String(localStorage.getItem('falak_username')).trim())
     || '';
 
+  // حفظ البيانات للاستخدام عند الرسم
+  window._certData = { certUrl, certNumber, certDate, certDateShort, courseTitle, level };
+
   const modal = document.createElement('div');
   modal.id = 'certViewModal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:10080;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(10px);overflow-y:auto';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10080;background:rgba(0,0,0,.92);display:flex;align-items:flex-start;justify-content:center;padding:1rem;backdrop-filter:blur(10px);overflow-y:auto';
   modal.innerHTML = `
-    <div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(245,158,11,.5);border-radius:24px;width:95%;max-width:500px;padding:2rem 1.75rem;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.7),0 0 60px rgba(245,158,11,.15);position:relative;overflow:hidden;margin:auto">
-      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,.12),transparent 65%);pointer-events:none"></div>
+    <div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(245,158,11,.5);border-radius:24px;width:95%;max-width:520px;padding:1.75rem 1.5rem;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.7),0 0 60px rgba(245,158,11,.15);position:relative;overflow:hidden;margin:auto">
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,.1),transparent 65%);pointer-events:none"></div>
 
-      <!-- أيقونة + عنوان -->
-      <div style="width:80px;height:80px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 1rem;box-shadow:0 10px 30px rgba(245,158,11,.5),0 0 0 8px rgba(245,158,11,.15)">🏆</div>
-      <h2 style="font-size:1.35rem;font-weight:900;color:#fde68a;margin-bottom:.35rem">مبروك! أتممت الكورس 🎉</h2>
-      <p style="color:#94a3b8;font-size:.85rem;margin-bottom:1.25rem">أتممت كورس <b style="color:#fbbf24">${escapeHtml(courseTitle)}</b> بنجاح!</p>
-
-      <!-- الخانات التي تتملى تلقائياً -->
-      <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1.25rem;text-align:right">
-        <p style="color:#fbbf24;font-size:.78rem;font-weight:700;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem"><i class="fas fa-magic"></i> بيانات الشهادة — تتملى أوتوماتيك</p>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
-          <!-- رقم الشهادة -->
-          <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:.55rem .75rem">
-            <div style="font-size:.7rem;color:#f59e0b;font-weight:700;margin-bottom:.2rem"><i class="fas fa-hashtag"></i> رقم الشهادة</div>
-            <div id="certNumDisplay" style="color:#fff;font-size:.82rem;direction:ltr;text-align:left;font-family:monospace">${certNumber}</div>
-          </div>
-          <!-- التاريخ -->
-          <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:.55rem .75rem">
-            <div style="font-size:.7rem;color:#f59e0b;font-weight:700;margin-bottom:.2rem"><i class="fas fa-calendar-alt"></i> التاريخ</div>
-            <div style="color:#fff;font-size:.82rem">${certDate}</div>
-          </div>
-          <!-- اسم الكورس -->
-          <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:.55rem .75rem">
-            <div style="font-size:.7rem;color:#f59e0b;font-weight:700;margin-bottom:.2rem"><i class="fas fa-book-open"></i> اسم الكورس</div>
-            <div style="color:#fff;font-size:.82rem">${escapeHtml(courseTitle)}</div>
-          </div>
-          <!-- مستوى الدورة -->
-          <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:.55rem .75rem">
-            <div style="font-size:.7rem;color:#f59e0b;font-weight:700;margin-bottom:.2rem"><i class="fas fa-layer-group"></i> مستوى الدورة</div>
-            <div style="color:#fff;font-size:.82rem">${escapeHtml(level)}</div>
-          </div>
-        </div>
-      </div>
+      <div style="width:70px;height:70px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto .85rem;box-shadow:0 10px 30px rgba(245,158,11,.5),0 0 0 6px rgba(245,158,11,.15)">🏆</div>
+      <h2 style="font-size:1.25rem;font-weight:900;color:#fde68a;margin-bottom:.3rem">مبروك! أتممت الكورس 🎉</h2>
+      <p style="color:#94a3b8;font-size:.82rem;margin-bottom:1.1rem">كورس <b style="color:#fbbf24">${escapeHtml(courseTitle)}</b></p>
 
       <!-- حقل اسم الطالب -->
-      <div style="margin-bottom:1.25rem;text-align:right">
-        <label style="display:block;color:#fbbf24;font-size:.9rem;font-weight:700;margin-bottom:.5rem"><i class="fas fa-user-pen"></i> اسمك بالكامل</label>
+      <div style="margin-bottom:1rem;text-align:right">
+        <label style="display:block;color:#fbbf24;font-size:.88rem;font-weight:700;margin-bottom:.45rem"><i class="fas fa-user-pen"></i> اسمك كما سيظهر في الشهادة</label>
         <input id="certNameInput" type="text" dir="rtl"
           placeholder="مثال: أحمد محمد علي"
           value="${escapeHtml(autoName)}"
-          style="width:100%;padding:.75rem 1rem;background:rgba(255,255,255,.07);border:1.5px solid rgba(245,158,11,.4);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem;outline:none;transition:border-color .2s"
-          oninput="document.getElementById('certNameError').style.display='none'"
+          style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,.07);border:1.5px solid rgba(245,158,11,.4);border-radius:12px;color:#fff;font-family:Cairo,sans-serif;font-size:1rem;outline:none"
+          oninput="document.getElementById('certNameError').style.display='none';window._certUpdatePreview && window._certUpdatePreview()"
           onfocus="this.style.borderColor='rgba(245,158,11,.8)'"
           onblur="this.style.borderColor='rgba(245,158,11,.4)'"
         />
-        <p id="certNameError" style="color:#f87171;font-size:.82rem;margin-top:.4rem;display:none"><i class="fas fa-exclamation-circle"></i> من فضلك اكتب اسمك بالكامل أولاً</p>
-        <p style="color:#6ee7b7;font-size:.75rem;margin-top:.35rem"><i class="fas fa-check-circle"></i> هيتسجل اسمك في المنصة تلقائياً</p>
+        <p id="certNameError" style="color:#f87171;font-size:.8rem;margin-top:.35rem;display:none"><i class="fas fa-exclamation-circle"></i> اكتب اسمك بالكامل أولاً (3 أحرف على الأقل)</p>
       </div>
 
-      <!-- زرار الشهادة -->
-      <button id="certDownloadBtn" onclick="handleCertDownload('${certUrl.replace(/'/g, "\\'")}', '${certNumber}')"
-        style="width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:14px;padding:.9rem 1.5rem;font-family:Cairo;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:.75rem;box-shadow:0 8px 24px rgba(245,158,11,.45);transition:all .2s">
-        <i class="fas fa-certificate"></i> احصل على شهادتك
+      <!-- معاينة الشهادة على Canvas -->
+      <div id="certCanvasWrap" style="margin-bottom:1rem;border-radius:14px;overflow:hidden;border:1px solid rgba(245,158,11,.35);background:#000;display:block;position:relative">
+        <div id="certLoadingOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.7);z-index:2;border-radius:14px">
+          <div style="width:40px;height:40px;border:3px solid transparent;border-top-color:#f59e0b;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:.75rem"></div>
+          <p style="color:#fbbf24;font-size:.85rem;margin:0">جاري تحميل الشهادة...</p>
+        </div>
+        <canvas id="certCanvas" style="width:100%;height:auto;display:block;border-radius:14px"></canvas>
+      </div>
+
+      <!-- أزرار -->
+      <button id="certDownloadBtn" onclick="handleCertDownload()"
+        style="width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:14px;padding:.85rem 1.5rem;font-family:Cairo,sans-serif;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:.6rem;box-shadow:0 8px 24px rgba(245,158,11,.45)">
+        <i class="fas fa-download"></i> تحميل الشهادة
       </button>
 
-      <!-- iframe عرض الشهادة -->
-      <div id="certPreviewWrap" style="display:none;margin-bottom:1rem;border-radius:12px;overflow:hidden;border:1px solid rgba(245,158,11,.3)">
-        <iframe id="certFrame" style="width:100%;height:400px;border:none;display:block" title="شهادتك"></iframe>
-        <a id="certDirectLink" href="#" target="_blank" rel="noopener"
-          style="display:flex;align-items:center;justify-content:center;gap:.5rem;background:rgba(245,158,11,.15);color:#fbbf24;padding:.6rem;font-family:Cairo;font-size:.88rem;font-weight:600;text-decoration:none;border-top:1px solid rgba(245,158,11,.2)">
-          <i class="fas fa-external-link-alt"></i> فتح الشهادة في تبويب جديد
-        </a>
-      </div>
-
       <button onclick="document.getElementById('certViewModal').remove()"
-        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;border-radius:10px;padding:.6rem 1.5rem;font-family:Cairo;font-size:.9rem;cursor:pointer;width:100%">
+        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;border-radius:10px;padding:.55rem 1.5rem;font-family:Cairo,sans-serif;font-size:.9rem;cursor:pointer;width:100%">
         إغلاق
       </button>
     </div>`;
+
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  // === رسم الشهادة على Canvas ===
+  const canvas = document.getElementById('certCanvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+
+  // تحويل رابط Google Drive/Docs لرابط صورة مباشرة
+  let imgSrc = certUrl;
+  if (certUrl.includes('drive.google.com/file/d/')) {
+    const idMatch = certUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (idMatch) imgSrc = 'https://drive.google.com/uc?export=view&id=' + idMatch[1];
+  } else if (certUrl.includes('docs.google.com')) {
+    imgSrc = certUrl.replace('/edit', '/export?format=png').replace('/pub', '/export?format=png');
+  }
+
+  img.onload = function() {
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+    const overlay = document.getElementById('certLoadingOverlay');
+    if (overlay) overlay.style.display = 'none';
+    window._certImg = img;
+    window._certCanvas = canvas;
+    window._certCtx = ctx;
+    window._certCourseTitle = courseTitle;
+    window._certLevel = level;
+    window._certDateShort = certDateShort;
+    window._certNumber = certNumber;
+    drawCertificateCanvas(autoName);
+  };
+
+  img.onerror = function() {
+    // لو فشل التحميل كصورة، ارسم خلفية افتراضية واكتب البيانات
+    const overlay = document.getElementById('certLoadingOverlay');
+    if (overlay) overlay.style.display = 'none';
+    canvas.width = 1600;
+    canvas.height = 1130;
+    window._certImg = null;
+    window._certCanvas = canvas;
+    window._certCtx = ctx;
+    window._certCourseTitle = courseTitle;
+    window._certLevel = level;
+    window._certDateShort = certDateShort;
+    window._certNumber = certNumber;
+    drawCertificateCanvas(autoName);
+    // أيضاً فتح الرابط الأصلي في تبويب جديد كبديل
+    const wrap = document.getElementById('certCanvasWrap');
+    if (wrap) {
+      const hint = document.createElement('a');
+      hint.href = certUrl;
+      hint.target = '_blank';
+      hint.rel = 'noopener';
+      hint.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:.4rem;background:rgba(245,158,11,.1);color:#fbbf24;padding:.5rem;font-family:Cairo;font-size:.8rem;text-decoration:none;border-top:1px solid rgba(245,158,11,.2)';
+      hint.innerHTML = '<i class="fas fa-external-link-alt"></i> فتح الشهادة الأصلية في تبويب جديد';
+      wrap.appendChild(hint);
+    }
+  };
+
+  img.src = imgSrc;
+
+  // دالة تحديث المعاينة عند تغيير الاسم
+  window._certUpdatePreview = function() {
+    const inp = document.getElementById('certNameInput');
+    if (!inp || !window._certCanvas) return;
+    drawCertificateCanvas(inp.value.trim() || '');
+  };
+
   setTimeout(() => {
     const inp = document.getElementById('certNameInput');
-    if (inp) { if (!inp.value) inp.focus(); }
-  }, 200);
+    if (inp && !inp.value) inp.focus();
+  }, 300);
 }
 
-window.handleCertDownload = function(certUrl, certNumber) {
+// ===== رسم البيانات على صورة الشهادة =====
+function drawCertificateCanvas(studentName) {
+  const canvas = window._certCanvas;
+  const ctx = window._certCtx;
+  if (!canvas || !ctx) return;
+
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // ارسم الخلفية (الصورة أو خلفية افتراضية)
+  ctx.clearRect(0, 0, W, H);
+  if (window._certImg) {
+    ctx.drawImage(window._certImg, 0, 0, W, H);
+  } else {
+    // خلفية افتراضية جميلة لو فشل تحميل الصورة
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#020010');
+    grad.addColorStop(0.5, '#0f0a1a');
+    grad.addColorStop(1, '#1a1a3e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(245,158,11,0.6)';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(30, 30, W-60, H-60);
+  }
+
+  // ===== إعدادات الكتابة =====
+  const scale = W / 1600; // نسبة التوسيع
+
+  // --- اسم الطالب (منتصف الشهادة أعلى) ---
+  if (studentName && studentName.length >= 1) {
+    ctx.save();
+    const nameFontSize = Math.round(72 * scale);
+    ctx.font = `bold ${nameFontSize}px Cairo, Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // ظل ذهبي
+    ctx.shadowColor = 'rgba(245,158,11,0.5)';
+    ctx.shadowBlur = 18 * scale;
+    // لون ذهبي لامع
+    const nameGrad = ctx.createLinearGradient(W/2 - 300*scale, 0, W/2 + 300*scale, 0);
+    nameGrad.addColorStop(0, '#f59e0b');
+    nameGrad.addColorStop(0.5, '#fde68a');
+    nameGrad.addColorStop(1, '#f59e0b');
+    ctx.fillStyle = nameGrad;
+    ctx.fillText(studentName, W / 2, H * 0.22);
+    ctx.restore();
+  }
+
+  // --- التاريخ ---
+  if (window._certDateShort) {
+    ctx.save();
+    const dateFontSize = Math.round(36 * scale);
+    ctx.font = `bold ${dateFontSize}px Cairo, Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fde68a';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 6 * scale;
+    // موضع التاريخ في الشهادة (وسط أسفل السطر الثاني)
+    ctx.fillText(window._certDateShort, W * 0.5, H * 0.54);
+    ctx.restore();
+  }
+
+  // --- مستوى الدورة ---
+  if (window._certLevel) {
+    ctx.save();
+    const lvlFontSize = Math.round(30 * scale);
+    ctx.font = `${lvlFontSize}px Cairo, Arial, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fde68a';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4 * scale;
+    ctx.fillText(window._certLevel, W * 0.24, H * 0.44);
+    ctx.restore();
+  }
+
+  // --- رقم الشهادة ---
+  if (window._certNumber) {
+    ctx.save();
+    const numFontSize = Math.round(28 * scale);
+    ctx.font = `bold ${numFontSize}px monospace, Cairo`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fbbf24';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4 * scale;
+    // موضع رقم الشهادة (يمين السفلي — منطقة ASP-)
+    ctx.fillText(window._certNumber, W * 0.72, H * 0.935);
+    ctx.restore();
+  }
+}
+
+window.handleCertDownload = function() {
   const nameInput = document.getElementById('certNameInput');
   const nameError = document.getElementById('certNameError');
   const name = nameInput ? nameInput.value.trim() : '';
@@ -8541,74 +8684,50 @@ window.handleCertDownload = function(certUrl, certNumber) {
   const btn = document.getElementById('certDownloadBtn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحضير...'; }
 
-  // ===== تسجيل الاسم في المنصة تلقائياً =====
-  // 1. حفظ في currentUser إذا كان فارغ
+  // ارسم الشهادة بالاسم الجديد
+  drawCertificateCanvas(name);
+
+  // ===== تسجيل الاسم في المنصة =====
   if (typeof currentUser !== 'undefined' && !currentUser) {
     currentUser = name;
     try { localStorage.setItem('falak_username', name); } catch(e) {}
   }
-
-  // 2. حفظ في Firebase
   if (typeof currentUserId !== 'undefined' && currentUserId) {
     try {
-      db.collection('users').doc(currentUserId).set({
-        displayName: name,
-        certName: name,
-        lastCertAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      // حفظ بيانات الشهادة
-      db.collection('issued_certificates').add({
-        userId: currentUserId,
-        studentName: name,
-        certNumber: certNumber || '',
-        issuedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(() => {});
+      db.collection('users').doc(currentUserId).set({ displayName: name, certName: name, lastCertAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      db.collection('issued_certificates').add({ userId: currentUserId, studentName: name, certNumber: window._certNumber || '', issuedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
+    } catch(e) {}
+    try {
+      db.collection('messages').add({ text: '🏆 الطالب ' + name + ' حصل على شهادة إتمام الكورس', sender: 'نظام', type: 'system_cert', certNumber: window._certNumber || '', userId: currentUserId, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
     } catch(e) {}
   }
 
-  // 3. تسجيل اسمه في الشات (رسالة نظام خفية)
-  try {
-    if (typeof db !== 'undefined' && typeof currentUserId !== 'undefined' && currentUserId) {
-      db.collection('messages').add({
-        text: '🏆 الطالب ' + name + ' حصل على شهادة إتمام الكورس',
-        sender: 'نظام',
-        type: 'system_cert',
-        certNumber: certNumber || '',
-        userId: currentUserId,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(() => {});
-    }
-  } catch(e) {}
-
-  // ===== عرض الشهادة =====
-  const wrap = document.getElementById('certPreviewWrap');
-  const frame = document.getElementById('certFrame');
-  const directLink = document.getElementById('certDirectLink');
-
-  let finalUrl = certUrl;
-
-  if (certUrl.includes('docs.google.com') || certUrl.includes('drive.google.com')) {
-    let embedUrl = certUrl
-      .replace('/edit', '/preview')
-      .replace('/pub', '/preview')
-      .replace('?usp=sharing', '');
-    finalUrl = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'rm=minimal';
-    if (frame) frame.src = finalUrl;
+  // ===== تحميل الشهادة كصورة PNG =====
+  const canvas = window._certCanvas;
+  if (canvas) {
+    setTimeout(() => {
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'شهادة_' + name.replace(/\s+/g, '_') + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> تم التحميل ✅'; btn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; }
+        showToast('🏆 مبروك ' + name + '! تم تحميل شهادتك');
+      } catch(e) {
+        // لو فشل التحميل المباشر، افتح الشهادة في تبويب
+        const certUrl = (window._certData && window._certData.certUrl) || '';
+        if (certUrl) window.open(certUrl, '_blank', 'noopener');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-external-link-alt"></i> فتح الشهادة'; }
+        showToast('🏆 مبروك ' + name + '! افتحت الشهادة في تبويب جديد');
+      }
+    }, 100);
   } else {
-    if (frame) frame.src = certUrl;
-    finalUrl = certUrl;
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-certificate"></i> احصل على شهادتك'; }
+    showToast('⚠️ لم تكتمل الشهادة، حاول مرة أخرى');
   }
-
-  if (directLink) { directLink.href = finalUrl; }
-  if (wrap) wrap.style.display = 'block';
-
-  if (btn) {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-check-circle"></i> تم! شهادتك جاهزة أدناه ✅';
-    btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-  }
-
-  showToast('🏆 مبروك ' + name + '! تم تسجيل اسمك وشهادتك جاهزة');
 };
 
 // ===== CERTIFICATES FEATURE =====
