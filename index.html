@@ -69,7 +69,7 @@
     html { width: 100%; min-height: 100%; min-height: 100dvh; background: #020010 !important; }
     html, body { width: 100%; min-height: 100%; background: #020010; }
     body { font-family: 'Cairo', sans-serif; background: #020010 !important; color: #fff; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-    #spaceCanvas { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; min-width: 100vw !important; height: 100vh !important; min-height: 100vh !important; z-index: 0 !important; pointer-events: none !important; display: block !important; }
+    #spaceCanvas { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; min-width: 100vw !important; height: 100vh !important; min-height: 100vh !important; height: 100dvh !important; min-height: 100dvh !important; z-index: 0 !important; pointer-events: none !important; display: block !important; }
     .app-wrapper { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; background: transparent; isolation: isolate; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; pointer-events: none; z-index: -1; overflow: hidden; background: #020010; }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
@@ -1543,7 +1543,7 @@
 </style>
 </head>
 <body>
-<canvas id="spaceCanvas" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:block"></canvas>
+<canvas id="spaceCanvas" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;height:100dvh;z-index:0;pointer-events:none;display:block"></canvas>
 
 <div class="landing-page" id="landingPage">
   <div class="landing-card">
@@ -8795,8 +8795,8 @@ function drawCertificateCanvas(studentName) {
     const ng = ctx.createLinearGradient(W/2-350*sc2,0,W/2+350*sc2,0);
     ng.addColorStop(0,'#c8973a'); ng.addColorStop(0.5,'#fde68a'); ng.addColorStop(1,'#c8973a');
     ctx.fillStyle = ng;
-    // موضع الاسم — أعلى وسط الشهادة حسب الصورة الأصلية
-    const nameY = window._certImg ? H*0.175 : H*0.22;
+    // موضع الاسم — وسط الشهادة حسب الصورة الأصلية
+    const nameY = window._certImg ? H*0.305 : H*0.22;
     ctx.fillText(studentName, W/2, nameY);
     ctx.restore();
   }
@@ -8809,7 +8809,7 @@ function drawCertificateCanvas(studentName) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fde68a';
     ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 8*sc2;
-    const dateY = window._certImg ? H*0.524 : H*0.54;
+    const dateY = window._certImg ? H*0.565 : H*0.54;
     ctx.fillText(window._certDateShort, W*0.5, dateY);
     ctx.restore();
   }
@@ -8822,7 +8822,7 @@ function drawCertificateCanvas(studentName) {
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fde68a';
     ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 6*sc2;
-    ctx.fillText(window._certLevel, W*0.235, H*0.435);
+    ctx.fillText(window._certLevel, W*0.22, H*0.475);
     ctx.restore();
   }
 
@@ -8834,8 +8834,8 @@ function drawCertificateCanvas(studentName) {
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fbbf24';
     ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 6*sc2;
-    const numX = window._certImg ? W*0.72 : W*0.62;
-    const numY = window._certImg ? H*0.937 : H*0.93;
+    const numX = window._certImg ? W*0.685 : W*0.62;
+    const numY = window._certImg ? H*0.942 : H*0.93;
     ctx.fillText(window._certNumber, numX, numY);
     ctx.restore();
   }
@@ -9006,14 +9006,12 @@ window.handleCertDownload = function() {
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
   function getVP() {
-    // استخدم أكبر قيمة ممكنة عشان يغطي كل الشاشة
-    const sw = screen.width || 0;
-    const sh = screen.height || 0;
-    const vvw = window.visualViewport ? window.visualViewport.width : 0;
-    const vvh = window.visualViewport ? window.visualViewport.height : 0;
+    // innerWidth/innerHeight دايماً صح على كل الأجهزة
+    const vvw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     return {
-      w: Math.max(sw, vvw, window.innerWidth, document.documentElement.clientWidth),
-      h: Math.max(sh, vvh, window.innerHeight, document.documentElement.clientHeight)
+      w: Math.max(vvw, window.innerWidth, document.documentElement.clientWidth),
+      h: Math.max(vvh, window.innerHeight, document.documentElement.clientHeight)
     };
   }
 
@@ -9025,6 +9023,9 @@ window.handleCertDownload = function() {
     canvas.height = Math.ceil(vH * DPR);
     canvas.style.width  = vW + 'px';
     canvas.style.height = vH + 'px';
+    // ضمان تغطية كل الشاشة حتى مع شريط المتصفح
+    canvas.style.minWidth  = '100vw';
+    canvas.style.minHeight = '100vh';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     initScene();
   }
