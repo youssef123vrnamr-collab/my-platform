@@ -1124,6 +1124,46 @@
 }
 
 
+
+/* ===== Certificate Feature ===== */
+.cert-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: .65rem 1.2rem;
+  font-family: Cairo, sans-serif;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  box-shadow: 0 4px 14px rgba(245,158,11,.4);
+  animation: certGlow 2.5s infinite;
+  width: 100%;
+  justify-content: center;
+  margin-top: .5rem;
+  text-decoration: none;
+}
+.cert-btn:hover { opacity: .9; transform: translateY(-2px); }
+@keyframes certGlow {
+  0%,100% { box-shadow: 0 4px 14px rgba(245,158,11,.4); }
+  50% { box-shadow: 0 4px 24px rgba(245,158,11,.75), 0 0 40px rgba(245,158,11,.2); }
+}
+.cert-manager-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  padding: .85rem 1rem;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px;
+  margin-bottom: .6rem;
+}
+.cert-manager-row.has-cert { border-color: rgba(245,158,11,.35); }
+
 /* ===== PDF Files Feature ===== */
 .pdf-modal-grid {
   display: grid;
@@ -1520,6 +1560,7 @@
             <div class="settings-menu-item admin-only" id="groupAdminMenuItem" style="display: none;" onclick="openGroupChatAdminPanel();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</div>
             <div class="settings-menu-item admin-only" id="pdfFilesMenuItem" style="display: none;" onclick="openPdfManagerModal();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-file-pdf" style="color:#ef4444"></i> إدارة ملفات PDF</div>
             <div class="settings-menu-item admin-only" id="manageCoursesMenuItem" style="display: none;" onclick="showCoursesList();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-graduation-cap" style="color:#f59e0b"></i> إدارة الكورسات</div>
+            <div class="settings-menu-item admin-only" id="manageCertificatesMenuItem" style="display: none;" onclick="openCertificatesManager();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-certificate" style="color:#f59e0b"></i> إدارة شهادات الكورسات</div>
             <div class="settings-menu-item local-only" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
             <div class="settings-menu-item" id="appsMenuItem"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
           </div>
@@ -4317,6 +4358,7 @@ async function showCoursesList() {
         ? `<button type="button" onclick="this.closest('.modal').remove(); openPaidCourseModal('${doc.id}')" style="padding:.65rem 1.2rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;font-family:Cairo;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-shadow:0 4px 14px rgba(16,185,129,.4)"><i class="fas fa-play-circle"></i> مشاهدة الفيديوهات <i class="fas fa-check-circle" style="font-size:.8rem;opacity:.85"></i></button>`
         : `<button type="button" class="btn btn-primary" onclick="enrollInCourseFromList('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>`
       }
+      ${isEnrolledInThis && c.certificateUrl ? `<div id="certBtnContainer_${doc.id}" style="width:100%"><button class="cert-btn" onclick="checkAndShowCertificate('${doc.id}',this)"><i class="fas fa-certificate"></i> 🏆 استلام شهادتك</button></div>` : ''}
       ${isAdmin ? `<button type="button" class="btn btn-warning" onclick="editCourse('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>` : ''}
       ${isAdmin ? `<button type="button" class="btn btn-info" onclick="showCourseExamsManager('${doc.id}','${safeTitle}')"><i class="fas fa-clipboard-list"></i> امتحانات الكورس</button>` : ''}
       ${isAdmin && paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="background:linear-gradient(135deg,#ef4444,#b91c1c);font-weight:700"><i class="fas fa-trash"></i> حذف الكورس المدفوع</button>` : ''}
@@ -8021,6 +8063,184 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   };
 
 })();
+</script>
+
+
+<!-- ===== Certificates Manager Modal ===== -->
+<div class="modal" id="certificatesManagerModal" style="z-index:10005;align-items:center;justify-content:center;padding:1rem">
+  <div class="modal-content" style="max-width:560px;max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:20px">
+    <div class="modal-header" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(217,119,6,.15))">
+      <h3><i class="fas fa-certificate" style="color:#f59e0b"></i> إدارة شهادات الكورسات</h3>
+      <button class="modal-close" onclick="closeCertificatesManager()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="padding:1.25rem;overflow-y:auto;flex:1">
+      <p style="color:#94a3b8;font-size:.87rem;line-height:1.6;margin-bottom:1rem">
+        <i class="fas fa-info-circle" style="color:#f59e0b"></i>
+        ضع رابط PDF الشهادة لكل كورس. الطالب سيشوف زرار "استلام شهادتك" بعد ما يكمل مشاهدة كل فيديوهات الكورس.
+      </p>
+      <div id="certManagerList"><p style="color:#888;text-align:center"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+// ===== Certificate Check & Show =====
+window.checkAndShowCertificate = async function(courseId, btnEl) {
+  if (!currentUserId) { showToast('❌ يجب تسجيل الدخول أولاً'); return; }
+  btnEl.disabled = true;
+  btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+  try {
+    // Get course data
+    const courseDoc = await db.collection('courses').doc(courseId).get();
+    if (!courseDoc.exists) { showToast('❌ الكورس غير موجود'); btnEl.disabled = false; return; }
+    const courseData = courseDoc.data();
+    const videoIds = courseData.videoIds || [];
+    const certUrl = courseData.certificateUrl || '';
+    if (!certUrl) { showToast('⚠️ لا توجد شهادة مرتبطة بهذا الكورس بعد'); btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك'; return; }
+    if (videoIds.length === 0) { window.open(certUrl, '_blank'); return; }
+    // Check watched videos
+    const watchSnap = await db.collection('watch_history')
+      .where('userId', '==', currentUserId)
+      .get();
+    const watchedIds = new Set();
+    watchSnap.forEach(d => watchedIds.add(d.data().videoId));
+    const allWatched = videoIds.every(id => watchedIds.has(id));
+    if (allWatched) {
+      // Show certificate modal
+      showCertificateModal(courseData.title || 'الكورس', certUrl);
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
+    } else {
+      const watched = videoIds.filter(id => watchedIds.has(id)).length;
+      const remaining = videoIds.length - watched;
+      showToast(`⏳ أكملت ${watched} من ${videoIds.length} فيديو — باقي ${remaining} فيديو للحصول على الشهادة`);
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
+    }
+  } catch(e) { console.error(e); showToast('❌ حدث خطأ'); btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك'; }
+};
+
+function showCertificateModal(courseTitle, certUrl) {
+  const old = document.getElementById('certViewModal');
+  if (old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'certViewModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10080;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(8px)';
+  modal.innerHTML = `
+    <div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(245,158,11,.5);border-radius:24px;width:95%;max-width:440px;padding:2rem 1.5rem;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.7),0 0 60px rgba(245,158,11,.15);position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,.12),transparent 65%);pointer-events:none"></div>
+      <div style="width:80px;height:80px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 1.25rem;box-shadow:0 10px 30px rgba(245,158,11,.5),0 0 0 8px rgba(245,158,11,.15)">🏆</div>
+      <h2 style="font-size:1.35rem;font-weight:900;color:#fde68a;margin-bottom:.4rem">مبروك! 🎉</h2>
+      <p style="color:#e0e7ff;font-size:.95rem;line-height:1.6;margin-bottom:1.5rem">
+        أتممت كورس <b style="color:#fbbf24">${escapeHtml(courseTitle)}</b> بنجاح!<br>
+        <span style="color:#94a3b8;font-size:.85rem">يمكنك الآن تحميل شهادتك</span>
+      </p>
+      <a href="${certUrl}" target="_blank" rel="noopener"
+        style="display:flex;align-items:center;justify-content:center;gap:.6rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:14px;padding:.85rem 1.5rem;font-family:Cairo;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;margin-bottom:.75rem;box-shadow:0 8px 24px rgba(245,158,11,.45)">
+        <i class="fas fa-download"></i> تحميل الشهادة PDF
+      </a>
+      <button onclick="document.getElementById('certViewModal').remove()"
+        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;border-radius:10px;padding:.6rem 1.5rem;font-family:Cairo;font-size:.9rem;cursor:pointer;width:100%">
+        إغلاق
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+// ===== CERTIFICATES FEATURE =====
+(function() {
+
+  window.openCertificatesManager = async function() {
+    if (!isAdmin) { showToast('❌ المشرف فقط'); return; }
+    document.getElementById('certificatesManagerModal').classList.add('active');
+    await renderCertManagerList();
+  };
+
+  window.closeCertificatesManager = function() {
+    document.getElementById('certificatesManagerModal').classList.remove('active');
+  };
+
+  async function renderCertManagerList() {
+    const listEl = document.getElementById('certManagerList');
+    if (!listEl) return;
+    listEl.innerHTML = '<p style="color:#888;text-align:center"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</p>';
+    try {
+      const snap = await db.collection('courses').get();
+      if (snap.empty) { listEl.innerHTML = '<p style="color:#888;text-align:center">لا توجد كورسات بعد</p>'; return; }
+      let html = '';
+      snap.forEach(doc => {
+        const c = doc.data();
+        const certUrl = c.certificateUrl || '';
+        const hasCert = !!certUrl;
+        html += `<div class="cert-manager-row ${hasCert ? 'has-cert' : ''}">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;color:#e0e7ff;font-size:.9rem;margin-bottom:.4rem">
+              <i class="fas fa-book-open" style="color:${hasCert ? '#f59e0b' : '#6366f1'};margin-left:.35rem"></i>
+              ${escapeHtml(c.title || 'كورس بدون اسم')}
+              ${hasCert ? '<span style="color:#f59e0b;font-size:.75rem;margin-right:.4rem"><i class="fas fa-certificate"></i> يوجد شهادة</span>' : ''}
+            </div>
+            <input
+              id="certUrl_${doc.id}"
+              type="url"
+              placeholder="رابط PDF الشهادة..."
+              value="${escapeHtml(certUrl)}"
+              style="width:100%;padding:.55rem .75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font-family:Cairo;font-size:.82rem;direction:ltr"
+              dir="ltr"
+            >
+          </div>
+          <button onclick="saveCertUrl('${doc.id}')"
+            style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:.5rem .85rem;font-family:Cairo;font-size:.8rem;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap">
+            <i class="fas fa-save"></i> حفظ
+          </button>
+          ${hasCert ? `<button onclick="clearCertUrl('${doc.id}')"
+            style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:10px;padding:.5rem .7rem;cursor:pointer;flex-shrink:0">
+            <i class="fas fa-trash"></i></button>` : ''}
+        </div>`;
+      });
+      listEl.innerHTML = html;
+    } catch(e) { console.error(e); listEl.innerHTML = '<p style="color:#ef4444">❌ فشل التحميل</p>'; }
+  }
+
+  window.saveCertUrl = async function(courseId) {
+    const inp = document.getElementById('certUrl_' + courseId);
+    if (!inp) return;
+    const url = inp.value.trim();
+    if (url && !url.startsWith('http')) { showToast('❌ رابط غير صالح'); return; }
+    try {
+      await db.collection('courses').doc(courseId).update({ certificateUrl: url });
+      showToast(url ? '✅ تم حفظ رابط الشهادة' : '🗑️ تم إزالة الشهادة');
+      await renderCertManagerList();
+    } catch(e) { console.error(e); showToast('❌ فشل الحفظ'); }
+  };
+
+  window.clearCertUrl = async function(courseId) {
+    if (!confirm('هل تريد إزالة الشهادة من هذا الكورس؟')) return;
+    try {
+      await db.collection('courses').doc(courseId).update({ certificateUrl: '' });
+      showToast('🗑️ تم إزالة الشهادة');
+      await renderCertManagerList();
+    } catch(e) { showToast('❌ فشل الحذف'); }
+  };
+
+  // Hook into updateAdminUI to show the menu item for admins
+  const _origUI = window.updateAdminUI;
+  window.updateAdminUI = function() {
+    if (_origUI) _origUI.apply(this, arguments);
+    const el = document.getElementById('manageCertificatesMenuItem');
+    if (el) el.style.display = (window.isAdmin) ? 'flex' : 'none';
+  };
+
+  // Close on backdrop click
+  document.addEventListener('DOMContentLoaded', () => {
+    const m = document.getElementById('certificatesManagerModal');
+    if (m) m.addEventListener('click', e => { if (e.target === m) closeCertificatesManager(); });
+  });
+
+})();
+
 </script>
 
 <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script></body>
