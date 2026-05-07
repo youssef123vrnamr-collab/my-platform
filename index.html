@@ -66,18 +66,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html { width: 100%; height: 100%; background: #020010; }
-    html, body { width: 100%; min-height: 100%; background: #020010; }
-    body { font-family: 'Cairo', sans-serif; background: #020010; color: #fff; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-    /* ===== SPACE CANVAS - BULLETPROOF FULLSCREEN ===== */
-    #spaceCanvas {
-      position: fixed !important;
-      top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-      width: 100vw !important; height: 100vh !important;
-      min-width: 100% !important; min-height: 100% !important;
-      z-index: -1 !important; pointer-events: none !important; display: block !important;
-      margin: 0 !important; padding: 0 !important;
-    }
+    html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
+    body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; background-attachment: fixed; }
     .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; background: transparent; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
@@ -1562,7 +1552,7 @@
 </div>
 
 <div class="app-wrapper" id="appWrapper" style="display: none;">
-  <canvas id="spaceCanvas" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;min-width:100%;min-height:100%;z-index:-1;pointer-events:none;display:block;"></canvas>
+  <canvas id="spaceCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;"></canvas>
   <div class="loader" id="loader"><div class="loader-ring"></div><div class="loader-text">مرحباً بك في عالم الفلك 🌌</div></div>
 
   <nav class="navbar">
@@ -1641,7 +1631,7 @@
   </div>
 
   <div class="container">
-    <div class="hero epic-hero" style="padding:3rem 1rem 2.5rem;position:relative;overflow:hidden;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <div class="hero epic-hero" style="padding:clamp(2rem,6vh,5rem) clamp(1rem,4vw,3rem);position:relative;overflow:hidden;min-height:100svh;min-height:100dvh;min-height:calc(100vh - 80px);display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;box-sizing:border-box;">
 
       <!-- Floating planets -->
       <div class="planet planet-1"></div>
@@ -1665,14 +1655,14 @@
         <span class="badge-dot"></span>
       </div>
 
-      <h2 style="position:relative;z-index:2;margin-top:1rem;">اكتشف أسرار <span>الكون</span></h2>
-      <p style="position:relative;z-index:2;">منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
+      <h2 style="position:relative;z-index:2;margin-top:clamp(0.5rem,2vh,1.5rem);font-size:clamp(2rem,6vw,5rem);line-height:1.2;">اكتشف أسرار <span>الكون</span></h2>
+      <p style="position:relative;z-index:2;font-size:clamp(1rem,2.5vw,1.5rem);max-width:700px;text-align:center;">منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
 
       <!-- Astronaut floating -->
-      <div class="astronaut-float" style="position:relative;z-index:2;margin-top:1.5rem;font-size:4rem;animation:astronautFloat 6s ease-in-out infinite;">🚀</div>
+      <div class="astronaut-float" style="position:relative;z-index:2;margin-top:clamp(1rem,3vh,2.5rem);font-size:clamp(3rem,8vw,7rem);animation:astronautFloat 6s ease-in-out infinite;">🚀</div>
 
       <!-- Stats bar -->
-      <div class="hero-stats" style="position:relative;z-index:2;display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center;">
+      <div class="hero-stats" style="position:relative;z-index:2;display:flex;gap:clamp(1rem,3vw,2.5rem);margin-top:clamp(1rem,3vh,2rem);flex-wrap:wrap;justify-content:center;">
         <div class="hero-stat"><span class="stat-icon">🌟</span><span class="stat-num">∞</span><span class="stat-label">درس فلكي</span></div>
         <div class="hero-stat"><span class="stat-icon">🪐</span><span class="stat-num">8</span><span class="stat-label">كواكب</span></div>
         <div class="hero-stat"><span class="stat-icon">🌌</span><span class="stat-num">∞</span><span class="stat-label">مجرة</span></div>
@@ -1999,10 +1989,10 @@
     /* Epic hero */
     .epic-hero { background: transparent !important; }
 
-    /* Floating planets */
+    /* Floating planets — scale with viewport */
     .planet { position: absolute; border-radius: 50%; pointer-events: none; }
     .planet-1 {
-      width: 120px; height: 120px;
+      width: clamp(90px,12vw,180px); height: clamp(90px,12vw,180px);
       background: radial-gradient(circle at 35% 35%, #a78bfa, #4c1d95 60%, #1e0050);
       box-shadow: 0 0 40px rgba(139,92,246,0.6), 0 0 80px rgba(99,102,241,0.3), inset -20px -20px 40px rgba(0,0,0,0.5);
       top: 5%; left: -30px;
@@ -2014,14 +2004,14 @@
       transform:translateY(-50%) rotateX(75deg);
     }
     .planet-2 {
-      width: 70px; height: 70px;
+      width: clamp(55px,8vw,110px); height: clamp(55px,8vw,110px);
       background: radial-gradient(circle at 35% 35%, #fb923c, #991b1b 60%, #3d0000);
       box-shadow: 0 0 30px rgba(251,146,60,0.7), 0 0 60px rgba(239,68,68,0.3);
       top: 60%; right: -15px;
       animation: planetOrbit2 15s ease-in-out infinite;
     }
     .planet-3 {
-      width: 50px; height: 50px;
+      width: clamp(40px,5vw,80px); height: clamp(40px,5vw,80px);
       background: radial-gradient(circle at 35% 35%, #67e8f9, #0e7490 60%, #002030);
       box-shadow: 0 0 25px rgba(6,182,212,0.8);
       top: 20%; right: 5%;
@@ -2044,24 +2034,24 @@
       50% { transform: translate(-20px,25px) scale(1.15); }
     }
 
-    /* Laser rings */
+    /* Laser rings — scale with screen */
     .laser-ring {
       position: absolute; border-radius: 50%; pointer-events: none;
       border: 1px solid transparent; left: 50%; top: 50%; transform: translate(-50%,-50%);
     }
     .laser-ring-1 {
-      width: 300px; height: 300px;
+      width: clamp(220px,30vw,450px); height: clamp(220px,30vw,450px);
       border-color: rgba(99,102,241,0.25);
       box-shadow: 0 0 15px rgba(99,102,241,0.2), inset 0 0 15px rgba(99,102,241,0.1);
       animation: laserSpin 8s linear infinite;
     }
     .laser-ring-2 {
-      width: 450px; height: 200px;
+      width: clamp(320px,45vw,650px); height: clamp(140px,15vw,250px);
       border-color: rgba(236,72,153,0.2);
       animation: laserSpin 12s linear infinite reverse;
     }
     .laser-ring-3 {
-      width: 600px; height: 120px;
+      width: clamp(440px,60vw,850px); height: clamp(90px,12vw,180px);
       border-color: rgba(6,182,212,0.15);
       animation: laserSpin 18s linear infinite;
     }
@@ -2118,12 +2108,12 @@
     }
 
     /* Hero stats */
-    .hero-stats { gap: 1.5rem; }
+    .hero-stats { gap: clamp(0.75rem,2.5vw,2rem); }
     .hero-stat {
-      display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(167,139,250,0.2);
-      border-radius: 16px; padding: 0.75rem 1.25rem;
+      border-radius: 16px; padding: clamp(0.6rem,2vh,1.2rem) clamp(1rem,2.5vw,2rem);
       backdrop-filter: blur(10px);
       transition: all 0.3s;
     }
@@ -2133,9 +2123,9 @@
       transform: translateY(-4px);
       box-shadow: 0 10px 30px rgba(99,102,241,0.2);
     }
-    .stat-icon { font-size: 1.4rem; }
-    .stat-num { font-size: 1.3rem; font-weight: 900; background: linear-gradient(135deg,#a5b4fc,#f0abfc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .stat-label { font-size: 0.72rem; color: #94a3b8; font-weight: 600; }
+    .stat-icon { font-size: clamp(1.2rem,3vw,2rem); }
+    .stat-num { font-size: clamp(1.2rem,3vw,2rem); font-weight: 900; background: linear-gradient(135deg,#a5b4fc,#f0abfc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-label { font-size: clamp(0.7rem,1.5vw,0.95rem); color: #94a3b8; font-weight: 600; }
 
     /* Navbar enhancement */
     .navbar {
@@ -2164,14 +2154,14 @@
     }
 
     @media (max-width:480px) {
-      .planet-1 { width:80px; height:80px; }
-      .planet-2 { width:50px; height:50px; }
-      .planet-3 { width:35px; height:35px; }
-      .laser-ring-1 { width:220px; height:220px; }
-      .laser-ring-2 { width:320px; height:150px; }
-      .laser-ring-3 { width:420px; height:90px; }
-      .hero-stats { gap:0.75rem; }
-      .hero-stat { padding: 0.6rem 0.9rem; }
+      .planet-1 { width:70px; height:70px; }
+      .planet-2 { width:45px; height:45px; }
+      .planet-3 { width:30px; height:30px; }
+      .laser-ring-1 { width:200px; height:200px; }
+      .laser-ring-2 { width:300px; height:130px; }
+      .laser-ring-3 { width:400px; height:80px; }
+      .hero-stats { gap:0.5rem; }
+      .hero-stat { padding: 0.5rem 0.75rem; }
     }
     /* ===== END EPIC HERO ===== */
   </style>
@@ -8534,12 +8524,8 @@ function showCertificateModal(courseTitle, certUrl) {
   let W, H, stars = [], nebulas = [], meteors = [];
 
   function resize() {
-    // استخدام أفضل طريقة لقياس الشاشة على أي جهاز في العالم
-    W = canvas.width = window.innerWidth || document.documentElement.clientWidth || screen.width;
-    H = canvas.height = window.innerHeight || document.documentElement.clientHeight || screen.height;
-    // تأكد إن الكانفاس مغطي كل الشاشة بالـ CSS كمان
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
     initStars();
   }
 
@@ -8639,7 +8625,6 @@ function showCertificateModal(courseTitle, certUrl) {
   }
 
   window.addEventListener('resize', resize);
-  window.addEventListener('orientationchange', function() { setTimeout(resize, 100); });
   resize();
   requestAnimationFrame(draw);
 })();
