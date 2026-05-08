@@ -3078,6 +3078,9 @@ body {
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
+provider.addScope('email');
+provider.addScope('profile');
+provider.setCustomParameters({ prompt: 'select_account' });
 // ========== User Roles Functions ==========
 async function createUserRole(userId, role, creatorId = null) {
   if (!userId) return false;
@@ -4571,7 +4574,23 @@ async function updateAdminUI() {
   async function googleLogin() { 
     try { 
         showToast("⏳ جاري تسجيل الدخول..."); 
-        const result = await auth.signInWithPopup(provider); 
+        let result;
+        try {
+          result = await auth.signInWithPopup(provider);
+        } catch(popupErr) {
+          // Popup blocked or not supported — fall back to redirect
+          if (
+            popupErr.code === 'auth/popup-blocked' ||
+            popupErr.code === 'auth/popup-closed-by-user' ||
+            popupErr.code === 'auth/cancelled-popup-request' ||
+            popupErr.code === 'auth/operation-not-supported-in-this-environment'
+          ) {
+            showToast("⏳ جاري التحويل لصفحة الدخول...");
+            await auth.signInWithRedirect(provider);
+            return; // page will reload after redirect
+          }
+          throw popupErr;
+        }
         googleUser = result.user; 
         currentUserId = googleUser.uid; 
         let name = googleUser.displayName; 
@@ -4653,9 +4672,18 @@ async function updateAdminUI() {
         updateAdminUI(); 
         showToast(`مرحباً بعودتك ${currentUser}! 🚀`); 
     } catch(error) { 
-        console.error(error); 
+        console.error(error);
+        const errCode = error && error.code ? error.code : '';
+        if (errCode === 'auth/network-request-failed') {
+          showToast("❌ تحقق من الاتصال بالإنترنت");
+        } else if (errCode === 'auth/user-disabled') {
+          showToast("❌ تم تعطيل هذا الحساب");
+        } else if (errCode === 'auth/popup-closed-by-user') {
+          showToast("⚠️ تم إغلاق نافذة الدخول");
+        } else {
+          showToast("❌ فشل تسجيل الدخول: " + (error.message || errCode));
+        }
         SoundEffects.error(); 
-        showToast("❌ فشل تسجيل الدخول بحساب Google"); 
     } 
 }
   loadUserDashboard();
@@ -5032,7 +5060,10 @@ async function updateAdminUI() {
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
   function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI();
+  function initAuthState() {
+    // Handle redirect result (for mobile browsers that block popups)
+    auth.getRedirectResult().catch(err => { console.warn("getRedirectResult:", err); });
+    auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI();
 
         } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { currentUserId = "local_" + (currentUserPhone || currentUser || "guest").replace(/[^a-zA-Z0-9]/g, "_"); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
 
