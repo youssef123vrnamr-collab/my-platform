@@ -3506,8 +3506,11 @@ async function updateAdminUI() {
     // ملحوظة: localStorage لم يعد موثوقاً وحده — الرجوع لـ Firestore يتم في refreshAdminStatusFromFirestore()
 
     if (isAdmin) {
-        // إخفاء كل عناصر المستخدم العادي (user-only)
-        userOnlyItems.forEach(el => el.style.display = "none");
+        // إخفاء كل عناصر المستخدم العادي بشكل صريح بالـ ID
+        ["installAppMenuItem","feedbackMenuItem","howToUseMenuItem","googleLoginMenuItem","googleLogoutMenuItem","adminLoginMenuItem"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+        });
         if(localOnlyItem) localOnlyItem.style.display = "none";
         adminOnlyItems.forEach(el => el.style.display = "flex");
         if (setAdminsMenuItem) setAdminsMenuItem.style.display = "flex";
