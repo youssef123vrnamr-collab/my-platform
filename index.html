@@ -67,7 +67,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
-    body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; background-attachment: fixed; }
+    body { font-family: 'Cairo', sans-serif; background: #03030a; color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
     .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; max-width: 100%; background: transparent; overflow-x: hidden; margin: 0; padding: 0; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
@@ -1569,13 +1569,9 @@ body {
   background-attachment: fixed !important;
 }
 .bg-animation {
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(99,102,241,0.22) 0%, transparent 58%),
-    radial-gradient(ellipse 55% 45% at 85% 85%, rgba(236,72,153,0.10) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 35% at 10% 90%, rgba(6,182,212,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 75% 15%, rgba(139,92,246,0.09) 0%, transparent 55%),
-    #020008 !important;
+  background: #03030a !important;
 }
+.nebula { display: none !important; }
 .nebula { display: none !important; }
 
 /* Custom scrollbar */
@@ -3801,7 +3797,7 @@ async function updateAdminUI() {
             const v = videos.find(x => x.id === vid);
             if (!v) continue;
             if (v.thumbnail) return v.thumbnail;
-            if (v.type === "youtube" && v.videoId) return v.thumbnail || `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
+            if (v.type === "youtube" && v.videoId) return `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
           }
           return "";
         })();
@@ -3855,7 +3851,7 @@ async function updateAdminUI() {
         let duration = v.duration ? formatDuration(v.duration) : "";
         let thumb = v.thumbnail;
         if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
-        let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" data-vid="${v.videoId||''}" width="400" height="225" loading="lazy" onerror="var el=this,vid=this.dataset.vid||'';if(vid&&el.src.includes('maxresdefault')){el.src='https://img.youtube.com/vi/'+vid+'/hqdefault.jpg';}else if(vid&&el.src.includes('hqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/mqdefault.jpg';}else if(vid&&el.src.includes('mqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/sddefault.jpg';}else{el.style.display='none';try{el.parentNode.querySelector('.fallback-icon').style.display='flex';}catch(_){}}" >` : "";
+        let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : "";
         return `<div class="video-card" onclick="openPaidCourseModal('${courseId}')" style="cursor:pointer"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas fa-film"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}<div style="position:absolute;top:7px;right:7px;z-index:5;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.18rem .55rem;border-radius:8px;font-size:.72rem;font-weight:700;display:flex;align-items:center;gap:.3rem;box-shadow:0 2px 8px rgba(245,158,11,.5)"><i class="fas fa-lock" style="font-size:.65rem"></i> مدفوع</div><div class="play-overlay"><div class="play-btn" style="background:rgba(245,158,11,.85);border-color:rgba(255,255,255,.9)"><i class="fas fa-lock"></i></div></div></div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)}</h4><div style="display:flex;align-items:center;gap:.35rem;margin-top:.3rem;font-size:.78rem;color:#f59e0b;font-weight:600"><i class="fas fa-graduation-cap"></i> ${courseTitle}${coursePrice ? ' · ' + coursePrice + ' جنيه' : ''}</div></div></div>`;
       }
       let duration = v.duration ? formatDuration(v.duration) : "";
@@ -3870,7 +3866,7 @@ async function updateAdminUI() {
       } else {
         if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; }
       }
-      let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" data-vid="${v.videoId||''}" width="400" height="225" loading="lazy" onerror="var el=this,vid=this.dataset.vid||'';if(vid&&el.src.includes('maxresdefault')){el.src='https://img.youtube.com/vi/'+vid+'/hqdefault.jpg';}else if(vid&&el.src.includes('hqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/mqdefault.jpg';}else if(vid&&el.src.includes('mqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/sddefault.jpg';}else{el.style.display='none';try{el.parentNode.querySelector('.fallback-icon').style.display='flex';}catch(_){}}" >` : "";
+      let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : "";
       return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
     })();
   }
@@ -4852,58 +4848,7 @@ async function updateAdminUI() {
 
   // YouTube Functions
   function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
-  // فحص أفضل صورة متاحة لفيديو يوتيوب
-  function getBestYouTubeThumbnail(videoId) {
-    const sizes = ['maxresdefault', 'hqdefault', 'mqdefault', 'sddefault', '0'];
-    return new Promise(resolve => {
-      let i = 0;
-      function tryNext() {
-        if (i >= sizes.length) { resolve(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`); return; }
-        const url = `https://img.youtube.com/vi/${videoId}/${sizes[i]}.jpg`;
-        const img = new Image();
-        img.onload = () => {
-          // يوتيوب بيرجع صورة 120x90 للـ thumbnails الفاضية
-          if (img.naturalWidth > 120) { resolve(url); }
-          else { i++; tryNext(); }
-        };
-        img.onerror = () => { i++; tryNext(); };
-        img.src = url;
-      }
-      tryNext();
-    });
-  }
-
-  async function addYouTubeVideo() {
-    if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; }
-    const urlInput = document.getElementById("youtubeUrlInput");
-    const rawUrl = urlInput.value.trim();
-    if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; }
-    const videoId = extractYouTubeId(rawUrl);
-    if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; }
-    const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب");
-    if (!title) return;
-    const description = prompt("أدخل وصف الفيديو (اختياري):", "");
-    showToast("⏳ جاري التحقق من الصورة...");
-    const thumbnail = await getBestYouTubeThumbnail(videoId);
-    const videoData = {
-      title: sanitizeInput(title),
-      description: sanitizeInput(description) || "",
-      type: "youtube",
-      videoId: videoId,
-      thumbnail: thumbnail,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      private: false
-    };
-    try {
-      await db.collection("videos").add(videoData);
-      showToast("✅ تم إضافة فيديو يوتيوب");
-      urlInput.value = "";
-    } catch(e) {
-      console.error(e);
-      SoundEffects.error();
-      showToast("❌ فشل إضافة الفيديو");
-    }
-  }
+  async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; } const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
 
   function localLogout() { if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) { if (currentUser && currentUserPhone) { endUserSession(currentUser, currentUserPhone); } localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; updateAdminUI(); location.reload(); } }
 
@@ -9454,374 +9399,372 @@ function showCertificateModal(courseTitle, certUrl) {
 
 <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script>
 <script>
-// ===== ULTRA PROFESSIONAL SPACE CANVAS v3 =====
-(function() {
+// ===== DEEP TECH BACKGROUND — QUANTUM GRID =====
+(function () {
   const canvas = document.getElementById('spaceCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
   let W, H, t = 0;
-  let stars = [], dustClouds = [], meteors = [], auroras = [], galaxyArms = [];
-  let wormholeAngle = 0, wormholePulse = 0;
-  let mouseX = -9999, mouseY = -9999;
+  let nodes = [], pulses = [], beams = [], hexes = [], scanLines = [];
+  let mouseX = W / 2, mouseY = H / 2;
 
-  const PALETTE = {
-    bg: '#020008',
-    violet: 'rgba(99,102,241,',
-    pink: 'rgba(236,72,153,',
-    cyan: 'rgba(6,182,212,',
-    amber: 'rgba(251,191,36,',
-    white: 'rgba(255,255,255,',
-    deepBlue: 'rgba(29,10,60,'
+  /* ── utils ──────────────────────────────── */
+  const r = (a, b) => Math.random() * (b - a) + a;
+  const TAU = Math.PI * 2;
+
+  /* ── CONFIG ──────────────────────────────── */
+  const CFG = {
+    bg:       '#03030a',
+    // palette: deep navy → violet → electric blue → cyan
+    colors: [
+      [59,  130, 246],   // electric blue
+      [99,  102, 241],   // indigo
+      [139, 92,  246],   // violet
+      [6,   182, 212],   // cyan
+      [16,  185, 129],   // emerald (accent)
+    ],
+    nodeCount: 55,
+    connectionDist: 210,
+    gridOpacity: 0.032,
+    beamInterval: 3200,
+    hexRadius: 38,
   };
 
-  function rand(a, b) { return Math.random() * (b - a) + a; }
-  function randInt(a, b) { return Math.floor(rand(a, b + 1)); }
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-
-  // ── RESIZE ──────────────────────────────────────────────
+  /* ── RESIZE ──────────────────────────────── */
   function resize() {
-    W = canvas.width = window.innerWidth;
+    W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
     buildScene();
   }
 
-  // ── BUILD SCENE ─────────────────────────────────────────
+  /* ── BUILD ───────────────────────────────── */
   function buildScene() {
-    // Stars (3 layers: far, mid, near)
-    stars = [];
-    const totalStars = Math.min(520, Math.floor(W * H / 2200));
-    for (let i = 0; i < totalStars; i++) {
-      const layer = i < totalStars * 0.6 ? 0 : i < totalStars * 0.85 ? 1 : 2;
-      const rBase = layer === 0 ? rand(0.15, 0.7) : layer === 1 ? rand(0.5, 1.3) : rand(1.0, 2.2);
-      const colorRoll = Math.random();
-      const color = colorRoll > 0.92 ? [165, 180, 252] :   // blue-white
-                    colorRoll > 0.82 ? [240, 171, 252] :   // pink
-                    colorRoll > 0.73 ? [253, 224, 132] :   // warm yellow
-                    colorRoll > 0.67 ? [110, 231, 183] :   // teal
-                    [255, 255, 255];                       // white
-      stars.push({
-        x: rand(0, W), y: rand(0, H),
-        r: rBase, baseR: rBase,
-        alpha: rand(0.25, 1), baseAlpha: rand(0.4, 1),
-        speed: rand(0.0002, 0.003),
-        phase: rand(0, Math.PI * 2),
-        color, layer,
-        drift: layer === 2 ? rand(-0.03, 0.03) : 0,
-        driftY: layer === 2 ? rand(-0.015, 0.015) : 0,
-        crossSpike: rBase > 1.5 && Math.random() > 0.55
+    // Nodes (floating particles that connect)
+    nodes = [];
+    const count = Math.min(CFG.nodeCount, Math.floor(W * H / 14000));
+    for (let i = 0; i < count; i++) {
+      const ci = Math.floor(r(0, CFG.colors.length));
+      nodes.push({
+        x: r(0, W), y: r(0, H),
+        vx: r(-0.18, 0.18), vy: r(-0.12, 0.12),
+        r: r(1.5, 3.5),
+        color: CFG.colors[ci],
+        alpha: r(0.5, 1),
+        pulse: r(0, TAU),
+        pulseSpeed: r(0.008, 0.022),
       });
     }
 
-    // Dust/nebula clouds
-    dustClouds = [
-      { x: W * 0.08,  y: H * 0.15, rx: W * 0.28, ry: H * 0.30, color: [99,102,241],  alpha: 0.09 },
-      { x: W * 0.88,  y: H * 0.72, rx: W * 0.30, ry: H * 0.28, color: [236,72,153],  alpha: 0.07 },
-      { x: W * 0.52,  y: H * 0.85, rx: W * 0.22, ry: H * 0.20, color: [6,182,212],   alpha: 0.055},
-      { x: W * 0.72,  y: H * 0.10, rx: W * 0.20, ry: H * 0.18, color: [139,92,246],  alpha: 0.06 },
-      { x: W * 0.25,  y: H * 0.65, rx: W * 0.18, ry: H * 0.22, color: [251,191,36],  alpha: 0.04 },
-    ];
-
-    // Aurora bands
-    auroras = [];
-    const numAuroras = 3;
-    for (let i = 0; i < numAuroras; i++) {
-      const pts = [];
-      const segments = 12;
-      for (let j = 0; j <= segments; j++) {
-        pts.push({ x: (j / segments) * W, y: rand(H * 0.05, H * 0.45), vy: rand(-0.3, 0.3) });
-      }
-      const hue = [240, 290, 180][i];
-      auroras.push({ pts, hue, alpha: rand(0.018, 0.038), width: rand(H * 0.04, H * 0.09), speed: rand(0.002, 0.006) });
-    }
-
-    // Galaxy arms (spiral)
-    galaxyArms = [];
-    const armCount = 3;
-    for (let a = 0; a < armCount; a++) {
-      const arm = [];
-      const armAngleOffset = (a / armCount) * Math.PI * 2;
-      const cx = W * rand(0.38, 0.62), cy = H * rand(0.32, 0.68);
-      const maxR = Math.min(W, H) * rand(0.08, 0.14);
-      for (let p = 0; p < 120; p++) {
-        const frac = p / 119;
-        const angle = armAngleOffset + frac * Math.PI * 3.5;
-        const r = frac * maxR;
-        const scatter = rand(-maxR * 0.08, maxR * 0.08);
-        arm.push({
-          x: cx + Math.cos(angle) * (r + scatter),
-          y: cy + Math.sin(angle) * (r + scatter) * 0.55,
-          r: rand(0.3, 1.1) * (1 - frac * 0.5),
-          alpha: rand(0.15, 0.55) * (1 - frac * 0.4),
-          color: a === 0 ? [165,180,252] : a === 1 ? [240,171,252] : [110,231,183]
+    // Hex grid points (subtle background hex pattern)
+    hexes = [];
+    const hSize = CFG.hexRadius;
+    const hW = hSize * 2;
+    const hH = Math.sqrt(3) * hSize;
+    for (let row = -1; row < H / hH + 2; row++) {
+      for (let col = -1; col < W / hW + 2; col++) {
+        const offset = (col % 2) * (hH / 2);
+        hexes.push({
+          x: col * hW * 0.75,
+          y: row * hH + offset,
+          r: hSize,
+          alpha: r(0.012, 0.028),
+          phase: r(0, TAU),
+          speed: r(0.0008, 0.002),
         });
       }
-      galaxyArms.push({ arm, cx, cy, maxR, rotSpeed: rand(0.00008, 0.00018), rotAngle: 0 });
+    }
+
+    // Scan lines (horizontal sweeping lines)
+    scanLines = [];
+    for (let i = 0; i < 3; i++) {
+      scanLines.push({
+        y: r(0, H),
+        vy: r(0.3, 0.9),
+        alpha: r(0.03, 0.07),
+        width: r(1, 2.5),
+        color: CFG.colors[Math.floor(r(0, CFG.colors.length))],
+      });
     }
   }
 
-  // ── SPAWN METEOR ────────────────────────────────────────
-  function spawnMeteor() {
-    const fromLeft = Math.random() > 0.5;
-    meteors.push({
-      x: fromLeft ? rand(-20, W * 0.3) : rand(W * 0.5, W + 20),
-      y: rand(-30, H * 0.25),
-      vx: fromLeft ? rand(4, 9) : rand(-9, -4),
-      vy: rand(2.5, 6),
-      len: rand(80, 200),
-      alpha: rand(0.7, 1),
-      width: rand(1, 2.5),
-      color: Math.random() > 0.6 ? [167,139,250] : Math.random() > 0.4 ? [255,255,255] : [6,182,212]
-    });
+  /* ── DRAW HEX ────────────────────────────── */
+  function hexPath(cx, cy, size) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 3) * i - Math.PI / 6;
+      const x = cx + size * Math.cos(a);
+      const y = cy + size * Math.sin(a);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
   }
 
-  setInterval(spawnMeteor, rand(2500, 4500));
-  setInterval(spawnMeteor, rand(8000, 14000)); // Bonus double
+  /* ── DRAW PERSPECTIVE GRID ───────────────── */
+  function drawGrid(now) {
+    const vp = { x: W * 0.5, y: H * 0.42 }; // vanishing point
+    const cols = 18, rows = 14;
+    const spread = W * 1.2;
+    const depth  = H * 0.9;
 
-  // ── DRAW CROSS SPIKE ───────────────────────────────────
-  function drawCrossSpike(x, y, r, color, alpha) {
-    const [cr, cg, cb] = color;
-    const spikeLen = r * 8;
     ctx.save();
-    ctx.globalAlpha = alpha * 0.6;
-    for (let angle = 0; angle < Math.PI; angle += Math.PI / 2) {
-      const g = ctx.createLinearGradient(
-        x + Math.cos(angle) * spikeLen, y + Math.sin(angle) * spikeLen,
-        x - Math.cos(angle) * spikeLen, y - Math.sin(angle) * spikeLen
-      );
-      g.addColorStop(0, 'transparent');
-      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.8)`);
-      g.addColorStop(1, 'transparent');
-      ctx.strokeStyle = g;
-      ctx.lineWidth = 0.7;
+    ctx.globalAlpha = CFG.gridOpacity;
+
+    // Horizontal lines (receding)
+    for (let i = 0; i <= rows; i++) {
+      const t2 = i / rows;
+      const ease = t2 * t2;
+      const y = vp.y + ease * depth;
+      const xLeft  = vp.x - ease * spread / 2;
+      const xRight = vp.x + ease * spread / 2;
+      const pulse = 0.7 + 0.3 * Math.sin(now * 0.00045 - i * 0.4);
+      ctx.strokeStyle = `rgba(99,102,241,${CFG.gridOpacity * 2 * pulse})`;
+      ctx.lineWidth = 0.5 + ease * 0.8;
+      ctx.beginPath(); ctx.moveTo(xLeft, y); ctx.lineTo(xRight, y); ctx.stroke();
+    }
+
+    // Vertical lines converging to vanishing point
+    for (let i = 0; i <= cols; i++) {
+      const frac = i / cols;
+      const xBase = vp.x - spread / 2 + frac * spread;
+      const pulse = 0.6 + 0.4 * Math.sin(now * 0.0004 + i * 0.5);
+      ctx.strokeStyle = `rgba(99,102,241,${CFG.gridOpacity * 1.8 * pulse})`;
+      ctx.lineWidth = 0.4;
       ctx.beginPath();
-      ctx.moveTo(x + Math.cos(angle) * spikeLen, y + Math.sin(angle) * spikeLen);
-      ctx.lineTo(x - Math.cos(angle) * spikeLen, y - Math.sin(angle) * spikeLen);
+      ctx.moveTo(vp.x, vp.y);
+      ctx.lineTo(xBase, vp.y + depth);
       ctx.stroke();
     }
+
+    // Glowing horizon line
+    const hg = ctx.createLinearGradient(0, vp.y, W, vp.y);
+    hg.addColorStop(0,    'transparent');
+    hg.addColorStop(0.25, `rgba(99,102,241,0.25)`);
+    hg.addColorStop(0.5,  `rgba(139,92,246,0.45)`);
+    hg.addColorStop(0.75, `rgba(99,102,241,0.25)`);
+    hg.addColorStop(1,    'transparent');
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 0.0006);
+    ctx.strokeStyle = hg;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, vp.y); ctx.lineTo(W, vp.y); ctx.stroke();
+
     ctx.restore();
   }
 
-  // ── DRAW WORMHOLE ──────────────────────────────────────
-  function drawWormhole(now) {
-    const wx = W * 0.5, wy = H * 0.5;
-    const maxR = Math.min(W, H) * 0.048;
-    wormholeAngle += 0.004;
-    wormholePulse = Math.sin(now * 0.0009) * 0.3 + 0.7;
-
-    // Outer event horizon glow
-    for (let i = 4; i >= 0; i--) {
-      const r = maxR * (1 + i * 0.55) * wormholePulse;
-      const alpha = 0.06 - i * 0.01;
-      const g = ctx.createRadialGradient(wx, wy, r * 0.4, wx, wy, r);
-      g.addColorStop(0, `rgba(99,102,241,${alpha})`);
-      g.addColorStop(0.5, `rgba(139,92,246,${alpha * 0.5})`);
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
-    }
-
-    // Accretion ring
-    const rings = 6;
-    for (let i = 0; i < rings; i++) {
-      const frac = i / rings;
-      const r = maxR * (0.6 + frac * 0.8) * wormholePulse;
-      const angle = wormholeAngle + frac * Math.PI * 0.5;
-      const alpha = (0.35 - frac * 0.05) * wormholePulse;
-      ctx.save();
-      ctx.translate(wx, wy);
-      ctx.rotate(angle);
-      ctx.scale(1, 0.32);
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      const ringGrad = ctx.createLinearGradient(-r, 0, r, 0);
-      ringGrad.addColorStop(0, `rgba(6,182,212,0)`);
-      ringGrad.addColorStop(0.25, `rgba(99,102,241,${alpha})`);
-      ringGrad.addColorStop(0.5, `rgba(236,72,153,${alpha * 1.3})`);
-      ringGrad.addColorStop(0.75, `rgba(99,102,241,${alpha})`);
-      ringGrad.addColorStop(1, `rgba(6,182,212,0)`);
-      ctx.strokeStyle = ringGrad;
-      ctx.lineWidth = 1.5 + frac;
+  /* ── DRAW HEX GRID ───────────────────────── */
+  function drawHexGrid(now) {
+    ctx.save();
+    hexes.forEach(h => {
+      h.phase += h.speed;
+      const a = h.alpha * (0.6 + 0.4 * Math.sin(h.phase));
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = `rgba(99,102,241,1)`;
+      ctx.lineWidth = 0.4;
+      hexPath(h.x, h.y, h.r);
       ctx.stroke();
-      ctx.restore();
-    }
-
-    // Black core
-    const coreG = ctx.createRadialGradient(wx, wy, 0, wx, wy, maxR * 0.7 * wormholePulse);
-    coreG.addColorStop(0, 'rgba(0,0,0,1)');
-    coreG.addColorStop(0.6, 'rgba(5,2,20,0.97)');
-    coreG.addColorStop(1, 'transparent');
-    ctx.fillStyle = coreG;
-    ctx.beginPath(); ctx.arc(wx, wy, maxR * 0.7 * wormholePulse, 0, Math.PI * 2); ctx.fill();
-
-    // Inner gleam
-    const gleamG = ctx.createRadialGradient(wx - maxR * 0.15, wy - maxR * 0.15, 0, wx, wy, maxR * 0.5 * wormholePulse);
-    gleamG.addColorStop(0, `rgba(139,92,246,${0.15 * wormholePulse})`);
-    gleamG.addColorStop(1, 'transparent');
-    ctx.fillStyle = gleamG;
-    ctx.beginPath(); ctx.arc(wx, wy, maxR * 0.5 * wormholePulse, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
   }
 
-  // ── DRAW AURORAS ───────────────────────────────────────
-  function drawAuroras(now) {
-    auroras.forEach(aurora => {
-      aurora.pts.forEach(p => { p.y += p.vy * aurora.speed * 0.8; if (p.y < H * -0.05 || p.y > H * 0.55) p.vy *= -1; });
-      ctx.save();
-      ctx.globalAlpha = aurora.alpha * (0.7 + 0.3 * Math.sin(now * 0.0004 + aurora.hue));
-      const g = ctx.createLinearGradient(0, 0, 0, H * 0.5);
-      g.addColorStop(0, `hsla(${aurora.hue},90%,70%,0)`);
-      g.addColorStop(0.4, `hsla(${aurora.hue},90%,70%,0.7)`);
-      g.addColorStop(1, `hsla(${aurora.hue+30},90%,60%,0)`);
+  /* ── AMBIENT GLOW ORBS ───────────────────── */
+  function drawOrbs(now) {
+    const orbs = [
+      { x: W * 0.15, y: H * 0.2,  r: W * 0.25, c: [99,102,241],  a: 0.055 },
+      { x: W * 0.85, y: H * 0.75, r: W * 0.28, c: [6,182,212],   a: 0.040 },
+      { x: W * 0.5,  y: H * 0.5,  r: W * 0.35, c: [139,92,246],  a: 0.028 },
+      { x: W * 0.7,  y: H * 0.15, r: W * 0.18, c: [16,185,129],  a: 0.030 },
+    ];
+    orbs.forEach((o, i) => {
+      const pulse = 0.75 + 0.25 * Math.sin(now * 0.00035 + i * 1.3);
+      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r * pulse);
+      const [cr, cg, cb] = o.c;
+      g.addColorStop(0,    `rgba(${cr},${cg},${cb},${o.a * 2.2})`);
+      g.addColorStop(0.4,  `rgba(${cr},${cg},${cb},${o.a})`);
+      g.addColorStop(1,    'transparent');
       ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(0, H);
-      aurora.pts.forEach((p, i) => { if (i === 0) ctx.lineTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-      ctx.lineTo(W, H); ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+      ctx.beginPath(); ctx.arc(o.x, o.y, o.r * pulse, 0, TAU); ctx.fill();
     });
   }
 
-  // ── DRAW GALAXY ARMS ──────────────────────────────────
-  function drawGalaxyArms() {
-    galaxyArms.forEach(g => {
-      g.rotAngle += g.rotSpeed;
-      g.arm.forEach(p => {
-        const angle = Math.atan2(p.y - g.cy, p.x - g.cx) + g.rotAngle;
-        const r = Math.hypot(p.x - g.cx, p.y - g.cy);
-        const rx = g.cx + Math.cos(angle) * r;
-        const ry = g.cy + Math.sin(angle) * r * 0.55;
-        const [cr, cg, cb] = p.color;
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = `rgba(${cr},${cg},${cb},1)`;
-        ctx.beginPath();
-        ctx.arc(rx, ry, p.r, 0, Math.PI * 2);
-        ctx.fill();
+  /* ── NODE NETWORK ────────────────────────── */
+  function drawNetwork(now) {
+    // Move nodes
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < -20) n.x = W + 20;
+      if (n.x > W + 20) n.x = -20;
+      if (n.y < -20) n.y = H + 20;
+      if (n.y > H + 20) n.y = -20;
+      n.pulse += n.pulseSpeed;
+    });
+
+    // Connections
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > CFG.connectionDist) continue;
+        const strength = 1 - dist / CFG.connectionDist;
+        const [cr, cg, cb] = a.color;
+        ctx.globalAlpha = strength * 0.18;
+        ctx.strokeStyle = `rgba(${cr},${cg},${cb},1)`;
+        ctx.lineWidth = strength * 1.2;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+
+        // Energy pulse dot travelling along connection
+        if (Math.random() < 0.0008) {
+          pulses.push({
+            x: a.x, y: a.y,
+            tx: b.x, ty: b.y,
+            progress: 0, speed: r(0.012, 0.028),
+            color: a.color,
+          });
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // Node dots
+    nodes.forEach(n => {
+      const tw = 0.6 + 0.4 * Math.sin(n.pulse);
+      const [cr, cg, cb] = n.color;
+
+      // Glow
+      const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 5);
+      glow.addColorStop(0, `rgba(${cr},${cg},${cb},${0.3 * tw})`);
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 5, 0, TAU); ctx.fill();
+
+      // Core
+      ctx.globalAlpha = n.alpha * tw;
+      ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, TAU); ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  /* ── ENERGY PULSES ───────────────────────── */
+  function drawPulses() {
+    pulses = pulses.filter(p => p.progress < 1);
+    pulses.forEach(p => {
+      p.progress += p.speed;
+      const x = p.x + (p.tx - p.x) * p.progress;
+      const y = p.y + (p.ty - p.y) * p.progress;
+      const [cr, cg, cb] = p.color;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 4);
+      g.addColorStop(0, `rgba(255,255,255,0.9)`);
+      g.addColorStop(0.4, `rgba(${cr},${cg},${cb},0.7)`);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, TAU); ctx.fill();
+    });
+  }
+
+  /* ── SCAN LINES ──────────────────────────── */
+  function drawScanLines(now) {
+    scanLines.forEach(sl => {
+      sl.y += sl.vy;
+      if (sl.y > H + 10) sl.y = -10;
+      const [cr, cg, cb] = sl.color;
+      const g = ctx.createLinearGradient(0, sl.y - 6, 0, sl.y + 6);
+      g.addColorStop(0, 'transparent');
+      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},${sl.alpha})`);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, sl.y - 6, W, 12);
+    });
+  }
+
+  /* ── DATA STREAMS (vertical falling code-like lines) ─── */
+  let streams = [];
+  function initStreams() {
+    streams = [];
+    const cols = Math.floor(W / 28);
+    for (let i = 0; i < cols; i++) {
+      if (Math.random() > 0.18) continue;
+      streams.push({
+        x: i * 28 + r(0, 28),
+        y: r(-H, 0),
+        speed: r(0.4, 1.1),
+        length: r(40, 120),
+        alpha: r(0.04, 0.09),
+        color: CFG.colors[Math.floor(r(0, CFG.colors.length))],
       });
+    }
+  }
+  function drawStreams() {
+    streams.forEach(s => {
+      s.y += s.speed;
+      if (s.y - s.length > H) { s.y = r(-80, 0); s.x = r(0, W); }
+      const [cr, cg, cb] = s.color;
+      const g = ctx.createLinearGradient(s.x, s.y - s.length, s.x, s.y);
+      g.addColorStop(0, 'transparent');
+      g.addColorStop(0.7, `rgba(${cr},${cg},${cb},${s.alpha * 0.5})`);
+      g.addColorStop(1, `rgba(${cr},${cg},${cb},${s.alpha})`);
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.moveTo(s.x, s.y - s.length); ctx.lineTo(s.x, s.y); ctx.stroke();
+      // bright tip
+      ctx.globalAlpha = s.alpha * 2;
+      ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+      ctx.fillRect(s.x - 0.5, s.y - 1, 1, 3);
     });
     ctx.globalAlpha = 1;
   }
 
-  // ── MAIN DRAW ──────────────────────────────────────────
+  /* ── CORNER FRAME ACCENTS ────────────────── */
+  function drawCornerAccents() {
+    const size = 40, lw = 1.5;
+    const corners = [
+      { x: 0,   y: 0,   sx: 1,  sy: 1  },
+      { x: W,   y: 0,   sx: -1, sy: 1  },
+      { x: 0,   y: H,   sx: 1,  sy: -1 },
+      { x: W,   y: H,   sx: -1, sy: -1 },
+    ];
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = 'rgba(99,102,241,0.8)';
+    ctx.lineWidth = lw;
+    corners.forEach(c => {
+      ctx.beginPath();
+      ctx.moveTo(c.x + c.sx * size, c.y);
+      ctx.lineTo(c.x, c.y);
+      ctx.lineTo(c.x, c.y + c.sy * size);
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  /* ── MAIN DRAW ────────────────────────────── */
   function draw(now) {
     t = now;
     requestAnimationFrame(draw);
 
-    // Deep space background
-    ctx.fillStyle = PALETTE.bg;
+    // Background
+    ctx.fillStyle = CFG.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Volumetric nebula clouds
-    dustClouds.forEach(d => {
-      const pulse = 0.85 + 0.15 * Math.sin(now * 0.0003 + d.x);
-      const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, Math.max(d.rx, d.ry) * pulse);
-      const [cr, cg, cb] = d.color;
-      g.addColorStop(0,   `rgba(${cr},${cg},${cb},${d.alpha * 2.2 * pulse})`);
-      g.addColorStop(0.35,`rgba(${cr},${cg},${cb},${d.alpha * 1.1})`);
-      g.addColorStop(0.7, `rgba(${cr},${cg},${cb},${d.alpha * 0.4})`);
-      g.addColorStop(1,   'transparent');
-      ctx.save();
-      ctx.translate(d.x, d.y);
-      ctx.scale(d.rx / Math.max(d.rx, d.ry), d.ry / Math.max(d.rx, d.ry));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(0, 0, Math.max(d.rx, d.ry) * pulse, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-
-    // Aurora
-    drawAuroras(now);
-
-    // Galaxy spiral arms
-    drawGalaxyArms();
-
-    // Stars
-    stars.forEach(s => {
-      s.phase += s.speed;
-      s.x += s.drift;
-      s.y += s.driftY;
-      if (s.x < -5) s.x = W + 5;
-      if (s.x > W + 5) s.x = -5;
-
-      const tw = 0.5 + 0.5 * Math.sin(s.phase);
-      const a = s.baseAlpha * (s.layer === 2 ? 0.7 + 0.3 * tw : 0.4 + 0.6 * tw);
-      const r = s.baseR * (s.layer === 2 ? 0.9 + 0.1 * tw : 1);
-      const [cr, cg, cb] = s.color;
-
-      // Glow for larger stars
-      if (r > 0.9) {
-        const glowR = r * (s.layer === 2 ? 6 : 4);
-        const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, glowR);
-        glow.addColorStop(0, `rgba(${cr},${cg},${cb},${a * 0.25})`);
-        glow.addColorStop(1, 'transparent');
-        ctx.fillStyle = glow;
-        ctx.beginPath(); ctx.arc(s.x, s.y, glowR, 0, Math.PI * 2); ctx.fill();
-      }
-
-      // Star core
-      ctx.globalAlpha = a;
-      ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
-      ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2); ctx.fill();
-
-      // Cross diffraction spike for bright nearby stars
-      if (s.crossSpike && r > 1.4) drawCrossSpike(s.x, s.y, r, s.color, a);
-    });
-    ctx.globalAlpha = 1;
-
-    // Wormhole
-    drawWormhole(now);
-
-    // Meteors
-    meteors = meteors.filter(m => m.alpha > 0.02);
-    meteors.forEach(m => {
-      ctx.save();
-      ctx.globalAlpha = m.alpha;
-      const tailX = m.x - (m.vx / Math.abs(m.vx)) * m.len * Math.cos(Math.atan2(m.vy, Math.abs(m.vx)));
-      const tailY = m.y - m.len * Math.sin(Math.atan2(m.vy, Math.abs(m.vx)));
-      const g = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-      const [cr, cg, cb] = m.color;
-      g.addColorStop(0, `rgba(255,255,255,1)`);
-      g.addColorStop(0.15, `rgba(${cr},${cg},${cb},0.9)`);
-      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.35)`);
-      g.addColorStop(1, 'transparent');
-      ctx.strokeStyle = g;
-      ctx.lineWidth = m.width;
-      ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tailX, tailY); ctx.stroke();
-      // Head flash
-      const flash = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.width * 3);
-      flash.addColorStop(0, `rgba(255,255,255,${m.alpha})`);
-      flash.addColorStop(1, 'transparent');
-      ctx.fillStyle = flash;
-      ctx.beginPath(); ctx.arc(m.x, m.y, m.width * 3, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-      m.x += m.vx; m.y += m.vy;
-      m.alpha -= 0.008;
-    });
-
-    // Mouse parallax shimmer
-    if (mouseX > 0 && mouseY > 0) {
-      const g = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 140);
-      g.addColorStop(0, 'rgba(139,92,246,0.06)');
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(mouseX, mouseY, 140, 0, Math.PI * 2); ctx.fill();
-    }
+    // Layers (back to front)
+    drawOrbs(now);
+    drawGrid(now);
+    drawHexGrid(now);
+    drawStreams();
+    drawNetwork(now);
+    drawPulses();
+    drawScanLines(now);
+    drawCornerAccents();
   }
 
-  // ── EVENTS ─────────────────────────────────────────────
+  /* ── INIT ──────────────────────────────────── */
   window.addEventListener('resize', resize);
   window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
-  window.addEventListener('touchmove', e => {
-    if (e.touches[0]) { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; }
-  }, { passive: true });
-
   resize();
+  initStreams();
   requestAnimationFrame(draw);
 })();
-// ===== END ULTRA SPACE CANVAS v3 =====
+// ===== END DEEP TECH BACKGROUND =====
 </script>
 </body>
 </html>
