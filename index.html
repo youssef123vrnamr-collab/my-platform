@@ -3505,16 +3505,16 @@ async function updateAdminUI() {
     if (window.isAdminClaim === true) isAdmin = true;
     // ملحوظة: localStorage لم يعد موثوقاً وحده — الرجوع لـ Firestore يتم في refreshAdminStatusFromFirestore()
 
-    // قائمة زراير المستخدم العادي فقط (بدون appsMenuItem عشان يظهر للاتنين بشكل منفصل)
-    const userItems = ["feedbackMenuItem","howToUseMenuItem","adminLoginMenuItem"];
+    // قائمة زراير المستخدم العادي فقط
+    const userItems = ["feedbackMenuItem","howToUseMenuItem","adminLoginMenuItem","appsMenuItem"];
     // installApp يتحكم فيه PWA لوحده، googleLogin/googleLogout يتحكم فيهم حالة جوجل
 
-    // قائمة زراير المشرف فقط (بدون appsMenuItem عشان يظهر للاتنين بشكل منفصل)
+    // قائمة زراير المشرف فقط
     const adminItems = [
         "setAdminsMenuItem","aiKeyMenuItem","teachAIMenuItem","manageAppsMenuItem",
         "viewFeedbacksMenuItem","emailSettingsMenuItem","zoomLinkMenuItem",
         "supervisorPayoutMenuItem","logoutMenuItem","maintenanceMenuItem",
-        "pdfFilesMenuItem","manageCoursesMenuItem","manageCertificatesMenuItem"
+        "pdfFilesMenuItem","manageCoursesMenuItem","manageCertificatesMenuItem","appsMenuItem"
     ];
 
     if (isAdmin) {
@@ -3526,9 +3526,6 @@ async function updateAdminUI() {
         document.getElementById("localLogoutMenuItem") && (document.getElementById("localLogoutMenuItem").style.display = "none");
         // إظهار زراير المشرف
         adminItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "flex"; });
-        // appsMenuItem يظهر للمشرف كمان
-        const appsItemEl = document.getElementById("appsMenuItem");
-        if (appsItemEl) appsItemEl.style.display = "flex";
         // إدارة المحادثة الجماعية للسوبر أدمن فقط
         const groupAdminEl = document.getElementById('groupAdminMenuItem');
         if (groupAdminEl) groupAdminEl.style.display = isSuperAdmin ? 'flex' : 'none';
