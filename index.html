@@ -3078,9 +3078,6 @@ body {
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
-provider.addScope('email');
-provider.addScope('profile');
-provider.setCustomParameters({ prompt: 'select_account' });
 // ========== User Roles Functions ==========
 async function createUserRole(userId, role, creatorId = null) {
   if (!userId) return false;
@@ -3804,7 +3801,7 @@ async function updateAdminUI() {
             const v = videos.find(x => x.id === vid);
             if (!v) continue;
             if (v.thumbnail) return v.thumbnail;
-            if (v.type === "youtube" && v.videoId) return `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
+            if (v.type === "youtube" && v.videoId) return v.thumbnail || `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
           }
           return "";
         })();
@@ -3858,13 +3855,7 @@ async function updateAdminUI() {
         let duration = v.duration ? formatDuration(v.duration) : "";
         let thumb = v.thumbnail;
         if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
-        let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="
-          var el=this, id='${v.type==='youtube'?v.videoId:''}';
-          if(id && el.src.includes('maxresdefault')){el.src='https://img.youtube.com/vi/'+id+'/hqdefault.jpg';}
-          else if(id && el.src.includes('hqdefault')){el.src='https://img.youtube.com/vi/'+id+'/mqdefault.jpg';}
-          else if(id && el.src.includes('mqdefault')){el.src='https://img.youtube.com/vi/'+id+'/sddefault.jpg';}
-          else{el.style.display='none'; el.parentNode.querySelector('.fallback-icon').style.display='flex';}
-        ">` : "";
+        let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" data-vid="${v.videoId||''}" width="400" height="225" loading="lazy" onerror="var el=this,vid=this.dataset.vid||'';if(vid&&el.src.includes('maxresdefault')){el.src='https://img.youtube.com/vi/'+vid+'/hqdefault.jpg';}else if(vid&&el.src.includes('hqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/mqdefault.jpg';}else if(vid&&el.src.includes('mqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/sddefault.jpg';}else{el.style.display='none';try{el.parentNode.querySelector('.fallback-icon').style.display='flex';}catch(_){}}" >` : "";
         return `<div class="video-card" onclick="openPaidCourseModal('${courseId}')" style="cursor:pointer"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas fa-film"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}<div style="position:absolute;top:7px;right:7px;z-index:5;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.18rem .55rem;border-radius:8px;font-size:.72rem;font-weight:700;display:flex;align-items:center;gap:.3rem;box-shadow:0 2px 8px rgba(245,158,11,.5)"><i class="fas fa-lock" style="font-size:.65rem"></i> مدفوع</div><div class="play-overlay"><div class="play-btn" style="background:rgba(245,158,11,.85);border-color:rgba(255,255,255,.9)"><i class="fas fa-lock"></i></div></div></div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)}</h4><div style="display:flex;align-items:center;gap:.35rem;margin-top:.3rem;font-size:.78rem;color:#f59e0b;font-weight:600"><i class="fas fa-graduation-cap"></i> ${courseTitle}${coursePrice ? ' · ' + coursePrice + ' جنيه' : ''}</div></div></div>`;
       }
       let duration = v.duration ? formatDuration(v.duration) : "";
@@ -3879,7 +3870,7 @@ async function updateAdminUI() {
       } else {
         if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; }
       }
-      let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="var el=this,vid='${v.videoId||''}';if(vid&&el.src.includes('maxresdefault')){el.src='https://img.youtube.com/vi/'+vid+'/hqdefault.jpg';}else if(vid&&el.src.includes('hqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/mqdefault.jpg';}else if(vid&&el.src.includes('mqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/sddefault.jpg';}else{el.style.display='none';el.parentNode.querySelector('.fallback-icon').style.display='flex';}">` : "";
+      let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" data-vid="${v.videoId||''}" width="400" height="225" loading="lazy" onerror="var el=this,vid=this.dataset.vid||'';if(vid&&el.src.includes('maxresdefault')){el.src='https://img.youtube.com/vi/'+vid+'/hqdefault.jpg';}else if(vid&&el.src.includes('hqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/mqdefault.jpg';}else if(vid&&el.src.includes('mqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/sddefault.jpg';}else{el.style.display='none';try{el.parentNode.querySelector('.fallback-icon').style.display='flex';}catch(_){}}" >` : "";
       return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
     })();
   }
@@ -4574,23 +4565,7 @@ async function updateAdminUI() {
   async function googleLogin() { 
     try { 
         showToast("⏳ جاري تسجيل الدخول..."); 
-        let result;
-        try {
-          result = await auth.signInWithPopup(provider);
-        } catch(popupErr) {
-          // Popup blocked or not supported — fall back to redirect
-          if (
-            popupErr.code === 'auth/popup-blocked' ||
-            popupErr.code === 'auth/popup-closed-by-user' ||
-            popupErr.code === 'auth/cancelled-popup-request' ||
-            popupErr.code === 'auth/operation-not-supported-in-this-environment'
-          ) {
-            showToast("⏳ جاري التحويل لصفحة الدخول...");
-            await auth.signInWithRedirect(provider);
-            return; // page will reload after redirect
-          }
-          throw popupErr;
-        }
+        const result = await auth.signInWithPopup(provider); 
         googleUser = result.user; 
         currentUserId = googleUser.uid; 
         let name = googleUser.displayName; 
@@ -4672,18 +4647,9 @@ async function updateAdminUI() {
         updateAdminUI(); 
         showToast(`مرحباً بعودتك ${currentUser}! 🚀`); 
     } catch(error) { 
-        console.error(error);
-        const errCode = error && error.code ? error.code : '';
-        if (errCode === 'auth/network-request-failed') {
-          showToast("❌ تحقق من الاتصال بالإنترنت");
-        } else if (errCode === 'auth/user-disabled') {
-          showToast("❌ تم تعطيل هذا الحساب");
-        } else if (errCode === 'auth/popup-closed-by-user') {
-          showToast("⚠️ تم إغلاق نافذة الدخول");
-        } else {
-          showToast("❌ فشل تسجيل الدخول: " + (error.message || errCode));
-        }
+        console.error(error); 
         SoundEffects.error(); 
+        showToast("❌ فشل تسجيل الدخول بحساب Google"); 
     } 
 }
   loadUserDashboard();
@@ -4886,7 +4852,58 @@ async function updateAdminUI() {
 
   // YouTube Functions
   function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
-  async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; } const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
+  // فحص أفضل صورة متاحة لفيديو يوتيوب
+  function getBestYouTubeThumbnail(videoId) {
+    const sizes = ['maxresdefault', 'hqdefault', 'mqdefault', 'sddefault', '0'];
+    return new Promise(resolve => {
+      let i = 0;
+      function tryNext() {
+        if (i >= sizes.length) { resolve(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`); return; }
+        const url = `https://img.youtube.com/vi/${videoId}/${sizes[i]}.jpg`;
+        const img = new Image();
+        img.onload = () => {
+          // يوتيوب بيرجع صورة 120x90 للـ thumbnails الفاضية
+          if (img.naturalWidth > 120) { resolve(url); }
+          else { i++; tryNext(); }
+        };
+        img.onerror = () => { i++; tryNext(); };
+        img.src = url;
+      }
+      tryNext();
+    });
+  }
+
+  async function addYouTubeVideo() {
+    if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; }
+    const urlInput = document.getElementById("youtubeUrlInput");
+    const rawUrl = urlInput.value.trim();
+    if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; }
+    const videoId = extractYouTubeId(rawUrl);
+    if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; }
+    const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب");
+    if (!title) return;
+    const description = prompt("أدخل وصف الفيديو (اختياري):", "");
+    showToast("⏳ جاري التحقق من الصورة...");
+    const thumbnail = await getBestYouTubeThumbnail(videoId);
+    const videoData = {
+      title: sanitizeInput(title),
+      description: sanitizeInput(description) || "",
+      type: "youtube",
+      videoId: videoId,
+      thumbnail: thumbnail,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      private: false
+    };
+    try {
+      await db.collection("videos").add(videoData);
+      showToast("✅ تم إضافة فيديو يوتيوب");
+      urlInput.value = "";
+    } catch(e) {
+      console.error(e);
+      SoundEffects.error();
+      showToast("❌ فشل إضافة الفيديو");
+    }
+  }
 
   function localLogout() { if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) { if (currentUser && currentUserPhone) { endUserSession(currentUser, currentUserPhone); } localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; updateAdminUI(); location.reload(); } }
 
@@ -5060,10 +5077,7 @@ async function updateAdminUI() {
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
   function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
 
-  function initAuthState() {
-    // Handle redirect result (for mobile browsers that block popups)
-    auth.getRedirectResult().catch(err => { console.warn("getRedirectResult:", err); });
-    auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI();
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI();
 
         } else if (!user && !isAdmin) { let hasLocal = loadUserDataFromStorage(); if (hasLocal && !currentUserId) { currentUserId = "local_" + (currentUserPhone || currentUser || "guest").replace(/[^a-zA-Z0-9]/g, "_"); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI(); } else { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } } }); }
 
@@ -5306,7 +5320,7 @@ window.openPaidCourseModal = async function(courseId) {
         // مشترك → قابل للضغط والتشغيل مباشرة
         return `<div onclick="this.closest('.modal').remove(); playVideo('${v.id}')" style="display:flex;align-items:center;gap:.85rem;padding:.75rem;background:rgba(99,102,241,.08);border-radius:12px;border:1px solid rgba(99,102,241,.2);cursor:pointer;transition:background .2s" onmouseover="this.style.background='rgba(99,102,241,.2)'" onmouseout="this.style.background='rgba(99,102,241,.08)'">
           <div style="position:relative;width:90px;min-width:90px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#0a0512">
-            ${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="var el=this,vid='${v.videoId||&quot;&quot;}';if(vid&&el.src.includes('maxresdefault')){el.src='https://img.youtube.com/vi/'+vid+'/hqdefault.jpg';}else if(vid&&el.src.includes('hqdefault')){el.src='https://img.youtube.com/vi/'+vid+'/mqdefault.jpg';}else{el.style.display='none';}">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555"><i class="fas fa-film"></i></div>'}
+            ${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555"><i class="fas fa-film"></i></div>'}
             <div style="position:absolute;inset:0;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center"><i class="fas fa-play-circle" style="color:#fff;font-size:1.6rem;opacity:.9"></i></div>
             ${duration ? `<div style="position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.8);color:#fff;font-size:.65rem;padding:.1rem .35rem;border-radius:4px">${duration}</div>` : ''}
           </div>
