@@ -1569,9 +1569,12 @@ body {
   background-attachment: fixed !important;
 }
 .bg-animation {
-  background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(124,58,237,0.18) 0%, transparent 60%),
-              radial-gradient(ellipse 60% 50% at 80% 80%, rgba(244,63,94,0.08) 0%, transparent 55%),
-              var(--dark) !important;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(99,102,241,0.22) 0%, transparent 58%),
+    radial-gradient(ellipse 55% 45% at 85% 85%, rgba(236,72,153,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 35% at 10% 90%, rgba(6,182,212,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 75% 15%, rgba(139,92,246,0.09) 0%, transparent 55%),
+    #020008 !important;
 }
 .nebula { display: none !important; }
 
@@ -9400,119 +9403,374 @@ function showCertificateModal(courseTitle, certUrl) {
 
 <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="a6a5e25a-64f1-46cb-adc6-a409302bcc7e"></script>
 <script>
-// ===== EPIC SPACE CANVAS =====
+// ===== ULTRA PROFESSIONAL SPACE CANVAS v3 =====
 (function() {
   const canvas = document.getElementById('spaceCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  let W, H, stars = [], nebulas = [], meteors = [];
 
+  let W, H, t = 0;
+  let stars = [], dustClouds = [], meteors = [], auroras = [], galaxyArms = [];
+  let wormholeAngle = 0, wormholePulse = 0;
+  let mouseX = -9999, mouseY = -9999;
+
+  const PALETTE = {
+    bg: '#020008',
+    violet: 'rgba(99,102,241,',
+    pink: 'rgba(236,72,153,',
+    cyan: 'rgba(6,182,212,',
+    amber: 'rgba(251,191,36,',
+    white: 'rgba(255,255,255,',
+    deepBlue: 'rgba(29,10,60,'
+  };
+
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+  function randInt(a, b) { return Math.floor(rand(a, b + 1)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  // ── RESIZE ──────────────────────────────────────────────
   function resize() {
     W = canvas.width = window.innerWidth;
     H = canvas.height = window.innerHeight;
-    initStars();
+    buildScene();
   }
 
-  function rand(min, max) { return Math.random() * (max - min) + min; }
-
-  function initStars() {
+  // ── BUILD SCENE ─────────────────────────────────────────
+  function buildScene() {
+    // Stars (3 layers: far, mid, near)
     stars = [];
-    const count = Math.min(220, Math.floor(W * H / 5000));
-    for (let i = 0; i < count; i++) {
+    const totalStars = Math.min(520, Math.floor(W * H / 2200));
+    for (let i = 0; i < totalStars; i++) {
+      const layer = i < totalStars * 0.6 ? 0 : i < totalStars * 0.85 ? 1 : 2;
+      const rBase = layer === 0 ? rand(0.15, 0.7) : layer === 1 ? rand(0.5, 1.3) : rand(1.0, 2.2);
+      const colorRoll = Math.random();
+      const color = colorRoll > 0.92 ? [165, 180, 252] :   // blue-white
+                    colorRoll > 0.82 ? [240, 171, 252] :   // pink
+                    colorRoll > 0.73 ? [253, 224, 132] :   // warm yellow
+                    colorRoll > 0.67 ? [110, 231, 183] :   // teal
+                    [255, 255, 255];                       // white
       stars.push({
         x: rand(0, W), y: rand(0, H),
-        r: rand(0.2, 1.8),
-        alpha: rand(0.3, 1),
-        speed: rand(0.0003, 0.002),
-        twinkle: rand(0, Math.PI * 2),
-        color: Math.random() > 0.85 ? '#a5b4fc' : Math.random() > 0.7 ? '#f0abfc' : '#ffffff'
+        r: rBase, baseR: rBase,
+        alpha: rand(0.25, 1), baseAlpha: rand(0.4, 1),
+        speed: rand(0.0002, 0.003),
+        phase: rand(0, Math.PI * 2),
+        color, layer,
+        drift: layer === 2 ? rand(-0.03, 0.03) : 0,
+        driftY: layer === 2 ? rand(-0.015, 0.015) : 0,
+        crossSpike: rBase > 1.5 && Math.random() > 0.55
       });
     }
-    nebulas = [
-      { x: W * 0.15, y: H * 0.25, r: 250, color: 'rgba(99,102,241,0.07)' },
-      { x: W * 0.8,  y: H * 0.6,  r: 300, color: 'rgba(236,72,153,0.05)' },
-      { x: W * 0.5,  y: H * 0.8,  r: 200, color: 'rgba(6,182,212,0.04)' },
+
+    // Dust/nebula clouds
+    dustClouds = [
+      { x: W * 0.08,  y: H * 0.15, rx: W * 0.28, ry: H * 0.30, color: [99,102,241],  alpha: 0.09 },
+      { x: W * 0.88,  y: H * 0.72, rx: W * 0.30, ry: H * 0.28, color: [236,72,153],  alpha: 0.07 },
+      { x: W * 0.52,  y: H * 0.85, rx: W * 0.22, ry: H * 0.20, color: [6,182,212],   alpha: 0.055},
+      { x: W * 0.72,  y: H * 0.10, rx: W * 0.20, ry: H * 0.18, color: [139,92,246],  alpha: 0.06 },
+      { x: W * 0.25,  y: H * 0.65, rx: W * 0.18, ry: H * 0.22, color: [251,191,36],  alpha: 0.04 },
     ];
+
+    // Aurora bands
+    auroras = [];
+    const numAuroras = 3;
+    for (let i = 0; i < numAuroras; i++) {
+      const pts = [];
+      const segments = 12;
+      for (let j = 0; j <= segments; j++) {
+        pts.push({ x: (j / segments) * W, y: rand(H * 0.05, H * 0.45), vy: rand(-0.3, 0.3) });
+      }
+      const hue = [240, 290, 180][i];
+      auroras.push({ pts, hue, alpha: rand(0.018, 0.038), width: rand(H * 0.04, H * 0.09), speed: rand(0.002, 0.006) });
+    }
+
+    // Galaxy arms (spiral)
+    galaxyArms = [];
+    const armCount = 3;
+    for (let a = 0; a < armCount; a++) {
+      const arm = [];
+      const armAngleOffset = (a / armCount) * Math.PI * 2;
+      const cx = W * rand(0.38, 0.62), cy = H * rand(0.32, 0.68);
+      const maxR = Math.min(W, H) * rand(0.08, 0.14);
+      for (let p = 0; p < 120; p++) {
+        const frac = p / 119;
+        const angle = armAngleOffset + frac * Math.PI * 3.5;
+        const r = frac * maxR;
+        const scatter = rand(-maxR * 0.08, maxR * 0.08);
+        arm.push({
+          x: cx + Math.cos(angle) * (r + scatter),
+          y: cy + Math.sin(angle) * (r + scatter) * 0.55,
+          r: rand(0.3, 1.1) * (1 - frac * 0.5),
+          alpha: rand(0.15, 0.55) * (1 - frac * 0.4),
+          color: a === 0 ? [165,180,252] : a === 1 ? [240,171,252] : [110,231,183]
+        });
+      }
+      galaxyArms.push({ arm, cx, cy, maxR, rotSpeed: rand(0.00008, 0.00018), rotAngle: 0 });
+    }
   }
 
+  // ── SPAWN METEOR ────────────────────────────────────────
   function spawnMeteor() {
+    const fromLeft = Math.random() > 0.5;
     meteors.push({
-      x: rand(0, W), y: rand(-50, H * 0.3),
-      vx: rand(3, 7), vy: rand(2, 5),
-      len: rand(60, 140), alpha: 1, life: 1
+      x: fromLeft ? rand(-20, W * 0.3) : rand(W * 0.5, W + 20),
+      y: rand(-30, H * 0.25),
+      vx: fromLeft ? rand(4, 9) : rand(-9, -4),
+      vy: rand(2.5, 6),
+      len: rand(80, 200),
+      alpha: rand(0.7, 1),
+      width: rand(1, 2.5),
+      color: Math.random() > 0.6 ? [167,139,250] : Math.random() > 0.4 ? [255,255,255] : [6,182,212]
     });
   }
 
-  setInterval(spawnMeteor, 3000);
+  setInterval(spawnMeteor, rand(2500, 4500));
+  setInterval(spawnMeteor, rand(8000, 14000)); // Bonus double
 
-  function draw(t) {
-    // Deep space background
-    ctx.fillStyle = '#020010';
-    ctx.fillRect(0, 0, W, H);
+  // ── DRAW CROSS SPIKE ───────────────────────────────────
+  function drawCrossSpike(x, y, r, color, alpha) {
+    const [cr, cg, cb] = color;
+    const spikeLen = r * 8;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.6;
+    for (let angle = 0; angle < Math.PI; angle += Math.PI / 2) {
+      const g = ctx.createLinearGradient(
+        x + Math.cos(angle) * spikeLen, y + Math.sin(angle) * spikeLen,
+        x - Math.cos(angle) * spikeLen, y - Math.sin(angle) * spikeLen
+      );
+      g.addColorStop(0, 'transparent');
+      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.8)`);
+      g.addColorStop(1, 'transparent');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(angle) * spikeLen, y + Math.sin(angle) * spikeLen);
+      ctx.lineTo(x - Math.cos(angle) * spikeLen, y - Math.sin(angle) * spikeLen);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 
-    // Nebulas
-    nebulas.forEach(n => {
-      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-      g.addColorStop(0, n.color);
+  // ── DRAW WORMHOLE ──────────────────────────────────────
+  function drawWormhole(now) {
+    const wx = W * 0.5, wy = H * 0.5;
+    const maxR = Math.min(W, H) * 0.048;
+    wormholeAngle += 0.004;
+    wormholePulse = Math.sin(now * 0.0009) * 0.3 + 0.7;
+
+    // Outer event horizon glow
+    for (let i = 4; i >= 0; i--) {
+      const r = maxR * (1 + i * 0.55) * wormholePulse;
+      const alpha = 0.06 - i * 0.01;
+      const g = ctx.createRadialGradient(wx, wy, r * 0.4, wx, wy, r);
+      g.addColorStop(0, `rgba(99,102,241,${alpha})`);
+      g.addColorStop(0.5, `rgba(139,92,246,${alpha * 0.5})`);
       g.addColorStop(1, 'transparent');
       ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Accretion ring
+    const rings = 6;
+    for (let i = 0; i < rings; i++) {
+      const frac = i / rings;
+      const r = maxR * (0.6 + frac * 0.8) * wormholePulse;
+      const angle = wormholeAngle + frac * Math.PI * 0.5;
+      const alpha = (0.35 - frac * 0.05) * wormholePulse;
+      ctx.save();
+      ctx.translate(wx, wy);
+      ctx.rotate(angle);
+      ctx.scale(1, 0.32);
       ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      const ringGrad = ctx.createLinearGradient(-r, 0, r, 0);
+      ringGrad.addColorStop(0, `rgba(6,182,212,0)`);
+      ringGrad.addColorStop(0.25, `rgba(99,102,241,${alpha})`);
+      ringGrad.addColorStop(0.5, `rgba(236,72,153,${alpha * 1.3})`);
+      ringGrad.addColorStop(0.75, `rgba(99,102,241,${alpha})`);
+      ringGrad.addColorStop(1, `rgba(6,182,212,0)`);
+      ctx.strokeStyle = ringGrad;
+      ctx.lineWidth = 1.5 + frac;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Black core
+    const coreG = ctx.createRadialGradient(wx, wy, 0, wx, wy, maxR * 0.7 * wormholePulse);
+    coreG.addColorStop(0, 'rgba(0,0,0,1)');
+    coreG.addColorStop(0.6, 'rgba(5,2,20,0.97)');
+    coreG.addColorStop(1, 'transparent');
+    ctx.fillStyle = coreG;
+    ctx.beginPath(); ctx.arc(wx, wy, maxR * 0.7 * wormholePulse, 0, Math.PI * 2); ctx.fill();
+
+    // Inner gleam
+    const gleamG = ctx.createRadialGradient(wx - maxR * 0.15, wy - maxR * 0.15, 0, wx, wy, maxR * 0.5 * wormholePulse);
+    gleamG.addColorStop(0, `rgba(139,92,246,${0.15 * wormholePulse})`);
+    gleamG.addColorStop(1, 'transparent');
+    ctx.fillStyle = gleamG;
+    ctx.beginPath(); ctx.arc(wx, wy, maxR * 0.5 * wormholePulse, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ── DRAW AURORAS ───────────────────────────────────────
+  function drawAuroras(now) {
+    auroras.forEach(aurora => {
+      aurora.pts.forEach(p => { p.y += p.vy * aurora.speed * 0.8; if (p.y < H * -0.05 || p.y > H * 0.55) p.vy *= -1; });
+      ctx.save();
+      ctx.globalAlpha = aurora.alpha * (0.7 + 0.3 * Math.sin(now * 0.0004 + aurora.hue));
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+      g.addColorStop(0, `hsla(${aurora.hue},90%,70%,0)`);
+      g.addColorStop(0.4, `hsla(${aurora.hue},90%,70%,0.7)`);
+      g.addColorStop(1, `hsla(${aurora.hue+30},90%,60%,0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      aurora.pts.forEach((p, i) => { if (i === 0) ctx.lineTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      ctx.lineTo(W, H); ctx.closePath();
       ctx.fill();
+      ctx.restore();
     });
+  }
+
+  // ── DRAW GALAXY ARMS ──────────────────────────────────
+  function drawGalaxyArms() {
+    galaxyArms.forEach(g => {
+      g.rotAngle += g.rotSpeed;
+      g.arm.forEach(p => {
+        const angle = Math.atan2(p.y - g.cy, p.x - g.cx) + g.rotAngle;
+        const r = Math.hypot(p.x - g.cx, p.y - g.cy);
+        const rx = g.cx + Math.cos(angle) * r;
+        const ry = g.cy + Math.sin(angle) * r * 0.55;
+        const [cr, cg, cb] = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},1)`;
+        ctx.beginPath();
+        ctx.arc(rx, ry, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // ── MAIN DRAW ──────────────────────────────────────────
+  function draw(now) {
+    t = now;
+    requestAnimationFrame(draw);
+
+    // Deep space background
+    ctx.fillStyle = PALETTE.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Volumetric nebula clouds
+    dustClouds.forEach(d => {
+      const pulse = 0.85 + 0.15 * Math.sin(now * 0.0003 + d.x);
+      const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, Math.max(d.rx, d.ry) * pulse);
+      const [cr, cg, cb] = d.color;
+      g.addColorStop(0,   `rgba(${cr},${cg},${cb},${d.alpha * 2.2 * pulse})`);
+      g.addColorStop(0.35,`rgba(${cr},${cg},${cb},${d.alpha * 1.1})`);
+      g.addColorStop(0.7, `rgba(${cr},${cg},${cb},${d.alpha * 0.4})`);
+      g.addColorStop(1,   'transparent');
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.scale(d.rx / Math.max(d.rx, d.ry), d.ry / Math.max(d.rx, d.ry));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(d.rx, d.ry) * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Aurora
+    drawAuroras(now);
+
+    // Galaxy spiral arms
+    drawGalaxyArms();
 
     // Stars
     stars.forEach(s => {
-      s.twinkle += s.speed * 60;
-      const a = s.alpha * (0.5 + 0.5 * Math.sin(s.twinkle));
-      ctx.globalAlpha = a;
-      ctx.fillStyle = s.color;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fill();
+      s.phase += s.speed;
+      s.x += s.drift;
+      s.y += s.driftY;
+      if (s.x < -5) s.x = W + 5;
+      if (s.x > W + 5) s.x = -5;
 
-      // Star glow for bigger stars
-      if (s.r > 1.2) {
-        const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
-        glow.addColorStop(0, s.color.replace(')', ',0.3)').replace('rgb','rgba'));
+      const tw = 0.5 + 0.5 * Math.sin(s.phase);
+      const a = s.baseAlpha * (s.layer === 2 ? 0.7 + 0.3 * tw : 0.4 + 0.6 * tw);
+      const r = s.baseR * (s.layer === 2 ? 0.9 + 0.1 * tw : 1);
+      const [cr, cg, cb] = s.color;
+
+      // Glow for larger stars
+      if (r > 0.9) {
+        const glowR = r * (s.layer === 2 ? 6 : 4);
+        const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, glowR);
+        glow.addColorStop(0, `rgba(${cr},${cg},${cb},${a * 0.25})`);
         glow.addColorStop(1, 'transparent');
         ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(s.x, s.y, glowR, 0, Math.PI * 2); ctx.fill();
       }
+
+      // Star core
+      ctx.globalAlpha = a;
+      ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2); ctx.fill();
+
+      // Cross diffraction spike for bright nearby stars
+      if (s.crossSpike && r > 1.4) drawCrossSpike(s.x, s.y, r, s.color, a);
     });
     ctx.globalAlpha = 1;
 
+    // Wormhole
+    drawWormhole(now);
+
     // Meteors
-    meteors = meteors.filter(m => m.alpha > 0);
+    meteors = meteors.filter(m => m.alpha > 0.02);
     meteors.forEach(m => {
       ctx.save();
       ctx.globalAlpha = m.alpha;
-      const g = ctx.createLinearGradient(m.x, m.y, m.x - m.vx * m.len / m.vy, m.y - m.len);
-      g.addColorStop(0, '#ffffff');
-      g.addColorStop(0.3, 'rgba(167,139,250,0.8)');
+      const tailX = m.x - (m.vx / Math.abs(m.vx)) * m.len * Math.cos(Math.atan2(m.vy, Math.abs(m.vx)));
+      const tailY = m.y - m.len * Math.sin(Math.atan2(m.vy, Math.abs(m.vx)));
+      const g = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+      const [cr, cg, cb] = m.color;
+      g.addColorStop(0, `rgba(255,255,255,1)`);
+      g.addColorStop(0.15, `rgba(${cr},${cg},${cb},0.9)`);
+      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.35)`);
       g.addColorStop(1, 'transparent');
       ctx.strokeStyle = g;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(m.x, m.y);
-      ctx.lineTo(m.x - m.vx * (m.len / m.vy), m.y - m.len);
-      ctx.stroke();
+      ctx.lineWidth = m.width;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tailX, tailY); ctx.stroke();
+      // Head flash
+      const flash = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.width * 3);
+      flash.addColorStop(0, `rgba(255,255,255,${m.alpha})`);
+      flash.addColorStop(1, 'transparent');
+      ctx.fillStyle = flash;
+      ctx.beginPath(); ctx.arc(m.x, m.y, m.width * 3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-      m.x += m.vx;
-      m.y += m.vy;
-      m.alpha -= 0.012;
+      m.x += m.vx; m.y += m.vy;
+      m.alpha -= 0.008;
     });
 
-    requestAnimationFrame(draw);
+    // Mouse parallax shimmer
+    if (mouseX > 0 && mouseY > 0) {
+      const g = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 140);
+      g.addColorStop(0, 'rgba(139,92,246,0.06)');
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(mouseX, mouseY, 140, 0, Math.PI * 2); ctx.fill();
+    }
   }
 
+  // ── EVENTS ─────────────────────────────────────────────
   window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+  window.addEventListener('touchmove', e => {
+    if (e.touches[0]) { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; }
+  }, { passive: true });
+
   resize();
   requestAnimationFrame(draw);
 })();
-// ===== END SPACE CANVAS =====
+// ===== END ULTRA SPACE CANVAS v3 =====
 </script>
 </body>
 </html>
