@@ -1591,18 +1591,267 @@ body {
   z-index: 1000 !important;
   background: rgba(9,9,15,0.97) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
-  border-bottom: 1px solid var(--border) !important;
-  padding: 0 1.75rem !important;
+  border-bottom: 1px solid rgba(124,58,237,0.2) !important;
+  padding: 0 1.25rem !important;
   height: 64px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 1px 0 rgba(124,58,237,0.15), 0 4px 32px rgba(0,0,0,0.5) !important;
   flex-wrap: nowrap !important;
-  gap: 0.75rem !important;
+  gap: 0.5rem !important;
+  overflow: visible !important;
+}
+/* خط متوهج أسفل الـ navbar */
+.navbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.6) 30%, rgba(244,63,94,0.6) 70%, transparent 100%);
+  pointer-events: none;
 }
 /* تعويض ارتفاع الـ navbar الثابت */
 .app-wrapper { padding-top: 64px !important; }
+
+/* === BRAND === */
+.brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* === LOGO === */
+.brand-logo {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  border-radius: 13px !important;
+  background: linear-gradient(135deg, #7c3aed, #f43f5e) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  animation: logoGlow 3s ease-in-out infinite !important;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.12) !important;
+}
+@keyframes logoGlow {
+  0%,100% { box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 0 4px 20px rgba(124,58,237,0.5); }
+  50%      { box-shadow: 0 0 0 2px rgba(255,255,255,0.22), 0 4px 28px rgba(244,63,94,0.6); }
+}
+.brand-logo::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.15) 20%, transparent 40%);
+  animation: logoSpin 4s linear infinite;
+  border-radius: 50%;
+}
+@keyframes logoSpin { to { transform: rotate(360deg); } }
+.brand-logo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 13px !important;
+  display: block !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* === BRAND TEXT === */
+.brand-text {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+}
+.brand-text h1 {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #fff 0%, #c4b5fd 60%, #f9a8d4 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  letter-events: -0.3px;
+  white-space: nowrap !important;
+  background-size: 200% auto !important;
+  animation: textShimmer 4s linear infinite !important;
+}
+@keyframes textShimmer {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* === HAMBURGER BUTTON === */
+#sectionsDropdownBtn {
+  width: 40px !important;
+  height: 40px !important;
+  background: rgba(124,58,237,0.12) !important;
+  border: 1px solid rgba(124,58,237,0.3) !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+#sectionsDropdownBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(124,58,237,0.4), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: inherit;
+}
+#sectionsDropdownBtn:hover::before { opacity: 1; }
+#sectionsDropdownBtn:hover {
+  background: rgba(124,58,237,0.28) !important;
+  border-color: rgba(124,58,237,0.6) !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 18px rgba(124,58,237,0.4) !important;
+}
+#sectionsDropdownBtn:active { transform: scale(0.95) !important; }
+/* الخطوط الثلاثة - تتحول عند الضغط */
+#sectionsDropdownBtn span { transition: all 0.3s ease !important; }
+#sectionsDropdownBtn.open > span > span:nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg) !important;
+}
+#sectionsDropdownBtn.open > span > span:nth-child(2) {
+  transform: scaleX(0) !important;
+  opacity: 0 !important;
+}
+#sectionsDropdownBtn.open > span > span:nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg) !important;
+}
+
+/* === SETTINGS GEAR BUTTON === */
+#settingsDropdownBtn {
+  width: 40px !important;
+  height: 40px !important;
+  background: rgba(255,255,255,0.07) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 10px !important;
+  color: #d4d4d8 !important;
+  font-size: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+#settingsDropdownBtn:hover {
+  background: rgba(255,255,255,0.14) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+}
+#settingsDropdownBtn:hover i {
+  animation: gearSpin 0.6s ease-in-out !important;
+}
+#settingsDropdownBtn:active { transform: scale(0.9) !important; }
+@keyframes gearSpin {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* === REFRESH BUTTON === */
+.refresh-btn {
+  background: rgba(124,58,237,0.14) !important;
+  border: 1px solid rgba(124,58,237,0.35) !important;
+  border-radius: 99px !important;
+  color: #c4b5fd !important;
+  padding: 0 1rem !important;
+  height: 36px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+/* تأثير موجة عند الضغط */
+.refresh-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(244,63,94,0.2));
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: inherit;
+}
+.refresh-btn:hover::after { opacity: 1; }
+.refresh-btn:hover {
+  background: rgba(124,58,237,0.28) !important;
+  border-color: rgba(124,58,237,0.7) !important;
+  transform: translateY(-2px) scale(1.04) !important;
+  box-shadow: 0 6px 20px rgba(124,58,237,0.4) !important;
+  color: #fff !important;
+}
+.refresh-btn:active { transform: scale(0.96) !important; }
+.refresh-btn i {
+  font-size: 0.85rem !important;
+  transition: transform 0.6s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+.refresh-btn:hover i { transform: rotate(360deg) !important; }
+
+/* === SETTINGS MENU — فتح بحركة === */
+.settings-menu {
+  background: rgba(13,10,25,0.97) !important;
+  border: 1px solid rgba(124,58,237,0.25) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(124,58,237,0.12), 0 0 40px rgba(124,58,237,0.06) !important;
+  overflow: hidden !important;
+  transform-origin: top right !important;
+  animation: menuPop 0.25s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+@keyframes menuPop {
+  0%   { opacity: 0; transform: scale(0.88) translateY(-10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.settings-menu-item {
+  padding: 0.72rem 1rem !important;
+  font-size: 0.87rem !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  transition: all 0.18s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  color: #e4e4f0 !important;
+}
+.settings-menu-item::before {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, transparent, rgba(124,58,237,0.2));
+  transition: width 0.2s ease;
+}
+.settings-menu-item:hover::before { width: 100%; }
+.settings-menu-item:hover {
+  background: rgba(124,58,237,0.15) !important;
+  padding-right: 1.3rem !important;
+  color: #fff !important;
+}
+.settings-menu-item i { color: #a78bfa !important; width: 20px !important; text-align: center !important; }
+
+/* موبايل */
+@media (max-width: 768px) {
+  .navbar { padding: 0 0.85rem !important; height: 58px !important; }
+  .app-wrapper { padding-top: 58px !important; }
+  .brand-logo { width: 40px !important; height: 40px !important; min-width: 40px !important; border-radius: 10px !important; }
+  .brand-text h1 { font-size: 0.88rem !important; }
+  #sectionsDropdownBtn, #settingsDropdownBtn { width: 36px !important; height: 36px !important; }
+  .refresh-btn { padding: 0 0.7rem !important; font-size: 0.78rem !important; height: 34px !important; }
+}
 .brand-logo {
   width: 52px !important;
   height: 52px !important;
@@ -6896,16 +7145,24 @@ window.pacSendMessage = async function(){
 function toggleSectionsMenu(e) {
   e.stopPropagation();
   const menu = document.getElementById('sectionsMenu');
+  const btn  = document.getElementById('sectionsDropdownBtn');
   if (menu) menu.classList.toggle('active');
+  if (btn)  btn.classList.toggle('open');
 }
 function closeSectionsMenu() {
   const menu = document.getElementById('sectionsMenu');
+  const btn  = document.getElementById('sectionsDropdownBtn');
   if (menu) menu.classList.remove('active');
+  if (btn)  btn.classList.remove('open');
 }
 document.addEventListener('click', function(e) {
   const dd = document.getElementById('sectionsDropdown');
   const menu = document.getElementById('sectionsMenu');
-  if (dd && menu && !dd.contains(e.target)) menu.classList.remove('active');
+  const btn  = document.getElementById('sectionsDropdownBtn');
+  if (dd && menu && !dd.contains(e.target)) {
+    menu.classList.remove('active');
+    if (btn) btn.classList.remove('open');
+  }
 });
 function scrollToSectionAndOpen(cat) {
   // scroll to cosmos section then open category
