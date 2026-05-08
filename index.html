@@ -1809,12 +1809,21 @@ body {
   border: 1px solid rgba(124,58,237,0.25) !important;
   border-radius: 16px !important;
   box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(124,58,237,0.12), 0 0 40px rgba(124,58,237,0.06) !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   transform-origin: top right !important;
   animation: menuPop 0.25s cubic-bezier(0.34,1.56,0.64,1) !important;
   min-width: 240px !important;
   width: max-content !important;
+  max-height: 70vh !important;
+  max-height: 70dvh !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(124,58,237,0.4) transparent !important;
 }
+.settings-menu::-webkit-scrollbar { width: 4px !important; }
+.settings-menu::-webkit-scrollbar-track { background: transparent !important; }
+.settings-menu::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.45) !important; border-radius: 99px !important; }
 @keyframes menuPop {
   0%   { opacity: 0; transform: scale(0.88) translateY(-10px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
