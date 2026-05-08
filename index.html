@@ -848,6 +848,13 @@
     .cosmos-pill-progress .pill-icon { animation: trophyShine 2.6s infinite; }
     @keyframes trophyShine { 0%,100%{ box-shadow: 0 4px 10px -4px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25); } 50%{ box-shadow: 0 0 18px rgba(253,224,71,.7), inset 0 1px 0 rgba(255,255,255,.4); } }
 
+    /* AI Content shimmer & card styles */
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .ai-generated-card { border: 1px solid rgba(167,139,250,.25) !important; animation: fadeInUp 0.5s ease both; }
+    .ai-generated-card:hover { border-color: rgba(167,139,250,.55) !important; box-shadow: 0 16px 36px -12px rgba(139,92,246,.4), 0 0 0 1px rgba(167,139,250,.2) !important; }
+    .ai-badge-pulse { display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .7rem;border-radius:999px;background:rgba(139,92,246,.18);border:1px solid rgba(167,139,250,.35);color:#c4b5fd;font-size:.75rem;font-weight:700;animation:aiPulse 2s infinite; }
+    @keyframes aiPulse { 0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.4)} 50%{box-shadow:0 0 0 6px rgba(139,92,246,0)} }
+
     /* ===== Student Progress Modal — pro design ===== */
     .progress-hero { position: relative; padding: 1.6rem 1.4rem; border-radius: 22px; background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(236,72,153,.14)); border: 1px solid rgba(167,139,250,.28); overflow: hidden; margin-bottom: 1.5rem; box-shadow: 0 18px 40px -22px rgba(99,102,241,.5), inset 0 1px 0 rgba(255,255,255,.05); }
     .progress-hero::before { content:""; position:absolute; inset:-2px; background: radial-gradient(500px 200px at 15% 0%, rgba(167,139,250,.22), transparent 70%), radial-gradient(450px 180px at 90% 100%, rgba(236,72,153,.18), transparent 70%); pointer-events:none; }
@@ -2423,10 +2430,11 @@ body {
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
             <div class="settings-menu-item" id="installAppMenuItem" style="display: none;"><i class="fas fa-download"></i> تثبيت التطبيق</div>
-            <div class="settings-menu-item user-only" id="feedbackMenuItem"><i class="fas fa-star"></i> تقييم المنصة</div>
-            <div class="settings-menu-item user-only" id="howToUseMenuItem"><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</div>
-            <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
-            <div class="settings-menu-item user-only" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
+            <div class="settings-menu-item" id="feedbackMenuItem"><i class="fas fa-star"></i> تقييم المنصة</div>
+            <div class="settings-menu-item" id="howToUseMenuItem"><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</div>
+            <div class="settings-menu-item" id="googleLoginMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الدخول بجوجل</div>
+            <div class="settings-menu-item" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
+            <div class="settings-menu-item" id="adminLoginMenuItem"><i class="fas fa-lock"></i> دخول المشرف</div>
             <div class="settings-menu-item admin-only" id="setAdminsMenuItem" style="display: none;"><i class="fas fa-users-cog"></i> تحديد المشرفين</div>
             <div class="settings-menu-item admin-only" id="aiKeyMenuItem" style="display: none;" onclick="openAiKeyModal()"><i class="fas fa-key"></i> مفتاح الذكاء الاصطناعي</div>
             <div class="settings-menu-item admin-only" id="teachAIMenuItem" style="display: none;"><i class="fas fa-robot"></i> تعليم الذكاء الاصطناعي</div>
@@ -3500,6 +3508,17 @@ async function updateAdminUI() {
     if (isAdmin) {
         userOnlyItems.forEach(el => el.style.display = "none");
         if(localOnlyItem) localOnlyItem.style.display = "none";
+        // إخفاء العناصر الخاصة بالمستخدم العادي
+        const feedbackItem = document.getElementById("feedbackMenuItem");
+        const howToUseItem = document.getElementById("howToUseMenuItem");
+        const adminLoginItem = document.getElementById("adminLoginMenuItem");
+        const googleLoginItem = document.getElementById("googleLoginMenuItem");
+        const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
+        if (feedbackItem) feedbackItem.style.display = "none";
+        if (howToUseItem) howToUseItem.style.display = "none";
+        if (adminLoginItem) adminLoginItem.style.display = "none";
+        if (googleLoginItem) googleLoginItem.style.display = "none";
+        if (googleLogoutItem) googleLogoutItem.style.display = "none";
         adminOnlyItems.forEach(el => el.style.display = "flex");
         if (setAdminsMenuItem) setAdminsMenuItem.style.display = "flex";
         if (teachAIMenuItem) teachAIMenuItem.style.display = "flex";
@@ -3517,18 +3536,22 @@ async function updateAdminUI() {
         if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
     } else {
         adminOnlyItems.forEach(el => el.style.display = "none");
-        if (isUserLoggedIn) {
-            userOnlyItems.forEach(el => el.style.display = "flex");
-            const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
-            if (googleLogoutItem) googleLogoutItem.style.display = isGoogleUser ? "flex" : "none";
-            if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
-        } else {
-            userOnlyItems.forEach(el => el.style.display = "none");
-            if(localOnlyItem) localOnlyItem.style.display = "none";
-        }
+        // العناصر الثابتة دايماً للمستخدم العادي (سواء مسجل أو لا)
+        const feedbackItem = document.getElementById("feedbackMenuItem");
+        const howToUseItem = document.getElementById("howToUseMenuItem");
+        const adminLoginItem = document.getElementById("adminLoginMenuItem");
+        if (feedbackItem) feedbackItem.style.display = "flex";
+        if (howToUseItem) howToUseItem.style.display = "flex";
+        if (adminLoginItem) adminLoginItem.style.display = "flex";
+        // تسجيل الدخول/الخروج جوجل
+        const googleLoginItem = document.getElementById("googleLoginMenuItem");
+        const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
+        if (googleLoginItem) googleLoginItem.style.display = isGoogleUser ? "none" : "flex";
+        if (googleLogoutItem) googleLogoutItem.style.display = isGoogleUser ? "flex" : "none";
+        // تسجيل خروج الحساب المحلي
+        if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
         if (uploadZone) uploadZone.classList.remove("active");
         if (storageBar) storageBar.style.display = "none";
-        // Dashboard مخفي بناءً على طلب المستخدم
     }
     updateGoogleLogoutButtonsVisibility();
     const createCourseBtn = document.getElementById("createCourseBtn");
@@ -5018,9 +5041,63 @@ async function updateAdminUI() {
     }
   }
 
-  // PWA Install
-  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "flex"; });
-  function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === "accepted") { showToast("✅ تم تثبيت التطبيق بنجاح!"); } deferredPrompt = null; const installMenuItem = document.getElementById("installAppMenuItem"); if (installMenuItem) installMenuItem.style.display = "none"; }); } else { showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أن المتصفح يدعم PWA."); } }
+  // PWA Install — يدعم كل المتصفحات
+  let pwaInstalled = false;
+  // تحقق لو التطبيق مثبَّت فعلاً (standalone mode)
+  function isPWAInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true ||
+           document.referrer.includes('android-app://') ||
+           pwaInstalled;
+  }
+  function updateInstallMenuVisibility() {
+    const installMenuItem = document.getElementById("installAppMenuItem");
+    if (!installMenuItem) return;
+    if (isPWAInstalled()) {
+      installMenuItem.style.display = "none";
+    } else if (deferredPrompt || isIOSSafari()) {
+      installMenuItem.style.display = "flex";
+    }
+  }
+  function isIOSSafari() {
+    const ua = navigator.userAgent;
+    return /iP(hone|ad|od)/.test(ua) && /WebKit/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
+  }
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    updateInstallMenuVisibility();
+  });
+  window.addEventListener("appinstalled", () => {
+    pwaInstalled = true;
+    deferredPrompt = null;
+    updateInstallMenuVisibility();
+    showToast("✅ تم تثبيت التطبيق بنجاح!");
+  });
+  function installApp() {
+    if (isPWAInstalled()) {
+      showToast("✅ التطبيق مثبَّت بالفعل على جهازك!");
+      updateInstallMenuVisibility();
+      return;
+    }
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === "accepted") {
+          pwaInstalled = true;
+          showToast("✅ تم تثبيت التطبيق بنجاح!");
+        }
+        deferredPrompt = null;
+        updateInstallMenuVisibility();
+      });
+    } else if (isIOSSafari()) {
+      showToast("📱 لتثبيت التطبيق على iOS: اضغط زرار المشاركة ثم 'إضافة إلى الشاشة الرئيسية'");
+    } else {
+      showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أنك تفتح الموقع من متصفح يدعم PWA مثل Chrome أو Edge.");
+    }
+  }
+  // تحقق من الحالة عند التحميل
+  window.addEventListener("load", function() { setTimeout(updateInstallMenuVisibility, 1000); });
 
   function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){} loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); updateAdminUI();
 
@@ -5038,6 +5115,7 @@ async function updateAdminUI() {
   document.addEventListener("DOMContentLoaded", function() {
     const dropdownBtn = document.getElementById("settingsDropdownBtn"); if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu);
     document.addEventListener("click", closeSettingsMenuOnClickOutside);
+    document.getElementById("googleLoginMenuItem")?.addEventListener("click", function() { document.getElementById("settingsMenu")?.classList.remove("active"); googleLogin(); });
     document.getElementById("googleLogoutMenuItem")?.addEventListener("click", googleLogout);
     document.getElementById("adminLoginMenuItem")?.addEventListener("click", showLogin);
     document.getElementById("logoutMenuItem")?.addEventListener("click", logout);
@@ -6396,11 +6474,145 @@ function switchProgressTab(tab) {
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-  function renderStaticCosmos(cat){
+  // ============================================================
+  // AI-POWERED DYNAMIC CONTENT SYSTEM
+  // يولد محتوى فلكي عربي جديد بالذكاء الاصطناعي كل 6 ساعات
+  // ============================================================
+  const _aiContentCache = {};
+  const AI_CONTENT_TTL = 6 * 60 * 60 * 1000; // 6 ساعات
+  const STATIC_ROTATE_TTL = 30 * 60 * 1000;   // 30 دقيقة دوران للبيانات الثابتة
+  let _staticRotateTimers = {};
+
+  const AI_CATEGORY_PROMPTS = {
+    stars:      'اكتب 6 بطاقات معلوماتية مثيرة ومتنوعة عن النجوم والفلك لعام 2025. كل بطاقة لها: title (عنوان قصير مثير)، text (فقرة 2-3 جمل معلومات علمية دقيقة ومشوقة بالعربي)، tag (وسم قصير مثل "عملاق أحمر" أو "اكتشاف 2025"). أعد JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    planets:    'اكتب 6 بطاقات معلومات مثيرة ومتنوعة عن الكواكب وعلوم الفضاء عام 2025. كل بطاقة: title، text (2-3 جمل علمية دقيقة مشوقة)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    galaxies:   'اكتب 6 بطاقات معلومات مشوقة ومتنوعة عن المجرات والكون عام 2025. كل بطاقة: title، text (2-3 جمل علمية)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    blackholes: 'اكتب 6 بطاقات معلومات مثيرة ومتنوعة عن الثقوب السوداء وظواهر الجاذبية عام 2025. كل بطاقة: title، text (2-3 جمل علمية دقيقة)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    astronauts: 'اكتب 6 بطاقات معلومات متنوعة عن رواد فضاء ومهمات بشرية في الفضاء (قديمة وحديثة 2025). كل بطاقة: title، text (2-3 جمل قصة مثيرة)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    missions:   'اكتب 6 بطاقات معلومات متنوعة عن مهمات فضائية مثيرة قديمة وحديثة 2025 (ناسا، SpaceX، ESA، إلخ). كل بطاقة: title، text (2-3 جمل علمية)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    telescopes: 'اكتب 6 بطاقات معلومات متنوعة عن التلسكوبات والمراصد الفلكية الحديثة والتاريخية. كل بطاقة: title، text (2-3 جمل علمية)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    phenomena:  'اكتب 6 بطاقات معلومات عن ظواهر فلكية مذهلة متنوعة (شهب، كسوف، شفق، مستعرات، إلخ). كل بطاقة: title، text (2-3 جمل علمية مشوقة)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    universe:   'اكتب 6 بطاقات معلومات متنوعة مثيرة عن الكون وأسراره (انفجار عظيم، مادة مظلمة، طاقة مظلمة، نظريات حديثة 2025). كل بطاقة: title، text (2-3 جمل)، tag. JSON فقط: [{"title":"...","text":"...","tag":"..."}]',
+    news:       'اكتب 6 بطاقات أخبار فلكية وفضائية مثيرة ومتنوعة كأنها أخبار حديثة 2025. كل بطاقة: title، text (2-3 جمل خبر علمي مشوق)، tag (سنة أو وصف). JSON فقط: [{"title":"...","text":"...","tag":"..."}]'
+  };
+
+  const COSMOS_IMG_POOL = [
+    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+    'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
+    'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
+    'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',
+    'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',
+    'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=900&q=70',
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70',
+    'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70',
+    'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70',
+    'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70',
+    'https://images.unsplash.com/photo-1630839437035-dac17da580d0?w=900&q=70',
+    'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=900&q=70',
+    'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',
+    'https://images.unsplash.com/photo-1539593395743-7da5ee10ff07?w=900&q=70',
+    'https://images.unsplash.com/photo-1628458483547-6c399d07a598?w=900&q=70',
+    'https://images.unsplash.com/photo-1504192010706-dd7f569ee2be?w=900&q=70',
+    'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900&q=70',
+    'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=900&q=70',
+    'https://images.unsplash.com/photo-1636819488537-a9b1980df19f?w=900&q=70',
+    'https://images.unsplash.com/photo-1494022299300-899b96e49893?w=900&q=70',
+    'https://images.unsplash.com/photo-1608178398319-48f814d0750c?w=900&q=70'
+  ];
+
+  function getShuffledImgs(count) {
+    const pool = [...COSMOS_IMG_POOL];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, count);
+  }
+
+  async function fetchAIContent(key) {
+    const cached = _aiContentCache[key];
+    if (cached && (Date.now() - cached.time) < AI_CONTENT_TTL) return cached.data;
+    const prompt = AI_CATEGORY_PROMPTS[key];
+    if (!prompt) return null;
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      const text = data.content && data.content[0] && data.content[0].text;
+      if (!text) return null;
+      const clean = text.replace(/```json|```/g, '').trim();
+      const items = JSON.parse(clean);
+      if (!Array.isArray(items) || !items.length) return null;
+      const imgs = getShuffledImgs(items.length);
+      const enriched = items.map((it, i) => ({ ...it, img: imgs[i] || COSMOS_IMG_POOL[i % COSMOS_IMG_POOL.length] }));
+      _aiContentCache[key] = { data: enriched, time: Date.now() };
+      return enriched;
+    } catch(e) {
+      console.warn('AI content fetch failed for', key, e);
+      return null;
+    }
+  }
+
+  function renderAICards(items, color, key) {
+    if (!items || !items.length) return '';
+    const now = new Date().toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="cosmos-cards" id="aiCards_${key}">
+        ${items.map((it, i) => `
+          <article class="cosmos-card ai-generated-card" style="animation-delay:${i * 0.08}s">
+            <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')">
+              <span class="cosmos-card-tag floating" style="background:rgba(99,102,241,.85);border-color:rgba(167,139,250,.6)">
+                <i class="fas fa-robot" style="color:#a78bfa"></i> ${escapeHtml(it.tag || 'ذكاء اصطناعي')}
+              </span>
+              <span class="cosmos-card-time"><i class="fas fa-clock-rotate-left"></i> ${now}</span>
+            </div>
+            <div class="cosmos-card-body">
+              <h4 style="color:#e2e8f0">${escapeHtml(it.title)}</h4>
+              <p>${escapeHtml(it.text)}</p>
+              <span class="cosmos-read-more" style="color:#a78bfa;font-size:.78rem">
+                <i class="fas fa-brain"></i> محتوى مولّد بالذكاء الاصطناعي
+              </span>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+      <p style="font-size:.78rem;color:#9ca3af;margin-top:.65rem;text-align:center">
+        <i class="fas fa-robot" style="color:#a78bfa"></i> محتوى مولَّد بالذكاء الاصطناعي Claude • يتجدد كل 6 ساعات
+        <span id="aiRefreshBadge_${key}" style="margin-right:.5rem;color:#10b981;font-size:.74rem"></span>
+      </p>`;
+  }
+
+  // Rotate static content items every 30 min (shuffle which 6 items shown from the full list)
+  function getRotatedStaticItems(cat) {
+    const all = cat.items;
+    if (!all || all.length <= 6) return all;
+    const seed = Math.floor(Date.now() / STATIC_ROTATE_TTL);
+    // deterministic shuffle based on time seed
+    const indices = all.map((_, i) => i);
+    let s = seed;
+    for (let i = indices.length - 1; i > 0; i--) {
+      s = (s * 1664525 + 1013904223) & 0xffffffff;
+      const j = Math.abs(s) % (i + 1);
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices.slice(0, 6).map(i => all[i]);
+  }
+
+  function renderStaticCosmos(cat) {
+    const items = getRotatedStaticItems(cat);
     return `
       <div class="cosmos-modal-intro"><i class="fas fa-info-circle" style="color:${cat.color};margin-left:.5rem"></i>${escapeHtml(cat.intro)}</div>
-      <div class="cosmos-cards">
-        ${cat.items.map(it=>`
+      <div class="cosmos-cards" id="staticCards_${cat.title}">
+        ${items.map(it=>`
           <article class="cosmos-card">
             <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')">
               ${it.tag?`<span class="cosmos-card-tag floating"><i class="fas fa-tag"></i> ${escapeHtml(it.tag)}</span>`:''}
@@ -6414,6 +6626,53 @@ function switchProgressTab(tab) {
       </div>
     `;
   }
+
+  // Called when opening a category — loads AI content on top of static
+  window._loadAIContentForCategory = async function(key, color, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    // Show shimmer/loading placeholder
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+        ${[1,2,3,4,5,6].map(()=>`
+          <div style="background:rgba(99,102,241,.07);border-radius:16px;overflow:hidden;border:1px solid rgba(99,102,241,.2)">
+            <div style="height:180px;background:linear-gradient(90deg,rgba(99,102,241,.1) 25%,rgba(139,92,246,.18) 50%,rgba(99,102,241,.1) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite"></div>
+            <div style="padding:1rem">
+              <div style="height:14px;background:rgba(255,255,255,.07);border-radius:6px;margin-bottom:.7rem;width:70%;animation:shimmer 1.5s infinite"></div>
+              <div style="height:10px;background:rgba(255,255,255,.05);border-radius:4px;margin-bottom:.4rem;animation:shimmer 1.5s infinite 0.1s"></div>
+              <div style="height:10px;background:rgba(255,255,255,.05);border-radius:4px;width:85%;animation:shimmer 1.5s infinite 0.2s"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <p style="text-align:center;color:#a78bfa;font-size:.85rem;margin-top:1rem"><i class="fas fa-robot"></i> يولّد الذكاء الاصطناعي محتوى جديد...</p>`;
+    const items = await fetchAIContent(key);
+    if (items && items.length) {
+      container.innerHTML = renderAICards(items, color, key);
+      container.style.opacity = '0';
+      container.style.transition = 'opacity 0.5s';
+      requestAnimationFrame(() => { container.style.opacity = '1'; });
+    } else {
+      container.innerHTML = '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>تعذّر توليد المحتوى الآن، جرّب التحديث.</p></div>';
+    }
+  };
+
+  // Background preload AI content for all categories silently
+  window._preloadAllAIContent = function() {
+    const keys = Object.keys(AI_CATEGORY_PROMPTS);
+    keys.forEach((key, i) => {
+      setTimeout(() => fetchAIContent(key).catch(()=>{}), i * 8000);
+    });
+  };
+
+  // Auto-rotate static content badge display every 30 min
+  setInterval(() => {
+    document.querySelectorAll('[id^="staticCards_"]').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.4s';
+      setTimeout(() => { el.style.opacity = '1'; }, 400);
+    });
+  }, STATIC_ROTATE_TTL);
 
   function timeAgo(dateStr){
     const d = new Date(dateStr); if(isNaN(d)) return '';
@@ -6605,6 +6864,18 @@ function switchProgressTab(tab) {
     if (key === 'news') {
       titleEl.innerHTML = `<i class="fas fa-newspaper" style="color:#ec4899"></i> أخبار الكون — مباشرة`;
       body.innerHTML = `
+        <div class="cosmos-modal-intro" style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08));border:1px solid rgba(167,139,250,.4);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
+          <span style="display:flex;align-items:center;gap:.5rem;flex:1">
+            <i class="fas fa-robot" style="color:#a78bfa;font-size:1.1rem"></i>
+            <strong style="color:#e2e8f0">أخبار بالذكاء الاصطناعي</strong>
+            <span style="font-size:.8rem;color:#9ca3af">— تتجدد كل 6 ساعات</span>
+          </span>
+          <button class="cosmos-refresh-btn" style="background:rgba(139,92,246,.25);border-color:rgba(167,139,250,.5)" onclick="window._refreshAICategory('news','#ec4899','cosmosAI_news',event)">
+            <i class="fas fa-rotate"></i> توليد أخبار جديدة
+          </button>
+        </div>
+        <div id="cosmosAI_news"></div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:1.5rem 0">
         <div class="cosmos-modal-intro">
           <i class="fas fa-bolt" style="color:#ec4899;margin-left:.5rem"></i>
           أحدث أخبار الفضاء والفلك تُحدَّث تلقائياً من <strong>Spaceflight News</strong> (مصادر عالمية موثوقة كـ NASA و SpaceX و ESA). اضغط على أي خبر لقراءته كاملاً في المصدر الأصلي.
@@ -6617,6 +6888,8 @@ function switchProgressTab(tab) {
       m.classList.add('active');
       document.body.style.overflow = 'hidden';
       _startNewsCountdown();
+      // Load AI news and live news in parallel
+      window._loadAIContentForCategory('news', '#ec4899', 'cosmosAI_news');
       try {
         const articles = await fetchLiveNews();
         document.getElementById('cosmosNewsContainer').innerHTML = renderNewsCards(getNewsPage(articles));
@@ -6630,7 +6903,25 @@ function switchProgressTab(tab) {
     const cat = COSMOS_DATA[key]; if(!cat) return;
     titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
     const liveContainerId = `cosmosLive_${key}`;
+    const aiContainerId = `cosmosAI_${key}`;
     const hasLive = ['planets','universe','missions','stars','galaxies','blackholes','astronauts','telescopes','phenomena'].includes(key);
+
+    // AI-powered dynamic section (all categories)
+    const aiBlock = `
+      <div class="cosmos-modal-intro" style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08));border:1px solid rgba(167,139,250,.4);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
+        <span style="display:flex;align-items:center;gap:.5rem;flex:1">
+          <i class="fas fa-robot" style="color:#a78bfa;font-size:1.1rem"></i>
+          <strong style="color:#e2e8f0">محتوى الذكاء الاصطناعي</strong>
+          <span style="font-size:.8rem;color:#9ca3af">— يتجدد تلقائياً كل 6 ساعات</span>
+        </span>
+        <button class="cosmos-refresh-btn" style="background:rgba(139,92,246,.25);border-color:rgba(167,139,250,.5)" onclick="window._refreshAICategory('${key}','${cat.color}','${aiContainerId}',event)">
+          <i class="fas fa-rotate"></i> توليد محتوى جديد
+        </button>
+      </div>
+      <div id="${aiContainerId}"></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:1.5rem 0">
+    `;
+
     const liveBlock = hasLive ? `
       <div class="cosmos-modal-intro" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35)">
         <i class="fas fa-satellite-dish" style="color:#22c55e;margin-left:.5rem"></i>
@@ -6642,9 +6933,14 @@ function switchProgressTab(tab) {
       </div>
       <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:1.5rem 0">
     ` : '';
-    body.innerHTML = liveBlock + renderStaticCosmos(cat);
+
+    body.innerHTML = aiBlock + liveBlock + renderStaticCosmos(cat);
     m.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // Load AI content
+    window._loadAIContentForCategory(key, cat.color, aiContainerId);
+
     if (hasLive) loadLiveCategoryData(key, cat.color);
   };
 
@@ -6690,6 +6986,14 @@ function switchProgressTab(tab) {
       if (c) c.innerHTML = renderNewsCards(getNewsPage(articles));
     } catch(e){
       if (c) c.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر التحديث الآن.</p></div>';
+    }
+  };
+
+  window._refreshAICategory = async function(key, color, containerId, ev) {
+    if (ev) ev.stopPropagation();
+    delete _aiContentCache[key];
+    if (typeof window._loadAIContentForCategory === 'function') {
+      await window._loadAIContentForCategory(key, color, containerId);
     }
   };
 
@@ -8324,6 +8628,49 @@ window.playChatSound = function() {
       }
     }
   }, REFRESH_SEC * 1000);
+})();
+
+// ============================
+// 5b. AI CONTENT AUTO-REFRESH
+// كل 6 ساعات يجدد محتوى الذكاء الاصطناعي لكل الأقسام المفتوحة
+// ============================
+(function() {
+  const AI_REFRESH_INTERVAL = 6 * 60 * 60 * 1000; // 6 ساعات
+
+  // Preload AI content silently in background after page load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      if (typeof window._preloadAllAIContent === 'function') {
+        window._preloadAllAIContent();
+      }
+    }, 5000); // بعد 5 ثواني من التحميل
+  });
+
+  // Auto-refresh AI content if a cosmos modal is open and TTL expired
+  setInterval(async () => {
+    const modal = document.getElementById('cosmosModal');
+    if (!modal || !modal.classList.contains('active')) return;
+    // Find open AI container
+    const aiContainers = modal.querySelectorAll('[id^="cosmosAI_"]');
+    for (const c of aiContainers) {
+      const key = c.id.replace('cosmosAI_', '');
+      if (!key) continue;
+      // Check if cache is stale
+      if (typeof _aiContentCache !== 'undefined' && _aiContentCache[key]) {
+        const age = Date.now() - (_aiContentCache[key].time || 0);
+        if (age < AI_REFRESH_INTERVAL) continue;
+      }
+      // Refresh
+      if (typeof window._loadAIContentForCategory === 'function') {
+        const cat = (typeof COSMOS_DATA !== 'undefined') && COSMOS_DATA[key];
+        const color = cat ? cat.color : '#a78bfa';
+        c.style.opacity = '0';
+        c.style.transition = 'opacity 0.4s';
+        await window._loadAIContentForCategory(key, color, c.id);
+        c.style.opacity = '1';
+      }
+    }
+  }, 30 * 60 * 1000); // يتحقق كل 30 دقيقة
 })();
 
 // ============================
