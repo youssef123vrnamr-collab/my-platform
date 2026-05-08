@@ -2429,12 +2429,12 @@ body {
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu">
-            <div class="settings-menu-item" id="installAppMenuItem" style="display: none;"><i class="fas fa-download"></i> تثبيت التطبيق</div>
-            <div class="settings-menu-item" id="feedbackMenuItem"><i class="fas fa-star"></i> تقييم المنصة</div>
-            <div class="settings-menu-item" id="howToUseMenuItem"><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</div>
-            <div class="settings-menu-item" id="googleLoginMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الدخول بجوجل</div>
-            <div class="settings-menu-item" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
-            <div class="settings-menu-item" id="adminLoginMenuItem"><i class="fas fa-lock"></i> دخول المشرف</div>
+            <div class="settings-menu-item user-only" id="installAppMenuItem" style="display: none;"><i class="fas fa-download"></i> تثبيت التطبيق</div>
+            <div class="settings-menu-item user-only" id="feedbackMenuItem"><i class="fas fa-star"></i> تقييم المنصة</div>
+            <div class="settings-menu-item user-only" id="howToUseMenuItem"><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</div>
+            <div class="settings-menu-item user-only" id="googleLoginMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الدخول بجوجل</div>
+            <div class="settings-menu-item user-only" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
+            <div class="settings-menu-item user-only" id="adminLoginMenuItem"><i class="fas fa-lock"></i> دخول المشرف</div>
             <div class="settings-menu-item admin-only" id="setAdminsMenuItem" style="display: none;"><i class="fas fa-users-cog"></i> تحديد المشرفين</div>
             <div class="settings-menu-item admin-only" id="aiKeyMenuItem" style="display: none;" onclick="openAiKeyModal()"><i class="fas fa-key"></i> مفتاح الذكاء الاصطناعي</div>
             <div class="settings-menu-item admin-only" id="teachAIMenuItem" style="display: none;"><i class="fas fa-robot"></i> تعليم الذكاء الاصطناعي</div>
@@ -3506,19 +3506,9 @@ async function updateAdminUI() {
     // ملحوظة: localStorage لم يعد موثوقاً وحده — الرجوع لـ Firestore يتم في refreshAdminStatusFromFirestore()
 
     if (isAdmin) {
+        // إخفاء كل عناصر المستخدم العادي (user-only)
         userOnlyItems.forEach(el => el.style.display = "none");
         if(localOnlyItem) localOnlyItem.style.display = "none";
-        // إخفاء العناصر الخاصة بالمستخدم العادي
-        const feedbackItem = document.getElementById("feedbackMenuItem");
-        const howToUseItem = document.getElementById("howToUseMenuItem");
-        const adminLoginItem = document.getElementById("adminLoginMenuItem");
-        const googleLoginItem = document.getElementById("googleLoginMenuItem");
-        const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
-        if (feedbackItem) feedbackItem.style.display = "none";
-        if (howToUseItem) howToUseItem.style.display = "none";
-        if (adminLoginItem) adminLoginItem.style.display = "none";
-        if (googleLoginItem) googleLoginItem.style.display = "none";
-        if (googleLogoutItem) googleLogoutItem.style.display = "none";
         adminOnlyItems.forEach(el => el.style.display = "flex");
         if (setAdminsMenuItem) setAdminsMenuItem.style.display = "flex";
         if (teachAIMenuItem) teachAIMenuItem.style.display = "flex";
@@ -3530,13 +3520,16 @@ async function updateAdminUI() {
         // Show admin chat manage item in settings menu (super admin only)
         const adminChatMenuItem = document.getElementById('groupAdminMenuItem');
         if (adminChatMenuItem) adminChatMenuItem.style.display = isSuperAdmin ? 'flex' : 'none';
+        // تطبيقات المنصة تظهر للجميع
+        const appsItemAdmin = document.getElementById("appsMenuItem");
+        if (appsItemAdmin) appsItemAdmin.style.display = "flex";
         updateStorageBar();
         loadAIKnowledgeFromFirebase();
         const cancelBtn = document.getElementById("cancelMaintenanceBtn");
         if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
     } else {
         adminOnlyItems.forEach(el => el.style.display = "none");
-        // العناصر الثابتة دايماً للمستخدم العادي (سواء مسجل أو لا)
+        // إظهار عناصر المستخدم العادي
         const feedbackItem = document.getElementById("feedbackMenuItem");
         const howToUseItem = document.getElementById("howToUseMenuItem");
         const adminLoginItem = document.getElementById("adminLoginMenuItem");
@@ -3550,6 +3543,9 @@ async function updateAdminUI() {
         if (googleLogoutItem) googleLogoutItem.style.display = isGoogleUser ? "flex" : "none";
         // تسجيل خروج الحساب المحلي
         if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
+        // تطبيقات المنصة تظهر للجميع
+        const appsItemUser = document.getElementById("appsMenuItem");
+        if (appsItemUser) appsItemUser.style.display = "flex";
         if (uploadZone) uploadZone.classList.remove("active");
         if (storageBar) storageBar.style.display = "none";
     }
