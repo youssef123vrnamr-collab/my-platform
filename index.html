@@ -3518,17 +3518,21 @@ async function updateAdminUI() {
     ];
 
     if (isAdmin) {
-        // إخفاء كل زراير المستخدم العادي
-        userItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "none"; });
-        document.getElementById("installAppMenuItem") && (document.getElementById("installAppMenuItem").style.display = "none");
-        document.getElementById("googleLoginMenuItem") && (document.getElementById("googleLoginMenuItem").style.display = "none");
-        document.getElementById("googleLogoutMenuItem") && (document.getElementById("googleLogoutMenuItem").style.display = "none");
-        document.getElementById("localLogoutMenuItem") && (document.getElementById("localLogoutMenuItem").style.display = "none");
         // إظهار زراير المشرف
         adminItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "flex"; });
-        // appsMenuItem يظهر للمشرف كمان
+        // appsMenuItem يظهر للمشرف
         const appsItemEl = document.getElementById("appsMenuItem");
         if (appsItemEl) appsItemEl.style.display = "flex";
+        // زراير المستخدم العادي تظهر للمشرف كمان
+        userItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "flex"; });
+        // installAppMenuItem يتحكم فيه PWA - نتركه كما هو (لا نخفيه)
+        // تسجيل الدخول/الخروج جوجل للمشرف
+        const googleLoginItemA = document.getElementById("googleLoginMenuItem");
+        const googleLogoutItemA = document.getElementById("googleLogoutMenuItem");
+        if (googleLoginItemA) googleLoginItemA.style.display = isGoogleUser ? "none" : "flex";
+        if (googleLogoutItemA) googleLogoutItemA.style.display = isGoogleUser ? "flex" : "none";
+        // تسجيل خروج الحساب المحلي للمشرف
+        if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
         // إدارة المحادثة الجماعية للسوبر أدمن فقط
         const groupAdminEl = document.getElementById('groupAdminMenuItem');
         if (groupAdminEl) groupAdminEl.style.display = isSuperAdmin ? 'flex' : 'none';
@@ -3542,6 +3546,10 @@ async function updateAdminUI() {
         // إخفاء كل زراير المشرف
         adminItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "none"; });
         document.getElementById("groupAdminMenuItem") && (document.getElementById("groupAdminMenuItem").style.display = "none");
+        // إخفاء تسجيل الدخول بجوجل للمستخدم العادي
+        document.getElementById("googleLoginMenuItem") && (document.getElementById("googleLoginMenuItem").style.display = "none");
+        // إخفاء تسجيل خروج الحساب المحلي للمستخدم العادي
+        if(localOnlyItem) localOnlyItem.style.display = "none";
         // إظهار زراير المستخدم العادي فقط
         const feedbackItem = document.getElementById("feedbackMenuItem");
         const howToUseItem = document.getElementById("howToUseMenuItem");
@@ -3550,14 +3558,10 @@ async function updateAdminUI() {
         if (feedbackItem) feedbackItem.style.display = "flex";
         if (howToUseItem) howToUseItem.style.display = "flex";
         if (adminLoginItem) adminLoginItem.style.display = "flex";
-        if (appsItemEl) appsItemEl.style.display = "flex";
-        // تسجيل الدخول/الخروج جوجل
-        const googleLoginItem = document.getElementById("googleLoginMenuItem");
+        if (appsItemEl) appsItemEl.style.display = "none";
+        // تسجيل الخروج جوجل فقط (بدون تسجيل الدخول)
         const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
-        if (googleLoginItem) googleLoginItem.style.display = isGoogleUser ? "none" : "flex";
         if (googleLogoutItem) googleLogoutItem.style.display = isGoogleUser ? "flex" : "none";
-        // تسجيل خروج الحساب المحلي
-        if(localOnlyItem) localOnlyItem.style.display = isLocalOnly ? "flex" : "none";
         if (uploadZone) uploadZone.classList.remove("active");
         if (storageBar) storageBar.style.display = "none";
     }
