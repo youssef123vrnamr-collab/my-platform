@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"> 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>منصة الفلك المتكاملة | تعلم علم الفلك والفضاء بالعربي</title>
+  <title>Astronomy and space</title>
 
   <!-- SEO أساسي -->
   <meta name="description" content="منصة الفلك المتكاملة — تعلم علم الفلك وعلوم الفضاء بمحتوى عربي احترافي. كورسات فيديو، دروس تفاعلية، وشهادات إتمام معتمدة.">
@@ -3481,7 +3481,7 @@ async function updateAdminUI() {
 
         if (isAdmin) {
             // ===== أيتمز المشرف فقط =====
-            if (!isPWAInstalled() && (deferredPrompt || isIOSSafari())) {
+            if (!isPWAInstalled()) {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
@@ -3509,7 +3509,7 @@ async function updateAdminUI() {
             if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
         } else {
             // ===== أيتمز المستخدم العادي فقط =====
-            if (!isPWAInstalled() && (deferredPrompt || isIOSSafari())) {
+            if (!isPWAInstalled()) {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
@@ -5041,7 +5041,7 @@ async function updateAdminUI() {
   function installApp() {
     if (isPWAInstalled()) {
       showToast("✅ التطبيق مثبَّت بالفعل على جهازك!");
-      updateInstallMenuVisibility();
+      updateAdminUI();
       return;
     }
     if (deferredPrompt) {
@@ -5052,12 +5052,13 @@ async function updateAdminUI() {
           showToast("✅ تم تثبيت التطبيق بنجاح!");
         }
         deferredPrompt = null;
-        updateInstallMenuVisibility();
+        updateAdminUI();
       });
     } else if (isIOSSafari()) {
-      showToast("📱 لتثبيت التطبيق على iOS: اضغط زرار المشاركة ثم 'إضافة إلى الشاشة الرئيسية'");
+      showToast("📱 على iOS: اضغط زر المشاركة ثم اختر 'إضافة إلى الشاشة الرئيسية'");
     } else {
-      showToast("⚠️ التثبيت غير متاح حالياً. تأكد من أنك تفتح الموقع من متصفح يدعم PWA مثل Chrome أو Edge.");
+      // Android Chrome - نفتح قائمة المتصفح يدوياً
+      showToast("📲 افتح قائمة المتصفح (⋮) واختر 'إضافة إلى الشاشة الرئيسية' أو 'تثبيت التطبيق'");
     }
   }
   // تحقق من الحالة عند التحميل
