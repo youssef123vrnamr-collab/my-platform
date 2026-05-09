@@ -2428,30 +2428,7 @@ body {
         </div>
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
-          <div class="settings-menu" id="settingsMenu">
-            <div class="settings-menu-item" id="installAppMenuItem" style="display: none;"><i class="fas fa-download"></i> تثبيت التطبيق</div>
-            <div class="settings-menu-item" id="feedbackMenuItem" style="display: none;"><i class="fas fa-star"></i> تقييم المنصة</div>
-            <div class="settings-menu-item" id="howToUseMenuItem" style="display: none;"><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</div>
-            <div class="settings-menu-item" id="googleLoginMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الدخول بجوجل</div>
-            <div class="settings-menu-item" id="googleLogoutMenuItem" style="display: none;"><i class="fab fa-google"></i> تسجيل الخروج من جوجل</div>
-            <div class="settings-menu-item" id="adminLoginMenuItem" style="display: none;"><i class="fas fa-lock"></i> دخول المشرف</div>
-            <div class="settings-menu-item" id="setAdminsMenuItem" style="display: none;"><i class="fas fa-users-cog"></i> تحديد المشرفين</div>
-            <div class="settings-menu-item" id="aiKeyMenuItem" style="display: none;" onclick="openAiKeyModal()"><i class="fas fa-key"></i> مفتاح الذكاء الاصطناعي</div>
-            <div class="settings-menu-item" id="teachAIMenuItem" style="display: none;"><i class="fas fa-robot"></i> تعليم الذكاء الاصطناعي</div>
-            <div class="settings-menu-item" id="manageAppsMenuItem" style="display: none;"><i class="fas fa-th-large"></i> إدارة التطبيقات</div>
-            <div class="settings-menu-item" id="viewFeedbacksMenuItem" style="display: none;"><i class="fas fa-chart-simple"></i> معرفة رأي الجمهور</div>
-            <div class="settings-menu-item" id="emailSettingsMenuItem" style="display: none;"><i class="fas fa-envelope"></i> إعدادات البريد الإلكتروني</div>
-            <div class="settings-menu-item" id="zoomLinkMenuItem" style="display: none;" onclick="openZoomLinkSettings();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-video" style="color:#2d8cff"></i> رابط Zoom للمحاضرات</div>
-            <div class="settings-menu-item" id="supervisorPayoutMenuItem" style="display: none;"><i class="fas fa-credit-card"></i> ربط استلام المدفوعات (مشرف)</div>
-            <div class="settings-menu-item" id="logoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> خروج المشرف</div>
-            <div class="settings-menu-item" id="maintenanceMenuItem" style="display: none;"><i class="fas fa-tools"></i> تحديث المحتوى</div>
-            <div class="settings-menu-item" id="groupAdminMenuItem" style="display: none;" onclick="openGroupChatAdminPanel();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-users-cog"></i> إدارة المحادثة الجماعية</div>
-            <div class="settings-menu-item" id="pdfFilesMenuItem" style="display: none;" onclick="openPdfManagerModal();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-file-pdf" style="color:#ef4444"></i> إدارة ملفات PDF</div>
-            <div class="settings-menu-item" id="manageCoursesMenuItem" style="display: none;" onclick="showCoursesList();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-graduation-cap" style="color:#f59e0b"></i> إدارة الكورسات</div>
-            <div class="settings-menu-item" id="manageCertificatesMenuItem" style="display: none;" onclick="openCertificatesManager();document.getElementById('settingsMenu').classList.remove('active')"><i class="fas fa-certificate" style="color:#f59e0b"></i> إدارة شهادات الكورسات</div>
-            <div class="settings-menu-item" id="localLogoutMenuItem" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج من الحساب المحلي</div>
-            <div class="settings-menu-item" id="appsMenuItem" style="display: none;"><i class="fas fa-th-large"></i> تطبيقات المنصة</div>
-          </div>
+          <div class="settings-menu" id="settingsMenu"></div>
         </div>
       </div>
     </div>
@@ -3475,95 +3452,73 @@ async function isAdminUser(userId) {
   document.addEventListener("input", function(e) { if (e.target.id === "rateRange") document.getElementById("rateValue").textContent = e.target.value; else if (e.target.id === "pitchRange") document.getElementById("pitchValue").textContent = e.target.value; });
 
   // ========== Admin & UI ==========
-// ========== Admin & UI ==========
 async function updateAdminUI() {
-    // ✅ أول حاجة: لو في مستخدم جوجل مسجل، أجب token جديد عشان نعرف صلاحياته
     if (googleUser && googleUser.getIdTokenResult) {
         try {
             const tokenResult = await googleUser.getIdTokenResult();
             window.isAdminClaim = tokenResult.claims.admin === true;
         } catch(e) { console.warn("token error", e); }
     }
+    if (window.isAdminClaim === true) isAdmin = true;
 
-    const adminOnlyItems = document.querySelectorAll('.admin-only');
-    const userOnlyItems = document.querySelectorAll('.user-only');
-    const localOnlyItem = document.getElementById('localLogoutMenuItem');
+    const isGoogleUser = !!googleUser;
     const uploadZone = document.getElementById("uploadZone");
     const storageBar = document.getElementById("storageBar");
-    const manageAppsMenuItem = document.getElementById("manageAppsMenuItem");
-    const viewFeedbacksMenuItem = document.getElementById("viewFeedbacksMenuItem");
-    const emailSettingsMenuItem = document.getElementById("emailSettingsMenuItem");
-    const setAdminsMenuItem = document.getElementById("setAdminsMenuItem");
-    const teachAIMenuItem = document.getElementById("teachAIMenuItem");
 
-    const isUserLoggedIn = (currentUser && currentUserPhone) || googleUser;
-    const isLocalOnly = (currentUser && currentUserPhone) && !googleUser;
-    const isGoogleUser = !!googleUser;
+    // ===== بناء الـ menu من الصفر حسب نوع المستخدم =====
+    const menu = document.getElementById("settingsMenu");
+    if (menu) {
+        menu.innerHTML = "";
 
-    // ✅ صلاحية المشرف: تُحدَّد فقط من Firestore (admin_accounts) بناءً على بريد جوجل المسجَّل
-    // window.isAdminClaim مازالت محترمة لمن لديه custom claim من Firebase Admin SDK
-    if (window.isAdminClaim === true) isAdmin = true;
-    // ملحوظة: localStorage لم يعد موثوقاً وحده — الرجوع لـ Firestore يتم في refreshAdminStatusFromFirestore()
+        function addItem(id, icon, label, onclick) {
+            const d = document.createElement("div");
+            d.className = "settings-menu-item";
+            d.id = id;
+            d.innerHTML = `<i class="${icon}"></i> ${label}`;
+            if (onclick) d.addEventListener("click", onclick);
+            menu.appendChild(d);
+        }
 
-    // قائمة زراير المستخدم العادي فقط (بدون appsMenuItem عشان يظهر للاتنين بشكل منفصل)
-    const userItems = ["feedbackMenuItem","howToUseMenuItem","adminLoginMenuItem"];
-    // installApp يتحكم فيه PWA لوحده، googleLogin/googleLogout يتحكم فيهم حالة جوجل
+        if (isAdmin) {
+            // ===== أيتمز المشرف فقط =====
+            if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
+            addItem("setAdminsMenuItem","fas fa-users-cog","تحديد المشرفين", () => { menu.classList.remove("active"); openSetAdminsModal(); });
+            addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); });
+            addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); });
+            addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); });
+            addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); });
+            addItem("emailSettingsMenuItem","fas fa-envelope","إعدادات البريد الإلكتروني", () => { menu.classList.remove("active"); openEmailSettingsModal(); });
+            addItem("zoomLinkMenuItem","fas fa-video","رابط Zoom للمحاضرات", () => { menu.classList.remove("active"); openZoomLinkSettings(); });
+            addItem("supervisorPayoutMenuItem","fas fa-credit-card","ربط استلام المدفوعات (مشرف)", () => { menu.classList.remove("active"); openSupervisorPayoutModal(); });
+            addItem("logoutMenuItem","fas fa-sign-out-alt","خروج المشرف", () => { menu.classList.remove("active"); logout(); });
+            addItem("maintenanceMenuItem","fas fa-tools","تحديث المحتوى", () => { menu.classList.remove("active"); openMaintenanceModal(); });
+            if (isSuperAdmin) addItem("groupAdminMenuItem","fas fa-users-cog","إدارة المحادثة الجماعية", () => { menu.classList.remove("active"); openGroupChatAdminPanel(); });
+            addItem("pdfFilesMenuItem","fas fa-file-pdf","إدارة ملفات PDF", () => { menu.classList.remove("active"); openPdfManagerModal(); });
+            addItem("manageCoursesMenuItem","fas fa-graduation-cap","إدارة الكورسات", () => { menu.classList.remove("active"); showCoursesList(); });
+            addItem("manageCertificatesMenuItem","fas fa-certificate","إدارة شهادات الكورسات", () => { menu.classList.remove("active"); openCertificatesManager(); });
+            addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
 
-    // قائمة زراير المشرف فقط (بدون appsMenuItem عشان يظهر للاتنين بشكل منفصل)
-    const adminItems = [
-        "setAdminsMenuItem","aiKeyMenuItem","teachAIMenuItem","manageAppsMenuItem",
-        "viewFeedbacksMenuItem","emailSettingsMenuItem","zoomLinkMenuItem",
-        "supervisorPayoutMenuItem","logoutMenuItem","maintenanceMenuItem",
-        "pdfFilesMenuItem","manageCoursesMenuItem","manageCertificatesMenuItem"
-    ];
+            if (uploadZone) uploadZone.classList.add("active");
+            if (storageBar) storageBar.style.display = "block";
+            updateStorageBar();
+            loadAIKnowledgeFromFirebase();
+            const cancelBtn = document.getElementById("cancelMaintenanceBtn");
+            if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
+        } else {
+            // ===== أيتمز المستخدم العادي فقط =====
+            if (!isPWAInstalled() && (deferredPrompt || isIOSSafari())) {
+                addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
+            }
+            addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
+            addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
+            if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
+            addItem("adminLoginMenuItem","fas fa-lock","دخول المشرف", () => { menu.classList.remove("active"); showLogin(); });
 
-    // إخفاء تسجيل الخروج المحلي دائماً — الكل يدخل بجوجل فقط
-    document.getElementById("localLogoutMenuItem") && (document.getElementById("localLogoutMenuItem").style.display = "none");
-
-    if (isAdmin) {
-        // إخفاء أيتمز المستخدم العادي عند المشرف
-        userItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "none"; });
-        document.getElementById("installAppMenuItem") && (document.getElementById("installAppMenuItem").style.display = "none");
-        document.getElementById("googleLoginMenuItem") && (document.getElementById("googleLoginMenuItem").style.display = "none");
-        // تسجيل الخروج من جوجل يظهر للمشرف فقط لو مسجل دخول بجوجل
-        const googleLogoutItemA = document.getElementById("googleLogoutMenuItem");
-        if (googleLogoutItemA) googleLogoutItemA.style.display = isGoogleUser ? "flex" : "none";
-        // إظهار أيتمز المشرف
-        adminItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "flex"; });
-        // تطبيقات المنصة للمشرف
-        const appsItemEl = document.getElementById("appsMenuItem");
-        if (appsItemEl) appsItemEl.style.display = "flex";
-        // إدارة المحادثة الجماعية للسوبر أدمن فقط
-        const groupAdminEl = document.getElementById('groupAdminMenuItem');
-        if (groupAdminEl) groupAdminEl.style.display = isSuperAdmin ? 'flex' : 'none';
-        if (uploadZone) uploadZone.classList.add("active");
-        if (storageBar) storageBar.style.display = "block";
-        updateStorageBar();
-        loadAIKnowledgeFromFirebase();
-        const cancelBtn = document.getElementById("cancelMaintenanceBtn");
-        if (cancelBtn && document.getElementById("maintenanceOverlay")?.classList.contains("active")) cancelBtn.classList.add("active");
-    } else {
-        // إخفاء كل أيتمز المشرف
-        adminItems.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "none"; });
-        document.getElementById("groupAdminMenuItem") && (document.getElementById("groupAdminMenuItem").style.display = "none");
-        document.getElementById("googleLoginMenuItem") && (document.getElementById("googleLoginMenuItem").style.display = "none");
-        // إظهار أيتمز المستخدم العادي فقط
-        document.getElementById("installAppMenuItem") && (document.getElementById("installAppMenuItem").style.display = "flex");
-        const feedbackItem = document.getElementById("feedbackMenuItem");
-        const howToUseItem = document.getElementById("howToUseMenuItem");
-        const adminLoginItem = document.getElementById("adminLoginMenuItem");
-        if (feedbackItem) feedbackItem.style.display = "flex";
-        if (howToUseItem) howToUseItem.style.display = "flex";
-        if (adminLoginItem) adminLoginItem.style.display = "flex";
-        // تطبيقات المنصة مش للمستخدم العادي
-        const appsItemEl = document.getElementById("appsMenuItem");
-        if (appsItemEl) appsItemEl.style.display = "none";
-        // تسجيل الخروج من جوجل فقط (بدون تسجيل الدخول)
-        const googleLogoutItem = document.getElementById("googleLogoutMenuItem");
-        if (googleLogoutItem) googleLogoutItem.style.display = isGoogleUser ? "flex" : "none";
-        if (uploadZone) uploadZone.classList.remove("active");
-        if (storageBar) storageBar.style.display = "none";
+            if (uploadZone) uploadZone.classList.remove("active");
+            if (storageBar) storageBar.style.display = "none";
+        }
     }
+
     updateGoogleLogoutButtonsVisibility();
     const createCourseBtn = document.getElementById("createCourseBtn");
     if (createCourseBtn) createCourseBtn.style.display = isAdmin ? "inline-flex" : "none";
@@ -5127,24 +5082,6 @@ async function updateAdminUI() {
   document.addEventListener("DOMContentLoaded", function() {
     const dropdownBtn = document.getElementById("settingsDropdownBtn"); if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu);
     document.addEventListener("click", closeSettingsMenuOnClickOutside);
-    document.getElementById("googleLoginMenuItem")?.addEventListener("click", function() { document.getElementById("settingsMenu")?.classList.remove("active"); googleLogin(); });
-    document.getElementById("googleLogoutMenuItem")?.addEventListener("click", googleLogout);
-    document.getElementById("adminLoginMenuItem")?.addEventListener("click", showLogin);
-    document.getElementById("logoutMenuItem")?.addEventListener("click", logout);
-    document.getElementById("maintenanceMenuItem")?.addEventListener("click", openMaintenanceModal);
-    document.getElementById("appsMenuItem")?.addEventListener("click", openAppsModal);
-    document.getElementById("manageAppsMenuItem")?.addEventListener("click", openManageAppsModal);
-    document.getElementById("installAppMenuItem")?.addEventListener("click", installApp);
-    document.getElementById("localLogoutMenuItem")?.addEventListener("click", localLogout);
-    document.getElementById("feedbackMenuItem")?.addEventListener("click", openFeedbackModal);
-    document.getElementById("howToUseMenuItem")?.addEventListener("click", openHowToUseModal);
-    document.getElementById("viewFeedbacksMenuItem")?.addEventListener("click", openViewFeedbacksModal);
-    document.getElementById("emailSettingsMenuItem")?.addEventListener("click", openEmailSettingsModal);
-    document.getElementById("supervisorPayoutMenuItem")?.addEventListener("click", openSupervisorPayoutModal);
-    const setAdminsMenuItem = document.getElementById("setAdminsMenuItem");
-    if (setAdminsMenuItem) setAdminsMenuItem.addEventListener("click", openSetAdminsModal);
-    const teachAIMenuItem = document.getElementById("teachAIMenuItem");
-    if (teachAIMenuItem) teachAIMenuItem.addEventListener("click", openTeachAICircleModal);
   });
 
   window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); try { loadAiKeyOnce(); listenAiKey(); } catch(_){} document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
