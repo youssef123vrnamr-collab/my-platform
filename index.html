@@ -3481,6 +3481,9 @@ async function updateAdminUI() {
 
         if (isAdmin) {
             // ===== أيتمز المشرف فقط =====
+            if (!isPWAInstalled() && (deferredPrompt || isIOSSafari())) {
+                addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
+            }
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
             addItem("setAdminsMenuItem","fas fa-users-cog","تحديد المشرفين", () => { menu.classList.remove("active"); openSetAdminsModal(); });
             addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); });
@@ -5017,14 +5020,8 @@ async function updateAdminUI() {
            pwaInstalled;
   }
   function updateInstallMenuVisibility() {
-    const installMenuItem = document.getElementById("installAppMenuItem");
-    if (!installMenuItem) return;
-    // تثبيت التطبيق للمستخدم العادي فقط — مش للمشرف
-    if (isAdmin || isPWAInstalled()) {
-      installMenuItem.style.display = "none";
-    } else if (deferredPrompt || isIOSSafari()) {
-      installMenuItem.style.display = "flex";
-    }
+    // نعيد بناء الـ menu عشان يظهر/يختفي زر التثبيت حسب حالة PWA
+    updateAdminUI();
   }
   function isIOSSafari() {
     const ua = navigator.userAgent;
