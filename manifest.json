@@ -12,14 +12,14 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "https://drive.google.com/uc?export=view&id=1qLiohofvPYZmJZ0h4U503FgGcgkFoxKd",
-      "sizes": "512x512",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://drive.google.com/uc?export=view&id=1qLiohofvPYZmJZ0h4U503FgGcgkFoxKd",
-      "sizes": "192x192",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
