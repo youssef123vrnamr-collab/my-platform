@@ -5044,22 +5044,8 @@ async function updateAdminUI() {
       updateAdminUI();
       return;
     }
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === "accepted") {
-          pwaInstalled = true;
-          showToast("✅ تم تثبيت التطبيق بنجاح!");
-        }
-        deferredPrompt = null;
-        updateAdminUI();
-      });
-    } else if (isIOSSafari()) {
-      showToast("📱 على iOS: اضغط زر المشاركة ثم اختر 'إضافة إلى الشاشة الرئيسية'");
-    } else {
-      // Android Chrome - نفتح قائمة المتصفح يدوياً
-      showToast("📲 افتح قائمة المتصفح (⋮) واختر 'إضافة إلى الشاشة الرئيسية' أو 'تثبيت التطبيق'");
-    }
+    // افتح الـ modal دايماً — بيعرض الصورة + الخطوات + زرار التثبيت المباشر لو متاح
+    openPwaModal();
   }
   // تحقق من الحالة عند التحميل
   window.addEventListener("load", function() { setTimeout(updateInstallMenuVisibility, 1000); });
@@ -10059,6 +10045,174 @@ function showCertificateModal(courseTitle, certUrl) {
   requestAnimationFrame(draw);
 })();
 // ===== END DEEP TECH BACKGROUND =====
+</script>
+
+<!-- ===== PWA INSTALL GUIDE MODAL ===== -->
+<div id="pwaInstallModal" style="
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.85); z-index:99999; align-items:center;
+  justify-content:center; padding:1rem; backdrop-filter:blur(8px);
+" onclick="if(event.target===this)closePwaModal()">
+  <div style="
+    background:linear-gradient(145deg,#1a1025,#0f0a1a);
+    border:1px solid rgba(99,102,241,0.5); border-radius:24px;
+    max-width:420px; width:100%; overflow:hidden;
+    box-shadow:0 25px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(236,72,153,0.2);
+    animation:fadeInUp 0.3s ease;
+  ">
+    <!-- Header -->
+    <div style="
+      background:linear-gradient(135deg,rgba(99,102,241,0.3),rgba(236,72,153,0.2));
+      padding:1.25rem 1.5rem; display:flex; align-items:center;
+      justify-content:space-between; border-bottom:1px solid rgba(99,102,241,0.3);
+    ">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div style="
+          width:42px;height:42px;border-radius:12px;
+          background:linear-gradient(135deg,#6366f1,#ec4899);
+          display:flex;align-items:center;justify-content:center;font-size:1.3rem;
+        ">📲</div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;color:#fff;">تثبيت التطبيق</div>
+          <div style="font-size:0.78rem;color:#aaa;">أضف المنصة لشاشتك الرئيسية</div>
+        </div>
+      </div>
+      <button onclick="closePwaModal()" style="
+        background:rgba(239,68,68,0.2);border:none;color:#ef4444;
+        width:36px;height:36px;border-radius:10px;cursor:pointer;
+        font-size:1.1rem;display:flex;align-items:center;justify-content:center;
+      ">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:1.5rem;">
+      <!-- صورة معاينة الشاشة الرئيسية -->
+      <div style="
+        text-align:center;margin-bottom:1.25rem;
+        background:rgba(99,102,241,0.08);border-radius:16px;
+        padding:1rem;border:1px solid rgba(99,102,241,0.2);
+      ">
+        <div style="font-size:0.82rem;color:#aaa;margin-bottom:0.75rem;">
+          📱 هكذا يظهر التطبيق على شاشتك الرئيسية
+        </div>
+        <img
+          src="1000093591.jpg"
+          alt="صورة الشاشة الرئيسية"
+          style="
+            width:130px;height:130px;object-fit:cover;
+            border-radius:22px;
+            box-shadow:0 8px 24px rgba(99,102,241,0.4),0 0 0 3px rgba(99,102,241,0.3);
+          "
+          onerror="this.style.display='none'"
+        />
+        <div style="margin-top:0.6rem;font-size:0.85rem;font-weight:600;color:#c4b5fd;">
+          Astronomy and space
+        </div>
+      </div>
+
+      <!-- خطوات التثبيت -->
+      <div id="pwaInstallSteps">
+        <!-- Android Chrome -->
+        <div id="pwaAndroidSteps">
+          <div style="font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+            <span style="font-size:1.1rem;">🤖</span> خطوات التثبيت على Android
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;">
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">1</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط على <strong style="color:#c4b5fd;">⋮</strong> (القائمة) في الزاوية العلوية من المتصفح</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">2</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اختر <strong style="color:#10b981;">"إضافة إلى الشاشة الرئيسية"</strong> أو <strong style="color:#10b981;">"تثبيت التطبيق"</strong></span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">3</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستجد الأيقونة على شاشتك مباشرة! 🎉</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- iOS Safari -->
+        <div id="pwaIOSSteps" style="display:none;">
+          <div style="font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+            <span style="font-size:1.1rem;">🍎</span> خطوات التثبيت على iPhone/iPad
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;">
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">1</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">افتح الصفحة في <strong style="color:#c4b5fd;">Safari</strong> واضغط زر <strong style="color:#10b981;">المشاركة 📤</strong> في الأسفل</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">2</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اختر <strong style="color:#10b981;">"إضافة إلى الشاشة الرئيسية"</strong></span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">3</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستظهر الأيقونة على شاشتك! 🎉</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- زرار التثبيت المباشر (يظهر لو Chrome Android) -->
+      <button id="pwaDirectInstallBtn" onclick="triggerDirectInstall()" style="
+        display:none; width:100%; margin-top:1rem;
+        background:linear-gradient(135deg,#6366f1,#8b5cf6);
+        color:#fff; border:none; padding:0.85rem;
+        border-radius:14px; font-family:'Cairo',sans-serif;
+        font-size:1rem; font-weight:700; cursor:pointer;
+        box-shadow:0 8px 20px rgba(99,102,241,0.4);
+        transition:all 0.3s;
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <i class="fas fa-download" style="margin-left:0.5rem;"></i> تثبيت الآن مباشرة
+      </button>
+
+      <button onclick="closePwaModal()" style="
+        width:100%; margin-top:0.75rem;
+        background:rgba(255,255,255,0.07); color:#ccc;
+        border:1px solid rgba(255,255,255,0.15); padding:0.7rem;
+        border-radius:14px; font-family:'Cairo',sans-serif;
+        font-size:0.9rem; cursor:pointer;
+      ">إغلاق</button>
+    </div>
+  </div>
+</div>
+<!-- ===== END PWA INSTALL GUIDE MODAL ===== -->
+
+<script>
+  function openPwaModal() {
+    const modal = document.getElementById('pwaInstallModal');
+    if (!modal) return;
+    // تحديد نوع الجهاز
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) && /WebKit/.test(navigator.userAgent) && !/CriOS|FxiOS/.test(navigator.userAgent);
+    document.getElementById('pwaAndroidSteps').style.display = isIOS ? 'none' : 'block';
+    document.getElementById('pwaIOSSteps').style.display = isIOS ? 'block' : 'none';
+    // لو في deferredPrompt (Chrome Android) اعرض زر التثبيت المباشر
+    const directBtn = document.getElementById('pwaDirectInstallBtn');
+    if (directBtn) directBtn.style.display = (deferredPrompt && !isIOS) ? 'flex' : 'none';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closePwaModal() {
+    const modal = document.getElementById('pwaInstallModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  function triggerDirectInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          pwaInstalled = true;
+          showToast('✅ تم تثبيت التطبيق بنجاح!');
+          closePwaModal();
+        }
+        deferredPrompt = null;
+        updateAdminUI();
+      });
+    }
+  }
 </script>
 </body>
 </html>
