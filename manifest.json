@@ -1,24 +1,23 @@
 {
-  "name": "Astronomy and space",
-  "short_name": "Astronomy",
-  "description": "منصة متكاملة لتعليم علم الفلك بشكل مجاني",
-  "start_url": "/index.html",
+  "name": "منصة الفلك المتكاملة",
+  "short_name": "الفلك",
+  "description": "تعلم علم الفلك والفضاء بالعربي",
+  "start_url": "/",
   "display": "standalone",
+  "background_color": "#050308",
   "theme_color": "#0f0a1a",
-  "background_color": "#0f0a1a",
-  "orientation": "any",
-  "scope": "/",
+  "orientation": "portrait",
   "lang": "ar",
   "dir": "rtl",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
