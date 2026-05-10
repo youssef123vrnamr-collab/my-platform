@@ -1,5 +1,5 @@
 {
-  "name": "منصة الفلك المتكاملة",
+  "name": "Astronomy and Space",
   "short_name": "الفلك",
   "description": "تعلم علم الفلك والفضاء بالعربي",
   "start_url": "/",
@@ -11,13 +11,13 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
