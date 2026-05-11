@@ -2435,7 +2435,7 @@ body {
         </div>
       </div>
     </div>
-    <div class="center-action"><button class="btn btn-ghost refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> تحديث</button></div>
+    <div class="center-action"></div>
     <div class="nav-actions" style="display: none;"></div>
   </nav>
 
@@ -7020,22 +7020,67 @@ function switchProgressTab(tab) {
     universe:   ['universe','cosmos','big bang','dark matter','dark energy','cosmic','كون','كوزموس','طاقة مظلمة']
   };
 
+  // مصطلح بحث مخصص لكل قسم في Spaceflight News API
+  const CATEGORY_SEARCH_TERM = {
+    stars:      'star OR stellar OR supernova OR pulsar OR neutron',
+    planets:    'planet OR mars OR venus OR jupiter OR saturn OR exoplanet',
+    galaxies:   'galaxy OR galaxies OR milky way OR andromeda',
+    blackholes: 'black hole OR event horizon OR singularity',
+    missions:   'mission OR launch OR rocket OR spacecraft OR probe',
+    astronauts: 'astronaut OR cosmonaut OR crew OR spacewalk OR ISS',
+    telescopes: 'telescope OR observatory OR Webb OR Hubble',
+    phenomena:  'meteor OR eclipse OR aurora OR comet OR asteroid',
+    universe:   'universe OR big bang OR dark matter OR dark energy OR cosmic'
+  };
+
+  // cache مستقل لكل قسم
+  const _catNewsCache = {};
+  const CAT_NEWS_TTL = 6 * 60 * 60 * 1000; // 6 ساعات
+
   async function fetchCategoryNews(key) {
+    // تحقق من الـ cache الخاص بالقسم
+    const cached = _catNewsCache[key];
+    if (cached && (Date.now() - cached.time) < CAT_NEWS_TTL) return cached.data;
+
     const keywords = CATEGORY_KEYWORDS[key];
     if (!keywords) return [];
-    // جلب الأخبار الكاملة من المصادر
-    let all = _newsCache;
-    if (!all || !all.length) {
-      try { all = await fetchLiveNews(); } catch(e) { all = []; }
-    }
-    if (!all || !all.length) return [];
-    // فلترة بالكلمات المفتاحية
+
+    const results = [];
+
+    // أولاً: جلب من Spaceflight News API بـ search term مخصص للقسم
+    try {
+      const term = encodeURIComponent(CATEGORY_SEARCH_TERM[key] || keywords[0]);
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(`https://api.spaceflightnewsapi.net/v4/articles/?limit=20&ordering=-published_at&search=${term}`, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (res.ok) {
+        const data = await res.json();
+        (data.results || []).forEach(a => {
+          results.push({ ...a, _source: 'spaceflight', _sourceName: a.news_site || 'Spaceflight News' });
+        });
+      }
+    } catch(e) { console.warn(`category news fetch failed for ${key}:`, e.message); }
+
+    // ثانياً: فلترة إضافية بالكلمات المفتاحية للتأكد من الدقة
     const lower = keywords.map(k => k.toLowerCase());
-    const filtered = all.filter(a => {
-      const text = ((a.title || '') + ' ' + (a.summary || '') + ' ' + (a._sourceName || '')).toLowerCase();
+    const filtered = results.filter(a => {
+      const text = ((a.title || '') + ' ' + (a.summary || '')).toLowerCase();
       return lower.some(kw => text.includes(kw));
     });
-    return filtered;
+
+    // لو مفيش نتايج من الـ API المخصص، ارجع للـ cache العام بفلترة صارمة
+    const final = filtered.length ? filtered : (() => {
+      const all = _newsCache || [];
+      return all.filter(a => {
+        const text = ((a.title || '') + ' ' + (a.summary || '')).toLowerCase();
+        return lower.some(kw => text.includes(kw));
+      });
+    })();
+
+    // احفظ في الـ cache الخاص بالقسم
+    _catNewsCache[key] = { data: final, time: Date.now() };
+    return final;
   }
 
   async function loadLiveCategoryData(key, color){
@@ -7081,8 +7126,8 @@ function switchProgressTab(tab) {
     delete _wikiCache[key];
     if (key === 'universe') { _apodCache = null; }
     else if (key === 'missions') { _launchesCache = null; }
-    // مسح cache الأخبار عشان يجيب أحدث أخبار للقسم
-    _newsCache = null; _newsTime = 0;
+    // مسح cache الأخبار الخاص بالقسم
+    if (typeof _catNewsCache !== 'undefined') delete _catNewsCache[key];
     const c = document.getElementById(`cosmosLive_${key}`);
     if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
     const cat = COSMOS_DATA[key];
