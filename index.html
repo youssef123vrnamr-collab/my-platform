@@ -6983,29 +6983,13 @@ function switchProgressTab(tab) {
     const cat = COSMOS_DATA[key]; if(!cat) return;
     titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
     const liveContainerId = `cosmosLive_${key}`;
-    const aiContainerId = `cosmosAI_${key}`;
     const hasLive = ['planets','universe','missions','stars','galaxies','blackholes','astronauts','telescopes','phenomena'].includes(key);
 
-    // AI-powered dynamic section (all categories)
-    const aiBlock = `
-      <div class="cosmos-modal-intro" style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08));border:1px solid rgba(167,139,250,.4);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
-        <span style="display:flex;align-items:center;gap:.5rem;flex:1">
-          <i class="fas fa-robot" style="color:#a78bfa;font-size:1.1rem"></i>
-          <strong style="color:#e2e8f0">محتوى الذكاء الاصطناعي</strong>
-          <span style="font-size:.8rem;color:#9ca3af">— يتجدد تلقائياً كل 6 ساعات</span>
-        </span>
-        <button class="cosmos-refresh-btn" style="background:rgba(139,92,246,.25);border-color:rgba(167,139,250,.5)" onclick="window._refreshAICategory('${key}','${cat.color}','${aiContainerId}',event)">
-          <i class="fas fa-rotate"></i> توليد محتوى جديد
-        </button>
-      </div>
-      <div id="${aiContainerId}"></div>
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:1.5rem 0">
-    `;
-
     const liveBlock = hasLive ? `
-      <div class="cosmos-modal-intro" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35)">
+      <div class="cosmos-modal-intro" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
         <i class="fas fa-satellite-dish" style="color:#22c55e;margin-left:.5rem"></i>
-        <strong>تحديث مباشر من مصادر موثوقة</strong>
+        <strong>أخبار ومعلومات مباشرة من مصادر موثوقة</strong>
+        <span style="font-size:.78rem;color:#9ca3af">NASA · ESA · Spaceflight News</span>
         <button class="cosmos-refresh-btn" onclick="refreshLiveCategory('${key}', event)"><i class="fas fa-rotate"></i> تحديث</button>
       </div>
       <div id="${liveContainerId}">
@@ -7014,12 +6998,9 @@ function switchProgressTab(tab) {
       <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:1.5rem 0">
     ` : '';
 
-    body.innerHTML = aiBlock + liveBlock + renderStaticCosmos(cat);
+    body.innerHTML = liveBlock + renderStaticCosmos(cat);
     m.classList.add('active');
     document.body.style.overflow = 'hidden';
-
-    // Load AI content
-    window._loadAIContentForCategory(key, cat.color, aiContainerId);
 
     if (hasLive) loadLiveCategoryData(key, cat.color);
   };
@@ -8766,46 +8747,16 @@ window.playChatSound = function() {
 })();
 
 // ============================
-// 5b. AI CONTENT AUTO-REFRESH
-// كل 6 ساعات يجدد محتوى الذكاء الاصطناعي لكل الأقسام المفتوحة
-// ============================
+// 5b. NEWS AUTO-REFRESH — تحديث الأخبار الحقيقية كل 24 ساعة في الخلفية
 (function() {
-  const AI_REFRESH_INTERVAL = 6 * 60 * 60 * 1000; // 6 ساعات
-
-  // Preload AI content silently in background after page load
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      if (typeof window._preloadAllAIContent === 'function') {
-        window._preloadAllAIContent();
-      }
-    }, 5000); // بعد 5 ثواني من التحميل
-  });
-
-  // Auto-refresh AI content if a cosmos modal is open and TTL expired
+  // تحديث تلقائي لـ cache الأخبار كل 24 ساعة
   setInterval(async () => {
-    const modal = document.getElementById('cosmosModal');
-    if (!modal || !modal.classList.contains('active')) return;
-    // Find open AI container
-    const aiContainers = modal.querySelectorAll('[id^="cosmosAI_"]');
-    for (const c of aiContainers) {
-      const key = c.id.replace('cosmosAI_', '');
-      if (!key) continue;
-      // Check if cache is stale
-      if (typeof _aiContentCache !== 'undefined' && _aiContentCache[key]) {
-        const age = Date.now() - (_aiContentCache[key].time || 0);
-        if (age < AI_REFRESH_INTERVAL) continue;
+    try {
+      if (typeof fetchLiveNews === 'function') {
+        await fetchLiveNews(true);
       }
-      // Refresh
-      if (typeof window._loadAIContentForCategory === 'function') {
-        const cat = (typeof COSMOS_DATA !== 'undefined') && COSMOS_DATA[key];
-        const color = cat ? cat.color : '#a78bfa';
-        c.style.opacity = '0';
-        c.style.transition = 'opacity 0.4s';
-        await window._loadAIContentForCategory(key, color, c.id);
-        c.style.opacity = '1';
-      }
-    }
-  }, 30 * 60 * 1000); // يتحقق كل 30 دقيقة
+    } catch(e) {}
+  }, 24 * 60 * 60 * 1000);
 })();
 
 // ============================
