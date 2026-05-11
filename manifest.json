@@ -2,7 +2,7 @@
   "name": "Astronomy and Space",
   "short_name": "Astronomy",
   "description": "منصة متكاملة لتعليم علم الفلك بشكل مجاني",
-  "start_url": "/public.html",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#050308",
