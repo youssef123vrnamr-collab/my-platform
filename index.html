@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Astronomy and space</title>
 
   <!-- SEO أساسي -->
@@ -70,7 +70,8 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
-    body { font-family: 'Cairo', sans-serif; background: #03030a; color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    html { height: 100%; height: -webkit-fill-available; }
+    body { font-family: 'Cairo', sans-serif; background: #03030a; color: #fff; min-height: 100vh; min-height: -webkit-fill-available; min-height: 100dvh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
     .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; max-width: 100%; background: transparent; overflow-x: hidden; margin: 0; padding: 0; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
@@ -2435,7 +2436,7 @@ body {
         </div>
       </div>
     </div>
-    <div class="center-action"><button class="btn btn-ghost refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> تحديث</button></div>
+    <div class="center-action"></div>
     <div class="nav-actions" style="display: none;"></div>
   </nav>
 
@@ -5060,6 +5061,10 @@ async function updateAdminUI() {
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
+  // إخفاء شريط العنوان (URL bar) بمجرد التمرير
+  function hideAddressBar() { if (window.scrollY === 0) { window.scrollTo(0, 1); } }
+  document.addEventListener("touchstart", function() { hideAddressBar(); }, { passive: true });
+  document.addEventListener("touchend", function() { setTimeout(hideAddressBar, 100); }, { passive: true });
 
   function toggleSettingsMenu(e) { e.stopPropagation(); const menu = document.getElementById("settingsMenu"); if (menu) menu.classList.toggle("active"); }
   function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
