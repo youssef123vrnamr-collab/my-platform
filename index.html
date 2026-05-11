@@ -6630,6 +6630,8 @@ function switchProgressTab(tab) {
   }
 
   let _newsCache = null, _newsTime = 0, _newsDisplayOffset = 0;
+  // اخلي _newsTime global عشان countdown يشوفه
+  window._getNewsTime = function(){ return _newsTime; };
   const NEWS_TTL = 24 * 60 * 60 * 1000; // cache يومي
   const NEWS_PAGE_SIZE = 12;
   window._currentNewsTab = 'all';
@@ -8702,48 +8704,24 @@ window.playChatSound = function() {
 })();
 
 // ============================
-// 5. NEWS AUTO-REFRESH
+// 5. NEWS COUNTDOWN (display only — no auto-rotate)
 // ============================
 (function() {
   let _countdownInterval = null;
-  const REFRESH_SEC = 180; // 3 دقائق
 
   window._startNewsCountdown = function() {
     if (_countdownInterval) clearInterval(_countdownInterval);
-    let remaining = REFRESH_SEC;
+    // عرض وقت آخر تحديث فقط — بدون تدوير تلقائي
     function tick() {
       const el = document.getElementById('newsCountdownSec');
-      if (el) el.textContent = remaining;
-      if (remaining <= 0) remaining = REFRESH_SEC;
-      else remaining--;
-    }
-    tick();
-    _countdownInterval = setInterval(tick, 1000);
-  };
-
-  // Auto-refresh news every 3 minutes if news modal is open
-  setInterval(async () => {
-    const modal = document.getElementById('cosmosModal');
-    if (modal && modal.classList.contains('active')) {
-      const titleEl = document.getElementById('cosmosModalTitle');
-      if (titleEl && titleEl.textContent.includes('أخبار')) {
-        if (typeof fetchLiveNews === 'function' && typeof renderNewsCards === 'function') {
-          try {
-            const articles = await fetchLiveNews(true);
-            const container = document.getElementById('cosmosNewsContainer');
-            if (container) {
-              container.style.opacity = '0';
-              container.style.transition = 'opacity 0.4s';
-              setTimeout(() => {
-                container.innerHTML = renderNewsCards(getNewsPage(articles));
-                container.style.opacity = '1';
-              }, 400);
-            }
-          } catch(e) {}
-        }
+      const t = typeof window._getNewsTime === 'function' ? window._getNewsTime() : 0;
+      if (el && t) {
+        el.textContent = new Date(t).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
       }
     }
-  }, REFRESH_SEC * 1000);
+    tick();
+    _countdownInterval = setInterval(tick, 30000);
+  };
 })();
 
 // ============================
