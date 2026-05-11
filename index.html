@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>Astronomy and space</title>
 
   <!-- SEO أساسي -->
@@ -70,8 +70,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
-    html { height: 100%; height: -webkit-fill-available; }
-    body { font-family: 'Cairo', sans-serif; background: #03030a; color: #fff; min-height: 100vh; min-height: -webkit-fill-available; min-height: 100dvh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    body { font-family: 'Cairo', sans-serif; background: #03030a; color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
     .app-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; width: 100%; max-width: 100%; background: transparent; overflow-x: hidden; margin: 0; padding: 0; }
     .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%); }
     :root { --primary: #6366f1; --secondary: #8b5cf6; --accent: #ec4899; --success: #10b981; --danger: #ef4444; --dark: #0f0a1a; --card: #1a1025; --ai-color: #06b6d4; }
@@ -2436,7 +2435,7 @@ body {
         </div>
       </div>
     </div>
-    <div class="center-action"></div>
+    <div class="center-action"><button class="btn btn-ghost refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> تحديث</button></div>
     <div class="nav-actions" style="display: none;"></div>
   </nav>
 
@@ -5061,10 +5060,6 @@ async function updateAdminUI() {
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
   function requestFullscreenAutomatically() { const elem = document.documentElement; const requestFullscreen = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen; if (requestFullscreen) { requestFullscreen.call(elem).catch(err => { console.warn("تعذر الدخول إلى وضع ملء الشاشة تلقائياً: ", err); }); } }
-  // إخفاء شريط العنوان (URL bar) بمجرد التمرير
-  function hideAddressBar() { if (window.scrollY === 0) { window.scrollTo(0, 1); } }
-  document.addEventListener("touchstart", function() { hideAddressBar(); }, { passive: true });
-  document.addEventListener("touchend", function() { setTimeout(hideAddressBar, 100); }, { passive: true });
 
   function toggleSettingsMenu(e) { e.stopPropagation(); const menu = document.getElementById("settingsMenu"); if (menu) menu.classList.toggle("active"); }
   function closeSettingsMenuOnClickOutside(e) { const dropdown = document.getElementById("settingsDropdown"); const menu = document.getElementById("settingsMenu"); if (dropdown && menu && !dropdown.contains(e.target)) { menu.classList.remove("active"); } }
@@ -5076,7 +5071,16 @@ async function updateAdminUI() {
     document.addEventListener("click", closeSettingsMenuOnClickOutside);
   });
 
-  window.addEventListener("load", function() { loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); try { loadAiKeyOnce(); listenAiKey(); } catch(_){} document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
+  window.addEventListener("load", function() {
+    // تحميل الأخبار المحفوظة من localStorage عشان تشتغل فوراً قبل الشبكة
+    try {
+      const stored = JSON.parse(localStorage.getItem('falak_news_cache') || 'null');
+      if (stored && stored.articles && stored.articles.length && stored.time && (Date.now() - stored.time) < (24 * 60 * 60 * 1000)) {
+        _newsCache = stored.articles;
+        _newsTime = stored.time;
+      }
+    } catch(e){}
+    loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); try { loadAiKeyOnce(); listenAiKey(); } catch(_){} document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
   setTimeout(hideLoader, 5000);
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); if(feedbacksUnsubscribe) feedbacksUnsubscribe(); removePresence(); });
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "supervisorPayoutModal") closeSupervisorPayoutModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
@@ -6626,18 +6630,147 @@ function switchProgressTab(tab) {
   }
 
   let _newsCache = null, _newsTime = 0, _newsDisplayOffset = 0;
-  const NEWS_TTL = 3 * 60 * 1000;
-  const NEWS_PAGE_SIZE = 9;
+  const NEWS_TTL = 24 * 60 * 60 * 1000; // cache يومي
+  const NEWS_PAGE_SIZE = 12;
+  window._currentNewsTab = 'all';
 
+  // جلب الأخبار من مصادر متعددة حقيقية
   async function fetchLiveNews(forceRefresh){
-    if (!forceRefresh && _newsCache && (Date.now() - _newsTime) < NEWS_TTL) return _newsCache;
-    const res = await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=50&ordering=-published_at');
-    if (!res.ok) throw new Error('news fetch failed');
-    const data = await res.json();
-    _newsCache = data.results || [];
-    _newsTime = Date.now();
-    return _newsCache;
+    if (!forceRefresh && _newsCache && _newsCache.length && (Date.now() - _newsTime) < NEWS_TTL) return _newsCache;
+
+    const allArticles = [];
+    const errors = [];
+
+    // المصدر 1: Spaceflight News API (الأقوى — NASA, SpaceX, ESA, Sky&Tel)
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=100&ordering=-published_at', { signal: ctrl.signal });
+      clearTimeout(t);
+      if (res.ok) {
+        const data = await res.json();
+        (data.results || []).forEach(a => {
+          allArticles.push({
+            ...a,
+            _source: 'spaceflight',
+            _sourceName: a.news_site || 'Spaceflight News'
+          });
+        });
+      }
+    } catch(e) { errors.push('spaceflight: ' + e.message); }
+
+    // المصدر 2: NASA News RSS عبر allorigins proxy
+    try {
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 8000);
+      const rssUrl = encodeURIComponent('https://www.nasa.gov/news/rss/');
+      const res2 = await fetch(`https://api.allorigins.win/get?url=${rssUrl}`, { signal: ctrl2.signal });
+      clearTimeout(t2);
+      if (res2.ok) {
+        const j = await res2.json();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(j.contents, 'text/xml');
+        const items = xml.querySelectorAll('item');
+        items.forEach(item => {
+          const title = item.querySelector('title')?.textContent || '';
+          const link = item.querySelector('link')?.textContent || '';
+          const desc = item.querySelector('description')?.textContent?.replace(/<[^>]+>/g,'') || '';
+          const pubDate = item.querySelector('pubDate')?.textContent || '';
+          const img = item.querySelector('enclosure')?.getAttribute('url') || '';
+          if (title && link) {
+            allArticles.push({
+              title, url: link, summary: desc.slice(0, 300),
+              image_url: img,
+              published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+              _source: 'nasa', _sourceName: 'NASA'
+            });
+          }
+        });
+      }
+    } catch(e) { errors.push('nasa rss: ' + e.message); }
+
+    // المصدر 3: ESA News RSS عبر allorigins proxy
+    try {
+      const ctrl3 = new AbortController();
+      const t3 = setTimeout(() => ctrl3.abort(), 8000);
+      const rssUrl3 = encodeURIComponent('https://www.esa.int/rssfeed/Our_Activities/Space_News');
+      const res3 = await fetch(`https://api.allorigins.win/get?url=${rssUrl3}`, { signal: ctrl3.signal });
+      clearTimeout(t3);
+      if (res3.ok) {
+        const j3 = await res3.json();
+        const parser3 = new DOMParser();
+        const xml3 = parser3.parseFromString(j3.contents, 'text/xml');
+        const items3 = xml3.querySelectorAll('item');
+        items3.forEach(item => {
+          const title = item.querySelector('title')?.textContent || '';
+          const link = item.querySelector('link')?.textContent || item.querySelector('guid')?.textContent || '';
+          const desc = item.querySelector('description')?.textContent?.replace(/<[^>]+>/g,'') || '';
+          const pubDate = item.querySelector('pubDate')?.textContent || '';
+          const imgEl = item.querySelector('enclosure') || item.querySelector('thumbnail');
+          const img = imgEl?.getAttribute('url') || '';
+          if (title && link) {
+            allArticles.push({
+              title, url: link, summary: desc.slice(0, 300),
+              image_url: img,
+              published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+              _source: 'esa', _sourceName: 'ESA'
+            });
+          }
+        });
+      }
+    } catch(e) { errors.push('esa rss: ' + e.message); }
+
+    if (errors.length) console.warn('News fetch partial errors:', errors);
+
+    // ترتيب حسب التاريخ (الأحدث أولاً) وإزالة التكرار
+    const seen = new Set();
+    const unique = allArticles
+      .filter(a => { const k = a.url || a.title; if (seen.has(k)) return false; seen.add(k); return true; })
+      .sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+
+    if (unique.length > 0) {
+      _newsCache = unique;
+      _newsTime = Date.now();
+      // حفظ في localStorage عشان يشتغل حتى لو الشبكة وقفت
+      try { localStorage.setItem('falak_news_cache', JSON.stringify({articles: unique, time: _newsTime})); } catch(e){}
+    } else {
+      // جرب اللود من localStorage لو الشبكة فشلت
+      try {
+        const stored = JSON.parse(localStorage.getItem('falak_news_cache') || 'null');
+        if (stored && stored.articles && stored.articles.length) {
+          _newsCache = stored.articles;
+          _newsTime = stored.time;
+        }
+      } catch(e){}
+    }
+
+    return _newsCache || [];
   }
+
+  // تصفية الأخبار حسب المصدر
+  function filterNewsBySource(articles, source) {
+    if (!source || source === 'all') return articles;
+    return articles.filter(a => a._source === source);
+  }
+
+  window.switchNewsTab = function(source, btn) {
+    window._currentNewsTab = source;
+    document.querySelectorAll('.news-tab-btn').forEach(b => {
+      b.classList.remove('active-tab');
+      b.style.background = '';
+      b.style.borderColor = '';
+      b.style.color = '';
+    });
+    if (btn) {
+      btn.classList.add('active-tab');
+      btn.style.background = 'rgba(236,72,153,.25)';
+      btn.style.borderColor = 'rgba(236,72,153,.6)';
+      btn.style.color = '#f9a8d4';
+    }
+    const filtered = filterNewsBySource(_newsCache || [], source);
+    const c = document.getElementById('cosmosNewsContainer');
+    if (c) c.innerHTML = renderNewsCards(filtered.length ? filtered : (_newsCache || []));
+  };
 
   function getNewsPage(articles){
     if (!articles || !articles.length) return articles;
@@ -6776,25 +6909,33 @@ function switchProgressTab(tab) {
 
   function renderNewsCards(articles){
     if (!articles || !articles.length) {
-      return '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب لاحقاً.</p></div>';
+      return '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب التحديث أو تأكد من الاتصال.</p></div>';
     }
     const fallback = 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70';
-    return `<div class="cosmos-cards">${articles.map(a=>{
+    // ألوان المصادر
+    const sourceColors = { nasa: '#fc3d21', esa: '#003087', spaceflight: '#ec4899', default: '#6366f1' };
+    const sourceIcons = { nasa: 'fa-meteor', esa: 'fa-satellite', default: 'fa-rss' };
+    return `<div class="cosmos-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem">${articles.map(a=>{
       const url = a.url || '#';
       const img = a.image_url || fallback;
+      const src = a._source || 'spaceflight';
+      const srcName = a._sourceName || a.news_site || 'Space News';
+      const srcColor = sourceColors[src] || sourceColors.default;
+      const srcIcon = sourceIcons[src] || sourceIcons.default;
       return `
       <a class="cosmos-card cosmos-news-card" href="${encodeURI(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit;display:block">
         <div class="cosmos-card-img" style="background-image:url('${encodeURI(img)}')" onerror="this.style.backgroundImage='url(${fallback})'">
-          <span class="cosmos-card-tag floating"><i class="fas fa-rss"></i> ${escapeHtml(a.news_site||'Space News')}</span>
+          <span class="cosmos-card-tag floating" style="background:${srcColor};color:#fff"><i class="fas ${srcIcon}"></i> ${escapeHtml(srcName)}</span>
           <span class="cosmos-card-time"><i class="far fa-clock"></i> ${escapeHtml(timeAgo(a.published_at))}</span>
         </div>
         <div class="cosmos-card-body">
           <h4>${escapeHtml(a.title||'')}</h4>
           <p>${escapeHtml((a.summary||'').slice(0, 220))}${(a.summary||'').length>220?'…':''}</p>
-          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ الخبر كاملاً</span>
+          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ الخبر كاملاً من المصدر</span>
         </div>
       </a>`;
-    }).join('')}</div>`;
+    }).join('')}</div>
+    <p style="font-size:.78rem;color:#9ca3af;margin-top:1rem;text-align:center"><i class="fas fa-circle-info"></i> المصادر: Spaceflight News API · NASA RSS · ESA RSS — تتجدد يومياً</p>`;
   }
 
   window.openCosmosCategory = async function(key){
@@ -6805,35 +6946,33 @@ function switchProgressTab(tab) {
     if (key === 'news') {
       titleEl.innerHTML = `<i class="fas fa-newspaper" style="color:#ec4899"></i> أخبار الكون — مباشرة`;
       body.innerHTML = `
-        <div class="cosmos-modal-intro" style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08));border:1px solid rgba(167,139,250,.4);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
+        <div class="cosmos-modal-intro" style="background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.35);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
           <span style="display:flex;align-items:center;gap:.5rem;flex:1">
-            <i class="fas fa-robot" style="color:#a78bfa;font-size:1.1rem"></i>
-            <strong style="color:#e2e8f0">أخبار بالذكاء الاصطناعي</strong>
-            <span style="font-size:.8rem;color:#9ca3af">— تتجدد كل 6 ساعات</span>
+            <i class="fas fa-satellite-dish" style="color:#ec4899;font-size:1.1rem"></i>
+            <strong style="color:#e2e8f0">أخبار الفضاء والفلك — مصادر عالمية موثوقة</strong>
           </span>
-          <button class="cosmos-refresh-btn" style="background:rgba(139,92,246,.25);border-color:rgba(167,139,250,.5)" onclick="window._refreshAICategory('news','#ec4899','cosmosAI_news',event)">
-            <i class="fas fa-rotate"></i> توليد أخبار جديدة
-          </button>
-        </div>
-        <div id="cosmosAI_news"></div>
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:1.5rem 0">
-        <div class="cosmos-modal-intro">
-          <i class="fas fa-bolt" style="color:#ec4899;margin-left:.5rem"></i>
-          أحدث أخبار الفضاء والفلك تُحدَّث تلقائياً من <strong>Spaceflight News</strong> (مصادر عالمية موثوقة كـ NASA و SpaceX و ESA). اضغط على أي خبر لقراءته كاملاً في المصدر الأصلي.
+          <span style="font-size:.78rem;color:#9ca3af">NASA · SpaceX · ESA · Sky&amp;Tel · Universe Today</span>
           <button class="cosmos-refresh-btn" onclick="refreshLiveNews(event)"><i class="fas fa-rotate"></i> تحديث الآن</button>
-          <span id="newsCountdown" style="margin-right:.5rem;font-size:.78rem;color:#a78bfa;display:inline-flex;align-items:center;gap:.3rem"><i class="far fa-clock"></i> التحديث القادم: <strong id="newsCountdownSec">180</strong>ث</span>
+          <span id="newsCountdown" style="margin-right:.5rem;font-size:.78rem;color:#a78bfa;display:inline-flex;align-items:center;gap:.3rem"><i class="far fa-clock"></i> آخر تحديث: <strong id="newsCountdownSec">—</strong></span>
+        </div>
+        <div id="newsSourceTabs" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
+          <button class="cosmos-refresh-btn news-tab-btn active-tab" style="background:rgba(236,72,153,.25);border-color:rgba(236,72,153,.6);color:#f9a8d4" onclick="switchNewsTab('all',this)"><i class="fas fa-globe"></i> الكل</button>
+          <button class="cosmos-refresh-btn news-tab-btn" onclick="switchNewsTab('spaceflight',this)"><i class="fas fa-rss"></i> Spaceflight News</button>
+          <button class="cosmos-refresh-btn news-tab-btn" onclick="switchNewsTab('nasa',this)"><i class="fas fa-meteor"></i> NASA</button>
+          <button class="cosmos-refresh-btn news-tab-btn" onclick="switchNewsTab('esa',this)"><i class="fas fa-satellite"></i> ESA</button>
         </div>
         <div id="cosmosNewsContainer">
-          <div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب آخر الأخبار من الفضاء...</p></div>
+          <div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب آخر الأخبار من مصادرها الرسمية...</p></div>
         </div>`;
       m.classList.add('active');
       document.body.style.overflow = 'hidden';
       _startNewsCountdown();
-      // Load AI news and live news in parallel
-      window._loadAIContentForCategory('news', '#ec4899', 'cosmosAI_news');
+      window._currentNewsTab = 'all';
       try {
         const articles = await fetchLiveNews();
-        document.getElementById('cosmosNewsContainer').innerHTML = renderNewsCards(getNewsPage(articles));
+        document.getElementById('cosmosNewsContainer').innerHTML = renderNewsCards(articles);
+        const ts = document.getElementById('newsCountdownSec');
+        if (ts && _newsTime) ts.textContent = new Date(_newsTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
       } catch(e){
         console.error(e);
         document.getElementById('cosmosNewsContainer').innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب الأخبار الآن. تحقق من الاتصال وحاول مرة أخرى.</p></div>';
@@ -6885,11 +7024,59 @@ function switchProgressTab(tab) {
     if (hasLive) loadLiveCategoryData(key, cat.color);
   };
 
+  // كلمات مفتاحية لكل قسم لفلترة الأخبار
+  const CATEGORY_KEYWORDS = {
+    stars:      ['star','stellar','supernova','neutron','pulsar','sun','solar','نجم','شمس','مستعر'],
+    planets:    ['planet','mars','venus','jupiter','saturn','mercury','uranus','neptune','exoplanet','كوكب','مريخ','مشتري','زحل'],
+    galaxies:   ['galaxy','galaxies','milky way','andromeda','hubble','مجرة','درب التبانة'],
+    blackholes: ['black hole','blackhole','event horizon','singularity','gravitational','ثقب أسود','جاذبية'],
+    missions:   ['mission','launch','rocket','spacex','nasa mission','spacecraft','probe','مهمة','إطلاق','مركبة'],
+    astronauts: ['astronaut','cosmonaut','crew','spacewalk','iss','station','رائد فضاء','محطة'],
+    telescopes: ['telescope','observatory','hubble','webb','james webb','تلسكوب','مرصد'],
+    phenomena:  ['meteor','eclipse','aurora','comet','asteroid','phenomenon','شهاب','كسوف','مذنب','كويكب','شفق'],
+    universe:   ['universe','cosmos','big bang','dark matter','dark energy','cosmic','كون','كوزموس','طاقة مظلمة']
+  };
+
+  async function fetchCategoryNews(key) {
+    const keywords = CATEGORY_KEYWORDS[key];
+    if (!keywords) return [];
+    // جلب الأخبار الكاملة من المصادر
+    let all = _newsCache;
+    if (!all || !all.length) {
+      try { all = await fetchLiveNews(); } catch(e) { all = []; }
+    }
+    if (!all || !all.length) return [];
+    // فلترة بالكلمات المفتاحية
+    const lower = keywords.map(k => k.toLowerCase());
+    const filtered = all.filter(a => {
+      const text = ((a.title || '') + ' ' + (a.summary || '') + ' ' + (a._sourceName || '')).toLowerCase();
+      return lower.some(kw => text.includes(kw));
+    });
+    return filtered;
+  }
+
   async function loadLiveCategoryData(key, color){
     const container = document.getElementById(`cosmosLive_${key}`);
     if (!container) return;
     try {
       const parts = [];
+
+      // أخبار مخصصة للقسم من Spaceflight News + NASA + ESA
+      const catNews = await fetchCategoryNews(key);
+      if (catNews && catNews.length) {
+        const cat = COSMOS_DATA[key];
+        parts.push(`
+          <div class="cosmos-modal-intro" style="background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.3);margin-bottom:.75rem">
+            <i class="fas fa-newspaper" style="color:#ec4899;margin-left:.5rem"></i>
+            <strong>أحدث أخبار ${escapeHtml(cat ? cat.title : key)}</strong>
+            <span style="font-size:.78rem;color:#9ca3af;margin-right:.5rem">— من مصادر رسمية</span>
+          </div>
+          ${renderNewsCards(catNews.slice(0, 9))}
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:1.5rem 0">
+        `);
+      }
+
+      // بيانات حية إضافية حسب القسم
       if (key === 'universe') {
         try { const apod = await fetchAPOD(); if (apod) parts.push(renderAPODCard(apod)); } catch(e){ console.warn('apod failed', e); }
       } else if (key === 'missions') {
@@ -6899,7 +7086,7 @@ function switchProgressTab(tab) {
         const items = await fetchWikiCards(key);
         if (items.length) parts.push(renderWikiCards(items, color));
       }
-      container.innerHTML = parts.length ? parts.join('<div style="height:1rem"></div>') : '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد بيانات حية متاحة الآن. تأكد من اتصال الإنترنت.</p></div>';
+      container.innerHTML = parts.length ? parts.join('<div style="height:1rem"></div>') : '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد بيانات متاحة الآن لهذا القسم. تأكد من اتصال الإنترنت.</p></div>';
     } catch (e) {
       console.error('live category fetch failed', e);
       container.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب البيانات الحية، المحتوى المحفوظ ظاهر بالأسفل.</p></div>';
@@ -6911,6 +7098,8 @@ function switchProgressTab(tab) {
     delete _wikiCache[key];
     if (key === 'universe') { _apodCache = null; }
     else if (key === 'missions') { _launchesCache = null; }
+    // مسح cache الأخبار عشان يجيب أحدث أخبار للقسم
+    _newsCache = null; _newsTime = 0;
     const c = document.getElementById(`cosmosLive_${key}`);
     if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
     const cat = COSMOS_DATA[key];
@@ -6920,13 +7109,18 @@ function switchProgressTab(tab) {
   window.refreshLiveNews = async function(ev){
     if (ev) ev.stopPropagation();
     _newsCache = null;
+    _newsTime = 0;
     const c = document.getElementById('cosmosNewsContainer');
-    if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
+    if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب أحدث الأخبار من المصادر الرسمية...</p></div>';
     try {
       const articles = await fetchLiveNews(true);
-      if (c) c.innerHTML = renderNewsCards(getNewsPage(articles));
+      const tab = window._currentNewsTab || 'all';
+      const filtered = filterNewsBySource(articles, tab);
+      if (c) c.innerHTML = renderNewsCards(filtered.length ? filtered : articles);
+      const ts = document.getElementById('newsCountdownSec');
+      if (ts && _newsTime) ts.textContent = new Date(_newsTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
     } catch(e){
-      if (c) c.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر التحديث الآن.</p></div>';
+      if (c) c.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر التحديث الآن. تأكد من الاتصال.</p></div>';
     }
   };
 
