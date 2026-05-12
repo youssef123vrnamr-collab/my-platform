@@ -10887,9 +10887,9 @@ function startSelfLearning(level) {
   SL.wrongCount = 0;
   SL.sessionXP = 0;
   SL.apiFetched = [];
-  // Build shuffled pool from local bank
+  SL.unusedPool = [];
+  // Local pool kept ONLY as offline fallback
   SL.pool = slShuffle([...SL_QUESTIONS[level]]);
-  SL.unusedPool = [...SL.pool];
 
   const colors = {beginner:'#10b981',intermediate:'#a78bfa',advanced:'#fbbf24',expert:'#f472b6'};
   const names = {beginner:'مبتدئ',intermediate:'متوسط',advanced:'متقدم',expert:'محترف'};
@@ -10900,20 +10900,18 @@ function startSelfLearning(level) {
   slLoadStage();
 }
 
-// ---- Load a stage (10 questions) ----
+// ---- Load a stage (10 questions) — ALWAYS fetches from internet first ----
 async function slLoadStage() {
   SL.stageCorrect = 0;
   SL.stageXP = 0;
   SL.currentQ = 0;
 
-  // Refill pool if running low
+  // Always try to get fresh internet questions
+  await slFetchAPI();
+
+  // If API failed and pool still empty → use local as offline backup
   if (SL.unusedPool.length < SL.PER_STAGE) {
-    // Try API first
-    await slFetchAPI();
-    // If still not enough, reshuffle local
-    if (SL.unusedPool.length < SL.PER_STAGE) {
-      SL.unusedPool = [...SL.unusedPool, ...slShuffle([...SL.pool])];
-    }
+    SL.unusedPool = [...SL.unusedPool, ...slShuffle([...SL.pool])];
   }
 
   // Pick PER_STAGE questions
@@ -10922,20 +10920,21 @@ async function slLoadStage() {
   slRenderQuestion();
 }
 
-// ---- Fetch from OpenTDB API ----
+// ---- Fetch from OpenTDB API (primary source) ----
 async function slFetchAPI() {
   const diffMap = {beginner:'easy', intermediate:'medium', advanced:'hard', expert:'hard'};
   const diff = diffMap[SL.level] || 'medium';
+  const notice = document.getElementById('slFetchingNotice');
   try {
-    const notice = document.getElementById('slFetchingNotice');
     if (notice) notice.style.display = 'block';
+    // Fetch 30 at a time to cover 3 stages before next fetch
     const res = await fetch(
-      `https://opentdb.com/api.php?amount=15&category=17&difficulty=${diff}&type=multiple`,
-      { signal: AbortSignal.timeout(6000) }
+      `https://opentdb.com/api.php?amount=30&category=17&difficulty=${diff}&type=multiple`,
+      { signal: AbortSignal.timeout(8000) }
     );
     const data = await res.json();
     if (notice) notice.style.display = 'none';
-    if (data.response_code === 0 && data.results) {
+    if (data.response_code === 0 && data.results && data.results.length > 0) {
       const converted = data.results.map(r => {
         const correct = slDecodeHTML(r.correct_answer);
         const opts = slShuffle([correct, ...r.incorrect_answers.map(slDecodeHTML)]);
@@ -10948,12 +10947,15 @@ async function slFetchAPI() {
           fromAPI: true
         };
       });
-      SL.unusedPool = [...SL.unusedPool, ...converted];
+      // Add to pool (dedup by question text)
+      const existing = new Set(SL.unusedPool.map(q => q.q));
+      const fresh = converted.filter(q => !existing.has(q.q));
+      SL.unusedPool = [...SL.unusedPool, ...fresh];
+      return true; // success
     }
-  } catch(e) {
-    const notice = document.getElementById('slFetchingNotice');
-    if (notice) notice.style.display = 'none';
-  }
+  } catch(e) { /* network error */ }
+  if (notice) notice.style.display = 'none';
+  return false; // failed — caller will use local fallback
 }
 
 // ---- Render Question ----
