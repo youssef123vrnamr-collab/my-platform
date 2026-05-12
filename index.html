@@ -10862,16 +10862,56 @@ let SL = {
   totalSessions: parseInt(localStorage.getItem('sl_totalSessions') || '0'),
   bestStreak: parseInt(localStorage.getItem('sl_bestStreak') || '0'),
   PER_STAGE: 10,
+  lang: 'ar',
 };
 
-// ---- Open/Close ----
+// ---- Language Picker ----
 function openSelfLearning() {
+  // Show language picker overlay first
+  let picker = document.getElementById('slLangPicker');
+  if (!picker) {
+    picker = document.createElement('div');
+    picker.id = 'slLangPicker';
+    picker.style.cssText = 'position:fixed;inset:0;z-index:10020;background:rgba(5,3,15,.92);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:center;padding:1.5rem;';
+    picker.innerHTML = `
+      <div style="background:linear-gradient(145deg,#111118,#1c1c2e);border:1px solid rgba(167,139,250,.3);border-radius:28px;padding:2rem 1.75rem;max-width:380px;width:100%;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:slFadeIn .3s ease">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">🌍</div>
+        <div style="font-size:1.3rem;font-weight:900;color:#ede9fe;margin-bottom:.4rem">اختر لغة الأسئلة</div>
+        <div style="font-size:.85rem;color:#8b8aa0;margin-bottom:1.75rem">Choose the language of questions</div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <button onclick="slSelectLang('ar')" style="display:flex;align-items:center;gap:1rem;width:100%;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));border:1px solid rgba(139,92,246,.4);border-radius:16px;cursor:pointer;color:#ede9fe;font-family:Cairo,sans-serif;font-size:1rem;font-weight:700;text-align:right;">
+            <span style="font-size:1.8rem">🇸🇦</span>
+            <div><div>العربية</div><div style="font-size:.75rem;color:#a78bfa">أسئلة مترجمة للعربية</div></div>
+          </button>
+          <button onclick="slSelectLang('en')" style="display:flex;align-items:center;gap:1rem;width:100%;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(6,182,212,.12),rgba(14,165,233,.08));border:1px solid rgba(6,182,212,.35);border-radius:16px;cursor:pointer;color:#ede9fe;font-family:Cairo,sans-serif;font-size:1rem;font-weight:700;text-align:right;">
+            <span style="font-size:1.8rem">🇬🇧</span>
+            <div><div>English</div><div style="font-size:.75rem;color:#06b6d4">Questions in English</div></div>
+          </button>
+          <button onclick="slSelectLang('de')" style="display:flex;align-items:center;gap:1rem;width:100%;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(217,119,6,.08));border:1px solid rgba(245,158,11,.35);border-radius:16px;cursor:pointer;color:#ede9fe;font-family:Cairo,sans-serif;font-size:1rem;font-weight:700;text-align:right;">
+            <span style="font-size:1.8rem">🇩🇪</span>
+            <div><div>Deutsch</div><div style="font-size:.75rem;color:#f59e0b">Fragen auf Deutsch</div></div>
+          </button>
+        </div>
+        <button onclick="document.getElementById('slLangPicker').style.display='none'" style="margin-top:1.25rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#8b8aa0;padding:.6rem 1.5rem;border-radius:99px;cursor:pointer;font-family:Cairo,sans-serif;font-size:.85rem;">إلغاء / Cancel</button>
+      </div>
+    `;
+    document.body.appendChild(picker);
+  }
+  picker.style.display = 'flex';
+}
+
+function slSelectLang(lang) {
+  SL.lang = lang;
+  document.getElementById('slLangPicker').style.display = 'none';
   document.getElementById('selfLearningModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
   slShowScreen('slWelcomeScreen');
   document.getElementById('slStatsBar').style.display = 'none';
   slLoadPrevStats();
 }
+
+// ---- Open/Close (original) ----
+function openSelfLearning_orig() {
 function closeSelfLearning() {
   document.getElementById('selfLearningModal').style.display = 'none';
   document.body.style.overflow = '';
@@ -10928,7 +10968,16 @@ async function slLoadStage() {
 
   // If API failed and pool still empty → use local as offline backup
   if (SL.unusedPool.length < SL.PER_STAGE) {
-    SL.unusedPool = [...SL.unusedPool, ...slShuffle([...SL.pool])];
+    // Local pool is Arabic — label correctly based on language
+    const localPool = SL.pool.map(q => ({
+      ...q,
+      exp: SL.lang === 'en'
+        ? ('✅ Correct answer: ' + q.opts[q.ans])
+        : SL.lang === 'de'
+        ? ('✅ Richtige Antwort: ' + q.opts[q.ans])
+        : q.exp
+    }));
+    SL.unusedPool = [...SL.unusedPool, ...slShuffle(localPool)];
   }
 
   // Pick PER_STAGE questions
@@ -10937,42 +10986,103 @@ async function slLoadStage() {
   slRenderQuestion();
 }
 
-// ---- Fetch from OpenTDB API (primary source) ----
+// ---- Fetch from OpenTDB API (primary source) + translate if needed ----
 async function slFetchAPI() {
   const diffMap = {beginner:'easy', intermediate:'medium', advanced:'hard', expert:'hard'};
   const diff = diffMap[SL.level] || 'medium';
   const notice = document.getElementById('slFetchingNotice');
+  const lang = SL.lang || 'en';
   try {
-    if (notice) notice.style.display = 'block';
+    if (notice) {
+      notice.style.display = 'block';
+      notice.innerHTML = lang === 'ar'
+        ? '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> جاري تحميل وترجمة الأسئلة...'
+        : lang === 'de'
+        ? '<i class="fas fa-cloud-download-alt" style="color:#f59e0b"></i> Fragen werden geladen und übersetzt...'
+        : '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> Loading questions from the internet...';
+    }
     // Fetch 30 at a time to cover 3 stages before next fetch
     const res = await fetch(
       `https://opentdb.com/api.php?amount=30&category=17&difficulty=${diff}&type=multiple`,
       { signal: AbortSignal.timeout(8000) }
     );
     const data = await res.json();
-    if (notice) notice.style.display = 'none';
     if (data.response_code === 0 && data.results && data.results.length > 0) {
-      const converted = data.results.map(r => {
+      let items = data.results.map(r => {
         const correct = slDecodeHTML(r.correct_answer);
-        const opts = slShuffle([correct, ...r.incorrect_answers.map(slDecodeHTML)]);
+        const incorrects = r.incorrect_answers.map(slDecodeHTML);
+        return { q: slDecodeHTML(r.question), correct, incorrects };
+      });
+
+      // Translate if Arabic or German
+      if (lang !== 'en') {
+        items = await slTranslateQuestions(items, lang);
+      }
+
+      const converted = items.map(item => {
+        const opts = slShuffle([item.correct, ...item.incorrects]);
+        const correctLabel = lang === 'ar' ? '✅ الإجابة الصحيحة' : lang === 'de' ? '✅ Richtige Antwort' : '✅ Correct answer';
         return {
-          q: slDecodeHTML(r.question),
+          q: item.q,
           icon: '🌌',
           opts,
-          ans: opts.indexOf(correct),
-          exp: `✅ الإجابة الصحيحة: ${correct}`,
+          ans: opts.indexOf(item.correct),
+          exp: `${correctLabel}: ${item.correct}`,
           fromAPI: true
         };
       });
+
+      if (notice) notice.style.display = 'none';
       // Add to pool (dedup by question text)
       const existing = new Set(SL.unusedPool.map(q => q.q));
       const fresh = converted.filter(q => !existing.has(q.q));
       SL.unusedPool = [...SL.unusedPool, ...fresh];
       return true; // success
     }
-  } catch(e) { /* network error */ }
+  } catch(e) { console.warn('slFetchAPI error:', e); }
   if (notice) notice.style.display = 'none';
   return false; // failed — caller will use local fallback
+}
+
+// ---- Translate questions via Claude API ----
+async function slTranslateQuestions(items, lang) {
+  const targetName = lang === 'ar' ? 'Arabic' : 'German';
+  const subset = items.slice(0, 15); // translate 15 at a time to stay within token limits
+  const payload = subset.map((it, i) => ({
+    id: i,
+    q: it.q,
+    correct: it.correct,
+    incorrects: it.incorrects
+  }));
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3000,
+        system: `You are a translator. Translate astronomy quiz questions to ${targetName}. Return ONLY a JSON array, no markdown, no explanation. Each item: {id, q, correct, incorrects:[...]}`,
+        messages: [{
+          role: 'user',
+          content: 'Translate these astronomy quiz questions to ' + targetName + '. Keep scientific terms accurate. Return ONLY JSON array:
+' + JSON.stringify(payload)
+        }]
+      })
+    });
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    const d = await resp.json();
+    const raw = d.content?.[0]?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const translated = JSON.parse(clean);
+    // Merge translated with rest (untranslated items beyond 15 stay in English)
+    const map = {};
+    translated.forEach(t => { map[t.id] = t; });
+    return items.map((it, i) => map[i] ? { q: map[i].q, correct: map[i].correct, incorrects: map[i].incorrects } : it);
+  } catch(e) {
+    console.warn('Translation failed, using English fallback:', e);
+    return items; // fallback to English
+  }
 }
 
 // ---- Render Question ----
