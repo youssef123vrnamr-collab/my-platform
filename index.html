@@ -11063,8 +11063,7 @@ async function slTranslateQuestions(items, lang) {
         system: `You are a translator. Translate astronomy quiz questions to ${targetName}. Return ONLY a JSON array, no markdown, no explanation. Each item: {id, q, correct, incorrects:[...]}`,
         messages: [{
           role: 'user',
-          content: 'Translate these astronomy quiz questions to ' + targetName + '. Keep scientific terms accurate. Return ONLY JSON array:
-' + JSON.stringify(payload)
+          content: 'Translate these astronomy quiz questions to ' + targetName + '. Keep scientific terms accurate. Return ONLY JSON array: ' + JSON.stringify(payload)
         }]
       })
     });
