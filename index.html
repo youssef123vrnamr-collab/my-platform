@@ -6820,38 +6820,68 @@ function switchProgressTab(tab) {
   }
 
 
-  // خريطة صور NASA/ESA من Unsplash لكل موضوع ويكيبيديا
+  // خريطة صور ثابتة لكل موضوع - تمنع ويكيبيديا من جلب صور خاطئة
   const WIKI_IMAGE_MAP = {
-    'عطارد':           'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=900&q=70',
-    'الزهرة':          'https://images.unsplash.com/photo-1614314215058-f5de81528b82?w=900&q=70',
-    'الأرض':           'https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?w=900&q=70',
-    'المريخ':          'https://images.unsplash.com/photo-1545156521-77bd85671d30?w=900&q=70',
-    'المشتري':         'https://images.unsplash.com/photo-1611270629569-8b357cb88da9?w=900&q=70',
-    'زحل':             'https://images.unsplash.com/photo-1639921884918-8d28ab2e39a4?w=900&q=70',
-    'أورانوس':         'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=900&q=70',
-    'نبتون':           'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
-    'الشمس':           'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=900&q=70',
-    'منكب الجوزاء':    'https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=900&q=70',
-    'بروكسيما قنطورس': 'https://images.unsplash.com/photo-1504333638930-c8787321eee0?w=900&q=70',
-    'الشعرى اليمانية': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900&q=70',
-    'نجم قطبي':        'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?w=900&q=70',
-    'نجم نيوتروني':    'https://images.unsplash.com/photo-1608178398319-48f814d0750c?w=900&q=70',
-    'قزم أبيض':        'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
-    'مستعر أعظم':      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
-    'درب التبانة':     'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+    // كواكب
+    'عطارد':                'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=900&q=70',
+    'الزهرة':               'https://images.unsplash.com/photo-1614314215058-f5de81528b82?w=900&q=70',
+    'الأرض':                'https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?w=900&q=70',
+    'المريخ':               'https://images.unsplash.com/photo-1545156521-77bd85671d30?w=900&q=70',
+    'المشتري':              'https://images.unsplash.com/photo-1611270629569-8b357cb88da9?w=900&q=70',
+    'زحل':                  'https://images.unsplash.com/photo-1639921884918-8d28ab2e39a4?w=900&q=70',
+    'أورانوس':              'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=900&q=70',
+    'نبتون':                'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    // نجوم
+    'الشمس':                'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=900&q=70',
+    'منكب الجوزاء':         'https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=900&q=70',
+    'بروكسيما قنطورس':      'https://images.unsplash.com/photo-1504333638930-c8787321eee0?w=900&q=70',
+    'الشعرى اليمانية':      'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900&q=70',
+    'نجم قطبي':             'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?w=900&q=70',
+    'نجم نيوتروني':         'https://images.unsplash.com/photo-1608178398319-48f814d0750c?w=900&q=70',
+    'قزم أبيض':             'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
+    'مستعر أعظم':           'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    // مجرات
+    'درب التبانة':          'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
     'مجرة المرأة المسلسلة': 'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',
-    'مجرة المثلث':     'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
-    'مجرة دوامة':      'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70',
-    'مجرة سومبريرو':   'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
-    'مجرة بيضوية':     'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
-    'نشاط مجري':       'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
-    'ثقب أسود':        'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
-    'إم 87 (مجرة)':   'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',
-    'القوس A*':        'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
-    'أفق الحدث':       'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
-    'إشعاع هوكينغ':    'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
+    'مجرة المثلث':          'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    'مجرة دوامة':           'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70',
+    'مجرة سومبريرو':        'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+    'مجرة بيضوية':          'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
+    'نشاط مجري':            'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
+    // ثقوب سوداء
+    'ثقب أسود':             'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    'إم 87 (مجرة)':        'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',
+    'القوس A*':             'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+    'أفق الحدث':            'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    'إشعاع هوكينغ':         'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
     'ثقب أسود فائق الكتلة': 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
-    'ثقب أسود نجمي':   'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+    'ثقب أسود نجمي':        'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+    // ظواهر
+    'زخة شهب':              'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?w=900&q=70',
+    'كسوف الشمس':           'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
+    'خسوف القمر':           'https://images.unsplash.com/photo-1504333638930-c8787321eee0?w=900&q=70',
+    'شفق قطبي':             'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=900&q=70',
+    'مذنب هالي':            'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    'اقتران كوكبي':         'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900&q=70',
+    'عبور فلكي':            'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=900&q=70',
+    'نيزك':                 'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?w=900&q=70',
+    // رواد الفضاء
+    'يوري غاغارين':         'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',
+    'نيل أرمسترونغ':        'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',
+    'فالنتينا تيريشكوفا':   'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',
+    'هزاع المنصوري':        'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70',
+    'سلطان بن سلمان آل سعود': 'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',
+    'سكوت كيلي':            'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70',
+    'بز ألدرين':            'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',
+    'كريستينا كوخ':         'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',
+    // تلسكوبات
+    'تلسكوب هابل الفضائي':  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70',
+    'تلسكوب جيمس ويب الفضائي': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70',
+    'تلسكوب فاست':          'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+    'مرصد ليغو':            'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
+    'تلسكوب أفق الحدث':     'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',
+    'مرصد فيرا روبين':      'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
+    'مصفوفة أتاكاما الكبيرة المليمترية': 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
   };
 
   function renderWikiCards(items, accent){
@@ -6865,7 +6895,8 @@ function switchProgressTab(tab) {
     ];
     return `<div class="cosmos-cards">${items.map((p,i)=>{
       const d = p.data;
-      const img = WIKI_IMAGE_MAP[p.title] || (d.originalimage && d.originalimage.source && d.originalimage.width > 300 ? d.originalimage.source : null) || (d.thumbnail && d.thumbnail.source && d.thumbnail.width > 200 ? d.thumbnail.source : null) || WIKI_IMAGE_MAP[p.title] || fallbacks[i % fallbacks.length];
+      // استخدم الخريطة دايماً - امنع ويكيبيديا من جلب صور خاطئة
+      const img = WIKI_IMAGE_MAP[p.title] || WIKI_IMAGE_MAP[d.title] || fallbacks[i % fallbacks.length];
       const extract = d.extract || '';
       const displayTitle = (d.titles && d.titles.normalized) || p.title;
       const url = (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || `https://ar.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
