@@ -11042,44 +11042,56 @@ async function slFetchAPI() {
   return false; // failed — caller will use local fallback
 }
 
-// ---- Translate questions via Claude API ----
+// ---- Translate questions via Groq API ----
 async function slTranslateQuestions(items, lang) {
   const targetName = lang === 'ar' ? 'Arabic' : 'German';
-  const subset = items.slice(0, 15); // translate 15 at a time to stay within token limits
-  const payload = subset.map((it, i) => ({
-    id: i,
-    q: it.q,
-    correct: it.correct,
-    incorrects: it.incorrects
-  }));
+  const apiKey = (typeof getAiApiKey === 'function') ? getAiApiKey() : '';
+  if (!apiKey) { console.warn('No API key, skipping translation'); return items; }
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 3000,
-        system: `You are a translator. Translate astronomy quiz questions to ${targetName}. Return ONLY a JSON array, no markdown, no explanation. Each item: {id, q, correct, incorrects:[...]}`,
-        messages: [{
-          role: 'user',
-          content: 'Translate these astronomy quiz questions to ' + targetName + '. Keep scientific terms accurate. Return ONLY JSON array: ' + JSON.stringify(payload)
-        }]
-      })
-    });
-    if (!resp.ok) throw new Error('API ' + resp.status);
-    const d = await resp.json();
-    const raw = d.content?.[0]?.text || '';
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const translated = JSON.parse(clean);
-    // Merge translated with rest (untranslated items beyond 15 stay in English)
-    const map = {};
-    translated.forEach(t => { map[t.id] = t; });
-    return items.map((it, i) => map[i] ? { q: map[i].q, correct: map[i].correct, incorrects: map[i].incorrects } : it);
-  } catch(e) {
-    console.warn('Translation failed, using English fallback:', e);
-    return items; // fallback to English
+  // Translate in chunks of 10 to avoid token limits
+  const CHUNK = 10;
+  const result = [...items];
+
+  for (let start = 0; start < items.length; start += CHUNK) {
+    const chunk = items.slice(start, start + CHUNK);
+    const payload = chunk.map((it, i) => ({ id: start + i, q: it.q, correct: it.correct, incorrects: it.incorrects }));
+
+    try {
+      const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 2000,
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a precise translator specializing in astronomy. Translate quiz questions to ' + targetName + '. Return ONLY a valid JSON array, no markdown, no extra text. Each element must have: id (number), q (string), correct (string), incorrects (array of 3 strings).'
+            },
+            {
+              role: 'user',
+              content: 'Translate to ' + targetName + ': ' + JSON.stringify(payload)
+            }
+          ]
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!resp.ok) { console.warn('Groq translate error:', resp.status); continue; }
+      const d = await resp.json();
+      const raw = (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
+      const translated = JSON.parse(raw);
+      translated.forEach(t => {
+        if (typeof t.id === 'number' && t.q && t.correct && Array.isArray(t.incorrects)) {
+          result[t.id] = { q: t.q, correct: t.correct, incorrects: t.incorrects };
+        }
+      });
+    } catch(e) {
+      console.warn('Chunk translation failed:', e);
+    }
   }
+  return result;
 }
 
 // ---- Render Question ----
