@@ -10701,6 +10701,23 @@ function showCertificateModal(courseTitle, certUrl) {
         </div>
       </div>
 
+      <!-- SCREEN 4: Stage Complete -->
+      <div class="sl-screen" id="slStageScreen">
+        <div style="text-align:center;padding:2rem 1.5rem;width:100%;max-width:500px;margin:0 auto">
+          <div id="slStageEmoji" style="font-size:5rem;display:block;margin-bottom:1rem;animation:slMascotBounce 1s cubic-bezier(.34,1.56,.64,1)">🎯</div>
+          <div style="font-size:1.7rem;font-weight:900;background:linear-gradient(135deg,#fde047,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.4rem" id="slStageTitle">المرحلة 1 اكتملت!</div>
+          <div style="color:#8b8aa0;font-size:.95rem;margin-bottom:1.5rem" id="slStageSub">استعد للمرحلة القادمة</div>
+          <div style="display:flex;justify-content:center;gap:2rem;margin-bottom:2rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:16px;border:1px solid rgba(255,255,255,.07)">
+            <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:#10b981" id="slStageCorrCount">0</div><div style="font-size:.72rem;color:#8b8aa0;margin-top:.2rem">صحيح</div></div>
+            <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:#fde047" id="slStageXPCount">+0</div><div style="font-size:.72rem;color:#8b8aa0;margin-top:.2rem">XP</div></div>
+            <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:#f97316" id="slStageStreakCount">0</div><div style="font-size:.72rem;color:#8b8aa0;margin-top:.2rem">streak</div></div>
+          </div>
+          <div id="slFetchingNotice" style="display:none;color:#8b8aa0;font-size:.85rem;margin-bottom:1rem;padding:.75rem;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:12px"><i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> جاري تحميل أسئلة جديدة من الإنترنت...</div>
+          <button class="sl-btn-again" id="slNextStageBtn" onclick="slContinueToNextStage()" style="width:100%;font-size:1.05rem;padding:.9rem">المرحلة التالية <i class="fas fa-arrow-left"></i></button>
+          <button class="sl-btn-change" onclick="slChangeLevel()" style="width:100%;margin-top:.75rem">🎯 تغيير المستوى</button>
+        </div>
+      </div>
+
     </div><!-- end sl-body -->
   </div>
 </div>
@@ -10711,10 +10728,31 @@ function showCertificateModal(courseTitle, certUrl) {
 
 <script>
 // ============================================================
-// SELF LEARNING SYSTEM — Full Duolingo-Style Implementation
+// SELF LEARNING SYSTEM v2 — Infinite Stages + Random Answers + API
 // ============================================================
 
-// ---- Question Bank ----
+// ---- Utilities ----
+function slShuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function slDecodeHTML(s) {
+  const t = document.createElement('textarea');
+  t.innerHTML = s;
+  return t.value;
+}
+// Shuffle options & update correct-answer index
+function slShuffleQ(q) {
+  const correct = q.opts[q.ans];
+  const shuffled = slShuffle(q.opts);
+  return { ...q, opts: shuffled, ans: shuffled.indexOf(correct) };
+}
+
+// ---- Local Question Bank ----
 const SL_QUESTIONS = {
   beginner: [
     {q:"كم عدد الكواكب في المجموعة الشمسية؟",icon:"🪐",opts:["6","8","10","12"],ans:1,exp:"المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، نبتون."},
@@ -10788,37 +10826,40 @@ const SL_QUESTIONS = {
 // ---- State ----
 let SL = {
   level: null,
-  questions: [],
+  stage: 1,
+  pool: [],           // master local pool (all qs for level)
+  unusedPool: [],     // qs not yet shown this rotation
+  apiFetched: [],     // qs fetched from OpenTDB
+  stageQuestions: [], // current 10-question stage
   currentQ: 0,
   hearts: 5,
   xp: 0,
   streak: 0,
-  correctCount: 0,
+  correctCount: 0,    // session total
   wrongCount: 0,
+  stageCorrect: 0,    // this stage
+  stageXP: 0,
   answered: false,
   sessionXP: 0,
   totalXP: parseInt(localStorage.getItem('sl_totalXP') || '0'),
   totalSessions: parseInt(localStorage.getItem('sl_totalSessions') || '0'),
   bestStreak: parseInt(localStorage.getItem('sl_bestStreak') || '0'),
-  QUESTIONS_PER_SESSION: 10,
+  PER_STAGE: 10,
 };
 
 // ---- Open/Close ----
 function openSelfLearning() {
-  const modal = document.getElementById('selfLearningModal');
-  modal.style.display = 'flex';
+  document.getElementById('selfLearningModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
   slShowScreen('slWelcomeScreen');
   document.getElementById('slStatsBar').style.display = 'none';
   slLoadPrevStats();
 }
-
 function closeSelfLearning() {
   document.getElementById('selfLearningModal').style.display = 'none';
   document.body.style.overflow = '';
   slStopAllAnimations();
 }
-
 function slLoadPrevStats() {
   const box = document.getElementById('slPrevStats');
   if (SL.totalSessions > 0) {
@@ -10831,61 +10872,106 @@ function slLoadPrevStats() {
 
 // ---- Screen management ----
 function slShowScreen(id) {
-  document.querySelectorAll('.sl-screen').forEach(s => {
-    s.classList.remove('active');
-    s.style.animation = '';
-  });
-  const target = document.getElementById(id);
-  target.classList.add('active');
+  document.querySelectorAll('.sl-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-// ---- Start Session ----
+// ---- Start full session ----
 function startSelfLearning(level) {
   SL.level = level;
+  SL.stage = 1;
   SL.hearts = 5;
   SL.xp = 0;
   SL.streak = 0;
   SL.correctCount = 0;
   SL.wrongCount = 0;
-  SL.answered = false;
   SL.sessionXP = 0;
-  SL.currentQ = 0;
+  SL.apiFetched = [];
+  // Build shuffled pool from local bank
+  SL.pool = slShuffle([...SL_QUESTIONS[level]]);
+  SL.unusedPool = [...SL.pool];
 
-  // Shuffle questions and pick N
-  const pool = [...SL_QUESTIONS[level]];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  SL.questions = pool.slice(0, Math.min(SL.QUESTIONS_PER_SESSION, pool.length));
-
-  // Show stats bar
-  document.getElementById('slStatsBar').style.display = 'flex';
-  slUpdateStats();
-
-  // Level badge color
   const colors = {beginner:'#10b981',intermediate:'#a78bfa',advanced:'#fbbf24',expert:'#f472b6'};
   const names = {beginner:'مبتدئ',intermediate:'متوسط',advanced:'متقدم',expert:'محترف'};
-  document.getElementById('slHeaderSub').innerHTML = `<span class="sl-level-badge" style="background:${colors[level]}22;color:${colors[level]};border:1px solid ${colors[level]}44">${names[level]}</span>`;
+  document.getElementById('slHeaderSub').innerHTML =
+    `<span class="sl-level-badge" style="background:${colors[level]}22;color:${colors[level]};border:1px solid ${colors[level]}44">${names[level]}</span>`;
+  document.getElementById('slStatsBar').style.display = 'flex';
+  slUpdateStats();
+  slLoadStage();
+}
 
+// ---- Load a stage (10 questions) ----
+async function slLoadStage() {
+  SL.stageCorrect = 0;
+  SL.stageXP = 0;
+  SL.currentQ = 0;
+
+  // Refill pool if running low
+  if (SL.unusedPool.length < SL.PER_STAGE) {
+    // Try API first
+    await slFetchAPI();
+    // If still not enough, reshuffle local
+    if (SL.unusedPool.length < SL.PER_STAGE) {
+      SL.unusedPool = [...SL.unusedPool, ...slShuffle([...SL.pool])];
+    }
+  }
+
+  // Pick PER_STAGE questions
+  SL.stageQuestions = SL.unusedPool.splice(0, SL.PER_STAGE).map(q => slShuffleQ(q));
   slShowScreen('slQuestionScreen');
   slRenderQuestion();
 }
 
+// ---- Fetch from OpenTDB API ----
+async function slFetchAPI() {
+  const diffMap = {beginner:'easy', intermediate:'medium', advanced:'hard', expert:'hard'};
+  const diff = diffMap[SL.level] || 'medium';
+  try {
+    const notice = document.getElementById('slFetchingNotice');
+    if (notice) notice.style.display = 'block';
+    const res = await fetch(
+      `https://opentdb.com/api.php?amount=15&category=17&difficulty=${diff}&type=multiple`,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    const data = await res.json();
+    if (notice) notice.style.display = 'none';
+    if (data.response_code === 0 && data.results) {
+      const converted = data.results.map(r => {
+        const correct = slDecodeHTML(r.correct_answer);
+        const opts = slShuffle([correct, ...r.incorrect_answers.map(slDecodeHTML)]);
+        return {
+          q: slDecodeHTML(r.question),
+          icon: '🌌',
+          opts,
+          ans: opts.indexOf(correct),
+          exp: `✅ الإجابة الصحيحة: ${correct}`,
+          fromAPI: true
+        };
+      });
+      SL.unusedPool = [...SL.unusedPool, ...converted];
+    }
+  } catch(e) {
+    const notice = document.getElementById('slFetchingNotice');
+    if (notice) notice.style.display = 'none';
+  }
+}
+
 // ---- Render Question ----
 function slRenderQuestion() {
-  const q = SL.questions[SL.currentQ];
-  const total = SL.questions.length;
+  const q = SL.stageQuestions[SL.currentQ];
+  const total = SL.stageQuestions.length;
 
-  document.getElementById('slQNum').textContent = `السؤال ${SL.currentQ + 1} من ${total}`;
+  // Header: stage + question number
+  document.getElementById('slQNum').textContent =
+    `المرحلة ${SL.stage} — السؤال ${SL.currentQ + 1} من ${total}` +
+    (q.fromAPI ? '  🌐' : '');
   document.getElementById('slQIcon').textContent = q.icon || '⭐';
   document.getElementById('slQText').textContent = q.q;
 
-  // Progress
-  const pct = (SL.currentQ / total) * 100;
-  document.getElementById('slProgressFill').style.width = pct + '%';
+  // Progress bar within stage
+  document.getElementById('slProgressFill').style.width = ((SL.currentQ / total) * 100) + '%';
 
-  // Options
+  // Options — already shuffled at load time
   const letters = ['أ','ب','ج','د'];
   const optsEl = document.getElementById('slOptions');
   optsEl.innerHTML = '';
@@ -10904,7 +10990,7 @@ function slRenderQuestion() {
   fb.className = 'sl-feedback';
   document.getElementById('slNextBtn').style.display = 'none';
 
-  // Animate question icon
+  // Icon animation
   const iconEl = document.getElementById('slQIcon');
   iconEl.style.animation = 'none';
   setTimeout(() => { iconEl.style.animation = 'slQIconPop .5s cubic-bezier(.34,1.56,.64,1)'; }, 10);
@@ -10915,58 +11001,51 @@ function slAnswer(idx, el) {
   if (SL.answered) return;
   SL.answered = true;
 
-  const q = SL.questions[SL.currentQ];
+  const q = SL.stageQuestions[SL.currentQ];
   const isCorrect = idx === q.ans;
   const opts = document.querySelectorAll('.sl-option');
-
   opts.forEach(o => { o.onclick = null; });
 
   if (isCorrect) {
     el.classList.add('correct');
     SL.correctCount++;
+    SL.stageCorrect++;
     SL.streak++;
     const earned = slCalcXP();
     SL.xp += earned;
     SL.sessionXP += earned;
-    slShowFeedback(true, q.exp, earned);
+    SL.stageXP += earned;
+    slShowFeedback(true, q.exp);
     slSpawnParticles(el);
     slShowXPPopup(earned, el);
     slCorrectBurst(el);
     if (SL.streak > SL.bestStreak) {
       SL.bestStreak = SL.streak;
       localStorage.setItem('sl_bestStreak', SL.bestStreak);
-      const streakIcon = document.querySelector('.sl-streak-icon');
-      if (streakIcon) streakIcon.classList.add('sl-streak-fire');
-      setTimeout(() => streakIcon && streakIcon.classList.remove('sl-streak-fire'), 1000);
+      const si = document.querySelector('.sl-streak-icon');
+      if (si) { si.classList.add('sl-streak-fire'); setTimeout(()=>si.classList.remove('sl-streak-fire'),1000); }
     }
   } else {
     el.classList.add('wrong');
-    // Reveal correct
     opts[q.ans].classList.add('reveal-correct');
-    SL.hearts--;
+    SL.hearts = Math.max(0, SL.hearts - 1);
     SL.streak = 0;
     SL.wrongCount++;
-    slShowFeedback(false, q.exp, 0);
+    slShowFeedback(false, q.exp);
     slHeartBreak();
-    if (SL.hearts < 0) SL.hearts = 0;
   }
 
   slUpdateStats();
   document.getElementById('slNextBtn').style.display = 'block';
-
-  // Auto-advance on correct after delay
-  if (isCorrect) {
-    setTimeout(() => { if (SL.answered) slNextQuestion(); }, 1800);
-  }
+  if (isCorrect) setTimeout(() => { if (SL.answered) slNextQuestion(); }, 1800);
 }
 
 function slCalcXP() {
-  const base = {beginner:10,intermediate:20,advanced:35,expert:50};
-  const streakBonus = Math.min(SL.streak, 5) * 2;
-  return (base[SL.level] || 10) + streakBonus;
+  const base = {beginner:10, intermediate:20, advanced:35, expert:50};
+  return (base[SL.level] || 10) + Math.min(SL.streak, 5) * 2;
 }
 
-function slShowFeedback(correct, explanation, xpEarned) {
+function slShowFeedback(correct, explanation) {
   const fb = document.getElementById('slFeedback');
   fb.style.display = 'flex';
   fb.className = 'sl-feedback ' + (correct ? 'correct-fb' : 'wrong-fb');
@@ -10977,77 +11056,100 @@ function slShowFeedback(correct, explanation, xpEarned) {
   document.getElementById('slFbSub').textContent = explanation;
 }
 
-// ---- Next Question ----
+// ---- Next question / Stage end ----
 function slNextQuestion() {
   SL.currentQ++;
-  if (SL.currentQ >= SL.questions.length || SL.hearts <= 0) {
-    slShowResult();
+  if (SL.hearts <= 0) {
+    slShowGameOver();
+    return;
+  }
+  if (SL.currentQ >= SL.stageQuestions.length) {
+    slShowStageComplete();
   } else {
     slRenderQuestion();
   }
 }
 
-// ---- Stats Update ----
-function slUpdateStats() {
-  // Hearts
-  const h = Math.max(0, SL.hearts);
-  document.getElementById('slHeartsIcons').textContent = '❤️'.repeat(h) + '🖤'.repeat(Math.max(0, 5 - h));
-  // XP
-  document.getElementById('slXpVal').textContent = SL.xp;
-  // Streak
-  document.getElementById('slStreakVal').textContent = SL.streak;
-}
-
-// ---- Result ----
-function slShowResult() {
-  const total = SL.questions.length;
-  const correct = SL.correctCount;
-  const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-  // Mascot & title
-  let mascot, title, sub;
-  if (accuracy >= 90) { mascot='🏆'; title='أسطوري!'; sub='أداء لا يُصدق، أنت نجم الفلك!'; }
-  else if (accuracy >= 70) { mascot='🎉'; title='أحسنت!'; sub='نتيجة رائعة، استمر في التقدم!'; }
-  else if (accuracy >= 50) { mascot='💪'; title='جيد!'; sub='كل محاولة تُقربك أكثر من النجوم!'; }
-  else { mascot='🔭'; title='حاول مرة أخرى!'; sub='التعلم رحلة، لا تستسلم!'; }
-
-  document.getElementById('slResultMascot').textContent = mascot;
-  document.getElementById('slResultTitle').textContent = title;
-  document.getElementById('slResultSub').textContent = sub;
-  document.getElementById('slResCorrect').textContent = correct + '/' + total;
-  document.getElementById('slResXP').textContent = '+' + SL.sessionXP;
-  document.getElementById('slResAccuracy').textContent = accuracy + '%';
-
-  // Level up if high accuracy
-  const lvlUpMsg = document.getElementById('slLevelUpMsg');
-  const nextLevels = {beginner:'intermediate',intermediate:'advanced',advanced:'expert'};
-  if (accuracy >= 80 && nextLevels[SL.level]) {
-    lvlUpMsg.style.display = 'block';
-    document.getElementById('slLevelUpText').textContent = `جاهز للانتقال لمستوى أعلى! 🚀`;
-  } else {
-    lvlUpMsg.style.display = 'none';
-  }
-
-  // Save stats
-  SL.totalXP += SL.sessionXP;
+// ---- Stage Complete screen ----
+function slShowStageComplete() {
+  // Save session stats
+  SL.totalXP += SL.stageXP;
   SL.totalSessions++;
   localStorage.setItem('sl_totalXP', SL.totalXP);
   localStorage.setItem('sl_totalSessions', SL.totalSessions);
   localStorage.setItem('sl_bestStreak', SL.bestStreak);
 
-  // Progress bar full
+  // Populate screen
+  const emojis = ['🎯','🚀','🌟','🏆','⭐','🔥','💫','🌌','🎉','🌠'];
+  document.getElementById('slStageEmoji').textContent = emojis[(SL.stage - 1) % emojis.length];
+  document.getElementById('slStageTitle').textContent = `المرحلة ${SL.stage} اكتملت! 🎉`;
+  const accuracy = Math.round((SL.stageCorrect / SL.stageQuestions.length) * 100);
+  document.getElementById('slStageSub').textContent =
+    accuracy >= 80 ? '🔥 أداء رائع! واصل!' : accuracy >= 50 ? '💪 جيد! ركّز أكثر في المرحلة القادمة' : '😅 حاول تحسين نتيجتك';
+  document.getElementById('slStageCorrCount').textContent = `${SL.stageCorrect}/${SL.stageQuestions.length}`;
+  document.getElementById('slStageXPCount').textContent = '+' + SL.stageXP;
+  document.getElementById('slStageStreakCount').textContent = SL.streak;
+  document.getElementById('slFetchingNotice').style.display = 'none';
+
+  // Progress bar full then reset
   document.getElementById('slProgressFill').style.width = '100%';
 
-  slShowScreen('slResultScreen');
-
-  // Confetti burst on success
+  slShowScreen('slStageScreen');
   if (accuracy >= 70) slConfettiBurst();
 }
 
-function slPlayAgain() {
-  startSelfLearning(SL.level);
+// ---- Continue to next stage ----
+async function slContinueToNextStage() {
+  SL.stage++;
+  // Reset hearts partially (reward good play)
+  if (SL.hearts < 5) SL.hearts = Math.min(5, SL.hearts + 2);
+  slUpdateStats();
+  document.getElementById('slProgressFill').style.width = '0%';
+
+  // Show loading notice & disable button while fetching
+  const btn = document.getElementById('slNextStageBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+  document.getElementById('slFetchingNotice').style.display = 'block';
+
+  await slLoadStage();
+
+  btn.disabled = false;
+  btn.innerHTML = 'المرحلة التالية <i class="fas fa-arrow-left"></i>';
+  document.getElementById('slFetchingNotice').style.display = 'none';
 }
 
+// ---- Game Over (lost all hearts) ----
+function slShowGameOver() {
+  SL.totalXP += SL.stageXP;
+  SL.totalSessions++;
+  localStorage.setItem('sl_totalXP', SL.totalXP);
+  localStorage.setItem('sl_totalSessions', SL.totalSessions);
+  localStorage.setItem('sl_bestStreak', SL.bestStreak);
+
+  const total = SL.currentQ;
+  const accuracy = total > 0 ? Math.round((SL.correctCount / total) * 100) : 0;
+  document.getElementById('slResultMascot').textContent = '💔';
+  document.getElementById('slResultTitle').textContent = 'نفدت الأرواح!';
+  document.getElementById('slResultSub').textContent = `وصلت للمرحلة ${SL.stage} — أعد المحاولة!`;
+  document.getElementById('slResCorrect').textContent = SL.correctCount + '/' + total;
+  document.getElementById('slResXP').textContent = '+' + SL.sessionXP;
+  document.getElementById('slResAccuracy').textContent = accuracy + '%';
+  document.getElementById('slLevelUpMsg').style.display = 'none';
+  document.getElementById('slProgressFill').style.width = '100%';
+  slShowScreen('slResultScreen');
+}
+
+// ---- Stats Update ----
+function slUpdateStats() {
+  const h = Math.max(0, SL.hearts);
+  document.getElementById('slHeartsIcons').textContent = '❤️'.repeat(h) + '🖤'.repeat(Math.max(0, 5 - h));
+  document.getElementById('slXpVal').textContent = SL.xp;
+  document.getElementById('slStreakVal').textContent = SL.streak;
+}
+
+// ---- Result screen buttons ----
+function slPlayAgain() { startSelfLearning(SL.level); }
 function slChangeLevel() {
   document.getElementById('slStatsBar').style.display = 'none';
   slShowScreen('slWelcomeScreen');
