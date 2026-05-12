@@ -115,6 +115,8 @@
     .settings-menu-item:last-child { border-bottom: none; }
     .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
     .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
+    .settings-menu-item.sl-menu-item { background: linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08)) !important; border-bottom: 1px solid rgba(16,185,129,.2) !important; }
+    .settings-menu-item.sl-menu-item:hover { background: linear-gradient(135deg,rgba(16,185,129,.25),rgba(6,182,212,.18)) !important; }
     @media (max-width:768px) { .settings-menu { left: 0; min-width: 180px; } .brand-logo { width: 60px; height: 60px; } .brand-text h1 { font-size: 1.1rem; } .settings-icon-btn { width: 34px; height: 34px; font-size: 1rem; margin-left: 4px; } }
     @media (orientation: landscape) and (min-width: 768px) { .container { padding: 1rem 2rem; } .hero { padding: 1rem 1rem; margin-bottom: 1rem; } .hero h2 { font-size: 2rem; } .videos-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } .video-card .video-thumbnail { height: 180px; } .video-info { margin-top: -40px; min-height: 280px; padding: 1rem; } .video-title { font-size: 1.2rem; } .video-description { font-size: 0.85rem; max-height: 80px; } .navbar { padding: 0.5rem 1rem; } .brand-logo { width: 60px; height: 60px; } .chat-container { height: 100vh; } .message { max-width: 70%; } .modal-content { max-height: 100dvh !important; overflow-y: auto !important; } .video-player-container { padding: 8px; } .video-player, .youtube-iframe { max-height: 65vh !important; width: auto !important; max-width: 100% !important; } .upload-zone { padding: 1.5rem; } .storage-bar-container { padding: 0.8rem; margin-bottom: 1rem; } .chat-messages { max-height: calc(100vh - 140px); overflow-y: auto; } }
     .container { max-width: 1400px; margin: 0 auto; padding: 2rem; flex: 1; width: 100%; }
@@ -3616,9 +3618,9 @@ async function updateAdminUI() {
     if (menu) {
         menu.innerHTML = "";
 
-        function addItem(id, icon, label, onclick) {
+        function addItem(id, icon, label, onclick, extraClass) {
             const d = document.createElement("div");
-            d.className = "settings-menu-item";
+            d.className = "settings-menu-item" + (extraClass ? " " + extraClass : "");
             d.id = id;
             d.innerHTML = `<i class="${icon}"></i> ${label}`;
             if (onclick) d.addEventListener("click", onclick);
@@ -3658,6 +3660,7 @@ async function updateAdminUI() {
             if (!isPWAInstalled()) {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
+            addItem("smartLearnMenuItem","fas fa-brain","التعلم الذكي 🧠", () => { menu.classList.remove("active"); openSelfLearning(); }, "sl-menu-item");
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
@@ -10672,6 +10675,15 @@ function showCertificateModal(courseTitle, certUrl) {
           <span class="sl-result-mascot" id="slResultMascot">🎉</span>
           <div class="sl-result-title" id="slResultTitle" style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">أحسنت!</div>
           <div class="sl-result-subtitle" id="slResultSub">انهيت الجلسة بنجاح</div>
+
+          <!-- ===== Progress Level Badge ===== -->
+          <div id="slProgressBadge" style="margin:1rem auto 1.5rem;max-width:320px;border-radius:20px;padding:1rem 1.5rem;text-align:center;animation:slFadeIn .5s .2s both;">
+            <div style="font-size:.75rem;font-weight:700;letter-spacing:1.5px;margin-bottom:.4rem;opacity:.75" id="slProgressBadgeLabel">مستوى تقدمك</div>
+            <div style="font-size:2rem;margin-bottom:.3rem" id="slProgressBadgeEmoji">📊</div>
+            <div style="font-size:1.35rem;font-weight:900" id="slProgressBadgeTitle">متوسط</div>
+            <div style="font-size:.82rem;margin-top:.3rem;line-height:1.5;opacity:.85" id="slProgressBadgeDesc">استمر في التعلم لترقية مستواك!</div>
+          </div>
+
           <div class="sl-result-stats">
             <div class="sl-result-stat">
               <div class="sl-result-stat-icon">✅</div>
@@ -10713,6 +10725,11 @@ function showCertificateModal(courseTitle, certUrl) {
             <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:#f97316" id="slStageStreakCount">0</div><div style="font-size:.72rem;color:#8b8aa0;margin-top:.2rem">streak</div></div>
           </div>
           <div id="slFetchingNotice" style="display:none;color:#8b8aa0;font-size:.85rem;margin-bottom:1rem;padding:.75rem;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:12px"><i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> جاري تحميل أسئلة جديدة من الإنترنت...</div>
+          <!-- Mini progress badge on stage screen -->
+          <div id="slStageBadge" style="margin:.75rem auto 1.25rem;max-width:300px;border-radius:14px;padding:.75rem 1rem;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">
+            <span style="font-size:.72rem;color:#8b8aa0;font-weight:700;letter-spacing:1px">مستوى تقدمك</span>
+            <div style="font-size:1.1rem;font-weight:900;margin-top:.2rem" id="slStageBadgeTitle" style="color:#a78bfa">⭐ متوسط</div>
+          </div>
           <button class="sl-btn-again" id="slNextStageBtn" onclick="slContinueToNextStage()" style="width:100%;font-size:1.05rem;padding:.9rem">المرحلة التالية <i class="fas fa-arrow-left"></i></button>
           <button class="sl-btn-change" onclick="slChangeLevel()" style="width:100%;margin-top:.75rem">🎯 تغيير المستوى</button>
         </div>
@@ -11098,6 +11115,8 @@ function slShowStageComplete() {
 
   slShowScreen('slStageScreen');
   if (accuracy >= 70) slConfettiBurst();
+  // Show progress badge on stage screen too
+  slShowProgressBadge(accuracy, SL.totalXP, SL.level);
 }
 
 // ---- Continue to next stage ----
@@ -11121,6 +11140,53 @@ async function slContinueToNextStage() {
   document.getElementById('slFetchingNotice').style.display = 'none';
 }
 
+// ---- Progress Badge Helper ----
+function slShowProgressBadge(accuracy, totalXP, level) {
+  const badge = document.getElementById('slProgressBadge');
+  const badgeEmoji = document.getElementById('slProgressBadgeEmoji');
+  const badgeTitle = document.getElementById('slProgressBadgeTitle');
+  const badgeDesc = document.getElementById('slProgressBadgeDesc');
+  if (!badge) return;
+
+  // Determine progress tier based on accuracy + XP + level
+  const levelWeight = {beginner:0, intermediate:25, advanced:50, expert:75};
+  const score = accuracy + (levelWeight[level] || 0) + Math.min(totalXP / 10, 25);
+
+  let tier, emoji, color, bg, desc;
+  if (score >= 140) {
+    tier = 'خبير 🏆'; emoji = '🏆'; color = '#fde047';
+    bg = 'linear-gradient(135deg,rgba(253,224,71,.18),rgba(245,158,11,.12))';
+    desc = 'مستوى استثنائي! أنت من أفضل المتعلمين في الفلك!';
+  } else if (score >= 110) {
+    tier = 'متقدم 🚀'; emoji = '🚀'; color = '#06b6d4';
+    bg = 'linear-gradient(135deg,rgba(6,182,212,.18),rgba(14,165,233,.12))';
+    desc = 'تقدم ممتاز! أنت تتقن المفاهيم الفلكية بشكل رائع.';
+  } else if (score >= 75) {
+    tier = 'متوسط ⭐'; emoji = '⭐'; color = '#a78bfa';
+    bg = 'linear-gradient(135deg,rgba(167,139,250,.18),rgba(139,92,246,.12))';
+    desc = 'تقدم جيد! استمر في التعلم للوصول للمستوى المتقدم.';
+  } else if (score >= 40) {
+    tier = 'مبتدئ 🌱'; emoji = '🌱'; color = '#10b981';
+    bg = 'linear-gradient(135deg,rgba(16,185,129,.18),rgba(5,150,105,.12))';
+    desc = 'بداية جيدة! التدرب اليومي سيرفع مستواك بسرعة.';
+  } else {
+    tier = 'مبتدئ 🌙'; emoji = '🌙'; color = '#8b8aa0';
+    bg = 'linear-gradient(135deg,rgba(139,138,160,.12),rgba(100,116,139,.08))';
+    desc = 'لا بأس! كل خبير كان مبتدئاً. واصل التعلم!';
+  }
+
+  badge.style.background = bg;
+  badge.style.border = `1px solid ${color}40`;
+  badgeEmoji.textContent = emoji;
+  badgeTitle.textContent = tier;
+  badgeTitle.style.color = color;
+  badgeDesc.textContent = desc;
+
+  // Update stage screen mini badge too
+  const stageBadgeTitle = document.getElementById('slStageBadgeTitle');
+  if (stageBadgeTitle) { stageBadgeTitle.textContent = tier; stageBadgeTitle.style.color = color; }
+}
+
 // ---- Game Over (lost all hearts) ----
 function slShowGameOver() {
   SL.totalXP += SL.stageXP;
@@ -11139,6 +11205,7 @@ function slShowGameOver() {
   document.getElementById('slResAccuracy').textContent = accuracy + '%';
   document.getElementById('slLevelUpMsg').style.display = 'none';
   document.getElementById('slProgressFill').style.width = '100%';
+  slShowProgressBadge(accuracy, SL.totalXP, SL.level);
   slShowScreen('slResultScreen');
 }
 
