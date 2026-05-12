@@ -10748,6 +10748,246 @@ function showCertificateModal(courseTitle, certUrl) {
 // SELF LEARNING SYSTEM v2 — Infinite Stages + Random Answers + API
 // ============================================================
 
+// ---- Multilingual UI strings ----
+const SL_STRINGS = {
+  ar: {
+    stage: 'المرحلة',
+    question: 'السؤال',
+    of: 'من',
+    correct: '✨ إجابة صحيحة!',
+    wrong: '😞 إجابة خاطئة',
+    streakMsg: (n) => `🔥 رائع! سلسلة ${n}!`,
+    stageComplete: (n) => `المرحلة ${n} اكتملت! 🎉`,
+    accuracyHigh: '🔥 أداء رائع! واصل!',
+    accuracyMid: '💪 جيد! ركّز أكثر في المرحلة القادمة',
+    accuracyLow: '😅 حاول تحسين نتيجتك',
+    loadingStage: '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...',
+    nextStageBtn: 'المرحلة التالية <i class="fas fa-arrow-left"></i>',
+    gameOverTitle: 'نفدت الأرواح!',
+    gameOverSub: (n) => `وصلت للمرحلة ${n} — أعد المحاولة!`,
+    badgeTiers: ['مبتدئ 🌙','مبتدئ 🌱','متوسط ⭐','متقدم 🚀','خبير 🏆'],
+    badgeDescs: ['لا بأس! كل خبير كان مبتدئاً. واصل التعلم!','بداية جيدة! التدرب اليومي سيرفع مستواك بسرعة.','تقدم جيد! استمر في التعلم للوصول للمستوى المتقدم.','تقدم ممتاز! أنت تتقن المفاهيم الفلكية بشكل رائع.','مستوى استثنائي! أنت من أفضل المتعلمين في الفلك!'],
+    levelNames: {beginner:'مبتدئ',intermediate:'متوسط',advanced:'متقدم',expert:'محترف'},
+    optionLetters: ['أ','ب','ج','د'],
+  },
+  en: {
+    stage: 'Stage',
+    question: 'Question',
+    of: 'of',
+    correct: '✨ Correct answer!',
+    wrong: '😞 Wrong answer',
+    streakMsg: (n) => `🔥 Amazing! Streak ${n}!`,
+    stageComplete: (n) => `Stage ${n} complete! 🎉`,
+    accuracyHigh: '🔥 Excellent performance! Keep going!',
+    accuracyMid: '💪 Good! Focus more in the next stage',
+    accuracyLow: '😅 Try to improve your score',
+    loadingStage: '<i class="fas fa-spinner fa-spin"></i> Loading...',
+    nextStageBtn: 'Next Stage <i class="fas fa-arrow-right"></i>',
+    gameOverTitle: 'Out of hearts!',
+    gameOverSub: (n) => `You reached Stage ${n} — Try again!`,
+    badgeTiers: ['Beginner 🌙','Beginner 🌱','Intermediate ⭐','Advanced 🚀','Expert 🏆'],
+    badgeDescs: ['No worries! Every expert was once a beginner. Keep learning!','Good start! Daily practice will boost your level fast.','Good progress! Keep learning to reach the advanced level.','Excellent progress! You are mastering astronomy concepts.','Exceptional level! You are among the best astronomy learners!'],
+    levelNames: {beginner:'Beginner',intermediate:'Intermediate',advanced:'Advanced',expert:'Expert'},
+    optionLetters: ['A','B','C','D'],
+  },
+  de: {
+    stage: 'Stufe',
+    question: 'Frage',
+    of: 'von',
+    correct: '✨ Richtige Antwort!',
+    wrong: '😞 Falsche Antwort',
+    streakMsg: (n) => `🔥 Super! Serie ${n}!`,
+    stageComplete: (n) => `Stufe ${n} abgeschlossen! 🎉`,
+    accuracyHigh: '🔥 Ausgezeichnete Leistung! Weiter so!',
+    accuracyMid: '💪 Gut! Konzentriere dich mehr in der nächsten Stufe',
+    accuracyLow: '😅 Versuche dein Ergebnis zu verbessern',
+    loadingStage: '<i class="fas fa-spinner fa-spin"></i> Wird geladen...',
+    nextStageBtn: 'Nächste Stufe <i class="fas fa-arrow-right"></i>',
+    gameOverTitle: 'Keine Herzen mehr!',
+    gameOverSub: (n) => `Du hast Stufe ${n} erreicht — Versuche es erneut!`,
+    badgeTiers: ['Anfänger 🌙','Anfänger 🌱','Mittel ⭐','Fortgeschritten 🚀','Experte 🏆'],
+    badgeDescs: ['Kein Problem! Jeder Experte war einmal Anfänger. Weiter lernen!','Guter Start! Tägliches Üben wird dein Level schnell steigern.','Guter Fortschritt! Lerne weiter, um das fortgeschrittene Level zu erreichen.','Ausgezeichneter Fortschritt! Du beherrschst astronomische Konzepte hervorragend.','Außergewöhnliches Niveau! Du gehörst zu den besten Astronomie-Lernenden!'],
+    levelNames: {beginner:'Anfänger',intermediate:'Mittel',advanced:'Fortgeschritten',expert:'Experte'},
+    optionLetters: ['A','B','C','D'],
+  }
+};
+function slT() { return SL_STRINGS[SL.lang] || SL_STRINGS['ar']; }
+
+// ============================================================
+// SL SOUND ENGINE — Cinematic & Unique
+// ============================================================
+const SLSound = (() => {
+  let ctx = null;
+  function ac() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function osc(freq, type, start, dur, gainPeak, c) {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(gainPeak, start + dur * 0.08);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(start); o.stop(start + dur + 0.01);
+    return o;
+  }
+  function oscRamp(f1, f2, type, start, dur, gainPeak, c) {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f1, start);
+    o.frequency.exponentialRampToValueAtTime(f2, start + dur);
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(gainPeak, start + dur * 0.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(start); o.stop(start + dur + 0.01);
+    return o;
+  }
+  function noise(start, dur, gain, c) {
+    const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(), g = c.createGain();
+    const filt = c.createBiquadFilter();
+    filt.type = 'bandpass'; filt.frequency.value = 1200; filt.Q.value = 0.8;
+    src.buffer = buf;
+    g.gain.setValueAtTime(gain, start);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    src.connect(filt); filt.connect(g); g.connect(c.destination);
+    src.start(start); src.stop(start + dur + 0.01);
+  }
+
+  return {
+    // صوت اختيار الإجابة — نبضة كونية عميقة فريدة
+    select() {
+      try {
+        const c = ac(), now = c.currentTime;
+        // طبقة 1: نبضة bass منخفضة
+        oscRamp(180, 90, 'sine', now, 0.18, 0.22, c);
+        // طبقة 2: نغمة فضائية متوسطة مع vibrato
+        const o = c.createOscillator(), lfo = c.createOscillator(), lfoG = c.createGain(), g = c.createGain();
+        o.type = 'triangle'; o.frequency.value = 520;
+        lfo.type = 'sine'; lfo.frequency.value = 14;
+        lfoG.gain.value = 12;
+        lfo.connect(lfoG); lfoG.connect(o.frequency);
+        g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.12, now + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+        o.connect(g); g.connect(c.destination);
+        lfo.start(now); lfo.stop(now + 0.25);
+        o.start(now); o.stop(now + 0.25);
+        // طبقة 3: shimmer عالية خفيفة
+        oscRamp(1800, 2400, 'sine', now, 0.15, 0.04, c);
+      } catch(e) {}
+    },
+
+    // صوت الإجابة الصحيحة — انفجار نجمي احترافي
+    correct() {
+      try {
+        const c = ac(), now = c.currentTime;
+        // Chord صاعد: C-E-G-C
+        [[261.6, 0], [329.6, 0.06], [392, 0.12], [523.2, 0.18], [783.9, 0.26]].forEach(([f, t]) => {
+          osc(f, 'sine', now + t, 0.38, 0.18, c);
+        });
+        // Impact bass
+        oscRamp(220, 55, 'sine', now, 0.25, 0.3, c);
+        // Shimmer sparkle
+        [[2100, 0.05], [2800, 0.12], [3500, 0.19]].forEach(([f, t]) => {
+          osc(f, 'sine', now + t, 0.12, 0.05, c);
+        });
+        // Noise burst للتشبيع
+        noise(now, 0.06, 0.08, c);
+      } catch(e) {}
+    },
+
+    // صوت الإجابة الخاطئة — هبوط درامي كوني
+    wrong() {
+      try {
+        const c = ac(), now = c.currentTime;
+        // هبوط عميق
+        oscRamp(280, 80, 'sawtooth', now, 0.35, 0.18, c);
+        oscRamp(210, 60, 'sine', now + 0.04, 0.32, 0.14, c);
+        // رعشة dissonant
+        osc(155, 'square', now, 0.2, 0.06, c);
+        // ضربة percussion
+        oscRamp(300, 40, 'sine', now, 0.1, 0.25, c);
+        noise(now, 0.08, 0.05, c);
+      } catch(e) {}
+    },
+
+    // صوت اكتمال المرحلة — fanfare ملحمي
+    stageComplete() {
+      try {
+        const c = ac(), now = c.currentTime;
+        // Fanfare ملحمي متصاعد
+        [[392, 0], [523.2, 0.1], [659.3, 0.2], [783.9, 0.3], [1046.5, 0.4]].forEach(([f, t]) => {
+          osc(f, 'triangle', now + t, 0.45, 0.2, c);
+          osc(f * 1.5, 'sine', now + t, 0.25, 0.06, c);
+        });
+        // Bass hit
+        oscRamp(110, 55, 'sine', now, 0.5, 0.28, c);
+        // Sparkle trail
+        for (let i = 0; i < 6; i++) {
+          osc(1200 + i * 300, 'sine', now + 0.08 * i, 0.12, 0.04, c);
+        }
+        noise(now, 0.05, 0.1, c);
+      } catch(e) {}
+    },
+
+    // صوت الشارة الأسطورية — orchestral epic
+    legendary() {
+      try {
+        const c = ac(), now = c.currentTime;
+        // Timpani hit
+        oscRamp(120, 40, 'sine', now, 0.6, 0.5, c);
+        oscRamp(95, 35, 'sine', now + 0.02, 0.55, 0.35, c);
+        noise(now, 0.12, 0.2, c);
+
+        // Brass chord صاعد — epic
+        [[174.6, 0, 0.22], [220, 0.07, 0.2], [261.6, 0.14, 0.22], [349.2, 0.21, 0.2], [440, 0.28, 0.18]].forEach(([f, t, g]) => {
+          oscRamp(f * 0.8, f, 'sawtooth', now + t, 0.55, g, c);
+          osc(f, 'square', now + t, 0.5, g * 0.3, c);
+        });
+
+        // String shimmer
+        [[880, 0.3], [1100, 0.38], [1320, 0.46], [1760, 0.54]].forEach(([f, t]) => {
+          const o = c.createOscillator(), vib = c.createOscillator(), vG = c.createGain(), g = c.createGain();
+          o.type = 'triangle'; o.frequency.value = f;
+          vib.type = 'sine'; vib.frequency.value = 6;
+          vG.gain.value = 8; vib.connect(vG); vG.connect(o.frequency);
+          g.gain.setValueAtTime(0, now + t); g.gain.linearRampToValueAtTime(0.07, now + t + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + t + 0.5);
+          o.connect(g); g.connect(c.destination);
+          vib.start(now + t); vib.stop(now + t + 0.55);
+          o.start(now + t); o.stop(now + t + 0.55);
+        });
+
+        // Final power chord
+        setTimeout(() => {
+          const n2 = c.currentTime;
+          [[130.8, 0.4], [196, 0.35], [261.6, 0.3], [392, 0.25], [523.2, 0.2]].forEach(([f, g]) => {
+            oscRamp(f * 0.95, f, 'sawtooth', n2, 0.7, g, c);
+          });
+          noise(n2, 0.15, 0.25, c);
+        }, 650);
+      } catch(e) {}
+    },
+
+    // صوت game over — هبوط مأساوي
+    gameOver() {
+      try {
+        const c = ac(), now = c.currentTime;
+        oscRamp(440, 220, 'sine', now, 0.4, 0.2, c);
+        oscRamp(330, 165, 'sine', now + 0.15, 0.5, 0.16, c);
+        oscRamp(220, 110, 'sine', now + 0.35, 0.6, 0.14, c);
+        osc(82, 'sawtooth', now + 0.5, 0.6, 0.12, c);
+        noise(now + 0.5, 0.15, 0.06, c);
+      } catch(e) {}
+    }
+  };
+})();
+
 // ---- Utilities ----
 function slShuffle(arr) {
   const a = [...arr];
@@ -10943,11 +11183,10 @@ function startSelfLearning(level) {
   SL.sessionXP = 0;
   SL.apiFetched = [];
   SL.unusedPool = [];
-  // Local pool kept ONLY as offline fallback
-  SL.pool = slShuffle([...SL_QUESTIONS[level]]);
+  // All questions come from internet only
 
   const colors = {beginner:'#10b981',intermediate:'#a78bfa',advanced:'#fbbf24',expert:'#f472b6'};
-  const names = {beginner:'مبتدئ',intermediate:'متوسط',advanced:'متقدم',expert:'محترف'};
+  const names = slT().levelNames;
   document.getElementById('slHeaderSub').innerHTML =
     `<span class="sl-level-badge" style="background:${colors[level]}22;color:${colors[level]};border:1px solid ${colors[level]}44">${names[level]}</span>`;
   document.getElementById('slStatsBar').style.display = 'flex';
@@ -10964,18 +11203,19 @@ async function slLoadStage() {
   // Always try to get fresh internet questions
   await slFetchAPI();
 
-  // If API failed and pool still empty → use local as offline backup
+  // If API failed and pool still empty → show error notice (no local fallback)
   if (SL.unusedPool.length < SL.PER_STAGE) {
-    // Local pool is Arabic — label correctly based on language
-    const localPool = SL.pool.map(q => ({
-      ...q,
-      exp: SL.lang === 'en'
-        ? ('✅ Correct answer: ' + q.opts[q.ans])
+    const notice = document.getElementById('slFetchingNotice');
+    if (notice) {
+      const t = slT();
+      notice.style.display = 'block';
+      notice.innerHTML = SL.lang === 'ar'
+        ? '<i class="fas fa-wifi" style="color:#ef4444"></i> تعذّر تحميل الأسئلة — تأكد من اتصالك بالإنترنت وأعد المحاولة'
         : SL.lang === 'de'
-        ? ('✅ Richtige Antwort: ' + q.opts[q.ans])
-        : q.exp
-    }));
-    SL.unusedPool = [...SL.unusedPool, ...slShuffle(localPool)];
+        ? '<i class="fas fa-wifi" style="color:#ef4444"></i> Fragen konnten nicht geladen werden — Bitte Internetverbindung prüfen'
+        : '<i class="fas fa-wifi" style="color:#ef4444"></i> Failed to load questions — Please check your internet connection';
+    }
+    return; // don't continue without questions
   }
 
   // Pick PER_STAGE questions
@@ -10984,22 +11224,94 @@ async function slLoadStage() {
   slRenderQuestion();
 }
 
-// ---- Fetch from OpenTDB API (primary source) + translate if needed ----
+// ---- Fetch astronomy questions via Claude API (web search enabled) ----
 async function slFetchAPI() {
-  const diffMap = {beginner:'easy', intermediate:'medium', advanced:'hard', expert:'hard'};
+  const diffMap = {beginner:'easy', intermediate:'medium', advanced:'hard', expert:'expert'};
   const diff = diffMap[SL.level] || 'medium';
   const notice = document.getElementById('slFetchingNotice');
-  const lang = SL.lang || 'en';
+  const lang = SL.lang || 'ar';
+
+  const langInstructions = {
+    ar: { label: 'Arabic', notice: '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> جاري تحميل أسئلة فلكية جديدة من الإنترنت...' },
+    en: { label: 'English', notice: '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> Loading new astronomy questions from the internet...' },
+    de: { label: 'German', notice: '<i class="fas fa-cloud-download-alt" style="color:#f59e0b"></i> Neue Astronomiefragen werden aus dem Internet geladen...' },
+  };
+  const li = langInstructions[lang] || langInstructions['ar'];
+
+  if (notice) { notice.style.display = 'block'; notice.innerHTML = li.notice; }
+
   try {
-    if (notice) {
-      notice.style.display = 'block';
-      notice.innerHTML = lang === 'ar'
-        ? '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> جاري تحميل وترجمة الأسئلة...'
-        : lang === 'de'
-        ? '<i class="fas fa-cloud-download-alt" style="color:#f59e0b"></i> Fragen werden geladen und übersetzt...'
-        : '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> Loading questions from the internet...';
-    }
-    // Fetch 30 at a time to cover 3 stages before next fetch
+    const systemPrompt = `You are an astronomy quiz generator. Generate exactly 20 multiple-choice astronomy questions in ${li.label} at ${diff} difficulty level.
+Use your knowledge to create varied, accurate, and interesting questions about space, stars, planets, galaxies, physics of the universe, space exploration, and astronomical phenomena.
+Vary the topics across different sources of knowledge.
+Return ONLY a valid JSON array with no markdown, no extra text. Each object must have:
+- "q": question text (string)
+- "correct": correct answer (string)  
+- "incorrects": array of exactly 3 wrong answers (strings)
+- "exp": brief explanation of the correct answer (string, in ${li.label})
+All text must be in ${li.label}.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: systemPrompt }]
+      }),
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!response.ok) throw new Error('API error: ' + response.status);
+    const data = await response.json();
+
+    // Extract text content from response (may contain tool_use blocks)
+    const fullText = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('');
+
+    const clean = fullText.replace(/```json|```/g, '').trim();
+    // Find JSON array in response
+    const startIdx = clean.indexOf('[');
+    const endIdx = clean.lastIndexOf(']');
+    if (startIdx === -1 || endIdx === -1) throw new Error('No JSON array found');
+    const items = JSON.parse(clean.slice(startIdx, endIdx + 1));
+
+    if (!Array.isArray(items) || items.length === 0) throw new Error('Empty result');
+
+    const converted = items
+      .filter(item => item.q && item.correct && Array.isArray(item.incorrects) && item.incorrects.length >= 3)
+      .map(item => {
+        const opts = slShuffle([item.correct, ...item.incorrects.slice(0, 3)]);
+        return {
+          q: item.q,
+          icon: '🌌',
+          opts,
+          ans: opts.indexOf(item.correct),
+          exp: item.exp || item.correct,
+          fromAPI: true
+        };
+      });
+
+    if (notice) notice.style.display = 'none';
+    // Add to pool (dedup by question text)
+    const existing = new Set(SL.unusedPool.map(q => q.q));
+    const fresh = converted.filter(q => !existing.has(q.q));
+    SL.unusedPool = [...SL.unusedPool, ...fresh];
+    return fresh.length > 0;
+  } catch(e) {
+    console.warn('slFetchAPI (Claude) error:', e);
+    // Fallback: try OpenTDB for English then translate
+    return await slFetchOpenTDB(diff, lang, notice);
+  }
+}
+
+// ---- Fallback: OpenTDB + translation ----
+async function slFetchOpenTDB(diff, lang, notice) {
+  try {
+    if (notice) notice.style.display = 'block';
     const res = await fetch(
       `https://opentdb.com/api.php?amount=30&category=17&difficulty=${diff}&type=multiple`,
       { signal: AbortSignal.timeout(8000) }
@@ -11011,35 +11323,23 @@ async function slFetchAPI() {
         const incorrects = r.incorrect_answers.map(slDecodeHTML);
         return { q: slDecodeHTML(r.question), correct, incorrects };
       });
-
-      // Translate if Arabic or German
       if (lang !== 'en') {
         items = await slTranslateQuestions(items, lang);
       }
-
+      const correctLabel = lang === 'ar' ? '✅ الإجابة الصحيحة' : lang === 'de' ? '✅ Richtige Antwort' : '✅ Correct answer';
       const converted = items.map(item => {
         const opts = slShuffle([item.correct, ...item.incorrects]);
-        const correctLabel = lang === 'ar' ? '✅ الإجابة الصحيحة' : lang === 'de' ? '✅ Richtige Antwort' : '✅ Correct answer';
-        return {
-          q: item.q,
-          icon: '🌌',
-          opts,
-          ans: opts.indexOf(item.correct),
-          exp: `${correctLabel}: ${item.correct}`,
-          fromAPI: true
-        };
+        return { q: item.q, icon: '🌌', opts, ans: opts.indexOf(item.correct), exp: `${correctLabel}: ${item.correct}`, fromAPI: true };
       });
-
       if (notice) notice.style.display = 'none';
-      // Add to pool (dedup by question text)
       const existing = new Set(SL.unusedPool.map(q => q.q));
       const fresh = converted.filter(q => !existing.has(q.q));
       SL.unusedPool = [...SL.unusedPool, ...fresh];
-      return true; // success
+      return true;
     }
-  } catch(e) { console.warn('slFetchAPI error:', e); }
+  } catch(e) { console.warn('slFetchOpenTDB error:', e); }
   if (notice) notice.style.display = 'none';
-  return false; // failed — caller will use local fallback
+  return false;
 }
 
 // ---- Translate questions via Groq API ----
@@ -11100,8 +11400,9 @@ function slRenderQuestion() {
   const total = SL.stageQuestions.length;
 
   // Header: stage + question number
+  const t = slT();
   document.getElementById('slQNum').textContent =
-    `المرحلة ${SL.stage} — السؤال ${SL.currentQ + 1} من ${total}` +
+    `${t.stage} ${SL.stage} — ${t.question} ${SL.currentQ + 1} ${t.of} ${total}` +
     (q.fromAPI ? '  🌐' : '');
   document.getElementById('slQIcon').textContent = q.icon || '⭐';
   document.getElementById('slQText').textContent = q.q;
@@ -11110,14 +11411,14 @@ function slRenderQuestion() {
   document.getElementById('slProgressFill').style.width = ((SL.currentQ / total) * 100) + '%';
 
   // Options — already shuffled at load time
-  const letters = ['أ','ب','ج','د'];
+  const letters = t.optionLetters;
   const optsEl = document.getElementById('slOptions');
   optsEl.innerHTML = '';
   q.opts.forEach((opt, i) => {
     const div = document.createElement('div');
     div.className = 'sl-option';
     div.innerHTML = `<span class="sl-option-letter">${letters[i]}</span><span>${opt}</span>`;
-    div.onclick = () => slAnswer(i, div);
+    div.onclick = () => { SLSound.select(); slAnswer(i, div); };
     optsEl.appendChild(div);
   });
 
@@ -11153,6 +11454,7 @@ function slAnswer(idx, el) {
     SL.xp += earned;
     SL.sessionXP += earned;
     SL.stageXP += earned;
+    SLSound.correct();
     slShowFeedback(true, q.exp);
     slSpawnParticles(el);
     slShowXPPopup(earned, el);
@@ -11169,6 +11471,7 @@ function slAnswer(idx, el) {
     SL.hearts = Math.max(0, SL.hearts - 1);
     SL.streak = 0;
     SL.wrongCount++;
+    SLSound.wrong();
     slShowFeedback(false, q.exp);
     slHeartBreak();
   }
@@ -11185,12 +11488,13 @@ function slCalcXP() {
 
 function slShowFeedback(correct, explanation) {
   const fb = document.getElementById('slFeedback');
+  const t = slT();
   fb.style.display = 'flex';
   fb.className = 'sl-feedback ' + (correct ? 'correct-fb' : 'wrong-fb');
   document.getElementById('slFbIcon').textContent = correct ? '✅' : '❌';
   document.getElementById('slFbTitle').textContent = correct
-    ? (SL.streak >= 3 ? `🔥 رائع! سلسلة ${SL.streak}!` : '✨ إجابة صحيحة!')
-    : '😞 إجابة خاطئة';
+    ? (SL.streak >= 3 ? t.streakMsg(SL.streak) : t.correct)
+    : t.wrong;
   document.getElementById('slFbSub').textContent = explanation;
 }
 
@@ -11219,11 +11523,12 @@ function slShowStageComplete() {
 
   // Populate screen
   const emojis = ['🎯','🚀','🌟','🏆','⭐','🔥','💫','🌌','🎉','🌠'];
+  const t = slT();
   document.getElementById('slStageEmoji').textContent = emojis[(SL.stage - 1) % emojis.length];
-  document.getElementById('slStageTitle').textContent = `المرحلة ${SL.stage} اكتملت! 🎉`;
+  document.getElementById('slStageTitle').textContent = t.stageComplete(SL.stage);
   const accuracy = Math.round((SL.stageCorrect / SL.stageQuestions.length) * 100);
   document.getElementById('slStageSub').textContent =
-    accuracy >= 80 ? '🔥 أداء رائع! واصل!' : accuracy >= 50 ? '💪 جيد! ركّز أكثر في المرحلة القادمة' : '😅 حاول تحسين نتيجتك';
+    accuracy >= 80 ? t.accuracyHigh : accuracy >= 50 ? t.accuracyMid : t.accuracyLow;
   document.getElementById('slStageCorrCount').textContent = `${SL.stageCorrect}/${SL.stageQuestions.length}`;
   document.getElementById('slStageXPCount').textContent = '+' + SL.stageXP;
   document.getElementById('slStageStreakCount').textContent = SL.streak;
@@ -11236,6 +11541,9 @@ function slShowStageComplete() {
   if (accuracy >= 70) slConfettiBurst();
   // Show progress badge on stage screen too
   slShowProgressBadge(accuracy, SL.totalXP, SL.level);
+  // Sound: legendary for expert + high accuracy, otherwise stage complete fanfare
+  const isLegendary = (SL.level === 'expert' && accuracy >= 80) || accuracy === 100;
+  setTimeout(() => isLegendary ? SLSound.legendary() : SLSound.stageComplete(), 150);
 }
 
 // ---- Continue to next stage ----
@@ -11248,14 +11556,15 @@ async function slContinueToNextStage() {
 
   // Show loading notice & disable button while fetching
   const btn = document.getElementById('slNextStageBtn');
+  const t = slT();
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+  btn.innerHTML = t.loadingStage;
   document.getElementById('slFetchingNotice').style.display = 'block';
 
   await slLoadStage();
 
   btn.disabled = false;
-  btn.innerHTML = 'المرحلة التالية <i class="fas fa-arrow-left"></i>';
+  btn.innerHTML = t.nextStageBtn;
   document.getElementById('slFetchingNotice').style.display = 'none';
 }
 
@@ -11270,29 +11579,29 @@ function slShowProgressBadge(accuracy, totalXP, level) {
   // Determine progress tier based on accuracy + XP + level
   const levelWeight = {beginner:0, intermediate:25, advanced:50, expert:75};
   const score = accuracy + (levelWeight[level] || 0) + Math.min(totalXP / 10, 25);
+  const t = slT();
 
-  let tier, emoji, color, bg, desc;
+  let tierIdx, color, bg;
   if (score >= 140) {
-    tier = 'خبير 🏆'; emoji = '🏆'; color = '#fde047';
+    tierIdx = 4; color = '#fde047';
     bg = 'linear-gradient(135deg,rgba(253,224,71,.18),rgba(245,158,11,.12))';
-    desc = 'مستوى استثنائي! أنت من أفضل المتعلمين في الفلك!';
   } else if (score >= 110) {
-    tier = 'متقدم 🚀'; emoji = '🚀'; color = '#06b6d4';
+    tierIdx = 3; color = '#06b6d4';
     bg = 'linear-gradient(135deg,rgba(6,182,212,.18),rgba(14,165,233,.12))';
-    desc = 'تقدم ممتاز! أنت تتقن المفاهيم الفلكية بشكل رائع.';
   } else if (score >= 75) {
-    tier = 'متوسط ⭐'; emoji = '⭐'; color = '#a78bfa';
+    tierIdx = 2; color = '#a78bfa';
     bg = 'linear-gradient(135deg,rgba(167,139,250,.18),rgba(139,92,246,.12))';
-    desc = 'تقدم جيد! استمر في التعلم للوصول للمستوى المتقدم.';
   } else if (score >= 40) {
-    tier = 'مبتدئ 🌱'; emoji = '🌱'; color = '#10b981';
+    tierIdx = 1; color = '#10b981';
     bg = 'linear-gradient(135deg,rgba(16,185,129,.18),rgba(5,150,105,.12))';
-    desc = 'بداية جيدة! التدرب اليومي سيرفع مستواك بسرعة.';
   } else {
-    tier = 'مبتدئ 🌙'; emoji = '🌙'; color = '#8b8aa0';
+    tierIdx = 0; color = '#8b8aa0';
     bg = 'linear-gradient(135deg,rgba(139,138,160,.12),rgba(100,116,139,.08))';
-    desc = 'لا بأس! كل خبير كان مبتدئاً. واصل التعلم!';
   }
+
+  const tier = t.badgeTiers[tierIdx];
+  const emoji = tier.match(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu)?.[0] || '⭐';
+  const desc = t.badgeDescs[tierIdx];
 
   badge.style.background = bg;
   badge.style.border = `1px solid ${color}40`;
@@ -11304,6 +11613,8 @@ function slShowProgressBadge(accuracy, totalXP, level) {
   // Update stage screen mini badge too
   const stageBadgeTitle = document.getElementById('slStageBadgeTitle');
   if (stageBadgeTitle) { stageBadgeTitle.textContent = tier; stageBadgeTitle.style.color = color; }
+  // Legendary sound for top tier badge
+  if (tierIdx === 4) setTimeout(() => SLSound.legendary(), 300);
 }
 
 // ---- Game Over (lost all hearts) ----
@@ -11316,9 +11627,10 @@ function slShowGameOver() {
 
   const total = SL.currentQ;
   const accuracy = total > 0 ? Math.round((SL.correctCount / total) * 100) : 0;
+  const t = slT();
   document.getElementById('slResultMascot').textContent = '💔';
-  document.getElementById('slResultTitle').textContent = 'نفدت الأرواح!';
-  document.getElementById('slResultSub').textContent = `وصلت للمرحلة ${SL.stage} — أعد المحاولة!`;
+  document.getElementById('slResultTitle').textContent = t.gameOverTitle;
+  document.getElementById('slResultSub').textContent = t.gameOverSub(SL.stage);
   document.getElementById('slResCorrect').textContent = SL.correctCount + '/' + total;
   document.getElementById('slResXP').textContent = '+' + SL.sessionXP;
   document.getElementById('slResAccuracy').textContent = accuracy + '%';
@@ -11326,6 +11638,7 @@ function slShowGameOver() {
   document.getElementById('slProgressFill').style.width = '100%';
   slShowProgressBadge(accuracy, SL.totalXP, SL.level);
   slShowScreen('slResultScreen');
+  setTimeout(() => SLSound.gameOver(), 100);
 }
 
 // ---- Stats Update ----
