@@ -2365,6 +2365,148 @@ body {
 }
 #newsCountdown { color: #a78bfa !important; }
 
+/* ===== SELF LEARNING SYSTEM — Duolingo Style ===== */
+@keyframes slMenuGlow { 0%,100%{box-shadow:0 0 8px rgba(16,185,129,.5)} 50%{box-shadow:0 0 18px rgba(6,182,212,.8)} }
+
+/* Modal base */
+#selfLearningModal { background: #09090f; }
+.sl-modal-content { background: #09090f; color: #f1f0f7; font-family: 'Cairo', sans-serif; }
+
+/* Header */
+.sl-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; background: rgba(0,0,0,0.4); border-bottom:1px solid rgba(255,255,255,.07); flex-shrink:0; position:sticky; top:0; z-index:10; }
+.sl-header-left { display:flex; align-items:center; gap:.75rem; }
+.sl-close-btn { width:38px;height:38px;border:none;background:rgba(239,68,68,.12);color:#ef4444;border-radius:10px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:.25s; }
+.sl-close-btn:hover { background:rgba(239,68,68,.3); transform:rotate(90deg) scale(1.1); }
+
+/* Stats bar */
+.sl-stats-bar { display:flex; align-items:center; justify-content:space-between; padding:.65rem 1.25rem; background:rgba(255,255,255,.03); border-bottom:1px solid rgba(255,255,255,.05); flex-shrink:0; gap:.75rem; }
+.sl-stat { display:flex; align-items:center; gap:.4rem; font-size:.88rem; font-weight:700; }
+.sl-stat-icon { font-size:1rem; }
+.sl-hearts { color:#ef4444; }
+.sl-xp { color:#fde047; }
+.sl-streak { color:#f97316; }
+.sl-level-badge { padding:.25rem .75rem; border-radius:99px; font-size:.75rem; font-weight:800; }
+.sl-progress-wrap { flex:1; height:10px; background:rgba(255,255,255,.07); border-radius:99px; overflow:hidden; position:relative; margin:0 .5rem; }
+.sl-progress-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#10b981,#06b6d4); transition:width .6s cubic-bezier(.2,.8,.2,1); position:relative; }
+.sl-progress-fill::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); animation:shimmer 2s infinite; }
+
+/* Body */
+.sl-body { flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+
+/* Level Select Screen */
+.sl-screen { display:none; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1.5rem; min-height:70vh; gap:1.5rem; animation:slFadeIn .4s ease; }
+.sl-screen.active { display:flex; }
+@keyframes slFadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+
+.sl-welcome-mascot { font-size:5rem; animation:slMascotFloat 3s ease-in-out infinite; filter:drop-shadow(0 0 20px rgba(16,185,129,.5)); }
+@keyframes slMascotFloat { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-15px) rotate(3deg)} }
+
+.sl-welcome-title { font-size:2rem; font-weight:900; text-align:center; line-height:1.3; background:linear-gradient(135deg,#10b981,#06b6d4,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.sl-welcome-sub { color:#8b8aa0; text-align:center; font-size:1rem; max-width:400px; line-height:1.7; }
+
+.sl-level-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; width:100%; max-width:480px; }
+.sl-level-card { background:linear-gradient(135deg,rgba(26,16,37,.95),rgba(15,10,26,.95)); border:1px solid rgba(255,255,255,.07); border-radius:20px; padding:1.5rem 1rem; text-align:center; cursor:pointer; transition:all .3s cubic-bezier(.2,.8,.2,1); position:relative; overflow:hidden; }
+.sl-level-card::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity .3s; border-radius:20px; }
+.sl-level-card:hover { transform:translateY(-6px) scale(1.03); border-color:rgba(255,255,255,.2); }
+.sl-level-card:hover::before { opacity:1; }
+.sl-level-card[data-level="beginner"]::before { background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(6,182,212,.1)); }
+.sl-level-card[data-level="beginner"] { --lc:#10b981; }
+.sl-level-card[data-level="intermediate"]::before { background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1)); }
+.sl-level-card[data-level="intermediate"] { --lc:#6366f1; }
+.sl-level-card[data-level="advanced"]::before { background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(249,115,22,.1)); }
+.sl-level-card[data-level="advanced"] { --lc:#f59e0b; }
+.sl-level-card[data-level="expert"]::before { background:linear-gradient(135deg,rgba(236,72,153,.15),rgba(239,68,68,.1)); }
+.sl-level-card[data-level="expert"] { --lc:#ec4899; }
+.sl-level-emoji { font-size:2.5rem; margin-bottom:.5rem; display:block; }
+.sl-level-name { font-size:1rem; font-weight:800; color:#fff; margin-bottom:.25rem; }
+.sl-level-desc { font-size:.75rem; color:#8b8aa0; line-height:1.5; }
+.sl-level-stars { display:flex; justify-content:center; gap:.2rem; margin-top:.5rem; font-size:.7rem; }
+.sl-level-card[data-level="beginner"] .sl-level-name { color:#10b981; }
+.sl-level-card[data-level="intermediate"] .sl-level-name { color:#a78bfa; }
+.sl-level-card[data-level="advanced"] .sl-level-name { color:#fbbf24; }
+.sl-level-card[data-level="expert"] .sl-level-name { color:#f472b6; }
+
+/* Question Screen */
+.sl-q-screen { padding:1.5rem; max-width:640px; margin:0 auto; width:100%; }
+.sl-q-num { font-size:.82rem; font-weight:700; color:#8b8aa0; margin-bottom:.5rem; text-align:center; }
+.sl-q-text { font-size:1.2rem; font-weight:700; color:#f1f0f7; text-align:center; margin-bottom:1.75rem; line-height:1.7; padding:.85rem 1rem; background:rgba(255,255,255,.03); border-radius:16px; border:1px solid rgba(255,255,255,.07); }
+.sl-q-icon { font-size:2.5rem; text-align:center; margin-bottom:1rem; display:block; animation:slQIconPop .5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes slQIconPop { from{transform:scale(0) rotate(-20deg)} to{transform:scale(1) rotate(0)} }
+
+.sl-options { display:flex; flex-direction:column; gap:.75rem; }
+.sl-option { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:rgba(255,255,255,.04); border:2px solid rgba(255,255,255,.08); border-radius:14px; cursor:pointer; transition:all .2s cubic-bezier(.2,.8,.2,1); font-size:.95rem; font-weight:600; color:#e4e4f0; }
+.sl-option:hover { background:rgba(124,58,237,.12); border-color:rgba(124,58,237,.4); transform:translateX(-3px); }
+.sl-option.correct { background:rgba(16,185,129,.15)!important; border-color:#10b981!important; color:#10b981!important; animation:slCorrectPop .4s cubic-bezier(.34,1.56,.64,1); }
+.sl-option.wrong { background:rgba(239,68,68,.15)!important; border-color:#ef4444!important; color:#ef4444!important; animation:slWrongShake .4s ease; }
+.sl-option.reveal-correct { background:rgba(16,185,129,.1)!important; border-color:rgba(16,185,129,.5)!important; }
+@keyframes slCorrectPop { 0%{transform:scale(.95)} 60%{transform:scale(1.04)} 100%{transform:scale(1)} }
+@keyframes slWrongShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.sl-option-letter { width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0;transition:.2s; }
+.sl-option:hover .sl-option-letter { background:rgba(124,58,237,.3); }
+.sl-option.correct .sl-option-letter { background:#10b981; color:#fff; }
+.sl-option.wrong .sl-option-letter { background:#ef4444; color:#fff; }
+
+/* Feedback panel */
+.sl-feedback { padding:1rem 1.25rem; border-radius:16px; margin-top:1rem; display:none; align-items:center; gap:.75rem; animation:slFadeIn .3s ease; }
+.sl-feedback.correct-fb { background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.4); }
+.sl-feedback.wrong-fb { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.35); }
+.sl-feedback-icon { font-size:1.5rem; flex-shrink:0; }
+.sl-feedback-text { flex:1; }
+.sl-feedback-title { font-weight:800; font-size:1rem; margin-bottom:.2rem; }
+.sl-feedback.correct-fb .sl-feedback-title { color:#10b981; }
+.sl-feedback.wrong-fb .sl-feedback-title { color:#ef4444; }
+.sl-feedback-sub { font-size:.85rem; color:#b8b3c9; line-height:1.5; }
+.sl-next-btn { background:linear-gradient(135deg,#10b981,#06b6d4); border:none; color:#fff; padding:.75rem 1.75rem; border-radius:12px; font-family:'Cairo',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; transition:.25s; margin-top:1rem; display:none; width:100%; }
+.sl-next-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(16,185,129,.4); }
+
+/* Particles */
+.sl-particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:99999; overflow:hidden; }
+.sl-particle { position:absolute; width:10px; height:10px; border-radius:50%; animation:slParticleFly 1s ease-out forwards; }
+@keyframes slParticleFly { 0%{transform:translateY(0) scale(1);opacity:1} 100%{transform:translateY(-200px) scale(0);opacity:0} }
+
+/* Result Screen */
+.sl-result-screen { text-align:center; padding:2rem 1.5rem; }
+.sl-result-mascot { font-size:6rem; animation:slMascotBounce 1s cubic-bezier(.34,1.56,.64,1); display:block; margin-bottom:1rem; }
+@keyframes slMascotBounce { from{transform:scale(0) rotate(-10deg)} 80%{transform:scale(1.1) rotate(2deg)} to{transform:scale(1)} }
+.sl-result-title { font-size:2rem; font-weight:900; margin-bottom:.5rem; }
+.sl-result-subtitle { color:#8b8aa0; font-size:1rem; margin-bottom:2rem; }
+.sl-result-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; max-width:400px; margin:0 auto 2rem; }
+.sl-result-stat { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:1rem .5rem; text-align:center; }
+.sl-result-stat-icon { font-size:1.5rem; margin-bottom:.25rem; }
+.sl-result-stat-num { font-size:1.5rem; font-weight:900; color:#fff; }
+.sl-result-stat-label { font-size:.72rem; color:#8b8aa0; margin-top:.2rem; }
+.sl-result-btns { display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center; }
+.sl-btn-again { background:linear-gradient(135deg,#10b981,#06b6d4); border:none; color:#fff; padding:.8rem 2rem; border-radius:14px; font-family:'Cairo',sans-serif; font-weight:800; font-size:1rem; cursor:pointer; transition:.25s; }
+.sl-btn-again:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(16,185,129,.45); }
+.sl-btn-change { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:#e4e4f0; padding:.8rem 2rem; border-radius:14px; font-family:'Cairo',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; transition:.25s; }
+.sl-btn-change:hover { background:rgba(255,255,255,.12); }
+
+/* Streak fire animation */
+.sl-streak-fire { animation:streakPulse 1s ease-in-out; }
+@keyframes streakPulse { 0%{transform:scale(1)} 50%{transform:scale(1.5)} 100%{transform:scale(1)} }
+
+/* XP popup */
+.sl-xp-popup { position:fixed; font-size:1.2rem; font-weight:900; color:#fde047; pointer-events:none; z-index:99999; animation:slXpFloat 1.2s ease-out forwards; white-space:nowrap; text-shadow:0 2px 8px rgba(0,0,0,.5); }
+@keyframes slXpFloat { 0%{transform:translateY(0) scale(.8);opacity:0} 20%{opacity:1;transform:translateY(-10px) scale(1.1)} 100%{transform:translateY(-70px) scale(.9);opacity:0} }
+
+/* Heart loss animation */
+.sl-heart-break { animation:heartBreak .5s ease; }
+@keyframes heartBreak { 0%,100%{transform:scale(1)} 50%{transform:scale(0) rotate(15deg)} }
+
+/* Correct Burst */
+.sl-correct-burst { position:fixed; pointer-events:none; z-index:99999; }
+.sl-burst-ring { position:absolute; width:80px; height:80px; border-radius:50%; border:3px solid #10b981; transform:translate(-50%,-50%); animation:burstRing .6s ease-out forwards; }
+@keyframes burstRing { from{transform:translate(-50%,-50%) scale(0);opacity:1} to{transform:translate(-50%,-50%) scale(3);opacity:0} }
+
+/* Responsive */
+@media (max-width:600px) {
+  .sl-level-grid { grid-template-columns:1fr 1fr; gap:.75rem; }
+  .sl-welcome-title { font-size:1.5rem; }
+  .sl-welcome-mascot { font-size:3.5rem; }
+  .sl-q-text { font-size:1.05rem; }
+  .sl-result-stats { grid-template-columns:repeat(3,1fr); }
+}
+
 /* === MAINTENANCE OVERLAY === */
 .maintenance-overlay { background: rgba(9,9,15,0.98) !important; }
 .maintenance-icon {
@@ -2427,6 +2569,7 @@ body {
             <div class="settings-menu-item" onclick="openStudentProgress();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fde047,#f59e0b);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> تقدم الطالب</div>
             <div class="settings-menu-item" onclick="openPdfFilesModal();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);margin-left:6px;font-size:.8rem"><i class="fas fa-file-pdf" style="color:#fff"></i></span> ملفات الدروس</div>
             <div class="settings-menu-item" onclick="openPrivateAdminChat();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#10b981);margin-left:6px;font-size:.8rem"><i class="fas fa-user-shield" style="color:#fff"></i></span> تواصل مع المشرفين</div>
+            <div class="settings-menu-item sl-menu-item" onclick="openSelfLearning();closeSectionsMenu()" style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08));border-bottom:1px solid rgba(16,185,129,.25)!important;position:relative;overflow:hidden"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);margin-left:6px;font-size:.8rem;box-shadow:0 0 10px rgba(16,185,129,.5);animation:slMenuGlow 2s infinite"><i class="fas fa-brain" style="color:#fff"></i></span> <span style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800">التعلم الذاتي</span><span style="margin-right:auto;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">جديد</span></div>
           </div>
         </div>
         <div class="settings-dropdown" id="settingsDropdown">
@@ -10426,6 +10569,579 @@ function showCertificateModal(courseTitle, certUrl) {
   </div>
 </div>
 <!-- ===== END PWA INSTALL GUIDE MODAL ===== -->
+
+<!-- ===== SELF LEARNING MODAL ===== -->
+<div class="modal" id="selfLearningModal" style="z-index:10010;display:none;align-items:stretch;justify-content:stretch;padding:0;margin:0;overflow:hidden;min-height:100vh;min-height:100dvh;">
+  <div class="modal-content sl-modal-content" style="display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;border-radius:0;margin:0;max-width:100%;width:100%;">
+
+    <!-- Header -->
+    <div class="sl-header">
+      <div class="sl-header-left">
+        <span style="font-size:1.4rem">🧠</span>
+        <div>
+          <div style="font-weight:900;font-size:1rem;background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">التعلم الذاتي</div>
+          <div style="font-size:.72rem;color:#8b8aa0;" id="slHeaderSub">نظام تكيفي ذكي في الفلك</div>
+        </div>
+      </div>
+      <button class="sl-close-btn" onclick="closeSelfLearning()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Stats Bar (hidden on welcome screen) -->
+    <div class="sl-stats-bar" id="slStatsBar" style="display:none;">
+      <div class="sl-stat sl-hearts" id="slHeartsDisplay">
+        <span class="sl-stat-icon" id="slHeartsIcons">❤️❤️❤️❤️❤️</span>
+      </div>
+      <div class="sl-progress-wrap" id="slProgressWrap">
+        <div class="sl-progress-fill" id="slProgressFill" style="width:0%"></div>
+      </div>
+      <div class="sl-stat sl-xp" id="slXpDisplay">
+        <span class="sl-stat-icon">⭐</span><span id="slXpVal">0</span> XP
+      </div>
+      <div class="sl-stat sl-streak" id="slStreakDisplay">
+        <span class="sl-stat-icon sl-streak-icon">🔥</span><span id="slStreakVal">0</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="sl-body" id="slBody">
+
+      <!-- SCREEN 1: Welcome / Level Select -->
+      <div class="sl-screen active" id="slWelcomeScreen">
+        <div class="sl-welcome-mascot">🔭</div>
+        <div class="sl-welcome-title">أهلاً بك في<br>التعلم الذاتي!</div>
+        <div class="sl-welcome-sub">نظام ذكي يضع أسئلة على قد مستواك في الفلك ويطور معلوماتك خطوة بخطوة</div>
+        <div style="font-weight:800;color:#f1f0f7;font-size:1rem;align-self:flex-start;max-width:480px;width:100%;">🎯 اختر مستواك أولاً:</div>
+        <div class="sl-level-grid">
+          <div class="sl-level-card" data-level="beginner" onclick="startSelfLearning('beginner')">
+            <span class="sl-level-emoji">🌱</span>
+            <div class="sl-level-name">مبتدئ</div>
+            <div class="sl-level-desc">بدأت رحلتي في عالم الفلك</div>
+            <div class="sl-level-stars">⭐</div>
+          </div>
+          <div class="sl-level-card" data-level="intermediate" onclick="startSelfLearning('intermediate')">
+            <span class="sl-level-emoji">🚀</span>
+            <div class="sl-level-name">متوسط</div>
+            <div class="sl-level-desc">أعرف أساسيات النجوم والكواكب</div>
+            <div class="sl-level-stars">⭐⭐</div>
+          </div>
+          <div class="sl-level-card" data-level="advanced" onclick="startSelfLearning('advanced')">
+            <span class="sl-level-emoji">🌌</span>
+            <div class="sl-level-name">متقدم</div>
+            <div class="sl-level-desc">أفهم الفيزياء الفلكية والكون</div>
+            <div class="sl-level-stars">⭐⭐⭐</div>
+          </div>
+          <div class="sl-level-card" data-level="expert" onclick="startSelfLearning('expert')">
+            <span class="sl-level-emoji">🌠</span>
+            <div class="sl-level-name">محترف</div>
+            <div class="sl-level-desc">أدرس الفلك بعمق علمي</div>
+            <div class="sl-level-stars">⭐⭐⭐⭐</div>
+          </div>
+        </div>
+        <!-- Stats from previous sessions -->
+        <div id="slPrevStats" style="display:none;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:16px;padding:1rem 1.5rem;text-align:center;max-width:400px;width:100%;">
+          <div style="font-size:.82rem;color:#8b8aa0;margin-bottom:.5rem;">إحصائياتك السابقة</div>
+          <div style="display:flex;justify-content:center;gap:2rem;">
+            <div><div style="font-size:1.4rem;font-weight:900;color:#10b981" id="slTotalXpStat">0</div><div style="font-size:.72rem;color:#8b8aa0">XP إجمالي</div></div>
+            <div><div style="font-size:1.4rem;font-weight:900;color:#fde047" id="slTotalSessionsStat">0</div><div style="font-size:.72rem;color:#8b8aa0">جلسة</div></div>
+            <div><div style="font-size:1.4rem;font-weight:900;color:#f97316" id="slBestStreakStat">0</div><div style="font-size:.72rem;color:#8b8aa0">أطول streak</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: Question Screen -->
+      <div class="sl-screen" id="slQuestionScreen">
+        <div class="sl-q-screen" style="width:100%">
+          <div class="sl-q-num" id="slQNum">السؤال 1 من 10</div>
+          <span class="sl-q-icon" id="slQIcon">⭐</span>
+          <div class="sl-q-text" id="slQText">...</div>
+          <div class="sl-options" id="slOptions"></div>
+          <div class="sl-feedback" id="slFeedback">
+            <span class="sl-feedback-icon" id="slFbIcon"></span>
+            <div class="sl-feedback-text">
+              <div class="sl-feedback-title" id="slFbTitle"></div>
+              <div class="sl-feedback-sub" id="slFbSub"></div>
+            </div>
+          </div>
+          <button class="sl-next-btn" id="slNextBtn" onclick="slNextQuestion()">التالي ←</button>
+        </div>
+      </div>
+
+      <!-- SCREEN 3: Result Screen -->
+      <div class="sl-screen" id="slResultScreen">
+        <div class="sl-result-screen" style="width:100%;max-width:500px;margin:0 auto">
+          <span class="sl-result-mascot" id="slResultMascot">🎉</span>
+          <div class="sl-result-title" id="slResultTitle" style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">أحسنت!</div>
+          <div class="sl-result-subtitle" id="slResultSub">انهيت الجلسة بنجاح</div>
+          <div class="sl-result-stats">
+            <div class="sl-result-stat">
+              <div class="sl-result-stat-icon">✅</div>
+              <div class="sl-result-stat-num" id="slResCorrect">0</div>
+              <div class="sl-result-stat-label">إجابة صحيحة</div>
+            </div>
+            <div class="sl-result-stat">
+              <div class="sl-result-stat-icon">⭐</div>
+              <div class="sl-result-stat-num" id="slResXP">0</div>
+              <div class="sl-result-stat-label">XP مكتسب</div>
+            </div>
+            <div class="sl-result-stat">
+              <div class="sl-result-stat-icon">🎯</div>
+              <div class="sl-result-stat-num" id="slResAccuracy">0%</div>
+              <div class="sl-result-stat-label">دقة الإجابة</div>
+            </div>
+          </div>
+          <!-- Level up message -->
+          <div id="slLevelUpMsg" style="display:none;background:linear-gradient(135deg,rgba(253,224,71,.15),rgba(245,158,11,.1));border:1px solid rgba(253,224,71,.4);border-radius:16px;padding:1rem;margin-bottom:1.5rem;animation:slFadeIn .5s .3s both;">
+            <div style="font-size:1.8rem;margin-bottom:.25rem">🏆</div>
+            <div style="font-weight:800;color:#fde047;font-size:1rem" id="slLevelUpText">ترقيت للمستوى التالي!</div>
+          </div>
+          <div class="sl-result-btns">
+            <button class="sl-btn-again" onclick="slPlayAgain()">🔄 جلسة جديدة</button>
+            <button class="sl-btn-change" onclick="slChangeLevel()">🎯 غيّر المستوى</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end sl-body -->
+  </div>
+</div>
+<!-- ===== END SELF LEARNING MODAL ===== -->
+
+<!-- Particles container (outside modal for z-index) -->
+<div class="sl-particles" id="slParticles" style="display:none;pointer-events:none;z-index:99999;"></div>
+
+<script>
+// ============================================================
+// SELF LEARNING SYSTEM — Full Duolingo-Style Implementation
+// ============================================================
+
+// ---- Question Bank ----
+const SL_QUESTIONS = {
+  beginner: [
+    {q:"كم عدد الكواكب في المجموعة الشمسية؟",icon:"🪐",opts:["6","8","10","12"],ans:1,exp:"المجموعة الشمسية تحتوي على 8 كواكب: عطارد، الزهرة، الأرض، المريخ، المشتري، زحل، أورانوس، نبتون."},
+    {q:"ما هو أكبر كوكب في المجموعة الشمسية؟",icon:"🪐",opts:["زحل","المشتري","أورانوس","الأرض"],ans:1,exp:"المشتري هو أكبر كوكب في المجموعة الشمسية، حجمه أكبر من الأرض بأكثر من 1300 مرة!"},
+    {q:"ما اسم أقرب نجم إلى الأرض بعد الشمس؟",icon:"⭐",opts:["سيريوس","نجم القطب","ألفا قنطوري","بيتلجوز"],ans:2,exp:"ألفا قنطوري (برو كسيما قنطوري) هو أقرب نجم للشمس، على بُعد حوالي 4.2 سنة ضوئية."},
+    {q:"كم تستغرق الأرض لتدور حول الشمس؟",icon:"🌍",opts:["24 ساعة","30 يوم","365 يوم","12 ساعة"],ans:2,exp:"تدور الأرض حول الشمس في 365.25 يوماً، وهذا هو سبب وجود سنة كبيسة كل 4 سنوات."},
+    {q:"ما هو النجم الأبرز في سماء الليل؟",icon:"🌟",opts:["القمر","المريخ","سيريوس (الشعرى اليمانية)","الزهرة"],ans:2,exp:"سيريوس هو ألمع نجم في السماء الليلية، ويقع في كوكبة الكلب الكبير."},
+    {q:"كم عدد أيام القمر في الدورة الكاملة (الشهر القمري)؟",icon:"🌕",opts:["28 يوم","29.5 يوم","30 يوم","31 يوم"],ans:1,exp:"الشهر القمري يساوي تقريباً 29.5 يوماً، وهو الوقت الذي يستغرقه القمر لإتمام دورة كاملة حول الأرض."},
+    {q:"ما سبب ظاهرة الليل والنهار؟",icon:"🌏",opts:["دوران الأرض حول الشمس","دوران الأرض حول نفسها","دوران القمر حول الأرض","بُعد الشمس"],ans:1,exp:"الليل والنهار ناتجان عن دوران الأرض حول نفسها (المحور)، وتستغرق هذه الدورة 24 ساعة."},
+    {q:"ما لون الشمس الحقيقي من الفضاء؟",icon:"☀️",opts:["أصفر","برتقالي","أبيض","أحمر"],ans:2,exp:"الشمس في الفضاء تبدو بيضاء اللون! تبدو صفراء من الأرض بسبب تشتت الضوء في الغلاف الجوي."},
+    {q:"ما هو الكوكب الأقرب إلى الشمس؟",icon:"🌡️",opts:["الزهرة","الأرض","عطارد","المريخ"],ans:2,exp:"عطارد هو أقرب الكواكب إلى الشمس، لكنه ليس الأكثر حرارة! الزهرة أكثر حرارة بسبب غلافها الجوي الكثيف."},
+    {q:"ما الجرم الفضائي الذي يطوف حول الأرض طبيعياً؟",icon:"🌙",opts:["المريخ","كيرون","القمر","هاليبوب"],ans:2,exp:"القمر هو التابع الطبيعي الوحيد للأرض، ويبعد عنها حوالي 384,400 كيلومتر."},
+    {q:"ما اسم المجرة التي تقع فيها الأرض؟",icon:"🌌",opts:["أندروميدا","درب التبانة","المثلث","سومبريرو"],ans:1,exp:"الأرض تقع في مجرة درب التبانة (Milky Way)، وهي مجرة حلزونية يُقدَّر عدد نجومها بمئات المليارات."},
+    {q:"ما تعريف السنة الضوئية؟",icon:"💫",opts:["عمر الكون","المسافة التي يقطعها الضوء في سنة","سرعة الضوء","وحدة الزمن الفلكي"],ans:1,exp:"السنة الضوئية هي المسافة التي يقطعها الضوء في سنة واحدة، وتساوي تقريباً 9.46 تريليون كيلومتر."},
+    {q:"ما الكوكب الذي يملك الحلقات الأشهر؟",icon:"💫",opts:["المشتري","أورانوس","زحل","نبتون"],ans:2,exp:"زحل مشهور بحلقاته الرائعة المصنوعة أساساً من جليد ومقتطفات صخرية."},
+    {q:"ما حالة الشمس؟",icon:"☀️",opts:["غاز صلب","مادة كثيفة جداً","بلازما (غاز متأين)","سائل"],ans:2,exp:"الشمس عبارة عن بلازما (غاز متأين) أساساً من الهيدروجين والهيليوم، مع درجات حرارة هائلة."},
+    {q:"كم تبلغ سرعة الضوء تقريباً؟",icon:"⚡",opts:["100,000 كم/ث","300,000 كم/ث","150,000 كم/ث","500,000 كم/ث"],ans:1,exp:"سرعة الضوء في الفراغ تبلغ تقريباً 299,792 كيلومتر في الثانية، أي ما يقارب 300,000 كم/ث."},
+  ],
+  intermediate: [
+    {q:"ما العملية التي تُنتج طاقة الشمس؟",icon:"☀️",opts:["الانشطار النووي","الاندماج النووي","الاحتراق الكيميائي","التبادل الحراري"],ans:1,exp:"الشمس تُنتج طاقتها عبر الاندماج النووي، حيث تندمج ذرات الهيدروجين لتكوّن الهيليوم مع إطلاق كميات هائلة من الطاقة."},
+    {q:"ما هو الثقب الأسود؟",icon:"⚫",opts:["نجم ميت يبرد","منطقة جاذبية هائلة لا يهرب منها الضوء","ثغرة في الفضاء","كوكب مظلم"],ans:1,exp:"الثقب الأسود منطقة في الفضاء حيث الجاذبية شديدة لدرجة أن لا شيء، حتى الضوء، يستطيع الإفلات منها."},
+    {q:"ما اسم الظاهرة التي تحدث عندما تمر القمر بين الأرض والشمس؟",icon:"🌒",opts:["خسوف القمر","كسوف الشمس","العبور","التوهج الشمسي"],ans:1,exp:"كسوف الشمس يحدث عندما يمر القمر بين الأرض والشمس مما يحجب ضوء الشمس كلياً أو جزئياً."},
+    {q:"ما هي المادة المظلمة؟",icon:"🌑",opts:["غبار كوني","مادة لا تصدر ضوءاً ولا تُرى لكن لها جاذبية","ثقوب سوداء صغيرة","مجرات بعيدة"],ans:1,exp:"المادة المظلمة مادة افتراضية لا تُصدر أو تعكس أو تمتص الضوء لكن يُستدل عليها من تأثيراتها الجاذبية."},
+    {q:"ما تسلسل حياة النجم المشابه للشمس؟",icon:"⭐",opts:["سحابة → قزم أبيض → نجم → عملاق أحمر","سحابة → نجم رئيسي → عملاق أحمر → قزم أبيض","سحابة → نجم → ثقب أسود","سحابة → عملاق → مستعر أعظم"],ans:1,exp:"النجوم المشابهة للشمس تمر بمراحل: سحابة → نجم رئيسي (كالشمس حالياً) → عملاق أحمر → قزم أبيض."},
+    {q:"ما مدة التحول الكامل لضوء الشمس قبل الوصول للأرض؟",icon:"💡",opts:["8 ثوانٍ","8 دقائق","8 ساعات","8 أيام"],ans:1,exp:"يستغرق الضوء من الشمس إلى الأرض حوالي 8 دقائق و20 ثانية بسرعته البالغة 300,000 كم/ث."},
+    {q:"ما اسم المنطقة بين المريخ والمشتري؟",icon:"🪨",opts:["الفضاء العميق","حزام الكويكبات","سحابة أورت","حزام كايبر"],ans:1,exp:"حزام الكويكبات منطقة تقع بين مداري المريخ والمشتري وتحتوي على ملايين الكويكبات والصخور."},
+    {q:"ما مبدأ دوبلر في الفلك؟",icon:"🔴",opts:["قياس درجة حرارة النجوم","تحول طيف الضوء بسبب الحركة","حساب مسافة النجوم","قياس الجاذبية"],ans:1,exp:"مبدأ دوبلر يُستخدم لقياس حركة الأجرام السماوية؛ الضوء يتحول للأحمر عند الابتعاد وللأزرق عند الاقتراب."},
+    {q:"ما هو مستعر أعظم (Supernova)؟",icon:"💥",opts:["نجم يولد من جديد","انفجار ضخم لنجم ضخم في نهاية عمره","اصطدام مجرتين","تصادم ثقبين أسودين"],ans:1,exp:"المستعر الأعظم هو انفجار هائل يحدث للنجوم الضخمة في نهاية حياتها، وقد يُساوي سطوعه سطوع مجرة كاملة."},
+    {q:"ما التعريف الصحيح للسنة الفلكية لبلوتو؟",icon:"🪐",opts:["88 يوماً أرضياً","165 سنة أرضية","248 سنة أرضية","17 يوماً"],ans:2,exp:"يستغرق بلوتو 248 سنة أرضية لإتمام دورة كاملة حول الشمس! هذا ما يجعل الفصول عليه طويلة جداً."},
+    {q:"ما هو الرادار الكوني (CMB)؟",icon:"📡",opts:["إشارات راديو من المجرات","إشعاع الخلفية الكونية الميكروي (صدى الانفجار الكبير)","موجات الجاذبية","أشعة كونية"],ans:1,exp:"إشعاع الخلفية الكونية الميكروي هو الإشعاع المتبقي من الانفجار الكبير، ويملأ الكون في كل الاتجاهات."},
+    {q:"ما الذي يحدد لون النجم؟",icon:"🌈",opts:["حجمه","عمره","درجة حرارته السطحية","مسافته عنا"],ans:2,exp:"لون النجم يحدده درجة حرارته: النجوم الزرقاء أشد حرارة، ثم البيضاء ثم الصفراء ثم البرتقالية ثم الحمراء."},
+    {q:"ما سبب مد وجزر البحار؟",icon:"🌊",opts:["الرياح القوية","الجاذبية القمرية والشمسية","دوران الأرض","الحرارة الجوفية"],ans:1,exp:"المد والجزر ناتجان أساساً عن جاذبية القمر (وجزئياً الشمس) التي تسحب مياه المحيطات."},
+    {q:"كم يبلغ قُطر الأرض تقريباً؟",icon:"🌍",opts:["6,371 كم","12,742 كم","100,000 كم","4,200 كم"],ans:1,exp:"قُطر الأرض يبلغ تقريباً 12,742 كيلومتر. أما نصف القطر فهو حوالي 6,371 كيلومتر."},
+    {q:"ما هي الشفق القطبي؟",icon:"🌠",opts:["عاصفة كونية","ظاهرة ضوئية ناتجة عن تفاعل الرياح الشمسية مع الغلاف الجوي","نيازك ليلية","انعكاس ضوء القمر"],ans:1,exp:"الشفق القطبي (Aurora) ظاهرة ضوئية ترسمها الجسيمات المشحونة من الرياح الشمسية عند تفاعلها مع الغلاف الجوي."},
+  ],
+  advanced: [
+    {q:"ما نظرية الانفجار الكبير؟",icon:"💥",opts:["اصطدام مجرتين كبيرتين","نقطة أولية بالغة الكثافة انفجرت وأوجدت الكون","انهيار نجم ضخم","نظرية فلسفية غير علمية"],ans:1,exp:"نظرية الانفجار الكبير تقول أن الكون بدأ من حالة بالغة الكثافة والحرارة قبل نحو 13.8 مليار سنة، ثم توسّع."},
+    {q:"ما موجات الجاذبية وأين اكتُشفت؟",icon:"〰️",opts:["موجات ضوئية كونية، اكتُشفت 1905","تموجات في نسيج الزمكان، اكتُشفت 2015 بواسطة LIGO","أمواج صوتية فضائية","موجات راديو من الثقوب السوداء"],ans:1,exp:"موجات الجاذبية تموجات في نسيج الزمكان تنبأ بها آينشتاين 1916، وأُكدت عام 2015 بمرصد LIGO عند اندماج ثقبين أسودين."},
+    {q:"ما الفرق بين النجم النيوتروني والثقب الأسود؟",icon:"⚫",opts:["لا فرق، هما نفس الشيء","النجم النيوتروني أصغر كثافة","كلاهما بقايا نجوم ضخمة، لكن الثقب الأسود يتجاوز كثافة النجم النيوتروني","الثقب الأسود يتوهج"],ans:2,exp:"كلاهما بقايا نجوم ضخمة انهارت. لكن إذا كانت الكتلة المتبقية أعلى من 3 كتل شمسية يتشكل ثقب أسود بدلاً من النجم النيوتروني."},
+    {q:"ما أفق الحدث في الثقب الأسود؟",icon:"⚫",opts:["سطحه المرئي","الحد الذي بعده لا يمكن للضوء أو أي شيء الإفلات","طبقته الخارجية","نقطة التفرد"],ans:1,exp:"أفق الحدث هو الحد الكروي حول الثقب الأسود الذي بعده تكون الجاذبية أشد من سرعة الضوء، فلا شيء يُفلت."},
+    {q:"ما نظرية النسبية الخاصة لآينشتاين؟",icon:"🔬",opts:["الجاذبية تُشوّه الزمكان","سرعة الضوء ثابتة والكتلة والطاقة متكافئتان (E=mc²)","الكون يتمدد","الفضاء والزمن مطلقان"],ans:1,exp:"النسبية الخاصة (1905): سرعة الضوء ثابتة للجميع، والزمن يتباطأ والكتلة تزداد مع السرعة، والطاقة والكتلة متكافئتان E=mc²."},
+    {q:"ما سبب تمدد الكون المتسارع؟",icon:"🔭",opts:["الانفجارات النجمية المستمرة","الطاقة المظلمة","المادة المظلمة","الثقوب السوداء"],ans:1,exp:"الطاقة المظلمة (Dark Energy) هي القوة الغامضة المسؤولة عن تسارع تمدد الكون. تشكّل ~68% من محتواه الكلي."},
+    {q:"ما مبدأ عدم اليقين لهايزنبرغ في الفيزياء الكمية الفلكية؟",icon:"⚛️",opts:["لا يمكن قياس موضع وزخم جسيم بدقة تامة في آن واحد","الجاذبية تؤثر على الزمن","الكون ثابت","النجوم تتحرك بشكل عشوائي"],ans:0,exp:"مبدأ عدم اليقين: لا يمكن معرفة الموضع والزخم (الكمية الحركية) لجسيم بدقة تامة في نفس الوقت، وهو من أسس الكم."},
+    {q:"ما كميات تكوين الكون المرصود؟",icon:"📊",opts:["75% مادة، 25% طاقة","5% مادة عادية، 27% مادة مظلمة، 68% طاقة مظلمة","50% مادة، 50% طاقة","100% مادة عادية"],ans:1,exp:"الكون يتكوّن تقريباً من: 5% مادة عادية (ذرات)، 27% مادة مظلمة، 68% طاقة مظلمة. ما نراه لا يتجاوز 5%!"},
+    {q:"ما ثابت هابل ودلالته؟",icon:"🔭",opts:["يقيس درجة حرارة الكون","يقيس معدل تمدد الكون (~70 كم/ث/ميغابارسك)","يقيس سرعة الضوء","يقيس حجم المجرات"],ans:1,exp:"ثابت هابل (H₀) يُعبّر عن معدل تمدد الكون: كل 1 ميغابارسك تُضاف ~70 كم/ث إلى سرعة ابتعاد المجرة."},
+    {q:"ما ظاهرة العدسة الجاذبية؟",icon:"🌐",opts:["مرور الضوء عبر مواد شفافة","انحناء الضوء بسبب الجاذبية حول أجرام كبيرة","انعكاس الضوء على الغبار الكوني","تشتت الضوء في الغلاف الجوي"],ans:1,exp:"العدسة الجاذبية تحدث حين تُحني الجاذبية الضخمة لمجرة أو عنقود مجري مسار الضوء القادم من مصدر خلفه."},
+    {q:"ما الفرق بين الكوار (Quasar) والنجوم العادية؟",icon:"✨",opts:["الكوار أكبر حجماً","الكوار أشد سطوعاً لأنه نواة مجرة نشطة يُغذيها ثقب أسود هائل","الكوار أبرد درجة","لا فرق بينهما"],ans:1,exp:"الكوار (Quasar) هو نواة مجرة بالغة اللمعان تتغذى على مادة تسقط في ثقب أسود ضخم. قد يكون أشد سطوعاً من 100 مجرة!"},
+    {q:"ما الانهيار الجاذبي للنجوم الضخمة؟",icon:"💫",opts:["تبرّد النجم تدريجياً","انهيار ضغط الانصهار أمام الجاذبية مما ينتج نجماً نيوترونياً أو ثقباً أسود","تفتت النجم لكويكبات","توقف الإشعاع الشمسي"],ans:1,exp:"عندما ينضب وقود الانصهار في النجوم الضخمة، تتغلب الجاذبية وينهار النجم بسرعة هائلة منتجاً مستعراً أعظم ثم نجماً نيوترونياً أو ثقباً أسود."},
+    {q:"ما الكشف الذي فاز بجائزة نوبل 2019 في الفيزياء الفلكية؟",icon:"🏆",opts:["اكتشاف موجات الجاذبية","اكتشاف كوكب خارج المجموعة الشمسية وقياس تمدد الكون","التصوير الأول لثقب أسود","اكتشاف النجوم النيوترونية"],ans:1,exp:"فاز عام 2019 بنوبل الفيزياء: ميشيل مايور ودومينيك كيلوز لاكتشاف أول كوكب خارج المجموعة، وجيم بيبلز لدراسة التطور الكوني."},
+    {q:"ما أول صورة لثقب أسود وأين التُقطت؟",icon:"📸",opts:["مركز درب التبانة 2015","M87 عام 2019 بواسطة تلسكوب الأفق الحدثي (EHT)","ثقب أسود في أندروميدا 2010","صورة محاكاة حاسوبية فقط"],ans:1,exp:"أول صورة حقيقية لثقب أسود التُقطت عام 2019 لثقب مركز مجرة M87 بواسطة تلسكوب الأفق الحدثي (EHT)، ثم سبق Sgr A* عام 2022."},
+    {q:"ما الفارق الجوهري بين الكون المرئي والكون الكلي؟",icon:"🌌",opts:["لا فارق، هما متطابقان","الكون المرئي ما يصلنا ضوؤه (46 مليار سنة ضوئية نصف قطره)، والكون الكلي قد يكون أكبر بلا نهاية","الكون الكلي أصغر","الكون المرئي هو ما يمكن رؤيته بالعين المجردة فقط"],ans:1,exp:"الكون المرئي محدود بسرعة الضوء منذ الانفجار الكبير (نصف قطره ~46 مليار سنة ضوئية)، أما الكون الكلي فربما لا حدود له."},
+  ],
+  expert: [
+    {q:"ما نظرية أوتار (String Theory) وما أهميتها؟",icon:"🎻",opts:["نظرية عن حركة الكواكب","تقترح أن الجسيمات الأساسية أوتار مهتزة أحادية البُعد وتسعى لتوحيد قوى الطبيعة","نظرية عن تمدد الكون","نموذج لتكوين النجوم"],ans:1,exp:"نظرية الأوتار تقترح أن المكوّنات الأساسية للمادة أوتار مهتزة ضئيلة، وهي محاولة لتوحيد الجاذبية مع ميكانيكا الكم."},
+    {q:"ما التناظر الزمني الفائق (Supersymmetry - SUSY) في فيزياء الجسيمات؟",icon:"⚛️",opts:["مبدأ تماثل الجسيمات وضدائدها","تقترح أن لكل جسيم معياري شريكاً فائقاً ثقيلاً لم يُكتشف بعد","قانون حفظ الطاقة الكمي","نموذج التوحيد الكبير"],ans:1,exp:"SUSY تتنبأ بأن لكل جسيم في النموذج المعياري جسيم شريك أثقل. إن صحّت، قد تفسر المادة المظلمة وتحل مشاكل التوحيد."},
+    {q:"ما مفارقة المعلومات في الثقب الأسود؟",icon:"⚫",opts:["معلومات لا يمكن تشفيرها","تعارض بين ميكانيكا الكم (التي تحفظ المعلومات) وإشعاع هوكينج (الذي يبدو أنه يفقدها)","مبدأ عدم اليقين داخل الثقب الأسود","ظاهرة تشفير الضوء"],ans:1,exp:"مفارقة المعلومات: هل تُفقد المعلومات عند ابتلاع الثقب الأسود لها؟ ميكانيكا الكم تمنع ذلك لكن هوكينج رأى خلافه. لا يزال غير محلول."},
+    {q:"ما مفهوم التضخم الكوني (Inflation) عقب الانفجار الكبير؟",icon:"💨",opts:["تمدد تدريجي عبر مليارات السنين","توسع هائل وسريع جداً للكون في الـ10⁻³² ثانية الأولى من عمره","تقلص الكون ثم تمدده","مرحلة التبريد الأولى للكون"],ans:1,exp:"التضخم الكوني هو مرحلة توسع أسي ضخم للكون في الفترة 10⁻³⁶ إلى 10⁻³² ثانية بعد الانفجار الكبير، ويفسر التوازن والتجانس المُلاحَظ."},
+    {q:"ما إشعاع هوكينج وما المبدأ الذي قام عليه؟",icon:"🌡️",opts:["إشعاع النجوم النيوترونية","إشعاع حراري تُصدره الثقوب السوداء ناتج عن تفاعلات كمية عند أفق الحدث","أشعة غاما الكونية","الإشعاع الخلفي الكوني"],ans:1,exp:"إشعاع هوكينج ظاهرة كمية: عند أفق الحدث تتشكل أزواج جسيم-ضد جسيم، فيسقط أحدهما داخل الثقب ويُفلت الآخر كإشعاع يُفقد الثقب كتلة تدريجياً."},
+    {q:"ما فرضية الكون الغشائي (Brane Cosmology) في نظرية M؟",icon:"🧬",opts:["الكون شبكة من الأوتار الكمية","كوننا ثلاثي الأبعاد غشاء (Brane) مغمور في فضاء أعلى أبعاد (Bulk)","الكون أسطواني الشكل","نظرية تبادل الجسيمات"],ans:1,exp:"في نظرية M، كوننا قد يكون غشاءً ثلاثي الأبعاد (Brane) طافياً في فضاء أعلى أبعاد. الجاذبية وحدها قد تنتقل بين هذه الأغشية."},
+    {q:"ما مبدأ التكامل الكوني الهولوغرافي (Holographic Principle)؟",icon:"🌐",opts:["الكون صورة ثلاثية الأبعاد لسطح ثنائي","المعلومات الكاملة لحجم كوني يمكن ترميزها على سطحه الحدودي (2D)","مبدأ تضاعف المعلومات","قانون حفظ الزخم الكوني"],ans:1,exp:"المبدأ الهولوغرافي يقول إن كل المعلومات داخل حجم من الفضاء يمكن تمثيلها على سطحه الحدودي. يُلمح لطبيعة عميقة للزمكان والجاذبية."},
+    {q:"ما نظرية تساوي الزمكان مع الشبكة (Loop Quantum Gravity - LQG)؟",icon:"🔗",opts:["نظرية تصف الكم على مستوى الأوتار","توصف الزمكان بشبكة منفصلة من الحلقات الكمية بدلاً من المستمر الأملس","نظرية تمدد الكون الكمي","نموذج حساب الجسيمات"],ans:1,exp:"LQG نظرية تتعامل مع الجاذبية كمياً عبر تقطيع الزمكان لشبكة من الحلقات المنفصلة. بديل محتمل لنظرية الأوتار."},
+    {q:"ما الدليل الرئيسي على الانفجار الكبير؟",icon:"📡",opts:["مشاهدة الانفجار مباشرة بالتلسكوب","إشعاع الخلفية الكونية الميكروي (CMB) وتمدد الكون وتوفر عناصر خفيفة (H,He,Li)","وجود الكواكب والنجوم","سرعة دوران المجرات"],ans:1,exp:"الأدلة الثلاثة الكبرى: 1) CMB إشعاع الصدى من الانفجار الكبير. 2) تمدد الكون (قانون هابل). 3) توفر الهيدروجين والهيليوم والليثيوم بنسب منسجمة مع النموذج."},
+    {q:"ما ثابت كوسمولوجي أينشتاين (Λ) ودوره في الكون؟",icon:"Λ",opts:["ثابت يقيس سرعة الضوء","ثابت أضافه آينشتاين لمعادلاته ليُنتج كوناً ثابتاً، ويُستخدم اليوم للتعبير عن الطاقة المظلمة","مقياس ثبات الكتلة","ثابت تمدد الجاذبية"],ans:1,exp:"الثابت الكوسمولوجي Λ أضافه آينشتاين لمعادلات المجال ليُنتج كوناً ساكناً. لاحقاً أُهمل، لكنه عاد اليوم كتعبير عن الطاقة المظلمة المسببة للتسارع."},
+    {q:"ما مصفوفة كتلة النيوترينو وعلاقتها بعلم الكونيات؟",icon:"⚛️",opts:["تصف طيف النجوم النيوترونية","مصفوفة PMNS تصف تذبذب النيوترينو بين نكهاته الثلاثة وهي دليل أن له كتلة ولها تداعيات كونية","مقياس شدة الإشعاع الكوني","نموذج تفاعل النيوترينو مع المادة المظلمة"],ans:1,exp:"مصفوفة PMNS (Pontecorvo-Maki-Nakagawa-Sakata) تصف تذبذب النيوترينوات. كتلتها (غير صفرية) مهمة لنمذجة الكون المبكر وتوليد المادة على حساب المادة المضادة."},
+    {q:"ما تضخم الكم (Stochastic Inflation) وكيف ينشئ الكون المتعدد؟",icon:"🔮",opts:["نظرية عن تضخم فقاعات الصابون","تقلبات كمية خلال التضخم قد تنتج جيوب كونية لا نهائية، كل منها كون مستقل (Multiverse)","نمذجة حرارية للكون المبكر","انهيار كمي للتضخم إلى ثقوب سوداء"],ans:1,exp:"التضخم الفوضوي يتنبأ بأن التقلبات الكمية أثناء التضخم تُنشئ جيوباً كونية لا تتوقف عن التمدد، مما ينتج عوالم متعددة لا حصر لها."},
+    {q:"ما الفصل الأساسي بين ميكانيكا الكم ونظرية النسبية العامة؟",icon:"⚡",opts:["النسبية تُعامل الزمكان كخلفية ثابتة بينما الكم كميّ يُعامل الجسيمات في فضاء غير ديناميكي","الزمكان في النسبية العامة ديناميكي ومنحنٍ، بينما ميكانيكا الكم تعمل عادة على خلفية مسطحة ثابتة، والتوفيق بينهما عسير","لا خلاف فعلي","الكم أدق والنسبية أضخم فقط"],ans:1,exp:"الشق الأعمق: النسبية العامة تصف الزمكان ديناميكياً ومتصلاً، بينما الكم يفترض خلفية ثابتة. إيجاد نظرية جاذبية كمية متسقة هو التحدي الكبير للفيزياء الحديثة."},
+    {q:"ما مدة بقاء الثقب الأسود بكتلة الشمس قبل التبخر الكامل عبر إشعاع هوكينج؟",icon:"⏳",opts:["بضعة مليارات سنة","أطول بكثير من عمر الكون الحالي — نحو 2×10⁶⁷ سنة","بضع تريليونات سنة","يتبخر فورياً عند توقف التغذية"],ans:1,exp:"ثقب أسود بكتلة الشمس يحتاج ~2×10⁶⁷ سنة لتبخّره الكامل بإشعاع هوكينج، أي أطول بأمدٍ هائل من عمر الكون الحالي (13.8 مليار سنة)."},
+  ]
+};
+
+// ---- State ----
+let SL = {
+  level: null,
+  questions: [],
+  currentQ: 0,
+  hearts: 5,
+  xp: 0,
+  streak: 0,
+  correctCount: 0,
+  wrongCount: 0,
+  answered: false,
+  sessionXP: 0,
+  totalXP: parseInt(localStorage.getItem('sl_totalXP') || '0'),
+  totalSessions: parseInt(localStorage.getItem('sl_totalSessions') || '0'),
+  bestStreak: parseInt(localStorage.getItem('sl_bestStreak') || '0'),
+  QUESTIONS_PER_SESSION: 10,
+};
+
+// ---- Open/Close ----
+function openSelfLearning() {
+  const modal = document.getElementById('selfLearningModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  slShowScreen('slWelcomeScreen');
+  document.getElementById('slStatsBar').style.display = 'none';
+  slLoadPrevStats();
+}
+
+function closeSelfLearning() {
+  document.getElementById('selfLearningModal').style.display = 'none';
+  document.body.style.overflow = '';
+  slStopAllAnimations();
+}
+
+function slLoadPrevStats() {
+  const box = document.getElementById('slPrevStats');
+  if (SL.totalSessions > 0) {
+    box.style.display = 'block';
+    document.getElementById('slTotalXpStat').textContent = SL.totalXP;
+    document.getElementById('slTotalSessionsStat').textContent = SL.totalSessions;
+    document.getElementById('slBestStreakStat').textContent = SL.bestStreak;
+  }
+}
+
+// ---- Screen management ----
+function slShowScreen(id) {
+  document.querySelectorAll('.sl-screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.animation = '';
+  });
+  const target = document.getElementById(id);
+  target.classList.add('active');
+}
+
+// ---- Start Session ----
+function startSelfLearning(level) {
+  SL.level = level;
+  SL.hearts = 5;
+  SL.xp = 0;
+  SL.streak = 0;
+  SL.correctCount = 0;
+  SL.wrongCount = 0;
+  SL.answered = false;
+  SL.sessionXP = 0;
+  SL.currentQ = 0;
+
+  // Shuffle questions and pick N
+  const pool = [...SL_QUESTIONS[level]];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  SL.questions = pool.slice(0, Math.min(SL.QUESTIONS_PER_SESSION, pool.length));
+
+  // Show stats bar
+  document.getElementById('slStatsBar').style.display = 'flex';
+  slUpdateStats();
+
+  // Level badge color
+  const colors = {beginner:'#10b981',intermediate:'#a78bfa',advanced:'#fbbf24',expert:'#f472b6'};
+  const names = {beginner:'مبتدئ',intermediate:'متوسط',advanced:'متقدم',expert:'محترف'};
+  document.getElementById('slHeaderSub').innerHTML = `<span class="sl-level-badge" style="background:${colors[level]}22;color:${colors[level]};border:1px solid ${colors[level]}44">${names[level]}</span>`;
+
+  slShowScreen('slQuestionScreen');
+  slRenderQuestion();
+}
+
+// ---- Render Question ----
+function slRenderQuestion() {
+  const q = SL.questions[SL.currentQ];
+  const total = SL.questions.length;
+
+  document.getElementById('slQNum').textContent = `السؤال ${SL.currentQ + 1} من ${total}`;
+  document.getElementById('slQIcon').textContent = q.icon || '⭐';
+  document.getElementById('slQText').textContent = q.q;
+
+  // Progress
+  const pct = (SL.currentQ / total) * 100;
+  document.getElementById('slProgressFill').style.width = pct + '%';
+
+  // Options
+  const letters = ['أ','ب','ج','د'];
+  const optsEl = document.getElementById('slOptions');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'sl-option';
+    div.innerHTML = `<span class="sl-option-letter">${letters[i]}</span><span>${opt}</span>`;
+    div.onclick = () => slAnswer(i, div);
+    optsEl.appendChild(div);
+  });
+
+  // Reset feedback
+  SL.answered = false;
+  const fb = document.getElementById('slFeedback');
+  fb.style.display = 'none';
+  fb.className = 'sl-feedback';
+  document.getElementById('slNextBtn').style.display = 'none';
+
+  // Animate question icon
+  const iconEl = document.getElementById('slQIcon');
+  iconEl.style.animation = 'none';
+  setTimeout(() => { iconEl.style.animation = 'slQIconPop .5s cubic-bezier(.34,1.56,.64,1)'; }, 10);
+}
+
+// ---- Answer ----
+function slAnswer(idx, el) {
+  if (SL.answered) return;
+  SL.answered = true;
+
+  const q = SL.questions[SL.currentQ];
+  const isCorrect = idx === q.ans;
+  const opts = document.querySelectorAll('.sl-option');
+
+  opts.forEach(o => { o.onclick = null; });
+
+  if (isCorrect) {
+    el.classList.add('correct');
+    SL.correctCount++;
+    SL.streak++;
+    const earned = slCalcXP();
+    SL.xp += earned;
+    SL.sessionXP += earned;
+    slShowFeedback(true, q.exp, earned);
+    slSpawnParticles(el);
+    slShowXPPopup(earned, el);
+    slCorrectBurst(el);
+    if (SL.streak > SL.bestStreak) {
+      SL.bestStreak = SL.streak;
+      localStorage.setItem('sl_bestStreak', SL.bestStreak);
+      const streakIcon = document.querySelector('.sl-streak-icon');
+      if (streakIcon) streakIcon.classList.add('sl-streak-fire');
+      setTimeout(() => streakIcon && streakIcon.classList.remove('sl-streak-fire'), 1000);
+    }
+  } else {
+    el.classList.add('wrong');
+    // Reveal correct
+    opts[q.ans].classList.add('reveal-correct');
+    SL.hearts--;
+    SL.streak = 0;
+    SL.wrongCount++;
+    slShowFeedback(false, q.exp, 0);
+    slHeartBreak();
+    if (SL.hearts < 0) SL.hearts = 0;
+  }
+
+  slUpdateStats();
+  document.getElementById('slNextBtn').style.display = 'block';
+
+  // Auto-advance on correct after delay
+  if (isCorrect) {
+    setTimeout(() => { if (SL.answered) slNextQuestion(); }, 1800);
+  }
+}
+
+function slCalcXP() {
+  const base = {beginner:10,intermediate:20,advanced:35,expert:50};
+  const streakBonus = Math.min(SL.streak, 5) * 2;
+  return (base[SL.level] || 10) + streakBonus;
+}
+
+function slShowFeedback(correct, explanation, xpEarned) {
+  const fb = document.getElementById('slFeedback');
+  fb.style.display = 'flex';
+  fb.className = 'sl-feedback ' + (correct ? 'correct-fb' : 'wrong-fb');
+  document.getElementById('slFbIcon').textContent = correct ? '✅' : '❌';
+  document.getElementById('slFbTitle').textContent = correct
+    ? (SL.streak >= 3 ? `🔥 رائع! سلسلة ${SL.streak}!` : '✨ إجابة صحيحة!')
+    : '😞 إجابة خاطئة';
+  document.getElementById('slFbSub').textContent = explanation;
+}
+
+// ---- Next Question ----
+function slNextQuestion() {
+  SL.currentQ++;
+  if (SL.currentQ >= SL.questions.length || SL.hearts <= 0) {
+    slShowResult();
+  } else {
+    slRenderQuestion();
+  }
+}
+
+// ---- Stats Update ----
+function slUpdateStats() {
+  // Hearts
+  const h = Math.max(0, SL.hearts);
+  document.getElementById('slHeartsIcons').textContent = '❤️'.repeat(h) + '🖤'.repeat(Math.max(0, 5 - h));
+  // XP
+  document.getElementById('slXpVal').textContent = SL.xp;
+  // Streak
+  document.getElementById('slStreakVal').textContent = SL.streak;
+}
+
+// ---- Result ----
+function slShowResult() {
+  const total = SL.questions.length;
+  const correct = SL.correctCount;
+  const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+  // Mascot & title
+  let mascot, title, sub;
+  if (accuracy >= 90) { mascot='🏆'; title='أسطوري!'; sub='أداء لا يُصدق، أنت نجم الفلك!'; }
+  else if (accuracy >= 70) { mascot='🎉'; title='أحسنت!'; sub='نتيجة رائعة، استمر في التقدم!'; }
+  else if (accuracy >= 50) { mascot='💪'; title='جيد!'; sub='كل محاولة تُقربك أكثر من النجوم!'; }
+  else { mascot='🔭'; title='حاول مرة أخرى!'; sub='التعلم رحلة، لا تستسلم!'; }
+
+  document.getElementById('slResultMascot').textContent = mascot;
+  document.getElementById('slResultTitle').textContent = title;
+  document.getElementById('slResultSub').textContent = sub;
+  document.getElementById('slResCorrect').textContent = correct + '/' + total;
+  document.getElementById('slResXP').textContent = '+' + SL.sessionXP;
+  document.getElementById('slResAccuracy').textContent = accuracy + '%';
+
+  // Level up if high accuracy
+  const lvlUpMsg = document.getElementById('slLevelUpMsg');
+  const nextLevels = {beginner:'intermediate',intermediate:'advanced',advanced:'expert'};
+  if (accuracy >= 80 && nextLevels[SL.level]) {
+    lvlUpMsg.style.display = 'block';
+    document.getElementById('slLevelUpText').textContent = `جاهز للانتقال لمستوى أعلى! 🚀`;
+  } else {
+    lvlUpMsg.style.display = 'none';
+  }
+
+  // Save stats
+  SL.totalXP += SL.sessionXP;
+  SL.totalSessions++;
+  localStorage.setItem('sl_totalXP', SL.totalXP);
+  localStorage.setItem('sl_totalSessions', SL.totalSessions);
+  localStorage.setItem('sl_bestStreak', SL.bestStreak);
+
+  // Progress bar full
+  document.getElementById('slProgressFill').style.width = '100%';
+
+  slShowScreen('slResultScreen');
+
+  // Confetti burst on success
+  if (accuracy >= 70) slConfettiBurst();
+}
+
+function slPlayAgain() {
+  startSelfLearning(SL.level);
+}
+
+function slChangeLevel() {
+  document.getElementById('slStatsBar').style.display = 'none';
+  slShowScreen('slWelcomeScreen');
+  slLoadPrevStats();
+}
+
+// ---- Animations ----
+function slSpawnParticles(el) {
+  const container = document.getElementById('slParticles');
+  container.style.display = 'block';
+  const rect = el.getBoundingClientRect();
+  const colors = ['#10b981','#06b6d4','#fde047','#a78bfa','#f43f5e','#fff'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'sl-particle';
+    p.style.cssText = `
+      left:${rect.left + Math.random() * rect.width}px;
+      top:${rect.top + Math.random() * rect.height}px;
+      background:${colors[Math.floor(Math.random() * colors.length)]};
+      transform:translate(${(Math.random()-0.5)*80}px, ${(Math.random()-0.5)*80}px);
+      animation-delay:${Math.random() * 0.2}s;
+      animation-duration:${0.6 + Math.random() * 0.4}s;
+      width:${6 + Math.random() * 8}px;
+      height:${6 + Math.random() * 8}px;
+    `;
+    container.appendChild(p);
+  }
+  setTimeout(() => {
+    container.innerHTML = '';
+    container.style.display = 'none';
+  }, 1200);
+}
+
+function slShowXPPopup(xp, el) {
+  const rect = el.getBoundingClientRect();
+  const popup = document.createElement('div');
+  popup.className = 'sl-xp-popup';
+  popup.textContent = '+' + xp + ' XP';
+  popup.style.left = (rect.left + rect.width / 2) + 'px';
+  popup.style.top = (rect.top - 10) + 'px';
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 1400);
+}
+
+function slCorrectBurst(el) {
+  const rect = el.getBoundingClientRect();
+  const burst = document.createElement('div');
+  burst.className = 'sl-correct-burst';
+  burst.style.left = (rect.left + rect.width / 2) + 'px';
+  burst.style.top = (rect.top + rect.height / 2) + 'px';
+  const ring = document.createElement('div');
+  ring.className = 'sl-burst-ring';
+  burst.appendChild(ring);
+  document.body.appendChild(burst);
+  setTimeout(() => burst.remove(), 700);
+}
+
+function slHeartBreak() {
+  const heartsEl = document.getElementById('slHeartsIcons');
+  heartsEl.classList.add('sl-heart-break');
+  setTimeout(() => heartsEl.classList.remove('sl-heart-break'), 600);
+}
+
+function slConfettiBurst() {
+  const container = document.getElementById('slParticles');
+  container.style.display = 'block';
+  const colors = ['#10b981','#06b6d4','#fde047','#a78bfa','#f43f5e','#ff6b6b','#4ecdc4','#ffe66d'];
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.style.cssText = `
+      position:absolute;
+      left:${Math.random() * 100}%;
+      top:${50 + Math.random() * 40}%;
+      width:${8 + Math.random() * 8}px;
+      height:${8 + Math.random() * 8}px;
+      background:${colors[Math.floor(Math.random() * colors.length)]};
+      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      animation:slParticleFly ${1 + Math.random() * 1}s ease-out ${Math.random() * 0.5}s forwards;
+      transform:translate(${(Math.random()-0.5)*200}px,${(Math.random()-0.5)*100}px);
+    `;
+    container.appendChild(p);
+  }
+  setTimeout(() => {
+    container.innerHTML = '';
+    container.style.display = 'none';
+  }, 2500);
+}
+
+function slStopAllAnimations() {
+  const container = document.getElementById('slParticles');
+  if (container) { container.innerHTML = ''; container.style.display = 'none'; }
+  document.querySelectorAll('.sl-xp-popup,.sl-correct-burst').forEach(el => el.remove());
+}
+</script>
 
 <script>
   function openPwaModal() {
