@@ -2581,6 +2581,8 @@ body {
             <div class="settings-menu-item" onclick="openPdfFilesModal();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);margin-left:6px;font-size:.8rem"><i class="fas fa-file-pdf" style="color:#fff"></i></span> ملفات الدروس</div>
             <div class="settings-menu-item" onclick="openPrivateAdminChat();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#10b981);margin-left:6px;font-size:.8rem"><i class="fas fa-user-shield" style="color:#fff"></i></span> تواصل مع المشرفين</div>
             <div class="settings-menu-item sl-menu-item" onclick="openSelfLearning();closeSectionsMenu()" style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08));border-bottom:1px solid rgba(16,185,129,.25)!important;position:relative;overflow:hidden"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);margin-left:6px;font-size:.8rem;box-shadow:0 0 10px rgba(16,185,129,.5);animation:slMenuGlow 2s infinite"><i class="fas fa-brain" style="color:#fff"></i></span> <span style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800">التعلم الذاتي</span><span style="margin-right:auto;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">جديد</span></div>
+            <div class="settings-menu-item" onclick="openDQ();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);margin-left:6px;font-size:.8rem"><i class="fas fa-bullseye" style="color:#fff"></i></span> مهامي اليومية 🎯</div>
+            <div class="settings-menu-item" onclick="openLB();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> لوحة المتصدرين 🏆</div>
           </div>
         </div>
         <div class="settings-dropdown" id="settingsDropdown">
@@ -3670,8 +3672,6 @@ async function updateAdminUI() {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
             addItem("smartLearnMenuItem","fas fa-brain","التعلم الذكي 🧠", () => { menu.classList.remove("active"); openSelfLearning(); }, "sl-menu-item");
-            addItem("dailyQuestsMenuItem","fas fa-bullseye","مهامي اليومية 🎯", () => { menu.classList.remove("active"); openDQ(); });
-            addItem("leaderboardMenuItem","fas fa-trophy","لوحة المتصدرين 🏆", () => { menu.classList.remove("active"); openLB(); });
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
@@ -12320,7 +12320,7 @@ function slStopAllAnimations() {
     _huaweiT = setInterval(function() {
       if (!synth.speaking) { clearInterval(_huaweiT); return; }
       synth.pause(); synth.resume();
-    }, 10000);
+    }, 5000);
 
     try { synth.speak(utt); } catch(e) {}
   }
@@ -12522,32 +12522,10 @@ function slStopAllAnimations() {
   }
 
   // ===== 10. Patch voice chat TTS =====
+  // لا نعمل override لـ speak لأن speakNextChunk عندها keep-alive خاص بيها
+  // أي override هنا بيتعارض مع الـ onend chain ويوقف القراءة في المنتصف
   function patchVoiceChat() {
-    var iv = setInterval(function() {
-      if (!window.speechSynthesis) { clearInterval(iv); return; }
-      clearInterval(iv);
-      var origSpeak = window.speechSynthesis.speak.bind(window.speechSynthesis);
-      window.speechSynthesis.speak = function(utt) {
-        if (utt instanceof SpeechSynthesisUtterance) {
-          var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
-          utt.rate  = p.voiceStyle.rate  || 0.9;
-          utt.pitch = p.voiceStyle.pitch || 0.85;
-          if (utt.text) {
-            var lang = detectLang(utt.text);
-            utt.lang = lang;
-            var v = getVoiceForLang(lang);
-            if (v) utt.voice = v;
-          }
-          // Huawei keep-alive for voice chat
-          clearInterval(_huaweiT);
-          _huaweiT = setInterval(function() {
-            if (!window.speechSynthesis.speaking) { clearInterval(_huaweiT); return; }
-            window.speechSynthesis.pause(); window.speechSynthesis.resume();
-          }, 10000);
-        }
-        origSpeak(utt);
-      };
-    }, 1000);
+    // intentionally left empty — keep-alive handled inside speakNextChunk
   }
 
   // ===== 11. Init =====
@@ -12898,14 +12876,31 @@ function slStopAllAnimations() {
       }
 
       var ws = _weekStart();
+
+      // جيب أسماء المستخدمين من user_progress لأنها أكثر اكتمالاً
+      var userIds = snap.docs.map(function(d){ return d.id; });
+      var nameMap = {};
+      await Promise.all(userIds.map(async function(id) {
+        try {
+          var prog = await db.collection('user_progress').doc(id).get();
+          if (prog.exists) {
+            nameMap[id] = prog.data().username || prog.data().name || prog.data().displayName || null;
+          }
+        } catch(e){}
+      }));
+
       list.innerHTML = snap.docs.map(function(doc, i) {
         var d = doc.data();
         var isMe = doc.id === uid;
-        // لو أسبوع جديد ومفيش weekStart مطابق — نعامله كـ 0
         var score = (tab === 'week')
           ? ((d.weekStart === ws) ? (d.weekPoints || 0) : 0)
           : (d.points || 0);
-        var name = d.username || 'طالب';
+        // اسم حقيقي: من user_progress أو user_points أو "طالب مجهول"
+        var name = nameMap[doc.id] || d.username || d.name || null;
+        if (!name || name.trim() === '' || name === 'مجهول') {
+          // لو ما لقيناش اسم — نعرض آخر 4 حروف من الـ uid
+          name = 'طالب #' + doc.id.slice(-4);
+        }
         return '<div class="lb-item' + (isMe ? ' me' : '') + '">' +
           '<div class="lb-rank">' + (MEDALS[i] || (i + 1)) + '</div>' +
           '<div class="lb-avatar">🌟</div>' +
