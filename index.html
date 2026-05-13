@@ -11347,39 +11347,80 @@ async function slLoadStage() {
   slRenderQuestion();
 }
 
-// ---- Fetch astronomy questions via Claude API (fast, no web search) ----
+// ---- Keywords that MUST appear for a question to be astronomy-related ----
+const SL_SPACE_KEYWORDS = [
+  // EN
+  'star','planet','galaxy','universe','cosmos','space','moon','sun','solar','orbit','comet','asteroid',
+  'nebula','black hole','supernova','neutron','pulsar','quasar','telescope','nasa','esa','astronaut',
+  'spacecraft','satellite','meteor','aurora','gravity','light-year','parsec','redshift','exoplanet',
+  'milky way','andromeda','hubble','jupiter','saturn','mars','venus','mercury','neptune','uranus',
+  'pluto','asteroid belt','oort','kuiper','big bang','dark matter','dark energy','inflation','cosmic',
+  'astronomical','astrophysics','interstellar','intergalactic','stellar','celestial','photon','radiation',
+  'spectrum','wavelength','luminosity','magnitude','eclipse','transit','parallax','doppler',
+  // AR
+  'نجم','كوكب','مجرة','كون','فضاء','قمر','شمس','مدار','مذنب','كويكب','سديم','ثقب أسود','مستعر',
+  'نيوتروني','تلسكوب','رائد فضاء','مركبة فضائية','قمر صناعي','شهاب','جاذبية','سنة ضوئية',
+  'المشتري','زحل','المريخ','الزهرة','عطارد','نبتون','أورانوس','بلوتو','درب التبانة','أندروميدا',
+  'انفجار كبير','مادة مظلمة','طاقة مظلمة','فلك','فلكي','نجمي','كوني','فوتون','إشعاع',
+  'طيف','كسوف','خسوف','بارسك','كوازار','بولسار','هابل','ناسا',
+  // DE
+  'stern','planet','galaxie','universum','weltraum','mond','sonne','orbit','komet','asteroid',
+  'nebel','schwarzes loch','supernova','neutron','teleskop','astronaut','raumsonde','satellit',
+  'meteor','schwerkraft','lichtjahr','jupiter','saturn','mars','venus','merkur','neptun','uranus',
+  'pluto','milchstraße','urknall','dunkle materie','dunkle energie','astronomie','astrophysik'
+];
+
+function slIsAstronomyQuestion(q, correct, incorrects) {
+  const text = (q + ' ' + correct + ' ' + incorrects.join(' ')).toLowerCase();
+  return SL_SPACE_KEYWORDS.some(kw => text.includes(kw.toLowerCase()));
+}
+
+// ---- Fetch astronomy questions via Claude API ----
 async function slFetchAPI() {
   const diffMap = {beginner:'easy', intermediate:'medium', advanced:'hard', expert:'expert'};
   const diff = diffMap[SL.level] || 'medium';
   const lang = SL.lang || 'ar';
-
   const langLabel = { ar: 'Arabic', en: 'English', de: 'German' }[lang] || 'Arabic';
 
-  // Topic rotation so each call has different subtopics
+  // Specific astronomy subtopics that rotate each stage
   const topicSets = [
-    'solar system planets, moons, asteroids, comets',
-    'stars: life cycle, types, supernovae, neutron stars, black holes',
-    'galaxies, dark matter, dark energy, cosmic expansion',
-    'space exploration history, missions, telescopes, astronauts',
-    'cosmology: Big Bang, cosmic microwave background, inflation',
-    'exoplanets, stellar distances, light-years, spectroscopy',
-    'space physics: gravity, orbital mechanics, relativity in astronomy',
+    'the 8 planets of the solar system, their moons and properties',
+    'stars: types (dwarf, giant, supergiant), life cycle, fusion, stellar evolution',
+    'black holes, neutron stars, pulsars, quasars, supernovae',
+    'galaxies: Milky Way, Andromeda, spiral/elliptical/irregular, galaxy clusters',
+    'space exploration: NASA, ESA missions, ISS, Apollo, Mars rovers, telescopes (Hubble, Webb)',
+    'cosmology: Big Bang, cosmic inflation, CMB, expansion of the universe',
+    'exoplanets, stellar distances, light-years, parsecs, Doppler effect, spectroscopy',
+    'orbital mechanics, gravity, Kepler laws, tides, eclipses, transits',
+    'comets, asteroids, meteor showers, Kuiper belt, Oort cloud',
+    'dark matter, dark energy, gravitational lensing, relativity in astronomy',
   ];
-  const topicIdx = (SL.stage - 1) % topicSets.length;
-  const topics = topicSets[topicIdx];
+  const topics = topicSets[(SL.stage - 1) % topicSets.length];
 
-  const prompt = `Generate exactly 15 multiple-choice astronomy quiz questions in ${langLabel} at ${diff} difficulty.
-Topics to cover: ${topics}.
-STRICT RULES:
-- Every question must be about astronomy, space, or astrophysics ONLY
-- No geography, history, biology, or any non-space topic
-- Questions must be factually accurate
-- ${diff === 'easy' ? 'Use simple, clear language for beginners' : diff === 'medium' ? 'Use moderate scientific terminology' : 'Use advanced scientific concepts and terminology'}
+  const diffDesc = {
+    easy: 'beginner level — simple facts, well-known objects, no equations',
+    medium: 'intermediate level — requires understanding of concepts, some terminology',
+    hard: 'advanced level — detailed scientific knowledge, precise values, technical concepts',
+    expert: 'expert level — deep astrophysics, cutting-edge research, quantitative details'
+  }[diff] || 'intermediate level';
 
-Return ONLY a JSON array, no markdown fences, no extra text:
-[{"q":"...","correct":"...","incorrects":["...","...","..."],"exp":"..."}]
+  const systemPrompt = `You are an ASTRONOMY-ONLY quiz generator. Your ONLY job is to create questions about astronomy, astrophysics, and space science.
 
-All text in ${langLabel}. "exp" = brief scientific explanation of why the answer is correct.`;
+ABSOLUTE RULES — never break these:
+1. EVERY single question must be 100% about astronomy or space science. Zero exceptions.
+2. FORBIDDEN topics (never include): chemistry formulas, biology, geography, history, literature, general physics that isn't directly about space objects, sports, music, art, politics, food, medicine.
+3. If a topic is not directly about stars, planets, galaxies, space missions, cosmology, telescopes, or space phenomena — DO NOT include it.
+4. Questions must be factually accurate and scientifically correct.
+5. Return ONLY a raw JSON array. No markdown. No explanation. No text before or after the array.
+
+Output format (exactly):
+[{"q":"question text","correct":"correct answer","incorrects":["wrong1","wrong2","wrong3"],"exp":"brief explanation"}]`;
+
+  const userPrompt = `Generate 15 astronomy quiz questions in ${langLabel}.
+Subtopic this batch: ${topics}
+Difficulty: ${diffDesc}
+Language: ALL text (questions, answers, explanations) must be in ${langLabel} only.
+Remember: ONLY astronomy/space topics. Start output with [ immediately.`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -11388,18 +11429,15 @@ All text in ${langLabel}. "exp" = brief scientific explanation of why the answer
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 3500,
-        // NO web_search tool — direct generation is faster and always astronomy
-        messages: [{ role: 'user', content: prompt }]
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
       }),
       signal: AbortSignal.timeout(25000)
     });
 
     if (!response.ok) throw new Error('API ' + response.status);
     const data = await response.json();
-
-    const fullText = (data.content || [])
-      .filter(b => b.type === 'text').map(b => b.text).join('');
-
+    const fullText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
     const clean = fullText.replace(/```json|```/g, '').trim();
     const si = clean.indexOf('['), ei = clean.lastIndexOf(']');
     if (si === -1 || ei === -1) throw new Error('No JSON');
@@ -11407,7 +11445,11 @@ All text in ${langLabel}. "exp" = brief scientific explanation of why the answer
     if (!Array.isArray(items) || items.length === 0) throw new Error('Empty');
 
     const converted = items
-      .filter(it => it.q && it.correct && Array.isArray(it.incorrects) && it.incorrects.length >= 3)
+      .filter(it => {
+        if (!it.q || !it.correct || !Array.isArray(it.incorrects) || it.incorrects.length < 3) return false;
+        // Client-side astronomy filter — reject anything not space-related
+        return slIsAstronomyQuestion(it.q, it.correct, it.incorrects);
+      })
       .map(it => {
         const opts = slShuffle([it.correct, ...it.incorrects.slice(0, 3)]);
         return { q: it.q, icon: '🌌', opts, ans: opts.indexOf(it.correct), exp: it.exp || it.correct, fromAPI: true };
@@ -11416,6 +11458,7 @@ All text in ${langLabel}. "exp" = brief scientific explanation of why the answer
     const existing = new Set(SL.unusedPool.map(q => q.q));
     const fresh = converted.filter(q => !existing.has(q.q));
     SL.unusedPool = [...SL.unusedPool, ...fresh];
+    console.log(`✅ Got ${fresh.length} astronomy questions (filtered from ${items.length})`);
     return fresh.length > 0;
 
   } catch(e) {
