@@ -11934,5 +11934,564 @@ function slStopAllAnimations() {
       .catch(err => console.log("SW error", err));
   }
 </script>
+
+<!-- ========================================================
+     🌟 نظام الشخصيات الصوتية للذكاء الاصطناعي
+     ✅ يدعم كل اللغات | ✅ أصوات رجالية | ✅ يشتغل على هواوي
+     ✅ الشخصية تتحفظ تلقائياً | ✅ يشتغل على كل الأجهزة
+======================================================== -->
+<style>
+/* ===== Modal اختيار الشخصية ===== */
+#aiPersonaModal {
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(5,3,8,0.97);
+  display: none; align-items: center; justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(12px);
+}
+#aiPersonaModal.active { display: flex; }
+.persona-modal-box {
+  background: linear-gradient(145deg,#12091e,#1a0f2e);
+  border: 1px solid rgba(99,102,241,0.45);
+  border-radius: 24px;
+  padding: 2rem 1.5rem 1.75rem;
+  max-width: 560px; width: 100%;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(236,72,153,0.12);
+  max-height: 90dvh; overflow-y: auto;
+  animation: personaFadeIn .35s ease;
+}
+@keyframes personaFadeIn {
+  from { opacity:0; transform: translateY(24px) scale(.97); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+.persona-modal-title {
+  text-align: center; margin-bottom: 1.5rem;
+}
+.persona-modal-title h2 {
+  font-size: 1.45rem; font-weight: 800;
+  background: linear-gradient(135deg,#a5b4fc,#ec4899);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: .3rem;
+}
+.persona-modal-title p { color: #888; font-size: .88rem; }
+.persona-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: .85rem;
+  margin-bottom: 1.5rem;
+}
+@media(max-width:420px) { .persona-grid { grid-template-columns: 1fr; } }
+.persona-card {
+  background: rgba(255,255,255,.04);
+  border: 2px solid rgba(99,102,241,.22);
+  border-radius: 16px;
+  padding: 1rem .85rem;
+  cursor: pointer;
+  transition: all .25s;
+  text-align: center;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.persona-card:hover, .persona-card:active {
+  border-color: #6366f1;
+  background: rgba(99,102,241,.13);
+  transform: translateY(-3px);
+}
+.persona-card.selected {
+  border-color: #ec4899;
+  background: linear-gradient(135deg,rgba(99,102,241,.18),rgba(236,72,153,.14));
+  box-shadow: 0 0 0 3px rgba(236,72,153,.25);
+}
+.persona-card.selected::after {
+  content: "✓";
+  position: absolute; top: 8px; left: 10px;
+  color: #ec4899; font-weight: 800; font-size: .95rem;
+}
+.persona-emoji { font-size: 2.2rem; margin-bottom: .45rem; display: block; }
+.persona-name {
+  font-size: .92rem; font-weight: 700; color: #e2e8f0;
+  margin-bottom: .2rem;
+}
+.persona-desc { font-size: .75rem; color: #888; line-height: 1.4; }
+.persona-lang-badge {
+  display: inline-block;
+  background: rgba(16,185,129,.15);
+  border: 1px solid rgba(16,185,129,.3);
+  color: #10b981;
+  font-size: .65rem;
+  padding: .18rem .5rem;
+  border-radius: 99px;
+  margin-top: .35rem;
+  font-weight: 600;
+}
+.persona-confirm-btn {
+  width: 100%; padding: .85rem;
+  background: linear-gradient(135deg,#6366f1,#ec4899);
+  border: none; border-radius: 14px;
+  color: #fff; font-family: 'Cairo',sans-serif;
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: all .3s;
+  box-shadow: 0 8px 24px rgba(99,102,241,.4);
+}
+.persona-confirm-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(99,102,241,.55); }
+.persona-confirm-btn:active { transform: translateY(0); }
+.ai-persona-change-btn {
+  background: rgba(99,102,241,.18);
+  border: 1px solid rgba(99,102,241,.4);
+  border-radius: 10px;
+  color: #a5b4fc;
+  font-size: .78rem;
+  padding: .3rem .65rem;
+  cursor: pointer;
+  font-family: 'Cairo',sans-serif;
+  font-weight: 600;
+  transition: all .2s;
+  display: flex; align-items: center; gap: .3rem;
+  white-space: nowrap;
+}
+.ai-persona-change-btn:hover { background: rgba(99,102,241,.32); color: #fff; }
+.ai-speaking-wave {
+  display: inline-flex; align-items: center; gap: 2px;
+  margin-right: 6px; vertical-align: middle;
+}
+.ai-speaking-wave span {
+  display: inline-block;
+  width: 3px; height: 10px;
+  background: #06b6d4;
+  border-radius: 2px;
+  animation: aiWave .7s ease-in-out infinite;
+}
+.ai-speaking-wave span:nth-child(2) { animation-delay: .1s; }
+.ai-speaking-wave span:nth-child(3) { animation-delay: .2s; }
+.ai-speaking-wave span:nth-child(4) { animation-delay: .3s; }
+@keyframes aiWave {
+  0%,100% { transform: scaleY(1); }
+  50% { transform: scaleY(2.2); }
+}
+</style>
+
+<!-- Modal اختيار الشخصية -->
+<div id="aiPersonaModal">
+  <div class="persona-modal-box">
+    <div class="persona-modal-title">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">🤖</div>
+      <h2>اختر شخصية مساعدك الذكي</h2>
+      <p>الشخصية اللي هتختارها هتفضل معاك دايماً — تقدر تغيرها في أي وقت</p>
+    </div>
+    <div class="persona-grid" id="personaGrid"></div>
+    <button class="persona-confirm-btn" onclick="confirmPersonaSelection()">
+      <i class="fas fa-rocket"></i> ابدأ مع مساعدك!
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== 1. تعريف الشخصيات =====
+  const AI_PERSONAS = [
+    {
+      id: 'cosmos',
+      name: 'كوزموس',
+      emoji: '🚀',
+      desc: 'مساعد فلكي محترف — يجيبك بعلم وإثارة',
+      systemPrompt: 'أنت كوزموس، مساعد فلكي خبير ومتحمس. تجيب بدقة علمية وبشكل مشوّق. تتكلم بأي لغة يستخدمها المستخدم.',
+      voiceStyle: { rate: 0.92, pitch: 0.85 },
+      badge: 'كل اللغات'
+    },
+    {
+      id: 'orion',
+      name: 'أوريون',
+      emoji: '⭐',
+      desc: 'معلم هادئ ومبسّط — يشرح الصعب ببساطة',
+      systemPrompt: 'أنت أوريون، معلم هادئ وصبور. تشرح الأمور ببساطة وبأمثلة واضحة. تتكلم بأي لغة يستخدمها المستخدم.',
+      voiceStyle: { rate: 0.88, pitch: 0.80 },
+      badge: 'كل اللغات'
+    },
+    {
+      id: 'nova',
+      name: 'نوفا',
+      emoji: '💫',
+      desc: 'مساعد سريع ومباشر — إجابات موجزة ودقيقة',
+      systemPrompt: 'أنت نوفا، مساعد ذكي وسريع. إجاباتك مختصرة ومباشرة ودقيقة. تتكلم بأي لغة يستخدمها المستخدم.',
+      voiceStyle: { rate: 1.0, pitch: 0.88 },
+      badge: 'كل اللغات'
+    },
+    {
+      id: 'galaxy',
+      name: 'جالكسي',
+      emoji: '🌌',
+      desc: 'مستكشف الكون — يروي قصص الفضاء بأسلوب رائع',
+      systemPrompt: 'أنت جالكسي، راوي قصص الفضاء. إجاباتك مليئة بالإثارة والتشويق والمعلومات الرائعة. تتكلم بأي لغة يستخدمها المستخدم.',
+      voiceStyle: { rate: 0.85, pitch: 0.78 },
+      badge: 'كل اللغات'
+    }
+  ];
+
+  // ===== 2. localStorage helpers =====
+  var PKEY = 'falak_ai_persona_id';
+  var VKEY = 'falak_ai_voice_uri';
+  function getSavedId()  { try { return localStorage.getItem(PKEY); } catch(e){ return null; } }
+  function savePId(id)   { try { localStorage.setItem(PKEY, id); } catch(e){} }
+  function getSavedVURI(){ try { return localStorage.getItem(VKEY); } catch(e){ return null; } }
+  function saveVURI(uri) { try { if(uri) localStorage.setItem(VKEY, uri); } catch(e){} }
+
+  // ===== 3. الشخصية الحالية =====
+  var _persona = null;
+  var _modalSel = null;
+  var _voices   = [];
+  var _selVoice = null;
+  var _speakBtn = null;
+  var _huaweiT  = null;
+
+  function getById(id) { return AI_PERSONAS.find(function(p){ return p.id === id; }) || AI_PERSONAS[0]; }
+
+  window.getCurrentAIPersona = function() {
+    if (!_persona) { var s = getSavedId(); _persona = s ? getById(s) : null; }
+    return _persona;
+  };
+  window.getAISystemPrompt = function() {
+    var p = window.getCurrentAIPersona();
+    return p ? p.systemPrompt : 'أنت مساعد فلكي ذكي. أجب بوضوح ودقة. تتكلم بأي لغة يستخدمها المستخدم.';
+  };
+
+  // ===== 4. تحميل الأصوات (هواوي compatible) =====
+  function loadVoices() {
+    var synth = window.speechSynthesis;
+    if (!synth) return;
+    function doLoad() {
+      var v = synth.getVoices();
+      if (v && v.length > 0) { _voices = v; pickBestVoice(); }
+    }
+    doLoad();
+    if (typeof synth.onvoiceschanged !== 'undefined') synth.onvoiceschanged = doLoad;
+    // Huawei retry
+    var tries = 0;
+    var iv = setInterval(function() {
+      if (_voices.length > 0 || tries > 20) { clearInterval(iv); return; }
+      doLoad(); tries++;
+    }, 250);
+  }
+
+  // اختيار أفضل صوت رجالي
+  function pickBestVoice() {
+    if (!_voices.length) return;
+    var saved = getSavedVURI();
+    if (saved) { var sv = _voices.find(function(v){ return v.voiceURI === saved; }); if (sv) { _selVoice = sv; return; } }
+
+    var tests = [
+      function(v){ return /ar/i.test(v.lang) && /male|man/i.test(v.name); },
+      function(v){ return /ar/i.test(v.lang); },
+      function(v){ return /google/i.test(v.name) && /en/i.test(v.lang); },
+      function(v){ return /microsoft/i.test(v.name); },
+      function(v){ return /google/i.test(v.name); },
+      function(v){ return /david|mark|daniel|james|alex/i.test(v.name); },
+      function(v){ return /en/i.test(v.lang); },
+      function(v){ return true; }
+    ];
+    for (var i = 0; i < tests.length; i++) {
+      var m = _voices.find(tests[i]);
+      if (m) { _selVoice = m; saveVURI(m.voiceURI); return; }
+    }
+  }
+
+  // ===== 5. اكتشاف اللغة =====
+  function detectLang(text) {
+    if (!text) return 'ar-SA';
+    if (/[\u0600-\u06FF]/.test(text)) return 'ar-SA';
+    if (/[\u0400-\u04FF]/.test(text)) return 'ru-RU';
+    if (/[\u4E00-\u9FFF]/.test(text)) return 'zh-CN';
+    if (/[\u3040-\u30FF]/.test(text)) return 'ja-JP';
+    if (/[\uAC00-\uD7AF]/.test(text)) return 'ko-KR';
+    if (/[\u0900-\u097F]/.test(text)) return 'hi-IN';
+    if (/[àâçéèêëîïôùûüÿœæ]/i.test(text)) return 'fr-FR';
+    if (/[äöüß]/i.test(text)) return 'de-DE';
+    if (/[áéíóúüñ]/i.test(text)) return 'es-ES';
+    if (/[çğışöü]/i.test(text)) return 'tr-TR';
+    return 'en-US';
+  }
+
+  function getVoiceForLang(lang) {
+    if (!_voices.length) return _selVoice;
+    var base = lang.split('-')[0].toLowerCase();
+    var m = _voices.find(function(v){ return v.lang.toLowerCase().startsWith(base); });
+    return m || _selVoice;
+  }
+
+  // ===== 6. دالة النطق الرئيسية =====
+  window.aiSpeak = function(text, btn) {
+    var synth = window.speechSynthesis;
+    if (!synth || !text) return;
+    if (_speakBtn === btn && synth.speaking) { stopAiSpeech(); return; }
+    stopAiSpeech();
+
+    var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.rate   = p.voiceStyle.rate  || 0.9;
+    utt.pitch  = p.voiceStyle.pitch || 0.85;
+    utt.volume = 1;
+
+    var lang = detectLang(text);
+    utt.lang = lang;
+    var voice = getVoiceForLang(lang);
+    if (voice) utt.voice = voice;
+
+    _speakBtn = btn || null;
+
+    utt.onstart = function() {
+      if (btn) {
+        btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
+        btn.classList.add('muted');
+      }
+    };
+    utt.onend = utt.onerror = function() {
+      if (btn) { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.classList.remove('muted'); }
+      if (_speakBtn === btn) _speakBtn = null;
+    };
+
+    synth.cancel();
+    setTimeout(function() {
+      try { synth.speak(utt); } catch(e) {}
+      // Huawei keep-alive
+      clearInterval(_huaweiT);
+      _huaweiT = setInterval(function() {
+        if (!synth.speaking) { clearInterval(_huaweiT); return; }
+        synth.pause(); synth.resume();
+      }, 10000);
+    }, 60);
+  };
+
+  function stopAiSpeech() {
+    var synth = window.speechSynthesis;
+    if (synth) { try { synth.cancel(); } catch(e){} }
+    if (_speakBtn) { _speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>'; _speakBtn.classList.remove('muted'); }
+    _speakBtn = null;
+    clearInterval(_huaweiT);
+  }
+  window.stopAllAISpeech = stopAiSpeech;
+
+  // ===== 7. زرار الصوت على رسائل AI =====
+  window.addAIMuteButton = function(msgEl, text) {
+    if (!msgEl || !text || msgEl.querySelector('.ai-msg-mute-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'ai-msg-mute-btn';
+    btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+    btn.title = 'استمع للرسالة';
+    btn.style.cssText = 'position:absolute;top:6px;left:-38px;width:30px;height:30px;border:none;border-radius:50%;background:linear-gradient(135deg,rgba(6,182,212,.25),rgba(99,102,241,.25));border:1px solid rgba(6,182,212,.4);color:#06b6d4;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .2s;z-index:10;';
+    btn.addEventListener('click', function(){ window.aiSpeak(text, btn); });
+    btn.addEventListener('touchend', function(e){ e.preventDefault(); window.aiSpeak(text, btn); });
+    msgEl.style.position = 'relative';
+    msgEl.appendChild(btn);
+  };
+
+  // ===== 8. Modal بناء وتأكيد =====
+  function buildGrid() {
+    var grid = document.getElementById('personaGrid');
+    if (!grid) return;
+    var savedId = getSavedId();
+    grid.innerHTML = AI_PERSONAS.map(function(p) {
+      return '<div class="persona-card ' + (p.id === (savedId||'cosmos') ? 'selected' : '') + '" id="pcard_' + p.id + '" onclick="selectPersonaCard(\'' + p.id + '\')" ontouchend="event.preventDefault();selectPersonaCard(\'' + p.id + '\')">'
+        + '<span class="persona-emoji">' + p.emoji + '</span>'
+        + '<div class="persona-name">' + p.name + '</div>'
+        + '<div class="persona-desc">' + p.desc + '</div>'
+        + '<span class="persona-lang-badge">🌍 ' + p.badge + '</span>'
+        + '</div>';
+    }).join('');
+    _modalSel = savedId || 'cosmos';
+  }
+
+  window.selectPersonaCard = function(id) {
+    _modalSel = id;
+    document.querySelectorAll('.persona-card').forEach(function(c){ c.classList.remove('selected'); });
+    var card = document.getElementById('pcard_' + id);
+    if (card) card.classList.add('selected');
+  };
+
+  window.confirmPersonaSelection = function() {
+    if (!_modalSel) return;
+    _persona = getById(_modalSel);
+    savePId(_modalSel);
+    pickBestVoice();
+    var modal = document.getElementById('aiPersonaModal');
+    if (modal) modal.classList.remove('active');
+    updatePersonaUI();
+    var welcome = 'أهلاً! أنا ' + _persona.name + '، مساعدك الذكي. جاهز أساعدك في أي وقت.';
+    setTimeout(function(){ window.aiSpeak(welcome, null); }, 500);
+    if (typeof showToast === 'function') showToast('✅ تم اختيار شخصية: ' + _persona.name + ' ' + _persona.emoji);
+  };
+
+  window.openPersonaModal = function() {
+    buildGrid();
+    var modal = document.getElementById('aiPersonaModal');
+    if (modal) modal.classList.add('active');
+  };
+
+  function updatePersonaUI() {
+    var p = _persona; if (!p) return;
+    var avatar = document.querySelector('.ai-chat-container .chat-avatar, #aiChatModal .chat-avatar');
+    if (avatar) avatar.innerHTML = p.emoji;
+    var nameEl = document.querySelector('#aiChatModal .chat-header-text h3');
+    if (nameEl) nameEl.textContent = p.name + ' ' + p.emoji;
+    var actions = document.querySelector('#aiChatModal .chat-actions');
+    if (actions && !actions.querySelector('.ai-persona-change-btn')) {
+      var btn = document.createElement('button');
+      btn.className = 'ai-persona-change-btn';
+      btn.innerHTML = '<i class="fas fa-user-astronaut"></i> شخصية';
+      btn.onclick = window.openPersonaModal;
+      actions.insertBefore(btn, actions.firstChild);
+    }
+  }
+
+  // ===== 9. Patch sendAIMessage =====
+  function patchSendAI() {
+    var iv = setInterval(function() {
+      if (typeof window.sendAIMessage !== 'function') return;
+      clearInterval(iv);
+
+      window.sendAIMessage = async function() {
+        var inp = document.getElementById('aiChatInput');
+        if (!inp || !inp.value.trim()) return;
+        var userMsg = inp.value.trim();
+        inp.value = ''; inp.style.height = 'auto';
+
+        var msgs = document.getElementById('aiChatMessages');
+        if (msgs) {
+          var ud = document.createElement('div');
+          ud.className = 'message sent';
+          ud.innerHTML = '<div class="message-content">' + userMsg + '</div>';
+          msgs.appendChild(ud);
+          msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        var typingEl = null;
+        if (msgs) {
+          typingEl = document.createElement('div');
+          typingEl.className = 'message received';
+          typingEl.id = 'aiTypingIndicator';
+          var pName = (_persona || AI_PERSONAS[0]).name;
+          typingEl.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> ' + pName + ' يفكر...</div>';
+          msgs.appendChild(typingEl);
+          msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        var persona = window.getCurrentAIPersona() || AI_PERSONAS[0];
+        var apiKey = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
+        var histMsgs = (typeof aiChatHistory !== 'undefined' && Array.isArray(aiChatHistory)) ? aiChatHistory.slice(-10) : [];
+
+        var payload = {
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: persona.systemPrompt },
+            ...histMsgs,
+            { role: 'user', content: userMsg }
+          ],
+          max_tokens: 600,
+          temperature: 0.4
+        };
+
+        try {
+          var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          var data = await res.json();
+          var answer = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'عذراً، حدث خطأ.';
+
+          if (typeof aiChatHistory !== 'undefined') {
+            aiChatHistory.push({ role: 'user', content: userMsg });
+            aiChatHistory.push({ role: 'assistant', content: answer });
+            if (aiChatHistory.length > 30) aiChatHistory.splice(0, 2);
+          }
+
+          if (typingEl) typingEl.remove();
+          if (msgs) {
+            var aiDiv = document.createElement('div');
+            aiDiv.className = 'message received';
+            aiDiv.innerHTML = '<div class="message-sender">' + persona.emoji + ' ' + persona.name + '</div><div class="message-content">' + answer + '</div>';
+            msgs.appendChild(aiDiv);
+            msgs.scrollTop = msgs.scrollHeight;
+            var txt = aiDiv.querySelector('.message-content');
+            if (txt) window.addAIMuteButton(aiDiv, txt.textContent);
+
+            // نطق تلقائي لو مش مكتوم
+            var isMuted = (typeof aiIsMuted !== 'undefined' && aiIsMuted);
+            var muteBtn = document.getElementById('aiMuteBtn');
+            if (muteBtn && muteBtn.classList.contains('muted')) isMuted = true;
+            if (!isMuted) window.aiSpeak(answer, null);
+          }
+        } catch(err) {
+          if (typingEl) typingEl.remove();
+          if (msgs) { var ed = document.createElement('div'); ed.className = 'message received'; ed.innerHTML = '<div class="message-content" style="color:#ef4444">❌ فشل الاتصال بالمساعد</div>'; msgs.appendChild(ed); }
+          console.error('AI send error:', err);
+        }
+      };
+    }, 800);
+  }
+
+  // ===== 10. Patch voice chat TTS =====
+  function patchVoiceChat() {
+    var iv = setInterval(function() {
+      if (!window.speechSynthesis) { clearInterval(iv); return; }
+      clearInterval(iv);
+      var origSpeak = window.speechSynthesis.speak.bind(window.speechSynthesis);
+      window.speechSynthesis.speak = function(utt) {
+        if (utt instanceof SpeechSynthesisUtterance) {
+          var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
+          utt.rate  = p.voiceStyle.rate  || 0.9;
+          utt.pitch = p.voiceStyle.pitch || 0.85;
+          if (utt.text) {
+            var lang = detectLang(utt.text);
+            utt.lang = lang;
+            var v = getVoiceForLang(lang);
+            if (v) utt.voice = v;
+          }
+          // Huawei keep-alive for voice chat
+          clearInterval(_huaweiT);
+          _huaweiT = setInterval(function() {
+            if (!window.speechSynthesis.speaking) { clearInterval(_huaweiT); return; }
+            window.speechSynthesis.pause(); window.speechSynthesis.resume();
+          }, 10000);
+        }
+        origSpeak(utt);
+      };
+    }, 1000);
+  }
+
+  // ===== 11. Init =====
+  function init() {
+    if (window.speechSynthesis) loadVoices();
+    var saved = getSavedId();
+    if (saved) {
+      _persona = getById(saved);
+      setTimeout(updatePersonaUI, 1200);
+    } else {
+      // انتظار فتح AI chat لعرض Modal الاختيار
+      var targetModal = document.getElementById('aiChatModal');
+      if (targetModal) {
+        var obs = new MutationObserver(function(muts) {
+          muts.forEach(function(mut) {
+            if (mut.attributeName === 'class' && targetModal.classList.contains('active') && !getSavedId()) {
+              obs.disconnect();
+              setTimeout(function() { buildGrid(); document.getElementById('aiPersonaModal').classList.add('active'); }, 300);
+            }
+          });
+        });
+        obs.observe(targetModal, { attributes: true });
+      }
+    }
+    patchSendAI();
+    patchVoiceChat();
+  }
+
+  window.AI_PERSONAS = AI_PERSONAS;
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 600); }); }
+  else { setTimeout(init, 600); }
+
+})();
+</script>
 </body>
 </html>
