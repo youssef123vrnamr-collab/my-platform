@@ -67,6 +67,7 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; min-height: 100%; background: #0f0a1a; background-attachment: fixed; }
@@ -12317,7 +12318,7 @@ function slStopAllAnimations() {
     _huaweiT = setInterval(function() {
       if (!synth.speaking) { clearInterval(_huaweiT); return; }
       synth.pause(); synth.resume();
-    }, 5000);
+    }, 10000);
 
     try { synth.speak(utt); } catch(e) {}
   }
@@ -12519,10 +12520,32 @@ function slStopAllAnimations() {
   }
 
   // ===== 10. Patch voice chat TTS =====
-  // لا نعمل override لـ speak لأن speakNextChunk عندها keep-alive خاص بيها
-  // أي override هنا بيتعارض مع الـ onend chain ويوقف القراءة في المنتصف
   function patchVoiceChat() {
-    // intentionally left empty — keep-alive is handled inside speakNextChunk
+    var iv = setInterval(function() {
+      if (!window.speechSynthesis) { clearInterval(iv); return; }
+      clearInterval(iv);
+      var origSpeak = window.speechSynthesis.speak.bind(window.speechSynthesis);
+      window.speechSynthesis.speak = function(utt) {
+        if (utt instanceof SpeechSynthesisUtterance) {
+          var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
+          utt.rate  = p.voiceStyle.rate  || 0.9;
+          utt.pitch = p.voiceStyle.pitch || 0.85;
+          if (utt.text) {
+            var lang = detectLang(utt.text);
+            utt.lang = lang;
+            var v = getVoiceForLang(lang);
+            if (v) utt.voice = v;
+          }
+          // Huawei keep-alive for voice chat
+          clearInterval(_huaweiT);
+          _huaweiT = setInterval(function() {
+            if (!window.speechSynthesis.speaking) { clearInterval(_huaweiT); return; }
+            window.speechSynthesis.pause(); window.speechSynthesis.resume();
+          }, 10000);
+        }
+        origSpeak(utt);
+      };
+    }, 1000);
   }
 
   // ===== 11. Init =====
@@ -12558,5 +12581,579 @@ function slStopAllAnimations() {
 
 })();
 </script>
+
+<!-- ============================================================
+     ✨ FEATURE 1 — Daily Quests + XP Badges نظام المهام اليومية
+     ============================================================ -->
+<style>
+/* ── Daily Quest Bar ── */
+.dq-bar{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;gap:.5rem;align-items:center;pointer-events:none;}
+.dq-fab{pointer-events:all;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;box-shadow:0 6px 24px rgba(99,102,241,.55);animation:dqPulse 3s infinite;position:fixed;bottom:22px;left:22px;z-index:3001;}
+@keyframes dqPulse{0%,100%{box-shadow:0 6px 24px rgba(99,102,241,.55)}50%{box-shadow:0 6px 36px rgba(139,92,246,.9)}}
+/* ── Quest Modal ── */
+.dq-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;padding:1rem;}
+.dq-modal.active{display:flex;}
+.dq-sheet{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.4);border-radius:28px 28px 18px 18px;width:100%;max-width:480px;padding:1.5rem;max-height:85vh;overflow-y:auto;}
+.dq-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
+.dq-title{font-size:1.15rem;font-weight:900;background:linear-gradient(135deg,#fde047,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.dq-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;}
+.dq-xp-summary{background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.15));border:1px solid rgba(99,102,241,.35);border-radius:16px;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.dq-xp-total{font-size:1.5rem;font-weight:900;color:#fde047;}
+.dq-streak{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:#f97316;}
+.dq-quest-list{display:flex;flex-direction:column;gap:.75rem;}
+.dq-quest{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.9rem 1rem;display:flex;align-items:center;gap:.85rem;transition:all .25s;}
+.dq-quest.done{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.07);}
+.dq-quest-icon{font-size:1.5rem;width:40px;text-align:center;flex-shrink:0;}
+.dq-quest-info{flex:1;}
+.dq-quest-name{font-size:.9rem;font-weight:700;color:#e0e7ff;margin-bottom:.25rem;}
+.dq-quest-desc{font-size:.78rem;color:#94a3b8;}
+.dq-quest-reward{font-size:.8rem;font-weight:800;color:#fde047;background:rgba(253,224,71,.12);border:1px solid rgba(253,224,71,.3);border-radius:20px;padding:.2rem .65rem;white-space:nowrap;}
+.dq-quest-check{font-size:1.3rem;}
+.dq-badge-section{margin-top:1.25rem;}
+.dq-badge-title{font-size:.9rem;font-weight:700;color:#a78bfa;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;}
+.dq-badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;}
+.dq-badge-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.6rem .4rem;text-align:center;transition:all .25s;}
+.dq-badge-item.earned{background:rgba(99,102,241,.18);border-color:rgba(139,92,246,.5);}
+.dq-badge-item.locked{opacity:.4;filter:grayscale(.8);}
+.dq-badge-emoji{font-size:1.5rem;display:block;margin-bottom:.25rem;}
+.dq-badge-lbl{font-size:.65rem;color:#94a3b8;line-height:1.3;}
+/* ── XP floating popup ── */
+.dq-xp-pop{position:fixed;font-size:1.3rem;font-weight:900;color:#fde047;text-shadow:0 2px 12px rgba(0,0,0,.5);pointer-events:none;z-index:99999;animation:dqXpUp 1.3s ease-out forwards;}
+@keyframes dqXpUp{0%{opacity:0;transform:translateY(0) scale(.7)}20%{opacity:1;transform:translateY(-12px) scale(1.15)}100%{opacity:0;transform:translateY(-80px) scale(.9)}}
+</style>
+
+<!-- Quest FAB -->
+<button class="dq-fab" onclick="openDQ()" title="مهامي اليومية" id="dqFab">🎯</button>
+
+<!-- Quest Modal -->
+<div class="dq-modal" id="dqModal">
+  <div class="dq-sheet">
+    <div class="dq-header">
+      <span class="dq-title">🎯 مهامك اليومية</span>
+      <button class="dq-close" onclick="closeDQ()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="dq-xp-summary">
+      <div>
+        <div style="font-size:.75rem;color:#94a3b8;margin-bottom:.25rem">إجمالي نقاطك</div>
+        <div class="dq-xp-total" id="dqTotalXP">0 ⭐ XP</div>
+      </div>
+      <div class="dq-streak">🔥 <span id="dqStreak">0</span> يوم متواصل</div>
+    </div>
+    <div class="dq-quest-list" id="dqQuestList"></div>
+    <div class="dq-badge-section">
+      <div class="dq-badge-title"><i class="fas fa-medal"></i> شاراتك المكتسبة</div>
+      <div class="dq-badges-grid" id="dqBadgesGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var STORAGE_DQ = 'dq_v1';
+  var TODAY = new Date().toDateString();
+  var QUESTS = [
+    { id:'watch',  icon:'📺', name:'شاهد فيديو فلكي',       desc:'افتح أي فيديو في المنصة',            xp:20 },
+    { id:'quiz',   icon:'🧠', name:'جاوب على 3 أسئلة',      desc:'أكمل امتحان أي فيديو',               xp:30 },
+    { id:'ai',     icon:'🤖', name:'اسأل الذكاء الاصطناعي', desc:'أرسل رسالة للمساعد الذكي',           xp:15 },
+    { id:'news',   icon:'📰', name:'اقرأ خبر فضائي',        desc:'افتح قسم أخبار الفضاء',              xp:10 },
+    { id:'login',  icon:'🌟', name:'مكافأة الدخول اليومي',  desc:'مجرد دخولك يكسبك نقاط',             xp:10 },
+  ];
+  var BADGES = [
+    { id:'first_watch', emoji:'🎬', label:'أول مشاهدة',  xpReq:0,  questReq:'watch' },
+    { id:'quiz_hero',   emoji:'🏅', label:'بطل الكويز',  xpReq:0,  questReq:'quiz'  },
+    { id:'ai_fan',      emoji:'🤖', label:'صديق AI',     xpReq:0,  questReq:'ai'    },
+    { id:'streak3',     emoji:'🔥', label:'3 أيام متواصلة', xpReq:0, streakReq:3   },
+    { id:'xp50',        emoji:'⭐', label:'50 XP',       xpReq:50,  questReq:null  },
+    { id:'xp150',       emoji:'💫', label:'150 XP',      xpReq:150, questReq:null  },
+    { id:'xp300',       emoji:'🌟', label:'300 XP',      xpReq:300, questReq:null  },
+    { id:'explorer',    emoji:'🚀', label:'مستكشف الفضاء', xpReq:500, questReq:null},
+  ];
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_DQ)) || {}; } catch(e){ return {}; }
+  }
+  function save(d) { localStorage.setItem(STORAGE_DQ, JSON.stringify(d)); }
+
+  function getState() {
+    var d = load();
+    if (d.date !== TODAY) {
+      // New day — reset daily quests, keep totals
+      var prevStreak = d.streak || 0;
+      var yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+      var wasYesterday = d.date === yesterday.toDateString();
+      d.completedToday = {};
+      d.date = TODAY;
+      d.streak = wasYesterday ? prevStreak + 1 : 1;
+      save(d);
+    }
+    d.totalXP = d.totalXP || 0;
+    d.completedToday = d.completedToday || {};
+    d.earnedBadges = d.earnedBadges || [];
+    return d;
+  }
+
+  window.dqCompleteQuest = function(questId) {
+    var d = getState();
+    if (d.completedToday[questId]) return;
+    var q = QUESTS.find(function(x){ return x.id === questId; });
+    if (!q) return;
+    d.completedToday[questId] = true;
+    d.totalXP = (d.totalXP || 0) + q.xp;
+    checkBadges(d);
+    save(d);
+    showXPPop('+' + q.xp + ' XP ⭐');
+    refreshDQUI();
+    // Update Leaderboard
+    if (window.lbAddXP) window.lbAddXP(q.xp);
+  };
+
+  function checkBadges(d) {
+    BADGES.forEach(function(b) {
+      if (d.earnedBadges.indexOf(b.id) !== -1) return;
+      var earn = false;
+      if (b.questReq && d.completedToday[b.questReq]) earn = true;
+      if (b.xpReq && d.totalXP >= b.xpReq) earn = true;
+      if (b.streakReq && d.streak >= b.streakReq) earn = true;
+      if (earn) {
+        d.earnedBadges.push(b.id);
+        setTimeout(function(){ showBadgeToast(b); }, 400);
+      }
+    });
+  }
+
+  function showBadgeToast(b) {
+    var t = document.createElement('div');
+    t.style.cssText='position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:.75rem 1.5rem;border-radius:20px;z-index:99999;font-family:Cairo;font-size:.95rem;font-weight:700;box-shadow:0 10px 30px rgba(99,102,241,.5);animation:dqXpUp 2.5s ease-out forwards;';
+    t.textContent = '🏅 شارة جديدة: ' + b.emoji + ' ' + b.label;
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 2600);
+  }
+
+  function showXPPop(txt) {
+    var p = document.createElement('div');
+    p.className = 'dq-xp-pop';
+    p.textContent = txt;
+    p.style.left = (Math.random() * 60 + 20) + '%';
+    p.style.bottom = '120px';
+    document.body.appendChild(p);
+    setTimeout(function(){ p.remove(); }, 1400);
+  }
+
+  function refreshDQUI() {
+    var d = getState();
+    var xpEl = document.getElementById('dqTotalXP');
+    var strEl = document.getElementById('dqStreak');
+    var listEl = document.getElementById('dqQuestList');
+    var badgesEl = document.getElementById('dqBadgesGrid');
+    if (!listEl) return;
+    if (xpEl) xpEl.textContent = (d.totalXP || 0) + ' ⭐ XP';
+    if (strEl) strEl.textContent = d.streak || 0;
+    listEl.innerHTML = QUESTS.map(function(q){
+      var done = !!d.completedToday[q.id];
+      return '<div class="dq-quest' + (done?' done':'') + '">' +
+        '<div class="dq-quest-icon">' + q.icon + '</div>' +
+        '<div class="dq-quest-info"><div class="dq-quest-name">' + q.name + '</div><div class="dq-quest-desc">' + q.desc + '</div></div>' +
+        '<div class="dq-quest-reward">+' + q.xp + ' XP</div>' +
+        '<div class="dq-quest-check">' + (done ? '✅' : '⬜') + '</div>' +
+        '</div>';
+    }).join('');
+    if (badgesEl) {
+      badgesEl.innerHTML = BADGES.map(function(b){
+        var earned = d.earnedBadges.indexOf(b.id) !== -1;
+        return '<div class="dq-badge-item ' + (earned?'earned':'locked') + '" title="' + b.label + '">' +
+          '<span class="dq-badge-emoji">' + b.emoji + '</span>' +
+          '<div class="dq-badge-lbl">' + b.label + '</div></div>';
+      }).join('');
+    }
+  }
+
+  window.openDQ = function() {
+    refreshDQUI();
+    document.getElementById('dqModal').classList.add('active');
+  };
+  window.closeDQ = function() {
+    document.getElementById('dqModal').classList.remove('active');
+  };
+  document.getElementById('dqModal').addEventListener('click', function(e){
+    if (e.target === this) closeDQ();
+  });
+
+  // Auto-complete login quest on load
+  setTimeout(function(){ window.dqCompleteQuest('login'); }, 1500);
+
+  // Hook: watch video
+  var origPlay = window.playVideo;
+  window.playVideo = function() {
+    var r = origPlay && origPlay.apply(this, arguments);
+    setTimeout(function(){ window.dqCompleteQuest('watch'); }, 800);
+    return r;
+  };
+
+  // Hook: AI send
+  document.addEventListener('dqAiSent', function(){ window.dqCompleteQuest('ai'); });
+  document.addEventListener('dqNewsSeen', function(){ window.dqCompleteQuest('news'); });
+  document.addEventListener('dqQuizDone', function(){ window.dqCompleteQuest('quiz'); });
+
+  window.dqGetTotalXP = function(){ return getState().totalXP || 0; };
+})();
+</script>
+
+
+<!-- ============================================================
+     ✨ FEATURE 2 — Global Leaderboard لوحة المتصدرين
+     ============================================================ -->
+<style>
+.lb-modal{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.82);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.lb-modal.active{display:flex;}
+.lb-card{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.4);border-radius:24px;width:100%;max-width:460px;padding:1.5rem;max-height:85vh;overflow-y:auto;}
+.lb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
+.lb-head-title{font-size:1.15rem;font-weight:900;color:#e0e7ff;display:flex;align-items:center;gap:.5rem;}
+.lb-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;}
+.lb-tabs{display:flex;gap:.5rem;margin-bottom:1rem;}
+.lb-tab{flex:1;padding:.5rem;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.05);color:#94a3b8;font-family:Cairo;font-size:.82rem;cursor:pointer;transition:.2s;text-align:center;}
+.lb-tab.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:transparent;color:#fff;font-weight:700;}
+.lb-list{display:flex;flex-direction:column;gap:.6rem;}
+.lb-item{display:flex;align-items:center;gap:.85rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:.75rem 1rem;transition:all .2s;}
+.lb-item.me{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.45);}
+.lb-rank{font-size:1.25rem;width:32px;text-align:center;flex-shrink:0;font-weight:900;}
+.lb-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#ec4899);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.lb-info{flex:1;}
+.lb-name{font-size:.9rem;font-weight:700;color:#e0e7ff;}
+.lb-xp{font-size:.78rem;color:#fde047;}
+.lb-score{font-size:1rem;font-weight:900;color:#fde047;}
+</style>
+
+<script>
+(function(){
+  var LB_KEY = 'lb_users_v1';
+  var ME_KEY = 'lb_me_v1';
+  var EMOJIS = ['🚀','🌟','⭐','🪐','🌙','☄️','🔭','🛸','🌌','💫'];
+
+  function loadLB() {
+    try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch(e){ return []; }
+  }
+  function saveLB(d) { localStorage.setItem(LB_KEY, JSON.stringify(d)); }
+
+  function getMe() {
+    var d = loadLB();
+    var myId = localStorage.getItem(ME_KEY);
+    if (!myId) {
+      myId = 'me_' + Date.now();
+      localStorage.setItem(ME_KEY, myId);
+    }
+    var me = d.find(function(u){ return u.id === myId; });
+    if (!me) {
+      me = { id: myId, name: 'أنت 🌟', emoji: EMOJIS[Math.floor(Math.random()*EMOJIS.length)], xp: 0, weekXP: 0, weekStart: _weekStart() };
+      d.push(me);
+      // Add some simulated users for demo
+      if (d.length < 6) {
+        var names = ['ريان الفلكي','نجمة السماء','قمر الليل','كوكب زحل','مجرة درب التبانة'];
+        var xps   = [480, 340, 270, 190, 120];
+        names.forEach(function(n,i){
+          d.push({ id:'sim_'+i, name:n, emoji:EMOJIS[i+2], xp:xps[i], weekXP:Math.floor(xps[i]*0.6), weekStart:_weekStart() });
+        });
+      }
+      saveLB(d);
+    }
+    return { me: me, myId: myId };
+  }
+
+  function _weekStart() {
+    var d = new Date(); d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - d.getDay());
+    return d.toDateString();
+  }
+
+  window.lbAddXP = function(amt) {
+    var d = loadLB();
+    var info = getMe();
+    var me = d.find(function(u){ return u.id === info.myId; });
+    if (!me) return;
+    // Reset weekly XP if new week
+    if (me.weekStart !== _weekStart()) { me.weekXP = 0; me.weekStart = _weekStart(); }
+    me.xp = (me.xp || 0) + amt;
+    me.weekXP = (me.weekXP || 0) + amt;
+    saveLB(d);
+  };
+
+  var _curTab = 'week';
+  function renderLB(tab) {
+    _curTab = tab;
+    var d = loadLB();
+    var info = getMe();
+    // Sort
+    var sorted = d.slice().sort(function(a,b){
+      return ((tab==='week' ? b.weekXP : b.xp) || 0) - ((tab==='week' ? a.weekXP : a.xp) || 0);
+    });
+    var medals = ['🥇','🥈','🥉'];
+    var list = document.getElementById('lbList');
+    if (!list) return;
+    list.innerHTML = sorted.slice(0,10).map(function(u,i){
+      var isMe = u.id === info.myId;
+      var score = tab === 'week' ? (u.weekXP||0) : (u.xp||0);
+      return '<div class="lb-item' + (isMe?' me':'') + '">' +
+        '<div class="lb-rank">' + (medals[i] || (i+1)) + '</div>' +
+        '<div class="lb-avatar">' + (u.emoji||'🌟') + '</div>' +
+        '<div class="lb-info"><div class="lb-name">' + u.name + (isMe?' (أنت)':'') + '</div><div class="lb-xp">' + score + ' XP</div></div>' +
+        '<div class="lb-score">' + score + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  window.openLB = function() {
+    document.getElementById('lbModal').classList.add('active');
+    renderLB('week');
+  };
+  window.closeLB = function() {
+    document.getElementById('lbModal').classList.remove('active');
+  };
+  window.lbTab = function(t, btn) {
+    document.querySelectorAll('.lb-tab').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    renderLB(t);
+  };
+
+  // Expose me init
+  getMe();
+})();
+</script>
+
+<!-- Leaderboard Modal HTML -->
+<div class="lb-modal" id="lbModal">
+  <div class="lb-card">
+    <div class="lb-head">
+      <div class="lb-head-title">🏆 لوحة المتصدرين</div>
+      <button class="lb-close" onclick="closeLB()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" onclick="lbTab('week',this)">🗓️ هذا الأسبوع</button>
+      <button class="lb-tab" onclick="lbTab('all',this)">🌟 كل الوقت</button>
+    </div>
+    <div class="lb-list" id="lbList"></div>
+  </div>
+</div>
+
+<!-- Add LB button to settings menu for regular users -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    // Patch user menu to add Leaderboard & Daily Quests entries
+    var origUpdateUI = window.updateUI;
+    // We also add a floating LB button
+    var lbBtn = document.createElement('button');
+    lbBtn.title = 'لوحة المتصدرين';
+    lbBtn.style.cssText='position:fixed;bottom:82px;left:22px;z-index:3001;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;box-shadow:0 5px 20px rgba(245,158,11,.5);';
+    lbBtn.innerHTML='🏆';
+    lbBtn.onclick = function(){ openLB(); };
+    document.body.appendChild(lbBtn);
+    // Move dqFab a bit higher
+    var dqFab = document.getElementById('dqFab');
+    if (dqFab) dqFab.style.bottom = '140px';
+  }, 1200);
+});
+</script>
+
+
+<!-- ============================================================
+     ✨ FEATURE 3 — NASA Live Space News in AI chat
+     ============================================================ -->
+<script>
+(function(){
+  // Intercept AI messages that ask about space news
+  var NASA_KEY = 'DEMO_KEY';
+  var SPACE_TRIGGERS = ['اليوم','النهارده','الآن','الأخبار','أحدث','جديد','ايش في','إيه في','news','today','latest','launch','صاروخ','إطلاق','ناسا','nasa','تلسكوب','webb','جيمس ويب'];
+
+  async function fetchNASAApod() {
+    try {
+      var r = await fetch('https://api.nasa.gov/planetary/apod?api_key=' + NASA_KEY);
+      var d = await r.json();
+      return d;
+    } catch(e){ return null; }
+  }
+
+  async function fetchSpaceNews() {
+    try {
+      var r = await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=3&ordering=-published_at');
+      var d = await r.json();
+      return d.results || [];
+    } catch(e){ return []; }
+  }
+
+  function containsTrigger(text) {
+    var low = text.toLowerCase();
+    return SPACE_TRIGGERS.some(function(t){ return low.includes(t); });
+  }
+
+  // Patch the AI send function to inject live space context
+  var _patchAttempts = 0;
+  var _patchInt = setInterval(async function(){
+    _patchAttempts++;
+    if (_patchAttempts > 40) { clearInterval(_patchInt); return; }
+    var origSend = window.sendAIMessage;
+    if (!origSend) return;
+    clearInterval(_patchInt);
+
+    window.sendAIMessage = async function(userMsg) {
+      if (containsTrigger(userMsg || '')) {
+        // Fetch live data and prepend as context
+        var apod = await fetchNASAApod();
+        var news = await fetchSpaceNews();
+        var ctx = '';
+        if (apod && apod.title) {
+          ctx += '\n[صورة ناسا الفلكية اليوم]: العنوان: ' + apod.title + '. الشرح: ' + (apod.explanation || '').slice(0, 300) + '\n';
+        }
+        if (news.length) {
+          ctx += '\n[أحدث أخبار الفضاء الحية]:\n';
+          news.forEach(function(n,i){
+            ctx += (i+1) + '. ' + n.title + ' (' + (n.news_site||'') + ') — ' + (n.summary||'').slice(0,150) + '\n';
+          });
+        }
+        if (ctx) {
+          userMsg = userMsg + '\n\n--- معلومات حية الآن ---' + ctx + '---\nاستخدم المعلومات الحية أعلاه للإجابة إذا كانت ذات صلة.';
+        }
+        // Fire news quest
+        document.dispatchEvent(new Event('dqNewsSeen'));
+      }
+      // Fire AI quest
+      document.dispatchEvent(new Event('dqAiSent'));
+      return origSend.call(this, userMsg);
+    };
+  }, 500);
+})();
+</script>
+
+
+<!-- ============================================================
+     ✨ FEATURE 4 — Certificate QR + Share شهادة بـ QR ومشاركة
+     ============================================================ -->
+<script>
+(function(){
+  // Override showCertificateModal to add QR + share buttons
+  var _origShowCert = window.showCertificateModal;
+  window.showCertificateModal = function(courseTitle, certUrl) {
+    // Remove any old modal
+    var old = document.getElementById('certViewModal');
+    if (old) old.remove();
+
+    var modal = document.createElement('div');
+    modal.id = 'certViewModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10080;background:rgba(0,0,0,.87);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(10px)';
+
+    var verifyUrl = certUrl + '?v=' + encodeURIComponent(courseTitle);
+    var linkedInUrl = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(certUrl);
+    var fbUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(certUrl);
+    var waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent('🏆 أتممت كورس "' + courseTitle + '" بنجاح على منصة الفلك المتكاملة! ' + certUrl);
+
+    modal.innerHTML =
+      '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(245,158,11,.5);border-radius:26px;width:95%;max-width:460px;padding:2rem 1.5rem;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.7),0 0 80px rgba(245,158,11,.12);position:relative;overflow:hidden;">' +
+        '<div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,.1),transparent 65%);pointer-events:none"></div>' +
+        '<div style="width:80px;height:80px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 1rem;box-shadow:0 10px 30px rgba(245,158,11,.5),0 0 0 8px rgba(245,158,11,.12)">🏆</div>' +
+        '<h2 style="font-size:1.3rem;font-weight:900;color:#fde68a;margin-bottom:.3rem">مبروك! 🎉</h2>' +
+        '<p style="color:#e0e7ff;font-size:.92rem;line-height:1.6;margin-bottom:1.25rem">أتممت كورس <b style="color:#fbbf24">' + (courseTitle||'') + '</b> بنجاح!</p>' +
+        // QR Code
+        '<div style="background:#fff;border-radius:16px;padding:12px;display:inline-block;margin-bottom:1rem;box-shadow:0 4px 20px rgba(0,0,0,.4)">' +
+          '<div id="certQRCode" style="width:140px;height:140px;"></div>' +
+        '</div>' +
+        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:1.25rem">امسح الـ QR Code للتحقق من شهادتك</p>' +
+        // Download
+        '<a href="' + certUrl + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:.6rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:14px;padding:.8rem 1.5rem;font-family:Cairo;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;margin-bottom:.75rem;box-shadow:0 8px 24px rgba(245,158,11,.4)">' +
+          '<i class="fas fa-download"></i> تحميل الشهادة PDF</a>' +
+        // Share buttons
+        '<div style="margin-bottom:.75rem;">' +
+          '<p style="color:#94a3b8;font-size:.8rem;margin-bottom:.6rem">شارك إنجازك 🎊</p>' +
+          '<div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;">' +
+            '<a href="' + linkedInUrl + '" target="_blank" style="display:flex;align-items:center;gap:.4rem;background:#0077b5;color:#fff;border-radius:10px;padding:.5rem .9rem;font-family:Cairo;font-size:.82rem;font-weight:700;text-decoration:none"><i class="fab fa-linkedin"></i> LinkedIn</a>' +
+            '<a href="' + fbUrl + '" target="_blank" style="display:flex;align-items:center;gap:.4rem;background:#1877f2;color:#fff;border-radius:10px;padding:.5rem .9rem;font-family:Cairo;font-size:.82rem;font-weight:700;text-decoration:none"><i class="fab fa-facebook"></i> Facebook</a>' +
+            '<a href="' + waUrl + '" target="_blank" style="display:flex;align-items:center;gap:.4rem;background:#25d366;color:#fff;border-radius:10px;padding:.5rem .9rem;font-family:Cairo;font-size:.82rem;font-weight:700;text-decoration:none"><i class="fab fa-whatsapp"></i> واتساب</a>' +
+          '</div>' +
+        '</div>' +
+        '<button onclick="document.getElementById(\'certViewModal\').remove()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;border-radius:10px;padding:.6rem 1.5rem;font-family:Cairo;font-size:.9rem;cursor:pointer;width:100%">إغلاق</button>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+
+    // Generate QR after insertion
+    setTimeout(function(){
+      var qrEl = document.getElementById('certQRCode');
+      if (qrEl && window.QRCode) {
+        new QRCode(qrEl, { text: verifyUrl, width:140, height:140, colorDark:'#1a1025', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      }
+    }, 300);
+  };
+})();
+</script>
+
+
+<!-- ============================================================
+     ✨ FEATURE 5 — Glow Star Animation + Lazy Video Iframes
+     ============================================================ -->
+<style>
+/* Glow breathing stars on background */
+@keyframes starGlow {
+  0%,100%{opacity:.25;transform:scale(1);}
+  50%{opacity:.9;transform:scale(1.6);}
+}
+.star-glow{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle,rgba(255,255,255,.9) 0%,transparent 70%);
+}
+</style>
+
+<script>
+(function(){
+  // ── 5A: Generate breathing stars ──
+  function addGlowStars(){
+    var frag = document.createDocumentFragment();
+    for(var i=0;i<28;i++){
+      var s=document.createElement('div');
+      var sz=(Math.random()*3+1).toFixed(1);
+      s.className='star-glow';
+      s.style.cssText='width:'+sz+'px;height:'+sz+'px;top:'+(Math.random()*100)+'vh;left:'+(Math.random()*100)+'vw;animation:starGlow '+(Math.random()*4+3).toFixed(1)+'s '+(Math.random()*5).toFixed(1)+'s infinite;';
+      frag.appendChild(s);
+    }
+    document.body.appendChild(frag);
+  }
+  addGlowStars();
+
+  // ── 5B: Lazy-load YouTube iframes with IntersectionObserver ──
+  function lazyIframes(){
+    if (!('IntersectionObserver' in window)) return;
+    var iframes = document.querySelectorAll('iframe[data-src]');
+    if (!iframes.length) return;
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var el=entry.target;
+          el.src=el.dataset.src;
+          obs.unobserve(el);
+        }
+      });
+    },{rootMargin:'200px'});
+    iframes.forEach(function(el){ obs.observe(el); });
+  }
+  // Run after videos render
+  setTimeout(lazyIframes, 3000);
+
+  // ── 5C: Hook AI send button to fire dqAiSent event ──
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      var sendBtn = document.getElementById('aiSendBtn') || document.querySelector('.ai-send-btn') || document.querySelector('[onclick*="sendAI"]');
+      if(sendBtn){
+        sendBtn.addEventListener('click', function(){
+          document.dispatchEvent(new Event('dqAiSent'));
+        });
+      }
+      // Also hook quiz submit
+      document.addEventListener('click', function(e){
+        if(e.target && (e.target.classList.contains('quiz-submit-btn') || (e.target.closest && e.target.closest('.quiz-submit-btn')))){
+          setTimeout(function(){ document.dispatchEvent(new Event('dqQuizDone')); }, 500);
+        }
+      });
+    }, 2000);
+  });
+})();
+</script>
+
 </body>
 </html>
