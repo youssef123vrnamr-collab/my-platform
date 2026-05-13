@@ -3670,6 +3670,8 @@ async function updateAdminUI() {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
             addItem("smartLearnMenuItem","fas fa-brain","التعلم الذكي 🧠", () => { menu.classList.remove("active"); openSelfLearning(); }, "sl-menu-item");
+            addItem("dailyQuestsMenuItem","fas fa-bullseye","مهامي اليومية 🎯", () => { menu.classList.remove("active"); openDQ(); });
+            addItem("leaderboardMenuItem","fas fa-trophy","لوحة المتصدرين 🏆", () => { menu.classList.remove("active"); openLB(); });
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
@@ -12587,9 +12589,7 @@ function slStopAllAnimations() {
      ============================================================ -->
 <style>
 /* ── Daily Quest Bar ── */
-.dq-bar{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;gap:.5rem;align-items:center;pointer-events:none;}
-.dq-fab{pointer-events:all;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;box-shadow:0 6px 24px rgba(99,102,241,.55);animation:dqPulse 3s infinite;position:fixed;bottom:22px;left:22px;z-index:3001;}
-@keyframes dqPulse{0%,100%{box-shadow:0 6px 24px rgba(99,102,241,.55)}50%{box-shadow:0 6px 36px rgba(139,92,246,.9)}}
+.dq-bar{display:none;}
 /* ── Quest Modal ── */
 .dq-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;padding:1rem;}
 .dq-modal.active{display:flex;}
@@ -12621,9 +12621,6 @@ function slStopAllAnimations() {
 .dq-xp-pop{position:fixed;font-size:1.3rem;font-weight:900;color:#fde047;text-shadow:0 2px 12px rgba(0,0,0,.5);pointer-events:none;z-index:99999;animation:dqXpUp 1.3s ease-out forwards;}
 @keyframes dqXpUp{0%{opacity:0;transform:translateY(0) scale(.7)}20%{opacity:1;transform:translateY(-12px) scale(1.15)}100%{opacity:0;transform:translateY(-80px) scale(.9)}}
 </style>
-
-<!-- Quest FAB -->
-<button class="dq-fab" onclick="openDQ()" title="مهامي اليومية" id="dqFab">🎯</button>
 
 <!-- Quest Modal -->
 <div class="dq-modal" id="dqModal">
@@ -12703,8 +12700,12 @@ function slStopAllAnimations() {
     save(d);
     showXPPop('+' + q.xp + ' XP ⭐');
     refreshDQUI();
-    // Update Leaderboard
+    // كتابة XP الحقيقي في Firebase
     if (window.lbAddXP) window.lbAddXP(q.xp);
+    // كمان addPoints الموجود في المنصة
+    if (typeof addPoints === 'function' && typeof currentUserId !== 'undefined' && currentUserId) {
+      addPoints(currentUserId, q.xp, 'مهمة يومية: ' + q.name).catch(function(){});
+    }
   };
 
   function checkBadges(d) {
@@ -12746,7 +12747,18 @@ function slStopAllAnimations() {
     var listEl = document.getElementById('dqQuestList');
     var badgesEl = document.getElementById('dqBadgesGrid');
     if (!listEl) return;
-    if (xpEl) xpEl.textContent = (d.totalXP || 0) + ' ⭐ XP';
+    // جرب تعرض النقاط الحقيقية من Firebase
+    if (xpEl) {
+      var uid = (typeof currentUserId !== 'undefined') ? currentUserId : null;
+      if (uid && typeof db !== 'undefined') {
+        db.collection('user_points').doc(uid).get().then(function(doc){
+          var pts = doc.exists ? (doc.data().points || 0) : (d.totalXP || 0);
+          xpEl.textContent = pts + ' ⭐ XP';
+        }).catch(function(){ xpEl.textContent = (d.totalXP || 0) + ' ⭐ XP'; });
+      } else {
+        xpEl.textContent = (d.totalXP || 0) + ' ⭐ XP';
+      }
+    }
     if (strEl) strEl.textContent = d.streak || 0;
     listEl.innerHTML = QUESTS.map(function(q){
       var done = !!d.completedToday[q.id];
@@ -12825,79 +12837,90 @@ function slStopAllAnimations() {
 
 <script>
 (function(){
-  var LB_KEY = 'lb_users_v1';
-  var ME_KEY = 'lb_me_v1';
-  var EMOJIS = ['🚀','🌟','⭐','🪐','🌙','☄️','🔭','🛸','🌌','💫'];
 
-  function loadLB() {
-    try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch(e){ return []; }
-  }
-  function saveLB(d) { localStorage.setItem(LB_KEY, JSON.stringify(d)); }
-
-  function getMe() {
-    var d = loadLB();
-    var myId = localStorage.getItem(ME_KEY);
-    if (!myId) {
-      myId = 'me_' + Date.now();
-      localStorage.setItem(ME_KEY, myId);
-    }
-    var me = d.find(function(u){ return u.id === myId; });
-    if (!me) {
-      me = { id: myId, name: 'أنت 🌟', emoji: EMOJIS[Math.floor(Math.random()*EMOJIS.length)], xp: 0, weekXP: 0, weekStart: _weekStart() };
-      d.push(me);
-      // Add some simulated users for demo
-      if (d.length < 6) {
-        var names = ['ريان الفلكي','نجمة السماء','قمر الليل','كوكب زحل','مجرة درب التبانة'];
-        var xps   = [480, 340, 270, 190, 120];
-        names.forEach(function(n,i){
-          d.push({ id:'sim_'+i, name:n, emoji:EMOJIS[i+2], xp:xps[i], weekXP:Math.floor(xps[i]*0.6), weekStart:_weekStart() });
-        });
-      }
-      saveLB(d);
-    }
-    return { me: me, myId: myId };
-  }
-
+  /* ── helpers ── */
   function _weekStart() {
     var d = new Date(); d.setHours(0,0,0,0);
     d.setDate(d.getDate() - d.getDay());
-    return d.toDateString();
+    return d.toISOString().slice(0,10); // "YYYY-MM-DD"
   }
+  var MEDALS = ['🥇','🥈','🥉'];
 
+  /* ── كتابة XP للـ Firebase بعد كل مهمة ── */
   window.lbAddXP = function(amt) {
-    var d = loadLB();
-    var info = getMe();
-    var me = d.find(function(u){ return u.id === info.myId; });
-    if (!me) return;
-    // Reset weekly XP if new week
-    if (me.weekStart !== _weekStart()) { me.weekXP = 0; me.weekStart = _weekStart(); }
-    me.xp = (me.xp || 0) + amt;
-    me.weekXP = (me.weekXP || 0) + amt;
-    saveLB(d);
+    // currentUserId و db موجودين في الـ scope الرئيسي للصفحة
+    var uid = (typeof currentUserId !== 'undefined') ? currentUserId : null;
+    var name = (typeof currentUser !== 'undefined') ? currentUser : 'مجهول';
+    if (!uid || typeof db === 'undefined') return;
+
+    var ws = _weekStart();
+    var ref = db.collection('user_points').doc(uid);
+    db.runTransaction(function(t) {
+      return t.get(ref).then(function(doc) {
+        var data = doc.exists ? doc.data() : {};
+        var totalPts = (data.points || 0) + amt;
+        // نقاط الأسبوع: لو أسبوع جديد نبدأ من صفر
+        var weekPts = (data.weekStart === ws) ? (data.weekPoints || 0) + amt : amt;
+        t.set(ref, {
+          points: totalPts,
+          weekPoints: weekPts,
+          weekStart: ws,
+          username: name,
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      });
+    }).catch(function(e){ console.warn('lbAddXP error', e); });
   };
 
+  /* ── رسم الـ Leaderboard من Firebase ── */
   var _curTab = 'week';
-  function renderLB(tab) {
+
+  async function renderLB(tab) {
     _curTab = tab;
-    var d = loadLB();
-    var info = getMe();
-    // Sort
-    var sorted = d.slice().sort(function(a,b){
-      return ((tab==='week' ? b.weekXP : b.xp) || 0) - ((tab==='week' ? a.weekXP : a.xp) || 0);
-    });
-    var medals = ['🥇','🥈','🥉'];
     var list = document.getElementById('lbList');
     if (!list) return;
-    list.innerHTML = sorted.slice(0,10).map(function(u,i){
-      var isMe = u.id === info.myId;
-      var score = tab === 'week' ? (u.weekXP||0) : (u.xp||0);
-      return '<div class="lb-item' + (isMe?' me':'') + '">' +
-        '<div class="lb-rank">' + (medals[i] || (i+1)) + '</div>' +
-        '<div class="lb-avatar">' + (u.emoji||'🌟') + '</div>' +
-        '<div class="lb-info"><div class="lb-name">' + u.name + (isMe?' (أنت)':'') + '</div><div class="lb-xp">' + score + ' XP</div></div>' +
-        '<div class="lb-score">' + score + '</div>' +
-        '</div>';
-    }).join('');
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#6366f1"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+
+    if (typeof db === 'undefined') {
+      list.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444">⚠️ Firebase غير متصل</div>';
+      return;
+    }
+
+    try {
+      var field = (tab === 'week') ? 'weekPoints' : 'points';
+      var snap = await db.collection('user_points').orderBy(field, 'desc').limit(10).get();
+
+      var uid = (typeof currentUserId !== 'undefined') ? currentUserId : null;
+
+      if (snap.empty) {
+        list.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8">لا توجد بيانات بعد 🌌</div>';
+        return;
+      }
+
+      var ws = _weekStart();
+      list.innerHTML = snap.docs.map(function(doc, i) {
+        var d = doc.data();
+        var isMe = doc.id === uid;
+        // لو أسبوع جديد ومفيش weekStart مطابق — نعامله كـ 0
+        var score = (tab === 'week')
+          ? ((d.weekStart === ws) ? (d.weekPoints || 0) : 0)
+          : (d.points || 0);
+        var name = d.username || 'طالب';
+        return '<div class="lb-item' + (isMe ? ' me' : '') + '">' +
+          '<div class="lb-rank">' + (MEDALS[i] || (i + 1)) + '</div>' +
+          '<div class="lb-avatar">🌟</div>' +
+          '<div class="lb-info">' +
+            '<div class="lb-name">' + name + (isMe ? ' <span style="color:#6366f1;font-size:.75rem">(أنت)</span>' : '') + '</div>' +
+            '<div class="lb-xp">' + score + ' نقطة</div>' +
+          '</div>' +
+          '<div class="lb-score">' + score + '</div>' +
+          '</div>';
+      }).join('');
+
+    } catch(e) {
+      console.error('renderLB error', e);
+      list.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444">❌ فشل تحميل البيانات</div>';
+    }
   }
 
   window.openLB = function() {
@@ -12913,8 +12936,6 @@ function slStopAllAnimations() {
     renderLB(t);
   };
 
-  // Expose me init
-  getMe();
 })();
 </script>
 
@@ -12933,25 +12954,7 @@ function slStopAllAnimations() {
   </div>
 </div>
 
-<!-- Add LB button to settings menu for regular users -->
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    // Patch user menu to add Leaderboard & Daily Quests entries
-    var origUpdateUI = window.updateUI;
-    // We also add a floating LB button
-    var lbBtn = document.createElement('button');
-    lbBtn.title = 'لوحة المتصدرين';
-    lbBtn.style.cssText='position:fixed;bottom:82px;left:22px;z-index:3001;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;box-shadow:0 5px 20px rgba(245,158,11,.5);';
-    lbBtn.innerHTML='🏆';
-    lbBtn.onclick = function(){ openLB(); };
-    document.body.appendChild(lbBtn);
-    // Move dqFab a bit higher
-    var dqFab = document.getElementById('dqFab');
-    if (dqFab) dqFab.style.bottom = '140px';
-  }, 1200);
-});
-</script>
+<!-- Add LB + DQ entries injected via settings menu above -->
 
 
 <!-- ============================================================
