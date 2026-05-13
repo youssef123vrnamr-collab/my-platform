@@ -12317,7 +12317,7 @@ function slStopAllAnimations() {
     _huaweiT = setInterval(function() {
       if (!synth.speaking) { clearInterval(_huaweiT); return; }
       synth.pause(); synth.resume();
-    }, 10000);
+    }, 5000);
 
     try { synth.speak(utt); } catch(e) {}
   }
@@ -12519,32 +12519,10 @@ function slStopAllAnimations() {
   }
 
   // ===== 10. Patch voice chat TTS =====
+  // لا نعمل override لـ speak لأن speakNextChunk عندها keep-alive خاص بيها
+  // أي override هنا بيتعارض مع الـ onend chain ويوقف القراءة في المنتصف
   function patchVoiceChat() {
-    var iv = setInterval(function() {
-      if (!window.speechSynthesis) { clearInterval(iv); return; }
-      clearInterval(iv);
-      var origSpeak = window.speechSynthesis.speak.bind(window.speechSynthesis);
-      window.speechSynthesis.speak = function(utt) {
-        if (utt instanceof SpeechSynthesisUtterance) {
-          var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
-          utt.rate  = p.voiceStyle.rate  || 0.9;
-          utt.pitch = p.voiceStyle.pitch || 0.85;
-          if (utt.text) {
-            var lang = detectLang(utt.text);
-            utt.lang = lang;
-            var v = getVoiceForLang(lang);
-            if (v) utt.voice = v;
-          }
-          // Huawei keep-alive for voice chat
-          clearInterval(_huaweiT);
-          _huaweiT = setInterval(function() {
-            if (!window.speechSynthesis.speaking) { clearInterval(_huaweiT); return; }
-            window.speechSynthesis.pause(); window.speechSynthesis.resume();
-          }, 10000);
-        }
-        origSpeak(utt);
-      };
-    }, 1000);
+    // intentionally left empty — keep-alive is handled inside speakNextChunk
   }
 
   // ===== 11. Init =====
