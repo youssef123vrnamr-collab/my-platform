@@ -12256,37 +12256,44 @@ function slStopAllAnimations() {
   var _speakActive = false;
 
   function splitToChunks(text) {
-    // قسّم النص على نقاط وفواصل وسطور — max 180 حرف للجزء
-    var MAX = 180;
-    var raw = text.replace(/\n+/g, '. ').split(/(?<=[.!?؟،,;:\n])/);
+    var MAX = 160;
+    // بدل lookbehind (مش مدعوم على كل متصفحات الموبايل)
+    // نستبدل علامات الترقيم بعلامة + separator ثم نقسم
+    var normalized = text
+      .replace(/\r?\n+/g, ' . ')
+      .replace(/([.!?؟،,;:])\s*/g, '$1\u200B'); // zero-width space بعد كل علامة
+    var raw = normalized.split('\u200B');
     var chunks = [];
     var cur = '';
-    raw.forEach(function(s) {
-      s = s.trim();
-      if (!s) return;
-      if ((cur + ' ' + s).length <= MAX) {
-        cur = cur ? cur + ' ' + s : s;
+    for (var i = 0; i < raw.length; i++) {
+      var s = raw[i].trim();
+      if (!s) continue;
+      var combined = cur ? cur + ' ' + s : s;
+      if (combined.length <= MAX) {
+        cur = combined;
       } else {
         if (cur) chunks.push(cur);
-        // لو الجملة نفسها أكبر من MAX، قسّمها على مسافات
+        // لو جملة واحدة أكبر من MAX — قسّمها على كلمات
         if (s.length > MAX) {
-          var words = s.split(' ');
+          var words = s.split(/\s+/);
           var part = '';
-          words.forEach(function(w) {
-            if ((part + ' ' + w).length <= MAX) {
-              part = part ? part + ' ' + w : w;
+          for (var j = 0; j < words.length; j++) {
+            var w = words[j];
+            if (!w) continue;
+            var trial = part ? part + ' ' + w : w;
+            if (trial.length <= MAX) {
+              part = trial;
             } else {
               if (part) chunks.push(part);
               part = w;
             }
-          });
-          if (part) cur = part;
-          else cur = '';
+          }
+          cur = part;
         } else {
           cur = s;
         }
       }
-    });
+    }
     if (cur) chunks.push(cur);
     return chunks.filter(function(c){ return c.trim().length > 0; });
   }
@@ -12296,6 +12303,7 @@ function slStopAllAnimations() {
       _speakActive = false;
       if (btn) { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.classList.remove('muted'); }
       if (_speakBtn === btn) _speakBtn = null;
+      clearInterval(_huaweiT);
       return;
     }
     var utt = new SpeechSynthesisUtterance(chunks[idx]);
@@ -12305,24 +12313,29 @@ function slStopAllAnimations() {
     utt.lang   = lang;
     if (voice) utt.voice = voice;
 
-    utt.onend = function() {
-      // keep-alive: resume في حالة الـ Huawei
+    var _moved = false;
+    function nextChunk() {
+      if (_moved) return; // نمنع الاستدعاء المزدوج
+      _moved = true;
       clearInterval(_huaweiT);
       speakNextChunk(synth, chunks, idx + 1, p, lang, voice, btn);
-    };
+    }
+
+    utt.onend = function() { nextChunk(); };
+
     utt.onerror = function(e) {
-      if (e.error === 'interrupted' || e.error === 'canceled') return;
-      speakNextChunk(synth, chunks, idx + 1, p, lang, voice, btn);
+      // نكمل دايماً حتى لو في error — ما نوقفش
+      nextChunk();
     };
 
-    // Huawei keep-alive
+    // Huawei / Android keep-alive
     clearInterval(_huaweiT);
     _huaweiT = setInterval(function() {
       if (!synth.speaking) { clearInterval(_huaweiT); return; }
       synth.pause(); synth.resume();
     }, 5000);
 
-    try { synth.speak(utt); } catch(e) {}
+    try { synth.speak(utt); } catch(e) { nextChunk(); }
   }
 
   window.aiSpeak = function(text, btn) {
