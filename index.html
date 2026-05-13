@@ -2487,6 +2487,14 @@ body {
 .sl-streak-fire { animation:streakPulse 1s ease-in-out; }
 @keyframes streakPulse { 0%{transform:scale(1)} 50%{transform:scale(1.5)} 100%{transform:scale(1)} }
 
+/* Loading screen animations */
+@keyframes slSunPulse { 0%,100%{box-shadow:0 0 20px #fde04788,0 0 40px #f9731633} 50%{box-shadow:0 0 32px #fde047cc,0 0 60px #f9731655} }
+@keyframes slOrbit1 { from{transform:rotate(0deg) translateX(48px) rotate(0deg)} to{transform:rotate(360deg) translateX(48px) rotate(-360deg)} }
+@keyframes slOrbit2 { from{transform:rotate(90deg) translateX(68px) rotate(-90deg)} to{transform:rotate(450deg) translateX(68px) rotate(-450deg)} }
+@keyframes slOrbit3 { from{transform:rotate(200deg) translateX(88px) rotate(-200deg)} to{transform:rotate(560deg) translateX(88px) rotate(-560deg)} }
+@keyframes slTwinkle { 0%,100%{opacity:.2;transform:scale(.6)} 50%{opacity:1;transform:scale(1.2)} }
+@keyframes slDotBounce { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-12px);opacity:1} }
+
 /* XP popup */
 .sl-xp-popup { position:fixed; font-size:1.2rem; font-weight:900; color:#fde047; pointer-events:none; z-index:99999; animation:slXpFloat 1.2s ease-out forwards; white-space:nowrap; text-shadow:0 2px 8px rgba(0,0,0,.5); }
 @keyframes slXpFloat { 0%{transform:translateY(0) scale(.8);opacity:0} 20%{opacity:1;transform:translateY(-10px) scale(1.1)} 100%{transform:translateY(-70px) scale(.9);opacity:0} }
@@ -10669,6 +10677,43 @@ function showCertificateModal(courseTitle, certUrl) {
         </div>
       </div>
 
+      <!-- SCREEN LOADING: Cosmic Loading -->
+      <div class="sl-screen" id="slLoadingScreen">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:2rem;text-align:center;gap:1.5rem;">
+          <!-- Animated solar system -->
+          <div id="slLoadingOrbit" style="position:relative;width:160px;height:160px;flex-shrink:0;">
+            <div style="position:absolute;inset:0;border:2px solid rgba(99,102,241,.2);border-radius:50%;"></div>
+            <div style="position:absolute;inset:20px;border:2px solid rgba(139,92,246,.15);border-radius:50%;"></div>
+            <div style="position:absolute;inset:40px;border:2px solid rgba(236,72,153,.1);border-radius:50%;"></div>
+            <!-- Sun -->
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;background:radial-gradient(circle,#fde047,#f97316);border-radius:50%;box-shadow:0 0 20px #fde04788;animation:slSunPulse 2s infinite;"></div>
+            <!-- Planet 1 -->
+            <div id="slP1" style="position:absolute;top:50%;left:50%;width:12px;height:12px;margin:-6px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 0 8px #6366f188;animation:slOrbit1 2.5s linear infinite;"></div>
+            <!-- Planet 2 -->
+            <div id="slP2" style="position:absolute;top:50%;left:50%;width:9px;height:9px;margin:-4.5px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);box-shadow:0 0 6px #10b98188;animation:slOrbit2 4s linear infinite;"></div>
+            <!-- Planet 3 -->
+            <div id="slP3" style="position:absolute;top:50%;left:50%;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#f97316);box-shadow:0 0 5px #ec489988;animation:slOrbit3 6.5s linear infinite;"></div>
+            <!-- Stars twinkling -->
+            <div style="position:absolute;top:8px;left:12px;width:3px;height:3px;background:#fff;border-radius:50%;animation:slTwinkle 1.2s infinite;opacity:.7;"></div>
+            <div style="position:absolute;top:18px;right:10px;width:2px;height:2px;background:#a78bfa;border-radius:50%;animation:slTwinkle 1.8s .4s infinite;opacity:.8;"></div>
+            <div style="position:absolute;bottom:10px;left:20px;width:2px;height:2px;background:#06b6d4;border-radius:50%;animation:slTwinkle 1.5s .8s infinite;opacity:.6;"></div>
+          </div>
+          <!-- Loading text -->
+          <div>
+            <div id="slLoadingTitle" style="font-size:1.25rem;font-weight:900;color:#ede9fe;margin-bottom:.5rem;">جاري استدعاء الأسئلة من الكون...</div>
+            <div id="slLoadingSubtitle" style="font-size:.85rem;color:#8b8aa0;line-height:1.6;max-width:280px;margin:0 auto;">نحن نجمع أسئلة فلكية احترافية خصيصاً لك</div>
+          </div>
+          <!-- Progress dots -->
+          <div style="display:flex;gap:.5rem;">
+            <div class="sl-dot-1" style="width:8px;height:8px;border-radius:50%;background:#6366f1;animation:slDotBounce 1.2s .0s infinite;"></div>
+            <div class="sl-dot-2" style="width:8px;height:8px;border-radius:50%;background:#8b5cf6;animation:slDotBounce 1.2s .2s infinite;"></div>
+            <div class="sl-dot-3" style="width:8px;height:8px;border-radius:50%;background:#ec4899;animation:slDotBounce 1.2s .4s infinite;"></div>
+          </div>
+          <!-- Fun facts while loading -->
+          <div id="slLoadingFact" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:.9rem 1.2rem;max-width:320px;font-size:.82rem;color:#c4b5fd;line-height:1.7;animation:slFadeIn .5s ease;"></div>
+        </div>
+      </div>
+
       <!-- SCREEN 3: Result Screen -->
       <div class="sl-screen" id="slResultScreen">
         <div class="sl-result-screen" style="width:100%;max-width:500px;margin:0 auto">
@@ -11194,126 +11239,197 @@ function startSelfLearning(level) {
   slLoadStage();
 }
 
-// ---- Load a stage (10 questions) — ALWAYS fetches from internet first ----
+// ---- Cosmic fun facts shown while loading ----
+const SL_FACTS = {
+  ar: [
+    "🌌 المجرة درب التبانة تحتوي على أكثر من 200 مليار نجم!",
+    "☀️ الشمس تُنتج طاقة تعادل 386 مليار مليار ميغاواط في الثانية",
+    "🪐 يوم واحد على المشتري يساوي 9.9 ساعة أرضية فقط",
+    "⭐ النجوم الزرقاء أشد حرارة من الحمراء بعشرات الأضعاف",
+    "🌑 الثقب الأسود الأقرب لنا يبعد عن الأرض 1000 سنة ضوئية",
+    "🚀 الصوت لا ينتقل في الفضاء — الكون في صمت مطبق!",
+    "🌙 القمر يبتعد عن الأرض بمقدار 3.8 سم كل سنة",
+    "💫 المستعر الأعظم ينتج طاقة تفوق طاقة الشمس في حياتها كلها",
+    "🔭 كوكب نبتون اكتُشف رياضياً قبل رؤيته بالتلسكوب",
+    "🌠 الضوء الذي تراه من بعض النجوم انطلق قبل وجود الإنسان!",
+  ],
+  en: [
+    "🌌 The Milky Way contains over 200 billion stars!",
+    "☀️ The Sun produces 386 billion billion megawatts of energy per second",
+    "🪐 A day on Jupiter lasts only 9.9 Earth hours",
+    "⭐ Blue stars are tens of times hotter than red stars",
+    "🌑 The nearest black hole to Earth is 1,000 light-years away",
+    "🚀 Sound cannot travel in space — the universe is completely silent!",
+    "🌙 The Moon moves 3.8 cm away from Earth every year",
+    "💫 A supernova releases more energy than the Sun will in its entire lifetime",
+    "🔭 Neptune was discovered mathematically before being seen through a telescope",
+    "🌠 Light from distant stars you see tonight left before humans existed!",
+  ],
+  de: [
+    "🌌 Die Milchstraße enthält über 200 Milliarden Sterne!",
+    "☀️ Die Sonne erzeugt pro Sekunde 386 Milliarden Milliarden Megawatt Energie",
+    "🪐 Ein Tag auf dem Jupiter dauert nur 9,9 Erdstunden",
+    "⭐ Blaue Sterne sind zehnmal heißer als rote Sterne",
+    "🌑 Das nächste schwarze Loch zur Erde ist 1.000 Lichtjahre entfernt",
+    "🚀 Schall kann sich nicht im Weltraum ausbreiten — völlige Stille!",
+    "🌙 Der Mond entfernt sich jedes Jahr 3,8 cm von der Erde",
+    "💫 Eine Supernova setzt mehr Energie frei als die Sonne in ihrem gesamten Leben",
+    "🔭 Neptun wurde mathematisch entdeckt, bevor er durch ein Teleskop gesehen wurde",
+    "🌠 Das Licht ferner Sterne, das du siehst, startete noch vor der Menschheit!",
+  ]
+};
+
+// ---- Show loading screen with animated facts ----
+let _slFactTimer = null;
+function slShowLoadingScreen() {
+  slShowScreen('slLoadingScreen');
+  const lang = SL.lang || 'ar';
+  const facts = SL_FACTS[lang] || SL_FACTS['ar'];
+  const factEl = document.getElementById('slLoadingFact');
+  const titleEl = document.getElementById('slLoadingTitle');
+  const subEl = document.getElementById('slLoadingSubtitle');
+
+  // Localize loading text
+  if (lang === 'en') {
+    if (titleEl) titleEl.textContent = 'Summoning questions from the cosmos...';
+    if (subEl) subEl.textContent = 'Gathering professional astronomy questions just for you';
+  } else if (lang === 'de') {
+    if (titleEl) titleEl.textContent = 'Fragen aus dem Kosmos werden geladen...';
+    if (subEl) subEl.textContent = 'Professionelle Astronomiefragen werden für dich gesammelt';
+  } else {
+    if (titleEl) titleEl.textContent = 'جاري استدعاء الأسئلة من الكون...';
+    if (subEl) subEl.textContent = 'نحن نجمع أسئلة فلكية احترافية خصيصاً لك';
+  }
+
+  // Rotate fun facts every 3s
+  let factIdx = Math.floor(Math.random() * facts.length);
+  if (factEl) factEl.textContent = facts[factIdx];
+  if (_slFactTimer) clearInterval(_slFactTimer);
+  _slFactTimer = setInterval(() => {
+    factIdx = (factIdx + 1) % facts.length;
+    if (factEl) {
+      factEl.style.opacity = '0';
+      setTimeout(() => {
+        if (factEl) { factEl.textContent = facts[factIdx]; factEl.style.opacity = '1'; }
+      }, 300);
+    }
+  }, 3000);
+}
+function slHideLoadingScreen() {
+  if (_slFactTimer) { clearInterval(_slFactTimer); _slFactTimer = null; }
+}
+
+// ---- Load a stage — show loading immediately, fetch in background ----
 async function slLoadStage() {
   SL.stageCorrect = 0;
   SL.stageXP = 0;
   SL.currentQ = 0;
 
-  // Always try to get fresh internet questions
-  await slFetchAPI();
+  // Show loading screen immediately — never keep user waiting silently
+  slShowLoadingScreen();
 
-  // If API failed and pool still empty → show error notice (no local fallback)
+  // Fetch questions
+  await slFetchAPI();
+  slHideLoadingScreen();
+
+  // If still not enough questions, show error
   if (SL.unusedPool.length < SL.PER_STAGE) {
-    const notice = document.getElementById('slFetchingNotice');
-    if (notice) {
-      const t = slT();
-      notice.style.display = 'block';
-      notice.innerHTML = SL.lang === 'ar'
-        ? '<i class="fas fa-wifi" style="color:#ef4444"></i> تعذّر تحميل الأسئلة — تأكد من اتصالك بالإنترنت وأعد المحاولة'
-        : SL.lang === 'de'
-        ? '<i class="fas fa-wifi" style="color:#ef4444"></i> Fragen konnten nicht geladen werden — Bitte Internetverbindung prüfen'
-        : '<i class="fas fa-wifi" style="color:#ef4444"></i> Failed to load questions — Please check your internet connection';
-    }
-    return; // don't continue without questions
+    const factEl = document.getElementById('slLoadingFact');
+    const titleEl = document.getElementById('slLoadingTitle');
+    if (titleEl) titleEl.textContent = SL.lang === 'ar' ? '⚠️ تعذّر تحميل الأسئلة' : SL.lang === 'de' ? '⚠️ Laden fehlgeschlagen' : '⚠️ Failed to load questions';
+    if (factEl) factEl.textContent = SL.lang === 'ar' ? 'تأكد من اتصالك بالإنترنت وأعد المحاولة' : SL.lang === 'de' ? 'Bitte Internetverbindung prüfen und erneut versuchen' : 'Please check your internet connection and try again';
+    return;
   }
 
-  // Pick PER_STAGE questions
+  // Pick PER_STAGE questions and start
   SL.stageQuestions = SL.unusedPool.splice(0, SL.PER_STAGE).map(q => slShuffleQ(q));
   slShowScreen('slQuestionScreen');
   slRenderQuestion();
 }
 
-// ---- Fetch astronomy questions via Claude API (web search enabled) ----
+// ---- Fetch astronomy questions via Claude API (fast, no web search) ----
 async function slFetchAPI() {
   const diffMap = {beginner:'easy', intermediate:'medium', advanced:'hard', expert:'expert'};
   const diff = diffMap[SL.level] || 'medium';
-  const notice = document.getElementById('slFetchingNotice');
   const lang = SL.lang || 'ar';
 
-  const langInstructions = {
-    ar: { label: 'Arabic', notice: '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> جاري تحميل أسئلة فلكية جديدة من الإنترنت...' },
-    en: { label: 'English', notice: '<i class="fas fa-cloud-download-alt" style="color:#06b6d4"></i> Loading new astronomy questions from the internet...' },
-    de: { label: 'German', notice: '<i class="fas fa-cloud-download-alt" style="color:#f59e0b"></i> Neue Astronomiefragen werden aus dem Internet geladen...' },
-  };
-  const li = langInstructions[lang] || langInstructions['ar'];
+  const langLabel = { ar: 'Arabic', en: 'English', de: 'German' }[lang] || 'Arabic';
 
-  if (notice) { notice.style.display = 'block'; notice.innerHTML = li.notice; }
+  // Topic rotation so each call has different subtopics
+  const topicSets = [
+    'solar system planets, moons, asteroids, comets',
+    'stars: life cycle, types, supernovae, neutron stars, black holes',
+    'galaxies, dark matter, dark energy, cosmic expansion',
+    'space exploration history, missions, telescopes, astronauts',
+    'cosmology: Big Bang, cosmic microwave background, inflation',
+    'exoplanets, stellar distances, light-years, spectroscopy',
+    'space physics: gravity, orbital mechanics, relativity in astronomy',
+  ];
+  const topicIdx = (SL.stage - 1) % topicSets.length;
+  const topics = topicSets[topicIdx];
+
+  const prompt = `Generate exactly 15 multiple-choice astronomy quiz questions in ${langLabel} at ${diff} difficulty.
+Topics to cover: ${topics}.
+STRICT RULES:
+- Every question must be about astronomy, space, or astrophysics ONLY
+- No geography, history, biology, or any non-space topic
+- Questions must be factually accurate
+- ${diff === 'easy' ? 'Use simple, clear language for beginners' : diff === 'medium' ? 'Use moderate scientific terminology' : 'Use advanced scientific concepts and terminology'}
+
+Return ONLY a JSON array, no markdown fences, no extra text:
+[{"q":"...","correct":"...","incorrects":["...","...","..."],"exp":"..."}]
+
+All text in ${langLabel}. "exp" = brief scientific explanation of why the answer is correct.`;
 
   try {
-    const systemPrompt = `You are an astronomy quiz generator. Generate exactly 20 multiple-choice astronomy questions in ${li.label} at ${diff} difficulty level.
-Use your knowledge to create varied, accurate, and interesting questions about space, stars, planets, galaxies, physics of the universe, space exploration, and astronomical phenomena.
-Vary the topics across different sources of knowledge.
-Return ONLY a valid JSON array with no markdown, no extra text. Each object must have:
-- "q": question text (string)
-- "correct": correct answer (string)  
-- "incorrects": array of exactly 3 wrong answers (strings)
-- "exp": brief explanation of the correct answer (string, in ${li.label})
-All text must be in ${li.label}.`;
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: systemPrompt }]
+        max_tokens: 3500,
+        // NO web_search tool — direct generation is faster and always astronomy
+        messages: [{ role: 'user', content: prompt }]
       }),
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(25000)
     });
 
-    if (!response.ok) throw new Error('API error: ' + response.status);
+    if (!response.ok) throw new Error('API ' + response.status);
     const data = await response.json();
 
-    // Extract text content from response (may contain tool_use blocks)
     const fullText = (data.content || [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('');
+      .filter(b => b.type === 'text').map(b => b.text).join('');
 
     const clean = fullText.replace(/```json|```/g, '').trim();
-    // Find JSON array in response
-    const startIdx = clean.indexOf('[');
-    const endIdx = clean.lastIndexOf(']');
-    if (startIdx === -1 || endIdx === -1) throw new Error('No JSON array found');
-    const items = JSON.parse(clean.slice(startIdx, endIdx + 1));
-
-    if (!Array.isArray(items) || items.length === 0) throw new Error('Empty result');
+    const si = clean.indexOf('['), ei = clean.lastIndexOf(']');
+    if (si === -1 || ei === -1) throw new Error('No JSON');
+    const items = JSON.parse(clean.slice(si, ei + 1));
+    if (!Array.isArray(items) || items.length === 0) throw new Error('Empty');
 
     const converted = items
-      .filter(item => item.q && item.correct && Array.isArray(item.incorrects) && item.incorrects.length >= 3)
-      .map(item => {
-        const opts = slShuffle([item.correct, ...item.incorrects.slice(0, 3)]);
-        return {
-          q: item.q,
-          icon: '🌌',
-          opts,
-          ans: opts.indexOf(item.correct),
-          exp: item.exp || item.correct,
-          fromAPI: true
-        };
+      .filter(it => it.q && it.correct && Array.isArray(it.incorrects) && it.incorrects.length >= 3)
+      .map(it => {
+        const opts = slShuffle([it.correct, ...it.incorrects.slice(0, 3)]);
+        return { q: it.q, icon: '🌌', opts, ans: opts.indexOf(it.correct), exp: it.exp || it.correct, fromAPI: true };
       });
 
-    if (notice) notice.style.display = 'none';
-    // Add to pool (dedup by question text)
     const existing = new Set(SL.unusedPool.map(q => q.q));
     const fresh = converted.filter(q => !existing.has(q.q));
     SL.unusedPool = [...SL.unusedPool, ...fresh];
     return fresh.length > 0;
+
   } catch(e) {
-    console.warn('slFetchAPI (Claude) error:', e);
-    // Fallback: try OpenTDB for English then translate
-    return await slFetchOpenTDB(diff, lang, notice);
+    console.warn('Claude API error:', e);
+    return await slFetchOpenTDB(diff, lang);
   }
 }
 
-// ---- Fallback: OpenTDB + translation ----
-async function slFetchOpenTDB(diff, lang, notice) {
+// ---- Fallback: OpenTDB (space/science category) ----
+async function slFetchOpenTDB(diff, lang) {
   try {
-    if (notice) notice.style.display = 'block';
+    // category=17 = Science & Nature (closest to space in OpenTDB)
     const res = await fetch(
-      `https://opentdb.com/api.php?amount=30&category=17&difficulty=${diff}&type=multiple`,
+      `https://opentdb.com/api.php?amount=20&category=17&difficulty=${diff === 'expert' ? 'hard' : diff}&type=multiple`,
       { signal: AbortSignal.timeout(8000) }
     );
     const data = await res.json();
@@ -11331,14 +11447,12 @@ async function slFetchOpenTDB(diff, lang, notice) {
         const opts = slShuffle([item.correct, ...item.incorrects]);
         return { q: item.q, icon: '🌌', opts, ans: opts.indexOf(item.correct), exp: `${correctLabel}: ${item.correct}`, fromAPI: true };
       });
-      if (notice) notice.style.display = 'none';
       const existing = new Set(SL.unusedPool.map(q => q.q));
       const fresh = converted.filter(q => !existing.has(q.q));
       SL.unusedPool = [...SL.unusedPool, ...fresh];
       return true;
     }
   } catch(e) { console.warn('slFetchOpenTDB error:', e); }
-  if (notice) notice.style.display = 'none';
   return false;
 }
 
@@ -11549,23 +11663,10 @@ function slShowStageComplete() {
 // ---- Continue to next stage ----
 async function slContinueToNextStage() {
   SL.stage++;
-  // Reset hearts partially (reward good play)
   if (SL.hearts < 5) SL.hearts = Math.min(5, SL.hearts + 2);
   slUpdateStats();
   document.getElementById('slProgressFill').style.width = '0%';
-
-  // Show loading notice & disable button while fetching
-  const btn = document.getElementById('slNextStageBtn');
-  const t = slT();
-  btn.disabled = true;
-  btn.innerHTML = t.loadingStage;
-  document.getElementById('slFetchingNotice').style.display = 'block';
-
   await slLoadStage();
-
-  btn.disabled = false;
-  btn.innerHTML = t.nextStageBtn;
-  document.getElementById('slFetchingNotice').style.display = 'none';
 }
 
 // ---- Progress Badge Helper ----
