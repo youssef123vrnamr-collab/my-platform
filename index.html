@@ -4692,7 +4692,10 @@ async function updateAdminUI() {
       const data = await response.json();
       const answer = data.choices[0].message.content;
       displayAIMessage(answer, "ai");
-      speakText(answer);
+      // ✅ استخدم aiSpeak (بالـ chunks) بدل speakText
+      if (typeof window.aiSpeak === 'function' && !(typeof aiIsMuted !== 'undefined' && aiIsMuted)) {
+        window.aiSpeak(answer, null);
+      }
     } catch (error) {
       console.error(error);
       displayAIMessage("عذراً، فشل الاتصال بالذكاء الاصطناعي.", "ai");
@@ -5286,43 +5289,14 @@ async function loadUserDashboard() {
 
 async function addPoints(userId, points, reason) {
   const pointsRef = db.collection("user_points").doc(userId);
-
-  // ✅ جيب الاسم الحقيقي من user_progress عشان يتحفظ في user_points
-  let realName = (typeof currentUser !== 'undefined' && currentUser && currentUser.trim() !== '' && currentUser !== 'مجهول')
-    ? currentUser : null;
-  if (!realName) {
-    try {
-      const prog = await db.collection("user_progress").doc(userId).get();
-      if (prog.exists) {
-        const pd = prog.data();
-        realName = pd.username || pd.name || pd.displayName || null;
-      }
-    } catch(_) {}
-  }
-
-  const ws = (function() {
-    var d = new Date(); d.setHours(0,0,0,0);
-    d.setDate(d.getDate() - d.getDay());
-    return d.toISOString().slice(0,10);
-  })();
-
   await db.runTransaction(async (t) => {
     const doc = await t.get(pointsRef);
-    const data = doc.exists ? doc.data() : {};
-    const current = data.points || 0;
-    const weekPts = (data.weekStart === ws) ? (data.weekPoints || 0) + points : points;
-    const patch = {
-      points: current + points,
-      weekPoints: weekPts,
-      weekStart: ws,
-      lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    // ✅ احفظ الاسم دايماً لو عندنا واحد
-    if (realName) patch.username = realName;
-    t.set(pointsRef, patch, { merge: true });
+    const current = doc.exists ? doc.data().points : 0;
+    t.set(pointsRef, { points: current + points, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
   });
   await db.collection("activities").add({ userId, message: `+${points} نقطة: ${reason}`, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
 }
+
 // ========== Courses Functions ==========
 function openSupervisorPayoutModal() {
   if (!isAdmin) { showToast("❌ للمشرفين فقط"); return; }
@@ -8499,8 +8473,25 @@ window.playChatSound = function() {
 
   // زرار الكتم/التشغيل العام في الـ header
   window.toggleAIMute = function() {
-    aiIsMuted = !aiIsMuted;
     const btn = document.getElementById('aiGlobalMuteBtn');
+    var synth = window.speechSynthesis;
+    var isCurrentlySpeaking = (typeof window.stopAllAISpeech === 'function') &&
+                              (synth && synth.speaking);
+
+    // ✅ لو الصوت شغّال دلوقتي → وقّف بس من غير ما تغير حالة الكتم
+    if (isCurrentlySpeaking) {
+      if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
+      stopAllSpeech();
+      if (btn) {
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        btn.style.color = '#10b981';
+        btn.title = 'كتم الصوت';
+      }
+      showToast('⏹️ تم إيقاف القراءة');
+      return;
+    }
+
+    aiIsMuted = !aiIsMuted;
     if (btn) {
       btn.innerHTML = aiIsMuted
         ? '<i class="fas fa-volume-mute"></i>'
@@ -8509,6 +8500,7 @@ window.playChatSound = function() {
       btn.title = aiIsMuted ? 'تشغيل الصوت' : 'كتم الصوت';
     }
     if (aiIsMuted) {
+      if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
       stopAllSpeech();
       showToast('🔇 تم كتم الصوت');
     } else {
@@ -8516,7 +8508,7 @@ window.playChatSound = function() {
     }
   };
 
-  // زرار الصوت على كل رسالة من الـ AI
+  // زرار الصوت على كل رسالة من الـ AI — ✅ يستخدم aiSpeak (chunks) بدل synth.speak مباشرة
   window.addAIMuteButton = function(msgEl, text) {
     if (!text || !text.trim()) return;
     const btn = document.createElement('button');
@@ -8526,53 +8518,21 @@ window.playChatSound = function() {
 
     btn.onclick = function(e) {
       e.stopPropagation();
-
-      // لو الصوت مكتوم عالمياً
       if (aiIsMuted) {
         showToast('🔇 الصوت مكتوم — اضغط زرار الصوت في الأعلى لتشغيله');
         return;
       }
-
-      const synth = window.speechSynthesis;
-      if (!synth) { showToast('⚠️ الصوت غير مدعوم في هذا المتصفح'); return; }
-
-      // لو الزرار ده نفسه بيقرأ → وقّف
-      if (_currentSpeakingBtn === btn) {
-        stopAllSpeech();
-        return;
+      if (!window.speechSynthesis) { showToast('⚠️ الصوت غير مدعوم في هذا المتصفح'); return; }
+      // aiSpeak بتتعامل مع toggle (لو نفس الزرار → وقّف)
+      if (typeof window.aiSpeak === 'function') {
+        window.aiSpeak(text, btn);
       }
-
-      // وقّف أي قراءة تانية
-      stopAllSpeech();
-
-      // ابدأ القراءة
-      const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = 'ar-SA';
-      utt.rate = 0.9;
-      utt.pitch = 1;
-
-      utt.onstart = function() {
-        btn.innerHTML = '<i class="fas fa-stop"></i>';
-        btn.classList.add('muted');
-        btn.title = 'إيقاف القراءة';
-        _currentSpeakingBtn = btn;
-      };
-
-      utt.onend = function() {
-        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        btn.classList.remove('muted');
-        btn.title = 'اقرأ الرسالة';
-        if (_currentSpeakingBtn === btn) _currentSpeakingBtn = null;
-      };
-
-      utt.onerror = function() {
-        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        btn.classList.remove('muted');
-        if (_currentSpeakingBtn === btn) _currentSpeakingBtn = null;
-      };
-
-      synth.speak(utt);
     };
+
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      btn.onclick(e);
+    });
 
     msgEl.style.position = 'relative';
     msgEl.appendChild(btn);
@@ -12548,11 +12508,12 @@ function slStopAllAnimations() {
             var txt = aiDiv.querySelector('.message-content');
             if (txt) window.addAIMuteButton(aiDiv, txt.textContent);
 
-            // نطق تلقائي لو مش مكتوم
+            // ✅ نطق تلقائي لو مش مكتوم — نربطه بزرار الكتم الكبير عشان يقدر يوقف
             var isMuted = (typeof aiIsMuted !== 'undefined' && aiIsMuted);
-            var muteBtn = document.getElementById('aiMuteBtn');
-            if (muteBtn && muteBtn.classList.contains('muted')) isMuted = true;
-            if (!isMuted) window.aiSpeak(answer, null);
+            if (!isMuted) {
+              var globalMuteBtn = document.getElementById('aiGlobalMuteBtn');
+              window.aiSpeak(answer, globalMuteBtn || null);
+            }
           }
         } catch(err) {
           if (typingEl) typingEl.remove();
@@ -12875,37 +12836,21 @@ function slStopAllAnimations() {
 
     var ws = _weekStart();
     var ref = db.collection('user_points').doc(uid);
-    // ✅ نجيب الاسم من user_progress لو مش موجود في currentUser
-    var resolvedName = (name && name !== 'مجهول') ? name : null;
-    var doTransaction = function(finalName) {
-      db.runTransaction(function(t) {
-        return t.get(ref).then(function(doc) {
-          var data = doc.exists ? doc.data() : {};
-          var totalPts = (data.points || 0) + amt;
-          var weekPts = (data.weekStart === ws) ? (data.weekPoints || 0) + amt : amt;
-          var patch = {
-            points: totalPts,
-            weekPoints: weekPts,
-            weekStart: ws,
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-          };
-          if (finalName) patch.username = finalName;
-          t.set(ref, patch, { merge: true });
-        });
-      }).catch(function(e){ console.warn('lbAddXP error', e); });
-    };
-    if (resolvedName) {
-      doTransaction(resolvedName);
-    } else {
-      db.collection('user_progress').doc(uid).get().then(function(prog) {
-        var fallbackName = null;
-        if (prog.exists) {
-          var pd = prog.data();
-          fallbackName = pd.username || pd.name || pd.displayName || null;
-        }
-        doTransaction(fallbackName);
-      }).catch(function(){ doTransaction(null); });
-    }
+    db.runTransaction(function(t) {
+      return t.get(ref).then(function(doc) {
+        var data = doc.exists ? doc.data() : {};
+        var totalPts = (data.points || 0) + amt;
+        // نقاط الأسبوع: لو أسبوع جديد نبدأ من صفر
+        var weekPts = (data.weekStart === ws) ? (data.weekPoints || 0) + amt : amt;
+        t.set(ref, {
+          points: totalPts,
+          weekPoints: weekPts,
+          weekStart: ws,
+          username: name,
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      });
+    }).catch(function(e){ console.warn('lbAddXP error', e); });
   };
 
   /* ── رسم الـ Leaderboard من Firebase ── */
@@ -12947,25 +12892,18 @@ function slStopAllAnimations() {
         } catch(e){}
       }));
 
-      // ✅ فلتر: اعرض بس اللي عندهم اسم حقيقي — متعرضش طالب #xxxx
-      var validDocs = snap.docs.filter(function(doc) {
-        var d = doc.data();
-        var name = nameMap[doc.id] || d.username || d.name || null;
-        return name && name.trim() !== '' && name !== 'مجهول';
-      });
-
-      if (validDocs.length === 0) {
-        list.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8">لا توجد بيانات بعد 🌌</div>';
-        return;
-      }
-
-      list.innerHTML = validDocs.map(function(doc, i) {
+      list.innerHTML = snap.docs.map(function(doc, i) {
         var d = doc.data();
         var isMe = doc.id === uid;
         var score = (tab === 'week')
           ? ((d.weekStart === ws) ? (d.weekPoints || 0) : 0)
           : (d.points || 0);
-        var name = nameMap[doc.id] || d.username || d.name;
+        // اسم حقيقي: من user_progress أو user_points أو "طالب مجهول"
+        var name = nameMap[doc.id] || d.username || d.name || null;
+        if (!name || name.trim() === '' || name === 'مجهول') {
+          // لو ما لقيناش اسم — نعرض آخر 4 حروف من الـ uid
+          name = 'طالب #' + doc.id.slice(-4);
+        }
         return '<div class="lb-item' + (isMe ? ' me' : '') + '">' +
           '<div class="lb-rank">' + (MEDALS[i] || (i + 1)) + '</div>' +
           '<div class="lb-avatar">🌟</div>' +
