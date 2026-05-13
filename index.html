@@ -3946,7 +3946,7 @@ async function updateAdminUI() {
             const v = videos.find(x => x.id === vid);
             if (!v) continue;
             if (v.thumbnail) return v.thumbnail;
-            if (v.type === "youtube" && v.videoId) return `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
+            if (v.type === "youtube" && v.videoId) return `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
           }
           return "";
         })();
@@ -3999,13 +3999,13 @@ async function updateAdminUI() {
         const coursePrice = paidCourse ? paidCourse.price : '';
         let duration = v.duration ? formatDuration(v.duration) : "";
         let thumb = v.thumbnail;
-        if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
-        let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : "";
+        if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
+        let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="if(this.src.includes('hqdefault')){this.src=this.src.replace('hqdefault','mqdefault');}else{this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';}">` : "";
         return `<div class="video-card" onclick="openPaidCourseModal('${courseId}')" style="cursor:pointer"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas fa-film"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}<div style="position:absolute;top:7px;right:7px;z-index:5;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.18rem .55rem;border-radius:8px;font-size:.72rem;font-weight:700;display:flex;align-items:center;gap:.3rem;box-shadow:0 2px 8px rgba(245,158,11,.5)"><i class="fas fa-lock" style="font-size:.65rem"></i> مدفوع</div><div class="play-overlay"><div class="play-btn" style="background:rgba(245,158,11,.85);border-color:rgba(255,255,255,.9)"><i class="fas fa-lock"></i></div></div></div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)}</h4><div style="display:flex;align-items:center;gap:.35rem;margin-top:.3rem;font-size:.78rem;color:#f59e0b;font-weight:600"><i class="fas fa-graduation-cap"></i> ${courseTitle}${coursePrice ? ' · ' + coursePrice + ' جنيه' : ''}</div></div></div>`;
       }
       let duration = v.duration ? formatDuration(v.duration) : "";
       let thumb = v.thumbnail;
-      if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
+      if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
       let hasExam = exams.some(e => e.videoId === v.id);
       let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button>` : "";
       let privateBadge = v.private ? '<div class="private-badge"><i class="fas fa-lock"></i> خاص</div>' : "";
@@ -4015,7 +4015,7 @@ async function updateAdminUI() {
       } else {
         if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; }
       }
-      let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';">` : "";
+      let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="if(this.src.includes('hqdefault')){this.src=this.src.replace('hqdefault','mqdefault');}else{this.style.display='none'; this.parentNode.querySelector('.fallback-icon').style.display='flex';}">` : "";
       return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
     })();
   }
@@ -4997,7 +4997,7 @@ async function updateAdminUI() {
 
   // YouTube Functions
   function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
-  async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; } const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
+  async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; } const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
 
   function localLogout() { if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) { if (currentUser && currentUserPhone) { endUserSession(currentUser, currentUserPhone); } localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; updateAdminUI(); location.reload(); } }
 
@@ -5436,7 +5436,7 @@ window.openPaidCourseModal = async function(courseId) {
 
     let videosHtml = courseVideos.map(v => {
       let thumb = v.thumbnail;
-      if (!thumb && v.type === 'youtube') thumb = `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`;
+      if (!thumb && v.type === 'youtube') thumb = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
       const duration = v.duration ? formatDuration(v.duration) : '';
       if (isEnrolled) {
         // مشترك → قابل للضغط والتشغيل مباشرة
@@ -11404,22 +11404,27 @@ async function slFetchAPI() {
     expert: 'expert level — deep astrophysics, cutting-edge research, quantitative details'
   }[diff] || 'intermediate level';
 
+  const langInstruction = lang === 'ar'
+    ? 'اكتب كل الأسئلة والإجابات والشروح باللغة العربية فقط. ممنوع أي كلمة إنجليزية.'
+    : 'Write everything in ' + langLabel + ' only.';
+
   const systemPrompt = `You are an ASTRONOMY-ONLY quiz generator. Your ONLY job is to create questions about astronomy, astrophysics, and space science.
 
 ABSOLUTE RULES — never break these:
 1. EVERY single question must be 100% about astronomy or space science. Zero exceptions.
-2. FORBIDDEN topics (never include): chemistry formulas, biology, geography, history, literature, general physics that isn't directly about space objects, sports, music, art, politics, food, medicine.
+2. FORBIDDEN topics (never include): chemistry formulas, biology, geography, history, literature, general physics not directly about space objects, sports, music, art, politics, food, medicine.
 3. If a topic is not directly about stars, planets, galaxies, space missions, cosmology, telescopes, or space phenomena — DO NOT include it.
 4. Questions must be factually accurate and scientifically correct.
 5. Return ONLY a raw JSON array. No markdown. No explanation. No text before or after the array.
+6. CRITICAL LANGUAGE RULE: You MUST write ALL content (questions, answers, explanations) ONLY in the requested language. If Arabic is requested, use Arabic script only — no English words at all.
 
 Output format (exactly):
 [{"q":"question text","correct":"correct answer","incorrects":["wrong1","wrong2","wrong3"],"exp":"brief explanation"}]`;
 
-  const userPrompt = `Generate 15 astronomy quiz questions in ${langLabel}.
+  const userPrompt = `Generate 15 astronomy quiz questions.
 Subtopic this batch: ${topics}
 Difficulty: ${diffDesc}
-Language: ALL text (questions, answers, explanations) must be in ${langLabel} only.
+LANGUAGE: ${langLabel} — ${langInstruction}
 Remember: ONLY astronomy/space topics. Start output with [ immediately.`;
 
   try {
@@ -12387,7 +12392,7 @@ function slStopAllAnimations() {
             ...histMsgs,
             { role: 'user', content: userMsg }
           ],
-          max_tokens: 600,
+          max_tokens: 1500,
           temperature: 0.4
         };
 
