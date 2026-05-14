@@ -7195,6 +7195,12 @@ function switchProgressTab(tab) {
       window._openCategoryKey = 'news';
       _startNewsCountdown();
       window._currentNewsTab = 'all';
+      // ── مهمة "اقرأ خبر فضائي": تكتمل بعد 10 ثواني من القراءة ──
+      clearTimeout(window._newsQuestTimer);
+      window._newsQuestTimer = setTimeout(function(){
+        if (window._openCategoryKey === 'news')
+          document.dispatchEvent(new Event('dqNewsSeen'));
+      }, 10000);
       try {
         const articles = await fetchLiveNews();
         document.getElementById('cosmosNewsContainer').innerHTML = renderNewsCards(articles);
@@ -7395,6 +7401,7 @@ function switchProgressTab(tab) {
 
   window.closeCosmosModal = function(){
     window._openCategoryKey = null;
+    clearTimeout(window._newsQuestTimer); // إلغاء تايمر مهمة الأخبار لو المستخدم خرج قبل 10 ثواني
     document.getElementById('cosmosModal').classList.remove('active');
     document.body.style.overflow = '';
   };
