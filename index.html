@@ -2534,6 +2534,38 @@ body {
   border-color: rgba(124,58,237,0.35) !important;
 }
 .timer-value { color: #a78bfa !important; }
+
+/* ===== خلفيات مخصصة ===== */
+#bgSettingsModal .modal-content { max-width: 520px; }
+.bg-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.bg-tab { flex: 1; min-width: 100px; padding: .5rem .75rem; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #ccc; font-family: 'Cairo', sans-serif; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; text-align: center; }
+.bg-tab.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); border-color: #6366f1; color: #fff; box-shadow: 0 4px 16px rgba(99,102,241,.4); }
+.bg-section-panel { display: none; }
+.bg-section-panel.active { display: block; }
+.bg-preview-area { position: relative; width: 100%; height: 140px; border-radius: 14px; overflow: hidden; border: 2px dashed rgba(99,102,241,.35); margin-bottom: 1rem; background: rgba(255,255,255,.04); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: .5rem; }
+.bg-preview-area.has-image { border-style: solid; border-color: rgba(99,102,241,.6); }
+.bg-preview-area img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+.bg-preview-area .bg-no-img-text { color: #888; font-size: .85rem; z-index: 1; text-align: center; }
+.bg-preview-actions { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 2; opacity: 0; transition: opacity .2s; }
+.bg-preview-area:hover .bg-preview-actions { opacity: 1; }
+.bg-preview-actions button { padding: .3rem .65rem; border: none; border-radius: 8px; font-size: .78rem; font-family: 'Cairo', sans-serif; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: .3rem; }
+.bg-upload-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.bg-upload-row input[type="file"] { display: none; }
+.bg-upload-label { flex: 1; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .6rem 1rem; background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(139,92,246,.15)); border: 1px solid rgba(99,102,241,.4); border-radius: 12px; color: #a78bfa; font-family: 'Cairo', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+.bg-upload-label:hover { background: linear-gradient(135deg, rgba(99,102,241,.35), rgba(139,92,246,.28)); }
+.bg-delete-btn { padding: .6rem .9rem; background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); border-radius: 12px; color: #ef4444; font-family: 'Cairo', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: .4rem; transition: all .2s; }
+.bg-delete-btn:hover { background: rgba(239,68,68,.28); }
+.bg-delete-btn:disabled { opacity: .4; cursor: not-allowed; }
+.bg-upload-progress { display: none; width: 100%; height: 6px; background: rgba(255,255,255,.1); border-radius: 99px; overflow: hidden; margin-top: .5rem; }
+.bg-upload-progress-bar { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 99px; width: 0%; transition: width .3s; }
+.bg-server-section { margin-top: 1.25rem; padding: 1rem; background: rgba(255,255,255,.04); border-radius: 12px; border: 1px solid rgba(255,255,255,.08); }
+.bg-server-section label { display: block; margin-bottom: .4rem; color: #a78bfa; font-size: .82rem; font-weight: 600; }
+.bg-server-section input { width: 100%; padding: .65rem .85rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #fff; font-family: 'Cairo', sans-serif; font-size: .82rem; margin-bottom: .6rem; }
+.bg-server-section input::placeholder { color: #666; }
+.bg-imgbb-admin-section { margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(139,92,246,.05)); border-radius: 12px; border: 1px solid rgba(99,102,241,.25); }
+.bg-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; }
+.bg-status-dot.ok { background: #10b981; box-shadow: 0 0 6px #10b981; }
+.bg-status-dot.missing { background: #ef4444; }
 </style>
 </head>
 <body>
@@ -3659,6 +3691,8 @@ async function updateAdminUI() {
             addItem("manageCoursesMenuItem","fas fa-graduation-cap","إدارة الكورسات", () => { menu.classList.remove("active"); showCoursesList(); });
             addItem("manageCertificatesMenuItem","fas fa-certificate","إدارة شهادات الكورسات", () => { menu.classList.remove("active"); openCertificatesManager(); });
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
+            addItem("imgbbKeyMenuItem","fas fa-key","مفتاح سيرفر الصور (imgbb)", () => { menu.classList.remove("active"); openImgbbKeyModal(); });
+            addItem("bgSettingsAdminMenuItem","fas fa-image","الخلفيات المخصصة", () => { menu.classList.remove("active"); openBackgroundSettings(); });
 
             if (uploadZone) uploadZone.classList.add("active");
             if (storageBar) storageBar.style.display = "block";
@@ -3676,6 +3710,7 @@ async function updateAdminUI() {
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
             addItem("adminLoginMenuItem","fas fa-lock","دخول المشرف", () => { menu.classList.remove("active"); showLogin(); });
+            addItem("bgSettingsUserMenuItem","fas fa-image","خلفياتي المخصصة 🖼️", () => { menu.classList.remove("active"); openBackgroundSettings(); });
 
             if (uploadZone) uploadZone.classList.remove("active");
             if (storageBar) storageBar.style.display = "none";
@@ -13574,6 +13609,454 @@ function slStopAllAnimations() {
     console.log('✅ TTS Guardian جاهز — مش هيوقف غير لما يخلص');
 
   }, 250);
+})();
+</script>
+
+<!-- ===== مودال الخلفيات المخصصة ===== -->
+<div class="modal" id="bgSettingsModal" style="z-index:10002">
+  <div class="modal-content" style="max-width:520px">
+    <div class="modal-header">
+      <h3><i class="fas fa-image" style="color:#6366f1"></i> الخلفيات المخصصة</h3>
+      <button class="modal-close" onclick="closeBackgroundSettings()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#aaa;font-size:.85rem;margin-bottom:1rem;"><i class="fas fa-info-circle" style="color:#6366f1"></i> الخلفيات التي تختارها تظهر لك أنت فقط ولا يراها أحد غيرك.</p>
+
+      <div class="bg-tabs">
+        <button class="bg-tab active" onclick="switchBgTab('main', this)"><i class="fas fa-home"></i> الصفحة الرئيسية</button>
+        <button class="bg-tab" onclick="switchBgTab('ai_chat', this)"><i class="fas fa-robot"></i> دردشة الذكاء</button>
+        <button class="bg-tab" onclick="switchBgTab('private_chat', this)"><i class="fas fa-comments"></i> المحادثات</button>
+      </div>
+
+      <!-- الصفحة الرئيسية -->
+      <div class="bg-section-panel active" id="bgPanel_main">
+        <div class="bg-preview-area" id="bgPreview_main">
+          <div class="bg-no-img-text"><i class="fas fa-image" style="font-size:2rem;margin-bottom:.5rem;display:block;color:#555"></i>لا توجد خلفية مخصصة</div>
+          <div class="bg-preview-actions">
+            <button onclick="triggerBgUpload('main')" style="background:#6366f1;color:#fff"><i class="fas fa-edit"></i> تغيير</button>
+            <button onclick="deleteBackground('main')" style="background:#ef4444;color:#fff"><i class="fas fa-trash"></i> حذف</button>
+          </div>
+        </div>
+        <div class="bg-upload-row">
+          <label class="bg-upload-label" for="bgFileInput_main"><i class="fas fa-upload"></i> اختر صورة للخلفية</label>
+          <input type="file" id="bgFileInput_main" accept="image/*" onchange="uploadBackground('main', this)">
+          <button class="bg-delete-btn" id="bgDeleteBtn_main" onclick="deleteBackground('main')" disabled><i class="fas fa-trash-alt"></i> حذف</button>
+        </div>
+        <div class="bg-upload-progress" id="bgProgress_main"><div class="bg-upload-progress-bar" id="bgProgressBar_main"></div></div>
+        <p id="bgStatusMsg_main" style="font-size:.8rem;margin-top:.4rem;min-height:1.2em;color:#10b981"></p>
+      </div>
+
+      <!-- دردشة الذكاء الاصطناعي -->
+      <div class="bg-section-panel" id="bgPanel_ai_chat">
+        <div class="bg-preview-area" id="bgPreview_ai_chat">
+          <div class="bg-no-img-text"><i class="fas fa-robot" style="font-size:2rem;margin-bottom:.5rem;display:block;color:#555"></i>لا توجد خلفية مخصصة</div>
+          <div class="bg-preview-actions">
+            <button onclick="triggerBgUpload('ai_chat')" style="background:#06b6d4;color:#fff"><i class="fas fa-edit"></i> تغيير</button>
+            <button onclick="deleteBackground('ai_chat')" style="background:#ef4444;color:#fff"><i class="fas fa-trash"></i> حذف</button>
+          </div>
+        </div>
+        <div class="bg-upload-row">
+          <label class="bg-upload-label" for="bgFileInput_ai_chat" style="border-color:rgba(6,182,212,.4);color:#06b6d4"><i class="fas fa-upload"></i> اختر صورة للخلفية</label>
+          <input type="file" id="bgFileInput_ai_chat" accept="image/*" onchange="uploadBackground('ai_chat', this)">
+          <button class="bg-delete-btn" id="bgDeleteBtn_ai_chat" onclick="deleteBackground('ai_chat')" disabled><i class="fas fa-trash-alt"></i> حذف</button>
+        </div>
+        <div class="bg-upload-progress" id="bgProgress_ai_chat"><div class="bg-upload-progress-bar" id="bgProgressBar_ai_chat"></div></div>
+        <p id="bgStatusMsg_ai_chat" style="font-size:.8rem;margin-top:.4rem;min-height:1.2em;color:#10b981"></p>
+      </div>
+
+      <!-- المحادثات الخاصة -->
+      <div class="bg-section-panel" id="bgPanel_private_chat">
+        <div class="bg-preview-area" id="bgPreview_private_chat">
+          <div class="bg-no-img-text"><i class="fas fa-comments" style="font-size:2rem;margin-bottom:.5rem;display:block;color:#555"></i>لا توجد خلفية مخصصة</div>
+          <div class="bg-preview-actions">
+            <button onclick="triggerBgUpload('private_chat')" style="background:#8b5cf6;color:#fff"><i class="fas fa-edit"></i> تغيير</button>
+            <button onclick="deleteBackground('private_chat')" style="background:#ef4444;color:#fff"><i class="fas fa-trash"></i> حذف</button>
+          </div>
+        </div>
+        <div class="bg-upload-row">
+          <label class="bg-upload-label" for="bgFileInput_private_chat" style="border-color:rgba(139,92,246,.4);color:#8b5cf6"><i class="fas fa-upload"></i> اختر صورة للخلفية</label>
+          <input type="file" id="bgFileInput_private_chat" accept="image/*" onchange="uploadBackground('private_chat', this)">
+          <button class="bg-delete-btn" id="bgDeleteBtn_private_chat" onclick="deleteBackground('private_chat')" disabled><i class="fas fa-trash-alt"></i> حذف</button>
+        </div>
+        <div class="bg-upload-progress" id="bgProgress_private_chat"><div class="bg-upload-progress-bar" id="bgProgressBar_private_chat"></div></div>
+        <p id="bgStatusMsg_private_chat" style="font-size:.8rem;margin-top:.4rem;min-height:1.2em;color:#10b981"></p>
+      </div>
+
+      <!-- إعدادات السيرفر (للجميع) -->
+      <div class="bg-server-section">
+        <label><i class="fas fa-server"></i> رابط سيرفر الصور</label>
+        <input type="url" id="bgServerUrlInput" placeholder="https://your-server.replit.app" value="">
+        <button onclick="saveBgServerUrl()" style="padding:.5rem 1rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;width:100%"><i class="fas fa-save"></i> حفظ رابط السيرفر</button>
+        <p id="bgServerUrlStatus" style="font-size:.78rem;margin-top:.4rem;color:#10b981;min-height:1em"></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== مودال مفتاح imgbb (للمشرف فقط) ===== -->
+<div class="modal" id="imgbbKeyModal" style="z-index:10003">
+  <div class="modal-content" style="max-width:460px">
+    <div class="modal-header">
+      <h3><i class="fas fa-key" style="color:#f59e0b"></i> إعداد مفتاح imgbb</h3>
+      <button class="modal-close" onclick="closeImgbbKeyModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#aaa;font-size:.85rem;margin-bottom:1rem">مفتاح imgbb يُستخدم لرفع صور الخلفيات على السيرفر. يُحفظ بأمان في السيرفر الرئيسي ولا يظهر للمستخدمين.</p>
+
+      <div style="margin-bottom:1rem">
+        <label style="display:block;margin-bottom:.4rem;color:#a78bfa;font-size:.85rem;font-weight:600"><i class="fas fa-server"></i> رابط السيرفر</label>
+        <input type="url" id="imgbbServerUrlField" class="form-control" placeholder="https://your-server.replit.app" style="width:100%;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:.85rem;margin-bottom:.4rem">
+        <p style="font-size:.75rem;color:#888;margin:0"><i class="fas fa-info-circle"></i> أدخل رابط الـ Replit server الخاص بك أولاً</p>
+      </div>
+
+      <div style="margin-bottom:1rem">
+        <label style="display:block;margin-bottom:.4rem;color:#a78bfa;font-size:.85rem;font-weight:600"><i class="fas fa-key"></i> مفتاح imgbb API</label>
+        <input type="text" id="imgbbKeyField" placeholder="e.g. e5b31ad299e1a34044c231cf4753e995" style="width:100%;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:.85rem;margin-bottom:.4rem">
+      </div>
+
+      <div style="margin-bottom:1.25rem">
+        <label style="display:block;margin-bottom:.4rem;color:#a78bfa;font-size:.85rem;font-weight:600"><i class="fas fa-lock"></i> كلمة سر المشرف (للسيرفر)</label>
+        <input type="password" id="imgbbAdminSecretField" placeholder="أدخل كلمة سر المشرف للسيرفر" style="width:100%;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:.85rem;margin-bottom:.3rem">
+        <p style="font-size:.75rem;color:#888;margin:0"><i class="fas fa-info-circle"></i> إذا كانت أول مرة، ستُحفظ هذه الكلمة كبيانات دخول المشرف للسيرفر</p>
+      </div>
+
+      <div id="imgbbKeyStatus" style="margin-bottom:.75rem;padding:.6rem .85rem;border-radius:10px;font-size:.83rem;display:none"></div>
+
+      <div id="imgbbServerStatus" style="margin-bottom:.75rem;font-size:.82rem;color:#888"><i class="fas fa-spinner fa-spin"></i> جاري التحقق من حالة السيرفر...</div>
+
+      <button onclick="saveImgbbKey()" style="width:100%;padding:.75rem;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem"><i class="fas fa-save"></i> حفظ المفتاح في السيرفر</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== خاصية الخلفيات المخصصة =====
+
+const BG_SECTIONS = { main: 'الصفحة الرئيسية', ai_chat: 'دردشة الذكاء الاصطناعي', private_chat: 'المحادثات الخاصة' };
+let _userBgData = {};
+
+function getBgServerUrl() {
+  return (localStorage.getItem('bg_server_url') || '').replace(/\/+$/, '');
+}
+
+function saveBgServerUrl() {
+  const input = document.getElementById('bgServerUrlInput');
+  if (!input) return;
+  const url = input.value.trim().replace(/\/+$/, '');
+  if (url && !url.startsWith('http')) {
+    document.getElementById('bgServerUrlStatus').textContent = '❌ الرابط يجب أن يبدأ بـ https://';
+    return;
+  }
+  localStorage.setItem('bg_server_url', url);
+  document.getElementById('bgServerUrlStatus').textContent = '✅ تم حفظ رابط السيرفر';
+  setTimeout(() => { const el = document.getElementById('bgServerUrlStatus'); if (el) el.textContent = ''; }, 3000);
+}
+
+function openBackgroundSettings() {
+  const modal = document.getElementById('bgSettingsModal');
+  if (!modal) return;
+  const urlInput = document.getElementById('bgServerUrlInput');
+  if (urlInput) urlInput.value = getBgServerUrl();
+  modal.classList.add('active');
+  loadUserBackgroundsForModal();
+}
+
+function closeBackgroundSettings() {
+  const modal = document.getElementById('bgSettingsModal');
+  if (modal) modal.classList.remove('active');
+}
+
+function switchBgTab(section, btn) {
+  document.querySelectorAll('.bg-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.bg-section-panel').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const panel = document.getElementById('bgPanel_' + section);
+  if (panel) panel.classList.add('active');
+}
+
+function triggerBgUpload(section) {
+  const input = document.getElementById('bgFileInput_' + section);
+  if (input) input.click();
+}
+
+async function loadUserBackgroundsForModal() {
+  if (!currentUserId) return;
+  try {
+    const doc = await db.collection('user_backgrounds').doc(currentUserId).get();
+    _userBgData = doc.exists ? (doc.data() || {}) : {};
+  } catch(e) { _userBgData = {}; }
+  ['main', 'ai_chat', 'private_chat'].forEach(sec => refreshBgPreview(sec));
+}
+
+function refreshBgPreview(section) {
+  const data = _userBgData[section];
+  const previewArea = document.getElementById('bgPreview_' + section);
+  const deleteBtn = document.getElementById('bgDeleteBtn_' + section);
+  if (!previewArea) return;
+  const existingImg = previewArea.querySelector('img');
+  if (existingImg) existingImg.remove();
+  const noImgText = previewArea.querySelector('.bg-no-img-text');
+  if (data && data.url) {
+    const img = document.createElement('img');
+    img.src = data.url;
+    img.alt = 'خلفية مخصصة';
+    img.onerror = () => { img.remove(); if (noImgText) noImgText.style.display = ''; previewArea.classList.remove('has-image'); };
+    if (noImgText) noImgText.style.display = 'none';
+    previewArea.classList.add('has-image');
+    previewArea.insertBefore(img, previewArea.firstChild);
+    if (deleteBtn) deleteBtn.disabled = false;
+  } else {
+    if (noImgText) noImgText.style.display = '';
+    previewArea.classList.remove('has-image');
+    if (deleteBtn) deleteBtn.disabled = true;
+  }
+}
+
+function setStatusMsg(section, msg, isError) {
+  const el = document.getElementById('bgStatusMsg_' + section);
+  if (el) { el.textContent = msg; el.style.color = isError ? '#ef4444' : '#10b981'; }
+}
+
+async function uploadBackground(section, inputEl) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) { setStatusMsg(section, '❌ حجم الصورة أكبر من 8 ميجا', true); return; }
+
+  const serverUrl = getBgServerUrl();
+  if (!serverUrl) { setStatusMsg(section, '❌ يرجى تعيين رابط السيرفر أولاً من إعدادات الخلفيات', true); return; }
+  if (!currentUserId) { setStatusMsg(section, '❌ يجب تسجيل الدخول أولاً', true); return; }
+
+  const progressEl = document.getElementById('bgProgress_' + section);
+  const progressBar = document.getElementById('bgProgressBar_' + section);
+  if (progressEl) progressEl.style.display = 'block';
+  if (progressBar) progressBar.style.width = '20%';
+  setStatusMsg(section, 'جاري رفع الصورة...', false);
+
+  try {
+    const reader = new FileReader();
+    const base64 = await new Promise((resolve, reject) => {
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    if (progressBar) progressBar.style.width = '50%';
+
+    const resp = await fetch(serverUrl + '/api/backgrounds/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64, name: 'bg_' + currentUserId + '_' + section })
+    });
+
+    if (progressBar) progressBar.style.width = '80%';
+
+    const result = await resp.json();
+    if (!resp.ok || !result.success) {
+      setStatusMsg(section, '❌ ' + (result.error || 'فشل رفع الصورة'), true);
+      if (progressEl) progressEl.style.display = 'none';
+      return;
+    }
+
+    if (progressBar) progressBar.style.width = '100%';
+
+    const old = _userBgData[section];
+    if (old && old.delete_url) {
+      fetch(serverUrl + '/api/backgrounds/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deleteUrl: old.delete_url })
+      }).catch(() => {});
+    }
+
+    _userBgData[section] = { url: result.url, delete_url: result.delete_url };
+    await db.collection('user_backgrounds').doc(currentUserId).set(_userBgData, { merge: true });
+
+    refreshBgPreview(section);
+    applyBackgroundToSection(section, result.url);
+    setStatusMsg(section, '✅ تم حفظ الخلفية بنجاح!', false);
+    setTimeout(() => { if (progressEl) progressEl.style.display = 'none'; setStatusMsg(section, '', false); }, 3000);
+
+  } catch(err) {
+    console.error('bg upload error:', err);
+    setStatusMsg(section, '❌ حدث خطأ أثناء الرفع', true);
+    if (progressEl) progressEl.style.display = 'none';
+  }
+  inputEl.value = '';
+}
+
+async function deleteBackground(section) {
+  if (!currentUserId) return;
+  const data = _userBgData[section];
+  if (!data || !data.url) { setStatusMsg(section, '❌ لا توجد خلفية لحذفها', true); return; }
+
+  setStatusMsg(section, 'جاري الحذف...', false);
+
+  const serverUrl = getBgServerUrl();
+  if (serverUrl && data.delete_url) {
+    fetch(serverUrl + '/api/backgrounds/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deleteUrl: data.delete_url })
+    }).catch(() => {});
+  }
+
+  delete _userBgData[section];
+  try {
+    await db.collection('user_backgrounds').doc(currentUserId).set(_userBgData, { merge: false });
+    if (Object.keys(_userBgData).length === 0) {
+      await db.collection('user_backgrounds').doc(currentUserId).delete().catch(() => {});
+    }
+  } catch(e) {}
+
+  refreshBgPreview(section);
+  removeBackgroundFromSection(section);
+  setStatusMsg(section, '✅ تم حذف الخلفية', false);
+  setTimeout(() => setStatusMsg(section, '', false), 2500);
+}
+
+function applyBackgroundToSection(section, url) {
+  if (!url) return;
+  const style = `url('${url}') center/cover no-repeat fixed`;
+  if (section === 'main') {
+    const bgAnim = document.querySelector('.bg-animation');
+    if (bgAnim) bgAnim.style.backgroundImage = `url('${url}')`;
+    document.body.style.backgroundImage = `url('${url}')`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.backgroundPosition = 'center';
+  } else if (section === 'ai_chat') {
+    const aiChat = document.getElementById('aiChatModal');
+    if (aiChat) { aiChat.style.backgroundImage = `url('${url}')`; aiChat.style.backgroundSize = 'cover'; aiChat.style.backgroundAttachment = 'fixed'; }
+    const aiContainer = aiChat ? aiChat.querySelector('.chat-container') : null;
+    if (aiContainer) { aiContainer.style.backgroundImage = `url('${url}')`; aiContainer.style.backgroundSize = 'cover'; aiContainer.style.backgroundAttachment = 'fixed'; aiContainer.style.backgroundPosition = 'center'; }
+  } else if (section === 'private_chat') {
+    const chat = document.getElementById('chatModal');
+    if (chat) { chat.style.backgroundImage = `url('${url}')`; chat.style.backgroundSize = 'cover'; chat.style.backgroundAttachment = 'fixed'; }
+    const chatContainer = chat ? chat.querySelector('.chat-container') : null;
+    if (chatContainer) { chatContainer.style.backgroundImage = `url('${url}')`; chatContainer.style.backgroundSize = 'cover'; chatContainer.style.backgroundAttachment = 'fixed'; chatContainer.style.backgroundPosition = 'center'; }
+  }
+}
+
+function removeBackgroundFromSection(section) {
+  if (section === 'main') {
+    const bgAnim = document.querySelector('.bg-animation');
+    if (bgAnim) bgAnim.style.backgroundImage = '';
+    document.body.style.backgroundImage = '';
+  } else if (section === 'ai_chat') {
+    const aiChat = document.getElementById('aiChatModal');
+    if (aiChat) aiChat.style.backgroundImage = '';
+    const aiContainer = aiChat ? aiChat.querySelector('.chat-container') : null;
+    if (aiContainer) aiContainer.style.backgroundImage = '';
+  } else if (section === 'private_chat') {
+    const chat = document.getElementById('chatModal');
+    if (chat) chat.style.backgroundImage = '';
+    const chatContainer = chat ? chat.querySelector('.chat-container') : null;
+    if (chatContainer) chatContainer.style.backgroundImage = '';
+  }
+}
+
+async function applyAllBackgrounds() {
+  if (!currentUserId) return;
+  try {
+    const doc = await db.collection('user_backgrounds').doc(currentUserId).get();
+    if (!doc.exists) return;
+    const data = doc.data() || {};
+    _userBgData = data;
+    ['main', 'ai_chat', 'private_chat'].forEach(sec => {
+      if (data[sec] && data[sec].url) applyBackgroundToSection(sec, data[sec].url);
+    });
+  } catch(e) { console.warn('apply backgrounds error:', e); }
+}
+
+// ===== مودال مفتاح imgbb =====
+function openImgbbKeyModal() {
+  const modal = document.getElementById('imgbbKeyModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  const urlField = document.getElementById('imgbbServerUrlField');
+  if (urlField) urlField.value = getBgServerUrl();
+  checkImgbbServerStatus();
+}
+
+function closeImgbbKeyModal() {
+  const modal = document.getElementById('imgbbKeyModal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function checkImgbbServerStatus() {
+  const statusEl = document.getElementById('imgbbServerStatus');
+  const serverUrl = getBgServerUrl() || (document.getElementById('imgbbServerUrlField') || {}).value || '';
+  if (!serverUrl) {
+    if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444"><i class="fas fa-times-circle"></i> لم يتم تعيين رابط السيرفر بعد</span>';
+    return;
+  }
+  if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+  try {
+    const resp = await fetch(serverUrl + '/api/backgrounds/imgbb-key-status');
+    const data = await resp.json();
+    if (statusEl) {
+      if (data.hasKey) {
+        statusEl.innerHTML = '<span style="color:#10b981"><i class="fas fa-check-circle"></i> السيرفر متصل ✅ — المفتاح محفوظ بالفعل</span>';
+      } else {
+        statusEl.innerHTML = '<span style="color:#f59e0b"><i class="fas fa-exclamation-circle"></i> السيرفر متصل — لكن المفتاح غير محفوظ بعد</span>';
+      }
+    }
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444"><i class="fas fa-times-circle"></i> تعذر الاتصال بالسيرفر — تأكد من الرابط</span>';
+  }
+}
+
+async function saveImgbbKey() {
+  const serverUrl = (document.getElementById('imgbbServerUrlField') || {}).value?.trim().replace(/\/+$/, '') || getBgServerUrl();
+  const key = (document.getElementById('imgbbKeyField') || {}).value?.trim() || '';
+  const secret = (document.getElementById('imgbbAdminSecretField') || {}).value?.trim() || '';
+  const statusEl = document.getElementById('imgbbKeyStatus');
+
+  if (!serverUrl) { showImgbbStatus('❌ يرجى إدخال رابط السيرفر أولاً', true); return; }
+  if (!key) { showImgbbStatus('❌ يرجى إدخال مفتاح imgbb', true); return; }
+
+  if (serverUrl) { localStorage.setItem('bg_server_url', serverUrl); }
+
+  showImgbbStatus('جاري الحفظ...', false);
+  try {
+    const resp = await fetch(serverUrl + '/api/admin/imgbb-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imgbbKey: key, adminSecret: secret })
+    });
+    const data = await resp.json();
+    if (resp.ok && data.success) {
+      showImgbbStatus('✅ ' + data.message, false);
+      checkImgbbServerStatus();
+      const urlInput = document.getElementById('bgServerUrlInput');
+      if (urlInput) urlInput.value = serverUrl;
+    } else {
+      showImgbbStatus('❌ ' + (data.error || 'فشل الحفظ'), true);
+    }
+  } catch(e) {
+    showImgbbStatus('❌ تعذر الاتصال بالسيرفر', true);
+  }
+}
+
+function showImgbbStatus(msg, isError) {
+  const el = document.getElementById('imgbbKeyStatus');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.background = isError ? 'rgba(239,68,68,.12)' : 'rgba(16,185,129,.12)';
+  el.style.border = '1px solid ' + (isError ? 'rgba(239,68,68,.3)' : 'rgba(16,185,129,.3)');
+  el.style.color = isError ? '#ef4444' : '#10b981';
+  el.textContent = msg;
+}
+
+// تطبيق الخلفيات عند تحميل الصفحة (تأخير حتى يتم تسجيل الدخول)
+(function waitForUserAndApplyBg() {
+  let attempts = 0;
+  const iv = setInterval(function() {
+    attempts++;
+    if (attempts > 60) { clearInterval(iv); return; }
+    if (currentUserId) { clearInterval(iv); applyAllBackgrounds(); }
+  }, 1000);
 })();
 </script>
 
