@@ -13702,19 +13702,13 @@ function slStopAllAnimations() {
       <button class="modal-close" onclick="closeImgbbKeyModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body">
-      <p style="color:#aaa;font-size:.85rem;margin-bottom:1rem">مفتاح imgbb يُستخدم لرفع صور الخلفيات مباشرةً. يُحفظ على جهازك فقط ولا يُرسَل لأي سيرفر خارجي.</p>
-
-      <div style="margin-bottom:1rem">
-        <label style="display:block;margin-bottom:.4rem;color:#a78bfa;font-size:.85rem;font-weight:600"><i class="fas fa-key"></i> مفتاح imgbb API</label>
-        <input type="text" id="imgbbKeyField" placeholder="e.g. e5b31ad299e1a34044c231cf4753e995" style="width:100%;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:.85rem;margin-bottom:.4rem">
-        <p style="font-size:.75rem;color:#888;margin:0"><i class="fas fa-info-circle"></i> احصل على مفتاحك من <a href="https://api.imgbb.com" target="_blank" style="color:#a78bfa">api.imgbb.com</a></p>
-      </div>
+      <p style="color:#aaa;font-size:.85rem;margin-bottom:1rem">رفع الخلفيات يعمل تلقائياً عبر سيرفر الموقع. اضغط "اختبار الاتصال" للتأكد.</p>
 
       <div id="imgbbKeyStatus" style="margin-bottom:.75rem;padding:.6rem .85rem;border-radius:10px;font-size:.83rem;display:none"></div>
 
       <div id="imgbbServerStatus" style="margin-bottom:.75rem;font-size:.82rem;color:#888"></div>
 
-      <button onclick="saveImgbbKey()" style="width:100%;padding:.75rem;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem"><i class="fas fa-save"></i> حفظ المفتاح</button>
+      <button onclick="saveImgbbKey()" style="width:100%;padding:.75rem;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem"><i class="fas fa-wifi"></i> اختبار الاتصال</button>
     </div>
   </div>
 </div>
@@ -13860,14 +13854,14 @@ async function uploadBackground(section, inputEl) {
 
     if (progressBar) progressBar.style.width = '50%';
 
-    const formData = new FormData();
-    formData.append('key', imgbbKey);
-    formData.append('image', base64);
-    formData.append('name', 'bg_' + currentUserId + '_' + section);
-
-    const resp = await fetch('https://api.imgbb.com/1/upload', {
+    // إرسال عبر الـ proxy (Vercel function) بدل imgbb مباشرة لتجنب CORS
+    const resp = await fetch('/api/imgbb-upload', {
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: base64,
+        name: 'bg_' + currentUserId + '_' + section
+      })
     });
 
     if (progressBar) progressBar.style.width = '80%';
@@ -14014,32 +14008,26 @@ function checkImgbbServerStatus() {
 }
 
 async function saveImgbbKey() {
-  const key = (document.getElementById('imgbbKeyField') || {}).value?.trim() || '';
-  if (!key) { showImgbbStatus('❌ يرجى إدخال مفتاح imgbb', true); return; }
-
-  showImgbbStatus('جاري التحقق من المفتاح...', false);
-
-  // التحقق من صحة المفتاح عن طريق رفع صورة تجريبية صغيرة جداً (pixel شفاف)
+  // المفتاح محفوظ في Vercel Environment Variables — مش محتاج تدخله هنا
+  // بس نتحقق إن الـ proxy شغال
+  showImgbbStatus('جاري التحقق من الاتصال...', false);
   try {
     const testBase64 = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    const formData = new FormData();
-    formData.append('key', key);
-    formData.append('image', testBase64);
-    formData.append('name', 'test_key_check');
-    formData.append('expiration', '60'); // يحذف تلقائياً بعد دقيقة
-
-    const resp = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+    const resp = await fetch('/api/imgbb-upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: testBase64, name: 'test_check', expiration: '60' })
+    });
     const data = await resp.json();
-
     if (resp.ok && data.success) {
-      localStorage.setItem('imgbb_api_key', key);
-      showImgbbStatus('✅ تم حفظ المفتاح بنجاح — المفتاح صحيح وجاهز للاستخدام', false);
+      showImgbbStatus('✅ الاتصال يعمل بنجاح — جاهز لرفع الخلفيات', false);
+      checkImgbbServerStatus();
     } else {
-      const errMsg = (data.error && data.error.message) || data.error || 'مفتاح غير صحيح';
+      const errMsg = (data.error && data.error.message) || data.error || 'فشل الاتصال';
       showImgbbStatus('❌ ' + errMsg, true);
     }
   } catch(e) {
-    showImgbbStatus('❌ تعذر التحقق من المفتاح — ' + e.message, true);
+    showImgbbStatus('❌ تعذر الاتصال — ' + e.message, true);
   }
 }
 
