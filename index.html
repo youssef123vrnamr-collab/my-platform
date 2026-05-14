@@ -13682,9 +13682,9 @@ function slStopAllAnimations() {
         <p id="bgStatusMsg_private_chat" style="font-size:.8rem;margin-top:.4rem;min-height:1.2em;color:#10b981"></p>
       </div>
 
-      <!-- إعدادات السيرفر (للجميع) -->
-      <div class="bg-server-section">
-        <label><i class="fas fa-server"></i> رابط سيرفر الصور</label>
+      <!-- إعدادات السيرفر - للمشرف فقط -->
+      <div class="bg-server-section" id="bgAdminServerSection" style="display:none">
+        <label><i class="fas fa-server"></i> رابط سيرفر الصور <span style="font-size:.75rem;color:#f59e0b">(مشرف فقط)</span></label>
         <input type="url" id="bgServerUrlInput" placeholder="https://your-server.replit.app" value="">
         <button onclick="saveBgServerUrl()" style="padding:.5rem 1rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;color:#fff;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;width:100%"><i class="fas fa-save"></i> حفظ رابط السيرفر</button>
         <p id="bgServerUrlStatus" style="font-size:.78rem;margin-top:.4rem;color:#10b981;min-height:1em"></p>
@@ -13735,12 +13735,23 @@ function slStopAllAnimations() {
 
 const BG_SECTIONS = { main: 'الصفحة الرئيسية', ai_chat: 'دردشة الذكاء الاصطناعي', private_chat: 'المحادثات الخاصة' };
 let _userBgData = {};
+let _bgServerUrl = '';
 
 function getBgServerUrl() {
-  return (localStorage.getItem('bg_server_url') || '').replace(/\/+$/, '');
+  return (_bgServerUrl || localStorage.getItem('bg_server_url') || '').replace(/\/+$/, '');
 }
 
-function saveBgServerUrl() {
+async function loadBgServerUrlFromFirebase() {
+  try {
+    const doc = await db.collection('platform_config').doc('backgrounds').get();
+    if (doc.exists && doc.data().serverUrl) {
+      _bgServerUrl = doc.data().serverUrl.replace(/\/+$/, '');
+      localStorage.setItem('bg_server_url', _bgServerUrl);
+    }
+  } catch(e) {}
+}
+
+async function saveBgServerUrl() {
   const input = document.getElementById('bgServerUrlInput');
   if (!input) return;
   const url = input.value.trim().replace(/\/+$/, '');
@@ -13749,15 +13760,27 @@ function saveBgServerUrl() {
     return;
   }
   localStorage.setItem('bg_server_url', url);
-  document.getElementById('bgServerUrlStatus').textContent = '✅ تم حفظ رابط السيرفر';
+  _bgServerUrl = url;
+  try {
+    await db.collection('platform_config').doc('backgrounds').set({ serverUrl: url }, { merge: true });
+    document.getElementById('bgServerUrlStatus').textContent = '✅ تم حفظ رابط السيرفر بأمان';
+  } catch(e) {
+    document.getElementById('bgServerUrlStatus').textContent = '✅ تم الحفظ محلياً';
+  }
   setTimeout(() => { const el = document.getElementById('bgServerUrlStatus'); if (el) el.textContent = ''; }, 3000);
 }
 
 function openBackgroundSettings() {
   const modal = document.getElementById('bgSettingsModal');
   if (!modal) return;
-  const urlInput = document.getElementById('bgServerUrlInput');
-  if (urlInput) urlInput.value = getBgServerUrl();
+  const adminSection = document.getElementById('bgAdminServerSection');
+  if (adminSection) {
+    adminSection.style.display = (typeof isAdmin !== 'undefined' && isAdmin) ? 'block' : 'none';
+    if (isAdmin) {
+      const urlInput = document.getElementById('bgServerUrlInput');
+      if (urlInput) urlInput.value = getBgServerUrl();
+    }
+  }
   modal.classList.add('active');
   loadUserBackgroundsForModal();
 }
@@ -14016,7 +14039,11 @@ async function saveImgbbKey() {
   if (!serverUrl) { showImgbbStatus('❌ يرجى إدخال رابط السيرفر أولاً', true); return; }
   if (!key) { showImgbbStatus('❌ يرجى إدخال مفتاح imgbb', true); return; }
 
-  if (serverUrl) { localStorage.setItem('bg_server_url', serverUrl); }
+  if (serverUrl) {
+    localStorage.setItem('bg_server_url', serverUrl);
+    _bgServerUrl = serverUrl;
+    try { await db.collection('platform_config').doc('backgrounds').set({ serverUrl }, { merge: true }); } catch(e) {}
+  }
 
   showImgbbStatus('جاري الحفظ...', false);
   try {
@@ -14055,7 +14082,10 @@ function showImgbbStatus(msg, isError) {
   const iv = setInterval(function() {
     attempts++;
     if (attempts > 60) { clearInterval(iv); return; }
-    if (currentUserId) { clearInterval(iv); applyAllBackgrounds(); }
+    if (currentUserId && typeof db !== 'undefined') {
+      clearInterval(iv);
+      loadBgServerUrlFromFirebase().then(() => applyAllBackgrounds());
+    }
   }, 1000);
 })();
 </script>
