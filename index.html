@@ -14017,16 +14017,19 @@ async function checkImgbbServerStatus() {
   if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
   try {
     const resp = await fetch(serverUrl + '/api/backgrounds/imgbb-key-status');
-    const data = await resp.json();
+    let data = {};
+    try { data = await resp.json(); } catch(jsonErr) { data = {}; }
     if (statusEl) {
-      if (data.hasKey) {
+      if (!resp.ok) {
+        statusEl.innerHTML = `<span style="color:#ef4444"><i class="fas fa-times-circle"></i> خطأ من السيرفر — HTTP ${resp.status} ${resp.statusText}${data.error ? ' — ' + data.error : ''}</span>`;
+      } else if (data.hasKey) {
         statusEl.innerHTML = '<span style="color:#10b981"><i class="fas fa-check-circle"></i> السيرفر متصل ✅ — المفتاح محفوظ بالفعل</span>';
       } else {
         statusEl.innerHTML = '<span style="color:#f59e0b"><i class="fas fa-exclamation-circle"></i> السيرفر متصل — لكن المفتاح غير محفوظ بعد</span>';
       }
     }
   } catch(e) {
-    if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444"><i class="fas fa-times-circle"></i> تعذر الاتصال بالسيرفر — تأكد من الرابط</span>';
+    if (statusEl) statusEl.innerHTML = `<span style="color:#ef4444"><i class="fas fa-times-circle"></i> تعذر الاتصال بالسيرفر — تأكد من الرابط<br><small style="opacity:.7">${e.message}</small></span>`;
   }
 }
 
@@ -14052,17 +14055,19 @@ async function saveImgbbKey() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ imgbbKey: key, adminSecret: secret })
     });
-    const data = await resp.json();
+    let data = {};
+    try { data = await resp.json(); } catch(jsonErr) { data = {}; }
     if (resp.ok && data.success) {
       showImgbbStatus('✅ ' + data.message, false);
       checkImgbbServerStatus();
       const urlInput = document.getElementById('bgServerUrlInput');
       if (urlInput) urlInput.value = serverUrl;
     } else {
-      showImgbbStatus('❌ ' + (data.error || 'فشل الحفظ'), true);
+      const errMsg = data.error || data.message || ('فشل الحفظ — HTTP ' + resp.status + ' ' + resp.statusText);
+      showImgbbStatus('❌ ' + errMsg, true);
     }
   } catch(e) {
-    showImgbbStatus('❌ تعذر الاتصال بالسيرفر', true);
+    showImgbbStatus('❌ تعذر الاتصال بالسيرفر — ' + e.message, true);
   }
 }
 
