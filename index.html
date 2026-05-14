@@ -7181,6 +7181,18 @@ function switchProgressTab(tab) {
           <button class="cosmos-refresh-btn" onclick="refreshLiveNews(event)"><i class="fas fa-rotate"></i> تحديث الآن</button>
           <span id="newsCountdown" style="margin-right:.5rem;font-size:.78rem;color:#a78bfa;display:inline-flex;align-items:center;gap:.3rem"><i class="far fa-clock"></i> آخر تحديث: <strong id="newsCountdownSec">—</strong></span>
         </div>
+        <div id="newsReadingBar" style="margin-bottom:.75rem;background:rgba(255,255,255,.07);border-radius:12px;padding:.55rem .85rem;display:flex;align-items:center;gap:.75rem;border:1px solid rgba(236,72,153,.25)">
+          <span id="newsReadingIcon" style="font-size:1rem">📖</span>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+              <span style="font-size:.75rem;color:#d1d5db" id="newsReadingLabel">اقرأ لمدة 10 ثواني لإكمال المهمة</span>
+              <span style="font-size:.75rem;color:#ec4899;font-weight:700" id="newsReadingSec">10</span>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden">
+              <div id="newsReadingProgress" style="height:100%;width:0%;background:linear-gradient(90deg,#ec4899,#a855f7);border-radius:6px;transition:width .9s linear"></div>
+            </div>
+          </div>
+        </div>
         <div id="newsSourceTabs" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
           <button class="cosmos-refresh-btn news-tab-btn active-tab" style="background:rgba(236,72,153,.25);border-color:rgba(236,72,153,.6);color:#f9a8d4" onclick="switchNewsTab('all',this)"><i class="fas fa-globe"></i> الكل</button>
           <button class="cosmos-refresh-btn news-tab-btn" onclick="switchNewsTab('spaceflight',this)"><i class="fas fa-rss"></i> Spaceflight News</button>
@@ -7197,6 +7209,32 @@ function switchProgressTab(tab) {
       window._currentNewsTab = 'all';
       // ── مهمة "اقرأ خبر فضائي": تكتمل بعد 10 ثواني من القراءة ──
       clearTimeout(window._newsQuestTimer);
+      clearInterval(window._newsReadInterval);
+      var _newsReadSec = 10;
+      // شغّل الـ progress bar
+      setTimeout(function(){
+        var bar = document.getElementById('newsReadingProgress');
+        if (bar) bar.style.width = '100%';
+      }, 50);
+      window._newsReadInterval = setInterval(function(){
+        _newsReadSec--;
+        var secEl = document.getElementById('newsReadingSec');
+        var barEl = document.getElementById('newsReadingProgress');
+        if (secEl) secEl.textContent = _newsReadSec > 0 ? _newsReadSec : '✓';
+        if (_newsReadSec <= 0) {
+          clearInterval(window._newsReadInterval);
+          var barBox = document.getElementById('newsReadingBar');
+          if (barBox) {
+            barBox.style.background = 'rgba(16,185,129,.15)';
+            barBox.style.borderColor = 'rgba(16,185,129,.5)';
+          }
+          var label = document.getElementById('newsReadingLabel');
+          if (label) label.textContent = 'أحسنت! تم إكمال مهمة القراءة ✅';
+          var icon = document.getElementById('newsReadingIcon');
+          if (icon) icon.textContent = '🏅';
+          if (barEl) barEl.style.background = 'linear-gradient(90deg,#10b981,#06b6d4)';
+        }
+      }, 1000);
       window._newsQuestTimer = setTimeout(function(){
         if (window._openCategoryKey === 'news')
           document.dispatchEvent(new Event('dqNewsSeen'));
@@ -7401,7 +7439,8 @@ function switchProgressTab(tab) {
 
   window.closeCosmosModal = function(){
     window._openCategoryKey = null;
-    clearTimeout(window._newsQuestTimer); // إلغاء تايمر مهمة الأخبار لو المستخدم خرج قبل 10 ثواني
+    clearTimeout(window._newsQuestTimer);
+    clearInterval(window._newsReadInterval); // إلغاء عداد الـ progress bar
     document.getElementById('cosmosModal').classList.remove('active');
     document.body.style.overflow = '';
   };
