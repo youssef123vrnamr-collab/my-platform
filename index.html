@@ -13322,189 +13322,201 @@ function slStopAllAnimations() {
 </script>
 
 
+
 <!-- ============================================================
-     ✨ TTS FIX — Robust voice that never cuts off mid-sentence
+     ✅ TTS FINAL FIX — يكمل لحد ما يخلص بدون ما يوقف
      ============================================================ -->
 <script>
 (function(){
-  // Wait until aiSpeak + getCurrentAIPersona are both available
+  var CHECK_INTERVAL = 200;   // كل 200ms نتحقق هل الصوت شغال
+  var GRACE_MS      = 1200;   // نستنى ثانية وربع قبل نحكم إنه مات
+
+  var _active       = false;
+  var _btn          = null;
+  var _chunks       = [];
+  var _idx          = 0;
+  var _lang         = 'ar-SA';
+  var _voice        = null;
+  var _rate         = 0.92;
+  var _pitch        = 0.88;
+  var _chunkTimer   = null;   // watchdog لكل chunk
+  var _guardian     = null;   // setInterval للرقابة المستمرة
+  var _chunkStart   = 0;      // وقت بداية الـ chunk الحالي
+  var _between      = false;  // هل نحن بين chunk وchunk؟
+
+  function getPersonaStyle() {
+    try {
+      var p = window.getCurrentAIPersona && window.getCurrentAIPersona();
+      if (p && p.voiceStyle) return p.voiceStyle;
+    } catch(e){}
+    return { rate: 0.92, pitch: 0.88 };
+  }
+
+  function detectLang(t) {
+    return /[\u0600-\u06FF]/.test(t||'') ? 'ar-SA' : 'en-US';
+  }
+
+  function getBestVoice(lang) {
+    try {
+      var vs = window.speechSynthesis.getVoices();
+      var base = lang.split('-')[0].toLowerCase();
+      return vs.find(function(v){ return v.lang.toLowerCase().startsWith(base); }) || vs[0] || null;
+    } catch(e){ return null; }
+  }
+
+  function split(text) {
+    var MAX = 120;
+    var norm = (text||'').replace(/\r?\n+/g,' . ').replace(/([.!?؟،,;:])\s*/g,'$1\u200B');
+    var parts = norm.split('\u200B');
+    var out = [], cur = '';
+    parts.forEach(function(s){
+      s = s.trim(); if(!s) return;
+      var combined = cur ? cur+' '+s : s;
+      if(combined.length <= MAX){ cur = combined; }
+      else {
+        if(cur) out.push(cur);
+        if(s.length > MAX){
+          var words = s.split(/\s+/), part='';
+          words.forEach(function(w){
+            if(!w) return;
+            var trial = part ? part+' '+w : w;
+            if(trial.length <= MAX){ part=trial; }
+            else { if(part) out.push(part); part=w; }
+          });
+          cur = part;
+        } else { cur = s; }
+      }
+    });
+    if(cur) out.push(cur);
+    return out.filter(function(c){ return c.trim().length>0; });
+  }
+
+  function stopAll() {
+    _active  = false;
+    _between = false;
+    clearTimeout(_chunkTimer);
+    clearInterval(_guardian);
+    _chunkTimer = null; _guardian = null;
+    try { window.speechSynthesis.cancel(); } catch(e){}
+    if (_btn) {
+      _btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      _btn.classList.remove('muted');
+      _btn = null;
+    }
+  }
+
+  function doChunk(idx) {
+    if (!_active || idx >= _chunks.length) { stopAll(); return; }
+
+    var synth = window.speechSynthesis;
+    _idx        = idx;
+    _between    = false;
+    _chunkStart = Date.now();
+
+    var text = _chunks[idx];
+    var utt  = new SpeechSynthesisUtterance(text);
+    utt.lang   = _lang;
+    utt.rate   = _rate;
+    utt.pitch  = _pitch;
+    utt.volume = 1;
+    if (_voice) utt.voice = _voice;
+
+    var done = false;
+    function advance() {
+      if (done || !_active) return;
+      done = true;
+      _between = true;
+      clearTimeout(_chunkTimer);
+      setTimeout(function(){
+        if (!_active) return;
+        _between = false;
+        doChunk(idx + 1);
+      }, 90);
+    }
+
+    utt.onend   = advance;
+    utt.onerror = function(e) {
+      // "interrupted" = intentional cancel, stop silently
+      if (e && e.error === 'interrupted') { _active = false; return; }
+      advance();
+    };
+
+    // Per-chunk watchdog: إذا onend ما جاش خلال الوقت المتوقع نكمل
+    var budget = Math.max(4000, Math.ceil(text.length * 55 / _rate) + 2500);
+    clearTimeout(_chunkTimer);
+    _chunkTimer = setTimeout(function(){
+      if (!done && _active) {
+        console.warn('[TTS] watchdog chunk', idx);
+        advance();
+      }
+    }, budget);
+
+    try { synth.speak(utt); } catch(ex) { advance(); }
+  }
+
+  // ─── Guardian loop ───────────────────────────────────────────
+  // يراقب كل 200ms: لو الصوت مات وهو لازم يكون شغال → يعيد الـ chunk
+  function startGuardian() {
+    clearInterval(_guardian);
+    _guardian = setInterval(function(){
+      if (!_active) { clearInterval(_guardian); return; }
+      if (_between)  return; // بين chunk وتاني، طبيعي
+      if (Date.now() - _chunkStart < GRACE_MS) return; // فترة السماح
+      var synth = window.speechSynthesis;
+      if (!synth.speaking && !synth.pending) {
+        console.warn('[TTS] guardian restarting chunk', _idx);
+        _chunkStart = Date.now();
+        synth.cancel();
+        setTimeout(function(){
+          if (_active) doChunk(_idx);
+        }, 80);
+      }
+    }, CHECK_INTERVAL);
+  }
+
+  // ─── Public API ──────────────────────────────────────────────
   var tries = 0;
   var iv = setInterval(function(){
     tries++;
-    if (tries > 60) { clearInterval(iv); return; }
-    if (typeof window.aiSpeak !== 'function' || typeof window.getCurrentAIPersona !== 'function') return;
+    if (tries > 80) { clearInterval(iv); return; }
+    if (typeof window.getCurrentAIPersona !== 'function') return;
     clearInterval(iv);
 
-    // ---------- internal state ----------
-    var _active  = false;
-    var _btn     = null;
-    var _wd      = null;   // watchdog timer
-    var _ka      = null;   // keep-alive timer
-    var _voices  = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-
-    if (!_voices.length && window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = function(){
-        _voices = window.speechSynthesis.getVoices();
-      };
-    }
-
-    // ---------- helpers ----------
-    function detectLang(t) {
-      if (!t) return 'ar-SA';
-      if (/[\u0600-\u06FF]/.test(t)) return 'ar-SA';
-      return 'en-US';
-    }
-
-    function getBestVoice(lang) {
-      var v = window.speechSynthesis.getVoices();
-      var base = lang.split('-')[0].toLowerCase();
-      return v.find(function(x){ return x.lang.toLowerCase().startsWith(base); }) || v[0] || null;
-    }
-
-    function splitChunks(text) {
-      var MAX = 150;
-      var normalized = text.replace(/\r?\n+/g, '. ').replace(/([.!?؟،,;:])\s*/g, '$1\u200B');
-      var parts = normalized.split('\u200B');
-      var out = [], cur = '';
-      for (var i = 0; i < parts.length; i++) {
-        var s = parts[i].trim();
-        if (!s) continue;
-        var combined = cur ? cur + ' ' + s : s;
-        if (combined.length <= MAX) { cur = combined; }
-        else {
-          if (cur) out.push(cur);
-          if (s.length > MAX) {
-            var words = s.split(/\s+/), part = '';
-            for (var j = 0; j < words.length; j++) {
-              var trial = part ? part + ' ' + words[j] : words[j];
-              if (trial.length <= MAX) { part = trial; }
-              else { if (part) out.push(part); part = words[j]; }
-            }
-            cur = part;
-          } else { cur = s; }
-        }
-      }
-      if (cur) out.push(cur);
-      return out.filter(function(c){ return c.trim().length > 0; });
-    }
-
-    function stopSpeech() {
-      _active = false;
-      clearTimeout(_wd);
-      clearInterval(_ka);
-      _wd = null; _ka = null;
-      try { window.speechSynthesis.cancel(); } catch(e){}
-      if (_btn) {
-        _btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        _btn.classList.remove('muted');
-      }
-      _btn = null;
-    }
-
-    function speakQueue(chunks, idx, lang, voice, persona) {
-      if (idx >= chunks.length || !_active) { stopSpeech(); return; }
-
-      var synth = window.speechSynthesis;
-      var chunk = chunks[idx];
-      var utt   = new SpeechSynthesisUtterance(chunk);
-
-      utt.lang   = lang;
-      utt.rate   = (persona && persona.voiceStyle && persona.voiceStyle.rate)  || 0.92;
-      utt.pitch  = (persona && persona.voiceStyle && persona.voiceStyle.pitch) || 0.88;
-      utt.volume = 1;
-      if (voice) utt.voice = voice;
-
-      var advanced = false;
-      function next() {
-        if (advanced || !_active) return;
-        advanced = true;
-        clearTimeout(_wd);
-        _wd = null;
-        // tiny gap so the browser doesn't swallow the next chunk
-        setTimeout(function(){ speakQueue(chunks, idx + 1, lang, voice, persona); }, 60);
-      }
-
-      utt.onend   = next;
-      utt.onerror = function(e) {
-        // interrupted = another speak() was called — just continue
-        if (e && e.error === 'interrupted') { next(); return; }
-        next();
-      };
-
-      // Watchdog: if onend never fires, force-advance
-      // Budget = chunk chars × 60ms per char / rate, plus 3s buffer
-      var budget = Math.max(4000, Math.ceil(chunk.length * 60 / ((persona && persona.voiceStyle && persona.voiceStyle.rate) || 0.92)) + 3000);
-      clearTimeout(_wd);
-      _wd = setTimeout(function(){
-        if (!advanced && _active) {
-          console.warn('[TTS] watchdog fired on chunk', idx, '— advancing');
-          next();
-        }
-      }, budget);
-
-      try { synth.speak(utt); } catch(ex) { next(); }
-    }
-
-    // ---------- public replacement ----------
     window.aiSpeak = function(text, btn) {
       var synth = window.speechSynthesis;
-      if (!synth || !text || !text.trim()) return;
+      if (!synth || !(text||'').trim()) return;
 
-      // Toggle: same btn while speaking → stop
-      if (_btn === btn && (_active || synth.speaking)) { stopSpeech(); return; }
-      stopSpeech();
+      // ── اضغط نفس الزرار (غير null) = إيقاف ──
+      if (btn && _btn === btn && _active) { stopAll(); return; }
 
-      var persona = window.getCurrentAIPersona() || { voiceStyle: { rate: 0.92, pitch: 0.88 } };
-      var lang    = detectLang(text);
-      var voice   = getBestVoice(lang);
-      var chunks  = splitChunks(text);
-      if (!chunks.length) return;
+      stopAll();
 
-      _active = true;
-      _btn    = btn || null;
+      var style  = getPersonaStyle();
+      _lang   = detectLang(text);
+      _voice  = getBestVoice(_lang);
+      _rate   = style.rate  || 0.92;
+      _pitch  = style.pitch || 0.88;
+      _chunks = split(text);
+      if (!_chunks.length) return;
+
+      _active  = true;
+      _btn     = btn || null;
+      _idx     = 0;
+      _between = false;
 
       if (btn) {
         btn.innerHTML = '<i class="fas fa-stop" style="color:#ef4444"></i>';
         btn.classList.add('muted');
       }
 
-      // Chrome keep-alive: pause/resume every 8s prevents the 15s cutoff bug
-      clearInterval(_ka);
-      _ka = setInterval(function(){
-        if (!_active) { clearInterval(_ka); return; }
-        if (synth.speaking && !synth.paused) {
-          synth.pause();
-          setTimeout(function(){ try{ synth.resume(); }catch(e){} }, 50);
-        }
-      }, 8000);
-
-      // Re-guard when tab regains focus (mobile browsers cancel speech on hide)
-      function onVisible() {
-        if (!_active) return;
-        if (!synth.speaking && !synth.paused) {
-          // speech was killed by browser — restart from beginning isn't ideal,
-          // but at least we stop cleanly and show the button
-          stopSpeech();
-        }
-      }
-      document.addEventListener('visibilitychange', function handler(){
-        if (document.visibilityState === 'visible') {
-          setTimeout(onVisible, 300);
-        }
-        // auto-remove after speech ends (next stopSpeech call)
-        if (!_active) document.removeEventListener('visibilitychange', handler);
-      });
-
+      startGuardian();
       synth.cancel();
-      setTimeout(function(){
-        speakQueue(chunks, 0, lang, voice, persona);
-      }, 100);
+      setTimeout(function(){ if(_active) doChunk(0); }, 120);
     };
 
-    // expose stop globally
-    window.stopAllAISpeech = stopSpeech;
+    window.stopAllAISpeech = stopAll;
+    console.log('✅ TTS Guardian جاهز — مش هيوقف غير لما يخلص');
 
-    console.log('✅ TTS محسّن — keep-alive 8s + watchdog + chunk queue');
   }, 250);
 })();
 </script>
