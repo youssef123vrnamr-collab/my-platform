@@ -7207,20 +7207,29 @@ function switchProgressTab(tab) {
       window._openCategoryKey = 'news';
       _startNewsCountdown();
       window._currentNewsTab = 'all';
-      // ── مهمة "اقرأ خبر فضائي": تكتمل بعد 10 ثواني من القراءة ──
+      // ── مهمة "اقرأ خبر فضائي": المدة تزيد 10 ثواني كل يوم ──
       clearTimeout(window._newsQuestTimer);
       clearInterval(window._newsReadInterval);
-      var _newsReadSec = 10;
+      var _dqState = (function(){ try { return JSON.parse(localStorage.getItem('dq_v1')) || {}; } catch(e){ return {}; } })();
+      var _totalDays = _dqState.totalDays || 1;
+      var _newsReadSec = _totalDays * 10;
+      var _newsReadTotal = _newsReadSec;
+      // تحديث النص عشان يعكس المدة الفعلية
+      var labelEl = document.getElementById('newsReadingLabel');
+      var secEl = document.getElementById('newsReadingSec');
+      if (labelEl) labelEl.textContent = 'اقرأ لمدة ' + _newsReadSec + ' ثانية لإكمال المهمة (اليوم ' + _totalDays + ')';
+      if (secEl) secEl.textContent = _newsReadSec;
       // شغّل الـ progress bar
       setTimeout(function(){
         var bar = document.getElementById('newsReadingProgress');
+        if (bar) bar.style.transitionDuration = _newsReadTotal + 's';
         if (bar) bar.style.width = '100%';
       }, 50);
       window._newsReadInterval = setInterval(function(){
         _newsReadSec--;
-        var secEl = document.getElementById('newsReadingSec');
+        var secEl2 = document.getElementById('newsReadingSec');
         var barEl = document.getElementById('newsReadingProgress');
-        if (secEl) secEl.textContent = _newsReadSec > 0 ? _newsReadSec : '✓';
+        if (secEl2) secEl2.textContent = _newsReadSec > 0 ? _newsReadSec : '✓';
         if (_newsReadSec <= 0) {
           clearInterval(window._newsReadInterval);
           var barBox = document.getElementById('newsReadingBar');
@@ -7228,8 +7237,8 @@ function switchProgressTab(tab) {
             barBox.style.background = 'rgba(16,185,129,.15)';
             barBox.style.borderColor = 'rgba(16,185,129,.5)';
           }
-          var label = document.getElementById('newsReadingLabel');
-          if (label) label.textContent = 'أحسنت! تم إكمال مهمة القراءة ✅';
+          var label2 = document.getElementById('newsReadingLabel');
+          if (label2) label2.textContent = 'أحسنت! تم إكمال مهمة القراءة ✅';
           var icon = document.getElementById('newsReadingIcon');
           if (icon) icon.textContent = '🏅';
           if (barEl) barEl.style.background = 'linear-gradient(90deg,#10b981,#06b6d4)';
@@ -7238,7 +7247,7 @@ function switchProgressTab(tab) {
       window._newsQuestTimer = setTimeout(function(){
         if (window._openCategoryKey === 'news')
           document.dispatchEvent(new Event('dqNewsSeen'));
-      }, 10000);
+      }, _newsReadTotal * 1000);
       try {
         const articles = await fetchLiveNews();
         document.getElementById('cosmosNewsContainer').innerHTML = renderNewsCards(articles);
@@ -12755,6 +12764,7 @@ function slStopAllAnimations() {
       d.completedToday = {};
       d.date = TODAY;
       d.streak = wasYesterday ? prevStreak + 1 : 1;
+      d.totalDays = (d.totalDays || 0) + 1; // عداد الأيام الكلي — بيزيد كل يوم ومش بيترسيت
       save(d);
     }
     d.totalXP = d.totalXP || 0;
