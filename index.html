@@ -9379,9 +9379,10 @@ window.playChatSound = function() {
     if (p) p.style.display = 'none';
   };
 
-  // Override sendAIMessage to handle files
+  // File upload override — DISABLED (merged into unified sendAIMessage at end of file)
   const _baseAI = window.sendAIMessage;
-  window.sendAIMessage = async function() {
+  // window.sendAIMessage already handles files; skip this override
+  if (false) window.sendAIMessage = async function() {
     if (window._aiSelectedFile) {
       const file = window._aiSelectedFile;
       window._aiSelectedFile = null;
@@ -12448,8 +12449,9 @@ function slStopAllAnimations() {
     }
   }
 
-  // ===== 9. Patch sendAIMessage =====
+  // ===== 9. Patch sendAIMessage — DISABLED (replaced by unified fix at end of file) =====
   function patchSendAI() {
+    return; // The single clean sendAIMessage handles everything now.
     var iv = setInterval(function() {
       if (typeof window.sendAIMessage !== 'function') return;
       clearInterval(iv);
@@ -13001,70 +13003,188 @@ function slStopAllAnimations() {
 
 
 <!-- ============================================================
-     ✨ FEATURE 3 — NASA Live Space News in AI chat
+     ✨ FINAL FIX — One clean sendAIMessage with full history + all features
      ============================================================ -->
 <script>
 (function(){
-  // Intercept AI messages that ask about space news
+  // ── Global history array (stays alive across turns) ──
+  window.aiChatHistory = [];
+
+  // ── Space context helpers ──
   var NASA_KEY = 'DEMO_KEY';
   var SPACE_TRIGGERS = ['اليوم','النهارده','الآن','الأخبار','أحدث','جديد','ايش في','إيه في','news','today','latest','launch','صاروخ','إطلاق','ناسا','nasa','تلسكوب','webb','جيمس ويب'];
+  function hasTrigger(t){ var l=t.toLowerCase(); return SPACE_TRIGGERS.some(function(k){ return l.includes(k); }); }
+  async function fetchNASAApod(){ try{ var r=await fetch('https://api.nasa.gov/planetary/apod?api_key='+NASA_KEY); return await r.json(); }catch(e){ return null; } }
+  async function fetchSpaceNews(){ try{ var r=await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=3&ordering=-published_at'); var d=await r.json(); return d.results||[]; }catch(e){ return []; } }
 
-  async function fetchNASAApod() {
-    try {
-      var r = await fetch('https://api.nasa.gov/planetary/apod?api_key=' + NASA_KEY);
-      var d = await r.json();
-      return d;
-    } catch(e){ return null; }
-  }
+  // ── Wait until all previous patches have settled, then replace once ──
+  var attempts = 0;
+  var iv = setInterval(async function(){
+    attempts++;
+    if (attempts > 60) { clearInterval(iv); return; }
+    // Wait until the persona patch (which registers getCurrentAIPersona) is done
+    if (typeof window.getCurrentAIPersona !== 'function') return;
+    clearInterval(iv);
 
-  async function fetchSpaceNews() {
-    try {
-      var r = await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=3&ordering=-published_at');
-      var d = await r.json();
-      return d.results || [];
-    } catch(e){ return []; }
-  }
+    // ── THE ONE CLEAN sendAIMessage ──
+    window.sendAIMessage = async function(injectedMsg) {
+      var inp  = document.getElementById('aiChatInput');
+      var msgs = document.getElementById('aiChatMessages');
 
-  function containsTrigger(text) {
-    var low = text.toLowerCase();
-    return SPACE_TRIGGERS.some(function(t){ return low.includes(t); });
-  }
+      // ── Handle file upload if any ──
+      if (window._aiSelectedFile) {
+        var file = window._aiSelectedFile;
+        window._aiSelectedFile = null;
+        var preview = document.getElementById('aiFilePreview');
+        if (preview) preview.style.display = 'none';
+        var extraText = inp ? inp.value.trim() : '';
+        if (inp) { inp.value = ''; inp.style.height = 'auto'; }
 
-  // Patch the AI send function to inject live space context
-  var _patchAttempts = 0;
-  var _patchInt = setInterval(async function(){
-    _patchAttempts++;
-    if (_patchAttempts > 40) { clearInterval(_patchInt); return; }
-    var origSend = window.sendAIMessage;
-    if (!origSend) return;
-    clearInterval(_patchInt);
+        if (file.type.startsWith('image/')) {
+          var reader = new FileReader();
+          reader.onload = async function(e) {
+            if (msgs) {
+              var div = document.createElement('div');
+              div.className = 'message sent';
+              div.innerHTML = '<img src="'+e.target.result+'" style="max-width:180px;border-radius:10px;display:block;margin-bottom:.3rem"><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+              msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+            }
+            await window.sendAIMessage(extraText || ('صف هذه الصورة باللغة العربية: "'+file.name+'"'));
+          };
+          reader.readAsDataURL(file);
+        } else {
+          var reader2 = new FileReader();
+          reader2.onload = async function(e) {
+            var content = typeof e.target.result === 'string' ? e.target.result.substring(0,3000) : '';
+            var combined = extraText
+              ? (extraText + '\n\n[محتوى الملف: "'+file.name+'"]\n'+content)
+              : ('حلل هذا الملف وأخبرني بأهم نقاطه:\n\n[اسم الملف: "'+file.name+'"]\n'+content);
+            await window.sendAIMessage(combined);
+          };
+          reader2.readAsText(file, 'UTF-8');
+        }
+        return;
+      }
 
-    window.sendAIMessage = async function(userMsg) {
-      if (containsTrigger(userMsg || '')) {
-        // Fetch live data and prepend as context
+      // ── Read message ──
+      var userMsg = injectedMsg !== undefined ? String(injectedMsg) : (inp ? inp.value.trim() : '');
+      if (!userMsg) return;
+      if (inp && injectedMsg === undefined) { inp.value = ''; inp.style.height = 'auto'; }
+
+      // ── Space context injection ──
+      if (hasTrigger(userMsg)) {
         var apod = await fetchNASAApod();
         var news = await fetchSpaceNews();
         var ctx = '';
-        if (apod && apod.title) {
-          ctx += '\n[صورة ناسا الفلكية اليوم]: العنوان: ' + apod.title + '. الشرح: ' + (apod.explanation || '').slice(0, 300) + '\n';
-        }
+        if (apod && apod.title)
+          ctx += '\n[صورة ناسا الفلكية اليوم]: العنوان: '+apod.title+'. الشرح: '+(apod.explanation||'').slice(0,300)+'\n';
         if (news.length) {
           ctx += '\n[أحدث أخبار الفضاء الحية]:\n';
-          news.forEach(function(n,i){
-            ctx += (i+1) + '. ' + n.title + ' (' + (n.news_site||'') + ') — ' + (n.summary||'').slice(0,150) + '\n';
-          });
+          news.forEach(function(n,i){ ctx += (i+1)+'. '+n.title+' ('+(n.news_site||'')+') — '+(n.summary||'').slice(0,150)+'\n'; });
         }
-        if (ctx) {
-          userMsg = userMsg + '\n\n--- معلومات حية الآن ---' + ctx + '---\nاستخدم المعلومات الحية أعلاه للإجابة إذا كانت ذات صلة.';
-        }
-        // Fire news quest
+        if (ctx) userMsg = userMsg + '\n\n--- معلومات حية الآن ---'+ctx+'---\nاستخدم المعلومات الحية أعلاه للإجابة إذا كانت ذات صلة.';
         document.dispatchEvent(new Event('dqNewsSeen'));
       }
-      // Fire AI quest
       document.dispatchEvent(new Event('dqAiSent'));
-      return origSend.call(this, userMsg);
+
+      // ── Show user bubble ──
+      if (msgs) {
+        var ud = document.createElement('div');
+        ud.className = 'message sent';
+        ud.innerHTML = '<div class="message-content">'+userMsg+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+        msgs.appendChild(ud); msgs.scrollTop = msgs.scrollHeight;
+      }
+
+      // ── Typing indicator ──
+      var typingEl = null;
+      if (msgs) {
+        typingEl = document.createElement('div');
+        typingEl.className = 'message received';
+        var pNameT = (window.getCurrentAIPersona() || {name:'Astronomy AI'}).name;
+        typingEl.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> '+pNameT+' يفكر...</div>';
+        msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+      }
+
+      // ── Persona & API key ──
+      var persona  = window.getCurrentAIPersona() || { name:'Astronomy AI', emoji:'🔭', systemPrompt:'أنت مساعد متخصص في الفلك والفضاء. أجب بالعربية بدقة ووضوح.' };
+      var apiKey   = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
+
+      // ── History slice (adaptive) ──
+      var histLimit = userMsg.length > 2000 ? 2 : userMsg.length > 800 ? 4 : 8;
+      var histMsgs  = window.aiChatHistory.slice(-histLimit);
+
+      function buildPayload(model, maxTok, hist) {
+        return {
+          model: model,
+          messages: [{ role:'system', content: persona.systemPrompt }].concat(hist).concat([{ role:'user', content: userMsg }]),
+          max_tokens: maxTok,
+          temperature: 0.4
+        };
+      }
+
+      async function callGroq(model, maxTok, hist) {
+        var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer '+apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload(model, maxTok, hist))
+        });
+        var data = await res.json();
+        return { res: res, data: data };
+      }
+
+      try {
+        var result = await callGroq('llama-3.3-70b-versatile', 8000, histMsgs);
+        // Retry with smaller model if context overflow
+        if (!result.res.ok && (result.res.status===400||result.res.status===413||
+            (result.data&&result.data.error&&/context|length|token/i.test(JSON.stringify(result.data.error))))) {
+          result = await callGroq('llama-3.1-8b-instant', 4000, []);
+        }
+        var answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
+        if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));
+        if (!answer) answer = 'عذراً، حدث خطأ غير متوقع.';
+
+        // ── Save to history ──
+        window.aiChatHistory.push({ role:'user', content: userMsg });
+        window.aiChatHistory.push({ role:'assistant', content: answer });
+        if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+
+        // ── Show AI bubble ──
+        if (typingEl) typingEl.remove();
+        if (msgs) {
+          var aiDiv = document.createElement('div');
+          aiDiv.className = 'message received';
+          aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+answer+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
+          if (typeof window.addAIMuteButton === 'function') {
+            var txtEl = aiDiv.querySelector('.message-content');
+            if (txtEl) window.addAIMuteButton(aiDiv, txtEl.textContent);
+          }
+          // Auto-speak if not muted
+          var muteBtn = document.getElementById('aiMuteBtn') || document.getElementById('aiGlobalMuteBtn');
+          var isMuted = (muteBtn && muteBtn.classList.contains('muted')) || (typeof aiIsMuted !== 'undefined' && aiIsMuted);
+          if (!isMuted && typeof window.aiSpeak === 'function') window.aiSpeak(answer, null);
+        }
+      } catch(err) {
+        if (typingEl) typingEl.remove();
+        if (msgs) {
+          var ed = document.createElement('div');
+          ed.className = 'message received';
+          ed.innerHTML = '<div class="message-content" style="color:#ef4444">❌ فشل الاتصال بالمساعد. تأكد من مفتاح API.</div>';
+          msgs.appendChild(ed); msgs.scrollTop = msgs.scrollHeight;
+        }
+        console.error('AI send error:', err);
+      }
     };
-  }, 500);
+
+    // ── Also patch clearAIChat to reset history ──
+    var _origClear = window.clearAIChat;
+    window.clearAIChat = function() {
+      window.aiChatHistory = [];
+      if (_origClear) _origClear.call(this);
+    };
+
+    console.log('✅ sendAIMessage الموحّدة جاهزة — history + personas + space context + retry + TTS');
+  }, 300);
 })();
 </script>
 
