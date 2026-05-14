@@ -4692,7 +4692,7 @@ async function updateAdminUI() {
       const data = await response.json();
       const answer = data.choices[0].message.content;
       displayAIMessage(answer, "ai");
-      // ✅ استخدم aiSpeak (بالـ chunks) بدل speakText
+      // ✅ استخدم aiSpeak بدل speakText
       if (typeof window.aiSpeak === 'function' && !(typeof aiIsMuted !== 'undefined' && aiIsMuted)) {
         window.aiSpeak(answer, null);
       }
@@ -8473,29 +8473,22 @@ window.playChatSound = function() {
 
   // زرار الكتم/التشغيل العام في الـ header
   window.toggleAIMute = function() {
-    const btn = document.getElementById('aiGlobalMuteBtn');
     var synth = window.speechSynthesis;
-    var isCurrentlySpeaking = (typeof window.stopAllAISpeech === 'function') &&
-                              (synth && synth.speaking);
+    var btn   = document.getElementById('aiGlobalMuteBtn');
 
-    // ✅ لو الصوت شغّال دلوقتي → وقّف بس من غير ما تغير حالة الكتم
-    if (isCurrentlySpeaking) {
+    // ✅ لو الصوت شغّال دلوقتي → وقّفه بس (من غير ما تكتم)
+    if (synth && synth.speaking) {
       if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
       stopAllSpeech();
-      if (btn) {
-        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        btn.style.color = '#10b981';
-        btn.title = 'كتم الصوت';
-      }
+      if (btn) { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.style.color = '#10b981'; btn.title = 'كتم الصوت'; }
       showToast('⏹️ تم إيقاف القراءة');
       return;
     }
 
+    // مش شغّال → toggle الكتم
     aiIsMuted = !aiIsMuted;
     if (btn) {
-      btn.innerHTML = aiIsMuted
-        ? '<i class="fas fa-volume-mute"></i>'
-        : '<i class="fas fa-volume-up"></i>';
+      btn.innerHTML = aiIsMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
       btn.style.color = aiIsMuted ? '#ef4444' : '#10b981';
       btn.title = aiIsMuted ? 'تشغيل الصوت' : 'كتم الصوت';
     }
@@ -8508,7 +8501,7 @@ window.playChatSound = function() {
     }
   };
 
-  // زرار الصوت على كل رسالة من الـ AI — ✅ يستخدم aiSpeak (chunks) بدل synth.speak مباشرة
+  // زرار الصوت على كل رسالة من الـ AI — ✅ يستخدم aiSpeak (بالـ chunks)
   window.addAIMuteButton = function(msgEl, text) {
     if (!text || !text.trim()) return;
     const btn = document.createElement('button');
@@ -8516,23 +8509,19 @@ window.playChatSound = function() {
     btn.title = 'اقرأ الرسالة';
     btn.innerHTML = '<i class="fas fa-volume-up"></i>';
 
-    btn.onclick = function(e) {
-      e.stopPropagation();
+    function handleClick(e) {
+      if (e && e.stopPropagation) e.stopPropagation();
       if (aiIsMuted) {
         showToast('🔇 الصوت مكتوم — اضغط زرار الصوت في الأعلى لتشغيله');
         return;
       }
-      if (!window.speechSynthesis) { showToast('⚠️ الصوت غير مدعوم في هذا المتصفح'); return; }
-      // aiSpeak بتتعامل مع toggle (لو نفس الزرار → وقّف)
       if (typeof window.aiSpeak === 'function') {
         window.aiSpeak(text, btn);
       }
-    };
+    }
 
-    btn.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      btn.onclick(e);
-    });
+    btn.onclick = handleClick;
+    btn.addEventListener('touchend', function(e) { e.preventDefault(); handleClick(e); });
 
     msgEl.style.position = 'relative';
     msgEl.appendChild(btn);
@@ -12240,20 +12229,18 @@ function slStopAllAnimations() {
     return m || _selVoice;
   }
 
-  // ===== 6. دالة النطق الرئيسية — بتقسيم الجمل لضمان الاكتمال =====
-  var _speakQueue = [];
+  // ===== 6. دالة النطق الرئيسية — نسخة محسّنة لـ Android/Huawei =====
   var _speakActive = false;
+  var _chunkTimer  = null; // fallback timeout لو onend ما جاش
 
+  // ── تقسيم النص لجمل صغيرة ──
   function splitToChunks(text) {
-    var MAX = 160;
-    // بدل lookbehind (مش مدعوم على كل متصفحات الموبايل)
-    // نستبدل علامات الترقيم بعلامة + separator ثم نقسم
+    var MAX = 100; // صغيّرنا عشان Android يتعامل معاها أحسن
     var normalized = text
       .replace(/\r?\n+/g, ' . ')
-      .replace(/([.!?؟،,;:])\s*/g, '$1\u200B'); // zero-width space بعد كل علامة
+      .replace(/([.!?؟،,;:])\s*/g, '$1\u200B');
     var raw = normalized.split('\u200B');
-    var chunks = [];
-    var cur = '';
+    var chunks = [], cur = '';
     for (var i = 0; i < raw.length; i++) {
       var s = raw[i].trim();
       if (!s) continue;
@@ -12262,77 +12249,78 @@ function slStopAllAnimations() {
         cur = combined;
       } else {
         if (cur) chunks.push(cur);
-        // لو جملة واحدة أكبر من MAX — قسّمها على كلمات
         if (s.length > MAX) {
-          var words = s.split(/\s+/);
-          var part = '';
+          var words = s.split(/\s+/), part = '';
           for (var j = 0; j < words.length; j++) {
-            var w = words[j];
-            if (!w) continue;
-            var trial = part ? part + ' ' + w : w;
-            if (trial.length <= MAX) {
-              part = trial;
-            } else {
-              if (part) chunks.push(part);
-              part = w;
-            }
+            if (!words[j]) continue;
+            var trial = part ? part + ' ' + words[j] : words[j];
+            if (trial.length <= MAX) { part = trial; }
+            else { if (part) chunks.push(part); part = words[j]; }
           }
           cur = part;
-        } else {
-          cur = s;
-        }
+        } else { cur = s; }
       }
     }
     if (cur) chunks.push(cur);
     return chunks.filter(function(c){ return c.trim().length > 0; });
   }
 
+  // ── نطق chunk واحدة وتمرير للتالية ──
   function speakNextChunk(synth, chunks, idx, p, lang, voice, btn) {
+    // انتهى أو اتوقف
     if (idx >= chunks.length || !_speakActive) {
       _speakActive = false;
+      clearTimeout(_chunkTimer);
       if (btn) { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.classList.remove('muted'); }
       if (_speakBtn === btn) _speakBtn = null;
-      clearInterval(_huaweiT);
       return;
     }
-    var utt = new SpeechSynthesisUtterance(chunks[idx]);
-    utt.rate   = p.voiceStyle.rate  || 0.9;
-    utt.pitch  = p.voiceStyle.pitch || 0.85;
+
+    var chunk = chunks[idx];
+    var utt   = new SpeechSynthesisUtterance(chunk);
+    utt.rate   = (p && p.voiceStyle && p.voiceStyle.rate)  || 0.9;
+    utt.pitch  = (p && p.voiceStyle && p.voiceStyle.pitch) || 1;
     utt.volume = 1;
     utt.lang   = lang;
     if (voice) utt.voice = voice;
 
-    var _moved = false;
-    function nextChunk() {
-      if (_moved) return; // نمنع الاستدعاء المزدوج
-      _moved = true;
-      clearInterval(_huaweiT);
-      speakNextChunk(synth, chunks, idx + 1, p, lang, voice, btn);
+    var done = false;
+    function advance() {
+      if (done) return;
+      done = true;
+      clearTimeout(_chunkTimer);
+      // delay صغير بين chunks يمنع Android من الاختناق
+      setTimeout(function() {
+        speakNextChunk(synth, chunks, idx + 1, p, lang, voice, btn);
+      }, 50);
     }
 
-    utt.onend = function() { nextChunk(); };
+    utt.onend   = advance;
+    utt.onerror = advance; // نكمل حتى لو في error
 
-    utt.onerror = function(e) {
-      // نكمل دايماً حتى لو في error — ما نوقفش
-      nextChunk();
-    };
+    // ── Fallback: لو onend ما جاش في الوقت المتوقع → نكمل قسراً ──
+    // تقدير الوقت: طول الـ chunk / سرعة القراءة + buffer
+    var estimatedMs = Math.max(2500, chunk.length * 80 + 1500);
+    clearTimeout(_chunkTimer);
+    _chunkTimer = setTimeout(function() {
+      if (!done && _speakActive) { advance(); }
+    }, estimatedMs);
 
-    // Huawei / Android keep-alive
-    clearInterval(_huaweiT);
-    _huaweiT = setInterval(function() {
-      if (!synth.speaking) { clearInterval(_huaweiT); return; }
-      synth.pause(); synth.resume();
-    }, 5000);
-
-    try { synth.speak(utt); } catch(e) { nextChunk(); }
+    try { synth.speak(utt); } catch(e) { advance(); }
   }
 
+  // ── الدالة الرئيسية للنطق ──
   window.aiSpeak = function(text, btn) {
     var synth = window.speechSynthesis;
-    if (!synth || !text) return;
-    // لو نفس الزرار والصوت شغّال — وقّف
-    if (_speakBtn === btn && (_speakActive || synth.speaking)) { stopAiSpeech(); return; }
-    stopAiSpeech();
+    if (!synth || !text || !text.trim()) return;
+
+    // لو نفس الزرار والصوت شغّال → وقّف
+    if (_speakBtn === btn && (_speakActive || synth.speaking)) {
+      stopAiSpeech();
+      return;
+    }
+
+    stopAiSpeech(); // وقّف أي صوت قديم
 
     var p      = window.getCurrentAIPersona() || AI_PERSONAS[0];
     var lang   = detectLang(text);
@@ -12348,19 +12336,25 @@ function slStopAllAnimations() {
       btn.classList.add('muted');
     }
 
+    // cancel أولاً ثم نستنى 150ms عشان Android تتحضّر
     synth.cancel();
     setTimeout(function() {
+      if (!_speakActive) return; // ممكن يتوقف في الـ 150ms
       speakNextChunk(synth, chunks, 0, p, lang, voice, btn);
-    }, 80);
+    }, 150);
   };
 
+  // ── إيقاف كل الصوت ──
   function stopAiSpeech() {
-    var synth = window.speechSynthesis;
     _speakActive = false;
+    clearTimeout(_chunkTimer);
+    var synth = window.speechSynthesis;
     if (synth) { try { synth.cancel(); } catch(e){} }
-    if (_speakBtn) { _speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>'; _speakBtn.classList.remove('muted'); }
+    if (_speakBtn) {
+      _speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      _speakBtn.classList.remove('muted');
+    }
     _speakBtn = null;
-    clearInterval(_huaweiT);
   }
   window.stopAllAISpeech = stopAiSpeech;
 
@@ -12508,11 +12502,11 @@ function slStopAllAnimations() {
             var txt = aiDiv.querySelector('.message-content');
             if (txt) window.addAIMuteButton(aiDiv, txt.textContent);
 
-            // ✅ نطق تلقائي لو مش مكتوم — نربطه بزرار الكتم الكبير عشان يقدر يوقف
+            // ✅ نطق تلقائي لو مش مكتوم
             var isMuted = (typeof aiIsMuted !== 'undefined' && aiIsMuted);
             if (!isMuted) {
-              var globalMuteBtn = document.getElementById('aiGlobalMuteBtn');
-              window.aiSpeak(answer, globalMuteBtn || null);
+              // نبعت null عشان الصوت يشتغل بدون ربط بزرار معين
+              window.aiSpeak(answer, null);
             }
           }
         } catch(err) {
