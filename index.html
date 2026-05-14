@@ -4686,16 +4686,14 @@ async function updateAdminUI() {
             { role: "system", content: "أنت مساعد متخصص في الفلك. جاوب بالعربية بدقة." },
             { role: "user", content: text }
           ],
+          max_tokens: 8000,
           temperature: 0.3
         })
       });
       const data = await response.json();
       const answer = data.choices[0].message.content;
       displayAIMessage(answer, "ai");
-      // ✅ استخدم aiSpeak بدل speakText
-      if (typeof window.aiSpeak === 'function' && !(typeof aiIsMuted !== 'undefined' && aiIsMuted)) {
-        window.aiSpeak(answer, null);
-      }
+      speakText(answer);
     } catch (error) {
       console.error(error);
       displayAIMessage("عذراً، فشل الاتصال بالذكاء الاصطناعي.", "ai");
@@ -8473,27 +8471,16 @@ window.playChatSound = function() {
 
   // زرار الكتم/التشغيل العام في الـ header
   window.toggleAIMute = function() {
-    var synth = window.speechSynthesis;
-    var btn   = document.getElementById('aiGlobalMuteBtn');
-
-    // ✅ لو الصوت شغّال دلوقتي → وقّفه بس (من غير ما تكتم)
-    if (synth && synth.speaking) {
-      if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
-      stopAllSpeech();
-      if (btn) { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.style.color = '#10b981'; btn.title = 'كتم الصوت'; }
-      showToast('⏹️ تم إيقاف القراءة');
-      return;
-    }
-
-    // مش شغّال → toggle الكتم
     aiIsMuted = !aiIsMuted;
+    const btn = document.getElementById('aiGlobalMuteBtn');
     if (btn) {
-      btn.innerHTML = aiIsMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+      btn.innerHTML = aiIsMuted
+        ? '<i class="fas fa-volume-mute"></i>'
+        : '<i class="fas fa-volume-up"></i>';
       btn.style.color = aiIsMuted ? '#ef4444' : '#10b981';
       btn.title = aiIsMuted ? 'تشغيل الصوت' : 'كتم الصوت';
     }
     if (aiIsMuted) {
-      if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
       stopAllSpeech();
       showToast('🔇 تم كتم الصوت');
     } else {
@@ -8501,7 +8488,7 @@ window.playChatSound = function() {
     }
   };
 
-  // زرار الصوت على كل رسالة من الـ AI — ✅ يستخدم aiSpeak (بالـ chunks)
+  // زرار الصوت على كل رسالة من الـ AI
   window.addAIMuteButton = function(msgEl, text) {
     if (!text || !text.trim()) return;
     const btn = document.createElement('button');
@@ -8509,19 +8496,55 @@ window.playChatSound = function() {
     btn.title = 'اقرأ الرسالة';
     btn.innerHTML = '<i class="fas fa-volume-up"></i>';
 
-    function handleClick(e) {
-      if (e && e.stopPropagation) e.stopPropagation();
+    btn.onclick = function(e) {
+      e.stopPropagation();
+
+      // لو الصوت مكتوم عالمياً
       if (aiIsMuted) {
         showToast('🔇 الصوت مكتوم — اضغط زرار الصوت في الأعلى لتشغيله');
         return;
       }
-      if (typeof window.aiSpeak === 'function') {
-        window.aiSpeak(text, btn);
-      }
-    }
 
-    btn.onclick = handleClick;
-    btn.addEventListener('touchend', function(e) { e.preventDefault(); handleClick(e); });
+      const synth = window.speechSynthesis;
+      if (!synth) { showToast('⚠️ الصوت غير مدعوم في هذا المتصفح'); return; }
+
+      // لو الزرار ده نفسه بيقرأ → وقّف
+      if (_currentSpeakingBtn === btn) {
+        stopAllSpeech();
+        return;
+      }
+
+      // وقّف أي قراءة تانية
+      stopAllSpeech();
+
+      // ابدأ القراءة
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'ar-SA';
+      utt.rate = 0.9;
+      utt.pitch = 1;
+
+      utt.onstart = function() {
+        btn.innerHTML = '<i class="fas fa-stop"></i>';
+        btn.classList.add('muted');
+        btn.title = 'إيقاف القراءة';
+        _currentSpeakingBtn = btn;
+      };
+
+      utt.onend = function() {
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        btn.classList.remove('muted');
+        btn.title = 'اقرأ الرسالة';
+        if (_currentSpeakingBtn === btn) _currentSpeakingBtn = null;
+      };
+
+      utt.onerror = function() {
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        btn.classList.remove('muted');
+        if (_currentSpeakingBtn === btn) _currentSpeakingBtn = null;
+      };
+
+      synth.speak(utt);
+    };
 
     msgEl.style.position = 'relative';
     msgEl.appendChild(btn);
@@ -12229,18 +12252,20 @@ function slStopAllAnimations() {
     return m || _selVoice;
   }
 
-  // ===== 6. دالة النطق الرئيسية — نسخة محسّنة لـ Android/Huawei =====
+  // ===== 6. دالة النطق الرئيسية — بتقسيم الجمل لضمان الاكتمال =====
+  var _speakQueue = [];
   var _speakActive = false;
-  var _chunkTimer  = null; // fallback timeout لو onend ما جاش
 
-  // ── تقسيم النص لجمل صغيرة ──
   function splitToChunks(text) {
-    var MAX = 100; // صغيّرنا عشان Android يتعامل معاها أحسن
+    var MAX = 160;
+    // بدل lookbehind (مش مدعوم على كل متصفحات الموبايل)
+    // نستبدل علامات الترقيم بعلامة + separator ثم نقسم
     var normalized = text
       .replace(/\r?\n+/g, ' . ')
-      .replace(/([.!?؟،,;:])\s*/g, '$1\u200B');
+      .replace(/([.!?؟،,;:])\s*/g, '$1\u200B'); // zero-width space بعد كل علامة
     var raw = normalized.split('\u200B');
-    var chunks = [], cur = '';
+    var chunks = [];
+    var cur = '';
     for (var i = 0; i < raw.length; i++) {
       var s = raw[i].trim();
       if (!s) continue;
@@ -12249,78 +12274,77 @@ function slStopAllAnimations() {
         cur = combined;
       } else {
         if (cur) chunks.push(cur);
+        // لو جملة واحدة أكبر من MAX — قسّمها على كلمات
         if (s.length > MAX) {
-          var words = s.split(/\s+/), part = '';
+          var words = s.split(/\s+/);
+          var part = '';
           for (var j = 0; j < words.length; j++) {
-            if (!words[j]) continue;
-            var trial = part ? part + ' ' + words[j] : words[j];
-            if (trial.length <= MAX) { part = trial; }
-            else { if (part) chunks.push(part); part = words[j]; }
+            var w = words[j];
+            if (!w) continue;
+            var trial = part ? part + ' ' + w : w;
+            if (trial.length <= MAX) {
+              part = trial;
+            } else {
+              if (part) chunks.push(part);
+              part = w;
+            }
           }
           cur = part;
-        } else { cur = s; }
+        } else {
+          cur = s;
+        }
       }
     }
     if (cur) chunks.push(cur);
     return chunks.filter(function(c){ return c.trim().length > 0; });
   }
 
-  // ── نطق chunk واحدة وتمرير للتالية ──
   function speakNextChunk(synth, chunks, idx, p, lang, voice, btn) {
-    // انتهى أو اتوقف
     if (idx >= chunks.length || !_speakActive) {
       _speakActive = false;
-      clearTimeout(_chunkTimer);
       if (btn) { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.classList.remove('muted'); }
       if (_speakBtn === btn) _speakBtn = null;
+      clearInterval(_huaweiT);
       return;
     }
-
-    var chunk = chunks[idx];
-    var utt   = new SpeechSynthesisUtterance(chunk);
-    utt.rate   = (p && p.voiceStyle && p.voiceStyle.rate)  || 0.9;
-    utt.pitch  = (p && p.voiceStyle && p.voiceStyle.pitch) || 1;
+    var utt = new SpeechSynthesisUtterance(chunks[idx]);
+    utt.rate   = p.voiceStyle.rate  || 0.9;
+    utt.pitch  = p.voiceStyle.pitch || 0.85;
     utt.volume = 1;
     utt.lang   = lang;
     if (voice) utt.voice = voice;
 
-    var done = false;
-    function advance() {
-      if (done) return;
-      done = true;
-      clearTimeout(_chunkTimer);
-      // delay صغير بين chunks يمنع Android من الاختناق
-      setTimeout(function() {
-        speakNextChunk(synth, chunks, idx + 1, p, lang, voice, btn);
-      }, 50);
+    var _moved = false;
+    function nextChunk() {
+      if (_moved) return; // نمنع الاستدعاء المزدوج
+      _moved = true;
+      clearInterval(_huaweiT);
+      speakNextChunk(synth, chunks, idx + 1, p, lang, voice, btn);
     }
 
-    utt.onend   = advance;
-    utt.onerror = advance; // نكمل حتى لو في error
+    utt.onend = function() { nextChunk(); };
 
-    // ── Fallback: لو onend ما جاش في الوقت المتوقع → نكمل قسراً ──
-    // تقدير الوقت: طول الـ chunk / سرعة القراءة + buffer
-    var estimatedMs = Math.max(2500, chunk.length * 80 + 1500);
-    clearTimeout(_chunkTimer);
-    _chunkTimer = setTimeout(function() {
-      if (!done && _speakActive) { advance(); }
-    }, estimatedMs);
+    utt.onerror = function(e) {
+      // نكمل دايماً حتى لو في error — ما نوقفش
+      nextChunk();
+    };
 
-    try { synth.speak(utt); } catch(e) { advance(); }
+    // Huawei / Android keep-alive
+    clearInterval(_huaweiT);
+    _huaweiT = setInterval(function() {
+      if (!synth.speaking) { clearInterval(_huaweiT); return; }
+      synth.pause(); synth.resume();
+    }, 5000);
+
+    try { synth.speak(utt); } catch(e) { nextChunk(); }
   }
 
-  // ── الدالة الرئيسية للنطق ──
   window.aiSpeak = function(text, btn) {
     var synth = window.speechSynthesis;
-    if (!synth || !text || !text.trim()) return;
-
-    // لو نفس الزرار والصوت شغّال → وقّف
-    if (_speakBtn === btn && (_speakActive || synth.speaking)) {
-      stopAiSpeech();
-      return;
-    }
-
-    stopAiSpeech(); // وقّف أي صوت قديم
+    if (!synth || !text) return;
+    // لو نفس الزرار والصوت شغّال — وقّف
+    if (_speakBtn === btn && (_speakActive || synth.speaking)) { stopAiSpeech(); return; }
+    stopAiSpeech();
 
     var p      = window.getCurrentAIPersona() || AI_PERSONAS[0];
     var lang   = detectLang(text);
@@ -12336,25 +12360,19 @@ function slStopAllAnimations() {
       btn.classList.add('muted');
     }
 
-    // cancel أولاً ثم نستنى 150ms عشان Android تتحضّر
     synth.cancel();
     setTimeout(function() {
-      if (!_speakActive) return; // ممكن يتوقف في الـ 150ms
       speakNextChunk(synth, chunks, 0, p, lang, voice, btn);
-    }, 150);
+    }, 80);
   };
 
-  // ── إيقاف كل الصوت ──
   function stopAiSpeech() {
-    _speakActive = false;
-    clearTimeout(_chunkTimer);
     var synth = window.speechSynthesis;
+    _speakActive = false;
     if (synth) { try { synth.cancel(); } catch(e){} }
-    if (_speakBtn) {
-      _speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      _speakBtn.classList.remove('muted');
-    }
+    if (_speakBtn) { _speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>'; _speakBtn.classList.remove('muted'); }
     _speakBtn = null;
+    clearInterval(_huaweiT);
   }
   window.stopAllAISpeech = stopAiSpeech;
 
@@ -12464,27 +12482,61 @@ function slStopAllAnimations() {
 
         var persona = window.getCurrentAIPersona() || AI_PERSONAS[0];
         var apiKey = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
-        var histMsgs = (typeof aiChatHistory !== 'undefined' && Array.isArray(aiChatHistory)) ? aiChatHistory.slice(-10) : [];
 
-        var payload = {
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: persona.systemPrompt },
-            ...histMsgs,
-            { role: 'user', content: userMsg }
-          ],
-          max_tokens: 2000,
-          temperature: 0.4
-        };
+        // ✅ نحسب طول الرسالة ونضبط الـ history بناءً عليها
+        var msgLen = userMsg.length;
+        var histLimit = msgLen > 2000 ? 2 : msgLen > 800 ? 4 : 8;
+        var histMsgs = (typeof aiChatHistory !== 'undefined' && Array.isArray(aiChatHistory))
+          ? aiChatHistory.slice(-histLimit) : [];
 
-        try {
+        // ✅ نختار الموديل والـ max_tokens بناءً على حجم الرسالة
+        var chosenModel = 'llama-3.3-70b-versatile';
+        var chosenMaxTokens = 8000; // رفعنا من 2000 → 8000
+
+        function buildPayload(model, maxTok, hist) {
+          return {
+            model: model,
+            messages: [
+              { role: 'system', content: persona.systemPrompt },
+              ...hist,
+              { role: 'user', content: userMsg }
+            ],
+            max_tokens: maxTok,
+            temperature: 0.4
+          };
+        }
+
+        // ✅ دالة الإرسال مع retry تلقائي لو فشل
+        async function sendWithRetry() {
+          // محاولة أولى بالموديل الكبير
           var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(buildPayload(chosenModel, chosenMaxTokens, histMsgs))
           });
           var data = await res.json();
-          var answer = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'عذراً، حدث خطأ.';
+
+          // لو فشل بسبب context overflow → retry بموديل أخف وبدون history
+          if (!res.ok && (res.status === 400 || res.status === 413 ||
+              (data && data.error && /context|length|token/i.test(JSON.stringify(data.error))))) {
+            console.warn('Context too large, retrying with llama-3.1-8b-instant and no history...');
+            var res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+              body: JSON.stringify(buildPayload('llama-3.1-8b-instant', 4000, []))
+            });
+            data = await res2.json();
+            res = res2;
+          }
+          return { res: res, data: data };
+        }
+
+        try {
+          var result = await sendWithRetry();
+          var res = result.res, data = result.data;
+          var answer = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || null;
+          if (!answer && data.error) throw new Error(JSON.stringify(data.error));
+          if (!answer) answer = 'عذراً، حدث خطأ.';
 
           if (typeof aiChatHistory !== 'undefined') {
             aiChatHistory.push({ role: 'user', content: userMsg });
@@ -12502,12 +12554,11 @@ function slStopAllAnimations() {
             var txt = aiDiv.querySelector('.message-content');
             if (txt) window.addAIMuteButton(aiDiv, txt.textContent);
 
-            // ✅ نطق تلقائي لو مش مكتوم
+            // نطق تلقائي لو مش مكتوم
             var isMuted = (typeof aiIsMuted !== 'undefined' && aiIsMuted);
-            if (!isMuted) {
-              // نبعت null عشان الصوت يشتغل بدون ربط بزرار معين
-              window.aiSpeak(answer, null);
-            }
+            var muteBtn = document.getElementById('aiMuteBtn');
+            if (muteBtn && muteBtn.classList.contains('muted')) isMuted = true;
+            if (!isMuted) window.aiSpeak(answer, null);
           }
         } catch(err) {
           if (typingEl) typingEl.remove();
