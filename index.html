@@ -64,7 +64,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -2420,90 +2419,153 @@ body {
 .empty-state i { color: #7c3aed !important; }
 .empty-state h3 { color: #ede9fe !important; font-weight: 800 !important; }
 
-/* ===== AI CHAT + GROUP CHAT — نفس شكل pac-composer ===== */
-/* الـ wrapper يبقى flex عادي زي pac-composer */
-#aiChatModal .chat-input-wrapper,
-#chatModal .chat-input-wrapper {
+/* === SHARED NEW CHAT INPUT LAYOUT === */
+/* Wrapper around card + actions row */
+.new-chat-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+/* The row below the card: send btn left, tool btns right */
+.new-chat-actions-row {
   display: flex !important;
   flex-direction: row !important;
-  align-items: flex-end !important;
-  gap: 0.5rem !important;
-  padding: 0.75rem 0.85rem !important;
-  border-radius: 18px !important;
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  box-shadow: none !important;
-}
-
-/* الـ textarea زي pac-composer textarea */
-#aiChatModal .chat-input,
-#chatModal .chat-input {
-  flex: 1 !important;
-  resize: none !important;
-  max-height: 120px !important;
-  min-height: 44px !important;
-  padding: 0.7rem 0.9rem !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  background: rgba(255,255,255,0.04) !important;
-  color: #fff !important;
-  font-family: 'Cairo', sans-serif !important;
-  font-size: 0.95rem !important;
-  line-height: 1.5 !important;
-  outline: none !important;
-  transition: border-color 0.2s !important;
-  direction: rtl !important;
-}
-#aiChatModal .chat-input:focus,
-#chatModal .chat-input:focus {
-  border-color: rgba(99,102,241,0.5) !important;
-  background: rgba(255,255,255,0.06) !important;
-}
-
-/* الـ send button زي pac-send-btn */
-#aiChatModal .chat-send-btn,
-#chatModal .chat-send-btn {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 50% !important;
-  border: none !important;
-  color: #fff !important;
-  font-size: 1.05rem !important;
-  cursor: pointer !important;
-  display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  transition: all 0.25s !important;
-  flex: 0 0 auto !important;
+  justify-content: space-between !important;
+  padding: 0.45rem 0.2rem 0 !important;
+  gap: 0.4rem !important;
 }
-#aiChatModal .chat-send-btn {
-  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
-  box-shadow: 0 6px 18px -6px rgba(6,182,212,0.6) !important;
+.pac-actions-row {
+  padding: 0.45rem 0.75rem 0 !important;
 }
-#chatModal .chat-send-btn {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-  box-shadow: 0 6px 18px -6px rgba(99,102,241,0.6) !important;
-}
-#aiChatModal .chat-send-btn:hover,
-#chatModal .chat-send-btn:hover {
-  transform: translateY(-2px) scale(1.04) !important;
-}
-
-/* الـ tool btns جنب التيكست */
-#aiChatModal .chat-input-left-btns,
-#chatModal .chat-input-left-btns {
+.new-chat-right-btns {
   display: flex !important;
   align-items: center !important;
   gap: 0.2rem !important;
-  flex: 0 0 auto !important;
+}
+.new-send-btn {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 14px !important;
+  font-size: 1.1rem !important;
+  flex-shrink: 0 !important;
 }
 
-/* الـ bottom row في الدردشة الجماعية يكون flex عادي */
-#chatModal .chat-input-bottom-row {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 0.3rem !important;
+/* === AI CHAT INPUT CARD === */
+#aiChatModal .chat-input-wrapper.ai-input-card {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 0.75rem 0.85rem !important;
+  border-radius: 22px !important;
+  gap: 0 !important;
+  background: rgba(20,16,35,0.95) !important;
+  border: 1px solid rgba(6,182,212,0.2) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+}
+#aiChatModal .ai-textarea {
+  width: 100% !important;
+  min-height: 48px !important;
+  max-height: 120px !important;
+  resize: none !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #e5e7eb !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  padding: 0 !important;
+  direction: rtl !important;
+  text-align: right !important;
+}
+#aiChatModal .ai-textarea::placeholder { color: rgba(255,255,255,0.28) !important; }
+#aiChatModal .ai-send-btn {
+  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+  box-shadow: 0 4px 18px rgba(6,182,212,0.5) !important;
+}
+#aiChatModal .ai-send-btn:hover {
+  transform: scale(1.07) !important;
+  box-shadow: 0 6px 24px rgba(6,182,212,0.7) !important;
+}
+
+/* === GROUP CHAT INPUT CARD === */
+#chatModal .chat-input-wrapper.group-input-card {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 0.75rem 0.85rem !important;
+  border-radius: 22px !important;
+  gap: 0 !important;
+  background: rgba(20,16,35,0.95) !important;
+  border: 1px solid rgba(99,102,241,0.2) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+}
+#chatModal .group-textarea {
+  width: 100% !important;
+  min-height: 48px !important;
+  max-height: 120px !important;
+  resize: none !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #e5e7eb !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  padding: 0 !important;
+  direction: rtl !important;
+  text-align: right !important;
+}
+#chatModal .group-textarea::placeholder { color: rgba(255,255,255,0.28) !important; }
+#chatModal .group-send-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.5) !important;
+}
+#chatModal .group-send-btn:hover {
+  transform: scale(1.07) !important;
+  box-shadow: 0 6px 24px rgba(99,102,241,0.7) !important;
+}
+
+/* === PRIVATE CHAT (PAC) INPUT CARD === */
+.pac-composer.pac-composer-card {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 0.75rem 0.85rem !important;
+  border-radius: 22px !important;
+  gap: 0 !important;
+  background: rgba(10,20,12,0.95) !important;
+  border: 1px solid rgba(34,197,94,0.2) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+  margin: 0.5rem 0.75rem 0 !important;
+}
+.pac-composer-card .pac-textarea-new {
+  width: 100% !important;
+  min-height: 48px !important;
+  max-height: 120px !important;
+  resize: none !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #e5e7eb !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  padding: 0 !important;
+  direction: rtl !important;
+  text-align: right !important;
+}
+.pac-composer-card .pac-textarea-new::placeholder { color: rgba(255,255,255,0.28) !important; }
+.pac-send-new.new-send-btn {
+  background: linear-gradient(135deg, #22c55e, #10b981) !important;
+  box-shadow: 0 4px 18px rgba(34,197,94,0.5) !important;
+  border-radius: 14px !important;
+  width: 50px !important;
+  height: 50px !important;
+  font-size: 1.1rem !important;
+}
+.pac-send-new.new-send-btn:hover {
+  transform: scale(1.07) !important;
+  box-shadow: 0 6px 24px rgba(34,197,94,0.7) !important;
 }
 
 /* === UPLOAD ZONE === */
@@ -2802,7 +2864,6 @@ body {
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu"></div>
         </div>
-
       </div>
     </div>
     <div class="center-action"></div>
@@ -2990,10 +3051,10 @@ body {
 
   <!-- جميع المودالات (نفس الكود الأصلي مع إبقاء الوظائف) -->
   <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
-  <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div id="aiFilePreview" style="display:none;padding:.5rem;margin-bottom:.5rem;background:rgba(6,182,212,.1);border-radius:10px;border:1px solid rgba(6,182,212,.3);position:relative"><span id="aiFilePreviewName" style="color:#06b6d4;font-size:.85rem"></span><button onclick="clearAIFile()" style="position:absolute;top:.3rem;left:.3rem;background:rgba(239,68,68,.3);border:none;color:#ef4444;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem"><i class="fas fa-times"></i></button></div><div class="chat-input-container"><div class="chat-input-wrapper"><div class="chat-input-left-btns"><button class="chat-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="إيقاف/تشغيل الصوت" style="color:#10b981"><i class="fas fa-volume-up"></i></button><button class="chat-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية" style="color:#06b6d4"><i class="fas fa-headphones"></i></button></div><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="chat-input" onkeypress="handleAIKeyPress(event)"></textarea><button class="chat-send-btn" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
+  <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div id="aiFilePreview" style="display:none;padding:.5rem;margin-bottom:.5rem;background:rgba(6,182,212,.1);border-radius:10px;border:1px solid rgba(6,182,212,.3);position:relative"><span id="aiFilePreviewName" style="color:#06b6d4;font-size:.85rem"></span><button onclick="clearAIFile()" style="position:absolute;top:.3rem;left:.3rem;background:rgba(239,68,68,.3);border:none;color:#ef4444;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem"><i class="fas fa-times"></i></button></div><div class="chat-input-container"><div class="new-chat-wrap"><div class="chat-input-wrapper ai-input-card"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="2" class="chat-input ai-textarea" onkeypress="handleAIKeyPress(event)"></textarea></div><div class="new-chat-actions-row"><button class="chat-send-btn ai-send-btn new-send-btn" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button><div class="new-chat-right-btns"><button class="chat-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="إيقاف/تشغيل الصوت" style="color:#10b981"><i class="fas fa-volume-up"></i></button><button class="chat-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية" style="color:#06b6d4"><i class="fas fa-headphones"></i></button></div></div></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions" style="flex-direction:column;gap:.5rem;align-items:flex-end"><button class="chat-action-btn" onclick="closeChat()" title="إغلاق" style="width:36px;height:36px;flex-shrink:0"><i class="fas fa-times"></i></button><button id="zoomJoinBtn" onclick="joinZoomFromChat()" title="انضم لمحاضرة Zoom" style="display:none;align-items:center;gap:.4rem;background:linear-gradient(135deg,#2d8cff,#1a6fd4);color:#fff;border:1px solid rgba(45,140,255,.7);border-radius:10px;padding:.45rem .75rem;cursor:pointer;white-space:nowrap;font-family:Cairo,sans-serif;font-weight:700;font-size:.8rem;box-shadow:0 0 12px rgba(45,140,255,.5);animation:zoomPulse 2s infinite"><i class="fas fa-video" style="font-size:.85rem"></i> انضم للمحاضرة</button>
-<style>@keyframes zoomPulse{0%,100%{box-shadow:0 0 10px rgba(45,140,255,.5)}50%{box-shadow:0 0 20px rgba(45,140,255,.85),0 0 35px rgba(45,140,255,.3)}}#zoomJoinBtn:hover{opacity:.9;transform:scale(1.04)}</style><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><div class="chat-input-bottom-row"><div class="chat-input-left-btns"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button></div><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
+<style>@keyframes zoomPulse{0%,100%{box-shadow:0 0 10px rgba(45,140,255,.5)}50%{box-shadow:0 0 20px rgba(45,140,255,.85),0 0 35px rgba(45,140,255,.3)}}#zoomJoinBtn:hover{opacity:.9;transform:scale(1.04)}</style><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper group-input-card"><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="2" class="chat-input group-textarea" onkeypress="handleKeyPress(event)"></textarea></div><div class="new-chat-actions-row"><button class="chat-send-btn group-send-btn new-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button><div class="new-chat-right-btns"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button></div></div></div></div></div>
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar" id="drawingToolbar">
   <!-- أدوات الرسم الأساسية -->
   <span class="db-tool-label">رسم</span>
@@ -6698,9 +6759,11 @@ function switchProgressTab(tab) {
       <!-- Conversation view (used by both user and admin) -->
       <div id="pacChatView" class="pac-chat-view">
         <div id="pacMessages" class="pac-messages"></div>
-        <div class="pac-composer">
-          <textarea id="pacInput" rows="1" placeholder="اكتب رسالتك للمشرفين..." onkeydown="pacInputKeydown(event)"></textarea>
-          <button class="pac-send-btn" onclick="pacSendMessage()" aria-label="إرسال"><i class="fas fa-paper-plane"></i></button>
+        <div class="pac-composer pac-composer-card">
+          <textarea id="pacInput" rows="2" placeholder="اكتب رسالتك للمشرفين..." onkeydown="pacInputKeydown(event)" class="pac-textarea-new"></textarea>
+        </div>
+        <div class="new-chat-actions-row pac-actions-row">
+          <button class="pac-send-btn pac-send-new new-send-btn" onclick="pacSendMessage()" aria-label="إرسال"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
       <!-- Login required notice -->
@@ -13794,267 +13857,6 @@ function slStopAllAnimations() {
     console.log('✅ TTS Guardian جاهز — مش هيوقف غير لما يخلص');
 
   }, 250);
-})();
-</script>
-
-<script>
-(function(){
-  var STORAGE_KEY = 'astronomy_fs_agreed';
-  var done = false;
-
-  function goFS(){
-    if(done) return;
-    done = true;
-    var el = document.documentElement;
-    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-    if(req) req.call(el).catch(function(){});
-  }
-
-  function attachOnce(){
-    ['click','touchstart','pointerdown'].forEach(function(ev){
-      document.addEventListener(ev, goFS, {once:true, passive:true});
-    });
-  }
-
-  // لو سبق ووافق → أول لمسة تشغل الفول سكرين مباشرة
-  if(localStorage.getItem(STORAGE_KEY) === '1'){
-    attachOnce();
-    return;
-  }
-
-  // أول مرة: نعرض overlay بسيط يطلب ضغطة واحدة فقط
-  var overlay = document.createElement('div');
-  overlay.id = 'fs-overlay';
-  overlay.style.cssText = [
-    'position:fixed','top:0','left:0','width:100%','height:100%',
-    'background:rgba(5,3,8,0.96)','z-index:99999',
-    'display:flex','flex-direction:column',
-    'align-items:center','justify-content:center',
-    'cursor:pointer','user-select:none','-webkit-tap-highlight-color:transparent'
-  ].join(';');
-  overlay.innerHTML = [
-    '<div style="text-align:center;padding:2rem;">',
-    '<div style="font-size:4rem;margin-bottom:1rem;">🌌</div>',
-    '<div style="font-family:Cairo,sans-serif;font-size:1.6rem;font-weight:900;',
-      'background:linear-gradient(135deg,#6366f1,#ec4899);',
-      '-webkit-background-clip:text;-webkit-text-fill-color:transparent;',
-      'margin-bottom:0.5rem;">اضغط للدخول</div>',
-    '<div style="font-family:Cairo,sans-serif;font-size:0.95rem;color:rgba(255,255,255,0.5);">',
-      'مرة واحدة فقط ✓</div>',
-    '</div>'
-  ].join('');
-
-  overlay.addEventListener('click', function(){
-    localStorage.setItem(STORAGE_KEY, '1');
-    overlay.remove();
-    goFS();
-  }, {once:true});
-
-  // أضف الـ overlay بعد ما الـ body يكون جاهز
-  if(document.body){
-    document.body.appendChild(overlay);
-  } else {
-    document.addEventListener('DOMContentLoaded', function(){
-      document.body.appendChild(overlay);
-    });
-  }
-})();
-</script>
-
-
-<!-- ============================================================
-     🔔 نظام الإشعارات FCM — Firebase Cloud Messaging
-     يشتغل زي واتساب ويوتيوب على الأندرويد
-     ============================================================ -->
-<script>
-(function() {
-  'use strict';
-
-  const FCM_VAPID_KEY = "BJjtQh1Yw1_k7jJ-hzfCc9YAhMVSwypqRLeoHUqt6CRAbs5xZnciUYzSEGuttZo4VL3pRTiQ3JBRe_Ovr2k6AdU";
-
-  let _messaging = null;
-  let _fcmToken   = null;
-
-  // ── تهيئة FCM ──────────────────────────────────────────────
-  async function initFCM(userId) {
-    if (!userId) return;
-    if (!('serviceWorker' in navigator)) { console.warn('[FCM] Service Worker غير مدعوم'); return; }
-    if (!('Notification' in window))     { console.warn('[FCM] الإشعارات غير مدعومة'); return; }
-
-    try {
-      // سجّل الـ Service Worker
-      const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      console.log('[FCM] Service Worker مسجّل ✅');
-
-      // جيب الـ messaging instance
-      _messaging = firebase.messaging();
-
-      // اطلب إذن المستخدم
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        console.log('[FCM] المستخدم رفض الإشعارات');
-        return;
-      }
-
-      // جيب الـ Token
-      _fcmToken = await _messaging.getToken({
-        vapidKey: FCM_VAPID_KEY,
-        serviceWorkerRegistration: swReg
-      });
-
-      if (!_fcmToken) { console.warn('[FCM] فشل الحصول على Token'); return; }
-
-      console.log('[FCM] Token:', _fcmToken);
-
-      // احفظ الـ Token في Firestore مع بيانات المستخدم
-      await db.collection('users').doc(userId).set({
-        fcmToken:        _fcmToken,
-        fcmTokenUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-        platform:        /android/i.test(navigator.userAgent) ? 'android' : 'web'
-      }, { merge: true });
-
-      console.log('[FCM] ✅ Token محفوظ في Firestore');
-
-      // استقبل الإشعارات لما التطبيق مفتوح (Foreground)
-      _messaging.onMessage(function(payload) {
-        console.log('[FCM] Foreground message:', payload);
-        const title = payload.notification?.title || 'إشعار جديد';
-        const body  = payload.notification?.body  || '';
-
-        // عرض Toast داخل التطبيق
-        if (typeof showToast === 'function') {
-          showToast('🔔 ' + title + (body ? ': ' + body : ''));
-        }
-
-        // عرض إشعار نظام حتى لو التطبيق مفتوح
-        if (Notification.permission === 'granted') {
-          navigator.serviceWorker.ready.then(function(reg) {
-            reg.showNotification(title, {
-              body:    body,
-              icon:    '/icon.png',
-              badge:   '/icon.png',
-              dir:     'rtl',
-              lang:    'ar',
-              vibrate: [200, 100, 200],
-              tag:     payload.data?.tag || 'foreground'
-            });
-          });
-        }
-      });
-
-    } catch (err) {
-      console.warn('[FCM] خطأ في التهيئة:', err);
-    }
-  }
-
-  // ── بعت إشعار دردشة (المشرف → الطالب أو العكس) ────────────
-  window.sendFCMChatNotification = async function(receiverId, messageText, senderName) {
-    if (!receiverId || !messageText) return;
-    try {
-      // جيب token المستلم من Firestore
-      const userDoc = await db.collection('users').doc(receiverId).get();
-      const receiverToken = userDoc.exists ? userDoc.data()?.fcmToken : null;
-      if (!receiverToken) {
-        console.log('[FCM] المستلم ليس لديه Token:', receiverId);
-        return;
-      }
-
-      // احفظ الإشعار في Firestore
-      // (Cloud Function أو Firestore Trigger هيبعته فعلياً)
-      await db.collection('fcm_queue').add({
-        to:        receiverToken,
-        toUserId:  receiverId,
-        title:     'رسالة من ' + (senderName || 'المشرف') + ' 📩',
-        body:      messageText.length > 100 ? messageText.slice(0, 97) + '...' : messageText,
-        tag:       'chat_' + receiverId,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        sent:      false
-      });
-
-      console.log('[FCM] ✅ إشعار دردشة تم إضافته للـ queue');
-    } catch (e) {
-      console.warn('[FCM] خطأ إشعار الدردشة:', e);
-    }
-  };
-
-  // ── بعت إشعار فيديو جديد لكل المستخدمين ───────────────────
-  window.sendFCMNewVideoNotification = async function(videoTitle) {
-    if (!isAdmin) return;
-    try {
-      await db.collection('fcm_broadcast').add({
-        title:     '🎬 فيديو جديد نزل!',
-        body:      videoTitle || 'محتوى جديد متاح الآن',
-        tag:       'new_video',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        sent:      false
-      });
-      if (typeof showToast === 'function') showToast('📢 تم جدولة الإشعار لكل المستخدمين');
-    } catch (e) {
-      console.warn('[FCM] خطأ إشعار الفيديو:', e);
-    }
-  };
-
-  // ── اربط مع دالة pacSendMessage الموجودة ──────────────────
-  // لما المشرف يبعت رسالة دردشة → ابعت إشعار للطالب
-  const _origPacSend = window.pacSendMessage;
-  window.pacSendMessage = async function() {
-    // استدعي الدالة الأصلية أولاً
-    if (typeof _origPacSend === 'function') {
-      await _origPacSend.apply(this, arguments);
-    }
-
-    // لو المشرف هو اللي بيبعت → ابعت إشعار للطالب
-    try {
-      const threadId   = window.pacCurrentThreadUserId;
-      const isAdminNow = window.pacIsAdminView;
-      if (isAdminNow && threadId && _fcmToken !== null) {
-        const input = document.getElementById('pacInput');
-        const text  = ''; // النص اتبعت خلاص في الدالة الأصلية
-        const adminName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'المشرف';
-        await window.sendFCMChatNotification(threadId, 'رسالة جديدة من المشرف', adminName);
-      }
-    } catch (e) { /* silent */ }
-  };
-
-  // ── شغّل FCM بعد لوجين المستخدم ──────────────────────────
-  function startFCMWhenReady() {
-    let tried = 0;
-    const iv = setInterval(function() {
-      tried++;
-      if (tried > 60) { clearInterval(iv); return; }
-
-      const uid = (typeof currentUserId !== 'undefined' && currentUserId)
-               || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
-
-      if (uid) {
-        clearInterval(iv);
-        initFCM(uid);
-      }
-    }, 1000);
-  }
-
-  // شغّل بعد تحميل الصفحة
-  if (document.readyState === 'complete') {
-    setTimeout(startFCMWhenReady, 2000);
-  } else {
-    window.addEventListener('load', function() {
-      setTimeout(startFCMWhenReady, 2000);
-    });
-  }
-
-  // اشترك على تغيير حالة المستخدم
-  setTimeout(function() {
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-      firebase.auth().onAuthStateChanged(function(user) {
-        if (user) {
-          setTimeout(function() { initFCM(user.uid); }, 1500);
-        }
-      });
-    }
-  }, 3000);
-
-  console.log('🔔 نظام FCM جاهز للتشغيل');
-
 })();
 </script>
 
