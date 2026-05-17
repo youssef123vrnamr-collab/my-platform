@@ -4047,9 +4047,12 @@ body {
   border-radius: 12px !important;
   padding: 0.55rem 0.75rem !important;
   margin-bottom: 0.5rem !important;
-  display: flex !important;
   align-items: center !important;
   gap: 0.5rem !important;
+  /* لا نحط display هنا عشان ما يكسرش display:none */
+}
+#aiFilePreview:not([style*="display:none"]):not([style*="display: none"]) {
+  display: flex !important;
 }
 #aiFilePreviewName {
   color: #22d3ee !important;
@@ -4526,7 +4529,7 @@ body {
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area"><div id="aiFilePreview" style="display:none;padding:.5rem;margin-bottom:.5rem;background:rgba(6,182,212,.1);border-radius:10px;border:1px solid rgba(6,182,212,.3);position:relative"><span id="aiFilePreviewName" style="color:#06b6d4;font-size:.85rem"></span><button onclick="clearAIFile()" style="position:absolute;top:.3rem;left:.3rem;background:rgba(239,68,68,.3);border:none;color:#ef4444;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem"><i class="fas fa-times"></i></button></div><div class="chat-input-container"><div class="chat-input-wrapper ai-input-card"><textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="2" class="chat-input ai-textarea" onkeypress="handleAIKeyPress(event)"></textarea><div class="chat-input-bottom-row ai-bottom-row"><div class="chat-input-left-btns"><button class="chat-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="إيقاف/تشغيل الصوت" style="color:#10b981"><i class="fas fa-volume-up"></i></button><button class="chat-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية" style="color:#06b6d4"><i class="fas fa-headphones"></i></button></div><button class="chat-send-btn ai-send-btn" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div></div>
   <div class="modal" id="voiceSettingsModal"><div class="modal-content" style="max-width:500px"><div class="modal-header"><h3><i class="fas fa-microphone-alt" style="color:#06b6d4"></i> إعدادات الصوت</h3><button class="modal-close" onclick="closeVoiceSettings()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الصوت</label><select id="voiceSelect" style="width:100%;padding:.75rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff"></select></div><div class="form-group"><label>سرعة الكلام: <span id="rateValue">1</span></label><input id="rateRange" type="range" style="width:100%" max="2" min="0.5" value="1" step="0.1"></div><div class="form-group"><label>طبقة الصوت: <span id="pitchValue">1</span></label><input id="pitchRange" type="range" style="width:100%" max="2" min="0" value="1" step="0.1"></div><button class="btn btn-success" onclick="saveVoiceSettings()" style="width:100%"><i class="fas fa-save"></i> حفظ الإعدادات</button></div></div></div>
   <div class="modal chat-modal" id="chatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar"><i class="fas fa-users"></i></div><div class="chat-header-text"><h3>دردشة Astronomy and space</h3><p><span class="online-dot"></span> <span id="onlineCount">جاري التحميل...</span></p></div></div><div class="chat-actions" style="flex-direction:column;gap:.5rem;align-items:flex-end"><button class="chat-action-btn" onclick="closeChat()" title="إغلاق" style="width:36px;height:36px;flex-shrink:0"><i class="fas fa-times"></i></button><button id="zoomJoinBtn" onclick="joinZoomFromChat()" title="انضم لمحاضرة Zoom" style="display:none;align-items:center;gap:.4rem;background:linear-gradient(135deg,#2d8cff,#1a6fd4);color:#fff;border:1px solid rgba(45,140,255,.7);border-radius:10px;padding:.45rem .75rem;cursor:pointer;white-space:nowrap;font-family:Cairo,sans-serif;font-weight:700;font-size:.8rem;box-shadow:0 0 12px rgba(45,140,255,.5);animation:zoomPulse 2s infinite"><i class="fas fa-video" style="font-size:.85rem"></i> انضم للمحاضرة</button>
-<style>@keyframes zoomPulse{0%,100%{box-shadow:0 0 10px rgba(45,140,255,.5)}50%{box-shadow:0 0 20px rgba(45,140,255,.85),0 0 35px rgba(45,140,255,.3)}}#zoomJoinBtn:hover{opacity:.9;transform:scale(1.04)}</style><button class="chat-action-btn call-btn" onclick="openGroupChatAdminPanel()" title="إدارة المحادثة" style="display:none" id="groupAdminBtn"><i class="fas fa-cog"></i></button></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><div class="chat-input-bottom-row"><div class="chat-input-left-btns"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button></div><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
+<style>@keyframes zoomPulse{0%,100%{box-shadow:0 0 10px rgba(45,140,255,.5)}50%{box-shadow:0 0 20px rgba(45,140,255,.85),0 0 35px rgba(45,140,255,.3)}}#zoomJoinBtn:hover{opacity:.9;transform:scale(1.04)}</style></div></div><div class="chat-messages" id="chatMessages"></div><div class="chat-input-area"><div class="recording-indicator" id="recordingIndicator"><span class="recording-dot"></span> <span>جاري التسجيل... <span id="recordingTime">0:00</span></span></div><div class="chat-input-wrapper"><textarea id="messageInput" placeholder="اكتب رسالتك..." rows="1" class="chat-input" onkeypress="handleKeyPress(event)"></textarea><div class="chat-input-bottom-row"><div class="chat-input-left-btns"><button class="chat-tool-btn" onclick='document.getElementById("imageInput").click()' title="إرسال صورة"><i class="fas fa-image"></i></button><input id="imageInput" type="file" style="display:none" accept="image/*" onchange="sendImage(this)"><button class="chat-tool-btn" onclick="toggleRecording()" id="recordBtn" title="رسالة صوتية"><i class="fas fa-microphone"></i></button></div><button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div></div></div></div></div>
   <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar" id="drawingToolbar">
   <!-- أدوات الرسم الأساسية -->
   <span class="db-tool-label">رسم</span>
@@ -4891,302 +4894,6 @@ body {
       .hero-stat { padding: 0.6rem 0.9rem; }
     }
     /* ===== END EPIC HERO ===== */
-
-    /* ══════════════════════════════════════════════════
-       ██████╗ ██████╗ ██████╗   LEGENDARY DESIGN SYSTEM
-       ╚════╝ ╚════╝ ╚════╝     إصدار أسطوري نهائي
-       ══════════════════════════════════════════════════ */
-
-    /* ─── Star field particles background ─── */
-    .bg-animation::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,.4) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 55% 60%, rgba(255,255,255,.35) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 70% 25%, rgba(255,255,255,.55) 0%, transparent 100%),
-        radial-gradient(1px 1px at 80% 75%, rgba(255,255,255,.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,.3) 0%, transparent 100%),
-        radial-gradient(1px 1px at 15% 80%, rgba(255,255,255,.45) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 35% 90%, rgba(167,139,250,.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 60% 85%, rgba(236,72,153,.5) 0%, transparent 100%),
-        radial-gradient(2px 2px at 85% 10%, rgba(99,102,241,.7) 0%, transparent 100%),
-        radial-gradient(1px 1px at 5% 55%, rgba(255,255,255,.25) 0%, transparent 100%),
-        radial-gradient(1px 1px at 45% 50%, rgba(255,255,255,.3) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 75% 95%, rgba(167,139,250,.4) 0%, transparent 100%);
-      animation: starsTwinkle 6s ease-in-out infinite alternate;
-      pointer-events: none;
-      z-index: 0;
-    }
-    @keyframes starsTwinkle {
-      0%   { opacity: .5; transform: scale(1); }
-      50%  { opacity: .9; transform: scale(1.02); }
-      100% { opacity: .6; transform: scale(1); }
-    }
-
-    /* ─── Aurora / Northern lights across the page ─── */
-    .bg-animation::after {
-      content: '';
-      position: absolute;
-      top: -30%;
-      left: -10%;
-      width: 120%;
-      height: 60%;
-      background: linear-gradient(
-        180deg,
-        transparent 0%,
-        rgba(99,102,241,.04) 30%,
-        rgba(139,92,246,.06) 50%,
-        rgba(236,72,153,.03) 70%,
-        transparent 100%
-      );
-      filter: blur(40px);
-      animation: auroraFloat 15s ease-in-out infinite alternate;
-      pointer-events: none;
-    }
-    @keyframes auroraFloat {
-      0%   { transform: translateX(-5%) skewY(-2deg); opacity: .6; }
-      50%  { transform: translateX(3%) skewY(1deg);  opacity: 1; }
-      100% { transform: translateX(-8%) skewY(-1deg); opacity: .7; }
-    }
-
-    /* ─── Navbar: legendary glass morphism ─── */
-    .navbar {
-      background: linear-gradient(
-        135deg,
-        rgba(15,10,26,.92) 0%,
-        rgba(26,16,37,.88) 50%,
-        rgba(20,12,34,.92) 100%
-      ) !important;
-      backdrop-filter: blur(28px) saturate(180%) brightness(1.05) !important;
-      -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.05) !important;
-      border-bottom: 1px solid rgba(99,102,241,.25) !important;
-      box-shadow:
-        0 1px 0 rgba(255,255,255,.04) inset,
-        0 8px 32px -12px rgba(0,0,0,.6),
-        0 0 60px -30px rgba(99,102,241,.3) !important;
-    }
-
-    /* ─── Brand logo: legendary glow ring ─── */
-    .brand-logo {
-      position: relative;
-      box-shadow:
-        0 0 0 2px rgba(99,102,241,.4),
-        0 0 0 4px rgba(236,72,153,.15),
-        0 0 20px rgba(99,102,241,.5),
-        0 0 40px rgba(99,102,241,.2) !important;
-      animation: legendaryGlow 4s ease-in-out infinite !important;
-    }
-    @keyframes legendaryGlow {
-      0%,100% {
-        box-shadow:
-          0 0 0 2px rgba(99,102,241,.5),
-          0 0 0 4px rgba(236,72,153,.2),
-          0 0 20px rgba(99,102,241,.5),
-          0 0 40px rgba(99,102,241,.15);
-      }
-      33% {
-        box-shadow:
-          0 0 0 2px rgba(236,72,153,.6),
-          0 0 0 4px rgba(99,102,241,.2),
-          0 0 25px rgba(236,72,153,.5),
-          0 0 50px rgba(236,72,153,.2);
-      }
-      66% {
-        box-shadow:
-          0 0 0 2px rgba(139,92,246,.6),
-          0 0 0 4px rgba(6,182,212,.2),
-          0 0 22px rgba(139,92,246,.5),
-          0 0 45px rgba(139,92,246,.15);
-      }
-    }
-
-    /* ─── Video cards: legendary hover effect ─── */
-    .video-card {
-      background: linear-gradient(145deg, rgba(26,16,37,.6), rgba(15,10,26,.8)) !important;
-      border: 1px solid rgba(255,255,255,.04) !important;
-      box-shadow: 0 4px 20px -8px rgba(0,0,0,.5) !important;
-      transition: all .4s cubic-bezier(.34,1.56,.64,1) !important;
-    }
-    .video-card:hover {
-      border-color: rgba(99,102,241,.4) !important;
-      box-shadow:
-        0 20px 60px -20px rgba(99,102,241,.5),
-        0 0 0 1px rgba(99,102,241,.2) !important;
-      transform: translateY(-8px) scale(1.02) !important;
-    }
-    .video-card:hover .video-thumbnail .bg-image {
-      transform: scale(1.08) !important;
-    }
-
-    /* ─── Play overlay: legendary gradient ─── */
-    .play-overlay {
-      background: linear-gradient(
-        135deg,
-        rgba(99,102,241,.4) 0%,
-        rgba(0,0,0,.2) 50%,
-        rgba(236,72,153,.3) 100%
-      ) !important;
-    }
-    .play-btn {
-      background: rgba(0,0,0,.7) !important;
-      backdrop-filter: blur(8px) !important;
-      border: 2px solid rgba(255,255,255,.7) !important;
-      box-shadow: 0 0 20px rgba(99,102,241,.6), 0 0 40px rgba(99,102,241,.2) !important;
-      transition: all .3s !important;
-    }
-    .video-card:hover .play-btn {
-      transform: scale(1.15) !important;
-      box-shadow: 0 0 30px rgba(236,72,153,.7), 0 0 60px rgba(236,72,153,.3) !important;
-      border-color: rgba(236,72,153,.9) !important;
-    }
-
-    /* ─── Buttons: legendary premium feel ─── */
-    .btn-primary {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a855f7 100%) !important;
-      box-shadow:
-        0 0 0 1px rgba(167,139,250,.3),
-        0 8px 24px -8px rgba(99,102,241,.6),
-        inset 0 1px 0 rgba(255,255,255,.2) !important;
-    }
-    .btn-primary:hover {
-      box-shadow:
-        0 0 0 1px rgba(167,139,250,.5),
-        0 12px 32px -8px rgba(139,92,246,.7),
-        inset 0 1px 0 rgba(255,255,255,.25),
-        0 0 40px rgba(99,102,241,.25) !important;
-    }
-
-    /* ─── Settings dropdown: legendary glass ─── */
-    .settings-menu {
-      background: rgba(15,10,26,.97) !important;
-      backdrop-filter: blur(32px) saturate(200%) !important;
-      -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-      border: 1px solid rgba(99,102,241,.3) !important;
-      box-shadow:
-        0 25px 50px rgba(0,0,0,.6),
-        0 0 0 1px rgba(255,255,255,.04) inset,
-        0 -1px 0 rgba(255,255,255,.06) inset !important;
-    }
-    .settings-menu-item:hover {
-      background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(139,92,246,.15)) !important;
-    }
-
-    /* ─── Hero section: legendary star glow text ─── */
-    .hero {
-      position: relative;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80%;
-      height: 80%;
-      background: radial-gradient(ellipse, rgba(99,102,241,.06) 0%, transparent 70%);
-      pointer-events: none;
-      animation: heroGlow 8s ease-in-out infinite;
-    }
-    @keyframes heroGlow {
-      0%,100% { opacity: .5; transform: translate(-50%, -50%) scale(1); }
-      50%      { opacity: 1;  transform: translate(-50%, -50%) scale(1.1); }
-    }
-
-    /* ─── Modal: legendary glass morphism ─── */
-    .modal-content {
-      background: linear-gradient(
-        145deg,
-        rgba(22,14,36,.98) 0%,
-        rgba(15,10,26,.99) 100%
-      ) !important;
-      border: 1px solid rgba(99,102,241,.2) !important;
-      box-shadow:
-        0 40px 80px rgba(0,0,0,.7),
-        0 0 0 1px rgba(255,255,255,.04) inset,
-        0 1px 0 rgba(255,255,255,.08) inset !important;
-      backdrop-filter: blur(20px) !important;
-    }
-
-    /* ─── Toast notifications: legendary glow ─── */
-    .toast {
-      background: linear-gradient(135deg, rgba(22,14,36,.98), rgba(15,10,26,.99)) !important;
-      border: 1px solid rgba(99,102,241,.5) !important;
-      box-shadow:
-        0 20px 40px rgba(0,0,0,.5),
-        0 0 0 1px rgba(255,255,255,.05) inset,
-        0 0 30px rgba(99,102,241,.2) !important;
-      backdrop-filter: blur(20px) !important;
-    }
-
-    /* ─── Floating chat buttons: legendary pulse ─── */
-    .chat-btn {
-      box-shadow:
-        0 0 0 0 rgba(99,102,241,.5),
-        0 10px 30px rgba(99,102,241,.5) !important;
-      animation: legendaryPulseBtn 3s ease-in-out infinite !important;
-    }
-    .ai-chat-btn {
-      box-shadow:
-        0 0 0 0 rgba(6,182,212,.5),
-        0 8px 25px rgba(6,182,212,.4) !important;
-      animation: legendaryPulseBtnCyan 3s ease-in-out infinite 1.5s !important;
-    }
-    @keyframes legendaryPulseBtn {
-      0%,100% {
-        box-shadow: 0 0 0 0 rgba(99,102,241,.5), 0 10px 30px rgba(99,102,241,.5);
-      }
-      50% {
-        box-shadow: 0 0 0 12px rgba(99,102,241,0), 0 15px 40px rgba(99,102,241,.7);
-      }
-    }
-    @keyframes legendaryPulseBtnCyan {
-      0%,100% {
-        box-shadow: 0 0 0 0 rgba(6,182,212,.5), 0 8px 25px rgba(6,182,212,.4);
-      }
-      50% {
-        box-shadow: 0 0 0 10px rgba(6,182,212,0), 0 12px 35px rgba(6,182,212,.6);
-      }
-    }
-
-    /* ─── Storage bar: legendary shimmer ─── */
-    .storage-bar-container {
-      background: linear-gradient(
-        135deg,
-        rgba(255,255,255,.04) 0%,
-        rgba(99,102,241,.06) 100%
-      ) !important;
-      border: 1px solid rgba(99,102,241,.2) !important;
-      box-shadow: 0 4px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.04) !important;
-    }
-
-    /* ─── Loading ring: legendary ─── */
-    .loader-ring {
-      box-shadow:
-        0 0 20px rgba(99,102,241,.5),
-        0 0 40px rgba(99,102,241,.2) !important;
-    }
-
-    /* ─── Form inputs: legendary focus glow ─── */
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: rgba(99,102,241,.7) !important;
-      box-shadow:
-        0 0 0 3px rgba(99,102,241,.15),
-        0 0 20px rgba(99,102,241,.1) !important;
-    }
-
-    /* ─── Mobile: hide X bar above input (the annoying one) ─── */
-    #aiChatModal .chat-input-area > .x-bar,
-    #aiChatModal > .x-strip,
-    .chat-modal .input-x-bar {
-      display: none !important;
-    }
-
   </style>
 
 <div class="modal" id="loginModal"><div class="modal-content" style="max-width:480px"><div class="modal-header"><h3><i class="fas fa-user-shield"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="adminLoginBody"></div></div></div>
@@ -14545,7 +14252,7 @@ function slStopAllAnimations() {
     if (avatar) avatar.innerHTML = p.emoji;
     var nameEl = document.querySelector('#aiChatModal .chat-header-text h3');
     if (nameEl) nameEl.textContent = p.name + ' ' + p.emoji;
-    /* persona button removed from header */
+    /* persona button removed */
   }
 
   // ===== 9. Patch sendAIMessage — DISABLED (replaced by unified fix at end of file) =====
@@ -15621,88 +15328,48 @@ function slStopAllAnimations() {
 })();
 </script>
 
-<!-- ===== إصلاح الكيبورد الشامل — يشتغل في كل الأوضاع ===== -->
+<!-- ===== إصلاح الكيبورد الشامل ===== -->
 <style>
-/* ── الإصلاح الأساسي: input area دايماً فوق الكيبورد ── */
-.chat-modal,
-.chat-modal.active {
-  position: fixed !important;
-  inset: 0 !important;
-  /* استخدام dvh + small viewport height معاً */
-  height: 100dvh !important;
-  height: 100svh !important;
-}
+/*
+  الحل: استخدام visualViewport height بدل dvh/svh
+  عشان الـ input area تبقى فوق الكيبورد في كل الأوضاع
+*/
 
+/* ── الـ chat container يملا الـ viewport الحقيقي ── */
 .chat-modal .chat-container,
 #chatModal .chat-container,
 #aiChatModal .chat-container {
   height: 100dvh !important;
+  /* fallback */
   height: 100svh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
 }
 
-/* الـ messages تاخد كل المساحة المتاحة */
-.chat-modal .chat-messages {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* Input area تبقى fixed في الأسفل دايماً */
+/* ── الـ input area دايماً في الآخر ── */
 .chat-modal .chat-input-area,
 #chatModal .chat-input-area,
 #aiChatModal .chat-input-area {
-  flex-shrink: 0 !important;
   position: sticky !important;
   bottom: 0 !important;
-  bottom: env(safe-area-inset-bottom, 0px) !important;
-  z-index: 50 !important;
-  padding-bottom: max(0.85rem, env(safe-area-inset-bottom)) !important;
-  /* منع الـ input من يختفي وراء الكيبورد */
+  z-index: 20 !important;
+  flex-shrink: 0 !important;
+  /* تأكد مش بتختفي وراء الكيبورد */
   transform: translateZ(0) !important;
   -webkit-transform: translateZ(0) !important;
-  will-change: transform !important;
 }
 
 #pacComposer {
-  flex-shrink: 0 !important;
   position: sticky !important;
   bottom: 0 !important;
-  z-index: 50 !important;
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+  z-index: 20 !important;
+  flex-shrink: 0 !important;
   transform: translateZ(0) !important;
   -webkit-transform: translateZ(0) !important;
-  will-change: transform !important;
 }
 
-/* pac modal */
-#privateAdminChatModal .pac-modal-content {
-  height: 100dvh !important;
-  height: 100svh !important;
-  max-height: 100dvh !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-#privateAdminChatModal .pac-body {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-#privateAdminChatModal .pac-chat-view {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-#pacMessages {
+/* ── الرسائل تملا المساحة المتاحة ── */
+.chat-modal .chat-messages,
+#chatModal .chat-messages,
+#aiChatModal .chat-messages {
   flex: 1 1 0 !important;
   min-height: 0 !important;
   overflow-y: auto !important;
@@ -15714,66 +15381,322 @@ function slStopAllAnimations() {
 (function(){
   'use strict';
 
-  var CHAT_CONFIGS = [
-    { modalId:'chatModal',             inputId:'messageInput', messagesId:'chatMessages'   },
-    { modalId:'privateAdminChatModal', inputId:'pacInput',     messagesId:'pacMessages'    },
-    { modalId:'aiChatModal',           inputId:'aiChatInput',  messagesId:'aiChatMessages' }
+  var CONFIGS = [
+    { modalId:'chatModal',             inputId:'messageInput', msgsId:'chatMessages'   },
+    { modalId:'privateAdminChatModal', inputId:'pacInput',     msgsId:'pacMessages'    },
+    { modalId:'aiChatModal',           inputId:'aiChatInput',  msgsId:'aiChatMessages' }
   ];
 
-  function scrollBottom(id) {
-    var el = document.getElementById(id);
-    if (el) requestAnimationFrame(function(){ el.scrollTop = el.scrollHeight; });
-  }
-
-  function activeCfg() {
-    for (var i = 0; i < CHAT_CONFIGS.length; i++) {
-      var m = document.getElementById(CHAT_CONFIGS[i].modalId);
-      if (m && m.classList.contains('active')) return CHAT_CONFIGS[i];
+  function getActive() {
+    for (var i = 0; i < CONFIGS.length; i++) {
+      var m = document.getElementById(CONFIGS[i].modalId);
+      if (m && m.classList.contains('active')) return CONFIGS[i];
     }
     return null;
   }
 
-  /* ── Visual Viewport API: يتفعل لما الكيبورد يطلع أو ينزل ── */
-  function onVPResize() {
-    var cfg = activeCfg();
+  function scrollMsgs(id) {
+    var el = document.getElementById(id);
+    if (el) requestAnimationFrame(function(){ el.scrollTop = el.scrollHeight; });
+  }
+
+  /*
+    الحل الأساسي:
+    لما الكيبورد يطلع الـ visualViewport.height بيصغر.
+    بنحسب الفرق ونضيفه كـ padding-bottom على الـ input area
+    عشان تطلع فوق الكيبورد بالظبط.
+  */
+  function applyKeyboardOffset() {
+    var cfg = getActive();
     if (!cfg) return;
-    /* نسكرول الرسائل لتحت بعد ما الكيبورد يظهر */
-    setTimeout(function(){ scrollBottom(cfg.messagesId); }, 80);
-    setTimeout(function(){ scrollBottom(cfg.messagesId); }, 300);
+
+    var vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    var wh  = window.innerHeight;
+    var offset = Math.max(0, wh - vvh);
+
+    // الـ containers
+    var modal = document.getElementById(cfg.modalId);
+    if (!modal) return;
+
+    var container = modal.querySelector('.chat-container, .pac-modal-content');
+    if (container) {
+      container.style.height = vvh + 'px';
+    }
+
+    // الـ input area
+    var inputArea = cfg.modalId === 'privateAdminChatModal'
+      ? document.getElementById('pacComposer')
+      : modal.querySelector('.chat-input-area');
+
+    if (inputArea) {
+      inputArea.style.paddingBottom = (offset > 0 ? offset + 10 : '') + 'px';
+    }
+
+    // سكرول للآخر
+    scrollMsgs(cfg.msgsId);
   }
 
+  function resetOffset() {
+    CONFIGS.forEach(function(cfg) {
+      var modal = document.getElementById(cfg.modalId);
+      if (!modal) return;
+      var container = modal.querySelector('.chat-container, .pac-modal-content');
+      if (container) container.style.height = '';
+      var inputArea = cfg.modalId === 'privateAdminChatModal'
+        ? document.getElementById('pacComposer')
+        : modal.querySelector('.chat-input-area');
+      if (inputArea) inputArea.style.paddingBottom = '';
+    });
+  }
+
+  // ── ربط الـ events ──
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', onVPResize);
-    window.visualViewport.addEventListener('scroll', onVPResize);
+    window.visualViewport.addEventListener('resize',  applyKeyboardOffset);
+    window.visualViewport.addEventListener('scroll',  applyKeyboardOffset);
   }
-  window.addEventListener('resize', onVPResize);
+  window.addEventListener('resize', applyKeyboardOffset);
 
-  /* ── لما الـ input يتفوكس: سكرول الرسائل لتحت ── */
   window.addEventListener('load', function(){
-    CHAT_CONFIGS.forEach(function(cfg){
+    CONFIGS.forEach(function(cfg){
       var inp = document.getElementById(cfg.inputId);
       if (!inp) return;
+
       inp.addEventListener('focus', function(){
-        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 150);
-        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 400);
-        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 700);
+        setTimeout(applyKeyboardOffset, 100);
+        setTimeout(applyKeyboardOffset, 350);
+        setTimeout(function(){ scrollMsgs(cfg.msgsId); }, 400);
       });
-      /* لما يكتب: سكرول لتحت */
-      inp.addEventListener('input', function(){
-        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 50);
+
+      inp.addEventListener('blur', function(){
+        setTimeout(function(){
+          if (!document.activeElement || document.activeElement.tagName !== 'TEXTAREA') {
+            resetOffset();
+          }
+        }, 200);
       });
     });
   });
 
-  /* ── لما المودال يتفتح: اصلح الـ height مرة تانية ── */
-  document.addEventListener('click', function(e){
-    setTimeout(function(){
-      var cfg = activeCfg();
-      if (cfg) scrollBottom(cfg.messagesId);
-    }, 200);
-  });
-
 })();
 </script>
+
+<!-- ══════════════════════════════════════════════
+     LEGENDARY DESIGN EFFECTS — أسطوري موت موت موت
+     ══════════════════════════════════════════════ -->
+<style>
+/* ─── نجوم في الخلفية ─── */
+.bg-animation::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at  8% 12%, rgba(255,255,255,.75) 0%, transparent 100%),
+    radial-gradient(1px   1px   at 22% 35%, rgba(255,255,255,.50) 0%, transparent 100%),
+    radial-gradient(2px   2px   at 38%  8%, rgba(167,139,250,.80) 0%, transparent 100%),
+    radial-gradient(1px   1px   at 50% 58%, rgba(255,255,255,.45) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 65% 22%, rgba(255,255,255,.65) 0%, transparent 100%),
+    radial-gradient(1px   1px   at 78% 70%, rgba(255,255,255,.40) 0%, transparent 100%),
+    radial-gradient(2px   2px   at 88% 42%, rgba(99,102,241,.85)  0%, transparent 100%),
+    radial-gradient(1px   1px   at 14% 78%, rgba(255,255,255,.55) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 30% 92%, rgba(167,139,250,.65) 0%, transparent 100%),
+    radial-gradient(1px   1px   at 55% 83%, rgba(236,72,153,.55)  0%, transparent 100%),
+    radial-gradient(1px   1px   at  4% 50%, rgba(255,255,255,.30) 0%, transparent 100%),
+    radial-gradient(2px   2px   at 72% 95%, rgba(139,92,246,.60)  0%, transparent 100%),
+    radial-gradient(1px   1px   at 45% 45%, rgba(255,255,255,.35) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 92% 18%, rgba(255,255,255,.70) 0%, transparent 100%),
+    radial-gradient(1px   1px   at 60%  3%, rgba(167,139,250,.50) 0%, transparent 100%);
+  animation: starsTwinkle 7s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes starsTwinkle {
+  0%   { opacity: .45; transform: scale(1); }
+  50%  { opacity: .95; transform: scale(1.015); }
+  100% { opacity: .55; transform: scale(1); }
+}
+
+/* ─── أورورا شمالية تتحرك ─── */
+.bg-animation::after {
+  content: '';
+  position: absolute;
+  top: -20%; left: -5%;
+  width: 110%; height: 55%;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(99,102,241,.05)  30%,
+    rgba(139,92,246,.07)  50%,
+    rgba(236,72,153,.04)  70%,
+    transparent 100%
+  );
+  filter: blur(50px);
+  animation: auroraFloat 18s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes auroraFloat {
+  0%   { transform: translateX(-6%)  skewY(-2deg); opacity: .55; }
+  50%  { transform: translateX( 4%)  skewY( 1deg); opacity: 1;   }
+  100% { transform: translateX(-9%)  skewY(-1deg); opacity: .65; }
+}
+
+/* ─── Navbar: deep glass ─── */
+.navbar {
+  background: linear-gradient(
+    135deg,
+    rgba(12, 7, 22, .94) 0%,
+    rgba(22,14,37, .90) 50%,
+    rgba(16, 9, 28, .94) 100%
+  ) !important;
+  backdrop-filter: blur(30px) saturate(190%) brightness(1.06) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(190%) brightness(1.06) !important;
+  border-bottom: 1px solid rgba(99,102,241,.22) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.05) inset,
+    0 10px 40px -12px rgba(0,0,0,.65),
+    0 0 80px -35px rgba(99,102,241,.35) !important;
+}
+
+/* ─── Brand logo: rainbow glow ring ─── */
+.brand-logo {
+  animation: rainbowGlowRing 5s ease-in-out infinite !important;
+}
+@keyframes rainbowGlowRing {
+  0%,100% {
+    box-shadow:
+      0 0 0 2px rgba(99,102,241,.6),
+      0 0 0 5px rgba(99,102,241,.12),
+      0 0 22px rgba(99,102,241,.55),
+      0 0 44px rgba(99,102,241,.18);
+  }
+  33% {
+    box-shadow:
+      0 0 0 2px rgba(236,72,153,.65),
+      0 0 0 5px rgba(236,72,153,.14),
+      0 0 26px rgba(236,72,153,.55),
+      0 0 52px rgba(236,72,153,.20);
+  }
+  66% {
+    box-shadow:
+      0 0 0 2px rgba(139,92,246,.65),
+      0 0 0 5px rgba(6,182,212,.12),
+      0 0 24px rgba(139,92,246,.55),
+      0 0 48px rgba(139,92,246,.18);
+  }
+}
+
+/* ─── كروت الفيديو: legendary hover ─── */
+.video-card {
+  background: linear-gradient(145deg, rgba(22,14,36,.65), rgba(12,7,22,.85)) !important;
+  border: 1px solid rgba(255,255,255,.05) !important;
+  transition: all .45s cubic-bezier(.34,1.56,.64,1) !important;
+  will-change: transform !important;
+}
+.video-card:hover {
+  border-color: rgba(99,102,241,.45) !important;
+  box-shadow:
+    0 22px 55px -18px rgba(99,102,241,.55),
+    0 0 0 1px rgba(99,102,241,.22),
+    0 0 80px -40px rgba(236,72,153,.3) !important;
+  transform: translateY(-10px) scale(1.025) !important;
+}
+.video-card:hover .play-btn {
+  box-shadow: 0 0 28px rgba(236,72,153,.8), 0 0 60px rgba(236,72,153,.35) !important;
+  border-color: rgba(236,72,153,.9) !important;
+  transform: scale(1.18) !important;
+}
+
+/* ─── أزرار float: legendary pulse ─── */
+.chat-btn {
+  animation: floatPurplePulse 3.5s ease-in-out infinite !important;
+}
+.ai-chat-btn {
+  animation: floatCyanPulse 3.5s ease-in-out infinite 1.75s !important;
+}
+@keyframes floatPurplePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,.6),  0 12px 32px rgba(99,102,241,.5); }
+  50%      { box-shadow: 0 0 0 14px rgba(99,102,241,0), 0 16px 44px rgba(99,102,241,.7); }
+}
+@keyframes floatCyanPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(6,182,212,.6),  0 10px 28px rgba(6,182,212,.45); }
+  50%      { box-shadow: 0 0 0 12px rgba(6,182,212,0), 0 14px 38px rgba(6,182,212,.65); }
+}
+
+/* ─── Settings menu: deep glass ─── */
+.settings-menu {
+  background: rgba(12,7,22,.98) !important;
+  backdrop-filter: blur(36px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(210%) !important;
+  border: 1px solid rgba(99,102,241,.28) !important;
+  box-shadow:
+    0 28px 55px rgba(0,0,0,.65),
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 -1px 0 rgba(255,255,255,.05) inset,
+    0 0 40px -15px rgba(99,102,241,.25) !important;
+}
+
+/* ─── Toast: legendary ─── */
+.toast {
+  background: linear-gradient(135deg, rgba(18,11,30,.98), rgba(12,7,22,.99)) !important;
+  border: 1px solid rgba(99,102,241,.45) !important;
+  box-shadow:
+    0 22px 44px rgba(0,0,0,.55),
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 0 35px rgba(99,102,241,.22) !important;
+  backdrop-filter: blur(24px) !important;
+}
+
+/* ─── Modals: premium glass ─── */
+.modal-content {
+  background: linear-gradient(
+    145deg,
+    rgba(20,12,33,.98) 0%,
+    rgba(12,7,22,.99) 100%
+  ) !important;
+  border: 1px solid rgba(99,102,241,.18) !important;
+  box-shadow:
+    0 44px 88px rgba(0,0,0,.72),
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 1px 0 rgba(255,255,255,.07) inset !important;
+}
+
+/* ─── hero hero glow ─── */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 90%; height: 80%;
+  background: radial-gradient(ellipse, rgba(99,102,241,.07) 0%, transparent 70%);
+  pointer-events: none;
+  animation: heroAmbient 9s ease-in-out infinite;
+  z-index: 0;
+}
+@keyframes heroAmbient {
+  0%,100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
+  50%      { opacity: 1;  transform: translate(-50%,-50%) scale(1.12); }
+}
+
+/* ─── أزرار: legendary glass feel ─── */
+.btn-primary {
+  background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 55%,#a855f7 100%) !important;
+  box-shadow:
+    0 0 0 1px rgba(167,139,250,.3),
+    0 8px 26px -8px rgba(99,102,241,.65),
+    inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+.btn-primary:hover {
+  box-shadow:
+    0 0 0 1px rgba(167,139,250,.5),
+    0 14px 34px -8px rgba(139,92,246,.75),
+    inset 0 1px 0 rgba(255,255,255,.28),
+    0 0 44px rgba(99,102,241,.28) !important;
+}
+
+/* ─── Loader ring: legendary ─── */
+.loader-ring {
+  box-shadow:
+    0 0 22px rgba(99,102,241,.55),
+    0 0 44px rgba(99,102,241,.22) !important;
+}
+</style>
 </body>
 </html>
