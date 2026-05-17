@@ -13798,7 +13798,9 @@ function slStopAllAnimations() {
 
 <script>
 (function(){
+  var STORAGE_KEY = 'astronomy_fs_agreed';
   var done = false;
+
   function goFS(){
     if(done) return;
     done = true;
@@ -13806,20 +13808,55 @@ function slStopAllAnimations() {
     var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
     if(req) req.call(el).catch(function(){});
   }
-  // أول تفاعل من المستخدم → فول سكرين فوري
-  ['click','touchstart','keydown','scroll','pointerdown'].forEach(function(ev){
-    document.addEventListener(ev, goFS, {once:true, passive:true});
-  });
-  // لو المتصفح سمح بدون تفاعل (نادر بس بيحصل في بعض البيئات)
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      if(!done){
-        var el = document.documentElement;
-        var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-        if(req) req.call(el).catch(function(){});
-      }
-    }, 500);
-  });
+
+  function attachOnce(){
+    ['click','touchstart','pointerdown'].forEach(function(ev){
+      document.addEventListener(ev, goFS, {once:true, passive:true});
+    });
+  }
+
+  // لو سبق ووافق → أول لمسة تشغل الفول سكرين مباشرة
+  if(localStorage.getItem(STORAGE_KEY) === '1'){
+    attachOnce();
+    return;
+  }
+
+  // أول مرة: نعرض overlay بسيط يطلب ضغطة واحدة فقط
+  var overlay = document.createElement('div');
+  overlay.id = 'fs-overlay';
+  overlay.style.cssText = [
+    'position:fixed','top:0','left:0','width:100%','height:100%',
+    'background:rgba(5,3,8,0.96)','z-index:99999',
+    'display:flex','flex-direction:column',
+    'align-items:center','justify-content:center',
+    'cursor:pointer','user-select:none','-webkit-tap-highlight-color:transparent'
+  ].join(';');
+  overlay.innerHTML = [
+    '<div style="text-align:center;padding:2rem;">',
+    '<div style="font-size:4rem;margin-bottom:1rem;">🌌</div>',
+    '<div style="font-family:Cairo,sans-serif;font-size:1.6rem;font-weight:900;',
+      'background:linear-gradient(135deg,#6366f1,#ec4899);',
+      '-webkit-background-clip:text;-webkit-text-fill-color:transparent;',
+      'margin-bottom:0.5rem;">اضغط للدخول</div>',
+    '<div style="font-family:Cairo,sans-serif;font-size:0.95rem;color:rgba(255,255,255,0.5);">',
+      'مرة واحدة فقط ✓</div>',
+    '</div>'
+  ].join('');
+
+  overlay.addEventListener('click', function(){
+    localStorage.setItem(STORAGE_KEY, '1');
+    overlay.remove();
+    goFS();
+  }, {once:true});
+
+  // أضف الـ overlay بعد ما الـ body يكون جاهز
+  if(document.body){
+    document.body.appendChild(overlay);
+  } else {
+    document.addEventListener('DOMContentLoaded', function(){
+      document.body.appendChild(overlay);
+    });
+  }
 })();
 </script>
 </body>
