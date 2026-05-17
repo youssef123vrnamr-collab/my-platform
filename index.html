@@ -2801,6 +2801,7 @@ body {
           <button class="settings-icon-btn" id="settingsDropdownBtn"><i class="fas fa-cog"></i></button>
           <div class="settings-menu" id="settingsMenu"></div>
         </div>
+
       </div>
     </div>
     <div class="center-action"></div>
@@ -13795,5 +13796,31 @@ function slStopAllAnimations() {
 })();
 </script>
 
+<script>
+(function(){
+  var done = false;
+  function goFS(){
+    if(done) return;
+    done = true;
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if(req) req.call(el).catch(function(){});
+  }
+  // أول تفاعل من المستخدم → فول سكرين فوري
+  ['click','touchstart','keydown','scroll','pointerdown'].forEach(function(ev){
+    document.addEventListener(ev, goFS, {once:true, passive:true});
+  });
+  // لو المتصفح سمح بدون تفاعل (نادر بس بيحصل في بعض البيئات)
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      if(!done){
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+        if(req) req.call(el).catch(function(){});
+      }
+    }, 500);
+  });
+})();
+</script>
 </body>
 </html>
