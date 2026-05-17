@@ -244,7 +244,7 @@
       transform: scale(1.05);
       box-shadow: 0 0 15px #6366f1;
     }
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 9999; padding: 0 !important; margin: 0 !important; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 9999; padding: 0 !important; margin: 0 !important; overscroll-behavior: none; }
     .modal.active { display: flex; animation: fadeIn .3s; }
     .course-section { margin-bottom: 2rem; }
     .course-section-header { display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin: 0 .25rem 1rem; padding: .85rem 1.1rem; background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.12)); border: 1px solid rgba(139,92,246,.35); border-radius: 14px; backdrop-filter: blur(8px); }
@@ -422,9 +422,9 @@
     .chat-btn { position: fixed; bottom: 2rem; left: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(99,102,241,.5); z-index: 999; transition: all .3s; display: flex; align-items: center; justify-content: center; }
     .chat-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 40px rgba(99,102,241,.7); }
     .chat-btn .notification-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: .75rem; display: flex; align-items: center; justify-content: center; font-weight: 700; animation: pulse 2s infinite; }
-    .chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 10000; padding: 0 !important; margin: 0 !important; }
+    .chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 10000; padding: 0 !important; margin: 0 !important; overscroll-behavior: none; }
     .chat-modal.active { display: flex; }
-    .chat-container { background: #0f0a1a; border-radius: 0; width: 100%; height: 100vh; max-width: none; border: none; display: flex; flex-direction: column; overflow: hidden; }
+    .chat-container { background: #0f0a1a; border-radius: 0; width: 100%; height: 100vh; max-width: none; border: none; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
     .chat-header { padding: 1.5rem; background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(236,72,153,.2)); border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; align-items: center; }
     .chat-header-info { display: flex; align-items: center; gap: 1rem; }
     .chat-avatar { width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; }
@@ -4665,8 +4665,8 @@ async function updateAdminUI() {
   function renderAIKnowledgeList() { let list = document.getElementById("aiKnowledgeList"); if (!list) return; if (aiKnowledgeBase.length === 0) list.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">لا توجد معلومات بعد</p>'; else list.innerHTML = aiKnowledgeBase.map(k => `<div class="ai-knowledge-item"><div class="ai-knowledge-content"><div class="ai-knowledge-question"><i class="fas fa-question-circle"></i> ${escapeHtml(k.question)}</div><div class="ai-knowledge-answer">${escapeHtml(k.answer)}</div></div><button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${k.id}')" title="حذف"><i class="fas fa-trash"></i></button></div>`).join(""); }
   function saveAIKnowledge() { let q = document.getElementById("aiQuestionInput").value.trim(); let a = document.getElementById("aiAnswerInput").value.trim(); if (!q || !a) { showToast("⚠️ أدخل السؤال والإجابة"); return; } db.collection("ai_knowledge").add({ question: q, answer: a, createdBy: currentUser || "مشرف", createdAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم تعليم الذكاء الاصطناعي"); document.getElementById("aiQuestionInput").value = ""; document.getElementById("aiAnswerInput").value = ""; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحفظ"); }); }
   function deleteAIKnowledge(id) { if (confirm("هل أنت متأكد؟")) db.collection("ai_knowledge").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
-  function openAIChat() { document.getElementById("aiChatModal").classList.add("active"); let msgs = document.getElementById("aiChatMessages"); if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai"); setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100); }
-  function closeAIChat() { document.getElementById("aiChatModal").classList.remove("active"); }
+  function openAIChat() { document.getElementById("aiChatModal").classList.add("active"); document.body.style.overflow = "hidden"; let msgs = document.getElementById("aiChatMessages"); if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai"); setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100); }
+  function closeAIChat() { document.getElementById("aiChatModal").classList.remove("active"); document.body.style.overflow = ""; }
   function clearAIChat() { if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
   async function sendAIMessage() {
     let input = document.getElementById("aiChatInput");
@@ -4811,6 +4811,7 @@ async function updateAdminUI() {
   // التأكد من وجود مستخدم مسجل الدخول بحساب Google
   if (googleUser && currentUserId) {
     document.getElementById("chatModal").classList.add("active");
+    document.body.style.overflow = "hidden";
     document.getElementById("chatBadge").style.display = "none";
     unreadMessages = 0;
     loadMessages();
@@ -4823,7 +4824,7 @@ async function updateAdminUI() {
     googleLogin();
   }
 }
-  function closeChat() { document.getElementById("chatModal").classList.remove("active"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
+  function closeChat() { document.getElementById("chatModal").classList.remove("active"); document.body.style.overflow = ""; if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
   async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   loadUserDashboard();
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
