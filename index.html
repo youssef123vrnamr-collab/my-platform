@@ -2286,7 +2286,23 @@ body {
   border-radius: 10px !important;
   width: 38px !important;
   height: 38px !important;
+  overflow: hidden;
+  position: relative;
 }
+
+@keyframes sendFly {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  40%  { transform: translate(14px, -14px) rotate(-35deg) scale(0.7); opacity: 0; }
+  41%  { transform: translate(-14px, 14px) rotate(-35deg) scale(0.5); opacity: 0; }
+  70%  { transform: translate(0, 0) rotate(0deg) scale(1.2); opacity: 1; }
+  85%  { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.chat-send-btn.sending i {
+  animation: sendFly 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 
 /* === EMPTY STATE === */
 .empty-state { color: var(--muted) !important; }
@@ -4672,6 +4688,8 @@ async function updateAdminUI() {
     let input = document.getElementById("aiChatInput");
     let text = input.value.trim();
     if (!text) return;
+    const sendBtn = document.querySelector("#aiChatModal .chat-send-btn");
+    if (sendBtn) { sendBtn.classList.remove("sending"); void sendBtn.offsetWidth; sendBtn.classList.add("sending"); setTimeout(() => sendBtn.classList.remove("sending"), 600); }
     displayAIMessage(text, "user");
     input.value = "";
     try {
@@ -4837,6 +4855,8 @@ async function updateAdminUI() {
   if (!inp) return;
   let text = inp.value.trim();
   if (!text) return;
+  const sendBtn = document.querySelector("#chatModal .chat-send-btn");
+  if (sendBtn) { sendBtn.classList.remove("sending"); void sendBtn.offsetWidth; sendBtn.classList.add("sending"); setTimeout(() => sendBtn.classList.remove("sending"), 600); }
   // يقبل Google أو الاسم+هاتف العادي
   const senderName = (googleUser && googleUser.displayName) || currentUser || "مجهول";
   const senderPhone = (googleUser && googleUser.phoneNumber) || currentUserPhone || "";
