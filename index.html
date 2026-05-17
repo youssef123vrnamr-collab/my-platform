@@ -64,6 +64,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -13798,7 +13799,9 @@ function slStopAllAnimations() {
 
 <script>
 (function(){
+  var STORAGE_KEY = 'astronomy_fs_agreed';
   var done = false;
+
   function goFS(){
     if(done) return;
     done = true;
@@ -13806,21 +13809,254 @@ function slStopAllAnimations() {
     var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
     if(req) req.call(el).catch(function(){});
   }
-  // أول تفاعل من المستخدم → فول سكرين فوري
-  ['click','touchstart','keydown','scroll','pointerdown'].forEach(function(ev){
-    document.addEventListener(ev, goFS, {once:true, passive:true});
-  });
-  // لو المتصفح سمح بدون تفاعل (نادر بس بيحصل في بعض البيئات)
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      if(!done){
-        var el = document.documentElement;
-        var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-        if(req) req.call(el).catch(function(){});
-      }
-    }, 500);
-  });
+
+  function attachOnce(){
+    ['click','touchstart','pointerdown'].forEach(function(ev){
+      document.addEventListener(ev, goFS, {once:true, passive:true});
+    });
+  }
+
+  // لو سبق ووافق → أول لمسة تشغل الفول سكرين مباشرة
+  if(localStorage.getItem(STORAGE_KEY) === '1'){
+    attachOnce();
+    return;
+  }
+
+  // أول مرة: نعرض overlay بسيط يطلب ضغطة واحدة فقط
+  var overlay = document.createElement('div');
+  overlay.id = 'fs-overlay';
+  overlay.style.cssText = [
+    'position:fixed','top:0','left:0','width:100%','height:100%',
+    'background:rgba(5,3,8,0.96)','z-index:99999',
+    'display:flex','flex-direction:column',
+    'align-items:center','justify-content:center',
+    'cursor:pointer','user-select:none','-webkit-tap-highlight-color:transparent'
+  ].join(';');
+  overlay.innerHTML = [
+    '<div style="text-align:center;padding:2rem;">',
+    '<div style="font-size:4rem;margin-bottom:1rem;">🌌</div>',
+    '<div style="font-family:Cairo,sans-serif;font-size:1.6rem;font-weight:900;',
+      'background:linear-gradient(135deg,#6366f1,#ec4899);',
+      '-webkit-background-clip:text;-webkit-text-fill-color:transparent;',
+      'margin-bottom:0.5rem;">اضغط للدخول</div>',
+    '<div style="font-family:Cairo,sans-serif;font-size:0.95rem;color:rgba(255,255,255,0.5);">',
+      'مرة واحدة فقط ✓</div>',
+    '</div>'
+  ].join('');
+
+  overlay.addEventListener('click', function(){
+    localStorage.setItem(STORAGE_KEY, '1');
+    overlay.remove();
+    goFS();
+  }, {once:true});
+
+  // أضف الـ overlay بعد ما الـ body يكون جاهز
+  if(document.body){
+    document.body.appendChild(overlay);
+  } else {
+    document.addEventListener('DOMContentLoaded', function(){
+      document.body.appendChild(overlay);
+    });
+  }
 })();
 </script>
+
+
+<!-- ============================================================
+     🔔 نظام الإشعارات FCM — Firebase Cloud Messaging
+     يشتغل زي واتساب ويوتيوب على الأندرويد
+     ============================================================ -->
+<script>
+(function() {
+  'use strict';
+
+  const FCM_VAPID_KEY = "BJjtQh1Yw1_k7jJ-hzfCc9YAhMVSwypqRLeoHUqt6CRAbs5xZnciUYzSEGuttZo4VL3pRTiQ3JBRe_Ovr2k6AdU";
+
+  let _messaging = null;
+  let _fcmToken   = null;
+
+  // ── تهيئة FCM ──────────────────────────────────────────────
+  async function initFCM(userId) {
+    if (!userId) return;
+    if (!('serviceWorker' in navigator)) { console.warn('[FCM] Service Worker غير مدعوم'); return; }
+    if (!('Notification' in window))     { console.warn('[FCM] الإشعارات غير مدعومة'); return; }
+
+    try {
+      // سجّل الـ Service Worker
+      const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      console.log('[FCM] Service Worker مسجّل ✅');
+
+      // جيب الـ messaging instance
+      _messaging = firebase.messaging();
+
+      // اطلب إذن المستخدم
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        console.log('[FCM] المستخدم رفض الإشعارات');
+        return;
+      }
+
+      // جيب الـ Token
+      _fcmToken = await _messaging.getToken({
+        vapidKey: FCM_VAPID_KEY,
+        serviceWorkerRegistration: swReg
+      });
+
+      if (!_fcmToken) { console.warn('[FCM] فشل الحصول على Token'); return; }
+
+      console.log('[FCM] Token:', _fcmToken);
+
+      // احفظ الـ Token في Firestore مع بيانات المستخدم
+      await db.collection('users').doc(userId).set({
+        fcmToken:        _fcmToken,
+        fcmTokenUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+        platform:        /android/i.test(navigator.userAgent) ? 'android' : 'web'
+      }, { merge: true });
+
+      console.log('[FCM] ✅ Token محفوظ في Firestore');
+
+      // استقبل الإشعارات لما التطبيق مفتوح (Foreground)
+      _messaging.onMessage(function(payload) {
+        console.log('[FCM] Foreground message:', payload);
+        const title = payload.notification?.title || 'إشعار جديد';
+        const body  = payload.notification?.body  || '';
+
+        // عرض Toast داخل التطبيق
+        if (typeof showToast === 'function') {
+          showToast('🔔 ' + title + (body ? ': ' + body : ''));
+        }
+
+        // عرض إشعار نظام حتى لو التطبيق مفتوح
+        if (Notification.permission === 'granted') {
+          navigator.serviceWorker.ready.then(function(reg) {
+            reg.showNotification(title, {
+              body:    body,
+              icon:    '/icon.png',
+              badge:   '/icon.png',
+              dir:     'rtl',
+              lang:    'ar',
+              vibrate: [200, 100, 200],
+              tag:     payload.data?.tag || 'foreground'
+            });
+          });
+        }
+      });
+
+    } catch (err) {
+      console.warn('[FCM] خطأ في التهيئة:', err);
+    }
+  }
+
+  // ── بعت إشعار دردشة (المشرف → الطالب أو العكس) ────────────
+  window.sendFCMChatNotification = async function(receiverId, messageText, senderName) {
+    if (!receiverId || !messageText) return;
+    try {
+      // جيب token المستلم من Firestore
+      const userDoc = await db.collection('users').doc(receiverId).get();
+      const receiverToken = userDoc.exists ? userDoc.data()?.fcmToken : null;
+      if (!receiverToken) {
+        console.log('[FCM] المستلم ليس لديه Token:', receiverId);
+        return;
+      }
+
+      // احفظ الإشعار في Firestore
+      // (Cloud Function أو Firestore Trigger هيبعته فعلياً)
+      await db.collection('fcm_queue').add({
+        to:        receiverToken,
+        toUserId:  receiverId,
+        title:     'رسالة من ' + (senderName || 'المشرف') + ' 📩',
+        body:      messageText.length > 100 ? messageText.slice(0, 97) + '...' : messageText,
+        tag:       'chat_' + receiverId,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        sent:      false
+      });
+
+      console.log('[FCM] ✅ إشعار دردشة تم إضافته للـ queue');
+    } catch (e) {
+      console.warn('[FCM] خطأ إشعار الدردشة:', e);
+    }
+  };
+
+  // ── بعت إشعار فيديو جديد لكل المستخدمين ───────────────────
+  window.sendFCMNewVideoNotification = async function(videoTitle) {
+    if (!isAdmin) return;
+    try {
+      await db.collection('fcm_broadcast').add({
+        title:     '🎬 فيديو جديد نزل!',
+        body:      videoTitle || 'محتوى جديد متاح الآن',
+        tag:       'new_video',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        sent:      false
+      });
+      if (typeof showToast === 'function') showToast('📢 تم جدولة الإشعار لكل المستخدمين');
+    } catch (e) {
+      console.warn('[FCM] خطأ إشعار الفيديو:', e);
+    }
+  };
+
+  // ── اربط مع دالة pacSendMessage الموجودة ──────────────────
+  // لما المشرف يبعت رسالة دردشة → ابعت إشعار للطالب
+  const _origPacSend = window.pacSendMessage;
+  window.pacSendMessage = async function() {
+    // استدعي الدالة الأصلية أولاً
+    if (typeof _origPacSend === 'function') {
+      await _origPacSend.apply(this, arguments);
+    }
+
+    // لو المشرف هو اللي بيبعت → ابعت إشعار للطالب
+    try {
+      const threadId   = window.pacCurrentThreadUserId;
+      const isAdminNow = window.pacIsAdminView;
+      if (isAdminNow && threadId && _fcmToken !== null) {
+        const input = document.getElementById('pacInput');
+        const text  = ''; // النص اتبعت خلاص في الدالة الأصلية
+        const adminName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'المشرف';
+        await window.sendFCMChatNotification(threadId, 'رسالة جديدة من المشرف', adminName);
+      }
+    } catch (e) { /* silent */ }
+  };
+
+  // ── شغّل FCM بعد لوجين المستخدم ──────────────────────────
+  function startFCMWhenReady() {
+    let tried = 0;
+    const iv = setInterval(function() {
+      tried++;
+      if (tried > 60) { clearInterval(iv); return; }
+
+      const uid = (typeof currentUserId !== 'undefined' && currentUserId)
+               || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
+
+      if (uid) {
+        clearInterval(iv);
+        initFCM(uid);
+      }
+    }, 1000);
+  }
+
+  // شغّل بعد تحميل الصفحة
+  if (document.readyState === 'complete') {
+    setTimeout(startFCMWhenReady, 2000);
+  } else {
+    window.addEventListener('load', function() {
+      setTimeout(startFCMWhenReady, 2000);
+    });
+  }
+
+  // اشترك على تغيير حالة المستخدم
+  setTimeout(function() {
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+          setTimeout(function() { initFCM(user.uid); }, 1500);
+        }
+      });
+    }
+  }, 3000);
+
+  console.log('🔔 نظام FCM جاهز للتشغيل');
+
+})();
+</script>
+
 </body>
 </html>
