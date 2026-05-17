@@ -1028,7 +1028,7 @@
     .pac-login-notice h4 { color:#fff; margin:.5rem 0; font-weight:800; }
 
     @media (max-width: 600px) {
-      .pac-modal-content { width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; }
+      .pac-modal-content { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
       .pac-header { padding: .85rem 1rem; }
       .pac-header h3 { font-size: 1rem; }
       .pac-sub { font-size: .72rem; }
@@ -2278,6 +2278,32 @@ body {
 .message.received {
   background: rgba(255,255,255,0.07) !important;
   border: 1px solid var(--border) !important;
+}
+/* ===== KEYBOARD / DVH FIX ===== */
+/* استخدام dvh بدل vh عشان الـ browser toolbar يتحسب صح */
+.chat-modal .chat-container,
+#chatModal .chat-container,
+#aiChatModal .chat-container {
+  height: 100dvh !important;
+  height: -webkit-fill-available;
+}
+/* الـ input area تبقى sticky في الآخر */
+.chat-modal .chat-input-area,
+#chatModal .chat-input-area,
+#aiChatModal .chat-input-area {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
+}
+/* pac modal */
+.pac-modal-content {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+}
+#pacComposer {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
 }
 /* ===== CLAUDE-STYLE CHAT INPUT ===== */
 .chat-input-area {
@@ -13773,109 +13799,45 @@ function slStopAllAnimations() {
 (function(){
   'use strict';
 
-  // الـ IDs بتاعت الـ modals وال inputs جواها
   var CHAT_CONFIGS = [
-    { modalId: 'chatModal',             inputId: 'messageInput',  composerSel: '.chat-input-area',   messagesId: 'chatMessages' },
-    { modalId: 'privateAdminChatModal', inputId: 'pacInput',      composerSel: '#pacComposer',        messagesId: 'pacMessages' },
-    { modalId: 'aiChatModal',           inputId: 'aiChatInput',   composerSel: '.chat-input-area',   messagesId: 'aiChatMessages' }
+    { modalId:'chatModal',             inputId:'messageInput', composerSel:'.chat-input-area', messagesId:'chatMessages'   },
+    { modalId:'privateAdminChatModal', inputId:'pacInput',     composerSel:'#pacComposer',     messagesId:'pacMessages'    },
+    { modalId:'aiChatModal',           inputId:'aiChatInput',  composerSel:'.chat-input-area', messagesId:'aiChatMessages' }
   ];
 
-  function scrollMsgsToBottom(messagesId) {
-    var el = document.getElementById(messagesId);
-    if (el) el.scrollTop = el.scrollHeight;
+  function scrollBottom(id) {
+    var el = document.getElementById(id);
+    if (el) { el.scrollTop = el.scrollHeight; }
   }
 
-  function handleVP(cfg) {
-    if (!window.visualViewport) return;
-    var modal = document.getElementById(cfg.modalId);
-    if (!modal || !modal.classList.contains('active')) return;
+  function activeCfg() {
+    for (var i = 0; i < CHAT_CONFIGS.length; i++) {
+      var m = document.getElementById(CHAT_CONFIGS[i].modalId);
+      if (m && m.classList.contains('active')) return CHAT_CONFIGS[i];
+    }
+    return null;
+  }
 
-    var vv       = window.visualViewport;
-    var winH     = window.innerHeight;
-    var kbHeight = winH - vv.height; // ارتفاع الكيبورد
-    if (kbHeight < 50) kbHeight = 0;
-
-    var composer = modal.querySelector(cfg.composerSel);
-    if (!composer) return;
-
-    // نرفع الـ composer فوق الكيبورد
-    composer.style.transform   = kbHeight > 0 ? 'translateY(-' + kbHeight + 'px)' : '';
-    composer.style.transition  = 'transform 0.18s ease';
-
-    // نضيق منطقة الرسائل
-    var messages = document.getElementById(cfg.messagesId);
-    if (messages) {
-      messages.style.paddingBottom = kbHeight > 0 ? (kbHeight + 70) + 'px' : '';
-      if (kbHeight > 0) scrollMsgsToBottom(cfg.messagesId);
+  /* CSS sticky+dvh بيتكفل بالـ layout —
+     الـ JS مهمته بس يسكرول الرسائل لتحت لما الكيبورد يطلع */
+  function onVPResize() {
+    var cfg = activeCfg();
+    if (cfg) {
+      setTimeout(function(){ scrollBottom(cfg.messagesId); }, 100);
     }
   }
 
-  function resetVP(cfg) {
-    var modal    = document.getElementById(cfg.modalId);
-    if (!modal) return;
-    var composer = modal.querySelector(cfg.composerSel);
-    if (composer) { composer.style.transform = ''; }
-    var messages = document.getElementById(cfg.messagesId);
-    if (messages) { messages.style.paddingBottom = ''; }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onVPResize);
   }
-
-  function attachVP() {
-    if (!window.visualViewport) return;
-    window.visualViewport.addEventListener('resize', function(){
-      CHAT_CONFIGS.forEach(function(cfg){ handleVP(cfg); });
-    });
-    window.visualViewport.addEventListener('scroll', function(){
-      CHAT_CONFIGS.forEach(function(cfg){ handleVP(cfg); });
-    });
-  }
-
-  function attachInputFocus() {
-    CHAT_CONFIGS.forEach(function(cfg){
-      // نأخل نستنى الـ DOM يتحمل
-      var attach = function(){
-        var input = document.getElementById(cfg.inputId);
-        if (!input) return;
-        input.addEventListener('focus', function(){
-          setTimeout(function(){
-            handleVP(cfg);
-            scrollMsgsToBottom(cfg.messagesId);
-          }, 350);
-        });
-        input.addEventListener('blur', function(){
-          setTimeout(function(){ resetVP(cfg); }, 150);
-        });
-      };
-      if (document.readyState === 'complete') attach();
-      else window.addEventListener('load', attach);
-    });
-  }
-
-  attachVP();
-  attachInputFocus();
-
-  // نراقب فتح الـ modals بـ MutationObserver
-  var observer = new MutationObserver(function(mutations){
-    mutations.forEach(function(m){
-      if (m.type === 'attributes' && m.attributeName === 'class') {
-        var el = m.target;
-        CHAT_CONFIGS.forEach(function(cfg){
-          if (el.id === cfg.modalId) {
-            if (el.classList.contains('active')) {
-              // Modal اتفتح — جهز
-              setTimeout(function(){ handleVP(cfg); }, 200);
-            } else {
-              resetVP(cfg);
-            }
-          }
-        });
-      }
-    });
-  });
 
   window.addEventListener('load', function(){
     CHAT_CONFIGS.forEach(function(cfg){
-      var modal = document.getElementById(cfg.modalId);
-      if (modal) observer.observe(modal, { attributes: true });
+      var inp = document.getElementById(cfg.inputId);
+      if (!inp) return;
+      inp.addEventListener('focus', function(){
+        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 350);
+      });
     });
   });
 
