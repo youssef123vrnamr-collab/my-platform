@@ -4891,6 +4891,302 @@ body {
       .hero-stat { padding: 0.6rem 0.9rem; }
     }
     /* ===== END EPIC HERO ===== */
+
+    /* ══════════════════════════════════════════════════
+       ██████╗ ██████╗ ██████╗   LEGENDARY DESIGN SYSTEM
+       ╚════╝ ╚════╝ ╚════╝     إصدار أسطوري نهائي
+       ══════════════════════════════════════════════════ */
+
+    /* ─── Star field particles background ─── */
+    .bg-animation::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 60%, rgba(255,255,255,.35) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 70% 25%, rgba(255,255,255,.55) 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 75%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 15% 80%, rgba(255,255,255,.45) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 35% 90%, rgba(167,139,250,.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 60% 85%, rgba(236,72,153,.5) 0%, transparent 100%),
+        radial-gradient(2px 2px at 85% 10%, rgba(99,102,241,.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5% 55%, rgba(255,255,255,.25) 0%, transparent 100%),
+        radial-gradient(1px 1px at 45% 50%, rgba(255,255,255,.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 75% 95%, rgba(167,139,250,.4) 0%, transparent 100%);
+      animation: starsTwinkle 6s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes starsTwinkle {
+      0%   { opacity: .5; transform: scale(1); }
+      50%  { opacity: .9; transform: scale(1.02); }
+      100% { opacity: .6; transform: scale(1); }
+    }
+
+    /* ─── Aurora / Northern lights across the page ─── */
+    .bg-animation::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -10%;
+      width: 120%;
+      height: 60%;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(99,102,241,.04) 30%,
+        rgba(139,92,246,.06) 50%,
+        rgba(236,72,153,.03) 70%,
+        transparent 100%
+      );
+      filter: blur(40px);
+      animation: auroraFloat 15s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes auroraFloat {
+      0%   { transform: translateX(-5%) skewY(-2deg); opacity: .6; }
+      50%  { transform: translateX(3%) skewY(1deg);  opacity: 1; }
+      100% { transform: translateX(-8%) skewY(-1deg); opacity: .7; }
+    }
+
+    /* ─── Navbar: legendary glass morphism ─── */
+    .navbar {
+      background: linear-gradient(
+        135deg,
+        rgba(15,10,26,.92) 0%,
+        rgba(26,16,37,.88) 50%,
+        rgba(20,12,34,.92) 100%
+      ) !important;
+      backdrop-filter: blur(28px) saturate(180%) brightness(1.05) !important;
+      -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.05) !important;
+      border-bottom: 1px solid rgba(99,102,241,.25) !important;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.04) inset,
+        0 8px 32px -12px rgba(0,0,0,.6),
+        0 0 60px -30px rgba(99,102,241,.3) !important;
+    }
+
+    /* ─── Brand logo: legendary glow ring ─── */
+    .brand-logo {
+      position: relative;
+      box-shadow:
+        0 0 0 2px rgba(99,102,241,.4),
+        0 0 0 4px rgba(236,72,153,.15),
+        0 0 20px rgba(99,102,241,.5),
+        0 0 40px rgba(99,102,241,.2) !important;
+      animation: legendaryGlow 4s ease-in-out infinite !important;
+    }
+    @keyframes legendaryGlow {
+      0%,100% {
+        box-shadow:
+          0 0 0 2px rgba(99,102,241,.5),
+          0 0 0 4px rgba(236,72,153,.2),
+          0 0 20px rgba(99,102,241,.5),
+          0 0 40px rgba(99,102,241,.15);
+      }
+      33% {
+        box-shadow:
+          0 0 0 2px rgba(236,72,153,.6),
+          0 0 0 4px rgba(99,102,241,.2),
+          0 0 25px rgba(236,72,153,.5),
+          0 0 50px rgba(236,72,153,.2);
+      }
+      66% {
+        box-shadow:
+          0 0 0 2px rgba(139,92,246,.6),
+          0 0 0 4px rgba(6,182,212,.2),
+          0 0 22px rgba(139,92,246,.5),
+          0 0 45px rgba(139,92,246,.15);
+      }
+    }
+
+    /* ─── Video cards: legendary hover effect ─── */
+    .video-card {
+      background: linear-gradient(145deg, rgba(26,16,37,.6), rgba(15,10,26,.8)) !important;
+      border: 1px solid rgba(255,255,255,.04) !important;
+      box-shadow: 0 4px 20px -8px rgba(0,0,0,.5) !important;
+      transition: all .4s cubic-bezier(.34,1.56,.64,1) !important;
+    }
+    .video-card:hover {
+      border-color: rgba(99,102,241,.4) !important;
+      box-shadow:
+        0 20px 60px -20px rgba(99,102,241,.5),
+        0 0 0 1px rgba(99,102,241,.2) !important;
+      transform: translateY(-8px) scale(1.02) !important;
+    }
+    .video-card:hover .video-thumbnail .bg-image {
+      transform: scale(1.08) !important;
+    }
+
+    /* ─── Play overlay: legendary gradient ─── */
+    .play-overlay {
+      background: linear-gradient(
+        135deg,
+        rgba(99,102,241,.4) 0%,
+        rgba(0,0,0,.2) 50%,
+        rgba(236,72,153,.3) 100%
+      ) !important;
+    }
+    .play-btn {
+      background: rgba(0,0,0,.7) !important;
+      backdrop-filter: blur(8px) !important;
+      border: 2px solid rgba(255,255,255,.7) !important;
+      box-shadow: 0 0 20px rgba(99,102,241,.6), 0 0 40px rgba(99,102,241,.2) !important;
+      transition: all .3s !important;
+    }
+    .video-card:hover .play-btn {
+      transform: scale(1.15) !important;
+      box-shadow: 0 0 30px rgba(236,72,153,.7), 0 0 60px rgba(236,72,153,.3) !important;
+      border-color: rgba(236,72,153,.9) !important;
+    }
+
+    /* ─── Buttons: legendary premium feel ─── */
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a855f7 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(167,139,250,.3),
+        0 8px 24px -8px rgba(99,102,241,.6),
+        inset 0 1px 0 rgba(255,255,255,.2) !important;
+    }
+    .btn-primary:hover {
+      box-shadow:
+        0 0 0 1px rgba(167,139,250,.5),
+        0 12px 32px -8px rgba(139,92,246,.7),
+        inset 0 1px 0 rgba(255,255,255,.25),
+        0 0 40px rgba(99,102,241,.25) !important;
+    }
+
+    /* ─── Settings dropdown: legendary glass ─── */
+    .settings-menu {
+      background: rgba(15,10,26,.97) !important;
+      backdrop-filter: blur(32px) saturate(200%) !important;
+      -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+      border: 1px solid rgba(99,102,241,.3) !important;
+      box-shadow:
+        0 25px 50px rgba(0,0,0,.6),
+        0 0 0 1px rgba(255,255,255,.04) inset,
+        0 -1px 0 rgba(255,255,255,.06) inset !important;
+    }
+    .settings-menu-item:hover {
+      background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(139,92,246,.15)) !important;
+    }
+
+    /* ─── Hero section: legendary star glow text ─── */
+    .hero {
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse, rgba(99,102,241,.06) 0%, transparent 70%);
+      pointer-events: none;
+      animation: heroGlow 8s ease-in-out infinite;
+    }
+    @keyframes heroGlow {
+      0%,100% { opacity: .5; transform: translate(-50%, -50%) scale(1); }
+      50%      { opacity: 1;  transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    /* ─── Modal: legendary glass morphism ─── */
+    .modal-content {
+      background: linear-gradient(
+        145deg,
+        rgba(22,14,36,.98) 0%,
+        rgba(15,10,26,.99) 100%
+      ) !important;
+      border: 1px solid rgba(99,102,241,.2) !important;
+      box-shadow:
+        0 40px 80px rgba(0,0,0,.7),
+        0 0 0 1px rgba(255,255,255,.04) inset,
+        0 1px 0 rgba(255,255,255,.08) inset !important;
+      backdrop-filter: blur(20px) !important;
+    }
+
+    /* ─── Toast notifications: legendary glow ─── */
+    .toast {
+      background: linear-gradient(135deg, rgba(22,14,36,.98), rgba(15,10,26,.99)) !important;
+      border: 1px solid rgba(99,102,241,.5) !important;
+      box-shadow:
+        0 20px 40px rgba(0,0,0,.5),
+        0 0 0 1px rgba(255,255,255,.05) inset,
+        0 0 30px rgba(99,102,241,.2) !important;
+      backdrop-filter: blur(20px) !important;
+    }
+
+    /* ─── Floating chat buttons: legendary pulse ─── */
+    .chat-btn {
+      box-shadow:
+        0 0 0 0 rgba(99,102,241,.5),
+        0 10px 30px rgba(99,102,241,.5) !important;
+      animation: legendaryPulseBtn 3s ease-in-out infinite !important;
+    }
+    .ai-chat-btn {
+      box-shadow:
+        0 0 0 0 rgba(6,182,212,.5),
+        0 8px 25px rgba(6,182,212,.4) !important;
+      animation: legendaryPulseBtnCyan 3s ease-in-out infinite 1.5s !important;
+    }
+    @keyframes legendaryPulseBtn {
+      0%,100% {
+        box-shadow: 0 0 0 0 rgba(99,102,241,.5), 0 10px 30px rgba(99,102,241,.5);
+      }
+      50% {
+        box-shadow: 0 0 0 12px rgba(99,102,241,0), 0 15px 40px rgba(99,102,241,.7);
+      }
+    }
+    @keyframes legendaryPulseBtnCyan {
+      0%,100% {
+        box-shadow: 0 0 0 0 rgba(6,182,212,.5), 0 8px 25px rgba(6,182,212,.4);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(6,182,212,0), 0 12px 35px rgba(6,182,212,.6);
+      }
+    }
+
+    /* ─── Storage bar: legendary shimmer ─── */
+    .storage-bar-container {
+      background: linear-gradient(
+        135deg,
+        rgba(255,255,255,.04) 0%,
+        rgba(99,102,241,.06) 100%
+      ) !important;
+      border: 1px solid rgba(99,102,241,.2) !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.04) !important;
+    }
+
+    /* ─── Loading ring: legendary ─── */
+    .loader-ring {
+      box-shadow:
+        0 0 20px rgba(99,102,241,.5),
+        0 0 40px rgba(99,102,241,.2) !important;
+    }
+
+    /* ─── Form inputs: legendary focus glow ─── */
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: rgba(99,102,241,.7) !important;
+      box-shadow:
+        0 0 0 3px rgba(99,102,241,.15),
+        0 0 20px rgba(99,102,241,.1) !important;
+    }
+
+    /* ─── Mobile: hide X bar above input (the annoying one) ─── */
+    #aiChatModal .chat-input-area > .x-bar,
+    #aiChatModal > .x-strip,
+    .chat-modal .input-x-bar {
+      display: none !important;
+    }
+
   </style>
 
 <div class="modal" id="loginModal"><div class="modal-content" style="max-width:480px"><div class="modal-header"><h3><i class="fas fa-user-shield"></i> دخول المشرف</h3><button class="modal-close" onclick="closeLogin()"><i class="fas fa-times"></i></button></div><div class="modal-body" id="adminLoginBody"></div></div></div>
@@ -14249,14 +14545,7 @@ function slStopAllAnimations() {
     if (avatar) avatar.innerHTML = p.emoji;
     var nameEl = document.querySelector('#aiChatModal .chat-header-text h3');
     if (nameEl) nameEl.textContent = p.name + ' ' + p.emoji;
-    var actions = document.querySelector('#aiChatModal .chat-actions');
-    if (actions && !actions.querySelector('.ai-persona-change-btn')) {
-      var btn = document.createElement('button');
-      btn.className = 'ai-persona-change-btn';
-      btn.innerHTML = '<i class="fas fa-user-astronaut"></i> شخصية';
-      btn.onclick = window.openPersonaModal;
-      actions.insertBefore(btn, actions.firstChild);
-    }
+    /* persona button removed from header */
   }
 
   // ===== 9. Patch sendAIMessage — DISABLED (replaced by unified fix at end of file) =====
@@ -15332,20 +15621,108 @@ function slStopAllAnimations() {
 })();
 </script>
 
-<!-- ===== إصلاح الكيبورد في الفول سكرين ===== -->
+<!-- ===== إصلاح الكيبورد الشامل — يشتغل في كل الأوضاع ===== -->
+<style>
+/* ── الإصلاح الأساسي: input area دايماً فوق الكيبورد ── */
+.chat-modal,
+.chat-modal.active {
+  position: fixed !important;
+  inset: 0 !important;
+  /* استخدام dvh + small viewport height معاً */
+  height: 100dvh !important;
+  height: 100svh !important;
+}
+
+.chat-modal .chat-container,
+#chatModal .chat-container,
+#aiChatModal .chat-container {
+  height: 100dvh !important;
+  height: 100svh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* الـ messages تاخد كل المساحة المتاحة */
+.chat-modal .chat-messages {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Input area تبقى fixed في الأسفل دايماً */
+.chat-modal .chat-input-area,
+#chatModal .chat-input-area,
+#aiChatModal .chat-input-area {
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  bottom: env(safe-area-inset-bottom, 0px) !important;
+  z-index: 50 !important;
+  padding-bottom: max(0.85rem, env(safe-area-inset-bottom)) !important;
+  /* منع الـ input من يختفي وراء الكيبورد */
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
+  will-change: transform !important;
+}
+
+#pacComposer {
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 50 !important;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
+  will-change: transform !important;
+}
+
+/* pac modal */
+#privateAdminChatModal .pac-modal-content {
+  height: 100dvh !important;
+  height: 100svh !important;
+  max-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#privateAdminChatModal .pac-body {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+#privateAdminChatModal .pac-chat-view {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#pacMessages {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+</style>
+
 <script>
 (function(){
   'use strict';
 
   var CHAT_CONFIGS = [
-    { modalId:'chatModal',             inputId:'messageInput', composerSel:'.chat-input-area', messagesId:'chatMessages'   },
-    { modalId:'privateAdminChatModal', inputId:'pacInput',     composerSel:'#pacComposer',     messagesId:'pacMessages'    },
-    { modalId:'aiChatModal',           inputId:'aiChatInput',  composerSel:'.chat-input-area', messagesId:'aiChatMessages' }
+    { modalId:'chatModal',             inputId:'messageInput', messagesId:'chatMessages'   },
+    { modalId:'privateAdminChatModal', inputId:'pacInput',     messagesId:'pacMessages'    },
+    { modalId:'aiChatModal',           inputId:'aiChatInput',  messagesId:'aiChatMessages' }
   ];
 
   function scrollBottom(id) {
     var el = document.getElementById(id);
-    if (el) { el.scrollTop = el.scrollHeight; }
+    if (el) requestAnimationFrame(function(){ el.scrollTop = el.scrollHeight; });
   }
 
   function activeCfg() {
@@ -15356,27 +15733,44 @@ function slStopAllAnimations() {
     return null;
   }
 
-  /* CSS sticky+dvh بيتكفل بالـ layout —
-     الـ JS مهمته بس يسكرول الرسائل لتحت لما الكيبورد يطلع */
+  /* ── Visual Viewport API: يتفعل لما الكيبورد يطلع أو ينزل ── */
   function onVPResize() {
     var cfg = activeCfg();
-    if (cfg) {
-      setTimeout(function(){ scrollBottom(cfg.messagesId); }, 100);
-    }
+    if (!cfg) return;
+    /* نسكرول الرسائل لتحت بعد ما الكيبورد يظهر */
+    setTimeout(function(){ scrollBottom(cfg.messagesId); }, 80);
+    setTimeout(function(){ scrollBottom(cfg.messagesId); }, 300);
   }
 
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', onVPResize);
+    window.visualViewport.addEventListener('scroll', onVPResize);
   }
+  window.addEventListener('resize', onVPResize);
 
+  /* ── لما الـ input يتفوكس: سكرول الرسائل لتحت ── */
   window.addEventListener('load', function(){
     CHAT_CONFIGS.forEach(function(cfg){
       var inp = document.getElementById(cfg.inputId);
       if (!inp) return;
       inp.addEventListener('focus', function(){
-        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 350);
+        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 150);
+        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 400);
+        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 700);
+      });
+      /* لما يكتب: سكرول لتحت */
+      inp.addEventListener('input', function(){
+        setTimeout(function(){ scrollBottom(cfg.messagesId); }, 50);
       });
     });
+  });
+
+  /* ── لما المودال يتفتح: اصلح الـ height مرة تانية ── */
+  document.addEventListener('click', function(e){
+    setTimeout(function(){
+      var cfg = activeCfg();
+      if (cfg) scrollBottom(cfg.messagesId);
+    }, 200);
   });
 
 })();
