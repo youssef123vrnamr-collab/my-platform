@@ -2280,31 +2280,76 @@ body {
   border: 1px solid var(--border) !important;
 }
 /* ===== KEYBOARD / DVH FIX ===== */
-/* استخدام dvh بدل vh عشان الـ browser toolbar يتحسب صح */
+/* ── Chat Container: الـ JS هيضبط الـ height ديناميكياً لما الكيبورد يطلع ── */
+.chat-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+}
 .chat-modal .chat-container,
 #chatModal .chat-container,
 #aiChatModal .chat-container {
   height: 100dvh !important;
-  height: -webkit-fill-available;
+  height: -webkit-fill-available !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
 }
-/* الـ input area تبقى sticky في الآخر */
+/* الـ messages تملا المساحة المتاحة */
+.chat-modal .chat-messages {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+/* الـ input area تبقى في الآخر دايماً */
 .chat-modal .chat-input-area,
 #chatModal .chat-input-area,
 #aiChatModal .chat-input-area {
-  position: sticky !important;
-  bottom: 0 !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
   z-index: 10 !important;
+  /* منع الـ input من تختفي */
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
 }
 /* pac modal */
 .pac-modal-content {
   height: 100dvh !important;
   max-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.pac-body {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+.pac-chat-view {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+#pacMessages {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 #pacComposer {
-  position: sticky !important;
-  bottom: 0 !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
   z-index: 10 !important;
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
 }
+
 /* ===== CLAUDE-STYLE CHAT INPUT ===== */
 .chat-input-area {
   padding: 0.75rem 1rem 1rem !important;
@@ -4047,13 +4092,18 @@ body {
   border-radius: 12px !important;
   padding: 0.55rem 0.75rem !important;
   margin-bottom: 0.5rem !important;
+  /* لا نضع display هنا عشان display:none في الـ HTML يشتغل */
   align-items: center !important;
   gap: 0.5rem !important;
-  /* لا نحط display هنا عشان ما يكسرش display:none */
 }
-#aiFilePreview:not([style*="display:none"]):not([style*="display: none"]) {
+/* بس لما مش hidden نضيفه flex */
+#aiFilePreview[style*="display: block"],
+#aiFilePreview[style*="display:block"],
+#aiFilePreview[style*="display: flex"],
+#aiFilePreview[style*="display:flex"] {
   display: flex !important;
 }
+
 #aiFilePreviewName {
   color: #22d3ee !important;
   font-size: 0.83rem !important;
@@ -14252,7 +14302,7 @@ function slStopAllAnimations() {
     if (avatar) avatar.innerHTML = p.emoji;
     var nameEl = document.querySelector('#aiChatModal .chat-header-text h3');
     if (nameEl) nameEl.textContent = p.name + ' ' + p.emoji;
-    /* persona button removed */
+    /* persona button removed from header */
   }
 
   // ===== 9. Patch sendAIMessage — DISABLED (replaced by unified fix at end of file) =====
@@ -15328,65 +15378,26 @@ function slStopAllAnimations() {
 })();
 </script>
 
-<!-- ===== إصلاح الكيبورد الشامل ===== -->
-<style>
-/*
-  الحل: استخدام visualViewport height بدل dvh/svh
-  عشان الـ input area تبقى فوق الكيبورد في كل الأوضاع
-*/
-
-/* ── الـ chat container يملا الـ viewport الحقيقي ── */
-.chat-modal .chat-container,
-#chatModal .chat-container,
-#aiChatModal .chat-container {
-  height: 100dvh !important;
-  /* fallback */
-  height: 100svh !important;
-}
-
-/* ── الـ input area دايماً في الآخر ── */
-.chat-modal .chat-input-area,
-#chatModal .chat-input-area,
-#aiChatModal .chat-input-area {
-  position: sticky !important;
-  bottom: 0 !important;
-  z-index: 20 !important;
-  flex-shrink: 0 !important;
-  /* تأكد مش بتختفي وراء الكيبورد */
-  transform: translateZ(0) !important;
-  -webkit-transform: translateZ(0) !important;
-}
-
-#pacComposer {
-  position: sticky !important;
-  bottom: 0 !important;
-  z-index: 20 !important;
-  flex-shrink: 0 !important;
-  transform: translateZ(0) !important;
-  -webkit-transform: translateZ(0) !important;
-}
-
-/* ── الرسائل تملا المساحة المتاحة ── */
-.chat-modal .chat-messages,
-#chatModal .chat-messages,
-#aiChatModal .chat-messages {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-</style>
-
+<!-- ===== إصلاح الكيبورد — الحل الصحيح ===== -->
 <script>
 (function(){
   'use strict';
 
+  /*
+    المشكلة: لما الكيبورد يطلع، الـ chat-container لازم يتصغر
+    بحجم الكيبورد عشان الـ input تظهر فوق الكيبورد.
+
+    الحل: نستخدم visualViewport.height كـ height للـ container،
+    وده بيحسب المساحة المتاحة فعلاً فوق الكيبورد.
+  */
+
   var CONFIGS = [
-    { modalId:'chatModal',             inputId:'messageInput', msgsId:'chatMessages'   },
-    { modalId:'privateAdminChatModal', inputId:'pacInput',     msgsId:'pacMessages'    },
-    { modalId:'aiChatModal',           inputId:'aiChatInput',  msgsId:'aiChatMessages' }
+    { modalId: 'chatModal',             inputId: 'messageInput', msgsId: 'chatMessages'   },
+    { modalId: 'privateAdminChatModal', inputId: 'pacInput',     msgsId: 'pacMessages'    },
+    { modalId: 'aiChatModal',           inputId: 'aiChatInput',  msgsId: 'aiChatMessages' }
   ];
 
+  /* ── اعرف أنهي modal شغال ── */
   function getActive() {
     for (var i = 0; i < CONFIGS.length; i++) {
       var m = document.getElementById(CONFIGS[i].modalId);
@@ -15395,94 +15406,116 @@ function slStopAllAnimations() {
     return null;
   }
 
-  function scrollMsgs(id) {
+  /* ── سكرول الرسائل لأسفل ── */
+  function scrollToEnd(id) {
     var el = document.getElementById(id);
-    if (el) requestAnimationFrame(function(){ el.scrollTop = el.scrollHeight; });
+    if (el) requestAnimationFrame(function() { el.scrollTop = el.scrollHeight; });
   }
 
-  /*
-    الحل الأساسي:
-    لما الكيبورد يطلع الـ visualViewport.height بيصغر.
-    بنحسب الفرق ونضيفه كـ padding-bottom على الـ input area
-    عشان تطلع فوق الكيبورد بالظبط.
-  */
-  function applyKeyboardOffset() {
+  /* ── الوظيفة الأساسية: تطبق الـ height الصح على الـ container ── */
+  function fix() {
     var cfg = getActive();
     if (!cfg) return;
 
-    var vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    var wh  = window.innerHeight;
-    var offset = Math.max(0, wh - vvh);
-
-    // الـ containers
     var modal = document.getElementById(cfg.modalId);
     if (!modal) return;
 
-    var container = modal.querySelector('.chat-container, .pac-modal-content');
-    if (container) {
-      container.style.height = vvh + 'px';
-    }
+    /* الـ height المتاح فوق الكيبورد */
+    var vvh = window.visualViewport
+      ? Math.floor(window.visualViewport.height)
+      : window.innerHeight;
 
-    // الـ input area
-    var inputArea = cfg.modalId === 'privateAdminChatModal'
-      ? document.getElementById('pacComposer')
-      : modal.querySelector('.chat-input-area');
+    /* الـ offset لو الكيبورد فوق الـ visualViewport */
+    var vvOffsetTop = window.visualViewport ? Math.floor(window.visualViewport.offsetTop) : 0;
 
-    if (inputArea) {
-      inputArea.style.paddingBottom = (offset > 0 ? offset + 10 : '') + 'px';
-    }
+    /* طبق على الـ modal نفسه */
+    modal.style.height      = vvh + 'px';
+    modal.style.top         = vvOffsetTop + 'px';
+    modal.style.bottom      = 'auto';
 
-    // سكرول للآخر
-    scrollMsgs(cfg.msgsId);
+    /* طبق على الـ container */
+    var containers = [
+      modal.querySelector('.chat-container'),
+      modal.querySelector('.pac-modal-content')
+    ];
+    containers.forEach(function(c) {
+      if (c) c.style.height = vvh + 'px';
+    });
+
+    /* سكرول للآخر عشان الرسالة الأخيرة تظهر */
+    setTimeout(function() { scrollToEnd(cfg.msgsId); }, 80);
+    setTimeout(function() { scrollToEnd(cfg.msgsId); }, 250);
   }
 
-  function resetOffset() {
+  /* ── ارجع لوضعه الطبيعي لما الكيبورد ينزل ── */
+  function reset() {
     CONFIGS.forEach(function(cfg) {
       var modal = document.getElementById(cfg.modalId);
       if (!modal) return;
-      var container = modal.querySelector('.chat-container, .pac-modal-content');
-      if (container) container.style.height = '';
-      var inputArea = cfg.modalId === 'privateAdminChatModal'
-        ? document.getElementById('pacComposer')
-        : modal.querySelector('.chat-input-area');
-      if (inputArea) inputArea.style.paddingBottom = '';
+      modal.style.height = '';
+      modal.style.top    = '';
+      modal.style.bottom = '';
+      var c1 = modal.querySelector('.chat-container');
+      var c2 = modal.querySelector('.pac-modal-content');
+      if (c1) c1.style.height = '';
+      if (c2) c2.style.height = '';
     });
   }
 
-  // ── ربط الـ events ──
+  /* ── ربط الـ events ── */
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize',  applyKeyboardOffset);
-    window.visualViewport.addEventListener('scroll',  applyKeyboardOffset);
+    window.visualViewport.addEventListener('resize', fix,  { passive: true });
+    window.visualViewport.addEventListener('scroll', fix,  { passive: true });
   }
-  window.addEventListener('resize', applyKeyboardOffset);
 
-  window.addEventListener('load', function(){
-    CONFIGS.forEach(function(cfg){
+  window.addEventListener('resize', function() {
+    var cfg = getActive();
+    if (cfg) fix(); else reset();
+  }, { passive: true });
+
+  /* ── لما input يتفوكس أو يتكتب فيه ── */
+  window.addEventListener('load', function() {
+    CONFIGS.forEach(function(cfg) {
       var inp = document.getElementById(cfg.inputId);
       if (!inp) return;
 
-      inp.addEventListener('focus', function(){
-        setTimeout(applyKeyboardOffset, 100);
-        setTimeout(applyKeyboardOffset, 350);
-        setTimeout(function(){ scrollMsgs(cfg.msgsId); }, 400);
+      inp.addEventListener('focus', function() {
+        /* iOS بيتأخر شوية قبل ما الكيبورد يطلع */
+        setTimeout(fix, 100);
+        setTimeout(fix, 350);
+        setTimeout(fix, 600);
       });
 
-      inp.addEventListener('blur', function(){
-        setTimeout(function(){
-          if (!document.activeElement || document.activeElement.tagName !== 'TEXTAREA') {
-            resetOffset();
-          }
-        }, 200);
+      inp.addEventListener('blur', function() {
+        setTimeout(function() {
+          /* لو مفيش input تاني اتفوكس = الكيبورد نزل */
+          var active = document.activeElement;
+          var isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+          if (!isInput) setTimeout(reset, 100);
+        }, 150);
+      });
+
+      /* لما يكتب: تأكد الـ input ظاهرة */
+      inp.addEventListener('input', function() {
+        setTimeout(function() { scrollToEnd(cfg.msgsId); }, 50);
       });
     });
+
+    /* لما المودال يتفتح: apply fix */
+    document.addEventListener('click', function() {
+      setTimeout(function() {
+        var cfg = getActive();
+        if (cfg && window.visualViewport) fix();
+      }, 100);
+    }, { passive: true });
   });
 
 })();
 </script>
 
-<!-- ══════════════════════════════════════════════
-     LEGENDARY DESIGN EFFECTS — أسطوري موت موت موت
-     ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════
+     LEGENDARY DESIGN — أسطوري موت موت موت
+     ══════════════════════════════════════ -->
 <style>
 /* ─── نجوم في الخلفية ─── */
 .bg-animation::before {
@@ -15502,20 +15535,18 @@ function slStopAllAnimations() {
     radial-gradient(1px   1px   at 55% 83%, rgba(236,72,153,.55)  0%, transparent 100%),
     radial-gradient(1px   1px   at  4% 50%, rgba(255,255,255,.30) 0%, transparent 100%),
     radial-gradient(2px   2px   at 72% 95%, rgba(139,92,246,.60)  0%, transparent 100%),
-    radial-gradient(1px   1px   at 45% 45%, rgba(255,255,255,.35) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 92% 18%, rgba(255,255,255,.70) 0%, transparent 100%),
-    radial-gradient(1px   1px   at 60%  3%, rgba(167,139,250,.50) 0%, transparent 100%);
+    radial-gradient(1.5px 1.5px at 92% 18%, rgba(255,255,255,.70) 0%, transparent 100%);
   animation: starsTwinkle 7s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
 }
 @keyframes starsTwinkle {
-  0%   { opacity: .45; transform: scale(1); }
-  50%  { opacity: .95; transform: scale(1.015); }
-  100% { opacity: .55; transform: scale(1); }
+  0%   { opacity: .4;  transform: scale(1); }
+  50%  { opacity: .95; transform: scale(1.012); }
+  100% { opacity: .5;  transform: scale(1); }
 }
 
-/* ─── أورورا شمالية تتحرك ─── */
+/* ─── أورورا شمالية ─── */
 .bg-animation::after {
   content: '';
   position: absolute;
@@ -15540,8 +15571,7 @@ function slStopAllAnimations() {
 
 /* ─── Navbar: deep glass ─── */
 .navbar {
-  background: linear-gradient(
-    135deg,
+  background: linear-gradient(135deg,
     rgba(12, 7, 22, .94) 0%,
     rgba(22,14,37, .90) 50%,
     rgba(16, 9, 28, .94) 100%
@@ -15561,25 +15591,13 @@ function slStopAllAnimations() {
 }
 @keyframes rainbowGlowRing {
   0%,100% {
-    box-shadow:
-      0 0 0 2px rgba(99,102,241,.6),
-      0 0 0 5px rgba(99,102,241,.12),
-      0 0 22px rgba(99,102,241,.55),
-      0 0 44px rgba(99,102,241,.18);
+    box-shadow: 0 0 0 2px rgba(99,102,241,.6), 0 0 22px rgba(99,102,241,.55), 0 0 44px rgba(99,102,241,.18);
   }
   33% {
-    box-shadow:
-      0 0 0 2px rgba(236,72,153,.65),
-      0 0 0 5px rgba(236,72,153,.14),
-      0 0 26px rgba(236,72,153,.55),
-      0 0 52px rgba(236,72,153,.20);
+    box-shadow: 0 0 0 2px rgba(236,72,153,.65), 0 0 26px rgba(236,72,153,.55), 0 0 52px rgba(236,72,153,.20);
   }
   66% {
-    box-shadow:
-      0 0 0 2px rgba(139,92,246,.65),
-      0 0 0 5px rgba(6,182,212,.12),
-      0 0 24px rgba(139,92,246,.55),
-      0 0 48px rgba(139,92,246,.18);
+    box-shadow: 0 0 0 2px rgba(139,92,246,.65), 0 0 24px rgba(139,92,246,.55), 0 0 48px rgba(139,92,246,.18);
   }
 }
 
@@ -15588,20 +15606,15 @@ function slStopAllAnimations() {
   background: linear-gradient(145deg, rgba(22,14,36,.65), rgba(12,7,22,.85)) !important;
   border: 1px solid rgba(255,255,255,.05) !important;
   transition: all .45s cubic-bezier(.34,1.56,.64,1) !important;
-  will-change: transform !important;
 }
 .video-card:hover {
   border-color: rgba(99,102,241,.45) !important;
-  box-shadow:
-    0 22px 55px -18px rgba(99,102,241,.55),
-    0 0 0 1px rgba(99,102,241,.22),
-    0 0 80px -40px rgba(236,72,153,.3) !important;
+  box-shadow: 0 22px 55px -18px rgba(99,102,241,.55), 0 0 0 1px rgba(99,102,241,.22) !important;
   transform: translateY(-10px) scale(1.025) !important;
 }
 .video-card:hover .play-btn {
   box-shadow: 0 0 28px rgba(236,72,153,.8), 0 0 60px rgba(236,72,153,.35) !important;
   border-color: rgba(236,72,153,.9) !important;
-  transform: scale(1.18) !important;
 }
 
 /* ─── أزرار float: legendary pulse ─── */
@@ -15612,11 +15625,11 @@ function slStopAllAnimations() {
   animation: floatCyanPulse 3.5s ease-in-out infinite 1.75s !important;
 }
 @keyframes floatPurplePulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,.6),  0 12px 32px rgba(99,102,241,.5); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,.6), 0 12px 32px rgba(99,102,241,.5); }
   50%      { box-shadow: 0 0 0 14px rgba(99,102,241,0), 0 16px 44px rgba(99,102,241,.7); }
 }
 @keyframes floatCyanPulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(6,182,212,.6),  0 10px 28px rgba(6,182,212,.45); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(6,182,212,.6), 0 10px 28px rgba(6,182,212,.45); }
   50%      { box-shadow: 0 0 0 12px rgba(6,182,212,0), 0 14px 38px rgba(6,182,212,.65); }
 }
 
@@ -15626,76 +15639,31 @@ function slStopAllAnimations() {
   backdrop-filter: blur(36px) saturate(210%) !important;
   -webkit-backdrop-filter: blur(36px) saturate(210%) !important;
   border: 1px solid rgba(99,102,241,.28) !important;
-  box-shadow:
-    0 28px 55px rgba(0,0,0,.65),
-    0 0 0 1px rgba(255,255,255,.04) inset,
-    0 -1px 0 rgba(255,255,255,.05) inset,
-    0 0 40px -15px rgba(99,102,241,.25) !important;
+  box-shadow: 0 28px 55px rgba(0,0,0,.65), 0 0 40px -15px rgba(99,102,241,.25) !important;
 }
 
-/* ─── Toast: legendary ─── */
+/* ─── Toast ─── */
 .toast {
   background: linear-gradient(135deg, rgba(18,11,30,.98), rgba(12,7,22,.99)) !important;
   border: 1px solid rgba(99,102,241,.45) !important;
-  box-shadow:
-    0 22px 44px rgba(0,0,0,.55),
-    0 0 0 1px rgba(255,255,255,.04) inset,
-    0 0 35px rgba(99,102,241,.22) !important;
+  box-shadow: 0 22px 44px rgba(0,0,0,.55), 0 0 35px rgba(99,102,241,.22) !important;
   backdrop-filter: blur(24px) !important;
 }
 
-/* ─── Modals: premium glass ─── */
+/* ─── Modals ─── */
 .modal-content {
-  background: linear-gradient(
-    145deg,
-    rgba(20,12,33,.98) 0%,
-    rgba(12,7,22,.99) 100%
-  ) !important;
+  background: linear-gradient(145deg, rgba(20,12,33,.98) 0%, rgba(12,7,22,.99) 100%) !important;
   border: 1px solid rgba(99,102,241,.18) !important;
-  box-shadow:
-    0 44px 88px rgba(0,0,0,.72),
-    0 0 0 1px rgba(255,255,255,.04) inset,
-    0 1px 0 rgba(255,255,255,.07) inset !important;
+  box-shadow: 0 44px 88px rgba(0,0,0,.72), 0 0 0 1px rgba(255,255,255,.04) inset !important;
 }
 
-/* ─── hero hero glow ─── */
-.hero::before {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
-  width: 90%; height: 80%;
-  background: radial-gradient(ellipse, rgba(99,102,241,.07) 0%, transparent 70%);
-  pointer-events: none;
-  animation: heroAmbient 9s ease-in-out infinite;
-  z-index: 0;
-}
-@keyframes heroAmbient {
-  0%,100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
-  50%      { opacity: 1;  transform: translate(-50%,-50%) scale(1.12); }
-}
-
-/* ─── أزرار: legendary glass feel ─── */
+/* ─── أزرار ─── */
 .btn-primary {
   background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 55%,#a855f7 100%) !important;
-  box-shadow:
-    0 0 0 1px rgba(167,139,250,.3),
-    0 8px 26px -8px rgba(99,102,241,.65),
-    inset 0 1px 0 rgba(255,255,255,.22) !important;
+  box-shadow: 0 0 0 1px rgba(167,139,250,.3), 0 8px 26px -8px rgba(99,102,241,.65), inset 0 1px 0 rgba(255,255,255,.22) !important;
 }
 .btn-primary:hover {
-  box-shadow:
-    0 0 0 1px rgba(167,139,250,.5),
-    0 14px 34px -8px rgba(139,92,246,.75),
-    inset 0 1px 0 rgba(255,255,255,.28),
-    0 0 44px rgba(99,102,241,.28) !important;
-}
-
-/* ─── Loader ring: legendary ─── */
-.loader-ring {
-  box-shadow:
-    0 0 22px rgba(99,102,241,.55),
-    0 0 44px rgba(99,102,241,.22) !important;
+  box-shadow: 0 0 0 1px rgba(167,139,250,.5), 0 14px 34px -8px rgba(139,92,246,.75), 0 0 44px rgba(99,102,241,.28) !important;
 }
 </style>
 </body>
