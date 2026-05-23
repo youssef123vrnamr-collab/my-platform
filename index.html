@@ -424,7 +424,7 @@
     .chat-btn .notification-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: .75rem; display: flex; align-items: center; justify-content: center; font-weight: 700; animation: pulse 2s infinite; }
     .chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0a1a; display: none; align-items: center; justify-content: center; z-index: 10000; padding: 0 !important; margin: 0 !important; overscroll-behavior: none; }
     .chat-modal.active { display: flex; }
-    .chat-container { background: #0f0a1a; border-radius: 0; width: 100%; height: 100vh; max-width: none; border: none; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
+    .chat-container { background: #0f0a1a; border-radius: 0; width: 100%; height: 100vh; height: 100dvh; max-width: none; border: none; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
     .chat-header { padding: 1.5rem; background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(236,72,153,.2)); border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; align-items: center; }
     .chat-header-info { display: flex; align-items: center; gap: 1rem; }
     .chat-avatar { width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; }
@@ -2418,6 +2418,40 @@ body {
 .empty-state { color: var(--muted) !important; }
 .empty-state i { color: #7c3aed !important; }
 .empty-state h3 { color: #ede9fe !important; font-weight: 800 !important; }
+
+
+/* Prevent iOS auto-zoom on textarea focus — font-size must be >= 16px on mobile */
+@media (max-width: 768px) {
+  .chat-input, .ai-textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ===== KEYBOARD-AWARE CHAT INPUT ===== */
+/* الـ chat-container يستخدم dvh بدل vh عشان الكيبورد */
+.chat-modal.active { align-items: stretch !important; }
+.chat-container {
+  height: 100dvh !important;
+  height: -webkit-fill-available !important;
+}
+/* لما الكيبورد يطلع الـ messages area تتمدد وال input يبقى ظاهر */
+.chat-messages {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+/* input area تبقى دايما في الأسفل */
+.chat-input-area {
+  flex-shrink: 0 !important;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+  position: relative !important;
+}
+/* fullscreen mode — نفس الحاجة */
+.chat-modal:-webkit-full-screen .chat-container,
+.chat-modal:fullscreen .chat-container {
+  height: 100% !important;
+}
 
 /* === AI CHAT INPUT — NEW CARD LAYOUT === */
 #aiChatModal .chat-input-wrapper.ai-input-card {
@@ -4845,8 +4879,90 @@ async function updateAdminUI() {
   function renderAIKnowledgeList() { let list = document.getElementById("aiKnowledgeList"); if (!list) return; if (aiKnowledgeBase.length === 0) list.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">لا توجد معلومات بعد</p>'; else list.innerHTML = aiKnowledgeBase.map(k => `<div class="ai-knowledge-item"><div class="ai-knowledge-content"><div class="ai-knowledge-question"><i class="fas fa-question-circle"></i> ${escapeHtml(k.question)}</div><div class="ai-knowledge-answer">${escapeHtml(k.answer)}</div></div><button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${k.id}')" title="حذف"><i class="fas fa-trash"></i></button></div>`).join(""); }
   function saveAIKnowledge() { let q = document.getElementById("aiQuestionInput").value.trim(); let a = document.getElementById("aiAnswerInput").value.trim(); if (!q || !a) { showToast("⚠️ أدخل السؤال والإجابة"); return; } db.collection("ai_knowledge").add({ question: q, answer: a, createdBy: currentUser || "مشرف", createdAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم تعليم الذكاء الاصطناعي"); document.getElementById("aiQuestionInput").value = ""; document.getElementById("aiAnswerInput").value = ""; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحفظ"); }); }
   function deleteAIKnowledge(id) { if (confirm("هل أنت متأكد؟")) db.collection("ai_knowledge").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
-  function openAIChat() { document.getElementById("aiChatModal").classList.add("active"); document.body.style.overflow = "hidden"; let msgs = document.getElementById("aiChatMessages"); if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai"); setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 100); }
-  function closeAIChat() { document.getElementById("aiChatModal").classList.remove("active"); document.body.style.overflow = ""; }
+  function openAIChat() {
+    var modal = document.getElementById("aiChatModal");
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+    var msgs = document.getElementById("aiChatMessages");
+    if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai");
+    setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; setupChatKeyboard("aiChatModal"); }, 150);
+  }
+  function closeAIChat() {
+    document.getElementById("aiChatModal").classList.remove("active");
+    document.body.style.overflow = "";
+    teardownChatKeyboard("aiChatModal");
+  }
+
+  /* ===== MOBILE KEYBOARD HANDLER ===== */
+  var _kbCleanups = {};
+  function setupChatKeyboard(modalId) {
+    teardownChatKeyboard(modalId);
+    var modal = document.getElementById(modalId);
+    if (!modal) return;
+    var container = modal.querySelector(".chat-container");
+    var msgs      = modal.querySelector(".chat-messages");
+    var inputArea = modal.querySelector(".chat-input-area");
+    var textarea  = modal.querySelector("textarea");
+    if (!container || !msgs || !inputArea) return;
+
+    function onViewportResize() {
+      var vv = window.visualViewport;
+      if (!vv) return;
+      var kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      inputArea.style.paddingBottom = kbHeight > 10
+        ? (kbHeight + 4) + "px"
+        : "max(0.75rem, env(safe-area-inset-bottom))";
+      setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 80);
+    }
+    function onViewportScroll() {
+      var vv = window.visualViewport;
+      if (vv) container.style.transform = "translateY(" + vv.offsetTop + "px)";
+    }
+
+    var vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", onViewportResize);
+      vv.addEventListener("scroll", onViewportScroll);
+    }
+
+    function onFocus() {
+      setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 350);
+    }
+    function onBlur() {
+      setTimeout(function(){
+        inputArea.style.paddingBottom = "";
+        container.style.transform = "";
+      }, 120);
+    }
+    function autoResize() {
+      this.style.height = "auto";
+      this.style.height = Math.min(this.scrollHeight, 140) + "px";
+    }
+    if (textarea) {
+      textarea.addEventListener("focus", onFocus);
+      textarea.addEventListener("blur", onBlur);
+      textarea.addEventListener("input", autoResize);
+    }
+
+    _kbCleanups[modalId] = function() {
+      if (vv) {
+        vv.removeEventListener("resize", onViewportResize);
+        vv.removeEventListener("scroll", onViewportScroll);
+      }
+      if (textarea) {
+        textarea.removeEventListener("focus", onFocus);
+        textarea.removeEventListener("blur", onBlur);
+        textarea.removeEventListener("input", autoResize);
+      }
+      inputArea.style.paddingBottom = "";
+      container.style.transform = "";
+    };
+  }
+  function teardownChatKeyboard(modalId) {
+    if (_kbCleanups[modalId]) { _kbCleanups[modalId](); delete _kbCleanups[modalId]; }
+  }
+  window.setupChatKeyboard    = setupChatKeyboard;
+  window.teardownChatKeyboard = teardownChatKeyboard;
   function clearAIChat() { if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
   async function sendAIMessage() {
     let input = document.getElementById("aiChatInput");
@@ -4990,7 +5106,6 @@ async function updateAdminUI() {
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
   function openChat() {
-  // التأكد من وجود مستخدم مسجل الدخول بحساب Google
   if (googleUser && currentUserId) {
     document.getElementById("chatModal").classList.add("active");
     document.body.style.overflow = "hidden";
@@ -4999,14 +5114,13 @@ async function updateAdminUI() {
     loadMessages();
     scrollToBottom();
     initPresenceSystem();
+    setTimeout(function(){ if(window.setupChatKeyboard) setupChatKeyboard("chatModal"); }, 150);
   } else {
-    // إذا مش مسجل، نطلب تسجيل الدخول ب Google
     showToast("❌ يجب تسجيل الدخول بحساب Google أولاً للمشاركة في الدردشة");
-    // نفتح نافذة تسجيل الدخول تلقائياً (اختياري)
     googleLogin();
   }
 }
-  function closeChat() { document.getElementById("chatModal").classList.remove("active"); document.body.style.overflow = ""; if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
+  function closeChat() { document.getElementById("chatModal").classList.remove("active"); document.body.style.overflow = ""; if(window.teardownChatKeyboard) teardownChatKeyboard("chatModal"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
   async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   loadUserDashboard();
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
