@@ -12929,7 +12929,7 @@ function slStopAllAnimations() {
           model: model,
           voice: voice,
           input: clean.slice(0, 3000),
-          response_format: 'mp3'
+          response_format: isArabic ? 'wav' : 'mp3'
         })
       });
 
