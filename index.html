@@ -1636,40 +1636,45 @@ body {
 
 /* === LOGO === */
 .brand-logo {
-  width: 46px !important;
-  height: 46px !important;
-  min-width: 46px !important;
-  border-radius: 13px !important;
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  border-radius: 14px !important;
   background: linear-gradient(135deg, #7c3aed, #f43f5e) !important;
   overflow: hidden !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative !important;
-  animation: logoGlow 3s ease-in-out infinite !important;
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.12) !important;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.18), 0 4px 20px rgba(124,58,237,0.5) !important;
 }
-@keyframes logoGlow {
-  0%,100% { box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 0 4px 20px rgba(124,58,237,0.5); }
-  50%      { box-shadow: 0 0 0 2px rgba(255,255,255,0.22), 0 4px 28px rgba(244,63,94,0.6); }
-}
-.brand-logo::before {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  background: conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.15) 20%, transparent 40%);
-  animation: logoSpin 4s linear infinite;
-  border-radius: 50%;
-}
-@keyframes logoSpin { to { transform: rotate(360deg); } }
+/* إلغاء الـ ::before عشان ما يغطيش الصورة */
+.brand-logo::before { display: none !important; }
 .brand-logo img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  border-radius: 13px !important;
+  border-radius: 14px !important;
   display: block !important;
   position: relative !important;
   z-index: 1 !important;
+}
+
+
+/* === BRAND LOGO SIZE OVERRIDE — موبايل واضح === */
+@media (max-width: 768px) {
+  .brand-logo {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    border-radius: 13px !important;
+  }
+  .brand-logo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 13px !important;
+  }
 }
 
 /* === BRAND TEXT === */
