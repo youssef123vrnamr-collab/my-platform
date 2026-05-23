@@ -12963,33 +12963,19 @@ function slStopAllAnimations() {
 
   // ===== ElevenLabs Fallback TTS =====
   var ELEVENLABS_KEY = 'sk_fb9731db4191c0001f2b6609b4c0982d7fc9e5ca7c4a9455';
-  var ELEVENLABS_VOICES = {
-    arabic:  'onwK4e9ZLuTAKqWW03F9', // Daniel - يدعم العربي بشكل جيد
-    english: 'EXAVITQu4vr4xnSDxMaL'  // Sarah
+  // أصوات ElevenLabs — صوت مختلف لكل شخصية (multilingual يدعم العربي)
+  var EL_VOICES = {
+    cosmos:  'pNInz6obpgDQGcFmaJgB', // Adam  — رجالي عميق (كوزموس)
+    orion:   'VR6AewLTigWG4xSOukaG', // Arnold — رجالي هادئ (أوريون)
+    nova:    'EXAVITQu4vr4xnSDxMaL', // Sarah  — أنثوي (نوفا)
+    galaxy:  'onwK4e9ZLuTAKqWW03F9'  // Daniel — رجالي حكّاء (جالكسي)
   };
 
   async function tryElevenLabsTTS(text, btn, isArabic) {
     if (!_ttsActive) return;
     try {
-      // جلب أول صوت متاح من الحساب تلقائياً
-      var voiceId = isArabic ? ELEVENLABS_VOICES.arabic : ELEVENLABS_VOICES.english;
-      try {
-        var vResp = await fetch('https://api.elevenlabs.io/v1/voices', {
-          headers: { 'xi-api-key': ELEVENLABS_KEY }
-        });
-        if (vResp.ok) {
-          var vData = await vResp.json();
-          if (vData.voices && vData.voices.length > 0) {
-            // ابحث عن صوت يدعم العربي أو خد أول صوت
-            var arabicVoice = vData.voices.find(function(v) {
-              return v.labels && (v.labels.language === 'ar' || v.labels.accent === 'arabic');
-            });
-            voiceId = (arabicVoice || vData.voices[0]).voice_id;
-            console.log('[ElevenLabs] Using voice:', voiceId, (arabicVoice || vData.voices[0]).name);
-          }
-        }
-      } catch(ve) { console.warn('[ElevenLabs] Could not fetch voices:', ve); }
-      if (typeof showToast === 'function') showToast('\u0635\u0648\u062a Groq \u0648\u0635\u0644 \u0644\u0644\u062d\u062f \u0627\u0644\u064a\u0648\u0645\u064a \u060c \u062c\u0627\u0631\u064d \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u0628\u062f\u064a\u0644...');
+      var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
+      var voiceId = EL_VOICES[p.id] || EL_VOICES.cosmos;
 
       var resp = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
         method: 'POST',
@@ -13018,6 +13004,12 @@ function slStopAllAnimations() {
       var url  = URL.createObjectURL(blob);
       var audio = new Audio(url);
       _ttsAudio = audio;
+      _ttsBtn   = btn || null;
+
+      if (btn) {
+        btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
+        btn.classList.add('muted');
+      }
 
       audio.onended = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
       audio.onerror = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
@@ -13028,7 +13020,6 @@ function slStopAllAnimations() {
 
     } catch(e) {
       console.error('[TTS] ElevenLabs error:', e);
-      if (typeof showToast === 'function') showToast('\u26a0\ufe0f \u062a\u0639\u0630\u0651\u0631 \u062a\u0634\u063a\u064a\u0644 \u0627\u0644\u0635\u0648\u062a. \u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0627\u0644\u0645\u0634\u0631\u0641\u064a\u0646 \u0623\u0648 \u0627\u0646\u062a\u0638\u0631 \u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u062d\u0635\u0629 \u0627\u0644\u0645\u062c\u0627\u0646\u064a\u0629.');
       stopGroqTTS();
     }
   }
