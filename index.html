@@ -2428,13 +2428,23 @@ body {
 }
 
 /* ===== KEYBOARD-AWARE CHAT INPUT ===== */
-/* الـ chat-container يستخدم dvh بدل vh عشان الكيبورد */
-.chat-modal.active { align-items: stretch !important; }
-.chat-container {
-  height: 100dvh !important;
-  height: -webkit-fill-available !important;
+/* الـ chat-modal يبقى fixed ويتحرك مع الـ visualViewport */
+.chat-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
-/* لما الكيبورد يطلع الـ messages area تتمدد وال input يبقى ظاهر */
+.chat-modal.active { align-items: stretch !important; }
+
+/* الـ container يأخذ كل المساحة المتاحة */
+.chat-container {
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+/* الـ messages تملا الباقي */
 .chat-messages {
   flex: 1 1 0% !important;
   min-height: 0 !important;
@@ -2444,13 +2454,7 @@ body {
 /* input area تبقى دايما في الأسفل */
 .chat-input-area {
   flex-shrink: 0 !important;
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
   position: relative !important;
-}
-/* fullscreen mode — نفس الحاجة */
-.chat-modal:-webkit-full-screen .chat-container,
-.chat-modal:fullscreen .chat-container {
-  height: 100% !important;
 }
 
 /* === AI CHAT INPUT — NEW CARD LAYOUT === */
@@ -4893,7 +4897,7 @@ async function updateAdminUI() {
     teardownChatKeyboard("aiChatModal");
   }
 
-  /* ===== MOBILE KEYBOARD HANDLER ===== */
+  /* ===== MOBILE KEYBOARD HANDLER — v2 ===== */
   var _kbCleanups = {};
   function setupChatKeyboard(modalId) {
     teardownChatKeyboard(modalId);
@@ -4905,42 +4909,51 @@ async function updateAdminUI() {
     var textarea  = modal.querySelector("textarea");
     if (!container || !msgs || !inputArea) return;
 
-    function onViewportResize() {
+    // الحل الرئيسي: نضبط ارتفاع الـ container على حسب الـ visualViewport
+    // بدل ما نحاول نتحكم في الـ padding أو transform
+    function applyHeight() {
       var vv = window.visualViewport;
-      if (!vv) return;
-      var kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      inputArea.style.paddingBottom = kbHeight > 10
-        ? (kbHeight + 4) + "px"
-        : "max(0.75rem, env(safe-area-inset-bottom))";
-      setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 80);
+      var h = vv ? vv.height : window.innerHeight;
+      container.style.height = h + "px";
+      container.style.maxHeight = h + "px";
+      // scroll لآخر رسالة
+      msgs.scrollTop = msgs.scrollHeight;
     }
+
+    function onViewportResize() { applyHeight(); }
     function onViewportScroll() {
       var vv = window.visualViewport;
-      if (vv) container.style.transform = "translateY(" + vv.offsetTop + "px)";
+      if (vv) {
+        modal.style.top  = vv.offsetTop  + "px";
+        modal.style.left = vv.offsetLeft + "px";
+      }
     }
 
     var vv = window.visualViewport;
     if (vv) {
       vv.addEventListener("resize", onViewportResize);
       vv.addEventListener("scroll", onViewportScroll);
+      applyHeight();
     }
 
     function onFocus() {
-      setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 350);
+      setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 400);
     }
     function onBlur() {
       setTimeout(function(){
-        inputArea.style.paddingBottom = "";
-        container.style.transform = "";
-      }, 120);
+        container.style.height = "";
+        container.style.maxHeight = "";
+        modal.style.top  = "";
+        modal.style.left = "";
+      }, 150);
     }
     function autoResize() {
       this.style.height = "auto";
-      this.style.height = Math.min(this.scrollHeight, 140) + "px";
+      this.style.height = Math.min(this.scrollHeight, 120) + "px";
     }
     if (textarea) {
       textarea.addEventListener("focus", onFocus);
-      textarea.addEventListener("blur", onBlur);
+      textarea.addEventListener("blur",  onBlur);
       textarea.addEventListener("input", autoResize);
     }
 
@@ -4951,11 +4964,13 @@ async function updateAdminUI() {
       }
       if (textarea) {
         textarea.removeEventListener("focus", onFocus);
-        textarea.removeEventListener("blur", onBlur);
+        textarea.removeEventListener("blur",  onBlur);
         textarea.removeEventListener("input", autoResize);
       }
-      inputArea.style.paddingBottom = "";
-      container.style.transform = "";
+      container.style.height = "";
+      container.style.maxHeight = "";
+      modal.style.top  = "";
+      modal.style.left = "";
     };
   }
   function teardownChatKeyboard(modalId) {
