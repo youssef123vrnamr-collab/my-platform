@@ -12882,7 +12882,6 @@ function slStopAllAnimations() {
     if (btn && _ttsBtn === btn && _ttsActive) { stopGroqTTS(); return; }
     stopGroqTTS();
 
-    // نستخدم نفس مفتاح Groq الموجود للـ chat
     var key = (typeof getAiApiKey === 'function') ? getAiApiKey() : '';
     if (!key) {
       if (typeof showToast === 'function') showToast('⚠️ ادخل مفتاح Groq API أولاً');
@@ -12893,8 +12892,23 @@ function slStopAllAnimations() {
     var clean = cleanForTTS(text);
     if (!clean) return;
 
-    var p     = window.getCurrentAIPersona() || AI_PERSONAS[0];
-    var voice = p.groqVoice || 'Fritz-PlayAI';
+    var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
+
+    // اختيار الموديل والصوت حسب اللغة
+    var isArabic = /[\u0600-\u06FF]/.test(clean);
+    var model, voice;
+
+    if (isArabic) {
+      // موديل عربي سعودي — 4 أصوات متاحة
+      model = 'canopylabs/orpheus-arabic-saudi';
+      var arabicVoices = { cosmos: 'Abdullah', orion: 'Hamad', nova: 'Norah', galaxy: 'Fatimah' };
+      voice = arabicVoices[p.id] || 'Abdullah';
+    } else {
+      // موديل إنجليزي — 6 أصوات
+      model = 'canopylabs/orpheus-v1-english';
+      var englishVoices = { cosmos: 'tara', orion: 'leo', nova: 'mia', galaxy: 'dan' };
+      voice = englishVoices[p.id] || 'tara';
+    }
 
     _ttsActive = true;
     _ttsBtn    = btn || null;
@@ -12912,7 +12926,7 @@ function slStopAllAnimations() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'playai-tts',
+          model: model,
           voice: voice,
           input: clean.slice(0, 3000),
           response_format: 'mp3'
