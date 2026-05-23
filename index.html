@@ -12936,8 +12936,8 @@ function slStopAllAnimations() {
       if (!resp.ok) {
         var err = await resp.json().catch(function(){ return {}; });
         var msg = (err.error && err.error.message) || ('HTTP ' + resp.status);
-        if (typeof showToast === 'function') showToast('❌ Groq TTS: ' + msg);
-        stopGroqTTS();
+        console.warn('[TTS] Groq failed, trying ElevenLabs...', msg);
+        await tryElevenLabsTTS(clean, btn, isArabic);
         return;
       }
 
@@ -12957,10 +12957,62 @@ function slStopAllAnimations() {
 
     } catch(e) {
       console.error('[TTS] Groq error:', e);
-      if (typeof showToast === 'function') showToast('❌ فشل الاتصال بـ Groq TTS');
-      stopGroqTTS();
+      await tryElevenLabsTTS(clean, btn, isArabic);
     }
   };
+
+  // ===== ElevenLabs Fallback TTS =====
+  var ELEVENLABS_KEY = 'sk_fa28240812a907ce3878f654e389d41e7482798f298e459a';
+  var ELEVENLABS_VOICES = {
+    arabic:  'pqHfZKP75CvOlQylNhV4',
+    english: 'EXAVITQu4vr4xnSDxMaL'
+  };
+
+  async function tryElevenLabsTTS(text, btn, isArabic) {
+    if (!_ttsActive) return;
+    try {
+      var voiceId = isArabic ? ELEVENLABS_VOICES.arabic : ELEVENLABS_VOICES.english;
+      if (typeof showToast === 'function') showToast('\u0635\u0648\u062a Groq \u0648\u0635\u0644 \u0644\u0644\u062d\u062f \u0627\u0644\u064a\u0648\u0645\u064a \u060c \u062c\u0627\u0631\u064d \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u0628\u062f\u064a\u0644...');
+
+      var resp = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': ELEVENLABS_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: text.slice(0, 2500),
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        })
+      });
+
+      if (!resp.ok) {
+        if (typeof showToast === 'function') showToast('\u26a0\ufe0f \u062a\u0639\u0630\u0651\u0631 \u062a\u0634\u063a\u064a\u0644 \u0627\u0644\u0635\u0648\u062a. \u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0627\u0644\u0645\u0634\u0631\u0641\u064a\u0646 \u0623\u0648 \u0627\u0646\u062a\u0638\u0631 \u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u062d\u0635\u0629 \u0627\u0644\u0645\u062c\u0627\u0646\u064a\u0629.');
+        stopGroqTTS();
+        return;
+      }
+
+      if (!_ttsActive) return;
+
+      var blob = await resp.blob();
+      var url  = URL.createObjectURL(blob);
+      var audio = new Audio(url);
+      _ttsAudio = audio;
+
+      audio.onended = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
+      audio.onerror = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
+      audio.play().catch(function(e) {
+        console.warn('[TTS] ElevenLabs play failed:', e);
+        stopGroqTTS();
+      });
+
+    } catch(e) {
+      console.error('[TTS] ElevenLabs error:', e);
+      if (typeof showToast === 'function') showToast('\u26a0\ufe0f \u062a\u0639\u0630\u0651\u0631 \u062a\u0634\u063a\u064a\u0644 \u0627\u0644\u0635\u0648\u062a. \u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0627\u0644\u0645\u0634\u0631\u0641\u064a\u0646 \u0623\u0648 \u0627\u0646\u062a\u0638\u0631 \u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u062d\u0635\u0629 \u0627\u0644\u0645\u062c\u0627\u0646\u064a\u0629.');
+      stopGroqTTS();
+    }
+  }
 
   // ===== 7. زرار الصوت على رسائل AI =====
   window.addAIMuteButton = function(msgEl, text) {
