@@ -9057,6 +9057,8 @@ window.playChatSound = function() {
       _currentSpeakingBtn.classList.remove('muted');
       _currentSpeakingBtn = null;
     }
+    // أوقف Groq/ElevenLabs TTS برضو
+    if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
   }
 
   // زرار الكتم/التشغيل العام في الـ header
