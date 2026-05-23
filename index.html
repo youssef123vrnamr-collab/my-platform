@@ -4054,6 +4054,7 @@ async function updateAdminUI() {
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
             addItem("setAdminsMenuItem","fas fa-users-cog","تحديد المشرفين", () => { menu.classList.remove("active"); openSetAdminsModal(); });
             addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); });
+            addItem("openaiTTSKeyMenuItem","fas fa-microphone-lines","مفتاح OpenAI للأصوات 🎙️", () => { menu.classList.remove("active"); window.openOpenAITTSKeyModal && window.openOpenAITTSKeyModal(); });
             addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); });
             addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); });
             addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); });
@@ -4080,6 +4081,7 @@ async function updateAdminUI() {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
             addItem("smartLearnMenuItem","fas fa-brain","التعلم الذكي 🧠", () => { menu.classList.remove("active"); openSelfLearning(); }, "sl-menu-item");
+            addItem("openaiTTSKeyMenuItem","fas fa-microphone-lines","مفتاح OpenAI للأصوات 🎙️", () => { menu.classList.remove("active"); window.openOpenAITTSKeyModal && window.openOpenAITTSKeyModal(); });
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
@@ -12722,6 +12724,7 @@ function slStopAllAnimations() {
       desc: 'مساعد فلكي محترف — يجيبك بعلم وإثارة',
       systemPrompt: 'أنت كوزموس، مساعد فلكي خبير ومتحمس. تجيب بدقة علمية وبشكل مشوّق. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
       voiceStyle: { rate: 0.92, pitch: 0.85 },
+      openaiVoice: 'onyx',   // صوت رجالي عميق وجدي
       badge: 'كل اللغات'
     },
     {
@@ -12731,6 +12734,7 @@ function slStopAllAnimations() {
       desc: 'معلم هادئ ومبسّط — يشرح الصعب ببساطة',
       systemPrompt: 'أنت أوريون، معلم هادئ وصبور. تشرح الأمور ببساطة وبأمثلة واضحة. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
       voiceStyle: { rate: 0.88, pitch: 0.80 },
+      openaiVoice: 'echo',   // صوت هادئ ومريح
       badge: 'كل اللغات'
     },
     {
@@ -12740,6 +12744,7 @@ function slStopAllAnimations() {
       desc: 'مساعد سريع ومباشر — إجابات موجزة ودقيقة',
       systemPrompt: 'أنت نوفا، مساعد ذكي وسريع. إجاباتك مباشرة ودقيقة ومكتملة. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
       voiceStyle: { rate: 1.0, pitch: 0.88 },
+      openaiVoice: 'nova',   // صوت أنثوي نابض بالحياة
       badge: 'كل اللغات'
     },
     {
@@ -12749,17 +12754,76 @@ function slStopAllAnimations() {
       desc: 'مستكشف الكون — يروي قصص الفضاء بأسلوب رائع',
       systemPrompt: 'أنت جالكسي، راوي قصص الفضاء. إجاباتك مليئة بالإثارة والتشويق والمعلومات الرائعة. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
       voiceStyle: { rate: 0.85, pitch: 0.78 },
+      openaiVoice: 'fable',  // صوت حكّاء رائع
       badge: 'كل اللغات'
     }
   ];
 
   // ===== 2. localStorage helpers =====
-  var PKEY = 'falak_ai_persona_id';
-  var VKEY = 'falak_ai_voice_uri';
-  function getSavedId()  { try { return localStorage.getItem(PKEY); } catch(e){ return null; } }
-  function savePId(id)   { try { localStorage.setItem(PKEY, id); } catch(e){} }
-  function getSavedVURI(){ try { return localStorage.getItem(VKEY); } catch(e){ return null; } }
-  function saveVURI(uri) { try { if(uri) localStorage.setItem(VKEY, uri); } catch(e){} }
+  var PKEY  = 'falak_ai_persona_id';
+  var VKEY  = 'falak_ai_voice_uri';
+  var OKEY  = 'falak_openai_tts_key';   // مفتاح OpenAI TTS
+  function getSavedId()     { try { return localStorage.getItem(PKEY); } catch(e){ return null; } }
+  function savePId(id)      { try { localStorage.setItem(PKEY, id); } catch(e){} }
+  function getSavedVURI()   { try { return localStorage.getItem(VKEY); } catch(e){ return null; } }
+  function saveVURI(uri)    { try { if(uri) localStorage.setItem(VKEY, uri); } catch(e){} }
+  function getOpenAITTSKey(){ try { return localStorage.getItem(OKEY) || ''; } catch(e){ return ''; } }
+  function saveOpenAITTSKey(k){ try { localStorage.setItem(OKEY, k.trim()); } catch(e){} }
+
+  // ─── نافذة إدخال مفتاح OpenAI TTS ───────────────────────────
+  window.openOpenAITTSKeyModal = function() {
+    var old = document.getElementById('openaiTTSKeyModal');
+    if (old) old.remove();
+    var cur = getOpenAITTSKey();
+    var m = document.createElement('div');
+    m.id = 'openaiTTSKeyModal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:10090;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(8px)';
+    m.innerHTML =
+      '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.5);border-radius:20px;width:95%;max-width:460px;padding:1.8rem 1.5rem;">' +
+        '<h3 style="color:#6366f1;margin-bottom:.4rem;font-size:1.1rem"><i class="fas fa-microphone-lines"></i> مفتاح OpenAI للأصوات</h3>' +
+        '<p style="color:#888;font-size:.82rem;margin-bottom:1rem;line-height:1.6">المفتاح بيتحفظ في المتصفح فقط ومش بيتشارك مع أي خادم. اطلبه من <span style="color:#06b6d4">platform.openai.com/api-keys</span></p>' +
+        '<div style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.78rem;color:#94a3b8;line-height:1.6">' +
+          '🎙️ <b>أصوات الشخصيات:</b><br>' +
+          '🚀 كوزموس → <b>Onyx</b> (عميق وجدي)<br>' +
+          '⭐ أوريون → <b>Echo</b> (هادئ ومريح)<br>' +
+          '💫 نوفا → <b>Nova</b> (نابض بالحياة)<br>' +
+          '🌌 جالكسي → <b>Fable</b> (حكّاء رائع)' +
+        '</div>' +
+        '<div style="position:relative;margin-bottom:.6rem">' +
+          '<input id="openaiTTSKeyInput" type="password" placeholder="sk-…" value="' + (cur||'') + '" style="width:100%;padding:.85rem 2.8rem .85rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:monospace;direction:ltr;text-align:left;font-size:.9rem">' +
+          '<button onclick="(function(){var i=document.getElementById(\'openaiTTSKeyInput\');i.type=i.type===\'password\'?\'text\':\'password\'})()" style="position:absolute;top:50%;transform:translateY(-50%);left:.6rem;background:none;border:none;color:#888;cursor:pointer;font-size:1rem"><i class="fas fa-eye"></i></button>' +
+        '</div>' +
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+          '<button onclick="(function(){var k=document.getElementById(\'openaiTTSKeyInput\').value.trim();if(!k||!k.startsWith(\'sk-\')){alert(\'المفتاح لازم يبدأ بـ sk-\');return;}saveOpenAITTSKey(k);document.getElementById(\'openaiTTSKeyModal\').remove();if(typeof showToast===\'function\')showToast(\'✅ تم حفظ مفتاح OpenAI TTS\');})()" style="flex:1;min-width:110px;padding:.7rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-family:Cairo;font-weight:700;cursor:pointer"><i class="fas fa-save"></i> حفظ</button>' +
+          '<button onclick="(function(){var k=document.getElementById(\'openaiTTSKeyInput\').value.trim();if(!k){alert(\'ادخل المفتاح الأول\');return;}testOpenAITTSKey(k);})()" style="flex:1;min-width:110px;padding:.7rem;background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.3);border-radius:10px;font-family:Cairo;font-weight:700;cursor:pointer"><i class="fas fa-flask"></i> اختبار</button>' +
+          '<button onclick="document.getElementById(\'openaiTTSKeyModal\').remove()" style="flex:1;min-width:110px;padding:.7rem;background:rgba(255,255,255,.07);color:#aaa;border:1px solid rgba(255,255,255,.1);border-radius:10px;font-family:Cairo;cursor:pointer">إغلاق</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', function(e){ if(e.target===m) m.remove(); });
+  };
+
+  window.saveOpenAITTSKey = saveOpenAITTSKey; // اجعلها global للاستخدام في onclick
+
+  window.testOpenAITTSKey = async function(key) {
+    if (typeof showToast === 'function') showToast('⏳ جاري الاختبار…');
+    try {
+      var resp = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model:'tts-1', voice:'nova', input:'اختبار الصوت', speed:1.0 })
+      });
+      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      var blob = await resp.blob();
+      var url  = URL.createObjectURL(blob);
+      var a    = new Audio(url);
+      a.onended = function(){ URL.revokeObjectURL(url); };
+      a.play();
+      if (typeof showToast === 'function') showToast('✅ المفتاح شغّال والصوت تمام!');
+    } catch(e) {
+      if (typeof showToast === 'function') showToast('❌ المفتاح غلط أو منتهي: '+e.message);
+    }
+  };
 
   // ===== 3. الشخصية الحالية =====
   var _persona = null;
@@ -12843,129 +12907,111 @@ function slStopAllAnimations() {
     return m || _selVoice;
   }
 
-  // ===== 6. دالة النطق الرئيسية — بتقسيم الجمل لضمان الاكتمال =====
-  var _speakQueue = [];
-  var _speakActive = false;
+  // ===== 6. OpenAI TTS — النظام الجديد الكامل =====
+  var _ttsAudio   = null;   // العنصر الصوتي الحالي
+  var _ttsBtn     = null;   // الزرار المربوط
+  var _ttsActive  = false;
 
-  function splitToChunks(text) {
-    var MAX = 160;
-    // بدل lookbehind (مش مدعوم على كل متصفحات الموبايل)
-    // نستبدل علامات الترقيم بعلامة + separator ثم نقسم
-    var normalized = text
-      .replace(/\r?\n+/g, ' . ')
-      .replace(/([.!?؟،,;:])\s*/g, '$1\u200B'); // zero-width space بعد كل علامة
-    var raw = normalized.split('\u200B');
-    var chunks = [];
-    var cur = '';
-    for (var i = 0; i < raw.length; i++) {
-      var s = raw[i].trim();
-      if (!s) continue;
-      var combined = cur ? cur + ' ' + s : s;
-      if (combined.length <= MAX) {
-        cur = combined;
-      } else {
-        if (cur) chunks.push(cur);
-        // لو جملة واحدة أكبر من MAX — قسّمها على كلمات
-        if (s.length > MAX) {
-          var words = s.split(/\s+/);
-          var part = '';
-          for (var j = 0; j < words.length; j++) {
-            var w = words[j];
-            if (!w) continue;
-            var trial = part ? part + ' ' + w : w;
-            if (trial.length <= MAX) {
-              part = trial;
-            } else {
-              if (part) chunks.push(part);
-              part = w;
-            }
-          }
-          cur = part;
-        } else {
-          cur = s;
-        }
-      }
-    }
-    if (cur) chunks.push(cur);
-    return chunks.filter(function(c){ return c.trim().length > 0; });
+  function cleanForTTS(text) {
+    return (text || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/`+([^`]*)`+/g, '$1')
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/\r?\n+/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
-  function speakNextChunk(synth, chunks, idx, p, lang, voice, btn) {
-    if (idx >= chunks.length || !_speakActive) {
-      _speakActive = false;
-      if (btn) { btn.innerHTML = '<i class="fas fa-volume-up"></i>'; btn.classList.remove('muted'); }
-      if (_speakBtn === btn) _speakBtn = null;
-      clearInterval(_huaweiT);
+  function stopOpenAITTS() {
+    _ttsActive = false;
+    if (_ttsAudio) {
+      try { _ttsAudio.pause(); _ttsAudio.src = ''; } catch(e){}
+      _ttsAudio = null;
+    }
+    if (_ttsBtn) {
+      _ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      _ttsBtn.classList.remove('muted');
+      _ttsBtn = null;
+    }
+  }
+  window.stopAllAISpeech = stopOpenAITTS;
+
+  window.aiSpeak = async function(text, btn) {
+    // لو نفس الزرار → وقّف
+    if (btn && _ttsBtn === btn && _ttsActive) { stopOpenAITTS(); return; }
+    stopOpenAITTS();
+
+    var key = getOpenAITTSKey();
+    if (!key) {
+      // مفيش مفتاح — نفتح نافذة الإدخال
+      if (typeof showToast === 'function') showToast('⚠️ ادخل مفتاح OpenAI للأصوات أولاً');
+      window.openOpenAITTSKeyModal();
       return;
     }
-    var utt = new SpeechSynthesisUtterance(chunks[idx]);
-    utt.rate   = p.voiceStyle.rate  || 0.9;
-    utt.pitch  = p.voiceStyle.pitch || 0.85;
-    utt.volume = 1;
-    utt.lang   = lang;
-    if (voice) utt.voice = voice;
 
-    var _moved = false;
-    function nextChunk() {
-      if (_moved) return; // نمنع الاستدعاء المزدوج
-      _moved = true;
-      clearInterval(_huaweiT);
-      speakNextChunk(synth, chunks, idx + 1, p, lang, voice, btn);
-    }
+    var clean = cleanForTTS(text);
+    if (!clean) return;
 
-    utt.onend = function() { nextChunk(); };
+    var p     = window.getCurrentAIPersona() || AI_PERSONAS[0];
+    var voice = p.openaiVoice || 'onyx';
 
-    utt.onerror = function(e) {
-      // نكمل دايماً حتى لو في error — ما نوقفش
-      nextChunk();
-    };
-
-    // Huawei / Android keep-alive
-    clearInterval(_huaweiT);
-    _huaweiT = setInterval(function() {
-      if (!synth.speaking) { clearInterval(_huaweiT); return; }
-      synth.pause(); synth.resume();
-    }, 5000);
-
-    try { synth.speak(utt); } catch(e) { nextChunk(); }
-  }
-
-  window.aiSpeak = function(text, btn) {
-    var synth = window.speechSynthesis;
-    if (!synth || !text) return;
-    // لو نفس الزرار والصوت شغّال — وقّف
-    if (_speakBtn === btn && (_speakActive || synth.speaking)) { stopAiSpeech(); return; }
-    stopAiSpeech();
-
-    var p      = window.getCurrentAIPersona() || AI_PERSONAS[0];
-    var lang   = detectLang(text);
-    var voice  = getVoiceForLang(lang);
-    var chunks = splitToChunks(text);
-    if (!chunks.length) return;
-
-    _speakBtn    = btn || null;
-    _speakActive = true;
+    _ttsActive = true;
+    _ttsBtn    = btn || null;
 
     if (btn) {
       btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
       btn.classList.add('muted');
     }
 
-    synth.cancel();
-    setTimeout(function() {
-      speakNextChunk(synth, chunks, 0, p, lang, voice, btn);
-    }, 80);
-  };
+    try {
+      var resp = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'tts-1',
+          voice: voice,
+          input: clean.slice(0, 4096),   // حد OpenAI
+          speed: p.voiceStyle ? (p.voiceStyle.rate || 1.0) : 1.0
+        })
+      });
 
-  function stopAiSpeech() {
-    var synth = window.speechSynthesis;
-    _speakActive = false;
-    if (synth) { try { synth.cancel(); } catch(e){} }
-    if (_speakBtn) { _speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>'; _speakBtn.classList.remove('muted'); }
-    _speakBtn = null;
-    clearInterval(_huaweiT);
-  }
-  window.stopAllAISpeech = stopAiSpeech;
+      if (!resp.ok) {
+        var err = await resp.json().catch(function(){ return {}; });
+        var msg = (err.error && err.error.message) || ('HTTP '+resp.status);
+        if (typeof showToast === 'function') showToast('❌ خطأ OpenAI TTS: '+msg);
+        stopOpenAITTS();
+        return;
+      }
+
+      if (!_ttsActive) return; // اتوقف أثناء الانتظار
+
+      var blob  = await resp.blob();
+      var url   = URL.createObjectURL(blob);
+      var audio = new Audio(url);
+      _ttsAudio = audio;
+
+      audio.onended = function() {
+        URL.revokeObjectURL(url);
+        stopOpenAITTS();
+      };
+      audio.onerror = function() {
+        URL.revokeObjectURL(url);
+        stopOpenAITTS();
+      };
+
+      audio.play().catch(function(e) {
+        console.warn('[TTS] play failed:', e);
+        stopOpenAITTS();
+      });
+
+    } catch(e) {
+      console.error('[TTS] OpenAI error:', e);
+      if (typeof showToast === 'function') showToast('❌ فشل الاتصال بـ OpenAI TTS');
+      stopOpenAITTS();
+    }
+  };
 
   // ===== 7. زرار الصوت على رسائل AI =====
   window.addAIMuteButton = function(msgEl, text) {
@@ -13753,7 +13799,18 @@ function slStopAllAnimations() {
           // Auto-speak if not muted
           var muteBtn = document.getElementById('aiMuteBtn') || document.getElementById('aiGlobalMuteBtn');
           var isMuted = (muteBtn && muteBtn.classList.contains('muted')) || (typeof aiIsMuted !== 'undefined' && aiIsMuted);
-          if (!isMuted && typeof window.aiSpeak === 'function') window.aiSpeak(answer, null);
+          if (!isMuted && typeof window.aiSpeak === 'function') {
+            // نمرر النص النظيف بدون HTML أو markdown
+            var cleanAnswer = answer
+              .replace(/<[^>]*>/g, ' ')
+              .replace(/\*\*([^*]+)\*\*/g, '$1')
+              .replace(/\*([^*]+)\*/g, '$1')
+              .replace(/`+([^`]*)`+/g, '$1')
+              .replace(/\r?\n+/g, ' ')
+              .replace(/\s{2,}/g, ' ')
+              .trim();
+            window.aiSpeak(cleanAnswer, null);
+          }
         }
       } catch(err) {
         if (typingEl) typingEl.remove();
@@ -13914,203 +13971,5 @@ function slStopAllAnimations() {
 
 
 
-<!-- ============================================================
-     ✅ TTS FINAL FIX — يكمل لحد ما يخلص بدون ما يوقف
-     ============================================================ -->
-<script>
-(function(){
-  var CHECK_INTERVAL = 200;   // كل 200ms نتحقق هل الصوت شغال
-  var GRACE_MS      = 1200;   // نستنى ثانية وربع قبل نحكم إنه مات
-
-  var _active       = false;
-  var _btn          = null;
-  var _chunks       = [];
-  var _idx          = 0;
-  var _lang         = 'ar-SA';
-  var _voice        = null;
-  var _rate         = 0.92;
-  var _pitch        = 0.88;
-  var _chunkTimer   = null;   // watchdog لكل chunk
-  var _guardian     = null;   // setInterval للرقابة المستمرة
-  var _chunkStart   = 0;      // وقت بداية الـ chunk الحالي
-  var _between      = false;  // هل نحن بين chunk وchunk؟
-
-  function getPersonaStyle() {
-    try {
-      var p = window.getCurrentAIPersona && window.getCurrentAIPersona();
-      if (p && p.voiceStyle) return p.voiceStyle;
-    } catch(e){}
-    return { rate: 0.92, pitch: 0.88 };
-  }
-
-  function detectLang(t) {
-    return /[\u0600-\u06FF]/.test(t||'') ? 'ar-SA' : 'en-US';
-  }
-
-  function getBestVoice(lang) {
-    try {
-      var vs = window.speechSynthesis.getVoices();
-      var base = lang.split('-')[0].toLowerCase();
-      return vs.find(function(v){ return v.lang.toLowerCase().startsWith(base); }) || vs[0] || null;
-    } catch(e){ return null; }
-  }
-
-  function split(text) {
-    var MAX = 120;
-    var norm = (text||'').replace(/\r?\n+/g,' . ').replace(/([.!?؟،,;:])\s*/g,'$1\u200B');
-    var parts = norm.split('\u200B');
-    var out = [], cur = '';
-    parts.forEach(function(s){
-      s = s.trim(); if(!s) return;
-      var combined = cur ? cur+' '+s : s;
-      if(combined.length <= MAX){ cur = combined; }
-      else {
-        if(cur) out.push(cur);
-        if(s.length > MAX){
-          var words = s.split(/\s+/), part='';
-          words.forEach(function(w){
-            if(!w) return;
-            var trial = part ? part+' '+w : w;
-            if(trial.length <= MAX){ part=trial; }
-            else { if(part) out.push(part); part=w; }
-          });
-          cur = part;
-        } else { cur = s; }
-      }
-    });
-    if(cur) out.push(cur);
-    return out.filter(function(c){ return c.trim().length>0; });
-  }
-
-  function stopAll() {
-    _active  = false;
-    _between = false;
-    clearTimeout(_chunkTimer);
-    clearInterval(_guardian);
-    _chunkTimer = null; _guardian = null;
-    try { window.speechSynthesis.cancel(); } catch(e){}
-    if (_btn) {
-      _btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      _btn.classList.remove('muted');
-      _btn = null;
-    }
-  }
-
-  function doChunk(idx) {
-    if (!_active || idx >= _chunks.length) { stopAll(); return; }
-
-    var synth = window.speechSynthesis;
-    _idx        = idx;
-    _between    = false;
-    _chunkStart = Date.now();
-
-    var text = _chunks[idx];
-    var utt  = new SpeechSynthesisUtterance(text);
-    utt.lang   = _lang;
-    utt.rate   = _rate;
-    utt.pitch  = _pitch;
-    utt.volume = 1;
-    if (_voice) utt.voice = _voice;
-
-    var done = false;
-    function advance() {
-      if (done || !_active) return;
-      done = true;
-      _between = true;
-      clearTimeout(_chunkTimer);
-      setTimeout(function(){
-        if (!_active) return;
-        _between = false;
-        doChunk(idx + 1);
-      }, 90);
-    }
-
-    utt.onend   = advance;
-    utt.onerror = function(e) {
-      // "interrupted" = intentional cancel, stop silently
-      if (e && e.error === 'interrupted') { _active = false; return; }
-      advance();
-    };
-
-    // Per-chunk watchdog: إذا onend ما جاش خلال الوقت المتوقع نكمل
-    var budget = Math.max(4000, Math.ceil(text.length * 55 / _rate) + 2500);
-    clearTimeout(_chunkTimer);
-    _chunkTimer = setTimeout(function(){
-      if (!done && _active) {
-        console.warn('[TTS] watchdog chunk', idx);
-        advance();
-      }
-    }, budget);
-
-    try { synth.speak(utt); } catch(ex) { advance(); }
-  }
-
-  // ─── Guardian loop ───────────────────────────────────────────
-  // يراقب كل 200ms: لو الصوت مات وهو لازم يكون شغال → يعيد الـ chunk
-  function startGuardian() {
-    clearInterval(_guardian);
-    _guardian = setInterval(function(){
-      if (!_active) { clearInterval(_guardian); return; }
-      if (_between)  return; // بين chunk وتاني، طبيعي
-      if (Date.now() - _chunkStart < GRACE_MS) return; // فترة السماح
-      var synth = window.speechSynthesis;
-      if (!synth.speaking && !synth.pending) {
-        console.warn('[TTS] guardian restarting chunk', _idx);
-        _chunkStart = Date.now();
-        synth.cancel();
-        setTimeout(function(){
-          if (_active) doChunk(_idx);
-        }, 80);
-      }
-    }, CHECK_INTERVAL);
-  }
-
-  // ─── Public API ──────────────────────────────────────────────
-  var tries = 0;
-  var iv = setInterval(function(){
-    tries++;
-    if (tries > 80) { clearInterval(iv); return; }
-    if (typeof window.getCurrentAIPersona !== 'function') return;
-    clearInterval(iv);
-
-    window.aiSpeak = function(text, btn) {
-      var synth = window.speechSynthesis;
-      if (!synth || !(text||'').trim()) return;
-
-      // ── اضغط نفس الزرار (غير null) = إيقاف ──
-      if (btn && _btn === btn && _active) { stopAll(); return; }
-
-      stopAll();
-
-      var style  = getPersonaStyle();
-      _lang   = detectLang(text);
-      _voice  = getBestVoice(_lang);
-      _rate   = style.rate  || 0.92;
-      _pitch  = style.pitch || 0.88;
-      _chunks = split(text);
-      if (!_chunks.length) return;
-
-      _active  = true;
-      _btn     = btn || null;
-      _idx     = 0;
-      _between = false;
-
-      if (btn) {
-        btn.innerHTML = '<i class="fas fa-stop" style="color:#ef4444"></i>';
-        btn.classList.add('muted');
-      }
-
-      startGuardian();
-      synth.cancel();
-      setTimeout(function(){ if(_active) doChunk(0); }, 120);
-    };
-
-    window.stopAllAISpeech = stopAll;
-    console.log('✅ TTS Guardian جاهز — مش هيوقف غير لما يخلص');
-
-  }, 250);
-})();
-</script>
-
 </body>
-</html>
+</html></html>
