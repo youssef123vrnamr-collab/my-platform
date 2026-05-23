@@ -2591,37 +2591,30 @@ body {
 /* ===== KEYBOARD-AWARE CHAT INPUT ===== */
 .chat-modal {
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+  top: 0 !important; left: 0 !important;
+  width: 100% !important; height: 100% !important;
 }
 .chat-modal.active { align-items: stretch !important; }
-
-/* fullscreen — نفس الإعدادات */
-:fullscreen .chat-modal,
-:-webkit-full-screen .chat-modal,
-.chat-modal:fullscreen,
-.chat-modal:-webkit-full-screen {
-  position: fixed !important;
-  top: 0 !important; left: 0 !important;
-  width: 100vw !important; height: 100vh !important;
-}
 
 .chat-container {
   height: 100% !important;
   max-height: 100% !important;
   overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
+/* الرسائل تملا الباقي وتتأثر بالـ JS */
 .chat-messages {
   flex: 1 1 0% !important;
   min-height: 0 !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
+/* الـ input area — الـ JS هيعملها fixed لما الكيبورد يطلع */
 .chat-input-area {
   flex-shrink: 0 !important;
   position: relative !important;
+  width: 100% !important;
 }
 
 /* === AI CHAT INPUT — NEW CARD LAYOUT === */
@@ -5089,11 +5082,12 @@ async function updateAdminUI() {
     teardownChatKeyboard("aiChatModal");
   }
 
-  /* ===== MOBILE KEYBOARD HANDLER — v2 ===== */
+  /* ===== MOBILE KEYBOARD HANDLER — v3 (fixed input above keyboard) ===== */
   var _kbCleanups = {};
+
   function setupChatKeyboard(modalId) {
     teardownChatKeyboard(modalId);
-    var modal = document.getElementById(modalId);
+    var modal     = document.getElementById(modalId);
     if (!modal) return;
     var container = modal.querySelector(".chat-container");
     var msgs      = modal.querySelector(".chat-messages");
@@ -5101,84 +5095,97 @@ async function updateAdminUI() {
     var textarea  = modal.querySelector(".unified-textarea") || modal.querySelector("textarea");
     if (!container || !msgs || !inputArea) return;
 
-    // الحل الرئيسي: نضبط ارتفاع الـ container على حسب الـ visualViewport
-    // بدل ما نحاول نتحكم في الـ padding أو transform
-    function applyHeight() {
-      var vv = window.visualViewport;
-      var h = vv ? vv.height : window.innerHeight;
-      container.style.height = h + "px";
-      container.style.maxHeight = h + "px";
+    // ── الفكرة الجديدة ──
+    // نثبّت الـ inputArea بـ position:fixed فوق الكيبورد مباشرة
+    // ونحسب ارتفاع الـ msgs بحيث ما يتغطاش
+
+    function getVV() { return window.visualViewport || null; }
+
+    function applyLayout() {
+      var vv = getVV();
+      var vpTop    = vv ? vv.offsetTop  : 0;
+      var vpLeft   = vv ? vv.offsetLeft : 0;
+      var vpHeight = vv ? vv.height     : window.innerHeight;
+      var vpWidth  = vv ? vv.width      : window.innerWidth;
+
+      // inputArea: ثابت في أسفل الـ visualViewport
+      inputArea.style.position = "fixed";
+      inputArea.style.bottom   = "0";
+      inputArea.style.left     = vpLeft + "px";
+      inputArea.style.width    = vpWidth + "px";
+      inputArea.style.zIndex   = "99999";
+
+      // ارتفاع inputArea الفعلي بعد ما اتحسبت
+      var iaHeight = inputArea.offsetHeight || 70;
+
+      // container: يأخذ ارتفاع الـ viewport كله
+      container.style.height    = vpHeight + "px";
+      container.style.maxHeight = vpHeight + "px";
+
+      // msgs: كل المساحة إلا الـ header والـ inputArea
+      var header = container.querySelector(".chat-header");
+      var headerH = header ? header.offsetHeight : 70;
+      msgs.style.height    = (vpHeight - headerH - iaHeight) + "px";
+      msgs.style.maxHeight = (vpHeight - headerH - iaHeight) + "px";
+      msgs.style.paddingBottom = "0";
+
       // scroll لآخر رسالة
-      msgs.scrollTop = msgs.scrollHeight;
+      setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 60);
     }
 
-    function onViewportResize() { applyHeight(); }
-    function onViewportScroll() {
-      var vv = window.visualViewport;
-      if (vv) {
-        modal.style.top  = vv.offsetTop  + "px";
-        modal.style.left = vv.offsetLeft + "px";
-      }
-    }
+    function onVVResize()  { applyLayout(); }
+    function onVVScroll()  { applyLayout(); }
 
-    var vv = window.visualViewport;
+    var vv = getVV();
     if (vv) {
-      vv.addEventListener("resize", onViewportResize);
-      vv.addEventListener("scroll", onViewportScroll);
-      applyHeight();
+      vv.addEventListener("resize", onVVResize);
+      vv.addEventListener("scroll", onVVScroll);
     }
+    // أول مرة
+    applyLayout();
 
-    function onFocus() {
-      setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 400);
-    }
-    function onBlur() {
-      setTimeout(function(){
-        container.style.height = "";
-        container.style.maxHeight = "";
-        modal.style.top  = "";
-        modal.style.left = "";
-      }, 150);
-    }
+    // auto-resize textarea
     function autoResize() {
       this.style.height = "auto";
       this.style.height = Math.min(this.scrollHeight, 120) + "px";
+      applyLayout();
     }
     if (textarea) {
-      textarea.addEventListener("focus", onFocus);
-      textarea.addEventListener("blur",  onBlur);
       textarea.addEventListener("input", autoResize);
     }
 
     _kbCleanups[modalId] = function() {
       if (vv) {
-        vv.removeEventListener("resize", onViewportResize);
-        vv.removeEventListener("scroll", onViewportScroll);
+        vv.removeEventListener("resize", onVVResize);
+        vv.removeEventListener("scroll", onVVScroll);
       }
-      if (textarea) {
-        textarea.removeEventListener("focus", onFocus);
-        textarea.removeEventListener("blur",  onBlur);
-        textarea.removeEventListener("input", autoResize);
-      }
-      container.style.height = "";
-      container.style.maxHeight = "";
-      modal.style.top  = "";
-      modal.style.left = "";
+      if (textarea) textarea.removeEventListener("input", autoResize);
+      // إعادة كل الستايلات
+      inputArea.style.position = "";
+      inputArea.style.bottom   = "";
+      inputArea.style.left     = "";
+      inputArea.style.width    = "";
+      inputArea.style.zIndex   = "";
+      container.style.height   = "";
+      container.style.maxHeight= "";
+      msgs.style.height        = "";
+      msgs.style.maxHeight     = "";
+      msgs.style.paddingBottom = "";
     };
   }
+
   function teardownChatKeyboard(modalId) {
     if (_kbCleanups[modalId]) { _kbCleanups[modalId](); delete _kbCleanups[modalId]; }
   }
   window.setupChatKeyboard    = setupChatKeyboard;
   window.teardownChatKeyboard = teardownChatKeyboard;
 
-  /* ===== FULLSCREEN: إعادة تفعيل الـ keyboard fix لما الشاشة تبقى fullscreen ===== */
+  /* ===== FULLSCREEN: إعادة تفعيل الـ keyboard fix ===== */
   function onFullscreenChange() {
-    // لو في chat مفتوح، نعيد ضبط الـ keyboard handler
     var activeChats = ["aiChatModal", "chatModal"];
     activeChats.forEach(function(id) {
       var m = document.getElementById(id);
       if (m && m.classList.contains("active")) {
-        // نعيد التهيئة بعد تأخير بسيط عشان الـ fullscreen يكتمل
         setTimeout(function(){ setupChatKeyboard(id); }, 300);
       }
     });
