@@ -12964,14 +12964,26 @@ function slStopAllAnimations() {
   // ===== ElevenLabs Fallback TTS =====
   var ELEVENLABS_KEY = 'sk_fa28240812a907ce3878f654e389d41e7482798f298e459a';
   var ELEVENLABS_VOICES = {
-    arabic:  'pqHfZKP75CvOlQylNhV4',
-    english: 'EXAVITQu4vr4xnSDxMaL'
+    arabic:  'onwK4e9ZLuTAKqWW03F9', // Daniel - يدعم العربي بشكل جيد
+    english: 'EXAVITQu4vr4xnSDxMaL'  // Sarah
   };
 
   async function tryElevenLabsTTS(text, btn, isArabic) {
     if (!_ttsActive) return;
     try {
+      // جلب أول صوت متاح من الحساب تلقائياً
       var voiceId = isArabic ? ELEVENLABS_VOICES.arabic : ELEVENLABS_VOICES.english;
+      try {
+        var vResp = await fetch('https://api.elevenlabs.io/v1/voices', {
+          headers: { 'xi-api-key': ELEVENLABS_KEY }
+        });
+        if (vResp.ok) {
+          var vData = await vResp.json();
+          if (vData.voices && vData.voices.length > 0) {
+            voiceId = vData.voices[0].voice_id;
+          }
+        }
+      } catch(ve) { /* استخدم الصوت الافتراضي */ }
       if (typeof showToast === 'function') showToast('\u0635\u0648\u062a Groq \u0648\u0635\u0644 \u0644\u0644\u062d\u062f \u0627\u0644\u064a\u0648\u0645\u064a \u060c \u062c\u0627\u0631\u064d \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u0628\u062f\u064a\u0644...');
 
       var resp = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
@@ -12982,7 +12994,7 @@ function slStopAllAnimations() {
         },
         body: JSON.stringify({
           text: text.slice(0, 2500),
-          model_id: 'eleven_multilingual_v2',
+          model_id: 'eleven_turbo_v2_5',
           voice_settings: { stability: 0.5, similarity_boost: 0.75 }
         })
       });
