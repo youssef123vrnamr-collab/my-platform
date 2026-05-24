@@ -623,6 +623,33 @@
     .reply-status { font-size: 0.75rem; color: #10b981; margin-top: 0.5rem; }
     .debug-btn { display: none !important; }
 
+    /* ===== تحسينات التحقق من المدخلات في الوقت الفعلي ===== */
+    .field-hint {
+      font-size: 0.78rem; margin-top: 0.3rem; min-height: 1rem;
+      display: flex; align-items: center; gap: 0.35rem;
+      transition: all 0.25s ease; padding-right: 2px;
+    }
+    .field-hint.hint-ok  { color: #34d399; }
+    .field-hint.hint-err { color: #f87171; }
+    .field-hint.hint-tip { color: #94a3b8; }
+    input.v-ok, select.v-ok, textarea.v-ok {
+      border-color: rgba(52,211,153,.65) !important;
+      box-shadow: 0 0 0 2px rgba(52,211,153,.12) !important;
+    }
+    input.v-err, select.v-err, textarea.v-err {
+      border-color: rgba(248,113,113,.7) !important;
+      box-shadow: 0 0 0 2px rgba(248,113,113,.13) !important;
+    }
+    /* تحسين شكل select في الـ feedback modal */
+    .fb-phone-row { display: flex; gap: 8px; align-items: stretch; }
+    .fb-country-select {
+      width: 38%; padding: .75rem .5rem;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: #fff; font-family: 'Cairo', sans-serif;
+      font-size: .82rem; direction: ltr; cursor: pointer;
+    }
+    .fb-phone-input { flex: 1; }
+
     /* ===== Global polish: scrollbar, focus, selection, smoothing ===== */
     html { scroll-behavior: smooth; }
     body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
@@ -3185,7 +3212,36 @@ body {
 
 
   <!-- جميع المودالات (نفس الكود الأصلي مع إبقاء الوظائف) -->
-  <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p><input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50"><input id="examResultPhone" placeholder="رقم الهاتف" class="exam-result-input" maxlength="20" type="tel"><button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button></div></div></div>
+  <div class="modal" id="examResultModal"><div class="modal-content exam-result-modal-content"><div class="modal-header"><h3><i class="fas fa-file-alt" style="color:#6366f1"></i> استعلام عن نتيجة الامتحان</h3><button class="modal-close" onclick="closeExamResultModal()"><i class="fas fa-times"></i></button></div><div class="modal-body">
+  <p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p>
+  <input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50">
+  <div style="display:flex;gap:8px;margin-top:.5rem;margin-bottom:1rem">
+    <select id="examResultCountryCode" style="width:38%;padding:.85rem .5rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:.82rem;direction:ltr">
+      <option value="+20">🇪🇬 +20 مصر</option>
+      <option value="+966">🇸🇦 +966 السعودية</option>
+      <option value="+971">🇦🇪 +971 الإمارات</option>
+      <option value="+965">🇰🇼 +965 الكويت</option>
+      <option value="+974">🇶🇦 +974 قطر</option>
+      <option value="+973">🇧🇭 +973 البحرين</option>
+      <option value="+968">🇴🇲 +968 عمان</option>
+      <option value="+962">🇯🇴 +962 الأردن</option>
+      <option value="+961">🇱🇧 +961 لبنان</option>
+      <option value="+963">🇸🇾 +963 سوريا</option>
+      <option value="+970">🇵🇸 +970 فلسطين</option>
+      <option value="+218">🇱🇾 +218 ليبيا</option>
+      <option value="+213">🇩🇿 +213 الجزائر</option>
+      <option value="+212">🇲🇦 +212 المغرب</option>
+      <option value="+216">🇹🇳 +216 تونس</option>
+      <option value="+249">🇸🇩 +249 السودان</option>
+      <option value="+967">🇾🇪 +967 اليمن</option>
+      <option value="+964">🇮🇶 +964 العراق</option>
+      <option value="+1">🇺🇸 +1 USA</option>
+      <option value="+44">🇬🇧 +44 UK</option>
+    </select>
+    <input id="examResultPhone" placeholder="رقم الهاتف أو البريد الإلكتروني" class="exam-result-input" style="flex:1;margin-bottom:0" maxlength="100" type="tel">
+  </div>
+  <button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button>
+</div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area">
   <div id="aiFilePreview" class="unified-file-preview" style="display:none"><span id="aiFilePreviewName" class="unified-file-name"></span><button onclick="clearAIFile()" class="unified-file-clear"><i class="fas fa-times"></i></button></div>
   <div class="unified-input-wrapper" id="aiInputWrapper">
@@ -3611,12 +3667,97 @@ body {
   <div class="modal" id="maintenanceModal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-tools"></i> تحديث المحتوى</h3><button class="modal-close" onclick="closeMaintenanceModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">حدد المدة التي تريد تعطيل المنصة خلالها للتحديث. سيظهر للزوار عداد تنازلي مع صوت تكتكة.</p><div class="form-group"><label>المدة (بالدقائق)</label><input id="maintenanceMinutes" type="number" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem" max="10080" min="1" value="5"></div><div class="form-group"><label>رسالة التحديث (اختياري)</label><textarea id="maintenanceMessageInput" placeholder="اكتب رسالة للزوار..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1.1rem;min-height:100px"></textarea></div><button class="btn btn-warning" onclick="startMaintenance()" style="width:100%"><i class="fas fa-play"></i> بدء التحديث</button></div></div></div>
   <div class="modal" id="addQuizModal" style="z-index:10070"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-list" style="color:#10b981"></i> إضافة امتحان للفيديو</h3><button class="modal-close" onclick="closeAddExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><p style="margin-bottom:1.5rem;color:#aaa">اختر الفيديو ثم أضف الأسئلة والإجابات (يمكن إضافة صورة اختيارية لكل سؤال)</p><div class="form-group"><label>اختر الفيديو</label><select id="quizVideoSelect" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"><option value="">-- اختر فيديو --</option></select></div><div id="questionsContainer"></div><button class="btn btn-secondary" onclick="addQuestion()" style="width:100%;margin:1rem 0"><i class="fas fa-plus"></i> إضافة سؤال جديد</button><button class="btn btn-success" onclick="saveExam()" style="width:100%"><i class="fas fa-save"></i> حفظ الامتحان</button></div></div></div>
   <div class="modal" id="viewResultsModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-chart-bar" style="color:#f59e0b"></i> نتائج الامتحانات</h3><button class="modal-close" onclick="closeViewResultsModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اختر الفيديو لعرض النتائج</label><select id="resultsVideoSelect" style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem" onchange="loadResultsForVideo()"><option value="">-- اختر فيديو --</option></select></div><div id="resultsContainer" style="margin-top:1.5rem"><p style="text-align:center;color:#888;padding:2rem">اختر فيديو لعرض النتائج</p></div></div></div></div>
-  <div class="modal" id="takeQuizModal"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-check" style="color:#6366f1"></i> امتحان الفيديو</h3><button class="modal-close" onclick="closeTakeExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div id="studentNameSection"><p style="margin-bottom:1rem;color:#aaa">أدخل بياناتك قبل بدء الامتحان</p><input id="studentNameInput" placeholder="الاسم الكامل" class="student-name-input" maxlength="50"><input id="studentPhoneInput" placeholder="رقم الهاتف" class="student-name-input" maxlength="20" type="tel" style="margin-top:.5rem"><button class="btn btn-primary" onclick="startExam()" style="width:100%"><i class="fas fa-play"></i> بدء الامتحان</button></div><div id="quizSection" style="display:none"></div></div></div></div>
-  <div class="modal" id="nameModal"><div class="modal-content name-modal-content"><div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div><h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2><p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p><div class="name-input-group"><input id="userNameInput" placeholder="الاسم" class="name-input" maxlength="20"><div style="display: flex; gap: 10px; margin-top: 0.5rem;"><select id="userCountryCode" class="phone-input" style="width: 35%; text-align: center; direction: ltr;"><option value="+20">🇪🇬 +20 (مصر)</option><option value="+966">🇸🇦 +966 (السعودية)</option><option value="+971">🇦🇪 +971 (الإمارات)</option><option value="+965">🇰🇼 +965 (الكويت)</option><option value="+974">🇶🇦 +974 (قطر)</option><option value="+973">🇧🇭 +973 (البحرين)</option><option value="+968">🇴🇲 +968 (عمان)</option><option value="+962">🇯🇴 +962 (الأردن)</option><option value="+961">🇱🇧 +961 (لبنان)</option><option value="+963">🇸🇾 +963 (سوريا)</option><option value="+970">🇵🇸 +970 (فلسطين)</option><option value="+218">🇱🇾 +218 (ليبيا)</option><option value="+213">🇩🇿 +213 (الجزائر)</option><option value="+212">🇲🇦 +212 (المغرب)</option><option value="+216">🇹🇳 +216 (تونس)</option><option value="+1">🇺🇸 +1 (الولايات المتحدة)</option><option value="+44">🇬🇧 +44 (المملكة المتحدة)</option><option value="+49">🇩🇪 +49 (ألمانيا)</option><option value="+33">🇫🇷 +33 (فرنسا)</option></select><input id="userPhoneInput" placeholder="رقم الهاتف" class="phone-input" style="width: 65%;" maxlength="15" type="tel"></div></div><button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button></div></div>
+  <div class="modal" id="takeQuizModal"><div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-clipboard-check" style="color:#6366f1"></i> امتحان الفيديو</h3><button class="modal-close" onclick="closeTakeExamModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div id="studentNameSection">
+  <p style="margin-bottom:1rem;color:#aaa">أدخل بياناتك قبل بدء الامتحان</p>
+  <input id="studentNameInput" placeholder="الاسم الكامل" class="student-name-input" maxlength="50">
+  <div style="display:flex;gap:8px;margin-top:.5rem">
+    <select id="examCountryCode" style="width:38%;padding:.75rem .5rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:.82rem;direction:ltr">
+      <option value="+20">🇪🇬 +20 مصر</option>
+      <option value="+966">🇸🇦 +966 السعودية</option>
+      <option value="+971">🇦🇪 +971 الإمارات</option>
+      <option value="+965">🇰🇼 +965 الكويت</option>
+      <option value="+974">🇶🇦 +974 قطر</option>
+      <option value="+973">🇧🇭 +973 البحرين</option>
+      <option value="+968">🇴🇲 +968 عمان</option>
+      <option value="+962">🇯🇴 +962 الأردن</option>
+      <option value="+961">🇱🇧 +961 لبنان</option>
+      <option value="+963">🇸🇾 +963 سوريا</option>
+      <option value="+970">🇵🇸 +970 فلسطين</option>
+      <option value="+218">🇱🇾 +218 ليبيا</option>
+      <option value="+213">🇩🇿 +213 الجزائر</option>
+      <option value="+212">🇲🇦 +212 المغرب</option>
+      <option value="+216">🇹🇳 +216 تونس</option>
+      <option value="+249">🇸🇩 +249 السودان</option>
+      <option value="+967">🇾🇪 +967 اليمن</option>
+      <option value="+964">🇮🇶 +964 العراق</option>
+      <option value="+1">🇺🇸 +1 USA</option>
+      <option value="+44">🇬🇧 +44 UK</option>
+    </select>
+    <input id="studentPhoneInput" placeholder="رقم الهاتف بدون صفر" class="student-name-input" style="flex:1" maxlength="15" type="tel">
+  </div>
+  <p style="font-size:.75rem;color:#888;margin-top:.4rem"><i class="fas fa-info-circle"></i> يمكنك إدخال البريد الإلكتروني بدلاً من الهاتف</p>
+  <button class="btn btn-primary" onclick="startExam()" style="width:100%;margin-top:.75rem"><i class="fas fa-play"></i> بدء الامتحان</button>
+</div><div id="quizSection" style="display:none"></div></div></div></div>
+  <div class="modal" id="nameModal"><div class="modal-content name-modal-content"><div class="name-modal-icon"><i class="fas fa-user-astronaut"></i></div><h2 style="margin-bottom:1rem">مرحباً بك في فلك العالمي</h2><p style="margin-bottom:1.5rem;color:#aaa">أدخل اسمك ورقم هاتفك للانضمام إلى الدردشة</p><div class="name-input-group"><input id="userNameInput" placeholder="الاسم الكامل" class="name-input" maxlength="50" oninput="liveValidateName('userNameInput','userNameHint')"><div style="display: flex; gap: 10px; margin-top: 0.5rem;"><select id="userCountryCode" class="phone-input" style="width: 35%; text-align: center; direction: ltr;"><option value="+20">🇪🇬 +20 (مصر)</option><option value="+966">🇸🇦 +966 (السعودية)</option><option value="+971">🇦🇪 +971 (الإمارات)</option><option value="+965">🇰🇼 +965 (الكويت)</option><option value="+974">🇶🇦 +974 (قطر)</option><option value="+973">🇧🇭 +973 (البحرين)</option><option value="+968">🇴🇲 +968 (عمان)</option><option value="+962">🇯🇴 +962 (الأردن)</option><option value="+961">🇱🇧 +961 (لبنان)</option><option value="+963">🇸🇾 +963 (سوريا)</option><option value="+970">🇵🇸 +970 (فلسطين)</option><option value="+218">🇱🇾 +218 (ليبيا)</option><option value="+213">🇩🇿 +213 (الجزائر)</option><option value="+212">🇲🇦 +212 (المغرب)</option><option value="+216">🇹🇳 +216 (تونس)</option><option value="+1">🇺🇸 +1 (الولايات المتحدة)</option><option value="+44">🇬🇧 +44 (المملكة المتحدة)</option><option value="+49">🇩🇪 +49 (ألمانيا)</option><option value="+33">🇫🇷 +33 (فرنسا)</option></select><input id="userPhoneInput" placeholder="رقم الهاتف بدون صفر" class="phone-input" style="width: 65%;" maxlength="15" type="tel" oninput="liveValidatePhone('userPhoneInput','userCountryCode','userPhoneHint')"></div></div><div id="userNameHint" class="field-hint hint-tip" style="text-align:right;margin-top:.2rem"></div>
+<div id="userPhoneHint" class="field-hint hint-tip" style="text-align:right;margin:.2rem 0 .5rem"></div>
+<button class="btn btn-primary" onclick="saveUserName()" style="width:100%;padding:1rem"><i class="fas fa-check"></i> دخول</button></div></div>
   <div class="modal" id="callModal"><div class="modal-content call-modal-content"><div class="call-avatar"><i class="fas fa-users"></i></div><div class="call-status" id="callStatus">مكالمة جماعية</div><div class="call-timer" id="callTimer">00:00</div><div class="call-actions"><button class="call-action mute" onclick="toggleMute()" id="muteBtn"><i class="fas fa-microphone"></i></button><button class="call-action end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div></div></div>
   <div class="modal" id="appsModal"><div class="modal-content apps-modal-content"><div class="modal-header"><h3><i class="fas fa-th-large" style="color:#6366f1"></i> تطبيقات المنصة</h3><button class="modal-close" onclick="closeAppsModal()"><i class="fas fa-times"></i></button></div><div class="apps-list" id="appsList"></div></div></div>
   <div class="modal" id="teachAICircleModal"><div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto"><div class="modal-header"><h3><i class="fas fa-robot" style="color:#06b6d4"></i> تعليم الذكاء الاصطناعي</h3><button class="modal-close" onclick="closeTeachAICircleModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="margin-bottom:2rem;"><h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle"></i> إضافة معلومة جديدة</h4><div class="form-group"><label>السؤال</label><input type="text" id="aiQuestionInput" placeholder="مثال: ما هي سرعة الضوء؟" class="student-name-input"></div><div class="form-group"><label>الإجابة</label><textarea id="aiAnswerInput" placeholder="اكتب الإجابة..." class="student-name-input" rows="3"></textarea></div><button class="btn btn-primary" onclick="saveAIKnowledge()"><i class="fas fa-save"></i> حفظ المعرفة</button></div><div><h4><i class="fas fa-database"></i> قاعدة المعرفة الحالية</h4><div id="aiKnowledgeList"></div></div></div></div></div>
-  <div class="modal" id="feedbackModal"><div class="modal-content" style="max-width: 550px;"><div class="modal-header"><h3><i class="fas fa-star"></i> تقييم المنصة</h3><button class="modal-close" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>الاسم الكامل</label><input id="fbName" placeholder="الاسم الكامل"></div><div class="form-group"><label>رقم الهاتف</label><input id="fbPhone" placeholder="رقم الهاتف" type="tel"></div><div class="form-group"><label>البريد الإلكتروني (للاستلام الرد)</label><input id="fbEmail" placeholder="البريد الإلكتروني" type="email"></div><div class="form-group"><label>المحافظة</label><input id="fbGovernorate" placeholder="المحافظة"></div><div class="form-group"><label>القرية / المركز</label><input id="fbVillage" placeholder="القرية / المركز"></div><div class="form-group"><label>رأيك وتقييمك</label><textarea id="fbMessage" rows="5" placeholder="اكتب رأيك هنا"></textarea></div><button class="btn btn-primary" onclick="submitFeedback()" style="width:100%"><i class="fas fa-paper-plane"></i> إرسال التقييم</button></div></div></div>
+  <div class="modal" id="feedbackModal"><div class="modal-content" style="max-width:550px"><div class="modal-header"><h3><i class="fas fa-star"></i> تقييم المنصة</h3><button class="modal-close" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button></div><div class="modal-body">
+<div class="form-group">
+  <label>الاسم الكامل <span style="color:#f87171">*</span></label>
+  <input id="fbName" placeholder="مثال: محمد أحمد" maxlength="50" oninput="liveValidateName('fbName','fbNameHint')">
+  <div id="fbNameHint" class="field-hint hint-tip"><i class="fas fa-info-circle"></i> يجب أن يحتوي على حروف (2-50 حرف)</div>
+</div>
+<div class="form-group">
+  <label>رقم الهاتف <span style="color:#f87171">*</span></label>
+  <div class="fb-phone-row">
+    <select id="fbCountryCode" class="fb-country-select">
+      <option value="+20">🇪🇬 +20 مصر</option>
+      <option value="+966">🇸🇦 +966 السعودية</option>
+      <option value="+971">🇦🇪 +971 الإمارات</option>
+      <option value="+965">🇰🇼 +965 الكويت</option>
+      <option value="+974">🇶🇦 +974 قطر</option>
+      <option value="+973">🇧🇭 +973 البحرين</option>
+      <option value="+968">🇴🇲 +968 عمان</option>
+      <option value="+962">🇯🇴 +962 الأردن</option>
+      <option value="+961">🇱🇧 +961 لبنان</option>
+      <option value="+963">🇸🇾 +963 سوريا</option>
+      <option value="+970">🇵🇸 +970 فلسطين</option>
+      <option value="+218">🇱🇾 +218 ليبيا</option>
+      <option value="+213">🇩🇿 +213 الجزائر</option>
+      <option value="+212">🇲🇦 +212 المغرب</option>
+      <option value="+216">🇹🇳 +216 تونس</option>
+      <option value="+249">🇸🇩 +249 السودان</option>
+      <option value="+967">🇾🇪 +967 اليمن</option>
+      <option value="+964">🇮🇶 +964 العراق</option>
+      <option value="+1">🇺🇸 +1 USA/Canada</option>
+      <option value="+44">🇬🇧 +44 UK</option>
+      <option value="+49">🇩🇪 +49 Germany</option>
+      <option value="+33">🇫🇷 +33 France</option>
+      <option value="+90">🇹🇷 +90 تركيا</option>
+    </select>
+    <input id="fbPhone" class="fb-phone-input" placeholder="رقم الهاتف بدون صفر" type="tel" maxlength="15"
+      oninput="liveValidatePhone('fbPhone','fbCountryCode','fbPhoneHint')">
+  </div>
+  <div id="fbPhoneHint" class="field-hint hint-tip"><i class="fas fa-info-circle"></i> اختر الدولة ثم اكتب الرقم بدون صفر في البداية</div>
+</div>
+<div class="form-group">
+  <label>البريد الإلكتروني <span style="color:#f87171">*</span></label>
+  <input id="fbEmail" placeholder="example@gmail.com" type="email" maxlength="100" dir="ltr"
+    oninput="liveValidateEmail('fbEmail','fbEmailHint')">
+  <div id="fbEmailHint" class="field-hint hint-tip"><i class="fas fa-info-circle"></i> مثال: name@gmail.com</div>
+</div>
+<div class="form-group"><label>المحافظة</label><input id="fbGovernorate" placeholder="المحافظة" maxlength="50"></div>
+<div class="form-group"><label>القرية / المركز</label><input id="fbVillage" placeholder="القرية / المركز" maxlength="80"></div>
+<div class="form-group">
+  <label>رأيك وتقييمك <span style="color:#f87171">*</span></label>
+  <textarea id="fbMessage" rows="4" placeholder="اكتب رأيك هنا..." maxlength="2000"></textarea>
+  <div class="field-hint hint-tip"><i class="fas fa-pen"></i> <span id="fbMsgCount">0</span> / 2000 حرف</div>
+</div>
+<button class="btn btn-primary" onclick="submitFeedback()" style="width:100%"><i class="fas fa-paper-plane"></i> إرسال التقييم</button>
+</div></div></div>
   <div class="modal" id="howToUseModal"><div class="modal-content" style="max-width: 720px; max-height: 88vh; overflow:hidden; display:flex; flex-direction:column;"><div class="modal-header"><h3><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</h3><button class="modal-close" onclick="closeHowToUseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body" style="overflow-y:auto; padding-bottom:1.5rem;"><div class="howto-intro" style="background:linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.12)); border:1px solid rgba(139,92,246,.35); border-radius:14px; padding:1rem 1.2rem; margin-bottom:1.25rem; line-height:1.8; font-size:.95rem; color:#e0e7ff;"><i class="fas fa-rocket" style="color:#a78bfa; margin-left:.4rem;"></i> أهلاً بك في منصة <strong>فلك العالمي</strong> 🌌 إليك دليل سريع لاستخدام كل المميزات المتاحة لك كطالب.</div><div class="howto-steps" style="display:flex; flex-direction:column; gap:1rem;">
 
 <div class="howto-step" style="background:rgba(15,10,26,.55); border:1px solid rgba(99,102,241,.3); border-radius:12px; padding:.95rem 1.1rem;"><h4 style="color:#a78bfa; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-photo-film"></i> 1. مكتبة الفيديوهات</h4><p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">الفيديوهات مقسّمة إلى قسمين: <strong>فيديوهات عامة</strong> متاحة للجميع، و<strong>فيديوهات الكورسات</strong> تظهر تلقائياً بعد اشتراكك. اضغط على أي فيديو لتشغيله مباشرة.</p></div>
@@ -3724,44 +3865,121 @@ async function isAdminUser(userId) {
 
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
 
-  // ========== VALIDATION FUNCTIONS ==========
+  // ========== VALIDATION FUNCTIONS (محسّنة) ==========
+
+  // تنظيف أي مدخل من HTML/XSS مع الإبقاء على النص العادي (عربي/إنجليزي/أرقام)
   function sanitizeInput(str) {
     if (!str) return '';
-    return str.replace(/[<>\/\\`"'&;]/g, '').trim();
+    return str
+      .replace(/<[^>]*>/g, '')           // إزالة أي HTML tag
+      .replace(/javascript\s*:/gi, '')   // منع javascript: URLs
+      .replace(/on\w+\s*=/gi, '')       // منع onclick= وأمثالها
+      .replace(/[<>]/g, '')              // إزالة < و > المتبقية
+      .trim();
   }
 
+  // تنظيف الرسائل الطويلة مع حد أقصى
+  function sanitizeMessage(str) {
+    if (!str) return '';
+    return sanitizeInput(str).substring(0, 2000);
+  }
+
+  // التحقق من البريد الإلكتروني
   function validateEmail(email) {
     if (!email) return false;
-    const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
-    return re.test(email) && email.length <= 100;
+    const trimmed = email.trim();
+    if (trimmed.length < 5 || trimmed.length > 100) return false;
+    // regex دقيق يقبل الصيغ الشائعة فقط
+    const re = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    return re.test(trimmed);
   }
 
+  // التحقق من رقم الهاتف لكل دول العالم
   function validatePhone(phone, countryCode = '+20') {
     if (!phone) return false;
-    let clean = phone.replace(/[^\d+]/g, '');
+    // إزالة المسافات والشرطات والأقواس
+    let clean = phone.toString().replace(/[\s\-().]/g, '').replace(/[^\d+]/g, '');
     if (!clean.startsWith('+')) {
+      // حذف الصفر البادئ (مثل 01xxxxxxxx → يصبح 1xxxxxxxx ثم نضيف رمز الدولة)
       clean = countryCode + clean.replace(/^0+/, '');
     }
+    // يجب أن يكون بين 8 و 16 رقماً بعد رمز +
     const phoneRegex = /^\+\d{7,15}$/;
     if (!phoneRegex.test(clean)) return false;
     return clean;
   }
 
+  // تطبيع رقم الهاتف (إضافة رمز الدولة وإزالة الصفر البادئ)
   function normalizePhone(phone, countryCode = '+20') {
-    let cleaned = phone.replace(/[^\d+]/g, '');
+    let cleaned = phone.toString().replace(/[\s\-().]/g, '').replace(/[^\d+]/g, '');
     if (!cleaned.startsWith('+')) {
       cleaned = countryCode + cleaned.replace(/^0+/, '');
     }
     return cleaned;
   }
 
+  // التحقق من الاسم: يجب أن يحتوي على حروف عربية أو إنجليزية
   function isValidName(name) {
     if (!name) return false;
     const trimmed = name.trim();
     if (trimmed.length < 2 || trimmed.length > 50) return false;
-    if (/[<>\/\\`"'&;]/.test(trimmed)) return false;
+    // منع HTML/Script
+    if (/<[^>]*>/.test(trimmed) || /javascript\s*:/i.test(trimmed)) return false;
+    // يجب أن يحتوي على حرف واحد على الأقل (عربي أو إنجليزي)
+    if (!/[\u0600-\u06FFa-zA-Z]/.test(trimmed)) return false;
     return true;
   }
+
+  // ========== تحقق لحظي من المدخلات (يُظهر ✅ أو ❌ أثناء الكتابة) ==========
+
+  function _setFieldState(inputId, hintId, ok, msg) {
+    let el = document.getElementById(inputId);
+    let hint = document.getElementById(hintId);
+    if (el) { el.classList.toggle('v-ok', ok); el.classList.toggle('v-err', !ok && msg !== null); }
+    if (hint && msg !== null) {
+      hint.className = 'field-hint ' + (ok ? 'hint-ok' : 'hint-err');
+      hint.innerHTML = ok
+        ? '<i class="fas fa-check-circle"></i> ' + msg
+        : '<i class="fas fa-exclamation-circle"></i> ' + msg;
+    }
+  }
+
+  function liveValidateName(inputId, hintId) {
+    let val = (document.getElementById(inputId) || {value:''}).value.trim();
+    if (!val) { _setFieldState(inputId, hintId, false, null); return; }
+    if (val.length < 2) return _setFieldState(inputId, hintId, false, 'الاسم قصير جداً (2 حروف على الأقل)');
+    if (val.length > 50) return _setFieldState(inputId, hintId, false, 'الاسم طويل جداً (50 حرف كحد أقصى)');
+    if (/<[^>]*>|javascript\s*:/i.test(val)) return _setFieldState(inputId, hintId, false, 'الاسم يحتوي على محتوى غير مسموح');
+    if (!/[\u0600-\u06FFa-zA-Z]/.test(val)) return _setFieldState(inputId, hintId, false, 'يجب أن يحتوي الاسم على حروف');
+    _setFieldState(inputId, hintId, true, 'الاسم صحيح ✓');
+  }
+
+  function liveValidatePhone(inputId, codeId, hintId) {
+    let phone = (document.getElementById(inputId) || {value:''}).value.trim();
+    let code  = (document.getElementById(codeId)  || {value:'+20'}).value;
+    if (!phone) { _setFieldState(inputId, hintId, false, null); return; }
+    let norm = normalizePhone(phone, code);
+    let ok = !!validatePhone(norm, code);
+    ok ? _setFieldState(inputId, hintId, true, 'رقم الهاتف صحيح ✓')
+       : _setFieldState(inputId, hintId, false, 'رقم الهاتف غير صحيح — أرقام فقط بدون صفر في البداية');
+  }
+
+  function liveValidateEmail(inputId, hintId) {
+    let val = (document.getElementById(inputId) || {value:''}).value.trim();
+    if (!val) { _setFieldState(inputId, hintId, false, null); return; }
+    validateEmail(val)
+      ? _setFieldState(inputId, hintId, true, 'البريد الإلكتروني صحيح ✓')
+      : _setFieldState(inputId, hintId, false, 'صيغة البريد غير صحيحة — مثال: name@gmail.com');
+  }
+
+  // عداد حروف textarea في فورم التقييم
+  document.addEventListener('DOMContentLoaded', function() {
+    let msgEl = document.getElementById('fbMessage');
+    let cntEl = document.getElementById('fbMsgCount');
+    if (msgEl && cntEl) {
+      msgEl.addEventListener('input', function() { cntEl.textContent = this.value.length; });
+    }
+  });
 
   function xorEncryptDecrypt(str, key = "Falak2024!@#") {
     let result = "";
@@ -5145,7 +5363,7 @@ async function updateAdminUI() {
   function getStudentIdentifier() { if (currentUserPhone) return currentUserPhone; try { if (typeof googleUser !== "undefined" && googleUser && googleUser.email) return googleUser.email; } catch(_){} return ""; }
   function openTakeExamModal(videoId) { let exam = exams.find(e => e.videoId === videoId); if (!exam) { showToast("⚠️ لا يوجد امتحان"); return; } let video = videos.find(v => v.id === videoId); if (!isAdmin && video && video.private) { SoundEffects.error(); showToast("🔒 هذا الامتحان خاص ولا يمكن الدخول إليه"); return; } currentExam = exam; currentVideoIdForExam = videoId; currentExamAnswers = {}; document.getElementById("studentNameSection").style.display = "block"; document.getElementById("quizSection").style.display = "none"; document.getElementById("studentNameInput").value = currentUser || ""; const phInput = document.getElementById("studentPhoneInput"); phInput.value = getStudentIdentifier(); if (currentUserId && getStudentIdentifier().includes("@")) { phInput.placeholder = "البريد الإلكتروني"; phInput.type = "email"; } else { phInput.placeholder = "رقم الهاتف"; phInput.type = "tel"; } document.getElementById("takeQuizModal").classList.add("active"); }
   function closeTakeExamModal() { if (examTimer) { clearInterval(examTimer); examTimer = null; } document.getElementById("takeQuizModal").classList.remove("active"); currentExam = null; currentExamAnswers = {}; }
-  function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); if (!name) { showToast("⚠️ أدخل اسمك أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يكون بين 2 و 50 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let countryCode = '+20'; let normalizedPhone; if (phone.includes("@")) { if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح"); return; } normalizedPhone = phone.toLowerCase(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يكون مكوناً من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
+  function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); let countryCode = (document.getElementById("examCountryCode") || {value:'+20'}).value; if (!name) { showToast("⚠️ أدخل اسمك الكامل أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على رموز غير صالحة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let normalizedPhone; if (phone.includes("@")) { if (!validateEmail(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); return; } normalizedPhone = phone.toLowerCase().trim(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة وإدخال الأرقام بدون صفر في البداية"); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
   function updateExamTimer() { let mins = Math.floor(examTimeRemaining / 60); let secs = examTimeRemaining % 60; let d = document.getElementById("timerDisplay"); d && (d.textContent = mins + ":" + secs.toString().padStart(2, "0")); let timer = document.getElementById("quizTimer"); timer && (examTimeRemaining < 60 ? timer.classList.add("warning") : timer.classList.remove("warning")); }
   function selectExamAnswer(q, a) { currentExamAnswers[q] = a; }
   function submitExam() {
@@ -5492,7 +5710,7 @@ async function updateAdminUI() {
   }
 }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); document.body.style.overflow = ""; if(window.teardownChatKeyboard) teardownChatKeyboard("chatModal"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
-  async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يكون بين 2 و 20 حرفاً ولا يحتوي على رموز خاصة"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح (يجب أن يتكون من أرقام فقط ويبدأ بـ + رمز الدولة)"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
+  async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!name) { SoundEffects.error(); showToast("⚠️ أدخل اسمك الكامل"); return; } if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-20 حرف) ولا يحتوي على رموز"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح — اختر الدولة وأدخل الأرقام بدون صفر في البداية"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   loadUserDashboard();
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone && !data.senderPhone.includes('@')) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
@@ -5614,30 +5832,19 @@ async function updateAdminUI() {
   function openExamResultModal() { document.getElementById("examResultModal").classList.add("active"); document.getElementById("examResultName").value = currentUser || ""; const ep = document.getElementById("examResultPhone"); ep.value = getStudentIdentifier(); if (currentUserId && ep.value.includes("@")) { ep.placeholder = "البريد الإلكتروني"; ep.type = "email"; } else { ep.placeholder = "رقم الهاتف"; ep.type = "tel"; } }
   function closeExamResultModal() { document.getElementById("examResultModal").classList.remove("active"); }
   function checkExamResult() {
-  let name = document.getElementById("examResultName").value.trim();
+  let name  = document.getElementById("examResultName").value.trim();
   let phone = document.getElementById("examResultPhone").value.trim();
-  if (!name || !phone) {
-    showToast("⚠️ أدخل الاسم ورقم الهاتف أو البريد الإلكتروني");
-    return;
-  }
-  if (!isValidName(name)) {
-    showToast("⚠️ الاسم غير صالح");
-    return;
-  }
-  let countryCode = '+20';
+  let countryCode = (document.getElementById("examResultCountryCode") || {value:'+20'}).value;
+  if (!name)  { showToast("⚠️ أدخل اسمك الكامل"); return; }
+  if (!isValidName(name)) { showToast("⚠️ الاسم غير صالح — يجب أن يحتوي على حروف"); return; }
+  if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; }
   let normalizedPhone;
   if (phone.includes("@")) {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone)) {
-      showToast("⚠️ البريد الإلكتروني غير صحيح");
-      return;
-    }
-    normalizedPhone = phone.toLowerCase();
+    if (!validateEmail(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); return; }
+    normalizedPhone = phone.toLowerCase().trim();
   } else {
     normalizedPhone = normalizePhone(phone, countryCode);
-    if (!validatePhone(normalizedPhone, countryCode)) {
-      showToast("⚠️ رقم الهاتف غير صحيح");
-      return;
-    }
+    if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة وإدخال الأرقام بدون صفر"); return; }
   }
 
   // ✅ تم حذف السطر الذي يضيف مستند "exam-result-queries"
@@ -5729,39 +5936,45 @@ async function updateAdminUI() {
   window.closeHowToUseModal = closeHowToUseModal;
   function closeFeedbackModal() { document.getElementById("feedbackModal").classList.remove("active"); }
   async function submitFeedback() {
-    let name = document.getElementById("fbName").value.trim();
-    let phone = document.getElementById("fbPhone").value.trim();
-    let email = document.getElementById("fbEmail").value.trim();
+    let name     = document.getElementById("fbName").value.trim();
+    let phone    = document.getElementById("fbPhone").value.trim();
+    let email    = document.getElementById("fbEmail").value.trim();
+    let countryCode = (document.getElementById("fbCountryCode") || {value: '+20'}).value;
     let governorate = document.getElementById("fbGovernorate").value.trim();
-    let village = document.getElementById("fbVillage").value.trim();
-    let message = document.getElementById("fbMessage").value.trim();
-    if(!name || !phone || !email || !message) { showToast("⚠️ الرجاء ملء جميع الحقول الأساسية"); return; }
-    if (!isValidName(name)) { showToast("⚠️ الاسم غير صالح"); return; }
-    if (!validateEmail(email)) { showToast("⚠️ البريد الإلكتروني غير صحيح"); return; }
-    let countryCode = '+20';
+    let village  = document.getElementById("fbVillage").value.trim();
+    let message  = document.getElementById("fbMessage").value.trim();
+
+    // التحقق من الحقول المطلوبة
+    if (!name)    { showToast("⚠️ الاسم الكامل مطلوب");                    document.getElementById("fbName").focus();    return; }
+    if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على كود"); document.getElementById("fbName").focus(); return; }
+    if (!phone)   { showToast("⚠️ رقم الهاتف مطلوب");                       document.getElementById("fbPhone").focus();   return; }
     let normalizedPhone = normalizePhone(phone, countryCode);
-    if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح"); return; }
+    if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة الصحيحة وإدخال الأرقام فقط"); document.getElementById("fbPhone").focus(); return; }
+    if (!email)   { showToast("⚠️ البريد الإلكتروني مطلوب");                document.getElementById("fbEmail").focus();   return; }
+    if (!validateEmail(email)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); document.getElementById("fbEmail").focus(); return; }
+    if (!message) { showToast("⚠️ الرجاء كتابة رأيك وتقييمك");              document.getElementById("fbMessage").focus(); return; }
+    if (message.length < 5) { showToast("⚠️ التقييم قصير جداً، يرجى الكتابة بشكل أوضح"); return; }
+
     try {
       await db.collection("feedbacks").add({
-        name: sanitizeInput(name),
-        phone: normalizedPhone,
-        email: email.toLowerCase(),
+        name:        sanitizeInput(name),
+        phone:       normalizedPhone,
+        countryCode: countryCode,
+        email:       email.toLowerCase().trim(),
         governorate: sanitizeInput(governorate),
-        village: sanitizeInput(village),
-        message: sanitizeInput(message),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        replied: false
+        village:     sanitizeInput(village),
+        message:     sanitizeInput(message),
+        createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+        replied:     false
       });
       await sendAutoReplyEmail(email, name);
       showToast("✅ شكراً لتقييمك! تم إرسال تأكيد إلى بريدك الإلكتروني.");
       closeFeedbackModal();
-      document.getElementById("fbName").value = "";
-      document.getElementById("fbPhone").value = "";
-      document.getElementById("fbEmail").value = "";
-      document.getElementById("fbGovernorate").value = "";
-      document.getElementById("fbVillage").value = "";
-      document.getElementById("fbMessage").value = "";
-    } catch(e) { console.error(e); showToast("❌ فشل إرسال التقييم"); }
+      ["fbName","fbPhone","fbEmail","fbGovernorate","fbVillage","fbMessage"].forEach(id => {
+        let el = document.getElementById(id); if (el) { el.value = ""; el.classList.remove("v-ok","v-err"); }
+      });
+      let msgCount = document.getElementById("fbMsgCount"); if (msgCount) msgCount.textContent = "0";
+    } catch(e) { console.error(e); showToast("❌ فشل إرسال التقييم — تحقق من الاتصال بالإنترنت"); }
   }
 
   function openViewFeedbacksModal() {
