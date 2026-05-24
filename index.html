@@ -2780,7 +2780,7 @@ body {
 .sl-body { flex:1; overflow-y:auto; display:flex; flex-direction:column; overscroll-behavior: contain; }
 
 /* Level Select Screen */
-.sl-screen { display:none; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1.5rem; min-height:70vh; gap:1.5rem; animation:slFadeIn .4s ease; }
+.sl-screen { display:none; flex-direction:column; align-items:center; justify-content:flex-start; padding:2.5rem 1.5rem; min-height:70vh; gap:1.5rem; animation:slFadeIn .4s ease; }
 .sl-screen.active { display:flex; }
 @keyframes slFadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
 
@@ -2899,6 +2899,7 @@ body {
   .sl-welcome-mascot { font-size:3.5rem; }
   .sl-q-text { font-size:1.05rem; }
   .sl-result-stats { grid-template-columns:repeat(3,1fr); }
+  #slWelcomeScreen { padding-top: 1.5rem; justify-content: flex-start; }
 }
 
 /* === MAINTENANCE OVERLAY === */
