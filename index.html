@@ -1056,7 +1056,9 @@
 
     /* Glass headers + modals */
     .chat-header{ backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); background:linear-gradient(135deg, rgba(99,102,241,.22), rgba(139,92,246,.16) 50%, rgba(236,72,153,.22)) !important; border-bottom:1px solid var(--polish-border) !important; box-shadow:0 4px 20px -8px rgba(0,0,0,.4); position:relative; }
-    .chat-header::after{ content:''; position:absolute; left:0; right:0; bottom:-1px; height:1px; background:linear-gradient(90deg,transparent,rgba(236,72,153,.6),transparent); }
+    .chat-header::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:2px; background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1,#8b5cf6,#ec4899,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1); background-size:200% 100%; animation:navbarRainbow 4s linear infinite; pointer-events:none; }
+    .pac-header{ position:relative; }
+    .pac-header::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:2px; background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1,#8b5cf6,#ec4899,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1); background-size:200% 100%; animation:navbarRainbow 4s linear infinite; pointer-events:none; }
     .chat-avatar{ box-shadow:0 6px 20px -6px rgba(99,102,241,.55), inset 0 1px 0 rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.18); }
 
     /* Premium message bubbles */
