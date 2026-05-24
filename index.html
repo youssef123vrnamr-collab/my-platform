@@ -2628,7 +2628,7 @@ body {
 .chat-bg-tab { flex: 1; min-width: 80px; padding: .55rem .5rem; border: 1.5px solid rgba(255,255,255,.12); border-radius: 10px; background: rgba(255,255,255,.05); color: #aaa; font-family: Cairo, sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; text-align: center; transition: all .2s; }
 .chat-bg-tab.active { border-color: #6366f1; background: rgba(99,102,241,.18); color: #fff; }
 .chat-bg-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: .6rem; }
-.chat-bg-item { aspect-ratio: 9/16; border-radius: 10px; cursor: pointer; border: 2.5px solid transparent; transition: all .2s; overflow: hidden; position: relative; }
+.chat-bg-item { aspect-ratio: 2/3; border-radius: 10px; cursor: pointer; border: 2.5px solid transparent; transition: all .2s; overflow: hidden; position: relative; min-height: 100px; }
 .chat-bg-item:hover { transform: scale(1.05); }
 .chat-bg-item.selected { border-color: #6366f1; box-shadow: 0 0 0 2px #6366f1; }
 .chat-bg-item span { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-size: .6rem; color: #fff; text-shadow: 0 1px 3px #000; font-family: Cairo, sans-serif; }
@@ -3587,7 +3587,7 @@ body {
         <div class="chat-bg-tabs">
           <div class="chat-bg-tab active" onclick="switchBgTab('ai',this)">🤖 AI</div>
           <div class="chat-bg-tab" onclick="switchBgTab('public',this)">👥 العامة</div>
-          <div class="chat-bg-tab" onclick="switchBgTab('private',this)">🔒 الخاصة</div>
+          <div class="chat-bg-tab" onclick="switchBgTab('private',this)">💬 الدردشة الخاصة</div>
         </div>
         <div class="chat-bg-grid" id="chatBgGrid"></div>
         <button class="chat-bg-reset" onclick="resetChatBg()"><i class="fas fa-undo"></i> إعادة الخلفية الافتراضية</button>
@@ -4344,11 +4344,11 @@ async function updateAdminUI() {
       { id:'pub5', name:'ليلة صافية', style:'linear-gradient(180deg,#050308 0%,#0a0a1a 60%,#050308 100%)' },
     ],
     private: [
-      { id:'prv1', name:'زمرد', style:'linear-gradient(135deg,#0a1a0a 0%,#0a2e1a 50%,#0a1a2e 100%)' },
-      { id:'prv2', name:'عنبر ذهبي', style:'linear-gradient(160deg,#1a1000 0%,#2e2000 50%,#1a0a00 100%)' },
-      { id:'prv3', name:'بحر عميق', style:'linear-gradient(180deg,#000a1a 0%,#00142e 60%,#000a0a 100%)' },
-      { id:'prv4', name:'رماد فضي', style:'linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 50%,#0f0f0f 100%)' },
-      { id:'prv5', name:'أرجواني', style:'linear-gradient(135deg,#0f0020 0%,#1a0033 50%,#0a001a 100%)' },
+      { id:'prv1', name:'فجر الكون', style:'linear-gradient(135deg,#1a0a2e 0%,#ff6b35 40%,#f7c59f 100%)' },
+      { id:'prv2', name:'مياه عميقة', style:'linear-gradient(160deg,#001a2e 0%,#006994 50%,#001a1a 100%)' },
+      { id:'prv3', name:'غابة ليلية', style:'linear-gradient(160deg,#0a1a0a 0%,#1a3a1a 45%,#0a0a1a 100%)' },
+      { id:'prv4', name:'لهب بارد', style:'linear-gradient(135deg,#0a0a2e 0%,#1a0a4e 40%,#4e0a1a 100%)' },
+      { id:'prv5', name:'ذهب داكن', style:'linear-gradient(160deg,#1a1200 0%,#3d2e00 50%,#1a0e00 100%)' },
     ]
   };
   const BG_STORAGE_KEY = 'falak_chat_bg';
