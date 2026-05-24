@@ -4364,7 +4364,7 @@ async function updateAdminUI() {
     applyChatBg(type, bgStyle);
   }
   function applyChatBg(type, bgStyle) {
-    const targets = { ai: '#aiChatMessages', public: '#chatMessages', private: '#privateAdminChatModal .chat-messages' };
+    const targets = { ai: '#aiChatMessages', public: '#chatMessages', private: '#pacMessages' };
     const el = document.querySelector(targets[type]);
     if (el) el.style.background = bgStyle || '';
   }
@@ -8224,6 +8224,8 @@ function switchProgressTab(tab) {
       modal.classList.add('active');
       document.body.style.overflow = 'hidden';
       pacListenAdminThreads();
+      // تطبيق خلفية الدردشة الخاصة
+      try { const _s = getChatBgSettings(); if (_s.private) { const _el = document.getElementById('pacMessages'); if (_el) _el.style.background = _s.private; } } catch(e){}
       return;
     }
 
@@ -8247,6 +8249,8 @@ function switchProgressTab(tab) {
     loginNotice.style.display = 'none';
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    // تطبيق خلفية الدردشة الخاصة
+    setTimeout(() => { try { const _s = getChatBgSettings(); if (_s.private) { const _el = document.getElementById('pacMessages'); if (_el) _el.style.background = _s.private; } } catch(e){} }, 100);
 
     try {
       await dbi.collection(PAC_COL).doc(uid).set({
