@@ -9057,9 +9057,8 @@ window.playChatSound = function() {
       _currentSpeakingBtn.classList.remove('muted');
       _currentSpeakingBtn = null;
     }
-    // أوقف Groq/ElevenLabs/WebSpeech TTS برضو
+    // أوقف Groq/ElevenLabs TTS برضو
     if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
   }
 
   // زرار الكتم/التشغيل العام في الـ header
@@ -12994,8 +12993,10 @@ function slStopAllAnimations() {
       });
 
       if (!resp.ok) {
-        console.warn('[ElevenLabs] Failed, trying Web Speech...');
-        tryWebSpeechTTS(text, btn);
+        var errData = await resp.json().catch(function(){ return {}; });
+        var errMsg = errData.detail && errData.detail.message ? errData.detail.message : (errData.detail || JSON.stringify(errData));
+        if (typeof showToast === 'function') showToast('ElevenLabs خطأ ' + resp.status + ': ' + errMsg);
+        stopGroqTTS();
         return;
       }
 
@@ -13021,32 +13022,8 @@ function slStopAllAnimations() {
 
     } catch(e) {
       console.error('[TTS] ElevenLabs error:', e);
-      tryWebSpeechTTS(text, btn);
+      stopGroqTTS();
     }
-  }
-
-  // ===== Web Speech API — بديل تالت مجاني تماماً =====
-  function tryWebSpeechTTS(text, btn) {
-    if (!_ttsActive) return;
-    if (!window.speechSynthesis) { stopGroqTTS(); return; }
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text.slice(0, 2000));
-    u.lang = 'ar-SA';
-    u.rate = 1;
-    u.pitch = 1;
-    // اختار أفضل صوت عربي متاح
-    var voices = window.speechSynthesis.getVoices();
-    var arVoice = voices.find(function(v){ return v.lang === 'ar-SA'; }) ||
-                  voices.find(function(v){ return v.lang.startsWith('ar'); });
-    if (arVoice) u.voice = arVoice;
-    u.onend = function() { stopGroqTTS(); };
-    u.onerror = function() { stopGroqTTS(); };
-    if (btn) {
-      btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
-      btn.classList.add('muted');
-      _ttsBtn = btn;
-    }
-    window.speechSynthesis.speak(u);
   }
 
   // ===== 7. زرار الصوت على رسائل AI =====
