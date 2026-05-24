@@ -1619,9 +1619,20 @@ body {
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.6) 30%, rgba(244,63,94,0.6) 70%, transparent 100%);
+  height: 2px;
+  background: linear-gradient(90deg,
+    #6366f1, #8b5cf6, #ec4899, #f43f5e,
+    #f97316, #eab308, #22c55e, #06b6d4,
+    #6366f1, #8b5cf6, #ec4899, #f43f5e,
+    #f97316, #eab308, #22c55e, #06b6d4,
+    #6366f1);
+  background-size: 200% 100%;
+  animation: navbarRainbow 4s linear infinite;
   pointer-events: none;
+}
+@keyframes navbarRainbow {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
 }
 /* تعويض ارتفاع الـ navbar الثابت */
 .app-wrapper { padding-top: 64px !important; }
@@ -4095,6 +4106,7 @@ async function updateAdminUI() {
             addItem("supervisorPayoutMenuItem","fas fa-credit-card","ربط استلام المدفوعات (مشرف)", () => { menu.classList.remove("active"); openSupervisorPayoutModal(); });
             addItem("logoutMenuItem","fas fa-sign-out-alt","خروج المشرف", () => { menu.classList.remove("active"); logout(); });
             addItem("maintenanceMenuItem","fas fa-tools","تحديث المحتوى", () => { menu.classList.remove("active"); openMaintenanceModal(); });
+            addItem("chatBgMenuItem","fas fa-palette","تغيير خلفية الدردشة", () => { menu.classList.remove("active"); openChatBgModal(); });
             if (isSuperAdmin) addItem("groupAdminMenuItem","fas fa-users-cog","إدارة المحادثة الجماعية", () => { menu.classList.remove("active"); openGroupChatAdminPanel(); });
             addItem("pdfFilesMenuItem","fas fa-file-pdf","إدارة ملفات PDF", () => { menu.classList.remove("active"); openPdfManagerModal(); });
             addItem("manageCoursesMenuItem","fas fa-graduation-cap","إدارة الكورسات", () => { menu.classList.remove("active"); showCoursesList(); });
