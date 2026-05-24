@@ -3216,7 +3216,7 @@ body {
   <p style="margin-bottom:1.5rem;color:#aaa">أدخل بياناتك لمعرفة نتيجتك</p>
   <input id="examResultName" placeholder="الاسم الكامل" class="exam-result-input" maxlength="50">
   <div style="display:flex;gap:8px;margin-top:.5rem;margin-bottom:1rem">
-    <select id="examResultCountryCode" style="flex:0 0 auto;width:110px;padding:.85rem .4rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:.8rem;direction:ltr;text-align:center">
+    <select id="examResultCountryCode" style="flex:0 0 90px;width:90px;padding:.85rem .3rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:.78rem;direction:ltr;text-align:center;cursor:pointer">
       <option value="+20">🇪🇬 +20 مصر</option>
       <option value="+966">🇸🇦 +966 السعودية</option>
       <option value="+971">🇦🇪 +971 الإمارات</option>
@@ -3238,7 +3238,7 @@ body {
       <option value="+1">🇺🇸 +1 USA</option>
       <option value="+44">🇬🇧 +44 UK</option>
     </select>
-    <input id="examResultPhone" placeholder="رقم الهاتف أو البريد الإلكتروني" class="exam-result-input" style="flex:1;margin-bottom:0" maxlength="100" type="tel">
+    <input id="examResultPhone" placeholder="رقم الهاتف أو البريد الإلكتروني" type="tel" maxlength="100" style="flex:1;min-width:0;padding:.85rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem;margin-bottom:0">
   </div>
   <button class="exam-result-btn" onclick="checkExamResult()"><i class="fas fa-search"></i> عرض النتيجة</button>
 </div></div></div>
@@ -3671,7 +3671,7 @@ body {
   <p style="margin-bottom:1rem;color:#aaa">أدخل بياناتك قبل بدء الامتحان</p>
   <input id="studentNameInput" placeholder="الاسم الكامل" class="student-name-input" maxlength="50">
   <div style="display:flex;gap:8px;margin-top:.5rem">
-    <select id="examCountryCode" style="flex:0 0 auto;width:110px;padding:.75rem .4rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:.8rem;direction:ltr;text-align:center">
+    <select id="examCountryCode" style="flex:0 0 90px;width:90px;padding:.75rem .3rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:.78rem;direction:ltr;text-align:center;cursor:pointer">
       <option value="+20">🇪🇬 +20 مصر</option>
       <option value="+966">🇸🇦 +966 السعودية</option>
       <option value="+971">🇦🇪 +971 الإمارات</option>
@@ -3693,7 +3693,7 @@ body {
       <option value="+1">🇺🇸 +1 USA</option>
       <option value="+44">🇬🇧 +44 UK</option>
     </select>
-    <input id="studentPhoneInput" placeholder="رقم الهاتف بدون صفر" class="student-name-input" style="flex:1;min-width:0" maxlength="15" type="tel">
+    <input id="studentPhoneInput" placeholder="رقم الهاتف بدون صفر" type="tel" maxlength="15" style="flex:1;min-width:0;padding:.75rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:1rem">
   </div>
   <p style="font-size:.75rem;color:#888;margin-top:.4rem"><i class="fas fa-info-circle"></i> يمكنك إدخال البريد الإلكتروني بدلاً من الهاتف</p>
   <button class="btn btn-primary" onclick="startExam()" style="width:100%;margin-top:.75rem"><i class="fas fa-play"></i> بدء الامتحان</button>
@@ -3712,8 +3712,8 @@ body {
 </div>
 <div class="form-group">
   <label>رقم الهاتف <span style="color:#f87171">*</span></label>
-  <div class="fb-phone-row">
-    <select id="fbCountryCode" class="fb-country-select">
+  <div style="display:flex;gap:8px;align-items:center">
+    <select id="fbCountryCode" style="flex:0 0 90px;width:90px;padding:.75rem .3rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:.78rem;direction:ltr;text-align:center;cursor:pointer">
       <option value="+20">🇪🇬 +20 مصر</option>
       <option value="+966">🇸🇦 +966 السعودية</option>
       <option value="+971">🇦🇪 +971 الإمارات</option>
@@ -3738,7 +3738,8 @@ body {
       <option value="+33">🇫🇷 +33 France</option>
       <option value="+90">🇹🇷 +90 تركيا</option>
     </select>
-    <input id="fbPhone" class="fb-phone-input" placeholder="رقم الهاتف بدون صفر" type="tel" maxlength="15"
+    <input id="fbPhone" placeholder="رقم الهاتف بدون صفر" type="tel" maxlength="15"
+      style="flex:1;min-width:0;padding:.75rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-family:Cairo;font-size:1rem"
       oninput="liveValidatePhone('fbPhone','fbCountryCode','fbPhoneHint')">
   </div>
   <div id="fbPhoneHint" class="field-hint hint-tip"><i class="fas fa-info-circle"></i> اختر الدولة ثم اكتب الرقم بدون صفر في البداية</div>
