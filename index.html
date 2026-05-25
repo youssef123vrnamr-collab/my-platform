@@ -59,7 +59,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Cloudinary loaded dynamically on demand -->
+  <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -4037,9 +4037,9 @@ async function isAdminUser(userId) {
     if (result) {
       _setFieldState(inputId, hintId, true, 'رقم الهاتف صحيح ✓');
     } else {
-      let pfx = (COUNTRY_PREFIX_MAP[code] || []).slice(0,3).join('، ');
+      let prefixes = (COUNTRY_PREFIX_MAP[code] || []).slice(0,3).join('، ');
       let country = getCountryName(code);
-      let msg = pfx ? 'رقم غير صحيح لـ' + country + ' — يجب أن يبدأ بـ: ' + pfx + '...' : 'رقم الهاتف غير صحيح';
+      let msg = prefixes ? 'رقم غير صحيح لـ' + country + ' — يجب أن يبدأ بـ: ' + prefixes + '...' : 'رقم الهاتف غير صحيح — تأكد من اختيار الدولة';
       _setFieldState(inputId, hintId, false, msg);
     }
   }
@@ -4730,145 +4730,68 @@ async function updateAdminUI() {
 
   // ========== Cloudinary Widget ==========
   function initCloudinaryWidget() { return new Promise((resolve, reject) => { if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") { try { uploadWidget = cloudinary.createUploadWidget({ cloudName: CLOUDINARY_CONFIG.cloudName, uploadPreset: CLOUDINARY_CONFIG.uploadPreset, resourceType: "video", clientAllowedFormats: ["mp4","webm","mov","mkv","avi","m4v","3gp","flv","gif"], maxFileSize: MAX_VIDEO_SIZE, maxVideoFileSize: MAX_VIDEO_SIZE, chunkSize: CHUNK_SIZE, sources: ["local","url","camera","dropbox","google_drive"], language: "ar", text: { ar: { or: "أو", local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" }, menu: { files: "ملفاتي", web: "رابط الويب", camera: "الكاميرا", gdrive: "Google Drive", dropbox: "Dropbox" } } }, styles: { palette: { window: "#1a1025", windowBorder: "#6366f1", tabIcon: "#6366f1", menuIcons: "#6366f1", textDark: "#ffffff", textLight: "#ffffff", link: "#ec4899", action: "#6366f1", inactiveTabIcon: "#8b5cf6", error: "#ef4444", inProgress: "#6366f1", complete: "#10b981", sourceBg: "#0f0a1a" }, fonts: { default: "Cairo", active: "Cairo" } }, showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: "local", eagerAsync: true, prepareUploadParams: function (params, data) { data.context = "alt=فيديو فلك العالمي"; data.eager = [ { width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, { width: 400, height: 225, crop: "fill", format: "jpg" } ]; data.eager_async = true; params(data); } }, function (error, result) { if (error) { if (error.message && error.message.includes("focus")) { console.warn("Ignored focus error"); } else { console.error("Upload widget error:", error); document.getElementById("uploadProgressContainer")?.classList.remove("active"); SoundEffects.error(); showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف")); reject(error); } } else if (result) { switch (result.event) { case "success": document.getElementById("uploadProgressContainer")?.classList.remove("active"); pendingVideoInfo = result.info; document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان"; document.getElementById("videoDescriptionInput").value = ""; document.getElementById("descriptionModal").classList.add("active"); SoundEffects.success(); showToast("✅ تم الرفع! أكمل بيانات الفيديو"); resolve(result.info); break; case "queues-start": uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0; document.getElementById("uploadProgressContainer")?.classList.add("active"); showToast("🚀 جاري الرفع..."); break; case "upload-progress": updateUploadProgress(result.info); break; case "upload-success": showToast("📤 تم رفع جزء..."); break; } } }); resolve(uploadWidget); } catch (err) { if (err.message && err.message.includes("focus")) { console.warn("Ignored focus error"); resolve(null); } else reject(err); } } else { setTimeout(() => initCloudinaryWidget().then(resolve).catch(reject), 500); } }); }
-  // ══════════════════════════════════════════════════════════
-  // 🚀 CLOUDINARY WIDGET — Dynamic Loader with Auto Retry
-  // ══════════════════════════════════════════════════════════
-  var _cloudinaryLoadPromise = null;
-  var _cloudinaryLoadAttempts = 0;
-  var _CLOUDINARY_SRCS = [
-    "https://upload-widget.cloudinary.com/global/all.js",
-    "https://upload-widget.cloudinary.com/2.x/global/all.js"
-  ];
-
-  function _loadCloudinaryScript() {
-    if (_cloudinaryLoadPromise) return _cloudinaryLoadPromise;
-    _cloudinaryLoadPromise = new Promise(function(resolve, reject) {
-      // Already loaded?
-      if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") {
-        return resolve();
-      }
-      var src = _CLOUDINARY_SRCS[_cloudinaryLoadAttempts % _CLOUDINARY_SRCS.length];
-      _cloudinaryLoadAttempts++;
-      var script = document.createElement("script");
-      script.src = src;
-      script.async = true;
-      var timeout = setTimeout(function() {
-        script.onload = script.onerror = null;
-        _cloudinaryLoadPromise = null;
-        reject(new Error("Cloudinary script timeout"));
-      }, 12000);
-      script.onload = function() {
-        clearTimeout(timeout);
-        // Give it 300ms to initialize
-        setTimeout(function() {
-          if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") {
-            resolve();
-          } else {
-            _cloudinaryLoadPromise = null;
-            reject(new Error("Cloudinary loaded but createUploadWidget missing"));
-          }
-        }, 300);
-      };
-      script.onerror = function() {
-        clearTimeout(timeout);
-        _cloudinaryLoadPromise = null;
-        reject(new Error("Cloudinary script load error from: " + src));
-      };
-      document.head.appendChild(script);
-    });
-    return _cloudinaryLoadPromise;
-  }
-
-  function _buildCloudinaryWidget(callback) {
-    try {
-      var w = cloudinary.createUploadWidget({
-        cloudName: CLOUDINARY_CONFIG.cloudName,
-        uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-        resourceType: "video",
-        clientAllowedFormats: ["mp4","webm","mov","mkv","avi","m4v","3gp","flv","gif"],
-        maxFileSize: MAX_VIDEO_SIZE,
-        maxVideoFileSize: MAX_VIDEO_SIZE,
-        chunkSize: CHUNK_SIZE,
-        sources: ["local","camera"],
-        language: "ar",
-        text: { ar: { or: "أو", local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" }, menu: { files: "ملفاتي", camera: "الكاميرا" } } },
-        styles: { palette: { window: "#1a1025", windowBorder: "#6366f1", tabIcon: "#6366f1", menuIcons: "#6366f1", textDark: "#ffffff", textLight: "#ffffff", link: "#ec4899", action: "#6366f1", inactiveTabIcon: "#8b5cf6", error: "#ef4444", inProgress: "#6366f1", complete: "#10b981", sourceBg: "#0f0a1a" }, fonts: { default: "Cairo", active: "Cairo" } },
-        showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: "local", eagerAsync: true,
-        prepareUploadParams: function(params, data) { data.context = "alt=فيديو فلك العالمي"; data.eager = [{ width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, { width: 400, height: 225, crop: "fill", format: "jpg" }]; data.eager_async = true; params(data); }
-      }, function(error, result) {
-        if (error) {
-          if (error.message && error.message.includes("focus")) { return; }
-          console.error("Upload widget error:", error);
-          document.getElementById("uploadProgressContainer")?.classList.remove("active");
-          SoundEffects.error();
-          showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف"));
-        } else if (result) {
-          switch (result.event) {
-            case "success":
-              document.getElementById("uploadProgressContainer")?.classList.remove("active");
-              pendingVideoInfo = result.info;
-              document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان";
-              document.getElementById("videoDescriptionInput").value = "";
-              document.getElementById("descriptionModal").classList.add("active");
-              SoundEffects.success();
-              showToast("✅ تم الرفع! أكمل بيانات الفيديو");
-              break;
-            case "queues-start":
-              uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0;
-              document.getElementById("uploadProgressContainer")?.classList.add("active");
-              showToast("🚀 جاري الرفع...");
-              break;
-            case "upload-progress": updateUploadProgress(result.info); break;
-            case "upload-success": showToast("📤 تم رفع جزء..."); break;
-          }
-        }
-      });
-      callback(null, w);
-    } catch(err) {
-      callback(err, null);
-    }
-  }
-
   function openCloudinaryWidget() {
     if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الرفع"); return; }
 
-    // Already built and working → open immediately
+    // If widget already ready — open immediately (stays within user gesture)
     if (uploadWidget && typeof uploadWidget.open === "function") {
-      try { uploadWidget.open(); return; }
-      catch(e) { if (!e.message?.includes("focus")) { uploadWidget = null; } else { return; } }
+      try { uploadWidget.open(); return; } catch (e) {
+        if (!e.message?.includes("focus")) console.warn("Widget open error, rebuilding...", e);
+        uploadWidget = null;
+      }
     }
 
-    // Script already loaded, just build widget
+    // Widget not ready yet — build it synchronously then open
+    // (createUploadWidget is sync, so this stays within the user gesture on mobile)
     if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") {
-      _buildCloudinaryWidget(function(err, w) {
-        if (err) { SoundEffects.error(); showToast("❌ تعذر فتح واجهة الرفع"); return; }
-        uploadWidget = w;
-        try { uploadWidget.open(); } catch(e2) { if (!e2.message?.includes("focus")) showToast("❌ فشل فتح الواجهة"); }
-      });
-      return;
+      try {
+        uploadWidget = cloudinary.createUploadWidget({
+          cloudName: CLOUDINARY_CONFIG.cloudName,
+          uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+          resourceType: "video",
+          clientAllowedFormats: ["mp4","webm","mov","mkv","avi","m4v","3gp","flv","gif"],
+          maxFileSize: MAX_VIDEO_SIZE,
+          maxVideoFileSize: MAX_VIDEO_SIZE,
+          chunkSize: CHUNK_SIZE,
+          sources: ["local","camera"],
+          language: "ar",
+          text: { ar: { or: "أو", local: { browse: "اختر ملف", drop: "اسحب الفيديو هنا" }, menu: { files: "ملفاتي", camera: "الكاميرا" } } },
+          styles: { palette: { window: "#1a1025", windowBorder: "#6366f1", tabIcon: "#6366f1", menuIcons: "#6366f1", textDark: "#ffffff", textLight: "#ffffff", link: "#ec4899", action: "#6366f1", inactiveTabIcon: "#8b5cf6", error: "#ef4444", inProgress: "#6366f1", complete: "#10b981", sourceBg: "#0f0a1a" }, fonts: { default: "Cairo", active: "Cairo" } },
+          showAdvancedOptions: false, cropping: false, multiple: false, defaultSource: "local", eagerAsync: true,
+          prepareUploadParams: function (params, data) { data.context = "alt=فيديو فلك العالمي"; data.eager = [{ width: 1280, crop: "scale", quality: "auto", fetch_format: "auto" }, { width: 400, height: 225, crop: "fill", format: "jpg" }]; data.eager_async = true; params(data); }
+        }, function (error, result) {
+          if (error) {
+            if (error.message && error.message.includes("focus")) { console.warn("Ignored focus error"); }
+            else { console.error("Upload widget error:", error); document.getElementById("uploadProgressContainer")?.classList.remove("active"); SoundEffects.error(); showToast("❌ فشل الرفع: " + (error.message || "خطأ غير معروف")); }
+          } else if (result) {
+            switch (result.event) {
+              case "success": document.getElementById("uploadProgressContainer")?.classList.remove("active"); pendingVideoInfo = result.info; document.getElementById("videoTitleInput").value = result.info.original_filename || "فيديو بدون عنوان"; document.getElementById("videoDescriptionInput").value = ""; document.getElementById("descriptionModal").classList.add("active"); SoundEffects.success(); showToast("✅ تم الرفع! أكمل بيانات الفيديو"); break;
+              case "queues-start": uploadStartTime = Date.now(); lastTime = Date.now(); lastUploadedBytes = 0; document.getElementById("uploadProgressContainer")?.classList.add("active"); showToast("🚀 جاري الرفع..."); break;
+              case "upload-progress": updateUploadProgress(result.info); break;
+              case "upload-success": showToast("📤 تم رفع جزء..."); break;
+            }
+          }
+        });
+        uploadWidget.open();
+      } catch (err) {
+        if (err.message && err.message.includes("focus")) { console.warn("Ignored focus error"); }
+        else { console.error("Failed to create widget:", err); SoundEffects.error(); showToast("❌ تعذر فتح واجهة الرفع"); }
+      }
+    } else {
+      // Script not loaded yet — wait and retry (last resort)
+      showToast("⏳ جاري تجهيز واجهة الرفع...");
+      let tries = 0;
+      const wait = setInterval(function() {
+        tries++;
+        if (typeof cloudinary !== "undefined" && typeof cloudinary.createUploadWidget === "function") {
+          clearInterval(wait);
+          openCloudinaryWidget();
+        } else if (tries > 20) {
+          clearInterval(wait);
+          showToast("❌ تعذر تحميل واجهة الرفع، تأكد من الاتصال بالإنترنت");
+        }
+      }, 300);
     }
-
-    // Script not loaded yet → load it dynamically
-    var btn = document.querySelector("#uploadZone .upload-btn");
-    var oldTxt = btn ? btn.innerHTML : "";
-    if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...'; btn.disabled = true; }
-    showToast("⏳ جاري تجهيز واجهة الرفع...");
-
-    _loadCloudinaryScript().then(function() {
-      if (btn) { btn.innerHTML = oldTxt; btn.disabled = false; }
-      _buildCloudinaryWidget(function(err, w) {
-        if (err) { SoundEffects.error(); showToast("❌ تعذر إنشاء واجهة الرفع"); return; }
-        uploadWidget = w;
-        try { uploadWidget.open(); } catch(e2) { if (!e2.message?.includes("focus")) showToast("❌ فشل فتح الواجهة"); }
-      });
-    }).catch(function(err) {
-      if (btn) { btn.innerHTML = oldTxt; btn.disabled = false; }
-      console.error("Cloudinary load failed:", err);
-      SoundEffects.error();
-      // Show retry dialog
-      var retry = confirm("❌ تعذر تحميل واجهة الرفع\n\nتأكد من الاتصال بالإنترنت ثم اضغط موافق للمحاولة مرة أخرى");
-      if (retry) { _cloudinaryLoadPromise = null; setTimeout(openCloudinaryWidget, 500); }
-    });
   }
   function updateUploadProgress(info) { if (!info) return; let prog = info.progress || 0, uploaded = info.uploadedBytes || 0, total = info.totalBytes || 1; let now = Date.now(), dt = (now - lastTime) / 1000; let speed = dt > 0 ? (uploaded - lastUploadedBytes) / dt / 1048576 : 0; let remaining = speed > 0 ? (total - uploaded) / (speed * 1024 * 1024) : 0; let fill = document.getElementById("uploadProgressFill"); fill && (fill.style.width = prog + "%"); let pct = document.getElementById("uploadProgressPercent"); pct && (pct.textContent = Math.round(prog) + "%"); let sp = document.getElementById("uploadSpeed"); sp && (sp.textContent = speed.toFixed(2) + " MB/s"); let tr = document.getElementById("uploadTimeRemaining"); if (tr) { if (remaining > 60) { let m = Math.floor(remaining / 60), s = Math.floor(remaining % 60); tr.textContent = m + ":" + s.toString().padStart(2, "0") + " دقيقة متبقية"; } else tr.textContent = remaining > 0 ? Math.floor(remaining) + " ثانية متبقية" : "جاري إكمال الرفع..."; } lastTime = now; lastUploadedBytes = uploaded; }
   function saveVideoWithDescription() { if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; } let info = pendingVideoInfo; let title = document.getElementById("videoTitleInput").value.trim() || "فيديو بدون عنوان"; let desc = document.getElementById("videoDescriptionInput").value.trim() || ""; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); if (used + info.bytes > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; } let optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/"); let thumbnail = null; if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url; else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg"; let videoData = { title: title, description: desc, type: "cloudinary", url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnail, publicId: info.public_id || "", format: info.format, duration: info.duration, width: info.width, height: info.height, size: info.bytes, createdAt: firebase.firestore.FieldValue.serverTimestamp(), cloudinaryData: { assetId: info.asset_id, version: info.version_id }, optimized: true, private: false }; db.collection("videos").add(videoData).then(async () => { SoundEffects.success(); showToast("✅ تم الرفع والحفظ بنجاح!"); closeDescriptionModal(); pendingVideoInfo = null; }).catch(e => { console.error("Error saving to Firebase:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); }); }
@@ -5582,7 +5505,7 @@ async function updateAdminUI() {
   function getStudentIdentifier() { if (currentUserPhone) return currentUserPhone; try { if (typeof googleUser !== "undefined" && googleUser && googleUser.email) return googleUser.email; } catch(_){} return ""; }
   function openTakeExamModal(videoId) { let exam = exams.find(e => e.videoId === videoId); if (!exam) { showToast("⚠️ لا يوجد امتحان"); return; } let video = videos.find(v => v.id === videoId); if (!isAdmin && video && video.private) { SoundEffects.error(); showToast("🔒 هذا الامتحان خاص ولا يمكن الدخول إليه"); return; } currentExam = exam; currentVideoIdForExam = videoId; currentExamAnswers = {}; document.getElementById("studentNameSection").style.display = "block"; document.getElementById("quizSection").style.display = "none"; document.getElementById("studentNameInput").value = currentUser || ""; const phInput = document.getElementById("studentPhoneInput"); phInput.value = getStudentIdentifier(); if (currentUserId && getStudentIdentifier().includes("@")) { phInput.placeholder = "البريد الإلكتروني"; phInput.type = "email"; } else { phInput.placeholder = "رقم الهاتف"; phInput.type = "tel"; } document.getElementById("takeQuizModal").classList.add("active"); }
   function closeTakeExamModal() { if (examTimer) { clearInterval(examTimer); examTimer = null; } document.getElementById("takeQuizModal").classList.remove("active"); currentExam = null; currentExamAnswers = {}; }
-  function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); let countryCode = (document.getElementById("examCountryCode") || {value:'+20'}).value; if (!name) { showToast("⚠️ أدخل اسمك الكامل أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على رموز غير صالحة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let normalizedPhone; if (phone.includes("@")) { if (!validateEmail(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); return; } normalizedPhone = phone.toLowerCase().trim(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة وإدخال الأرقام بدون صفر في البداية"); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
+  function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); let countryCode = (document.getElementById("examCountryCode") || {value:'+20'}).value; if (!name) { showToast("⚠️ أدخل اسمك الكامل أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على رموز غير صالحة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let normalizedPhone; if (phone.includes("@")) { if (!validateEmail(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); return; } normalizedPhone = phone.toLowerCase().trim(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(phone, countryCode)) { let pfx=(COUNTRY_PREFIX_MAP[countryCode]||[]).slice(0,3).join("، "); let cn=getCountryName(countryCode); showToast("⚠️ رقم غير صحيح لـ"+cn+" — يجب أن يبدأ بـ: "+pfx+"..."); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
   function updateExamTimer() { let mins = Math.floor(examTimeRemaining / 60); let secs = examTimeRemaining % 60; let d = document.getElementById("timerDisplay"); d && (d.textContent = mins + ":" + secs.toString().padStart(2, "0")); let timer = document.getElementById("quizTimer"); timer && (examTimeRemaining < 60 ? timer.classList.add("warning") : timer.classList.remove("warning")); }
   function selectExamAnswer(q, a) { currentExamAnswers[q] = a; }
   function submitExam() {
@@ -5897,7 +5820,7 @@ async function updateAdminUI() {
         loadExamsFromFirebase(); 
         loadExamResultsFromFirebase(); 
         loadAppsFromFirebase(); 
-        /* preload Cloudinary in background */ setTimeout(function(){ _loadCloudinaryScript().catch(function(){}); }, 2000); 
+        initCloudinaryWidget(); 
         checkUrlForShare(); 
         loadEmailSettingsFromFirestore(); 
         updateAdminUI(); 
@@ -6063,7 +5986,7 @@ async function updateAdminUI() {
     normalizedPhone = phone.toLowerCase().trim();
   } else {
     normalizedPhone = normalizePhone(phone, countryCode);
-    if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة وإدخال الأرقام بدون صفر"); return; }
+    if (!validatePhone(phone, countryCode)) { let pfx=(COUNTRY_PREFIX_MAP[countryCode]||[]).slice(0,3).join("، "); let cn=getCountryName(countryCode); showToast("⚠️ رقم غير صحيح لـ"+cn+" — يجب أن يبدأ بـ: "+pfx+"..."); return; }
   }
 
   // ✅ تم حذف السطر الذي يضيف مستند "exam-result-queries"
@@ -6168,7 +6091,7 @@ async function updateAdminUI() {
     if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على كود"); document.getElementById("fbName").focus(); return; }
     if (!phone)   { showToast("⚠️ رقم الهاتف مطلوب");                       document.getElementById("fbPhone").focus();   return; }
     let normalizedPhone = normalizePhone(phone, countryCode);
-    if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة الصحيحة وإدخال الأرقام فقط"); document.getElementById("fbPhone").focus(); return; }
+    if (!validatePhone(phone, countryCode)) { let pfx=(COUNTRY_PREFIX_MAP[countryCode]||[]).slice(0,3).join("، "); let cn=getCountryName(countryCode); showToast("⚠️ رقم غير صحيح لـ"+cn+" — يجب أن يبدأ بـ: "+pfx+"..."); document.getElementById("fbPhone").focus(); return; }
     if (!email)   { showToast("⚠️ البريد الإلكتروني مطلوب");                document.getElementById("fbEmail").focus();   return; }
     if (!validateEmail(email)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); document.getElementById("fbEmail").focus(); return; }
     if (!message) { showToast("⚠️ الرجاء كتابة رأيك وتقييمك");              document.getElementById("fbMessage").focus(); return; }
@@ -14556,6 +14479,8 @@ function slStopAllAnimations() {
 
 
 
+
+
 <!-- ╔══════════════════════════════════════════════════════════════╗
      ║        🌌 LEGENDARY COSMIC DESIGN UPGRADE v3.0 🌌           ║
      ╚══════════════════════════════════════════════════════════════╝ -->
@@ -15159,4 +15084,4 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 </style>
 </body>
-</html></html>
+</html>
