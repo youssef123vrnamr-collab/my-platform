@@ -3895,28 +3895,102 @@ async function isAdminUser(userId) {
     return re.test(trimmed);
   }
 
-  // التحقق من رقم الهاتف لكل دول العالم
+  // ========== خريطة أكواد الدول — لكل كود: الأرقام المسموح بها كبادئة محلية ==========
+  // key = كود الدولة (مثل '+20')، value = مصفوفة من البادئات المحلية الصحيحة (2 رقم أو أكثر)
+  const COUNTRY_PREFIX_MAP = {
+    '+20':  ['01','02','03'],           // مصر
+    '+966': ['05','011','012','013'],    // السعودية
+    '+971': ['05','02','03','04','06','07','09'], // الإمارات
+    '+962': ['07','02','03','05','06','08'],       // الأردن
+    '+961': ['03','07','01','04','05','06','08','09'], // لبنان
+    '+963': ['09','011','021','031','041','051','061'], // سوريا
+    '+964': ['07','078','079','075','076','077'],   // العراق
+    '+965': ['05','06','09','18'],       // الكويت
+    '+968': ['07','09','22','23','24','25','26'],   // عُمان
+    '+974': ['33','30','31','32','55','50','44','66','77'],  // قطر
+    '+973': ['3','6','17'],              // البحرين
+    '+967': ['07','01','02','03','04','05','06'],   // اليمن
+    '+249': ['09','01','18','11','12','13','14','15','16','17'], // السودان
+    '+212': ['06','07','05','08'],       // المغرب
+    '+213': ['05','06','07','03'],       // الجزائر
+    '+216': ['2','3','4','5','7','9'],   // تونس
+    '+218': ['09','02','21','22','23','24','25','26','27','28','29'], // ليبيا
+    '+252': ['06','07','61','62','63','65','66'],   // الصومال
+    '+253': ['07','77'],                 // جيبوتي
+    '+255': ['07','06'],                 // تنزانيا
+    '+251': ['09','07'],                 // إثيوبيا
+    '+254': ['07','01'],                 // كينيا
+    '+234': ['07','08','09','080','070','090'], // نيجيريا
+    '+27':  ['06','07','08'],            // جنوب أفريقيا
+    '+1':   ['2','3','4','5','6','7','8','9'], // أمريكا/كندا
+    '+44':  ['07','01','02','03'],       // بريطانيا
+    '+33':  ['06','07','01','02','03','04','05','08','09'], // فرنسا
+    '+49':  ['01','015','016','017'],    // ألمانيا
+    '+39':  ['3','02','06','081'],       // إيطاليا
+    '+34':  ['6','7','9'],               // إسبانيا
+    '+7':   ['9','8'],                   // روسيا
+    '+86':  ['1'],                       // الصين
+    '+91':  ['6','7','8','9'],           // الهند
+    '+92':  ['03','021','042','051'],    // باكستان
+    '+55':  ['9','11','21','31','41','51','61','71','81','91'], // البرازيل
+    '+81':  ['0'],                       // اليابان
+    '+82':  ['01','010','011'],          // كوريا الجنوبية
+    '+90':  ['05','0212','0216'],        // تركيا
+    '+98':  ['09','021'],                // إيران
+    '+62':  ['08','021','022'],          // إندونيسيا
+    '+60':  ['01','03'],                 // ماليزيا
+    '+65':  ['6','8','9'],               // سنغافورة
+  };
+
+  // التحقق من رقم الهاتف — يشترط أن يبدأ الرقم المُدخَل بالبادئة الصحيحة لكود الدولة
   function validatePhone(phone, countryCode = '+20') {
     if (!phone) return false;
-    // إزالة المسافات والشرطات والأقواس
     let clean = phone.toString().replace(/[\s\-().]/g, '').replace(/[^\d+]/g, '');
-    if (!clean.startsWith('+')) {
-      // حذف الصفر البادئ (مثل 01xxxxxxxx → يصبح 1xxxxxxxx ثم نضيف رمز الدولة)
-      clean = countryCode + clean.replace(/^0+/, '');
+
+    // إذا كان يبدأ بـ + تحقق مباشرة
+    if (clean.startsWith('+')) {
+      const phoneRegex = /^\+\d{7,15}$/;
+      if (!phoneRegex.test(clean)) return false;
+      // تحقق أن الرقم يبدأ بكود الدولة المختار
+      if (!clean.startsWith(countryCode)) return false;
+      return clean;
     }
-    // يجب أن يكون بين 8 و 16 رقماً بعد رمز +
+
+    // الرقم محلي (بدون +) — تحقق من البادئة المحلية
+    const localPrefixes = COUNTRY_PREFIX_MAP[countryCode] || [];
+    if (localPrefixes.length > 0) {
+      const cleanNoZero = clean; // لا نحذف الصفر لأننا نتحقق من البادئة
+      const hasValidPrefix = localPrefixes.some(pfx => cleanNoZero.startsWith(pfx));
+      if (!hasValidPrefix) return false; // ❌ البادئة غير مطابقة لكود الدولة
+    }
+
+    // بناء الرقم الكامل
+    let full = countryCode + clean.replace(/^0+/, '');
     const phoneRegex = /^\+\d{7,15}$/;
-    if (!phoneRegex.test(clean)) return false;
-    return clean;
+    if (!phoneRegex.test(full)) return false;
+    return full;
   }
 
   // تطبيع رقم الهاتف (إضافة رمز الدولة وإزالة الصفر البادئ)
   function normalizePhone(phone, countryCode = '+20') {
     let cleaned = phone.toString().replace(/[\s\-().]/g, '').replace(/[^\d+]/g, '');
-    if (!cleaned.startsWith('+')) {
-      cleaned = countryCode + cleaned.replace(/^0+/, '');
-    }
-    return cleaned;
+    if (cleaned.startsWith('+')) return cleaned;
+    return countryCode + cleaned.replace(/^0+/, '');
+  }
+
+  // دالة مساعدة: تُرجع اسم الدولة من كودها
+  function getCountryName(code) {
+    const names = {
+      '+20':'مصر','+966':'السعودية','+971':'الإمارات','+962':'الأردن','+961':'لبنان',
+      '+963':'سوريا','+964':'العراق','+965':'الكويت','+968':'عُمان','+974':'قطر',
+      '+973':'البحرين','+967':'اليمن','+249':'السودان','+212':'المغرب','+213':'الجزائر',
+      '+216':'تونس','+218':'ليبيا','+1':'أمريكا/كندا','+44':'بريطانيا','+33':'فرنسا',
+      '+49':'ألمانيا','+39':'إيطاليا','+34':'إسبانيا','+7':'روسيا','+86':'الصين',
+      '+91':'الهند','+92':'باكستان','+55':'البرازيل','+81':'اليابان','+82':'كوريا الجنوبية',
+      '+90':'تركيا','+98':'إيران','+62':'إندونيسيا','+60':'ماليزيا','+65':'سنغافورة',
+      '+252':'الصومال','+254':'كينيا','+234':'نيجيريا','+27':'جنوب أفريقيا'
+    };
+    return names[code] || '';
   }
 
   // التحقق من الاسم: يجب أن يحتوي على حروف عربية أو إنجليزية
@@ -3959,10 +4033,15 @@ async function isAdminUser(userId) {
     let phone = (document.getElementById(inputId) || {value:''}).value.trim();
     let code  = (document.getElementById(codeId)  || {value:'+20'}).value;
     if (!phone) { _setFieldState(inputId, hintId, false, null); return; }
-    let norm = normalizePhone(phone, code);
-    let ok = !!validatePhone(norm, code);
-    ok ? _setFieldState(inputId, hintId, true, 'رقم الهاتف صحيح ✓')
-       : _setFieldState(inputId, hintId, false, 'رقم الهاتف غير صحيح — أرقام فقط بدون صفر في البداية');
+    let result = validatePhone(phone, code);
+    if (result) {
+      _setFieldState(inputId, hintId, true, 'رقم الهاتف صحيح ✓');
+    } else {
+      let prefixes = (COUNTRY_PREFIX_MAP[code] || []).slice(0,3).join('، ');
+      let country = getCountryName(code);
+      let msg = prefixes ? 'رقم غير صحيح لـ' + country + ' — يجب أن يبدأ بـ: ' + prefixes + '...' : 'رقم الهاتف غير صحيح — تأكد من اختيار الدولة';
+      _setFieldState(inputId, hintId, false, msg);
+    }
   }
 
   function liveValidateEmail(inputId, hintId) {
@@ -5426,7 +5505,7 @@ async function updateAdminUI() {
   function getStudentIdentifier() { if (currentUserPhone) return currentUserPhone; try { if (typeof googleUser !== "undefined" && googleUser && googleUser.email) return googleUser.email; } catch(_){} return ""; }
   function openTakeExamModal(videoId) { let exam = exams.find(e => e.videoId === videoId); if (!exam) { showToast("⚠️ لا يوجد امتحان"); return; } let video = videos.find(v => v.id === videoId); if (!isAdmin && video && video.private) { SoundEffects.error(); showToast("🔒 هذا الامتحان خاص ولا يمكن الدخول إليه"); return; } currentExam = exam; currentVideoIdForExam = videoId; currentExamAnswers = {}; document.getElementById("studentNameSection").style.display = "block"; document.getElementById("quizSection").style.display = "none"; document.getElementById("studentNameInput").value = currentUser || ""; const phInput = document.getElementById("studentPhoneInput"); phInput.value = getStudentIdentifier(); if (currentUserId && getStudentIdentifier().includes("@")) { phInput.placeholder = "البريد الإلكتروني"; phInput.type = "email"; } else { phInput.placeholder = "رقم الهاتف"; phInput.type = "tel"; } document.getElementById("takeQuizModal").classList.add("active"); }
   function closeTakeExamModal() { if (examTimer) { clearInterval(examTimer); examTimer = null; } document.getElementById("takeQuizModal").classList.remove("active"); currentExam = null; currentExamAnswers = {}; }
-  function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); let countryCode = (document.getElementById("examCountryCode") || {value:'+20'}).value; if (!name) { showToast("⚠️ أدخل اسمك الكامل أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على رموز غير صالحة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let normalizedPhone; if (phone.includes("@")) { if (!validateEmail(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); return; } normalizedPhone = phone.toLowerCase().trim(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة وإدخال الأرقام بدون صفر في البداية"); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
+  function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); let countryCode = (document.getElementById("examCountryCode") || {value:'+20'}).value; if (!name) { showToast("⚠️ أدخل اسمك الكامل أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على رموز غير صالحة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let normalizedPhone; if (phone.includes("@")) { if (!validateEmail(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); return; } normalizedPhone = phone.toLowerCase().trim(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(phone, countryCode)) { let pfx=(COUNTRY_PREFIX_MAP[countryCode]||[]).slice(0,3).join("، "); let cn=getCountryName(countryCode); showToast("⚠️ رقم غير صحيح لـ"+cn+" — يجب أن يبدأ بـ: "+pfx+"..."); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
   function updateExamTimer() { let mins = Math.floor(examTimeRemaining / 60); let secs = examTimeRemaining % 60; let d = document.getElementById("timerDisplay"); d && (d.textContent = mins + ":" + secs.toString().padStart(2, "0")); let timer = document.getElementById("quizTimer"); timer && (examTimeRemaining < 60 ? timer.classList.add("warning") : timer.classList.remove("warning")); }
   function selectExamAnswer(q, a) { currentExamAnswers[q] = a; }
   function submitExam() {
@@ -5907,7 +5986,7 @@ async function updateAdminUI() {
     normalizedPhone = phone.toLowerCase().trim();
   } else {
     normalizedPhone = normalizePhone(phone, countryCode);
-    if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة وإدخال الأرقام بدون صفر"); return; }
+    if (!validatePhone(phone, countryCode)) { let pfx=(COUNTRY_PREFIX_MAP[countryCode]||[]).slice(0,3).join("، "); let cn=getCountryName(countryCode); showToast("⚠️ رقم غير صحيح لـ"+cn+" — يجب أن يبدأ بـ: "+pfx+"..."); return; }
   }
 
   // ✅ تم حذف السطر الذي يضيف مستند "exam-result-queries"
@@ -6012,7 +6091,7 @@ async function updateAdminUI() {
     if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على كود"); document.getElementById("fbName").focus(); return; }
     if (!phone)   { showToast("⚠️ رقم الهاتف مطلوب");                       document.getElementById("fbPhone").focus();   return; }
     let normalizedPhone = normalizePhone(phone, countryCode);
-    if (!validatePhone(normalizedPhone, countryCode)) { showToast("⚠️ رقم الهاتف غير صحيح — تأكد من اختيار الدولة الصحيحة وإدخال الأرقام فقط"); document.getElementById("fbPhone").focus(); return; }
+    if (!validatePhone(phone, countryCode)) { let pfx=(COUNTRY_PREFIX_MAP[countryCode]||[]).slice(0,3).join("، "); let cn=getCountryName(countryCode); showToast("⚠️ رقم غير صحيح لـ"+cn+" — يجب أن يبدأ بـ: "+pfx+"..."); document.getElementById("fbPhone").focus(); return; }
     if (!email)   { showToast("⚠️ البريد الإلكتروني مطلوب");                document.getElementById("fbEmail").focus();   return; }
     if (!validateEmail(email)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); document.getElementById("fbEmail").focus(); return; }
     if (!message) { showToast("⚠️ الرجاء كتابة رأيك وتقييمك");              document.getElementById("fbMessage").focus(); return; }
@@ -14400,5 +14479,609 @@ function slStopAllAnimations() {
 
 
 
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║        🌌 LEGENDARY COSMIC DESIGN UPGRADE v3.0 🌌           ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<style>
+/* ══════════════════════════════════════════
+   🎨 LEGENDARY DESIGN TOKENS
+══════════════════════════════════════════ */
+:root {
+  --cosmic-1: #6366f1;
+  --cosmic-2: #8b5cf6;
+  --cosmic-3: #ec4899;
+  --cosmic-4: #06b6d4;
+  --cosmic-glow: 0 0 40px rgba(99,102,241,.35), 0 0 80px rgba(139,92,246,.15);
+  --cosmic-card: linear-gradient(160deg, rgba(26,16,37,.95) 0%, rgba(15,10,26,.98) 100%);
+  --cosmic-border: rgba(99,102,241,.25);
+  --neon-purple: #a78bfa;
+  --neon-pink: #f472b6;
+  --neon-cyan: #22d3ee;
+}
+
+/* ══════════════════════════════════════════
+   🌠 BACKGROUND — Deep Space
+══════════════════════════════════════════ */
+body {
+  background: radial-gradient(ellipse 120% 80% at 20% -10%, rgba(99,102,241,.18) 0%, transparent 60%),
+              radial-gradient(ellipse 100% 60% at 80% 110%, rgba(236,72,153,.12) 0%, transparent 55%),
+              radial-gradient(ellipse 80% 50% at 50% 50%, rgba(6,182,212,.06) 0%, transparent 70%),
+              #03030a !important;
+}
+
+/* ══════════════════════════════════════════
+   ✨ NAVBAR — Glassmorphism Ultra
+══════════════════════════════════════════ */
+.navbar {
+  background: rgba(10,6,20,.88) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(99,102,241,.2) !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+/* ══════════════════════════════════════════
+   🪐 BRAND LOGO — Orbital Glow
+══════════════════════════════════════════ */
+.brand-logo {
+  background: linear-gradient(135deg, #6366f1, #ec4899, #06b6d4) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.2), 0 8px 32px rgba(99,102,241,.45), var(--cosmic-glow) !important;
+  position: relative;
+}
+.brand-logo::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(99,102,241,.4);
+  animation: orbit-ring 3s linear infinite;
+}
+@keyframes orbit-ring {
+  0%   { transform: rotate(0deg) scale(1); opacity: .8; }
+  50%  { transform: rotate(180deg) scale(1.05); opacity: .4; }
+  100% { transform: rotate(360deg) scale(1); opacity: .8; }
+}
+
+/* ══════════════════════════════════════════
+   🎇 HERO SECTION — Cinematic
+══════════════════════════════════════════ */
+.hero {
+  position: relative;
+  padding: 5rem 2rem !important;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 65%);
+  pointer-events: none;
+  animation: hero-pulse 6s ease-in-out infinite;
+}
+@keyframes hero-pulse {
+  0%,100% { transform: translateX(-50%) scale(1); opacity: .8; }
+  50%      { transform: translateX(-50%) scale(1.15); opacity: 1; }
+}
+.hero h2 {
+  font-size: clamp(2rem, 6vw, 3.5rem) !important;
+  line-height: 1.2 !important;
+  text-shadow: 0 0 60px rgba(99,102,241,.3) !important;
+}
+
+/* ══════════════════════════════════════════
+   💎 VIDEO CARDS — Premium Glass
+══════════════════════════════════════════ */
+.video-card {
+  background: linear-gradient(160deg, rgba(26,16,37,.9) 0%, rgba(15,10,26,.95) 100%) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.6) !important;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, border-color .35s !important;
+}
+.video-card:hover {
+  transform: translateY(-8px) scale(1.01) !important;
+  border-color: rgba(99,102,241,.45) !important;
+  box-shadow: 0 24px 48px -12px rgba(0,0,0,.7), 0 0 0 1px rgba(99,102,241,.2), 0 0 30px rgba(99,102,241,.15) !important;
+}
+.video-thumbnail {
+  border-radius: 14px 14px 0 0 !important;
+  overflow: hidden;
+}
+.play-btn {
+  background: rgba(99,102,241,.9) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 2px solid rgba(255,255,255,.6) !important;
+  box-shadow: 0 4px 20px rgba(99,102,241,.5) !important;
+  transition: transform .25s, box-shadow .25s !important;
+}
+.video-card:hover .play-btn {
+  transform: scale(1.15) !important;
+  box-shadow: 0 8px 32px rgba(99,102,241,.7) !important;
+}
+.video-info {
+  background: linear-gradient(180deg, rgba(26,16,37,.8), rgba(15,10,26,.95)) !important;
+  border-radius: 0 0 14px 14px !important;
+  border-top: 1px solid rgba(99,102,241,.1) !important;
+  padding: 0.9rem 0.85rem 0.8rem !important;
+}
+.video-title { color: #ede9fe !important; letter-spacing: .2px; }
+
+/* ══════════════════════════════════════════
+   🌈 BUTTONS — Holographic
+══════════════════════════════════════════ */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #6366f1 100%) !important;
+  background-size: 200% 100% !important;
+  box-shadow: 0 4px 20px rgba(99,102,241,.4), inset 0 1px 0 rgba(255,255,255,.2) !important;
+  transition: all .3s ease, background-position .5s ease !important;
+}
+.btn-primary:hover {
+  background-position: 100% 0 !important;
+  box-shadow: 0 8px 32px rgba(99,102,241,.6), 0 0 20px rgba(139,92,246,.3), inset 0 1px 0 rgba(255,255,255,.25) !important;
+  transform: translateY(-2px) !important;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 18px rgba(16,185,129,.35) !important;
+}
+.btn-success:hover {
+  box-shadow: 0 8px 28px rgba(16,185,129,.55) !important;
+  transform: translateY(-2px) !important;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 4px 18px rgba(239,68,68,.35) !important;
+}
+.btn-danger:hover {
+  box-shadow: 0 8px 28px rgba(239,68,68,.55) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ══════════════════════════════════════════
+   🔮 MODALS — Space Portal
+══════════════════════════════════════════ */
+.modal-content {
+  background: linear-gradient(160deg, rgba(20,12,30,.97) 0%, rgba(10,6,20,.99) 100%) !important;
+  border: 1px solid rgba(99,102,241,.2) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 40px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  backdrop-filter: blur(20px) !important;
+}
+.modal-header {
+  background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(139,92,246,.08)) !important;
+  border-bottom: 1px solid rgba(99,102,241,.18) !important;
+  border-radius: 24px 24px 0 0 !important;
+  padding: 1rem 1.5rem !important;
+}
+.modal-header h3 {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #fff, #a78bfa) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+.modal-close {
+  background: rgba(239,68,68,.12) !important;
+  border: 1px solid rgba(239,68,68,.25) !important;
+  border-radius: 10px !important;
+  transition: all .25s !important;
+}
+.modal-close:hover {
+  background: rgba(239,68,68,.3) !important;
+  transform: rotate(90deg) scale(1.1) !important;
+  box-shadow: 0 4px 16px rgba(239,68,68,.3) !important;
+}
+
+/* ══════════════════════════════════════════
+   🌟 LANDING PAGE — Epic Portal
+══════════════════════════════════════════ */
+.landing-page {
+  background: radial-gradient(ellipse 150% 100% at 50% 0%, rgba(99,102,241,.2) 0%, transparent 55%),
+              radial-gradient(ellipse 120% 80% at 50% 100%, rgba(236,72,153,.12) 0%, transparent 55%),
+              linear-gradient(180deg, #050308 0%, #0a0618 50%, #050308 100%) !important;
+}
+.landing-card {
+  background: linear-gradient(160deg, rgba(26,16,37,.96) 0%, rgba(15,10,26,.98) 100%) !important;
+  border: 1px solid rgba(99,102,241,.25) !important;
+  border-radius: 32px !important;
+  box-shadow: 0 40px 80px rgba(0,0,0,.6), 0 0 60px rgba(99,102,241,.1), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  padding: 3rem 2.5rem !important;
+  position: relative;
+  overflow: hidden;
+}
+.landing-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,.6), rgba(236,72,153,.4), transparent);
+}
+.landing-icon {
+  background: linear-gradient(135deg, #6366f1, #ec4899, #06b6d4) !important;
+  box-shadow: 0 0 0 4px rgba(99,102,241,.15), 0 8px 40px rgba(99,102,241,.5), 0 0 60px rgba(139,92,246,.2) !important;
+}
+.landing-title {
+  font-size: clamp(1.6rem, 5vw, 2.2rem) !important;
+  text-shadow: 0 0 40px rgba(99,102,241,.4) !important;
+}
+.google-btn {
+  border-radius: 16px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.3) !important;
+  transition: all .3s !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+}
+.google-btn:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.4) !important;
+}
+
+/* ══════════════════════════════════════════
+   ⚡ INPUTS — Neon Glow
+══════════════════════════════════════════ */
+.name-input, .phone-input, .chat-input,
+input[type="text"], input[type="tel"], input[type="email"], input[type="url"],
+select, textarea {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(99,102,241,.2) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+  transition: border-color .25s, box-shadow .25s !important;
+  font-family: 'Cairo', sans-serif !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(99,102,241,.6) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.12), 0 0 20px rgba(99,102,241,.1) !important;
+  outline: none !important;
+}
+input.v-ok { border-color: rgba(52,211,153,.6) !important; box-shadow: 0 0 0 3px rgba(52,211,153,.1), 0 0 16px rgba(52,211,153,.1) !important; }
+input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3px rgba(248,113,113,.1) !important; }
+
+/* ══════════════════════════════════════════
+   💬 CHAT — Galaxy Chat
+══════════════════════════════════════════ */
+.chat-container {
+  background: linear-gradient(180deg, rgba(10,6,20,.98) 0%, rgba(5,3,10,.99) 100%) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+}
+.chat-header {
+  background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(139,92,246,.08)) !important;
+  border-bottom: 1px solid rgba(99,102,241,.15) !important;
+}
+.message.sent {
+  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%) !important;
+  box-shadow: 0 4px 16px rgba(99,102,241,.25) !important;
+  border-radius: 16px 4px 16px 16px !important;
+}
+.message.received {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(99,102,241,.12) !important;
+  border-radius: 4px 16px 16px 16px !important;
+}
+.chat-avatar {
+  background: linear-gradient(135deg, #6366f1, #ec4899) !important;
+  box-shadow: 0 4px 16px rgba(99,102,241,.4) !important;
+}
+
+/* ══════════════════════════════════════════
+   🏆 TOAST — Cosmic Alert
+══════════════════════════════════════════ */
+.toast {
+  background: linear-gradient(135deg, rgba(26,16,37,.97), rgba(15,10,26,.98)) !important;
+  border: 1px solid rgba(99,102,241,.3) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04), 0 0 30px rgba(99,102,241,.15) !important;
+  backdrop-filter: blur(20px) !important;
+  font-size: .95rem !important;
+  letter-spacing: .2px !important;
+}
+
+/* ══════════════════════════════════════════
+   📱 RESPONSIVE — All Devices
+══════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .landing-card { padding: 2rem 1.25rem !important; border-radius: 24px !important; }
+  .landing-title { font-size: 1.5rem !important; }
+  .modal-content { border-radius: 20px !important; }
+  .btn { padding: 0.55rem 0.9rem !important; font-size: 0.82rem !important; }
+  .hero { padding: 3rem 1.25rem !important; }
+  .hero h2 { font-size: 1.6rem !important; }
+  .navbar { padding: 0.6rem 1rem !important; }
+}
+@media (min-width: 1200px) {
+  .landing-card { padding: 3.5rem 3rem !important; }
+  .hero { padding: 6rem 2rem !important; }
+  .hero h2 { font-size: 4rem !important; }
+}
+
+/* ══════════════════════════════════════════
+   ⭐ FIELD HINTS — Glowing
+══════════════════════════════════════════ */
+.field-hint.hint-ok {
+  color: #34d399 !important;
+  text-shadow: 0 0 8px rgba(52,211,153,.3);
+}
+.field-hint.hint-err {
+  color: #f87171 !important;
+  text-shadow: 0 0 8px rgba(248,113,113,.2);
+}
+.field-hint.hint-err i { animation: err-shake .4s ease; }
+@keyframes err-shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-3px); }
+  60%      { transform: translateX(3px); }
+}
+
+/* ══════════════════════════════════════════
+   🌀 LOADING RING — Cosmic Spinner
+══════════════════════════════════════════ */
+.loader-ring {
+  border-top-color: #6366f1 !important;
+  border-right-color: #8b5cf6 !important;
+  box-shadow: 0 0 30px rgba(99,102,241,.3) !important;
+  animation: spin 0.8s linear infinite !important;
+}
+.loader-text {
+  background: linear-gradient(135deg, #a78bfa, #ec4899) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  font-weight: 700 !important;
+}
+
+/* ══════════════════════════════════════════
+   💫 PROGRESS BARS — Energy Beam
+══════════════════════════════════════════ */
+.progress-overall-fill {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899) !important;
+  background-size: 200% 100% !important;
+  animation: progress-flow 2s linear infinite !important;
+  box-shadow: 0 0 8px rgba(99,102,241,.5) !important;
+}
+@keyframes progress-flow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.storage-bar {
+  background: linear-gradient(90deg, #6366f1, #ec4899) !important;
+  animation: progress-flow 3s linear infinite !important;
+}
+
+/* ══════════════════════════════════════════
+   🔭 COSMOS PILLS — Orbital Chips
+══════════════════════════════════════════ */
+.cosmos-pill {
+  background: linear-gradient(135deg, rgba(26,16,37,.9), rgba(40,20,55,.7)) !important;
+  border: 1px solid rgba(99,102,241,.2) !important;
+  box-shadow: 0 4px 16px -6px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  transition: all .3s cubic-bezier(.2,.8,.2,1) !important;
+}
+.cosmos-pill:hover {
+  background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(139,92,246,.2)) !important;
+  border-color: rgba(167,139,250,.5) !important;
+  box-shadow: 0 12px 28px -8px rgba(99,102,241,.4), 0 0 20px rgba(99,102,241,.15) !important;
+  transform: translateY(-4px) !important;
+}
+
+/* ══════════════════════════════════════════
+   🎯 COUNTRY SELECT — Styled Dropdown
+══════════════════════════════════════════ */
+.fb-country-select, select#examCountryCode, select#examResultCountryCode {
+  background: rgba(99,102,241,.08) !important;
+  border: 1px solid rgba(99,102,241,.25) !important;
+  border-radius: 10px !important;
+  color: #a78bfa !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all .25s !important;
+}
+.fb-country-select:hover, select#examCountryCode:hover {
+  border-color: rgba(99,102,241,.5) !important;
+  background: rgba(99,102,241,.15) !important;
+}
+.fb-country-select:focus, select#examCountryCode:focus {
+  border-color: rgba(99,102,241,.7) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15) !important;
+}
+
+/* ══════════════════════════════════════════
+   🌌 SCROLLBAR — Space Tube
+══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(15,10,26,.4); border-radius: 99px; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6366f1, #ec4899);
+  border-radius: 99px;
+  box-shadow: 0 0 8px rgba(99,102,241,.4);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #7c7ff5, #f472b6);
+  box-shadow: 0 0 12px rgba(99,102,241,.6);
+}
+
+/* ══════════════════════════════════════════
+   ✳️ SETTINGS DROPDOWN — Galaxy Menu
+══════════════════════════════════════════ */
+.settings-menu {
+  background: linear-gradient(160deg, rgba(20,12,30,.97) 0%, rgba(10,6,20,.99) 100%) !important;
+  border: 1px solid rgba(99,102,241,.2) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 56px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03) !important;
+}
+.settings-menu-item:hover {
+  background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(139,92,246,.1)) !important;
+}
+.settings-menu-item i { color: #a78bfa !important; }
+
+/* ══════════════════════════════════════════
+   🔐 AI CHAT — Neural Interface
+══════════════════════════════════════════ */
+.ai-chat-header {
+  background: linear-gradient(135deg, rgba(6,182,212,.15), rgba(99,102,241,.1)) !important;
+  border-bottom: 1px solid rgba(6,182,212,.2) !important;
+}
+.ai-msg-mute-btn {
+  background: rgba(99,102,241,.15) !important;
+  border: 1px solid rgba(99,102,241,.25) !important;
+  border-radius: 8px !important;
+  transition: all .25s !important;
+}
+.ai-msg-mute-btn:hover {
+  background: rgba(99,102,241,.3) !important;
+  transform: scale(1.1) !important;
+}
+
+/* ══════════════════════════════════════════
+   📊 QUIZ/EXAM — Knowledge Portal
+══════════════════════════════════════════ */
+.question-card {
+  background: linear-gradient(160deg, rgba(26,16,37,.9), rgba(15,10,26,.95)) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.5) !important;
+  transition: border-color .25s !important;
+}
+.question-card:hover { border-color: rgba(99,102,241,.35) !important; }
+.option-label {
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 12px !important;
+  transition: all .25s !important;
+}
+.option-label:hover {
+  background: rgba(99,102,241,.12) !important;
+  border-color: rgba(99,102,241,.35) !important;
+  transform: translateX(-4px) !important;
+}
+.quiz-submit-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 8px 24px rgba(16,185,129,.35) !important;
+  border-radius: 14px !important;
+  font-size: 1.05rem !important;
+  letter-spacing: .3px !important;
+}
+.quiz-submit-btn:hover {
+  box-shadow: 0 12px 32px rgba(16,185,129,.55) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ══════════════════════════════════════════
+   🏅 STUDENT PROGRESS — Achievement Hub
+══════════════════════════════════════════ */
+.progress-hero {
+  background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(236,72,153,.1)) !important;
+  border: 1px solid rgba(99,102,241,.2) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 40px -16px rgba(99,102,241,.4), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+.progress-stat-card {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(99,102,241,.12) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px -6px rgba(0,0,0,.4) !important;
+  transition: all .25s !important;
+}
+.progress-stat-card:hover {
+  background: rgba(99,102,241,.08) !important;
+  border-color: rgba(99,102,241,.3) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* ══════════════════════════════════════════
+   📱 PWA SAFE AREA — Edge-to-Edge
+══════════════════════════════════════════ */
+@supports (padding: max(0px)) {
+  .navbar {
+    padding-top: max(0.75rem, env(safe-area-inset-top)) !important;
+    padding-left: max(1.5rem, env(safe-area-inset-left)) !important;
+    padding-right: max(1.5rem, env(safe-area-inset-right)) !important;
+  }
+  .container {
+    padding-left: max(2rem, env(safe-area-inset-left)) !important;
+    padding-right: max(2rem, env(safe-area-inset-right)) !important;
+  }
+}
+
+/* ══════════════════════════════════════════
+   🎪 SPECIAL EFFECTS — Magic Particles
+══════════════════════════════════════════ */
+@keyframes cosmic-float {
+  0%,100% { transform: translateY(0) rotate(0deg); opacity: .8; }
+  33%      { transform: translateY(-12px) rotate(2deg); opacity: 1; }
+  66%      { transform: translateY(6px) rotate(-1deg); opacity: .9; }
+}
+.resume-icon { animation: cosmic-float 4s ease-in-out infinite; }
+.upload-icon { transition: transform .3s, box-shadow .3s !important; }
+.upload-icon:hover {
+  transform: scale(1.1) rotate(8deg) !important;
+  box-shadow: 0 16px 40px rgba(99,102,241,.55) !important;
+}
+
+/* ══════════════════════════════════════════
+   🌠 SELECTION & FOCUS — Cosmic Blue
+══════════════════════════════════════════ */
+::selection { background: rgba(99,102,241,.4); color: #fff; }
+:focus-visible { outline: 2px solid rgba(99,102,241,.6); outline-offset: 3px; }
+
+/* ══════════════════════════════════════════
+   🎬 PAGE TRANSITIONS — Smooth Entry
+══════════════════════════════════════════ */
+.modal.active .modal-content { animation: modal-cosmic-in .4s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes modal-cosmic-in {
+  from { opacity: 0; transform: scale(.92) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ══════════════════════════════════════════
+   🎠 COSMOS CAROUSEL SECTION
+══════════════════════════════════════════ */
+.cosmos-carousel-section {
+  background: linear-gradient(135deg, rgba(99,102,241,.07), rgba(236,72,153,.05)) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 32px -12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.03) !important;
+}
+
+/* Video Duration Badge */
+.video-duration {
+  background: rgba(0,0,0,.85) !important;
+  backdrop-filter: blur(8px) !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  font-size: .72rem !important;
+  padding: .15rem .5rem !important;
+  font-weight: 600 !important;
+}
+
+/* Exam/Quiz Buttons */
+.quiz-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(99,102,241,.3) !important;
+  transition: all .25s !important;
+  border: none !important;
+}
+.quiz-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(99,102,241,.5) !important;
+}
+
+/* GIF/Exam Badges */
+.gif-badge {
+  border-radius: 8px !important;
+  font-size: .7rem !important;
+  font-weight: 700 !important;
+  backdrop-filter: blur(6px) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3) !important;
+}
+</style>
 </body>
-</html></html>
+</html>
