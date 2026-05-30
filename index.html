@@ -1215,14 +1215,60 @@
   }
 
   /* ══ LIBRARY TABS ══ */
-  .library-tabs-wrapper { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
-  .library-tabs { display:flex; gap:.4rem; background:rgba(255,255,255,.04); border:1px solid rgba(99,102,241,.2); border-radius:16px; padding:.3rem; }
-  .library-tab { background:transparent; border:none; border-radius:12px; color:rgba(255,255,255,.5); font-family:'Cairo',sans-serif; font-size:.85rem; font-weight:600; padding:.45rem .9rem; cursor:pointer; transition:all .25s; display:flex; align-items:center; gap:.4rem; }
-  .library-tab:hover { color:#fff; background:rgba(99,102,241,.15); }
-  .library-tab.active { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 4px 14px rgba(99,102,241,.4); }
-  .tab-count { background:rgba(255,255,255,.15); border-radius:20px; padding:.1rem .45rem; font-size:.75rem; min-width:20px; text-align:center; }
-  .library-tab.active .tab-count { background:rgba(255,255,255,.25); }
-  .library-tabs-actions { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+  .library-tabs-wrapper {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+  }
+  .library-tabs {
+    display: flex; gap: .5rem; padding: .4rem;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+  }
+  .library-tab {
+    position: relative; background: transparent; border: none;
+    border-radius: 14px; font-family: 'Cairo', sans-serif;
+    font-size: .88rem; font-weight: 700; padding: .55rem 1.1rem;
+    cursor: pointer; transition: all .3s cubic-bezier(.2,.8,.2,1);
+    display: flex; align-items: center; gap: .45rem;
+    color: rgba(255,255,255,.45); overflow: hidden;
+  }
+  .library-tab::before {
+    content: ''; position: absolute; inset: 0; border-radius: 14px;
+    opacity: 0; transition: opacity .3s;
+  }
+  .library-tab:hover { color: rgba(255,255,255,.85); transform: translateY(-1px); }
+  .library-tab:hover::before { opacity: 1; background: rgba(255,255,255,.06); }
+
+  /* فيديوهات — بنفسجي */
+  #tabVideos.active {
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 6px 20px rgba(99,102,241,.5), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  /* صور — وردي */
+  #tabImages.active {
+    color: #fff;
+    background: linear-gradient(135deg, #ec4899, #f43f5e);
+    box-shadow: 0 6px 20px rgba(236,72,153,.5), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  /* أصوات — سماوي */
+  #tabAudios.active {
+    color: #fff;
+    background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+    box-shadow: 0 6px 20px rgba(6,182,212,.5), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+
+  .tab-count {
+    background: rgba(255,255,255,.18); border-radius: 20px;
+    padding: .1rem .5rem; font-size: .72rem; font-weight: 800;
+    min-width: 22px; text-align: center; letter-spacing: .3px;
+  }
+  #tabVideos.active .tab-count { background: rgba(255,255,255,.3); }
+  #tabImages.active .tab-count { background: rgba(255,255,255,.3); }
+  #tabAudios.active .tab-count { background: rgba(255,255,255,.3); }
+  .library-tabs-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
   /* بطاقة الصورة */
   .image-card { background:#0f0a1a; border-radius:12px; overflow:hidden; cursor:pointer; transition:all .3s; position:relative; aspect-ratio:16/10; }
   .image-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(99,102,241,.3); }
