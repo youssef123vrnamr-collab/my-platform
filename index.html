@@ -15364,12 +15364,12 @@ async function sendFriendRequest(encodedUid, encodedName, btnEl) {
 
   if (btnEl) { btnEl.disabled = true; btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
   try {
-    // Check if request already sent or already friends
-    const existing = await db.collection('friend_requests')
+    // Check if request already sent — بـ where واحد بس عشان مش نحتاج Composite Index
+    const existingSnap = await db.collection('friend_requests')
       .where('from', '==', currentUserId)
-      .where('to', '==', targetUid)
       .get();
-    if (!existing.empty) {
+    const alreadySent = existingSnap.docs.some(d => d.data().to === targetUid);
+    if (alreadySent) {
       showToast('أنت بعت طلب صداقة لـ ' + targetName + ' قبل كده ✅');
       if (btnEl) { btnEl.innerHTML = '<i class="fas fa-check"></i> مُرسَل'; btnEl.style.background = 'rgba(16,185,129,.25)'; btnEl.style.color = '#10b981'; }
       return;
@@ -15408,15 +15408,17 @@ async function loadIncomingRequests() {
   const container = document.getElementById('friendIncomingList');
   container.innerHTML = '<div style="text-align:center;color:#888;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>';
   try {
+    // بـ where واحد بس عشان مش نحتاج Composite Index
     const snap = await db.collection('friend_requests')
       .where('to', '==', currentUserId)
-      .where('status', '==', 'pending')
       .get();
-    if (snap.empty) {
+    const items = snap.docs
+      .map(d => ({ ...d.data(), reqId: d.id }))
+      .filter(r => r.status === 'pending');
+    if (!items.length) {
       container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem"><i class="fas fa-inbox"></i><br>مفيش طلبات واردة حالياً</p>';
       return;
     }
-    const items = snap.docs.map(d => ({ ...d.data(), reqId: d.id }));
     container.innerHTML = items.map(r => friendUserCard({
       uid: r.from, name: r.fromName || 'طالب', reqId: r.reqId
     }, 'incoming')).join('');
@@ -15424,7 +15426,8 @@ async function loadIncomingRequests() {
     const badge = document.getElementById('incomingCount');
     if (badge) { badge.textContent = items.length; badge.style.display = items.length ? '' : 'none'; }
   } catch(e) {
-    container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">تعذر التحميل، حاول مرة أخرى</p>';
+    console.error('loadIncomingRequests error:', e);
+    container.innerHTML = '<p style="color:#ef4444;text-align:center;padding:2rem">تعذر التحميل، حاول مرة أخرى</p>';
   }
 }
 
