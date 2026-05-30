@@ -15261,12 +15261,19 @@ async function openAddFriendModal() {
     if (!_friendAllStudents) {
       const snap = await db.collection('user_progress').get();
       _friendAllStudents = [];
+      const seenKeys = new Set();
       snap.forEach(doc => {
         const d = doc.data();
         const name = (d.username || d.name || d.displayName || '').trim();
-        if (name && doc.id !== currentUserId) {
-          _friendAllStudents.push({ uid: doc.id, name, phone: d.phone || '' });
-        }
+        if (!name || doc.id === currentUserId) return;
+        // Normalize phone: keep digits only
+        const rawPhone = (d.phone || '').replace(/\D/g, '').slice(-9);
+        // Dedup key: use uid (each doc is unique per uid already)
+        // But also dedup by normalized name+phone to avoid duplicate registrations
+        const dedupKey = name.toLowerCase() + '|' + rawPhone;
+        if (seenKeys.has(dedupKey)) return;
+        seenKeys.add(dedupKey);
+        _friendAllStudents.push({ uid: doc.id, name, phone: d.phone || '' });
       });
     }
   } catch(e) { console.warn('friend students load failed', e); }
