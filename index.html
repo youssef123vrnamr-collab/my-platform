@@ -3034,6 +3034,7 @@ body {
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('telescopes');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);margin-left:6px;font-size:.8rem"><i class="fas fa-search" style="color:#fff"></i></span> التلسكوبات</div>
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('phenomena');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);margin-left:6px;font-size:.8rem"><i class="fas fa-bolt" style="color:#fff"></i></span> ظواهر فلكية</div>
             <div class="settings-menu-item" onclick="openStudentProgress();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fde047,#f59e0b);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> تقدم الطالب</div>
+            <div class="settings-menu-item" onclick="openAddFriendModal();closeSectionsMenu()" id="addFriendMenuItem"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#6366f1);margin-left:6px;font-size:.8rem"><i class="fas fa-user-plus" style="color:#fff"></i></span> إضافة صديق <span id="friendReqBadge" style="display:none;margin-right:auto;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">0</span></div>
             <div class="settings-menu-item" onclick="openPdfFilesModal();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);margin-left:6px;font-size:.8rem"><i class="fas fa-file-pdf" style="color:#fff"></i></span> ملفات الدروس</div>
             <div class="settings-menu-item" onclick="openPrivateAdminChat();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#10b981);margin-left:6px;font-size:.8rem"><i class="fas fa-user-shield" style="color:#fff"></i></span> تواصل مع المشرفين</div>
             <div class="settings-menu-item sl-menu-item" onclick="openSelfLearning();closeSectionsMenu()" style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08));border-bottom:1px solid rgba(16,185,129,.25)!important;position:relative;overflow:hidden"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);margin-left:6px;font-size:.8rem;box-shadow:0 0 10px rgba(16,185,129,.5);animation:slMenuGlow 2s infinite"><i class="fas fa-brain" style="color:#fff"></i></span> <span style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800">التعلم الذاتي</span><span style="margin-right:auto;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">جديد</span></div>
@@ -7005,6 +7006,43 @@ async function enrollInCourse(courseId) {
   </div>
 </div>
 
+
+  <!-- ===== Add Friend Modal ===== -->
+  <div class="modal" id="addFriendModal">
+    <div class="modal-content" style="max-width:620px;">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <h3><i class="fas fa-user-plus" style="color:#06b6d4"></i> إضافة صديق</h3>
+        </div>
+        <button class="modal-close" onclick="closeAddFriendModal()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="progress-tabs" style="margin-bottom:1.25rem">
+          <button class="progress-tab active" id="friendTabSearch" onclick="switchFriendTab('search')"><i class="fas fa-search"></i> ابحث عن طالب</button>
+          <button class="progress-tab" id="friendTabRequests" onclick="switchFriendTab('requests')"><i class="fas fa-bell"></i> الطلبات الواردة <span id="incomingCount" style="background:#ef4444;color:#fff;border-radius:99px;font-size:.65rem;padding:.1rem .4rem;margin-right:4px;display:none">0</span></button>
+          <button class="progress-tab" id="friendTabFriends" onclick="switchFriendTab('friends')"><i class="fas fa-users"></i> أصدقائي</button>
+        </div>
+        <div id="friendPanelSearch">
+          <div style="position:relative;margin-bottom:1rem">
+            <input type="text" id="friendSearchInput" placeholder="ابحث باسم الطالب أو رقم هاتفه..." oninput="searchStudentsForFriend()" style="width:100%;padding:.75rem 1rem .75rem 2.5rem;background:rgba(255,255,255,.07);border:1px solid rgba(99,102,241,.35);border-radius:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:.95rem;">
+            <i class="fas fa-search" style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:#6366f1;pointer-events:none"></i>
+          </div>
+          <div id="friendSearchResults" style="display:flex;flex-direction:column;gap:.6rem;min-height:60px"></div>
+        </div>
+        <div id="friendPanelRequests" style="display:none">
+          <div id="friendIncomingList" style="display:flex;flex-direction:column;gap:.6rem;min-height:60px">
+            <div style="text-align:center;color:#666;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>
+          </div>
+        </div>
+        <div id="friendPanelFriends" style="display:none">
+          <div id="friendMyList" style="display:flex;flex-direction:column;gap:.6rem;min-height:60px">
+            <div style="text-align:center;color:#666;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== Student Progress modal ===== -->
   <div class="modal" id="studentProgressModal">
     <div class="modal-content" style="max-width: 980px;">
@@ -7278,6 +7316,9 @@ function renderStudentProgress(data) {
     ? `<button class="progress-back-btn" onclick="setProgressView('all')"><i class="fas fa-arrow-right"></i> رجوع لكل الطلاب</button>`
     : '';
 
+  const isOtherStudent = !!__studentDetailFor && student.userId !== currentUserId;
+  const friendBtnHtml = isOtherStudent ? `<button class="btn btn-friend-add" id="hero-friend-btn" onclick="sendFriendRequest(decodeURIComponent('${encodeURIComponent(student.userId || '')}'),decodeURIComponent('${encodeURIComponent(displayName)}'), this)" style="margin-top:.75rem;display:inline-flex;align-items:center;gap:.5rem;"><i class="fas fa-user-plus"></i> إضافة صديق</button>` : '';
+
   const hero = `
     <div class="progress-hero">
       <div class="progress-hero-row">
@@ -7286,6 +7327,7 @@ function renderStudentProgress(data) {
           <h3>${escapeHtml(displayName)}</h3>
           <p>${student.phone ? escapeHtml(student.phone) : 'رحلتك في عالم الفلك والفضاء'}</p>
           <span class="progress-level-badge"><i class="fas ${level.icon}"></i> ${level.name}</span>
+          ${friendBtnHtml}
         </div>
       </div>
     </div>`;
@@ -7449,6 +7491,9 @@ function renderAllStudents(data) {
             <div class="psm"><b>${s.avgScore}%</b><span>متوسط</span></div>
             <span class="progress-item-badge ${cls}">${s.overallPct}%</span>
           </div>
+          <button class="student-add-friend-btn" id="friend-btn-${escapeHtml(s.userId || '')}" title="إضافة صديق" onclick="event.stopPropagation(); sendFriendRequest('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}', this)">
+            <i class="fas fa-user-plus"></i>
+          </button>
           <button class="student-delete-btn" title="حذف بيانات الطالب" onclick="event.stopPropagation(); deleteStudentRecord('${encodeURIComponent(s.userId || '')}','${encodeURIComponent(s.name || '')}','${encodeURIComponent(s.phone || '')}')">
             <i class="fas fa-trash-alt"></i>
           </button>
@@ -15195,5 +15240,265 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
 </style>
+
+<script>
+// ============================================================
+// 👥 FRIEND SYSTEM — إضافة صديق
+// ============================================================
+
+let _friendAllStudents = null;
+let _friendCurrentTab = 'search';
+
+async function openAddFriendModal() {
+  if (!currentUserId) {
+    showToast('سجّل دخولك أولاً عشان تستخدم نظام الأصدقاء 🔐');
+    return;
+  }
+  document.getElementById('addFriendModal').classList.add('active');
+  switchFriendTab('search');
+  // Load students cache for search
+  try {
+    if (!_friendAllStudents) {
+      const snap = await db.collection('user_progress').get();
+      _friendAllStudents = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        const name = (d.username || d.name || d.displayName || '').trim();
+        if (name && doc.id !== currentUserId) {
+          _friendAllStudents.push({ uid: doc.id, name, phone: d.phone || '' });
+        }
+      });
+    }
+  } catch(e) { console.warn('friend students load failed', e); }
+  updateFriendReqBadge();
+}
+
+function closeAddFriendModal() {
+  document.getElementById('addFriendModal').classList.remove('active');
+}
+
+function switchFriendTab(tab) {
+  _friendCurrentTab = tab;
+  ['search','requests','friends'].forEach(t => {
+    document.getElementById('friendTab' + t.charAt(0).toUpperCase() + t.slice(1))?.classList.toggle('active', t === tab);
+    document.getElementById('friendPanel' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'requests') loadIncomingRequests();
+  if (tab === 'friends') loadMyFriends();
+  if (tab === 'search') {
+    const inp = document.getElementById('friendSearchInput');
+    if (inp) { inp.value = ''; }
+    document.getElementById('friendSearchResults').innerHTML = '<p style="color:#888;text-align:center;padding:1.5rem">اكتب اسم الطالب للبحث...</p>';
+  }
+}
+
+function searchStudentsForFriend() {
+  const q = (document.getElementById('friendSearchInput')?.value || '').trim().toLowerCase();
+  const container = document.getElementById('friendSearchResults');
+  if (!q) {
+    container.innerHTML = '<p style="color:#888;text-align:center;padding:1.5rem">اكتب اسم الطالب للبحث...</p>';
+    return;
+  }
+  if (!_friendAllStudents) {
+    container.innerHTML = '<p style="color:#888;text-align:center;padding:1.5rem"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</p>';
+    return;
+  }
+  const results = _friendAllStudents.filter(s =>
+    s.name.toLowerCase().includes(q) || s.phone.includes(q)
+  ).slice(0, 10);
+  if (!results.length) {
+    container.innerHTML = '<p style="color:#888;text-align:center;padding:1.5rem">لم يتم إيجاد طلاب بهذا الاسم</p>';
+    return;
+  }
+  container.innerHTML = results.map(s => friendUserCard(s, 'search')).join('');
+}
+
+function friendUserCard(s, mode, status) {
+  const initial = (s.name || '?').trim().charAt(0).toUpperCase();
+  let actionBtn = '';
+  if (mode === 'search') {
+    actionBtn = `<button onclick="sendFriendRequest('${encodeURIComponent(s.uid)}','${encodeURIComponent(s.name)}',this)" id="frBtn_${s.uid}" style="background:linear-gradient(135deg,#06b6d4,#6366f1);color:#fff;border:none;border-radius:10px;padding:.45rem 1rem;font-family:'Cairo',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;white-space:nowrap;flex-shrink:0"><i class="fas fa-user-plus"></i> إضافة</button>`;
+  } else if (mode === 'incoming') {
+    actionBtn = `
+      <button onclick="acceptFriendRequest('${encodeURIComponent(s.reqId)}','${encodeURIComponent(s.uid)}','${encodeURIComponent(s.name)}',this)" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:.45rem .85rem;font-family:'Cairo',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;margin-left:6px"><i class="fas fa-check"></i> قبول</button>
+      <button onclick="rejectFriendRequest('${encodeURIComponent(s.reqId)}',this)" style="background:rgba(239,68,68,.2);color:#ef4444;border:1px solid rgba(239,68,68,.4);border-radius:10px;padding:.45rem .85rem;font-family:'Cairo',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer"><i class="fas fa-times"></i> رفض</button>`;
+  } else if (mode === 'friend') {
+    actionBtn = `<button onclick="removeFriend('${encodeURIComponent(s.uid)}','${encodeURIComponent(s.name)}',this)" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:.45rem .85rem;font-family:'Cairo',sans-serif;font-weight:600;font-size:.8rem;cursor:pointer"><i class="fas fa-user-minus"></i> إزالة</button>`;
+  }
+  return `
+    <div style="display:flex;align-items:center;gap:.85rem;background:rgba(255,255,255,.05);border:1px solid rgba(99,102,241,.18);border-radius:14px;padding:.75rem 1rem;">
+      <div style="width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0">${escapeHtml(initial)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(s.name)}</div>
+        ${s.phone ? `<div style="font-size:.78rem;color:#888">${escapeHtml(s.phone)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-shrink:0">${actionBtn}</div>
+    </div>`;
+}
+
+async function sendFriendRequest(encodedUid, encodedName, btnEl) {
+  if (!currentUserId) { showToast('سجّل دخولك أولاً 🔐'); return; }
+  const targetUid = decodeURIComponent(encodedUid);
+  const targetName = decodeURIComponent(encodedName);
+  if (!targetUid || targetUid === currentUserId) return;
+
+  if (btnEl) { btnEl.disabled = true; btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+  try {
+    // Check if request already sent or already friends
+    const existing = await db.collection('friend_requests')
+      .where('from', '==', currentUserId)
+      .where('to', '==', targetUid)
+      .get();
+    if (!existing.empty) {
+      showToast('أنت بعت طلب صداقة لـ ' + targetName + ' قبل كده ✅');
+      if (btnEl) { btnEl.innerHTML = '<i class="fas fa-check"></i> مُرسَل'; btnEl.style.background = 'rgba(16,185,129,.25)'; btnEl.style.color = '#10b981'; }
+      return;
+    }
+    const alreadyFriend = await db.collection('friendships')
+      .where('users', 'array-contains', currentUserId)
+      .get();
+    const isFriend = alreadyFriend.docs.some(d => {
+      const u = d.data().users || [];
+      return u.includes(targetUid);
+    });
+    if (isFriend) {
+      showToast(targetName + ' صديقك بالفعل 💙');
+      if (btnEl) { btnEl.innerHTML = '<i class="fas fa-user-check"></i> صديق'; btnEl.style.background = 'rgba(99,102,241,.25)'; btnEl.style.color = '#a78bfa'; }
+      return;
+    }
+
+    await db.collection('friend_requests').add({
+      from: currentUserId,
+      fromName: currentUser || '',
+      to: targetUid,
+      toName: targetName,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('تم إرسال طلب الصداقة لـ ' + targetName + ' 🚀');
+    if (btnEl) { btnEl.innerHTML = '<i class="fas fa-check"></i> مُرسَل'; btnEl.style.background = 'rgba(16,185,129,.25)'; btnEl.style.color = '#10b981'; btnEl.disabled = true; }
+  } catch(e) {
+    console.error(e);
+    showToast('حدث خطأ، حاول مرة أخرى');
+    if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-user-plus"></i> إضافة'; }
+  }
+}
+
+async function loadIncomingRequests() {
+  const container = document.getElementById('friendIncomingList');
+  container.innerHTML = '<div style="text-align:center;color:#888;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>';
+  try {
+    const snap = await db.collection('friend_requests')
+      .where('to', '==', currentUserId)
+      .where('status', '==', 'pending')
+      .get();
+    if (snap.empty) {
+      container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem"><i class="fas fa-inbox"></i><br>مفيش طلبات واردة حالياً</p>';
+      return;
+    }
+    const items = snap.docs.map(d => ({ ...d.data(), reqId: d.id }));
+    container.innerHTML = items.map(r => friendUserCard({
+      uid: r.from, name: r.fromName || 'طالب', reqId: r.reqId
+    }, 'incoming')).join('');
+    // Update badge
+    const badge = document.getElementById('incomingCount');
+    if (badge) { badge.textContent = items.length; badge.style.display = items.length ? '' : 'none'; }
+  } catch(e) {
+    container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">تعذر التحميل، حاول مرة أخرى</p>';
+  }
+}
+
+async function acceptFriendRequest(encodedReqId, encodedUid, encodedName, btnEl) {
+  const reqId = decodeURIComponent(encodedReqId);
+  const fromUid = decodeURIComponent(encodedUid);
+  const fromName = decodeURIComponent(encodedName);
+  if (btnEl) btnEl.disabled = true;
+  try {
+    await db.collection('friend_requests').doc(reqId).update({ status: 'accepted' });
+    await db.collection('friendships').add({
+      users: [currentUserId, fromUid],
+      names: { [currentUserId]: currentUser || '', [fromUid]: fromName },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('أصبحت أنت و' + fromName + ' أصدقاء 🎉');
+    loadIncomingRequests();
+    updateFriendReqBadge();
+  } catch(e) {
+    showToast('حدث خطأ أثناء القبول');
+    if (btnEl) btnEl.disabled = false;
+  }
+}
+
+async function rejectFriendRequest(encodedReqId, btnEl) {
+  const reqId = decodeURIComponent(encodedReqId);
+  try {
+    await db.collection('friend_requests').doc(reqId).update({ status: 'rejected' });
+    showToast('تم رفض الطلب');
+    loadIncomingRequests();
+    updateFriendReqBadge();
+  } catch(e) { showToast('حدث خطأ'); }
+}
+
+async function loadMyFriends() {
+  const container = document.getElementById('friendMyList');
+  container.innerHTML = '<div style="text-align:center;color:#888;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>';
+  try {
+    const snap = await db.collection('friendships')
+      .where('users', 'array-contains', currentUserId)
+      .get();
+    if (snap.empty) {
+      container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem"><i class="fas fa-user-friends"></i><br>مفيش أصدقاء لسه، ابدأ بإضافة أصدقاء!</p>';
+      return;
+    }
+    const friends = snap.docs.map(d => {
+      const data = d.data();
+      const friendUid = (data.users || []).find(u => u !== currentUserId);
+      const friendName = (data.names || {})[friendUid] || 'طالب';
+      return { uid: friendUid, name: friendName, fsId: d.id };
+    });
+    container.innerHTML = friends.map(f => friendUserCard(f, 'friend')).join('');
+  } catch(e) {
+    container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">تعذر التحميل</p>';
+  }
+}
+
+async function removeFriend(encodedUid, encodedName, btnEl) {
+  const friendUid = decodeURIComponent(encodedUid);
+  const friendName = decodeURIComponent(encodedName);
+  if (!confirm('هتحذف ' + friendName + ' من قائمة أصدقائك؟')) return;
+  if (btnEl) btnEl.disabled = true;
+  try {
+    const snap = await db.collection('friendships').where('users', 'array-contains', currentUserId).get();
+    const toDelete = snap.docs.find(d => (d.data().users || []).includes(friendUid));
+    if (toDelete) await toDelete.ref.delete();
+    showToast('تم حذف ' + friendName + ' من أصدقائك');
+    loadMyFriends();
+  } catch(e) {
+    showToast('حدث خطأ');
+    if (btnEl) btnEl.disabled = false;
+  }
+}
+
+async function updateFriendReqBadge() {
+  if (!currentUserId) return;
+  try {
+    const snap = await db.collection('friend_requests')
+      .where('to', '==', currentUserId)
+      .where('status', '==', 'pending')
+      .get();
+    const count = snap.size;
+    const badge = document.getElementById('friendReqBadge');
+    const inBadge = document.getElementById('incomingCount');
+    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
+    if (inBadge) { inBadge.textContent = count; inBadge.style.display = count > 0 ? '' : 'none'; }
+  } catch(e) {}
+}
+
+// Check for incoming requests every 60 seconds when logged in
+setInterval(() => { if (currentUserId) updateFriendReqBadge(); }, 60000);
+// Check on login
+document.addEventListener('userLoggedIn', () => setTimeout(updateFriendReqBadge, 2000));
+</script>
+
 </body>
 </html>
