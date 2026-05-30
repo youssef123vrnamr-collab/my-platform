@@ -3034,12 +3034,13 @@ body {
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('telescopes');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);margin-left:6px;font-size:.8rem"><i class="fas fa-search" style="color:#fff"></i></span> التلسكوبات</div>
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('phenomena');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);margin-left:6px;font-size:.8rem"><i class="fas fa-bolt" style="color:#fff"></i></span> ظواهر فلكية</div>
             <div class="settings-menu-item" onclick="openStudentProgress();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#fde047,#f59e0b);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> تقدم الطالب</div>
-            <div class="settings-menu-item" onclick="openAddFriendModal();closeSectionsMenu()" id="addFriendMenuItem"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#6366f1);margin-left:6px;font-size:.8rem"><i class="fas fa-user-plus" style="color:#fff"></i></span> إضافة صديق <span id="friendReqBadge" style="display:none;margin-right:auto;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">0</span></div>
-            <div class="settings-menu-item" onclick="openPdfFilesModal();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);margin-left:6px;font-size:.8rem"><i class="fas fa-file-pdf" style="color:#fff"></i></span> ملفات الدروس</div>
+            <div class="settings-menu-item" onclick="openAddFriendModal();closeSectionsMenu()" id="addFriendMenuItem"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#38bdf8);margin-left:6px;font-size:.8rem"><i class="fas fa-user-plus" style="color:#fff"></i></span> إضافة صديق <span id="friendReqBadge" style="display:none;margin-right:auto;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">0</span></div>
+            <div class="settings-menu-item" onclick="openPdfFilesModal();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#9f1239);margin-left:6px;font-size:.8rem"><i class="fas fa-file-pdf" style="color:#fff"></i></span> ملفات الدروس</div>
             <div class="settings-menu-item" onclick="openPrivateAdminChat();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#10b981);margin-left:6px;font-size:.8rem"><i class="fas fa-user-shield" style="color:#fff"></i></span> تواصل مع المشرفين</div>
+            <div class="settings-menu-item" onclick="openFriendChatMenu();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#a855f7);margin-left:6px;font-size:.8rem"><i class="fas fa-user-friends" style="color:#fff"></i></span> تحدث مع صديقك <span id="friendChatBadge" style="display:none;margin-right:auto;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">0</span></div>
             <div class="settings-menu-item sl-menu-item" onclick="openSelfLearning();closeSectionsMenu()" style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08));border-bottom:1px solid rgba(16,185,129,.25)!important;position:relative;overflow:hidden"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);margin-left:6px;font-size:.8rem;box-shadow:0 0 10px rgba(16,185,129,.5);animation:slMenuGlow 2s infinite"><i class="fas fa-brain" style="color:#fff"></i></span> <span style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800">التعلم الذاتي</span><span style="margin-right:auto;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">جديد</span></div>
-            <div class="settings-menu-item" onclick="openDQ();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);margin-left:6px;font-size:.8rem"><i class="fas fa-bullseye" style="color:#fff"></i></span> مهامي اليومية 🎯</div>
-            <div class="settings-menu-item" onclick="openLB();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> لوحة المتصدرين 🏆</div>
+            <div class="settings-menu-item" onclick="openDQ();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f97316,#fb923c);margin-left:6px;font-size:.8rem"><i class="fas fa-bullseye" style="color:#fff"></i></span> مهامي اليومية 🎯</div>
+            <div class="settings-menu-item" onclick="openLB();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#eab308,#ca8a04);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fff"></i></span> لوحة المتصدرين 🏆</div>
           </div>
         </div>
         <div class="settings-dropdown" id="settingsDropdown">
@@ -15505,6 +15506,214 @@ async function updateFriendReqBadge() {
 setInterval(() => { if (currentUserId) updateFriendReqBadge(); }, 60000);
 // Check on login
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendReqBadge, 2000));
+</script>
+
+
+  <!-- ===== Friend Chat Modal ===== -->
+  <div class="modal" id="friendChatMenuModal">
+    <div class="modal-content" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <h3><i class="fas fa-user-friends" style="color:#f472b6"></i> تحدث مع صديقك</h3>
+        </div>
+        <button class="modal-close" onclick="closeFriendChatMenu()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="friendChatMenuList" style="display:flex;flex-direction:column;gap:.65rem;min-height:80px">
+          <div style="text-align:center;color:#888;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Private Friend Chat Modal ===== -->
+  <div class="modal" id="privateFriendChatModal" style="z-index:10050">
+    <div class="modal-content" style="max-width:560px;display:flex;flex-direction:column;height:90vh;max-height:700px;">
+      <div class="modal-header" style="flex-shrink:0">
+        <div class="modal-header-left" style="display:flex;align-items:center;gap:.75rem">
+          <div id="pfcAvatar" style="width:38px;height:38px;background:linear-gradient(135deg,#f472b6,#a855f7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0">?</div>
+          <div>
+            <h3 id="pfcName" style="font-size:1rem;margin:0">صديق</h3>
+            <span style="font-size:.75rem;color:#10b981"><i class="fas fa-circle" style="font-size:.5rem"></i> أصدقاء</span>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closePrivateFriendChat()"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="pfcMessages" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.65rem;overscroll-behavior:contain;min-height:0"></div>
+      <div style="padding:.75rem 1rem;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:.5rem;flex-shrink:0;background:rgba(15,10,26,.8)">
+        <input id="pfcInput" type="text" placeholder="اكتب رسالة..." onkeydown="if(event.key==='Enter')sendPrivateFriendMsg()" style="flex:1;padding:.65rem 1rem;background:rgba(255,255,255,.07);border:1px solid rgba(99,102,241,.3);border-radius:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:.9rem;">
+        <button onclick="sendPrivateFriendMsg()" style="background:linear-gradient(135deg,#f472b6,#a855f7);border:none;color:#fff;border-radius:12px;padding:.65rem 1.1rem;cursor:pointer;font-size:1rem"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+// ============================================================
+// 💬 FRIEND PRIVATE CHAT SYSTEM
+// ============================================================
+
+let _pfcFriendUid = null;
+let _pfcFriendName = null;
+let _pfcUnsubscribe = null;
+
+async function openFriendChatMenu() {
+  if (!currentUserId) { showToast('سجّل دخولك أولاً 🔐'); return; }
+  document.getElementById('friendChatMenuModal').classList.add('active');
+  const container = document.getElementById('friendChatMenuList');
+  container.innerHTML = '<div style="text-align:center;color:#888;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>';
+  try {
+    const snap = await db.collection('friendships').where('users', 'array-contains', currentUserId).get();
+    if (snap.empty) {
+      container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem"><i class="fas fa-user-friends"></i><br>مفيش أصدقاء لسه!<br><small>روح لـ "إضافة صديق" وابدأ بإضافة أصدقاء</small></p>';
+      return;
+    }
+    // Get unread counts per friend
+    const unreadMap = {};
+    try {
+      const unreadSnap = await db.collection('private_messages')
+        .where('to', '==', currentUserId)
+        .where('read', '==', false)
+        .get();
+      unreadSnap.forEach(d => {
+        const from = d.data().from;
+        unreadMap[from] = (unreadMap[from] || 0) + 1;
+      });
+    } catch(e) {}
+
+    const friends = snap.docs.map(d => {
+      const data = d.data();
+      const fUid = (data.users || []).find(u => u !== currentUserId);
+      const fName = (data.names || {})[fUid] || 'صديق';
+      return { uid: fUid, name: fName };
+    });
+
+    container.innerHTML = friends.map(f => {
+      const initial = (f.name || '?').trim().charAt(0).toUpperCase();
+      const unread = unreadMap[f.uid] || 0;
+      return `
+        <div onclick="openPrivateFriendChat('${encodeURIComponent(f.uid)}','${encodeURIComponent(f.name)}')" style="display:flex;align-items:center;gap:.85rem;background:rgba(255,255,255,.05);border:1px solid rgba(244,114,182,.18);border-radius:14px;padding:.75rem 1rem;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(244,114,182,.1)'" onmouseout="this.style.background='rgba(255,255,255,.05)'">
+          <div style="position:relative;flex-shrink:0">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#f472b6,#a855f7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem">${escapeHtml(initial)}</div>
+            ${unread ? `<span style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:.65rem;display:flex;align-items:center;justify-content:center;font-weight:800">${unread}</span>` : ''}
+          </div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:.95rem">${escapeHtml(f.name)}</div>
+            <div style="font-size:.75rem;color:#a855f7">${unread ? `<span style="color:#ef4444">${unread} رسالة جديدة</span>` : 'اضغط للمحادثة'}</div>
+          </div>
+          <i class="fas fa-chevron-left" style="color:#a855f7;font-size:.85rem"></i>
+        </div>`;
+    }).join('');
+
+    // Update nav badge
+    const totalUnread = Object.values(unreadMap).reduce((a,b) => a+b, 0);
+    const badge = document.getElementById('friendChatBadge');
+    if (badge) { badge.textContent = totalUnread; badge.style.display = totalUnread > 0 ? '' : 'none'; }
+  } catch(e) {
+    container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">تعذر التحميل، حاول مرة أخرى</p>';
+  }
+}
+
+function closeFriendChatMenu() {
+  document.getElementById('friendChatMenuModal').classList.remove('active');
+}
+
+async function openPrivateFriendChat(encodedUid, encodedName) {
+  _pfcFriendUid = decodeURIComponent(encodedUid);
+  _pfcFriendName = decodeURIComponent(encodedName);
+  const initial = (_pfcFriendName || '?').trim().charAt(0).toUpperCase();
+  document.getElementById('pfcAvatar').textContent = initial;
+  document.getElementById('pfcName').textContent = _pfcFriendName;
+  document.getElementById('pfcMessages').innerHTML = '<div style="text-align:center;color:#888;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>';
+  document.getElementById('privateFriendChatModal').classList.add('active');
+  closeFriendChatMenu();
+
+  // Mark messages as read
+  try {
+    const unread = await db.collection('private_messages')
+      .where('from', '==', _pfcFriendUid)
+      .where('to', '==', currentUserId)
+      .where('read', '==', false)
+      .get();
+    const batch = db.batch();
+    unread.forEach(d => batch.update(d.ref, { read: true }));
+    if (!unread.empty) await batch.commit();
+  } catch(e) {}
+
+  // Real-time listener
+  if (_pfcUnsubscribe) _pfcUnsubscribe();
+  const chatId = [currentUserId, _pfcFriendUid].sort().join('_');
+  _pfcUnsubscribe = db.collection('private_messages')
+    .where('chatId', '==', chatId)
+    .orderBy('createdAt', 'asc')
+    .onSnapshot(snap => {
+      const container = document.getElementById('pfcMessages');
+      if (!snap.docs.length) {
+        container.innerHTML = '<p style="color:#888;text-align:center;padding:3rem"><i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>ابدأ المحادثة!</p>';
+        return;
+      }
+      container.innerHTML = snap.docs.map(d => {
+        const msg = d.data();
+        const isMe = msg.from === currentUserId;
+        const time = msg.createdAt?.toDate?.()?.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'}) || '';
+        return `
+          <div style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'}">
+            <div style="max-width:75%;padding:.65rem 1rem;border-radius:${isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isMe ? 'linear-gradient(135deg,#f472b6,#a855f7)' : 'rgba(255,255,255,.1)'};color:#fff;font-size:.9rem;line-height:1.5;word-break:break-word">${escapeHtml(msg.text || '')}</div>
+            <span style="font-size:.68rem;color:#666;margin-top:.2rem;padding:0 .3rem">${time}</span>
+          </div>`;
+      }).join('');
+      container.scrollTop = container.scrollHeight;
+    }, err => {
+      if (err.code === 'failed-precondition') {
+        document.getElementById('pfcMessages').innerHTML = '<p style="color:#f87171;text-align:center;padding:2rem;font-size:.85rem"><i class="fas fa-exclamation-triangle"></i><br>يحتاج إنشاء index في Firebase<br><small>تواصل مع المشرف</small></p>';
+      }
+    });
+}
+
+function closePrivateFriendChat() {
+  document.getElementById('privateFriendChatModal').classList.remove('active');
+  if (_pfcUnsubscribe) { _pfcUnsubscribe(); _pfcUnsubscribe = null; }
+  _pfcFriendUid = null;
+  _pfcFriendName = null;
+}
+
+async function sendPrivateFriendMsg() {
+  const input = document.getElementById('pfcInput');
+  const text = (input?.value || '').trim();
+  if (!text || !_pfcFriendUid || !currentUserId) return;
+  input.value = '';
+  const chatId = [currentUserId, _pfcFriendUid].sort().join('_');
+  try {
+    await db.collection('private_messages').add({
+      chatId,
+      from: currentUserId,
+      fromName: currentUser || '',
+      to: _pfcFriendUid,
+      text,
+      read: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {
+    showToast('تعذر إرسال الرسالة');
+    input.value = text;
+  }
+}
+
+// Update friend chat badge periodically
+async function updateFriendChatBadge() {
+  if (!currentUserId) return;
+  try {
+    const snap = await db.collection('private_messages')
+      .where('to', '==', currentUserId)
+      .where('read', '==', false)
+      .get();
+    const count = snap.size;
+    const badge = document.getElementById('friendChatBadge');
+    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
+  } catch(e) {}
+}
+setInterval(() => { if (currentUserId) updateFriendChatBadge(); }, 30000);
+document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge, 3000));
 </script>
 
 </body>
