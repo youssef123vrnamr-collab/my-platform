@@ -4684,16 +4684,21 @@ async function updateAdminUI() {
       { id:'prv5', name:'ذهب داكن', style:'linear-gradient(160deg,#1a1200 0%,#3d2e00 50%,#1a0e00 100%)' },
     ]
   };
-  const BG_STORAGE_KEY = 'falak_chat_bg';
+  const BG_STORAGE_KEY_PREFIX = 'falak_chat_bg_';
   let currentBgTab = 'ai';
 
+  function getBgStorageKey() {
+    // مفتاح خاص بكل مستخدم — لو مفيش userId نستخدم مفتاح مؤقت
+    const uid = currentUserId || (typeof currentUser !== 'undefined' && currentUser ? 'local_' + currentUser : 'guest');
+    return BG_STORAGE_KEY_PREFIX + uid;
+  }
   function getChatBgSettings() {
-    try { return JSON.parse(localStorage.getItem(BG_STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+    try { return JSON.parse(localStorage.getItem(getBgStorageKey()) || '{}'); } catch(e) { return {}; }
   }
   function saveChatBgSetting(type, bgStyle) {
     const s = getChatBgSettings();
     s[type] = bgStyle;
-    localStorage.setItem(BG_STORAGE_KEY, JSON.stringify(s));
+    localStorage.setItem(getBgStorageKey(), JSON.stringify(s));
     applyChatBg(type, bgStyle);
   }
   function applyChatBg(type, bgStyle) {
@@ -4737,13 +4742,13 @@ async function updateAdminUI() {
   function resetChatBg() {
     const s = getChatBgSettings();
     delete s[currentBgTab];
-    localStorage.setItem(BG_STORAGE_KEY, JSON.stringify(s));
+    localStorage.setItem(getBgStorageKey(), JSON.stringify(s));
     applyChatBg(currentBgTab, '');
     renderBgGrid();
     showToast('✅ تمت إعادة الخلفية الافتراضية');
   }
-  // Apply on page load
-  setTimeout(applyAllChatBgs, 1500);
+  // Apply on page load — بيتأجل عشان currentUserId يكون جاهز بعد تسجيل الدخول
+  // تم استبدال setTimeout هنا بحدث userLoggedIn أسفل
   // ============================================================
   function startMaintenance() { if (!isAdmin) { SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let minutes = parseInt(document.getElementById("maintenanceMinutes").value) || 5; if (minutes < 1 || minutes > 10080) { showToast("❌ المدة يجب أن تكون بين 1 و 10080 دقيقة (أسبوع)"); return; } let msg = document.getElementById("maintenanceMessageInput").value.trim() || "جاري تحديث المحتوى، يرجى الانتظار..."; let end = new Date(Date.now() + minutes * 60 * 1000); db.collection("system").doc("maintenance").set({ status: "maintenance", endTime: firebase.firestore.Timestamp.fromDate(end), message: msg }, { merge: true }).then(() => { SoundEffects.recordStart(); showToast("✅ تم بدء التحديث"); closeMaintenanceModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل بدء التحديث"); }); }
   function cancelMaintenance() { isAdmin ? (confirm("هل أنت متأكد؟") && db.collection("system").doc("maintenance").update({ status: "active" }).then(() => { SoundEffects.success(); showToast("✅ تم إلغاء التحديث"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل إلغاء التحديث"); })) : showToast("❌ المشرف فقط يستطيع إلغاء التحديث"); }
@@ -5930,6 +5935,8 @@ async function updateAdminUI() {
         loadEmailSettingsFromFirestore(); 
         updateAdminUI(); 
         showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
+        // ── تطبيق خلفيات الدردشة الخاصة بهذا الحساب ──
+        setTimeout(function() { try { applyAllChatBgs(); } catch(_){} }, 800);
         // ── تحميل الـ dashboard بعد login ناجح ──
         setTimeout(function() { loadUserDashboard().catch(function(){}); }, 300);
         // ── Cloudinary خارج الـ try/catch — لو فشل مش يأثر على login ──
@@ -6356,7 +6363,7 @@ async function updateAdminUI() {
   // تحقق من الحالة عند التحميل
   window.addEventListener("load", function() { setTimeout(updateInstallMenuVisibility, 1000); });
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500);
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); setTimeout(function(){ try { applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500);
 
         } else if (!user && !isAdmin) { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
