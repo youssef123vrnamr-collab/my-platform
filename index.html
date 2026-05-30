@@ -1213,90 +1213,6 @@
     font-size: 2.5rem !important;
     filter: drop-shadow(0 0 10px rgba(236,72,153,0.7));
   }
-
-  /* ══ LIBRARY TABS ══ */
-  .library-tabs-wrapper {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
-  }
-  .library-tabs {
-    display: flex; gap: .5rem; padding: .4rem;
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(255,255,255,.07);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-  }
-  .library-tab {
-    position: relative; background: transparent; border: none;
-    border-radius: 14px; font-family: 'Cairo', sans-serif;
-    font-size: .88rem; font-weight: 700; padding: .55rem 1.1rem;
-    cursor: pointer; transition: all .3s cubic-bezier(.2,.8,.2,1);
-    display: flex; align-items: center; gap: .45rem;
-    color: rgba(255,255,255,.45); overflow: hidden;
-  }
-  .library-tab::before {
-    content: ''; position: absolute; inset: 0; border-radius: 14px;
-    opacity: 0; transition: opacity .3s;
-  }
-  .library-tab:hover { color: rgba(255,255,255,.85); transform: translateY(-1px); }
-  .library-tab:hover::before { opacity: 1; background: rgba(255,255,255,.06); }
-
-  /* فيديوهات — بنفسجي */
-  #tabVideos.active {
-    color: #fff !important;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    box-shadow: 0 6px 20px rgba(99,102,241,.55), inset 0 1px 0 rgba(255,255,255,.2) !important;
-    transform: translateY(-2px);
-  }
-  /* صور — وردي */
-  #tabImages.active {
-    color: #fff !important;
-    background: linear-gradient(135deg, #ec4899, #f43f5e) !important;
-    box-shadow: 0 6px 20px rgba(236,72,153,.55), inset 0 1px 0 rgba(255,255,255,.2) !important;
-    transform: translateY(-2px);
-  }
-  /* أصوات — سماوي */
-  #tabAudios.active {
-    color: #fff !important;
-    background: linear-gradient(135deg, #06b6d4, #0ea5e9) !important;
-    box-shadow: 0 6px 20px rgba(6,182,212,.55), inset 0 1px 0 rgba(255,255,255,.2) !important;
-    transform: translateY(-2px);
-  }
-  .library-tab:not(.active) {
-    color: rgba(255,255,255,.5) !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  .tab-count {
-    background: rgba(255,255,255,.18); border-radius: 20px;
-    padding: .1rem .5rem; font-size: .72rem; font-weight: 800;
-    min-width: 22px; text-align: center; letter-spacing: .3px;
-  }
-  #tabVideos.active .tab-count { background: rgba(255,255,255,.3); }
-  #tabImages.active .tab-count { background: rgba(255,255,255,.3); }
-  #tabAudios.active .tab-count { background: rgba(255,255,255,.3); }
-  .library-tabs-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
-  /* بطاقة الصورة */
-  .image-card { background:#0f0a1a; border-radius:12px; overflow:hidden; cursor:pointer; transition:all .3s; position:relative; aspect-ratio:16/10; }
-  .image-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(99,102,241,.3); }
-  .image-card img { width:100%; height:100%; object-fit:cover; display:block; }
-  .image-card-overlay { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,.85)); padding:.75rem; opacity:0; transition:opacity .25s; }
-  .image-card:hover .image-card-overlay { opacity:1; }
-  .image-card-title { color:#fff; font-size:.85rem; font-weight:600; }
-  .image-card-admin { position:absolute; top:.5rem; left:.5rem; display:flex; gap:.3rem; opacity:0; transition:opacity .25s; }
-  .image-card:hover .image-card-admin { opacity:1; }
-  /* بطاقة الصوت */
-  .audio-card { background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08)); border:1px solid rgba(99,102,241,.2); border-radius:16px; padding:1.25rem; display:flex; flex-direction:column; gap:.75rem; transition:all .3s; }
-  .audio-card:hover { border-color:rgba(99,102,241,.4); transform:translateY(-3px); box-shadow:0 12px 30px rgba(99,102,241,.2); }
-  .audio-card-header { display:flex; align-items:center; gap:.75rem; }
-  .audio-icon { width:48px; height:48px; border-radius:12px; flex-shrink:0; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#fff; }
-  .audio-card-title { font-weight:700; font-size:.95rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .audio-card-meta { font-size:.78rem; color:rgba(255,255,255,.45); margin-top:.2rem; }
-  .audio-player { width:100%; height:36px; accent-color:#6366f1; }
-  .audio-card-actions { display:flex; gap:.5rem; justify-content:flex-end; }
-  @media(max-width:768px){ .library-tabs-wrapper{flex-direction:column;align-items:stretch} .library-tabs{justify-content:center} .library-tab{font-size:.8rem;padding:.4rem .7rem} }
-
   .videos-library-heading {
     font-size: 1.6rem !important;
     align-items: center;
@@ -3202,17 +3118,7 @@ body {
 
     <!-- cosmos carousel removed - accessible via hamburger menu -->
 
-    <div class="library-tabs-wrapper">
-      <div class="library-tabs">
-        <button class="library-tab active" id="tabVideos" onclick="switchLibraryTab('videos')"><i class="fas fa-play-circle"></i> فيديوهات <span class="tab-count" id="countVideos">0</span></button>
-        <button class="library-tab" id="tabImages" onclick="switchLibraryTab('images')"><i class="fas fa-image"></i> صور <span class="tab-count" id="countImages">0</span></button>
-        <button class="library-tab" id="tabAudios" onclick="switchLibraryTab('audios')"><i class="fas fa-music"></i> أصوات <span class="tab-count" id="countAudios">0</span></button>
-      </div>
-      <div class="library-tabs-actions">
-        <span id="videoCount" style="background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 عنصر</span>
-        <button class="btn btn-info" onclick="openExamResultModal()" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button>
-      </div>
-    </div>
+    <h3 class="videos-library-heading" style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle videos-heading-icon" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
     <div class="videos-grid" id="videosContainer"></div>
     <div id="loadingIndicator" class="loading-videos" style="display: none;">
       <!-- تأثير الثقب الأسود أثناء التحميل -->
@@ -3955,7 +3861,6 @@ async function isAdminUser(userId) {
   // ========== Global Variables ==========
   const onlineUsersRef = db.collection("online_users");
   let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null, apps = [];
-  let currentLibraryTab = 'videos';
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
   // ===== Paid courses access control =====
   let unsubscribeCoursesAccess = null, unsubscribeUserEnrollmentsAccess = null;
@@ -5001,48 +4906,7 @@ async function updateAdminUI() {
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
 
   // دالة عرض الفيديوهات مع رسالة الثقب الأسود الاحترافية
-  function switchLibraryTab(tab) {
-    currentLibraryTab = tab;
-    ['videos','images','audios'].forEach(t => {
-      let btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-      if (btn) btn.classList.toggle('active', t === tab);
-    });
-    renderVideos();
-  }
-
-  function _renderImages(container, items) {
-    container.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
-    if (!items.length) { container.innerHTML = ""; return; }
-    container.innerHTML = items.map(v => {
-      let del = isAdmin ? `<div class="image-card-admin"><button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.75rem" onclick="event.stopPropagation();deleteVideo('${v.id}')"><i class="fas fa-trash"></i></button></div>` : "";
-      return `<div class="image-card" onclick="viewImage('${v.url}')">
-        <img src="${v.thumbnail||v.url}" alt="${escapeHtml(v.title||'')}" loading="lazy">
-        <div class="image-card-overlay"><div class="image-card-title">${escapeHtml(v.title||'صورة')}</div></div>
-        ${del}</div>`;
-    }).join("");
-  }
-
-  function _renderAudios(container, items) {
-    container.style.gridTemplateColumns = "repeat(auto-fill, minmax(280px, 1fr))";
-    if (!items.length) { container.innerHTML = ""; return; }
-    container.innerHTML = items.map(v => {
-      let dur = v.duration ? Math.floor(v.duration/60)+":"+String(Math.floor(v.duration%60)).padStart(2,"0") : "--:--";
-      let del = isAdmin ? `<button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.75rem" onclick="deleteVideo('${v.id}')"><i class="fas fa-trash"></i></button>` : "";
-      return `<div class="audio-card">
-        <div class="audio-card-header">
-          <div class="audio-icon"><i class="fas fa-music"></i></div>
-          <div style="flex:1;min-width:0">
-            <div class="audio-card-title">${escapeHtml(v.title||'صوت')}</div>
-            <div class="audio-card-meta">${dur}${v.format?" · "+v.format.toUpperCase():""}</div>
-          </div>
-        </div>
-        <audio class="audio-player" controls preload="metadata" src="${v.url}"></audio>
-        <div class="audio-card-actions">${del}</div>
-      </div>`;
-    }).join("");
-  }
-
-    function renderVideos() {
+  function renderVideos() {
     let container = document.getElementById("videosContainer");
     let empty = document.getElementById("emptyState");
     let loading = document.getElementById("loadingIndicator");
@@ -5067,30 +4931,7 @@ async function updateAdminUI() {
       countSpan.textContent = "0 فيديو";
       return;
     }
-    const allVisible = videos.filter(v => !isVideoHiddenForViewer(v));
-    const _vids = allVisible.filter(v => !v.resourceType || v.resourceType === "video");
-    const _imgs = allVisible.filter(v => v.resourceType === "image");
-    const _auds = allVisible.filter(v => v.resourceType === "audio");
-    let cV=document.getElementById("countVideos"); if(cV) cV.textContent=_vids.length;
-    let cI=document.getElementById("countImages"); if(cI) cI.textContent=_imgs.length;
-    let cA=document.getElementById("countAudios"); if(cA) cA.textContent=_auds.length;
-
-    if (currentLibraryTab === "images") {
-      empty.style.display = _imgs.length ? "none" : "block";
-      if (!_imgs.length) empty.innerHTML = `<h3>⚫ لا توجد صور بعد</h3><p>ارفع صوراً عبر زرار الرفع.</p>`;
-      countSpan.textContent = _imgs.length + " صورة";
-      _renderImages(container, _imgs);
-      return;
-    }
-    if (currentLibraryTab === "audios") {
-      empty.style.display = _auds.length ? "none" : "block";
-      if (!_auds.length) empty.innerHTML = `<h3>⚫ لا توجد أصوات بعد</h3><p>ارفع ملفات صوتية عبر زرار الرفع.</p>`;
-      countSpan.textContent = _auds.length + " صوت";
-      _renderAudios(container, _auds);
-      return;
-    }
-    container.style.gridTemplateColumns = "";
-    const visibleVideos = _vids;
+    const visibleVideos = videos.filter(v => !isVideoHiddenForViewer(v));
     if (visibleVideos.length === 0) {
       container.innerHTML = "";
       empty.innerHTML = `<div class="black-hole-loader" style="transform: scale(0.8);"><div class="black-hole"><div class="accretion-disk" style="animation-duration: 2s;"></div><div class="gravitational-lens"></div><div class="black-core"></div></div></div><h3>⚫ لا توجد فيديوهات متاحة لك</h3><p>الفيديوهات المدفوعة تظهر بعد الاشتراك في الكورس.</p>`;
