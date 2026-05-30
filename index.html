@@ -1213,6 +1213,36 @@
     font-size: 2.5rem !important;
     filter: drop-shadow(0 0 10px rgba(236,72,153,0.7));
   }
+
+  /* ══ LIBRARY TABS ══ */
+  .library-tabs-wrapper { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+  .library-tabs { display:flex; gap:.4rem; background:rgba(255,255,255,.04); border:1px solid rgba(99,102,241,.2); border-radius:16px; padding:.3rem; }
+  .library-tab { background:transparent; border:none; border-radius:12px; color:rgba(255,255,255,.5); font-family:'Cairo',sans-serif; font-size:.85rem; font-weight:600; padding:.45rem .9rem; cursor:pointer; transition:all .25s; display:flex; align-items:center; gap:.4rem; }
+  .library-tab:hover { color:#fff; background:rgba(99,102,241,.15); }
+  .library-tab.active { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 4px 14px rgba(99,102,241,.4); }
+  .tab-count { background:rgba(255,255,255,.15); border-radius:20px; padding:.1rem .45rem; font-size:.75rem; min-width:20px; text-align:center; }
+  .library-tab.active .tab-count { background:rgba(255,255,255,.25); }
+  .library-tabs-actions { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+  /* بطاقة الصورة */
+  .image-card { background:#0f0a1a; border-radius:12px; overflow:hidden; cursor:pointer; transition:all .3s; position:relative; aspect-ratio:16/10; }
+  .image-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(99,102,241,.3); }
+  .image-card img { width:100%; height:100%; object-fit:cover; display:block; }
+  .image-card-overlay { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,.85)); padding:.75rem; opacity:0; transition:opacity .25s; }
+  .image-card:hover .image-card-overlay { opacity:1; }
+  .image-card-title { color:#fff; font-size:.85rem; font-weight:600; }
+  .image-card-admin { position:absolute; top:.5rem; left:.5rem; display:flex; gap:.3rem; opacity:0; transition:opacity .25s; }
+  .image-card:hover .image-card-admin { opacity:1; }
+  /* بطاقة الصوت */
+  .audio-card { background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08)); border:1px solid rgba(99,102,241,.2); border-radius:16px; padding:1.25rem; display:flex; flex-direction:column; gap:.75rem; transition:all .3s; }
+  .audio-card:hover { border-color:rgba(99,102,241,.4); transform:translateY(-3px); box-shadow:0 12px 30px rgba(99,102,241,.2); }
+  .audio-card-header { display:flex; align-items:center; gap:.75rem; }
+  .audio-icon { width:48px; height:48px; border-radius:12px; flex-shrink:0; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#fff; }
+  .audio-card-title { font-weight:700; font-size:.95rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .audio-card-meta { font-size:.78rem; color:rgba(255,255,255,.45); margin-top:.2rem; }
+  .audio-player { width:100%; height:36px; accent-color:#6366f1; }
+  .audio-card-actions { display:flex; gap:.5rem; justify-content:flex-end; }
+  @media(max-width:768px){ .library-tabs-wrapper{flex-direction:column;align-items:stretch} .library-tabs{justify-content:center} .library-tab{font-size:.8rem;padding:.4rem .7rem} }
+
   .videos-library-heading {
     font-size: 1.6rem !important;
     align-items: center;
@@ -3118,7 +3148,17 @@ body {
 
     <!-- cosmos carousel removed - accessible via hamburger menu -->
 
-    <h3 class="videos-library-heading" style="margin-bottom:2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><i class="fas fa-play-circle videos-heading-icon" style="color:#ec4899"></i> مكتبة الفيديوهات<span id="videoCount" style="margin-right:auto;background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 فيديو</span><button class="btn btn-info" onclick="openExamResultModal()" style="margin-right:1rem" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button></h3>
+    <div class="library-tabs-wrapper">
+      <div class="library-tabs">
+        <button class="library-tab active" id="tabVideos" onclick="switchLibraryTab('videos')"><i class="fas fa-play-circle"></i> فيديوهات <span class="tab-count" id="countVideos">0</span></button>
+        <button class="library-tab" id="tabImages" onclick="switchLibraryTab('images')"><i class="fas fa-image"></i> صور <span class="tab-count" id="countImages">0</span></button>
+        <button class="library-tab" id="tabAudios" onclick="switchLibraryTab('audios')"><i class="fas fa-music"></i> أصوات <span class="tab-count" id="countAudios">0</span></button>
+      </div>
+      <div class="library-tabs-actions">
+        <span id="videoCount" style="background:rgba(99,102,241,.2);padding:.3rem 1rem;border-radius:20px;font-size:.9rem">0 عنصر</span>
+        <button class="btn btn-info" onclick="openExamResultModal()" id="examResultBtn"><i class="fas fa-file-alt"></i> نتيجة الامتحان</button>
+      </div>
+    </div>
     <div class="videos-grid" id="videosContainer"></div>
     <div id="loadingIndicator" class="loading-videos" style="display: none;">
       <!-- تأثير الثقب الأسود أثناء التحميل -->
@@ -3861,6 +3901,7 @@ async function isAdminUser(userId) {
   // ========== Global Variables ==========
   const onlineUsersRef = db.collection("online_users");
   let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null, apps = [];
+  let currentLibraryTab = 'videos';
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
   // ===== Paid courses access control =====
   let unsubscribeCoursesAccess = null, unsubscribeUserEnrollmentsAccess = null;
@@ -4755,7 +4796,7 @@ async function updateAdminUI() {
       uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
       apiKey: CLOUDINARY_CONFIG.apiKey,
       sources: ["local", "url", "camera"],
-      resourceType: "auto",
+      resourceType: "video",
       maxFileSize: 104857600,
       language: "ar",
       text: {
@@ -4898,47 +4939,7 @@ async function updateAdminUI() {
     });
   }
   function updateUploadProgress(info) { if (!info) return; let prog = info.progress || 0, uploaded = info.uploadedBytes || 0, total = info.totalBytes || 1; let now = Date.now(), dt = (now - lastTime) / 1000; let speed = dt > 0 ? (uploaded - lastUploadedBytes) / dt / 1048576 : 0; let remaining = speed > 0 ? (total - uploaded) / (speed * 1024 * 1024) : 0; let fill = document.getElementById("uploadProgressFill"); fill && (fill.style.width = prog + "%"); let pct = document.getElementById("uploadProgressPercent"); pct && (pct.textContent = Math.round(prog) + "%"); let sp = document.getElementById("uploadSpeed"); sp && (sp.textContent = speed.toFixed(2) + " MB/s"); let tr = document.getElementById("uploadTimeRemaining"); if (tr) { if (remaining > 60) { let m = Math.floor(remaining / 60), s = Math.floor(remaining % 60); tr.textContent = m + ":" + s.toString().padStart(2, "0") + " دقيقة متبقية"; } else tr.textContent = remaining > 0 ? Math.floor(remaining) + " ثانية متبقية" : "جاري إكمال الرفع..."; } lastTime = now; lastUploadedBytes = uploaded; }
-  function saveVideoWithDescription() {
-    if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; }
-    let info = pendingVideoInfo;
-    let title = document.getElementById("videoTitleInput").value.trim() || "ملف بدون عنوان";
-    let desc  = document.getElementById("videoDescriptionInput").value.trim() || "";
-    let fileSize = info.bytes || 0;
-    let used = videos.reduce((acc, v) => acc + (v.size || 0), 0);
-    if (fileSize > 0 && used + fileSize > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; }
-    let resourceType = info.resource_type || "video";
-    let optimizedUrl = info.secure_url;
-    if (resourceType === "video") {
-      optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/");
-    } else if (resourceType === "image") {
-      optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto/");
-    }
-    let thumbnail = null;
-    if (resourceType === "image") {
-      thumbnail = optimizedUrl;
-    } else if (resourceType === "video") {
-      if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url;
-      else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg";
-    }
-    let mediaData = {
-      title: title, description: desc,
-      type: "cloudinary", resourceType: resourceType,
-      url: optimizedUrl, originalUrl: info.secure_url,
-      thumbnail: thumbnail, publicId: info.public_id || "",
-      format: info.format || "", duration: info.duration || null,
-      width: info.width || null, height: info.height || null,
-      size: fileSize,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      cloudinaryData: { assetId: info.asset_id || "", version: info.version_id || "" },
-      optimized: true, private: false
-    };
-    db.collection("videos").add(mediaData).then(() => {
-      SoundEffects.success();
-      showToast("✅ تم الرفع والحفظ بنجاح!");
-      closeDescriptionModal();
-      pendingVideoInfo = null;
-    }).catch(e => { console.error("Error saving:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); });
-  }
+  function saveVideoWithDescription() { if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; } let info = pendingVideoInfo; let title = document.getElementById("videoTitleInput").value.trim() || "فيديو بدون عنوان"; let desc = document.getElementById("videoDescriptionInput").value.trim() || ""; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); if (used + info.bytes > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; } let optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/"); let thumbnail = null; if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url; else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg"; let videoData = { title: title, description: desc, type: "cloudinary", url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnail, publicId: info.public_id || "", format: info.format, duration: info.duration, width: info.width, height: info.height, size: info.bytes, createdAt: firebase.firestore.FieldValue.serverTimestamp(), cloudinaryData: { assetId: info.asset_id, version: info.version_id }, optimized: true, private: false }; db.collection("videos").add(videoData).then(async () => { SoundEffects.success(); showToast("✅ تم الرفع والحفظ بنجاح!"); closeDescriptionModal(); pendingVideoInfo = null; }).catch(e => { console.error("Error saving to Firebase:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); }); }
   function closeDescriptionModal() { document.getElementById("descriptionModal").classList.remove("active"); pendingVideoInfo = null; }
   function editVideoTitle(id) { if (!isAdmin) { SoundEffects.error(); showToast("❌ المشرف فقط يستطيع التعديل"); return; } let v = videos.find(v => v.id === id); if (v) { currentEditVideoId = id; document.getElementById("editVideoTitleInput").value = v.title || ""; document.getElementById("editVideoDescriptionInput").value = v.description || ""; document.getElementById("editDescCharCount").textContent = "(" + (v.description || "").length + " / 5000 حرف)"; document.getElementById("editVideoModal").classList.add("active"); } }
   function closeEditVideoModal() { document.getElementById("editVideoModal").classList.remove("active"); currentEditVideoId = null; }
@@ -4946,7 +4947,48 @@ async function updateAdminUI() {
   function togglePrivate(videoId, currentPrivate) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } db.collection("videos").doc(videoId).update({ private: !currentPrivate }).then(() => { SoundEffects.success(); showToast(!currentPrivate ? "🔒 الفيديو أصبح خاصاً (لا يمكن تشغيله إلا بواسطتك)" : "🔓 الفيديو أصبح عاماً (يمكن للجميع تشغيله)"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التحديث"); }); }
 
   // دالة عرض الفيديوهات مع رسالة الثقب الأسود الاحترافية
-  function renderVideos() {
+  function switchLibraryTab(tab) {
+    currentLibraryTab = tab;
+    ['videos','images','audios'].forEach(t => {
+      let btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (btn) btn.classList.toggle('active', t === tab);
+    });
+    renderVideos();
+  }
+
+  function _renderImages(container, items) {
+    container.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
+    if (!items.length) { container.innerHTML = ""; return; }
+    container.innerHTML = items.map(v => {
+      let del = isAdmin ? `<div class="image-card-admin"><button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.75rem" onclick="event.stopPropagation();deleteVideo('${v.id}')"><i class="fas fa-trash"></i></button></div>` : "";
+      return `<div class="image-card" onclick="viewImage('${v.url}')">
+        <img src="${v.thumbnail||v.url}" alt="${escapeHtml(v.title||'')}" loading="lazy">
+        <div class="image-card-overlay"><div class="image-card-title">${escapeHtml(v.title||'صورة')}</div></div>
+        ${del}</div>`;
+    }).join("");
+  }
+
+  function _renderAudios(container, items) {
+    container.style.gridTemplateColumns = "repeat(auto-fill, minmax(280px, 1fr))";
+    if (!items.length) { container.innerHTML = ""; return; }
+    container.innerHTML = items.map(v => {
+      let dur = v.duration ? Math.floor(v.duration/60)+":"+String(Math.floor(v.duration%60)).padStart(2,"0") : "--:--";
+      let del = isAdmin ? `<button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.75rem" onclick="deleteVideo('${v.id}')"><i class="fas fa-trash"></i></button>` : "";
+      return `<div class="audio-card">
+        <div class="audio-card-header">
+          <div class="audio-icon"><i class="fas fa-music"></i></div>
+          <div style="flex:1;min-width:0">
+            <div class="audio-card-title">${escapeHtml(v.title||'صوت')}</div>
+            <div class="audio-card-meta">${dur}${v.format?" · "+v.format.toUpperCase():""}</div>
+          </div>
+        </div>
+        <audio class="audio-player" controls preload="metadata" src="${v.url}"></audio>
+        <div class="audio-card-actions">${del}</div>
+      </div>`;
+    }).join("");
+  }
+
+    function renderVideos() {
     let container = document.getElementById("videosContainer");
     let empty = document.getElementById("emptyState");
     let loading = document.getElementById("loadingIndicator");
@@ -4971,7 +5013,30 @@ async function updateAdminUI() {
       countSpan.textContent = "0 فيديو";
       return;
     }
-    const visibleVideos = videos.filter(v => !isVideoHiddenForViewer(v));
+    const allVisible = videos.filter(v => !isVideoHiddenForViewer(v));
+    const _vids = allVisible.filter(v => !v.resourceType || v.resourceType === "video");
+    const _imgs = allVisible.filter(v => v.resourceType === "image");
+    const _auds = allVisible.filter(v => v.resourceType === "audio");
+    let cV=document.getElementById("countVideos"); if(cV) cV.textContent=_vids.length;
+    let cI=document.getElementById("countImages"); if(cI) cI.textContent=_imgs.length;
+    let cA=document.getElementById("countAudios"); if(cA) cA.textContent=_auds.length;
+
+    if (currentLibraryTab === "images") {
+      empty.style.display = _imgs.length ? "none" : "block";
+      if (!_imgs.length) empty.innerHTML = `<h3>⚫ لا توجد صور بعد</h3><p>ارفع صوراً عبر زرار الرفع.</p>`;
+      countSpan.textContent = _imgs.length + " صورة";
+      _renderImages(container, _imgs);
+      return;
+    }
+    if (currentLibraryTab === "audios") {
+      empty.style.display = _auds.length ? "none" : "block";
+      if (!_auds.length) empty.innerHTML = `<h3>⚫ لا توجد أصوات بعد</h3><p>ارفع ملفات صوتية عبر زرار الرفع.</p>`;
+      countSpan.textContent = _auds.length + " صوت";
+      _renderAudios(container, _auds);
+      return;
+    }
+    container.style.gridTemplateColumns = "";
+    const visibleVideos = _vids;
     if (visibleVideos.length === 0) {
       container.innerHTML = "";
       empty.innerHTML = `<div class="black-hole-loader" style="transform: scale(0.8);"><div class="black-hole"><div class="accretion-disk" style="animation-duration: 2s;"></div><div class="gravitational-lens"></div><div class="black-core"></div></div></div><h3>⚫ لا توجد فيديوهات متاحة لك</h3><p>الفيديوهات المدفوعة تظهر بعد الاشتراك في الكورس.</p>`;
