@@ -4748,7 +4748,91 @@ async function updateAdminUI() {
   function updateStorageBar() { if (!isAdmin) return; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); let percent = Math.min(used / MAX_STORAGE * 100, 100); let remaining = MAX_STORAGE - used; document.getElementById("usedSpace").textContent = (used / 1073741824).toFixed(2) + " GB"; document.getElementById("percentage").textContent = percent.toFixed(2) + "%"; document.getElementById("remainingText").textContent = "المتبقي: " + (remaining / 1073741824).toFixed(2) + " GB"; document.getElementById("videosCount").textContent = videos.length + " فيديو"; let bar = document.getElementById("storageProgress"); bar.style.width = percent + "%"; bar.classList.remove("low", "medium", "high"); if (percent < 50) bar.classList.add("low"); else if (percent < 80) bar.classList.add("medium"); else bar.classList.add("high"); document.getElementById("storageBar").style.display = "block"; }
 
 
-  // ========== Cloudinary Lazy Loader ==========
+  // ========== Cloudinary Widget Helpers ==========
+  function _buildWidgetConfig() {
+    return {
+      cloudName: CLOUDINARY_CONFIG.cloudName,
+      uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+      apiKey: CLOUDINARY_CONFIG.apiKey,
+      sources: ["local", "url", "camera"],
+      resourceType: "video",
+      maxFileSize: 104857600,
+      language: "ar",
+      text: {
+        "ar": {
+          "or": "أو",
+          "back": "رجوع",
+          "close": "إغلاق",
+          "no_results": "لا توجد نتائج",
+          "upload_more": "رفع المزيد",
+          "done": "تم",
+          "local": { "title": "من الجهاز", "browse": "تصفح" },
+          "url": { "inner_title": "رابط الفيديو", "input_placeholder": "http://..." }
+        }
+      },
+      styles: {
+        palette: {
+          window: "#1a1025",
+          windowBorder: "#6366f1",
+          tabIcon: "#6366f1",
+          menuIcons: "#c5c5c5",
+          textDark: "#ffffff",
+          textLight: "#ffffff",
+          link: "#6366f1",
+          action: "#6366f1",
+          inactiveTabIcon: "#8b8b8b",
+          error: "#ef4444",
+          inProgress: "#6366f1",
+          complete: "#10b981",
+          sourceBg: "#0f0a1a"
+        },
+        fonts: { default: { active: true } }
+      },
+      eager: [
+        { format: "mp4", transformation: [{ quality: "auto", fetch_format: "auto" }] },
+        { width: 480, height: 270, crop: "fill", start_offset: "1", format: "jpg" }
+      ],
+      eager_async: true,
+      chunk_size: 10485760
+    };
+  }
+
+  function _widgetCallback(error, result) {
+    if (error) {
+      if (error.message && error.message.includes("focus")) return;
+      console.error("Cloudinary widget error:", error);
+      SoundEffects.error();
+      showToast("❌ حدث خطأ في واجهة الرفع");
+      return;
+    }
+    if (!result || !result.event) return;
+    if (result.event === "upload-added") {
+      uploadStartTime = Date.now();
+      lastUploadedBytes = 0;
+      lastTime = Date.now();
+      document.getElementById("uploadProgressContainer").style.display = "block";
+    }
+    if (result.event === "progress") {
+      updateUploadProgress(result.info);
+    }
+    if (result.event === "success") {
+      document.getElementById("uploadProgressContainer").style.display = "none";
+      pendingVideoInfo = result.info;
+      let titleInput = document.getElementById("videoTitleInput");
+      let descInput  = document.getElementById("videoDescriptionInput");
+      if (titleInput) titleInput.value = result.info.original_filename || "";
+      if (descInput)  descInput.value  = "";
+      let charCount = document.getElementById("descCharCount");
+      if (charCount) charCount.textContent = "(0 / 5000 حرف)";
+      document.getElementById("descriptionModal").classList.add("active");
+      SoundEffects.success();
+      showToast("✅ تم الرفع! أضف العنوان والوصف.");
+    }
+    if (result.event === "close") {
+      document.getElementById("uploadProgressContainer").style.display = "none";
+    }
+  }
+
   function _loadCloudinaryScript(callback) {
     if (window.cloudinary && typeof window.cloudinary.createUploadWidget === "function") {
       callback(); return;
@@ -4763,6 +4847,7 @@ async function updateAdminUI() {
     }
     _injectCloudinaryScript(callback);
   }
+
   function _injectCloudinaryScript(callback) {
     var s = document.createElement("script");
     s.src = "https://upload-widget.cloudinary.com/global/all.js";
@@ -4771,6 +4856,7 @@ async function updateAdminUI() {
     document.head.appendChild(s);
   }
 
+  // ========== Cloudinary Widget ==========
   // ── Pre-warm الـ widget في الخلفية بعد login (اختياري) ──
   function initCloudinaryWidget() {
     _loadCloudinaryScript(function() {
@@ -4789,44 +4875,25 @@ async function updateAdminUI() {
   function openCloudinaryWidget() {
     if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الرفع"); return; }
 
-    function _doOpen() {
-      // دايماً نعمل widget جديد لو مش موجود أو اتكسر
-      if (!uploadWidget || typeof uploadWidget.open !== "function") {
+    // لو الـ widget جاهز افتحه مباشرة
+    if (uploadWidget && typeof uploadWidget.open === "function") {
+      try { uploadWidget.open(); return; } catch(e) {
+        if (!e.message?.includes("focus")) console.warn("Widget open error, rebuilding...", e);
         uploadWidget = null;
-        try {
-          uploadWidget = cloudinary.createUploadWidget(_buildWidgetConfig(), _widgetCallback);
-        } catch(err) {
-          if (err.message && err.message.includes("focus")) return;
-          console.error("Failed to create widget:", err);
-          SoundEffects.error();
-          showToast("❌ تعذر فتح واجهة الرفع، جرب مرة تانية");
-          return;
-        }
       }
+    }
+
+    // تأكد إن الـ script محملة أولاً
+    _loadCloudinaryScript(function() {
       try {
+        uploadWidget = cloudinary.createUploadWidget(_buildWidgetConfig(), _widgetCallback);
         uploadWidget.open();
-      } catch(e) {
-        if (e.message && e.message.includes("focus")) return;
-        console.warn("Widget open failed, resetting:", e);
-        uploadWidget = null;
+      } catch(err) {
+        if (err.message && err.message.includes("focus")) return;
+        console.error("Failed to create widget:", err);
         SoundEffects.error();
         showToast("❌ تعذر فتح واجهة الرفع، جرب مرة تانية");
-      }
-    }
-
-    // لو المكتبة محملة خلاص → افتح مباشرة
-    if (window.cloudinary && typeof window.cloudinary.createUploadWidget === "function") {
-      _doOpen(); return;
-    }
-
-    // لسه بتتحمل → استنى وافتح
-    showToast("⏳ جاري تحميل واجهة الرفع...");
-    _loadCloudinaryScript(function() {
-      if (window.cloudinary && typeof window.cloudinary.createUploadWidget === "function") {
-        _doOpen();
-      } else {
-        SoundEffects.error();
-        showToast("❌ فشل تحميل واجهة الرفع، تحقق من الاتصال");
+        uploadWidget = null;
       }
     });
   }
