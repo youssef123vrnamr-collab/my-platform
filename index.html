@@ -4789,25 +4789,44 @@ async function updateAdminUI() {
   function openCloudinaryWidget() {
     if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الرفع"); return; }
 
-    // لو الـ widget جاهز افتحه مباشرة
-    if (uploadWidget && typeof uploadWidget.open === "function") {
-      try { uploadWidget.open(); return; } catch(e) {
-        if (!e.message?.includes("focus")) console.warn("Widget open error, rebuilding...", e);
+    function _doOpen() {
+      // دايماً نعمل widget جديد لو مش موجود أو اتكسر
+      if (!uploadWidget || typeof uploadWidget.open !== "function") {
         uploadWidget = null;
+        try {
+          uploadWidget = cloudinary.createUploadWidget(_buildWidgetConfig(), _widgetCallback);
+        } catch(err) {
+          if (err.message && err.message.includes("focus")) return;
+          console.error("Failed to create widget:", err);
+          SoundEffects.error();
+          showToast("❌ تعذر فتح واجهة الرفع، جرب مرة تانية");
+          return;
+        }
+      }
+      try {
+        uploadWidget.open();
+      } catch(e) {
+        if (e.message && e.message.includes("focus")) return;
+        console.warn("Widget open failed, resetting:", e);
+        uploadWidget = null;
+        SoundEffects.error();
+        showToast("❌ تعذر فتح واجهة الرفع، جرب مرة تانية");
       }
     }
 
-    // تأكد إن الـ script محملة أولاً
+    // لو المكتبة محملة خلاص → افتح مباشرة
+    if (window.cloudinary && typeof window.cloudinary.createUploadWidget === "function") {
+      _doOpen(); return;
+    }
+
+    // لسه بتتحمل → استنى وافتح
+    showToast("⏳ جاري تحميل واجهة الرفع...");
     _loadCloudinaryScript(function() {
-      try {
-        uploadWidget = cloudinary.createUploadWidget(_buildWidgetConfig(), _widgetCallback);
-        uploadWidget.open();
-      } catch(err) {
-        if (err.message && err.message.includes("focus")) return;
-        console.error("Failed to create widget:", err);
+      if (window.cloudinary && typeof window.cloudinary.createUploadWidget === "function") {
+        _doOpen();
+      } else {
         SoundEffects.error();
-        showToast("❌ تعذر فتح واجهة الرفع، جرب مرة تانية");
-        uploadWidget = null;
+        showToast("❌ فشل تحميل واجهة الرفع، تحقق من الاتصال");
       }
     });
   }
