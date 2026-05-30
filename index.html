@@ -5815,18 +5815,31 @@ async function updateAdminUI() {
         loadExamsFromFirebase(); 
         loadExamResultsFromFirebase(); 
         loadAppsFromFirebase(); 
-        initCloudinaryWidget(); 
         checkUrlForShare(); 
         loadEmailSettingsFromFirestore(); 
         updateAdminUI(); 
-        showToast(`مرحباً بعودتك ${currentUser}! 🚀`); 
+        showToast(`مرحباً بعودتك ${currentUser}! 🚀`);
+        // ── تحميل الـ dashboard بعد login ناجح ──
+        setTimeout(function() { loadUserDashboard().catch(function(){}); }, 300);
+        // ── Cloudinary خارج الـ try/catch — لو فشل مش يأثر على login ──
+        setTimeout(function() { try { initCloudinaryWidget(); } catch(_){} }, 500);
     } catch(error) { 
-        console.error(error); 
+        // تحقق إن المستخدم مش بالفعل لوغن (بيحصل لما popup يتقفل بدون error حقيقي)
+        if (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request") {
+            showToast("⚠️ تم إغلاق نافذة تسجيل الدخول");
+            return;
+        }
+        if (auth.currentUser) {
+            // المستخدم لوغن فعلاً — الـ error من خطوة تانية مش من الـ auth
+            console.warn("Login succeeded but post-login step failed:", error);
+            return;
+        }
+        console.error("Login error:", error);
         SoundEffects.error(); 
-        showToast("❌ فشل تسجيل الدخول بحساب Google"); 
+        showToast("❌ فشل تسجيل الدخول: " + (error.message || "حاول مرة أخرى")); 
     } 
 }
-  loadUserDashboard();
+  // loadUserDashboard() — يتعمل من داخل googleLogin بعد login ناجح فقط
   async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
@@ -5848,7 +5861,7 @@ async function updateAdminUI() {
 }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); document.body.style.overflow = ""; if(window.teardownChatKeyboard) teardownChatKeyboard("chatModal"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
   async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!name) { SoundEffects.error(); showToast("⚠️ أدخل اسمك الكامل"); return; } if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-20 حرف) ولا يحتوي على رموز"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح — اختر الدولة وأدخل الأرقام بدون صفر في البداية"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
-  loadUserDashboard();
+  // loadUserDashboard() — يتعمل بعد تسجيل دخول ناجح فقط
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone && !data.senderPhone.includes('@')) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
@@ -6232,7 +6245,7 @@ async function updateAdminUI() {
   // تحقق من الحالة عند التحميل
   window.addEventListener("load", function() { setTimeout(updateInstallMenuVisibility, 1000); });
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore();
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500);
 
         } else if (!user && !isAdmin) { document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
@@ -6265,46 +6278,7 @@ async function updateAdminUI() {
   window.onclick = function(e) { if (e.target.classList.contains("modal")) { if (e.target.id === "videoModal") closeModal(); else if (e.target.id === "loginModal") closeLogin(); else if (e.target.id === "adminPasswordModal") closeAdminPasswordModal(); else if (e.target.id === "setAdminsModal") closeSetAdminsModal(); else if (e.target.id === "teachAICircleModal") closeTeachAICircleModal(); else if (e.target.id === "descriptionModal") closeDescriptionModal(); else if (e.target.id === "editVideoModal") closeEditVideoModal(); else if (e.target.id === "chatModal") closeChat(); else if (e.target.id === "aiChatModal") closeAIChat(); else if (e.target.id === "imageViewer") closeImageViewer(); else if (e.target.id === "maintenanceModal") closeMaintenanceModal(); else if (e.target.id === "chatBgModal") closeChatBgModal(); else if (e.target.id === "addQuizModal") closeAddExamModal(); else if (e.target.id === "viewResultsModal") closeViewResultsModal(); else if (e.target.id === "takeQuizModal") closeTakeExamModal(); else if (e.target.id === "voiceSettingsModal") closeVoiceSettings(); else if (e.target.id === "examResultModal") closeExamResultModal(); else if (e.target.id === "emailSettingsModal") closeEmailSettingsModal(); else if (e.target.id === "supervisorPayoutModal") closeSupervisorPayoutModal(); else if (e.target.id === "appsModal") closeAppsModal(); else if (e.target.id === "manageAppsModal") closeManageAppsModal(); else if (e.target.id === "addAppModal") closeAddAppModal(); else if (e.target.id === "feedbackModal") closeFeedbackModal(); else if (e.target.id === "viewFeedbacksModal") closeViewFeedbacksModal(); else if (e.target.id === "replyFeedbackModal") closeReplyModal(); } };
   document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeLogin(); closeAdminPasswordModal(); closeSetAdminsModal(); closeTeachAICircleModal(); closeDescriptionModal(); closeEditVideoModal(); closeChat(); closeAIChat(); closeAddExamModal(); closeViewResultsModal(); closeTakeExamModal(); if (document.getElementById("callModal")?.classList.contains("active")) endCall(); closeImageViewer(); closeMaintenanceModal(); closeVoiceSettings(); closeExamResultModal(); closeEmailSettingsModal(); closeSupervisorPayoutModal(); closeAppsModal(); closeManageAppsModal(); closeAddAppModal(); closeFeedbackModal(); closeViewFeedbacksModal(); closeReplyModal(); } });
   // ========== Dashboard Functions ==========
-async function loadUserDashboard() {
-  if (!currentUserId) return;
-  const userRole = await getUserRole(currentUserId);
-  if (userRole === 'student') document.getElementById("dashboardContainer").style.display = "block";
-  
-  const watchHistorySnap = await db.collection("watch_history").where("userId", "==", currentUserId).get();
-  document.getElementById("userWatchedVideos").innerText = watchHistorySnap.size;
-  
-  const pointsDoc = await db.collection("user_points").doc(currentUserId).get();
-  let points = pointsDoc.exists ? pointsDoc.data().points : 0;
-  document.getElementById("userPoints").innerText = points;
-  
-  const allPoints = await db.collection("user_points").orderBy("points", "desc").get();
-  let rank = 1;
-  for (const doc of allPoints.docs) {
-    if (doc.id === currentUserId) break;
-    rank++;
-  }
-  document.getElementById("userRank").innerText = rank;
-  
-  const enrollments = await db.collection("course_enrollments").where("userId", "==", currentUserId).get();
-  let coursesHtml = "";
-  for (const enroll of enrollments.docs) {
-    const courseData = enroll.data();
-    const courseDoc = await db.collection("courses").doc(courseData.courseId).get();
-    const courseTitle = courseDoc.exists ? courseDoc.data().title : "كورس";
-    const progressPercent = (courseData.completedVideos / (courseData.totalVideos || 1)) * 100;
-    coursesHtml += `<div style="margin-bottom: 0.8rem;"><div>${escapeHtml(courseTitle)}</div><div class="storage-bar-wrapper" style="height: 8px;"><div class="storage-bar low" style="width: ${progressPercent}%; background: #10b981;"></div></div><span style="font-size: 0.8rem;">${courseData.completedVideos}/${courseData.totalVideos} فيديو</span></div>`;
-  }
-  document.getElementById("coursesProgressList").innerHTML = coursesHtml || "<p>لم تسجل في أي كورس بعد</p>";
-  
-  const recentActivity = await db.collection("activities").where("userId", "==", currentUserId).orderBy("timestamp", "desc").limit(5).get();
-  let activitiesHtml = "<ul style='list-style: none;'>";
-  recentActivity.forEach(act => {
-    const data = act.data();
-    activitiesHtml += `<li style="margin-bottom: 0.5rem;"><i class="fas fa-circle" style="font-size: 0.6rem; color: #6366f1;"></i> ${escapeHtml(data.message)} - ${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : "الآن"}</li>`;
-  });
-  activitiesHtml += "</ul>";
-  document.getElementById("recentActivities").innerHTML = activitiesHtml || "<p>لا توجد أنشطة حديثة</p>";
-}
+
 
 async function addPoints(userId, points, reason) {
   const pointsRef = db.collection("user_points").doc(userId);
