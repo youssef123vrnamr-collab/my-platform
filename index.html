@@ -4898,7 +4898,47 @@ async function updateAdminUI() {
     });
   }
   function updateUploadProgress(info) { if (!info) return; let prog = info.progress || 0, uploaded = info.uploadedBytes || 0, total = info.totalBytes || 1; let now = Date.now(), dt = (now - lastTime) / 1000; let speed = dt > 0 ? (uploaded - lastUploadedBytes) / dt / 1048576 : 0; let remaining = speed > 0 ? (total - uploaded) / (speed * 1024 * 1024) : 0; let fill = document.getElementById("uploadProgressFill"); fill && (fill.style.width = prog + "%"); let pct = document.getElementById("uploadProgressPercent"); pct && (pct.textContent = Math.round(prog) + "%"); let sp = document.getElementById("uploadSpeed"); sp && (sp.textContent = speed.toFixed(2) + " MB/s"); let tr = document.getElementById("uploadTimeRemaining"); if (tr) { if (remaining > 60) { let m = Math.floor(remaining / 60), s = Math.floor(remaining % 60); tr.textContent = m + ":" + s.toString().padStart(2, "0") + " دقيقة متبقية"; } else tr.textContent = remaining > 0 ? Math.floor(remaining) + " ثانية متبقية" : "جاري إكمال الرفع..."; } lastTime = now; lastUploadedBytes = uploaded; }
-  function saveVideoWithDescription() { if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; } let info = pendingVideoInfo; let title = document.getElementById("videoTitleInput").value.trim() || "فيديو بدون عنوان"; let desc = document.getElementById("videoDescriptionInput").value.trim() || ""; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); if (used + info.bytes > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; } let optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/"); let thumbnail = null; if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url; else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg"; let videoData = { title: title, description: desc, type: "cloudinary", url: optimizedUrl, originalUrl: info.secure_url, thumbnail: thumbnail, publicId: info.public_id || "", format: info.format, duration: info.duration, width: info.width, height: info.height, size: info.bytes, createdAt: firebase.firestore.FieldValue.serverTimestamp(), cloudinaryData: { assetId: info.asset_id, version: info.version_id }, optimized: true, private: false }; db.collection("videos").add(videoData).then(async () => { SoundEffects.success(); showToast("✅ تم الرفع والحفظ بنجاح!"); closeDescriptionModal(); pendingVideoInfo = null; }).catch(e => { console.error("Error saving to Firebase:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); }); }
+  function saveVideoWithDescription() {
+    if (!pendingVideoInfo) { showToast("⚠️ لا توجد معلومات فيديو"); closeDescriptionModal(); return; }
+    let info = pendingVideoInfo;
+    let title = document.getElementById("videoTitleInput").value.trim() || "ملف بدون عنوان";
+    let desc  = document.getElementById("videoDescriptionInput").value.trim() || "";
+    let fileSize = info.bytes || 0;
+    let used = videos.reduce((acc, v) => acc + (v.size || 0), 0);
+    if (fileSize > 0 && used + fileSize > MAX_STORAGE) { SoundEffects.error(); showToast("❌ لا توجد مساحة كافية"); return; }
+    let resourceType = info.resource_type || "video";
+    let optimizedUrl = info.secure_url;
+    if (resourceType === "video") {
+      optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto,vc_auto/");
+    } else if (resourceType === "image") {
+      optimizedUrl = info.secure_url.replace("/upload/", "/upload/q_auto,f_auto/");
+    }
+    let thumbnail = null;
+    if (resourceType === "image") {
+      thumbnail = optimizedUrl;
+    } else if (resourceType === "video") {
+      if (info.eager && info.eager[1] && info.eager[1].secure_url) thumbnail = info.eager[1].secure_url;
+      else if (info.public_id) thumbnail = "https://res.cloudinary.com/" + CLOUDINARY_CONFIG.cloudName + "/video/upload/so_1,f_jpg/" + info.public_id + ".jpg";
+    }
+    let mediaData = {
+      title: title, description: desc,
+      type: "cloudinary", resourceType: resourceType,
+      url: optimizedUrl, originalUrl: info.secure_url,
+      thumbnail: thumbnail, publicId: info.public_id || "",
+      format: info.format || "", duration: info.duration || null,
+      width: info.width || null, height: info.height || null,
+      size: fileSize,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      cloudinaryData: { assetId: info.asset_id || "", version: info.version_id || "" },
+      optimized: true, private: false
+    };
+    db.collection("videos").add(mediaData).then(() => {
+      SoundEffects.success();
+      showToast("✅ تم الرفع والحفظ بنجاح!");
+      closeDescriptionModal();
+      pendingVideoInfo = null;
+    }).catch(e => { console.error("Error saving:", e); SoundEffects.error(); showToast("⚠️ تم الرفع لكن فشل الحفظ"); });
+  }
   function closeDescriptionModal() { document.getElementById("descriptionModal").classList.remove("active"); pendingVideoInfo = null; }
   function editVideoTitle(id) { if (!isAdmin) { SoundEffects.error(); showToast("❌ المشرف فقط يستطيع التعديل"); return; } let v = videos.find(v => v.id === id); if (v) { currentEditVideoId = id; document.getElementById("editVideoTitleInput").value = v.title || ""; document.getElementById("editVideoDescriptionInput").value = v.description || ""; document.getElementById("editDescCharCount").textContent = "(" + (v.description || "").length + " / 5000 حرف)"; document.getElementById("editVideoModal").classList.add("active"); } }
   function closeEditVideoModal() { document.getElementById("editVideoModal").classList.remove("active"); currentEditVideoId = null; }
