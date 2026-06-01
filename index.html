@@ -15505,16 +15505,16 @@ async function removeFriend(encodedUid, encodedName, btnEl) {
 async function updateFriendReqBadge() {
   if (!currentUserId) return;
   try {
+    // بـ where واحد بس عشان مش نحتاج Composite Index
     const snap = await db.collection('friend_requests')
       .where('to', '==', currentUserId)
-      .where('status', '==', 'pending')
       .get();
-    const count = snap.size;
+    const count = snap.docs.filter(d => d.data().status === 'pending').length;
     const badge = document.getElementById('friendReqBadge');
     const inBadge = document.getElementById('incomingCount');
     if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
     if (inBadge) { inBadge.textContent = count; inBadge.style.display = count > 0 ? '' : 'none'; }
-  } catch(e) {}
+  } catch(e) { console.error('updateFriendReqBadge error:', e); }
 }
 
 // Check for incoming requests every 60 seconds when logged in
@@ -15583,14 +15583,13 @@ async function openFriendChatMenu() {
       container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem"><i class="fas fa-user-friends"></i><br>مفيش أصدقاء لسه!<br><small>روح لـ "إضافة صديق" وابدأ بإضافة أصدقاء</small></p>';
       return;
     }
-    // Get unread counts per friend
+    // Get unread counts per friend — بـ where واحد بس عشان مش نحتاج Composite Index
     const unreadMap = {};
     try {
       const unreadSnap = await db.collection('private_messages')
         .where('to', '==', currentUserId)
-        .where('read', '==', false)
         .get();
-      unreadSnap.forEach(d => {
+      unreadSnap.docs.filter(d => d.data().read === false).forEach(d => {
         const from = d.data().from;
         unreadMap[from] = (unreadMap[from] || 0) + 1;
       });
@@ -15643,16 +15642,17 @@ async function openPrivateFriendChat(encodedUid, encodedName) {
   document.getElementById('privateFriendChatModal').classList.add('active');
   closeFriendChatMenu();
 
-  // Mark messages as read
+  // Mark messages as read — بـ where واحد بس عشان مش نحتاج Composite Index
   try {
     const unread = await db.collection('private_messages')
-      .where('from', '==', _pfcFriendUid)
       .where('to', '==', currentUserId)
-      .where('read', '==', false)
       .get();
-    const batch = db.batch();
-    unread.forEach(d => batch.update(d.ref, { read: true }));
-    if (!unread.empty) await batch.commit();
+    const toMark = unread.docs.filter(d => d.data().from === _pfcFriendUid && d.data().read === false);
+    if (toMark.length) {
+      const batch = db.batch();
+      toMark.forEach(d => batch.update(d.ref, { read: true }));
+      await batch.commit();
+    }
   } catch(e) {}
 
   // Real-time listener
@@ -15718,14 +15718,14 @@ async function sendPrivateFriendMsg() {
 async function updateFriendChatBadge() {
   if (!currentUserId) return;
   try {
+    // بـ where واحد بس عشان مش نحتاج Composite Index
     const snap = await db.collection('private_messages')
       .where('to', '==', currentUserId)
-      .where('read', '==', false)
       .get();
-    const count = snap.size;
+    const count = snap.docs.filter(d => d.data().read === false).length;
     const badge = document.getElementById('friendChatBadge');
     if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
-  } catch(e) {}
+  } catch(e) { console.error('updateFriendChatBadge error:', e); }
 }
 setInterval(() => { if (currentUserId) updateFriendChatBadge(); }, 30000);
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge, 3000));
