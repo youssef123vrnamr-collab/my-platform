@@ -2065,17 +2065,9 @@ async function updateAdminUI() {
         englishPrompt = "astronomy, space, " + englishPrompt + ", highly detailed, 4k, cinematic";
       } catch(e) { englishPrompt = "astronomy space " + prompt; }
 
-      // توليد الصورة
-      const imgRes = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1", {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + hfToken, "Content-Type": "application/json" },
-        body: JSON.stringify({ inputs: englishPrompt })
-      });
-
-      if (!imgRes.ok) throw new Error("فشل توليد الصورة: " + imgRes.status);
-
-      const blob = await imgRes.blob();
-      const imageUrl = URL.createObjectURL(blob);
+      // توليد الصورة عبر Pollinations AI (مجاني بدون token)
+      const encodedPrompt = encodeURIComponent(englishPrompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&nologo=true&seed=${Date.now()}`;
 
       // استبدال رسالة الانتظار بالصورة
       const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
