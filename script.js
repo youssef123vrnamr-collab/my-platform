@@ -2066,7 +2066,7 @@ async function updateAdminUI() {
       } catch(e) { englishPrompt = "astronomy space " + prompt; }
 
       // توليد الصورة
-      const imgRes = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+      const imgRes = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1", {
         method: "POST",
         headers: { "Authorization": "Bearer " + hfToken, "Content-Type": "application/json" },
         body: JSON.stringify({ inputs: englishPrompt })
