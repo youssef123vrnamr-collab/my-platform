@@ -2060,26 +2060,37 @@ async function updateAdminUI() {
     const cont = document.getElementById("aiChatMessages");
     if (!cont) return;
 
-    // رسالة انتظار
+    // رسالة انتظار مع تايمر
     const loadMsg = document.createElement("div");
     loadMsg.className = "message received";
-    loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div><div class="message-content" style="display:flex;align-items:center;gap:8px;"><span class="typing-dot" style="width:8px;height:8px;border-radius:50%;background:#06b6d4;display:inline-block;animation:pulse 1s infinite"></span> جاري توليد الصورة...</div>`;
+    let loadSecs = 0;
+    loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
+      <div class="message-content" style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#06b6d4;display:inline-block;animation:pulse 1s infinite"></span>
+          <span id="_imgGenStatus">🎨 جاري توليد الصورة...</span>
+        </div>
+        <div style="font-size:0.75rem;color:#888;" id="_imgGenTimer">قد يستغرق حتى 60 ثانية</div>
+      </div>`;
     cont.appendChild(loadMsg);
     cont.scrollTop = cont.scrollHeight;
 
-    const hfToken = await getHFToken();
-    if (!hfToken) {
-      const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div><div class="message-content">❌ خطأ: لم يتم إعداد مفتاح توليد الصور.</div><div class="message-time">${time}</div>`;
-      return;
-    }
+    // تايمر انتظار
+    const timerInterval = setInterval(() => {
+      loadSecs++;
+      const el = document.getElementById("_imgGenTimer");
+      if (el) el.textContent = `⏳ ${loadSecs} ثانية...`;
+    }, 1000);
 
     try {
-      // ترجمة البرومبت للإنجليزية عبر Groq
+      // ترجمة البرومبت للإنجليزية عبر Groq (مع timeout 8 ثواني)
       let englishPrompt = prompt;
       try {
+        const trController = new AbortController();
+        const trTimeout = setTimeout(() => trController.abort(), 8000);
         const trRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
+          signal: trController.signal,
           headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
@@ -2090,35 +2101,49 @@ async function updateAdminUI() {
             max_tokens: 200, temperature: 0.3
           })
         });
+        clearTimeout(trTimeout);
         const trData = await trRes.json();
         englishPrompt = (trData.choices && trData.choices[0] && trData.choices[0].message.content) || prompt;
-        englishPrompt = "astronomy, space, " + englishPrompt + ", highly detailed, 4k, cinematic";
-      } catch(e) { englishPrompt = "astronomy space " + prompt; }
+      } catch(e) { /* فشلت الترجمة، استخدم الأصلي */ }
+      englishPrompt = "astronomy, space, " + englishPrompt + ", highly detailed, 4k, cinematic";
 
       // توليد الصورة عبر Pollinations AI (مجاني بدون token)
+      const seed = Date.now();
       const encodedPrompt = encodeURIComponent(englishPrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&nologo=true&seed=${Date.now()}`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&nologo=true&enhance=true&seed=${seed}`;
 
-      // انتظار تحميل الصورة فعلاً قبل العرض
+      // انتظار تحميل الصورة مع timeout 75 ثانية
       await new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = resolve;
-        img.onerror = reject;
+        const timeout = setTimeout(() => { img.src = ""; reject(new Error("timeout")); }, 75000);
+        img.onload = () => { clearTimeout(timeout); resolve(); };
+        img.onerror = () => { clearTimeout(timeout); reject(new Error("load_error")); };
         img.src = imageUrl;
       });
 
-      // استبدال رسالة الانتظار بالصورة
+      clearInterval(timerInterval);
       const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
       loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
         <div class="message-content">🎨 تم توليد الصورة:</div>
-        <img src="${imageUrl}" style="max-width:100%;border-radius:12px;margin-top:6px;display:block;cursor:pointer;" onclick="viewImage(this.src)">
+        <img src="${imageUrl}" style="max-width:100%;border-radius:12px;margin-top:6px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(6,182,212,0.3);" onclick="viewImage(this.src)" loading="lazy">
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <a href="${imageUrl}" download="astronomy_image.jpg" style="font-size:0.75rem;color:#06b6d4;text-decoration:none;background:rgba(6,182,212,0.1);padding:4px 10px;border-radius:20px;border:1px solid rgba(6,182,212,0.3);"><i class="fas fa-download"></i> تحميل</a>
+          <span style="font-size:0.75rem;color:#888;padding:4px 10px;">✨ Pollinations AI</span>
+        </div>
         <div class="message-time">${time}</div>`;
       cont.scrollTop = cont.scrollHeight;
 
     } catch(err) {
-      console.error(err);
+      clearInterval(timerInterval);
+      console.error("Image gen error:", err);
+      const isTimeout = err.message === "timeout";
       const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div><div class="message-content">❌ عذراً، فشل توليد الصورة. حاول مرة أخرى.</div><div class="message-time">${time}</div>`;
+      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
+        <div class="message-content">
+          ❌ ${isTimeout ? "استغرق التوليد وقتاً طويلاً، حاول مرة أخرى." : "عذراً، فشل توليد الصورة."}
+          <br><button onclick="generateAndDisplayImage(${JSON.stringify(prompt)})" style="margin-top:8px;background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-family:inherit;font-size:0.85rem;"><i class="fas fa-redo"></i> إعادة المحاولة</button>
+        </div>
+        <div class="message-time">${time}</div>`;
     }
   }
 
