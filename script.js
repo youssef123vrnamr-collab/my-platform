@@ -1992,7 +1992,7 @@ async function updateAdminUI() {
   async function getHFToken() {
     if (_hfTokenCache) return _hfTokenCache;
     try {
-      const doc = await db.collection("settings").doc("api_keys").get();
+      const doc = await db.collection("api_keys").doc("api_keys").get();
       if (doc.exists && doc.data().hf_token) {
         _hfTokenCache = doc.data().hf_token;
         return _hfTokenCache;
