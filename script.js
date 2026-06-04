@@ -69,7 +69,6 @@ async function isAdminUser(userId) {
     try {
       const doc = await db.collection("api_keys").doc("api_keys").get();
       if (doc.exists) _hfToken = doc.data()?.hf_token || "";
-      if (!_hfToken) console.warn("hf_token not found in api_keys/api_keys");
     } catch(e) { console.warn("getHfToken error:", e); }
     return _hfToken;
   }
@@ -2073,14 +2072,28 @@ async function updateAdminUI() {
 
     if (txEl) txEl.textContent = attempt === 1 ? "🎨 جاري توليد الصورة..." : `🔄 محاولة ${attempt}/3...`;
 
-    // جيب hf_token
+    // جيب hf_token من Firestore
     const hfToken = await getHfToken();
     if (!hfToken) {
-      stEl.innerHTML = `❌ خطأ: لم يتم العثور على مفتاح API في Firestore.<br><small style="color:#888">api_keys/api_keys → hf_token</small>`;
+      stEl.innerHTML = "❌ لم يتم العثور على مفتاح Hugging Face في Firestore.";
       return;
     }
 
-    const modelIndex = attempt - 1;
+    // موديلات مرتبة من الأسرع
+    const HF_MODELS = [
+      "black-forest-labs/FLUX.1-schnell",
+      "stabilityai/sdxl-turbo",
+      "runwayml/stable-diffusion-v1-5",
+    ];
+    const modelIndex  = attempt - 1;
+    const chosenModel = HF_MODELS[modelIndex] || HF_MODELS[0];
+    const hfUrl       = `https://api-inference.huggingface.co/models/${chosenModel}`;
+
+    const parameters  = modelIndex === 0
+      ? { num_inference_steps: 4,  guidance_scale: 0,   width: 512, height: 512 }
+      : modelIndex === 1
+      ? { num_inference_steps: 1,  guidance_scale: 0,   width: 512, height: 512 }
+      : { num_inference_steps: 20, guidance_scale: 7.5, width: 512, height: 512 };
 
     try {
       let secs = 0;
@@ -2090,24 +2103,32 @@ async function updateAdminUI() {
       }, 1000);
 
       const ctrl = new AbortController();
-      const tOut = setTimeout(() => ctrl.abort(), 58000);
+      const tOut = setTimeout(() => ctrl.abort(), 90000);
 
-      const resp = await fetch("/api/imagine", {
+      // كلم Hugging Face مباشرة من المتصفح — بدون Vercel proxy
+      const resp = await fetch(hfUrl, {
         method: "POST",
         signal: ctrl.signal,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: finalPrompt, hf_token: hfToken, model: modelIndex }),
+        headers: {
+          Authorization: `Bearer ${hfToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: finalPrompt.substring(0, 500),
+          parameters,
+          options: { wait_for_model: true },
+        }),
       });
       clearTimeout(tOut);
       clearInterval(ticker);
 
       if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        console.warn("imagine failed:", errJson);
+        const errText = await resp.text().catch(() => "");
+        console.warn(`HF ${resp.status}:`, errText.substring(0, 200));
         if (attempt < 3) {
           await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
         } else {
-          stEl.innerHTML = `❌ فشل توليد الصورة (${errJson.error || resp.status})
+          stEl.innerHTML = `❌ فشل توليد الصورة (HF ${resp.status})
             <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
               style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
                      border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
@@ -2151,8 +2172,9 @@ async function updateAdminUI() {
 
     } catch(e) {
       console.warn("_doGenerate catch:", e.message);
-      if (attempt < 3) { await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1); }
-      else {
+      if (attempt < 3) {
+        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+      } else {
         stEl.innerHTML = `❌ فشل: ${e.message}
           <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
             style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
