@@ -1,16 +1,17 @@
 /**
  * /api/imagine.js — Vercel Serverless Function
- * بيستقبل hf_token من الـ frontend ويولد صورة بـ Hugging Face
+ * بيستخدم Hugging Face - fast models
  */
 
 export const config = {
   maxDuration: 60,
 };
 
+// موديلات مرتبة من الأسرع للأبطأ
 const HF_MODELS = [
-  "stabilityai/stable-diffusion-xl-base-1.0",
-  "runwayml/stable-diffusion-v1-5",
-  "CompVis/stable-diffusion-v1-4",
+  "black-forest-labs/FLUX.1-schnell",     // الأسرع - 4 steps بس
+  "stabilityai/sdxl-turbo",               // سريع جداً
+  "runwayml/stable-diffusion-v1-5",       // backup
 ];
 
 export default async function handler(req, res) {
@@ -19,27 +20,33 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  // اقبل البيانات من POST body أو GET query
   let prompt = "", hfToken = "", modelIndex = 0;
   if (req.method === "POST") {
     const body = req.body || {};
-    prompt     = body.prompt     || "";
-    hfToken    = body.hf_token   || "";
+    prompt     = body.prompt    || "";
+    hfToken    = body.hf_token  || "";
     modelIndex = parseInt(body.model) || 0;
   } else {
-    prompt     = req.query.prompt    || "";
-    hfToken    = req.query.hf_token  || "";
+    prompt     = req.query.prompt   || "";
+    hfToken    = req.query.hf_token || "";
     modelIndex = parseInt(req.query.model) || 0;
   }
 
-  if (!prompt.trim())   return res.status(400).json({ error: "No prompt" });
-  if (!hfToken.trim())  return res.status(400).json({ error: "No hf_token" });
+  if (!prompt.trim())  return res.status(400).json({ error: "No prompt" });
+  if (!hfToken.trim()) return res.status(400).json({ error: "No hf_token" });
 
   const chosenModel = HF_MODELS[modelIndex] || HF_MODELS[0];
   const hfUrl = `https://api-inference.huggingface.co/models/${chosenModel}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 55000);
+
+  // parameters حسب الموديل
+  const parameters = modelIndex === 0
+    ? { num_inference_steps: 4,  guidance_scale: 0,   width: 512, height: 512 }  // FLUX schnell
+    : modelIndex === 1
+    ? { num_inference_steps: 1,  guidance_scale: 0,   width: 512, height: 512 }  // SDXL turbo
+    : { num_inference_steps: 20, guidance_scale: 7.5, width: 512, height: 512 }; // SD v1.5
 
   try {
     const response = await fetch(hfUrl, {
@@ -51,12 +58,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         inputs: prompt.substring(0, 500),
-        parameters: {
-          num_inference_steps: 25,
-          guidance_scale: 7.5,
-          width: 512,
-          height: 512,
-        },
+        parameters,
         options: { wait_for_model: true },
       }),
     });
@@ -64,16 +66,23 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errText = await response.text();
+      console.error(`HF error ${response.status}:`, errText.substring(0, 200));
       return res.status(502).json({
-        error: `HF error ${response.status}`,
-        detail: errText.substring(0, 300),
+        error: `HF ${response.status}`,
+        detail: errText.substring(0, 200),
         tryNext: modelIndex < HF_MODELS.length - 1,
       });
     }
 
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.startsWith("image/")) {
-      return res.status(502).json({ error: "Not an image", ct: contentType });
+      const body = await response.text();
+      console.error("Not image:", contentType, body.substring(0, 200));
+      return res.status(502).json({
+        error: "Not an image",
+        ct: contentType,
+        tryNext: modelIndex < HF_MODELS.length - 1,
+      });
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
@@ -84,8 +93,9 @@ export default async function handler(req, res) {
 
   } catch (e) {
     clearTimeout(timeout);
+    console.error("imagine error:", e.message);
     return res.status(504).json({
-      error: e.name === "AbortError" ? "Timeout >55s" : (e.message || "Unknown error"),
+      error: e.name === "AbortError" ? "Timeout" : (e.message || "Unknown"),
       tryNext: modelIndex < HF_MODELS.length - 1,
     });
   }

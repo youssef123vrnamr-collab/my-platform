@@ -62,13 +62,14 @@ async function isAdminUser(userId) {
   // EmailJS settings
   let emailSettings = { publicKey: "", serviceId: "", templateId: "" };
 
-  // ===== Hugging Face Token (يتجيب من Firestore: api_keys/api_keys) =====
+  // ===== Hugging Face Token =====
   let _hfToken = "";
   async function getHfToken() {
     if (_hfToken) return _hfToken;
     try {
       const doc = await db.collection("api_keys").doc("api_keys").get();
       if (doc.exists) _hfToken = doc.data()?.hf_token || "";
+      if (!_hfToken) console.warn("hf_token not found in api_keys/api_keys");
     } catch(e) { console.warn("getHfToken error:", e); }
     return _hfToken;
   }
@@ -2070,20 +2071,18 @@ async function updateAdminUI() {
       return;
     }
 
-    if (txEl) txEl.textContent = attempt === 1 ? "🎨 جاري توليد الصورة بالـ AI..." : `🔄 محاولة ${attempt}/3...`;
+    if (txEl) txEl.textContent = attempt === 1 ? "🎨 جاري توليد الصورة..." : `🔄 محاولة ${attempt}/3...`;
 
-    // جيب الـ hf_token من Firestore
+    // جيب hf_token
     const hfToken = await getHfToken();
     if (!hfToken) {
-      stEl.innerHTML = "❌ لم يتم العثور على مفتاح Hugging Face.";
+      stEl.innerHTML = `❌ خطأ: لم يتم العثور على مفتاح API في Firestore.<br><small style="color:#888">api_keys/api_keys → hf_token</small>`;
       return;
     }
 
-    // كل محاولة تجرب موديل مختلف
     const modelIndex = attempt - 1;
 
     try {
-      // تايمر مرئي
       let secs = 0;
       const ticker = setInterval(() => {
         secs++;
@@ -2097,33 +2096,34 @@ async function updateAdminUI() {
         method: "POST",
         signal: ctrl.signal,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: finalPrompt,
-          hf_token: hfToken,
-          model: modelIndex,
-        }),
+        body: JSON.stringify({ prompt: finalPrompt, hf_token: hfToken, model: modelIndex }),
       });
       clearTimeout(tOut);
       clearInterval(ticker);
 
       if (!resp.ok) {
         const errJson = await resp.json().catch(() => ({}));
-        // لو الموديل فشل وفيه موديل تاني، جرب التاني
-        if (errJson.tryNext) {
+        console.warn("imagine failed:", errJson);
+        if (attempt < 3) {
           await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-          return;
+        } else {
+          stEl.innerHTML = `❌ فشل توليد الصورة (${errJson.error || resp.status})
+            <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
+              style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
+                     border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
+                     font-size:.85rem;margin-top:6px;display:inline-block;">
+              <i class="fas fa-redo"></i> إعادة المحاولة
+            </button>`;
         }
-        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
         return;
       }
 
       const ct = resp.headers.get("content-type") || "";
       if (!ct.startsWith("image/")) {
-        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+        if (attempt < 3) { await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1); }
         return;
       }
 
-      // الصورة اتجلبت — حولها لـ blob URL واعرضها
       const blob   = await resp.blob();
       const objUrl = URL.createObjectURL(blob);
 
@@ -2150,7 +2150,16 @@ async function updateAdminUI() {
       if (cont) cont.scrollTop = cont.scrollHeight;
 
     } catch(e) {
-      await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+      console.warn("_doGenerate catch:", e.message);
+      if (attempt < 3) { await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1); }
+      else {
+        stEl.innerHTML = `❌ فشل: ${e.message}
+          <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
+            style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
+                   border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;display:inline-block;">
+            <i class="fas fa-redo"></i> إعادة المحاولة
+          </button>`;
+      }
     }
   }
   const IMAGE_GEN_TRIGGERS = [
