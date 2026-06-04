@@ -1987,18 +1987,143 @@ async function updateAdminUI() {
   document.addEventListener("webkitfullscreenchange", onFullscreenChange);
   document.addEventListener("mozfullscreenchange",    onFullscreenChange);
   function clearAIChat() { if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
-  // ========== Image Generation via HuggingFace ==========
-  let _hfTokenCache = null;
-  async function getHFToken() {
-    if (_hfTokenCache) return _hfTokenCache;
+  // ========== Image Generation via Vercel Proxy ==========
+  async function generateAndDisplayImage(prompt) {
+    const cont = document.getElementById("aiChatMessages");
+    if (!cont) return;
+
+    const seed = Math.floor(Math.random() * 9999999);
+    const time = new Date().toLocaleTimeString("ar-EG", { hour:"2-digit", minute:"2-digit" });
+    const uid  = "ig_" + seed;
+
+    // رسالة انتظار
+    const msgEl = document.createElement("div");
+    msgEl.className = "message received";
+    msgEl.innerHTML =
+      `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
+       <div id="${uid}_st" class="message-content" style="display:flex;align-items:center;gap:8px;">
+         <span style="width:9px;height:9px;border-radius:50%;background:#06b6d4;flex-shrink:0;animation:pulse 1s infinite"></span>
+         <span id="${uid}_tx">✨ جاري توليد الصورة...</span>
+       </div>
+       <div id="${uid}_box" style="margin-top:8px;min-height:40px;"></div>
+       <div class="message-time">${time}</div>`;
+    cont.appendChild(msgEl);
+    cont.scrollTop = cont.scrollHeight;
+
+    // ترجمة (6 ثواني timeout)
+    let enPrompt = "";
     try {
-      const doc = await db.collection("api_keys").doc("api_keys").get();
-      if (doc.exists && doc.data().hf_token) {
-        _hfTokenCache = doc.data().hf_token;
-        return _hfTokenCache;
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 6000);
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST", signal: ctrl.signal,
+        headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: "Translate Arabic to English for AI image generation. Reply ONLY with a concise English description, max 20 words. No quotes, no explanation." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 60, temperature: 0.3
+        })
+      });
+      const d = await r.json();
+      enPrompt = (d?.choices?.[0]?.message?.content || "").trim();
+    } catch(e) {}
+
+    if (!enPrompt) enPrompt = prompt.substring(0, 100);
+    const finalPrompt = `epic space astronomy ${enPrompt} cinematic dramatic 8k ultra detailed`;
+
+    // استدعاء Vercel proxy بدل Pollinations مباشرة
+    await _doGenerate(finalPrompt, uid, prompt, cont, seed, 1);
+  }
+
+  async function _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt) {
+    const stEl = document.getElementById(uid + "_st");
+    const txEl = document.getElementById(uid + "_tx");
+    const box  = document.getElementById(uid + "_box");
+    if (!stEl || !box) return;
+
+    const safeP = encodeURIComponent(origPrompt);
+
+    if (attempt > 3) {
+      stEl.innerHTML =
+        `❌ فشل توليد الصورة.
+         <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
+           style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
+                  border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
+                  font-size:.85rem;margin-top:6px;display:inline-block;">
+           <i class="fas fa-redo"></i> إعادة المحاولة
+         </button>`;
+      box.innerHTML = "";
+      return;
+    }
+
+    if (txEl) txEl.textContent = attempt === 1 ? "✨ جاري التوليد..." : `🔄 محاولة ${attempt}/3...`;
+
+    // استخدم الـ Vercel proxy ← السحر هنا
+    const models = ["flux", "flux-realism", "any-dark"];
+    const model  = models[attempt - 1] || "flux";
+    const thisSeed = seed + attempt * 7;
+    const proxyUrl = `/api/imagine?prompt=${encodeURIComponent(finalPrompt)}&seed=${thisSeed}&model=${model}`;
+
+    try {
+      // تايمر مرئي
+      let secs = 0;
+      const ticker = setInterval(() => {
+        secs++;
+        if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
+      }, 1000);
+
+      // fetch من نفس الدومين ← لا CORS ولا مشاكل
+      const ctrl  = new AbortController();
+      const tOut  = setTimeout(() => ctrl.abort(), 58000);
+      const resp  = await fetch(proxyUrl, { signal: ctrl.signal });
+      clearTimeout(tOut);
+      clearInterval(ticker);
+
+      if (!resp.ok) {
+        // محاولة تانية
+        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+        return;
       }
-    } catch(e) { console.error("HF token fetch error:", e); }
-    return null;
+
+      const ct = resp.headers.get("content-type") || "";
+      if (!ct.startsWith("image/")) {
+        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+        return;
+      }
+
+      // الصورة اتجلبت — حولها لـ blob URL واعرضها
+      const blob   = await resp.blob();
+      const objUrl = URL.createObjectURL(blob);
+
+      if (txEl) txEl.textContent = "";
+      stEl.innerHTML =
+        `🎨 تم التوليد!
+         <a href="${objUrl}" download="space_${thisSeed}.jpg"
+            style="color:#06b6d4;font-size:.75rem;text-decoration:none;background:rgba(6,182,212,.12);
+                   padding:3px 10px;border-radius:20px;border:1px solid rgba(6,182,212,.3);margin-right:6px;">
+           <i class="fas fa-download"></i> تحميل
+         </a>
+         <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
+           style="background:rgba(255,255,255,.07);color:#aaa;border:none;border-radius:20px;
+                  padding:3px 10px;cursor:pointer;font-family:inherit;font-size:.72rem;">
+           <i class="fas fa-sync"></i> صورة جديدة
+         </button>`;
+
+      const img = document.createElement("img");
+      img.src   = objUrl;
+      img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
+      img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
+      box.innerHTML = "";
+      box.appendChild(img);
+      if (cont) cont.scrollTop = cont.scrollHeight;
+
+    } catch(e) {
+      // timeout أو network error → محاولة تانية
+      await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+    }
   }
   const IMAGE_GEN_TRIGGERS = [
     // فصحى
@@ -2054,100 +2179,6 @@ async function updateAdminUI() {
       }
     }
     return t;
-  }
-
-  async function generateAndDisplayImage(prompt) {
-    const cont = document.getElementById("aiChatMessages");
-    if (!cont) return;
-
-    const seed = Math.floor(Math.random() * 9999999);
-    const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-    const uid = "ig_" + seed;
-
-    // إنشاء رسالة الانتظار فوراً
-    const msgEl = document.createElement("div");
-    msgEl.className = "message received";
-    msgEl.innerHTML = `
-      <div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
-      <div id="${uid}_status" class="message-content" style="display:flex;align-items:center;gap:8px;">
-        <span style="width:8px;height:8px;border-radius:50%;background:#06b6d4;display:inline-block;animation:pulse 1s infinite;flex-shrink:0"></span>
-        <span id="${uid}_txt">🎨 جاري التوليد...</span>
-      </div>
-      <div id="${uid}_imgbox" style="margin-top:6px;"></div>
-      <div class="message-time">${time}</div>`;
-    cont.appendChild(msgEl);
-    cont.scrollTop = cont.scrollHeight;
-
-    // ترجمة البرومبت (اختيارية - مع timeout 8 ثواني)
-    let finalPrompt = prompt;
-    try {
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 8000);
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST", signal: ctrl.signal,
-        headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: "Translate Arabic to English image prompt. Reply ONLY with the English prompt, nothing else." },
-            { role: "user", content: prompt }
-          ],
-          max_tokens: 150, temperature: 0.3
-        })
-      });
-      clearTimeout(tid);
-      const d = await res.json();
-      const translated = d?.choices?.[0]?.message?.content?.trim();
-      if (translated) finalPrompt = translated;
-    } catch(e) { /* استخدام الأصلي كـ fallback */ }
-
-    finalPrompt = "astronomy, space, " + finalPrompt + ", highly detailed, 4k, cinematic, photorealistic";
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=768&height=768&nologo=true&enhance=true&seed=${seed}`;
-
-    const statusEl = document.getElementById(uid + "_status");
-    const txtEl    = document.getElementById(uid + "_txt");
-    const imgBox   = document.getElementById(uid + "_imgbox");
-    if (!statusEl || !imgBox) return;
-
-    // تايمر مرئي
-    let secs = 0;
-    const ticker = setInterval(() => {
-      secs++;
-      if (txtEl) txtEl.textContent = `🎨 جاري التوليد... ${secs}s`;
-    }, 1000);
-
-    // timeout 75 ثانية
-    const killTimer = setTimeout(() => {
-      clearInterval(ticker);
-      const safePrompt = encodeURIComponent(prompt);
-      statusEl.innerHTML = `❌ استغرق وقتاً طويلاً. <button onclick="generateAndDisplayImage(decodeURIComponent('${safePrompt}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
-      imgBox.innerHTML = '';
-    }, 75000);
-
-    // إنشاء الـ img مباشرةً وتركه يحمّل — المتصفح يتعامل معه بدون CORS قيود
-    const img = document.createElement("img");
-    img.style.cssText = "max-width:100%;border-radius:12px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(6,182,212,.3);";
-    img.loading = "lazy";
-    img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
-
-    img.onload = function() {
-      clearTimeout(killTimer);
-      clearInterval(ticker);
-      statusEl.innerHTML = `🎨 تم توليد الصورة: <a href="${imageUrl}" download="space_image.jpg" style="font-size:.75rem;color:#06b6d4;text-decoration:none;background:rgba(6,182,212,.12);padding:3px 10px;border-radius:20px;border:1px solid rgba(6,182,212,.3);margin-right:6px;"><i class="fas fa-download"></i> تحميل</a>`;
-      cont.scrollTop = cont.scrollHeight;
-    };
-
-    img.onerror = function() {
-      clearTimeout(killTimer);
-      clearInterval(ticker);
-      const safePrompt = encodeURIComponent(prompt);
-      statusEl.innerHTML = `❌ فشل توليد الصورة. <button onclick="generateAndDisplayImage(decodeURIComponent('${safePrompt}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
-      imgBox.innerHTML = '';
-    };
-
-    img.src = imageUrl;
-    imgBox.appendChild(img);
-    cont.scrollTop = cont.scrollHeight;
   }
 
   async function sendAIMessage() {
