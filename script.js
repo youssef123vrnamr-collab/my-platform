@@ -2061,34 +2061,44 @@ async function updateAdminUI() {
 
     if (txEl) txEl.textContent = attempt === 1 ? "🎨 جاري توليد الصورة..." : `🔄 محاولة ${attempt}/3...`;
 
-    // Pollinations مباشرة بـ <img src> — بدون fetch وبدون CORS
-    const models   = ["flux", "turbo", "flux-realism"];
-    const model    = models[attempt - 1] || "flux";
-    const thisSeed = seed + attempt * 7;
-    const imgUrl   = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=512&height=512&nologo=true&model=${model}&seed=${thisSeed}`;
-
     let secs = 0;
     const ticker = setInterval(() => {
       secs++;
       if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
     }, 1000);
 
-    // تايمر أمان — لو فاتت 90 ثانية جرب موديل تاني
-    const safetyTimer = setTimeout(() => {
-      clearInterval(ticker);
-      img.src = "";
-      if (attempt < 3) _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-      else stEl.innerHTML = `❌ انتهت المهلة. <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;display:inline-block;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
-    }, 90000);
+    try {
+      const response = await fetch("/api/imagine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: finalPrompt, model: attempt - 1 })
+      });
 
-    const img = document.createElement("img");
-    img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
-    img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
-    img.crossOrigin = "anonymous";
-
-    img.onload = function() {
       clearInterval(ticker);
-      clearTimeout(safetyTimer);
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        if (errData.tryNext && attempt < 3) {
+          _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+        } else {
+          stEl.innerHTML = `❌ فشل توليد الصورة (${response.status}).
+            <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
+              style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
+                     border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
+                     font-size:.85rem;margin-top:6px;display:inline-block;">
+              <i class="fas fa-redo"></i> إعادة المحاولة
+            </button>`;
+        }
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const img = document.createElement("img");
+      img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
+      img.onclick = function() { if (typeof viewImage === "function") viewImage(url); };
+      img.src = url;
+
       if (txEl) txEl.textContent = "";
       stEl.innerHTML =
         `🎨 تم التوليد!
@@ -2100,16 +2110,22 @@ async function updateAdminUI() {
       box.innerHTML = "";
       box.appendChild(img);
       if (cont) cont.scrollTop = cont.scrollHeight;
-    };
 
-    img.onerror = function() {
+    } catch (err) {
       clearInterval(ticker);
-      clearTimeout(safetyTimer);
-      if (attempt < 3) _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-      else stEl.innerHTML = `❌ فشل توليد الصورة. <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;display:inline-block;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
-    };
-
-    img.src = imgUrl;
+      console.warn("_doGenerate error:", err);
+      if (attempt < 3) {
+        _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+      } else {
+        stEl.innerHTML = `❌ فشل توليد الصورة.
+          <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
+            style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
+                   border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
+                   font-size:.85rem;margin-top:6px;display:inline-block;">
+            <i class="fas fa-redo"></i> إعادة المحاولة
+          </button>`;
+      }
+    }
   }
   const IMAGE_GEN_TRIGGERS = [
     // فصحى
