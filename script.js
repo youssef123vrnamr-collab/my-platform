@@ -62,6 +62,17 @@ async function isAdminUser(userId) {
   // EmailJS settings
   let emailSettings = { publicKey: "", serviceId: "", templateId: "" };
 
+  // ===== Hugging Face Token (يتجيب من Firestore: api_keys/api_keys) =====
+  let _hfToken = "";
+  async function getHfToken() {
+    if (_hfToken) return _hfToken;
+    try {
+      const doc = await db.collection("api_keys").doc("api_keys").get();
+      if (doc.exists) _hfToken = doc.data()?.hf_token || "";
+    } catch(e) { console.warn("getHfToken error:", e); }
+    return _hfToken;
+  }
+
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
 
   // ========== VALIDATION FUNCTIONS (محسّنة) ==========
@@ -2059,11 +2070,17 @@ async function updateAdminUI() {
       return;
     }
 
-    if (txEl) txEl.textContent = attempt === 1 ? "✨ جاري توليد الصورة بالـ AI..." : `🔄 محاولة ${attempt}/3...`;
+    if (txEl) txEl.textContent = attempt === 1 ? "🎨 جاري توليد الصورة بالـ AI..." : `🔄 محاولة ${attempt}/3...`;
 
-    // model index — كل محاولة تجرب موديل مختلف من Hugging Face
+    // جيب الـ hf_token من Firestore
+    const hfToken = await getHfToken();
+    if (!hfToken) {
+      stEl.innerHTML = "❌ لم يتم العثور على مفتاح Hugging Face.";
+      return;
+    }
+
+    // كل محاولة تجرب موديل مختلف
     const modelIndex = attempt - 1;
-    const proxyUrl = `/api/imagine?prompt=${encodeURIComponent(finalPrompt)}&model=${modelIndex}`;
 
     try {
       // تايمر مرئي
@@ -2073,15 +2090,29 @@ async function updateAdminUI() {
         if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
       }, 1000);
 
-      // fetch من نفس الدومين ← لا CORS ولا مشاكل
-      const ctrl  = new AbortController();
-      const tOut  = setTimeout(() => ctrl.abort(), 58000);
-      const resp  = await fetch(proxyUrl, { signal: ctrl.signal });
+      const ctrl = new AbortController();
+      const tOut = setTimeout(() => ctrl.abort(), 58000);
+
+      const resp = await fetch("/api/imagine", {
+        method: "POST",
+        signal: ctrl.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          hf_token: hfToken,
+          model: modelIndex,
+        }),
+      });
       clearTimeout(tOut);
       clearInterval(ticker);
 
       if (!resp.ok) {
-        // محاولة تانية
+        const errJson = await resp.json().catch(() => ({}));
+        // لو الموديل فشل وفيه موديل تاني، جرب التاني
+        if (errJson.tryNext) {
+          await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+          return;
+        }
         await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
         return;
       }
@@ -2099,7 +2130,7 @@ async function updateAdminUI() {
       if (txEl) txEl.textContent = "";
       stEl.innerHTML =
         `🎨 تم التوليد!
-         <a href="${objUrl}" download="space_${thisSeed}.jpg"
+         <a href="${objUrl}" download="ai_image.jpg"
             style="color:#06b6d4;font-size:.75rem;text-decoration:none;background:rgba(6,182,212,.12);
                    padding:3px 10px;border-radius:20px;border:1px solid rgba(6,182,212,.3);margin-right:6px;">
            <i class="fas fa-download"></i> تحميل
@@ -2119,7 +2150,6 @@ async function updateAdminUI() {
       if (cont) cont.scrollTop = cont.scrollHeight;
 
     } catch(e) {
-      // timeout أو network error → محاولة تانية
       await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
     }
   }
