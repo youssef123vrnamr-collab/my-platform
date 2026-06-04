@@ -2060,91 +2060,94 @@ async function updateAdminUI() {
     const cont = document.getElementById("aiChatMessages");
     if (!cont) return;
 
-    // رسالة انتظار مع تايمر
-    const loadMsg = document.createElement("div");
-    loadMsg.className = "message received";
-    let loadSecs = 0;
-    loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
-      <div class="message-content" style="display:flex;flex-direction:column;gap:6px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="width:8px;height:8px;border-radius:50%;background:#06b6d4;display:inline-block;animation:pulse 1s infinite"></span>
-          <span id="_imgGenStatus">🎨 جاري توليد الصورة...</span>
-        </div>
-        <div style="font-size:0.75rem;color:#888;" id="_imgGenTimer">قد يستغرق حتى 60 ثانية</div>
-      </div>`;
-    cont.appendChild(loadMsg);
+    const seed = Math.floor(Math.random() * 9999999);
+    const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    const uid = "ig_" + seed;
+
+    // إنشاء رسالة الانتظار فوراً
+    const msgEl = document.createElement("div");
+    msgEl.className = "message received";
+    msgEl.innerHTML = `
+      <div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
+      <div id="${uid}_status" class="message-content" style="display:flex;align-items:center;gap:8px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#06b6d4;display:inline-block;animation:pulse 1s infinite;flex-shrink:0"></span>
+        <span id="${uid}_txt">🎨 جاري التوليد...</span>
+      </div>
+      <div id="${uid}_imgbox" style="margin-top:6px;"></div>
+      <div class="message-time">${time}</div>`;
+    cont.appendChild(msgEl);
     cont.scrollTop = cont.scrollHeight;
 
-    // تايمر انتظار
-    const timerInterval = setInterval(() => {
-      loadSecs++;
-      const el = document.getElementById("_imgGenTimer");
-      if (el) el.textContent = `⏳ ${loadSecs} ثانية...`;
+    // ترجمة البرومبت (اختيارية - مع timeout 8 ثواني)
+    let finalPrompt = prompt;
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST", signal: ctrl.signal,
+        headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: "Translate Arabic to English image prompt. Reply ONLY with the English prompt, nothing else." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 150, temperature: 0.3
+        })
+      });
+      clearTimeout(tid);
+      const d = await res.json();
+      const translated = d?.choices?.[0]?.message?.content?.trim();
+      if (translated) finalPrompt = translated;
+    } catch(e) { /* استخدام الأصلي كـ fallback */ }
+
+    finalPrompt = "astronomy, space, " + finalPrompt + ", highly detailed, 4k, cinematic, photorealistic";
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=768&height=768&nologo=true&enhance=true&seed=${seed}`;
+
+    const statusEl = document.getElementById(uid + "_status");
+    const txtEl    = document.getElementById(uid + "_txt");
+    const imgBox   = document.getElementById(uid + "_imgbox");
+    if (!statusEl || !imgBox) return;
+
+    // تايمر مرئي
+    let secs = 0;
+    const ticker = setInterval(() => {
+      secs++;
+      if (txtEl) txtEl.textContent = `🎨 جاري التوليد... ${secs}s`;
     }, 1000);
 
-    try {
-      // ترجمة البرومبت للإنجليزية عبر Groq (مع timeout 8 ثواني)
-      let englishPrompt = prompt;
-      try {
-        const trController = new AbortController();
-        const trTimeout = setTimeout(() => trController.abort(), 8000);
-        const trRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          signal: trController.signal,
-          headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            messages: [
-              { role: "system", content: "You are a translator. Translate the user's Arabic text to an English image generation prompt. Reply with ONLY the English prompt, no explanation, no quotes." },
-              { role: "user", content: prompt }
-            ],
-            max_tokens: 200, temperature: 0.3
-          })
-        });
-        clearTimeout(trTimeout);
-        const trData = await trRes.json();
-        englishPrompt = (trData.choices && trData.choices[0] && trData.choices[0].message.content) || prompt;
-      } catch(e) { /* فشلت الترجمة، استخدم الأصلي */ }
-      englishPrompt = "astronomy, space, " + englishPrompt + ", highly detailed, 4k, cinematic";
+    // timeout 75 ثانية
+    const killTimer = setTimeout(() => {
+      clearInterval(ticker);
+      const safePrompt = encodeURIComponent(prompt);
+      statusEl.innerHTML = `❌ استغرق وقتاً طويلاً. <button onclick="generateAndDisplayImage(decodeURIComponent('${safePrompt}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
+      imgBox.innerHTML = '';
+    }, 75000);
 
-      // توليد الصورة عبر Pollinations AI (مجاني بدون token)
-      const seed = Date.now();
-      const encodedPrompt = encodeURIComponent(englishPrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&nologo=true&enhance=true&seed=${seed}`;
+    // إنشاء الـ img مباشرةً وتركه يحمّل — المتصفح يتعامل معه بدون CORS قيود
+    const img = document.createElement("img");
+    img.style.cssText = "max-width:100%;border-radius:12px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(6,182,212,.3);";
+    img.loading = "lazy";
+    img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
 
-      // انتظار تحميل الصورة مع timeout 75 ثانية
-      await new Promise((resolve, reject) => {
-        const img = new Image();
-        const timeout = setTimeout(() => { img.src = ""; reject(new Error("timeout")); }, 75000);
-        img.onload = () => { clearTimeout(timeout); resolve(); };
-        img.onerror = () => { clearTimeout(timeout); reject(new Error("load_error")); };
-        img.src = imageUrl;
-      });
-
-      clearInterval(timerInterval);
-      const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
-        <div class="message-content">🎨 تم توليد الصورة:</div>
-        <img src="${imageUrl}" style="max-width:100%;border-radius:12px;margin-top:6px;display:block;cursor:pointer;box-shadow:0 4px 20px rgba(6,182,212,0.3);" onclick="viewImage(this.src)" loading="lazy">
-        <div style="display:flex;gap:8px;margin-top:6px;">
-          <a href="${imageUrl}" download="astronomy_image.jpg" style="font-size:0.75rem;color:#06b6d4;text-decoration:none;background:rgba(6,182,212,0.1);padding:4px 10px;border-radius:20px;border:1px solid rgba(6,182,212,0.3);"><i class="fas fa-download"></i> تحميل</a>
-          <span style="font-size:0.75rem;color:#888;padding:4px 10px;">✨ Pollinations AI</span>
-        </div>
-        <div class="message-time">${time}</div>`;
+    img.onload = function() {
+      clearTimeout(killTimer);
+      clearInterval(ticker);
+      statusEl.innerHTML = `🎨 تم توليد الصورة: <a href="${imageUrl}" download="space_image.jpg" style="font-size:.75rem;color:#06b6d4;text-decoration:none;background:rgba(6,182,212,.12);padding:3px 10px;border-radius:20px;border:1px solid rgba(6,182,212,.3);margin-right:6px;"><i class="fas fa-download"></i> تحميل</a>`;
       cont.scrollTop = cont.scrollHeight;
+    };
 
-    } catch(err) {
-      clearInterval(timerInterval);
-      console.error("Image gen error:", err);
-      const isTimeout = err.message === "timeout";
-      const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
-        <div class="message-content">
-          ❌ ${isTimeout ? "استغرق التوليد وقتاً طويلاً، حاول مرة أخرى." : "عذراً، فشل توليد الصورة."}
-          <br><button onclick="generateAndDisplayImage(${JSON.stringify(prompt)})" style="margin-top:8px;background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-family:inherit;font-size:0.85rem;"><i class="fas fa-redo"></i> إعادة المحاولة</button>
-        </div>
-        <div class="message-time">${time}</div>`;
-    }
+    img.onerror = function() {
+      clearTimeout(killTimer);
+      clearInterval(ticker);
+      const safePrompt = encodeURIComponent(prompt);
+      statusEl.innerHTML = `❌ فشل توليد الصورة. <button onclick="generateAndDisplayImage(decodeURIComponent('${safePrompt}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
+      imgBox.innerHTML = '';
+    };
+
+    img.src = imageUrl;
+    imgBox.appendChild(img);
+    cont.scrollTop = cont.scrollHeight;
   }
 
   async function sendAIMessage() {
