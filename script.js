@@ -9838,6 +9838,13 @@ function slStopAllAnimations() {
       if (!userMsg) return;
       if (inp && injectedMsg === undefined) { inp.value = ''; inp.style.height = 'auto'; }
 
+      // ── Image generation check ──
+      if (typeof isImageRequest === 'function' && isImageRequest(userMsg)) {
+        var imgPrompt = typeof extractImagePrompt === 'function' ? extractImagePrompt(userMsg) : userMsg;
+        await generateAndDisplayImage(imgPrompt);
+        return;
+      }
+
       // ── Space context injection ──
       if (hasTrigger(userMsg)) {
         var apod = await fetchNASAApod();
@@ -9900,7 +9907,7 @@ function slStopAllAnimations() {
       }
 
       try {
-        var result = await callGroq('llama-3.3-70b-versatile', 8000, histMsgs);
+        var result = await callGroq('llama-3.3-70b-versatile', 1500, histMsgs);
         // Retry with smaller model if context overflow
         if (!result.res.ok && (result.res.status===400||result.res.status===413||
             (result.data&&result.data.error&&/context|length|token/i.test(JSON.stringify(result.data.error))))) {
