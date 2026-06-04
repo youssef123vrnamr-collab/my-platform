@@ -24,16 +24,16 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     const body = req.body || {};
     prompt     = body.prompt    || "";
-    hfToken    = body.hf_token  || "";
+    hfToken    = process.env.HF_TOKEN || body.hf_token || "";
     modelIndex = parseInt(body.model) || 0;
   } else {
     prompt     = req.query.prompt   || "";
-    hfToken    = req.query.hf_token || "";
+    hfToken    = process.env.HF_TOKEN || req.query.hf_token || "";
     modelIndex = parseInt(req.query.model) || 0;
   }
 
   if (!prompt.trim())  return res.status(400).json({ error: "No prompt" });
-  if (!hfToken.trim()) return res.status(400).json({ error: "No hf_token" });
+  if (!hfToken.trim()) return res.status(401).json({ error: "HF_TOKEN not configured" });
 
   const chosenModel = HF_MODELS[modelIndex] || HF_MODELS[0];
   const hfUrl = `https://api-inference.huggingface.co/models/${chosenModel}`;
