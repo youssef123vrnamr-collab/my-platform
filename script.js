@@ -2059,60 +2059,69 @@ async function updateAdminUI() {
       return;
     }
 
-    if (txEl) txEl.textContent = attempt === 1 ? "✨ جاري التوليد..." : `🔄 محاولة ${attempt}/3...`;
+    if (txEl) txEl.textContent = attempt === 1 ? "✨ جاري توليد الصورة بالـ AI..." : `🔄 محاولة ${attempt}/3...`;
 
-    // استخدم الـ Vercel proxy ← السحر هنا
-    const models = ["flux", "flux-realism", "any-dark"];
-    const model  = models[attempt - 1] || "flux";
-    const thisSeed = seed + attempt * 7;
-    const proxyUrl = `/api/imagine?prompt=${encodeURIComponent(finalPrompt)}&seed=${thisSeed}&model=${model}`;
+    // model index — كل محاولة تجرب موديل مختلف من Hugging Face
+    const modelIndex = attempt - 1;
+    const proxyUrl = `/api/imagine?prompt=${encodeURIComponent(finalPrompt)}&model=${modelIndex}`;
 
-    // تايمر مرئي
-    let secs = 0;
-    const ticker = setInterval(() => {
-      secs++;
-      if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
-    }, 1000);
+    try {
+      // تايمر مرئي
+      let secs = 0;
+      const ticker = setInterval(() => {
+        secs++;
+        if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
+      }, 1000);
 
-    // استخدم <img src> مباشرة — بيتبع الـ redirect تلقائياً بدون مشاكل timeout
-    const img = document.createElement("img");
-    img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
-    img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
-
-    // تايمر أمان 90 ثانية
-    const safetyTimer = setTimeout(() => {
+      // fetch من نفس الدومين ← لا CORS ولا مشاكل
+      const ctrl  = new AbortController();
+      const tOut  = setTimeout(() => ctrl.abort(), 58000);
+      const resp  = await fetch(proxyUrl, { signal: ctrl.signal });
+      clearTimeout(tOut);
       clearInterval(ticker);
-      img.src = ""; // وقف التحميل
-      _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-    }, 90000);
 
-    img.onload = function() {
-      clearInterval(ticker);
-      clearTimeout(safetyTimer);
+      if (!resp.ok) {
+        // محاولة تانية
+        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+        return;
+      }
+
+      const ct = resp.headers.get("content-type") || "";
+      if (!ct.startsWith("image/")) {
+        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+        return;
+      }
+
+      // الصورة اتجلبت — حولها لـ blob URL واعرضها
+      const blob   = await resp.blob();
+      const objUrl = URL.createObjectURL(blob);
 
       if (txEl) txEl.textContent = "";
       stEl.innerHTML =
         `🎨 تم التوليد!
+         <a href="${objUrl}" download="space_${thisSeed}.jpg"
+            style="color:#06b6d4;font-size:.75rem;text-decoration:none;background:rgba(6,182,212,.12);
+                   padding:3px 10px;border-radius:20px;border:1px solid rgba(6,182,212,.3);margin-right:6px;">
+           <i class="fas fa-download"></i> تحميل
+         </a>
          <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
            style="background:rgba(255,255,255,.07);color:#aaa;border:none;border-radius:20px;
                   padding:3px 10px;cursor:pointer;font-family:inherit;font-size:.72rem;">
            <i class="fas fa-sync"></i> صورة جديدة
          </button>`;
 
+      const img = document.createElement("img");
+      img.src   = objUrl;
+      img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
+      img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
       box.innerHTML = "";
       box.appendChild(img);
       if (cont) cont.scrollTop = cont.scrollHeight;
-    };
 
-    img.onerror = function() {
-      clearInterval(ticker);
-      clearTimeout(safetyTimer);
-      // محاولة تانية
-      _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-    };
-
-    // ابدأ التحميل
-    img.src = proxyUrl;
+    } catch(e) {
+      // timeout أو network error → محاولة تانية
+      await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+    }
   }
   const IMAGE_GEN_TRIGGERS = [
     // فصحى
