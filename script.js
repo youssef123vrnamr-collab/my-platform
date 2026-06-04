@@ -1987,6 +1987,104 @@ async function updateAdminUI() {
   document.addEventListener("webkitfullscreenchange", onFullscreenChange);
   document.addEventListener("mozfullscreenchange",    onFullscreenChange);
   function clearAIChat() { if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
+  // ========== Image Generation via HuggingFace ==========
+  let _hfTokenCache = null;
+  async function getHFToken() {
+    if (_hfTokenCache) return _hfTokenCache;
+    try {
+      const doc = await db.collection("settings").doc("api_keys").get();
+      if (doc.exists && doc.data().hf_token) {
+        _hfTokenCache = doc.data().hf_token;
+        return _hfTokenCache;
+      }
+    } catch(e) { console.error("HF token fetch error:", e); }
+    return null;
+  }
+  const IMAGE_GEN_TRIGGERS = ["ارسم","ارسملي","ارسم لي","ولد صورة","اعمل صورة","صور لي","صورة لـ","صورة ل","generate image","draw","رسم"];
+
+  function isImageRequest(text) {
+    const t = text.trim().toLowerCase();
+    return IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger));
+  }
+
+  function extractImagePrompt(text) {
+    const t = text.trim();
+    for (const trigger of IMAGE_GEN_TRIGGERS) {
+      const idx = t.toLowerCase().indexOf(trigger);
+      if (idx !== -1) {
+        const after = t.slice(idx + trigger.length).trim().replace(/^[:\-,\s]+/, '');
+        if (after) return after;
+      }
+    }
+    return t;
+  }
+
+  async function generateAndDisplayImage(prompt) {
+    const cont = document.getElementById("aiChatMessages");
+    if (!cont) return;
+
+    // رسالة انتظار
+    const loadMsg = document.createElement("div");
+    loadMsg.className = "message received";
+    loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div><div class="message-content" style="display:flex;align-items:center;gap:8px;"><span class="typing-dot" style="width:8px;height:8px;border-radius:50%;background:#06b6d4;display:inline-block;animation:pulse 1s infinite"></span> جاري توليد الصورة...</div>`;
+    cont.appendChild(loadMsg);
+    cont.scrollTop = cont.scrollHeight;
+
+    const hfToken = await getHFToken();
+    if (!hfToken) {
+      const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div><div class="message-content">❌ خطأ: لم يتم إعداد مفتاح توليد الصور.</div><div class="message-time">${time}</div>`;
+      return;
+    }
+
+    try {
+      // ترجمة البرومبت للإنجليزية عبر Groq
+      let englishPrompt = prompt;
+      try {
+        const trRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              { role: "system", content: "You are a translator. Translate the user's Arabic text to an English image generation prompt. Reply with ONLY the English prompt, no explanation, no quotes." },
+              { role: "user", content: prompt }
+            ],
+            max_tokens: 200, temperature: 0.3
+          })
+        });
+        const trData = await trRes.json();
+        englishPrompt = (trData.choices && trData.choices[0] && trData.choices[0].message.content) || prompt;
+        englishPrompt = "astronomy, space, " + englishPrompt + ", highly detailed, 4k, cinematic";
+      } catch(e) { englishPrompt = "astronomy space " + prompt; }
+
+      // توليد الصورة
+      const imgRes = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + hfToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ inputs: englishPrompt })
+      });
+
+      if (!imgRes.ok) throw new Error("فشل توليد الصورة: " + imgRes.status);
+
+      const blob = await imgRes.blob();
+      const imageUrl = URL.createObjectURL(blob);
+
+      // استبدال رسالة الانتظار بالصورة
+      const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>
+        <div class="message-content">🎨 تم توليد الصورة:</div>
+        <img src="${imageUrl}" style="max-width:100%;border-radius:12px;margin-top:6px;display:block;cursor:pointer;" onclick="viewImage(this.src)">
+        <div class="message-time">${time}</div>`;
+      cont.scrollTop = cont.scrollHeight;
+
+    } catch(err) {
+      console.error(err);
+      const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+      loadMsg.innerHTML = `<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div><div class="message-content">❌ عذراً، فشل توليد الصورة. حاول مرة أخرى.</div><div class="message-time">${time}</div>`;
+    }
+  }
+
   async function sendAIMessage() {
     let input = document.getElementById("aiChatInput");
     let text = input.value.trim();
@@ -1995,6 +2093,14 @@ async function updateAdminUI() {
     if (sendBtn) { sendBtn.classList.remove("sending"); void sendBtn.offsetWidth; sendBtn.classList.add("sending"); setTimeout(() => sendBtn.classList.remove("sending"), 600); }
     displayAIMessage(text, "user");
     input.value = "";
+
+    // لو الرسالة طلب توليد صورة
+    if (isImageRequest(text)) {
+      const prompt = extractImagePrompt(text);
+      await generateAndDisplayImage(prompt);
+      return;
+    }
+
     try {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
