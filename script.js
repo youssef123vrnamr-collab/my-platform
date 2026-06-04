@@ -62,17 +62,6 @@ async function isAdminUser(userId) {
   // EmailJS settings
   let emailSettings = { publicKey: "", serviceId: "", templateId: "" };
 
-  // ===== Hugging Face Token =====
-  let _hfToken = "";
-  async function getHfToken() {
-    if (_hfToken) return _hfToken;
-    try {
-      const doc = await db.collection("api_keys").doc("api_keys").get();
-      if (doc.exists) _hfToken = doc.data()?.hf_token || "";
-    } catch(e) { console.warn("getHfToken error:", e); }
-    return _hfToken;
-  }
-
   const CLOUDINARY_CONFIG = { cloudName: "dnnsna4il", uploadPreset: "falak_upload", apiKey: "364194664384272" };
 
   // ========== VALIDATION FUNCTIONS (محسّنة) ==========
@@ -2072,117 +2061,55 @@ async function updateAdminUI() {
 
     if (txEl) txEl.textContent = attempt === 1 ? "🎨 جاري توليد الصورة..." : `🔄 محاولة ${attempt}/3...`;
 
-    // جيب hf_token من Firestore
-    const hfToken = await getHfToken();
-    if (!hfToken) {
-      stEl.innerHTML = "❌ لم يتم العثور على مفتاح Hugging Face في Firestore.";
-      return;
-    }
+    // Pollinations مباشرة بـ <img src> — بدون fetch وبدون CORS
+    const models   = ["flux", "turbo", "flux-realism"];
+    const model    = models[attempt - 1] || "flux";
+    const thisSeed = seed + attempt * 7;
+    const imgUrl   = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=512&height=512&nologo=true&model=${model}&seed=${thisSeed}`;
 
-    // موديلات مرتبة من الأسرع
-    const HF_MODELS = [
-      "black-forest-labs/FLUX.1-schnell",
-      "stabilityai/sdxl-turbo",
-      "runwayml/stable-diffusion-v1-5",
-    ];
-    const modelIndex  = attempt - 1;
-    const chosenModel = HF_MODELS[modelIndex] || HF_MODELS[0];
-    const hfUrl       = `https://api-inference.huggingface.co/models/${chosenModel}`;
+    let secs = 0;
+    const ticker = setInterval(() => {
+      secs++;
+      if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
+    }, 1000);
 
-    const parameters  = modelIndex === 0
-      ? { num_inference_steps: 4,  guidance_scale: 0,   width: 512, height: 512 }
-      : modelIndex === 1
-      ? { num_inference_steps: 1,  guidance_scale: 0,   width: 512, height: 512 }
-      : { num_inference_steps: 20, guidance_scale: 7.5, width: 512, height: 512 };
-
-    try {
-      let secs = 0;
-      const ticker = setInterval(() => {
-        secs++;
-        if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
-      }, 1000);
-
-      const ctrl = new AbortController();
-      const tOut = setTimeout(() => ctrl.abort(), 90000);
-
-      // كلم Hugging Face مباشرة من المتصفح — بدون Vercel proxy
-      const resp = await fetch(hfUrl, {
-        method: "POST",
-        signal: ctrl.signal,
-        headers: {
-          Authorization: `Bearer ${hfToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: finalPrompt.substring(0, 500),
-          parameters,
-          options: { wait_for_model: true },
-        }),
-      });
-      clearTimeout(tOut);
+    // تايمر أمان — لو فاتت 90 ثانية جرب موديل تاني
+    const safetyTimer = setTimeout(() => {
       clearInterval(ticker);
+      img.src = "";
+      if (attempt < 3) _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+      else stEl.innerHTML = `❌ انتهت المهلة. <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;display:inline-block;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
+    }, 90000);
 
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => "");
-        console.warn(`HF ${resp.status}:`, errText.substring(0, 200));
-        if (attempt < 3) {
-          await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-        } else {
-          stEl.innerHTML = `❌ فشل توليد الصورة (HF ${resp.status})
-            <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
-              style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
-                     border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
-                     font-size:.85rem;margin-top:6px;display:inline-block;">
-              <i class="fas fa-redo"></i> إعادة المحاولة
-            </button>`;
-        }
-        return;
-      }
+    const img = document.createElement("img");
+    img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
+    img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
+    img.crossOrigin = "anonymous";
 
-      const ct = resp.headers.get("content-type") || "";
-      if (!ct.startsWith("image/")) {
-        if (attempt < 3) { await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1); }
-        return;
-      }
-
-      const blob   = await resp.blob();
-      const objUrl = URL.createObjectURL(blob);
-
+    img.onload = function() {
+      clearInterval(ticker);
+      clearTimeout(safetyTimer);
       if (txEl) txEl.textContent = "";
       stEl.innerHTML =
         `🎨 تم التوليد!
-         <a href="${objUrl}" download="ai_image.jpg"
-            style="color:#06b6d4;font-size:.75rem;text-decoration:none;background:rgba(6,182,212,.12);
-                   padding:3px 10px;border-radius:20px;border:1px solid rgba(6,182,212,.3);margin-right:6px;">
-           <i class="fas fa-download"></i> تحميل
-         </a>
          <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
            style="background:rgba(255,255,255,.07);color:#aaa;border:none;border-radius:20px;
                   padding:3px 10px;cursor:pointer;font-family:inherit;font-size:.72rem;">
            <i class="fas fa-sync"></i> صورة جديدة
          </button>`;
-
-      const img = document.createElement("img");
-      img.src   = objUrl;
-      img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
-      img.onclick = function() { if (typeof viewImage === "function") viewImage(this.src); };
       box.innerHTML = "";
       box.appendChild(img);
       if (cont) cont.scrollTop = cont.scrollHeight;
+    };
 
-    } catch(e) {
-      console.warn("_doGenerate catch:", e.message);
-      if (attempt < 3) {
-        await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-      } else {
-        stEl.innerHTML = `❌ فشل: ${e.message}
-          <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
-            style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
-                   border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;display:inline-block;">
-            <i class="fas fa-redo"></i> إعادة المحاولة
-          </button>`;
-      }
-    }
+    img.onerror = function() {
+      clearInterval(ticker);
+      clearTimeout(safetyTimer);
+      if (attempt < 3) _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+      else stEl.innerHTML = `❌ فشل توليد الصورة. <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:6px;display:inline-block;"><i class="fas fa-redo"></i> إعادة المحاولة</button>`;
+    };
+
+    img.src = imgUrl;
   }
   const IMAGE_GEN_TRIGGERS = [
     // فصحى
