@@ -2000,7 +2000,14 @@ async function updateAdminUI() {
     } catch(e) { console.error("HF token fetch error:", e); }
     return null;
   }
-  const IMAGE_GEN_TRIGGERS = ["ارسم","ارسملي","ارسم لي","ولد صورة","اعمل صورة","صور لي","صورة لـ","صورة ل","generate image","draw","رسم"];
+  const IMAGE_GEN_TRIGGERS = [
+    "ارسم","ارسملي","ارسم لي","ولد صورة","اعمل صورة",
+    "صور لي","صورة لـ","صورة ل","generate image","draw","رسم",
+    "عايز صوره","عايز صورة","عاوز صوره","عاوز صورة",
+    "ابي صوره","ابي صورة","ابغى صوره","ابغى صورة",
+    "اعطني صوره","اعطني صورة","هات صوره","هات صورة",
+    "جيب صوره","جيب صورة","بغيت صوره","بغيت صورة"
+  ];
 
   function isImageRequest(text) {
     const t = text.trim().toLowerCase();
