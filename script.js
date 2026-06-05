@@ -1252,8 +1252,8 @@ async function updateAdminUI() {
     iframe.height = "100%";
     iframe.style.aspectRatio = "16 / 9";
     iframe.style.border = "none";
-    iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1`;
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3&cc_load_policy=0`;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope";
     iframe.allowFullscreen = true;
     iframe.id = "videoPlayer";
     playerContainer.innerHTML = "";
