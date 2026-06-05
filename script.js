@@ -1257,7 +1257,19 @@ async function updateAdminUI() {
     iframe.allowFullscreen = true;
     iframe.id = "videoPlayer";
     playerContainer.innerHTML = "";
-    playerContainer.appendChild(iframe);
+    // ── Overlay يخفي controls يوتيوب ──
+    let wrapper = document.createElement("div");
+    wrapper.className = "yt-wrapper";
+    wrapper.appendChild(iframe);
+    // overlay علوي (channel name / CC / settings / share)
+    let topOverlay = document.createElement("div");
+    topOverlay.className = "yt-overlay yt-overlay-top";
+    wrapper.appendChild(topOverlay);
+    // overlay سفلي (لوجو YouTube / watermark)
+    let botOverlay = document.createElement("div");
+    botOverlay.className = "yt-overlay yt-overlay-bot";
+    wrapper.appendChild(botOverlay);
+    playerContainer.appendChild(wrapper);
     if (currentUserId) setupYouTubeProgressTracking(id);
   } else {
     let video = document.createElement("video");
