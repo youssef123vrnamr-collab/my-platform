@@ -2022,29 +2022,29 @@ async function updateAdminUI() {
     cont.appendChild(msgEl);
     cont.scrollTop = cont.scrollHeight;
 
-    // ترجمة (6 ثواني timeout)
+    // Improve prompt using Groq
     let enPrompt = "";
     try {
       const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 6000);
+      setTimeout(() => ctrl.abort(), 10000);
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST", signal: ctrl.signal,
         headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [
-            { role: "system", content: "Translate Arabic to English for AI image generation. Reply ONLY with a concise English description, max 20 words. No quotes, no explanation." },
+            { role: "system", content: "You are an expert prompt engineer for image generation. The user will provide a request in Arabic. Translate and expand it into a highly detailed, stunning, masterpiece English image generation prompt. Include lighting, atmosphere, and artistic style. Max 50 words. Do NOT include any intro text, just the raw prompt." },
             { role: "user", content: prompt }
           ],
-          max_tokens: 60, temperature: 0.3
+          max_tokens: 150, temperature: 0.7
         })
       });
       const d = await r.json();
       enPrompt = (d?.choices?.[0]?.message?.content || "").trim();
     } catch(e) {}
 
-    if (!enPrompt) enPrompt = prompt.substring(0, 100);
-    const finalPrompt = `epic space astronomy ${enPrompt} cinematic dramatic 8k ultra detailed`;
+    if (!enPrompt) enPrompt = prompt.substring(0, 100) + " highly detailed masterpiece";
+    const finalPrompt = enPrompt;
 
     // استدعاء Vercel proxy بدل Pollinations مباشرة
     await _doGenerate(finalPrompt, uid, prompt, cont, seed, 1);
@@ -9915,7 +9915,7 @@ function slStopAllAnimations() {
     clearInterval(iv);
 
     // ── THE ONE CLEAN sendAIMessage ──
-    window.sendAIMessage = async function(injectedMsg) {
+    window.sendAIMessage = async function(injectedMsg, injectedImage) {
       var inp  = document.getElementById('aiChatInput');
       var msgs = document.getElementById('aiChatMessages');
 
@@ -9937,7 +9937,7 @@ function slStopAllAnimations() {
               div.innerHTML = '<img src="'+e.target.result+'" style="max-width:180px;border-radius:10px;display:block;margin-bottom:.3rem"><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
               msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
             }
-            await window.sendAIMessage(extraText || ('صف هذه الصورة باللغة العربية: "'+file.name+'"'));
+            await window.sendAIMessage(extraText || ('صف هذه الصورة باللغة العربية: "'+file.name+'"'), e.target.result);
           };
           reader.readAsDataURL(file);
         } else {
@@ -10009,9 +10009,21 @@ function slStopAllAnimations() {
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
 
       function buildPayload(model, maxTok, hist) {
+        var messages = [{ role:'system', content: persona.systemPrompt }].concat(hist);
+        var userContent;
+        if (injectedImage) {
+            userContent = [
+                { type: "text", text: userMsg },
+                { type: "image_url", image_url: { url: injectedImage } }
+            ];
+            model = 'llama-3.2-90b-vision-preview'; // Override model for vision capabilities
+        } else {
+            userContent = userMsg;
+        }
+        messages.push({ role: 'user', content: userContent });
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt }].concat(hist).concat([{ role:'user', content: userMsg }]),
+          messages: messages,
           max_tokens: maxTok,
           temperature: 0.4
         };
