@@ -6866,10 +6866,28 @@ window.playChatSound = function() {
     showToast('🗑️ تم مسح المحادثة');
   };
 
-  // Fix handleAIFileSelect - ensure it works correctly
+  // Fix handleAIFileSelect - ensure it works correctly and robustly
   window.handleAIFileSelect = function(input) {
     const file = input.files[0];
     if (!file) return;
+
+    // Check file size (max 5MB)
+    const MAX_SIZE_MB = 5;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      if (typeof showToast === 'function') showToast(`❌ حجم الملف كبير جداً! الحد الأقصى هو ${MAX_SIZE_MB} ميجابايت.`);
+      input.value = '';
+      return;
+    }
+
+    // Basic type checking
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'text/plain', 'text/html', 'text/css', 'text/javascript', 'application/json', 'text/csv'];
+    const isTextExt = file.name.match(/\.(txt|md|js|css|html|json|csv)$/i);
+    if (!file.type.startsWith('image/') && !validTypes.includes(file.type) && !isTextExt) {
+      if (typeof showToast === 'function') showToast('⚠️ يرجى رفع صورة أو ملف نصي فقط.');
+      input.value = '';
+      return;
+    }
+
     window._aiSelectedFile = file;
     const preview = document.getElementById('aiFilePreview');
     const name = document.getElementById('aiFilePreviewName');
