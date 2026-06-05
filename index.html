@@ -83,6 +83,49 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ===== إصلاح الفيديو: يملأ المساحة السوداء بالكامل ===== */
+    .video-player-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .video-player-container .yt-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .video-player-container .yt-wrapper iframe,
+    .video-player-container .youtube-iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      aspect-ratio: unset !important;
+    }
+    .video-player-container .video-player {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    /* ===== video-with-board: المنطقة الرئيسية للفيديو ===== */
+    .video-with-board {
+      display: flex;
+      height: 100%;
+      min-height: 300px;
+    }
+    .video-with-board .video-player-container {
+      flex: 1;
+      min-height: 300px;
+    }
+  </style>
 </head>
 <body>
 

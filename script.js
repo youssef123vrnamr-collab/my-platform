@@ -1250,8 +1250,7 @@ async function updateAdminUI() {
     iframe.classList.add("youtube-iframe");
     iframe.width = "100%";
     iframe.height = "100%";
-    iframe.style.aspectRatio = "16 / 9";
-    iframe.style.border = "none";
+    iframe.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;top:0;left:0;";
     iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3&cc_load_policy=0`;
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope";
     iframe.allowFullscreen = true;
@@ -1260,6 +1259,7 @@ async function updateAdminUI() {
     // ── Overlay يخفي controls يوتيوب ──
     let wrapper = document.createElement("div");
     wrapper.className = "yt-wrapper";
+    wrapper.style.cssText = "position:relative;width:100%;height:100%;";
     wrapper.appendChild(iframe);
     // overlay علوي (channel name / CC / settings / share)
     let topOverlay = document.createElement("div");
@@ -2079,37 +2079,30 @@ async function updateAdminUI() {
       if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
     }, 1000);
 
+    // Pollinations.ai — مجاني 100% بدون API key
+    const pollinationsModels = ["flux", "flux-realism", "turbo"];
+    const chosenModel = pollinationsModels[attempt - 1] || "flux";
+    const encodedPrompt = encodeURIComponent(finalPrompt);
+    const imgSeed = seed + attempt;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${chosenModel}&seed=${imgSeed}&width=768&height=512&nologo=true&enhance=true`;
+
     try {
-      const response = await fetch("/api/imagine", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: finalPrompt, model: attempt - 1 })
+      // نعمل preload للصورة عشان نعرف لو نجحت ولا لا
+      await new Promise((resolve, reject) => {
+        const testImg = new Image();
+        const timeout = setTimeout(() => reject(new Error("timeout")), 50000);
+        testImg.onload = () => { clearTimeout(timeout); resolve(); };
+        testImg.onerror = () => { clearTimeout(timeout); reject(new Error("load error")); };
+        testImg.src = imageUrl;
       });
 
       clearInterval(ticker);
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        if (errData.tryNext && attempt < 3) {
-          _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
-        } else {
-          stEl.innerHTML = `❌ فشل توليد الصورة (${response.status}).
-            <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
-              style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
-                     border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
-                     font-size:.85rem;margin-top:6px;display:inline-block;">
-              <i class="fas fa-redo"></i> إعادة المحاولة
-            </button>`;
-        }
-        return;
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
       const img = document.createElement("img");
       img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
-      img.onclick = function() { if (typeof viewImage === "function") viewImage(url); };
-      img.src = url;
+      img.onclick = function() { if (typeof viewImage === "function") viewImage(imageUrl); };
+      img.src = imageUrl;
+      img.loading = "lazy";
 
       if (txEl) txEl.textContent = "";
       stEl.innerHTML =
@@ -2125,7 +2118,7 @@ async function updateAdminUI() {
 
     } catch (err) {
       clearInterval(ticker);
-      console.warn("_doGenerate error:", err);
+      console.warn("_doGenerate pollinations error:", err);
       if (attempt < 3) {
         _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
       } else {
@@ -4244,7 +4237,7 @@ function switchProgressTab(tab) {
   let _newsCache = null, _newsTime = 0, _newsDisplayOffset = 0;
   // اخلي _newsTime global عشان countdown يشوفه
   window._getNewsTime = function(){ return _newsTime; };
-  const NEWS_TTL = 60 * 60 * 1000; // كل ساعة
+  const NEWS_TTL = 0; // تتجدد الأخبار عند كل فتح للمنصة
   const NEWS_PAGE_SIZE = 12;
   window._currentNewsTab = 'all';
 
@@ -4768,7 +4761,7 @@ function switchProgressTab(tab) {
 
   // cache مستقل لكل قسم
   const _catNewsCache = {};
-  const CAT_NEWS_TTL = 60 * 60 * 1000; // كل ساعة
+  const CAT_NEWS_TTL = 0; // تتجدد عند كل فتح
 
   async function fetchCategoryNews(key) {
     // cache مخصص لكل قسم
