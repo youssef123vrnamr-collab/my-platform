@@ -3159,19 +3159,16 @@ body {
 .persona-close-btn {
   position: absolute;
   top: 1rem; left: 1rem;
-  width: 44px; height: 44px;
-  background: rgba(239,68,68,.25);
-  border: 1.5px solid rgba(239,68,68,.5);
-  border-radius: 12px;
+  width: 40px; height: 40px;
+  background: rgba(239,68,68,.2);
+  border: none;
+  border-radius: 10px;
   color: #ef4444;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  display: flex !important;
-  align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   transition: background .2s;
-  z-index: 100;
-  visibility: visible !important;
-  opacity: 1 !important;
+  z-index: 10;
 }
 .persona-close-btn:hover { background: rgba(239,68,68,.4); }
 @keyframes personaFadeIn {
@@ -3190,12 +3187,11 @@ body {
 .persona-modal-title p { color: #888; font-size: .88rem; }
 .persona-grid {
   display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: .75rem;
+  grid-template-columns: repeat(2,1fr);
+  gap: .85rem;
   margin-bottom: 1.5rem;
 }
-@media(max-width:500px) { .persona-grid { grid-template-columns: repeat(2,1fr); } }
-@media(max-width:340px) { .persona-grid { grid-template-columns: 1fr; } }
+@media(max-width:420px) { .persona-grid { grid-template-columns: 1fr; } }
 .persona-card {
   background: rgba(255,255,255,.04);
   border: 2px solid rgba(99,102,241,.22);
@@ -3290,9 +3286,9 @@ body {
 /* ── Daily Quest Bar ── */
 .dq-bar{display:none;}
 /* ── Quest Modal ── */
-.dq-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;padding:1rem;}
+.dq-modal{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#1a1025,#0f0a1a);display:none;align-items:stretch;justify-content:stretch;padding:0;}
 .dq-modal.active{display:flex;}
-.dq-sheet{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.4);border-radius:28px 28px 18px 18px;width:100%;max-width:480px;padding:1.5rem;max-height:85vh;overflow-y:auto;}
+.dq-sheet{background:transparent;border:none;border-radius:0;width:100%;max-width:100%;padding:1.5rem;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .dq-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
 .dq-title{font-size:1.15rem;font-weight:900;background:linear-gradient(135deg,#fde047,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .dq-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;}
@@ -3322,9 +3318,9 @@ body {
 
 
 
-.lb-modal{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.82);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.lb-modal{position:fixed;inset:0;z-index:9998;background:linear-gradient(160deg,#1a1025,#0f0a1a);display:none;align-items:stretch;justify-content:stretch;padding:0;}
 .lb-modal.active{display:flex;}
-.lb-card{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.4);border-radius:24px;width:100%;max-width:460px;padding:1.5rem;max-height:85vh;overflow-y:auto;}
+.lb-card{background:transparent;border:none;border-radius:0;width:100%;max-width:100%;padding:1.5rem;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .lb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
 .lb-head-title{font-size:1.15rem;font-weight:900;color:#e0e7ff;display:flex;align-items:center;gap:.5rem;}
 .lb-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;}
