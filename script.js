@@ -907,16 +907,39 @@ async function updateAdminUI() {
     if (!grid) return;
     const bgs = CHAT_BACKGROUNDS[currentBgTab];
     const saved = getChatBgSettings()[currentBgTab] || '';
-    grid.innerHTML = bgs.map(bg => `
-      <div class="chat-bg-item ${saved === bg.style ? 'selected' : ''}" 
-           style="background:${bg.style}"
-           onclick="selectChatBg('${bg.id}','${currentBgTab}','${bg.style.replace(/'/g,"\\'") }',this)">
-        <span>${bg.name}</span>
-      </div>`).join('');
+    grid.innerHTML = bgs.map(bg => {
+      const esc = bg.style.replace(/'/g, String.fromCharCode(92)+String.fromCharCode(39));
+      return '<div class="chat-bg-item '+(saved===bg.style?'selected':'')+'" '
+        + 'style="background:'+bg.style+'" '
+        + 'onmouseenter="previewChatBg(\'' + currentBgTab + '\',\''+esc+'\');return false" '
+        + 'onmouseleave="cancelPreviewChatBg(\'' + currentBgTab + '\')" '
+        + 'onclick="selectChatBg(\'' + bg.id + '\',\'' + currentBgTab + '\',\''+esc+'\',this)">'
+        + '<span>'+bg.name+'</span></div>';
+    }).join('');
+  }
+  let _previewBgPrev = {};
+  function previewChatBg(type, style) {
+    const targets = { ai: '#aiChatMessages', public: '#chatMessages', private: '#pacMessages' };
+    const el = document.querySelector(targets[type]);
+    if (!el) return;
+    _previewBgPrev[type] = el.style.background;
+    el.style.transition = 'background .25s ease';
+    el.style.background = style;
+  }
+  function cancelPreviewChatBg(type) {
+    const saved = getChatBgSettings()[type] || '';
+    const targets = { ai: '#aiChatMessages', public: '#chatMessages', private: '#pacMessages' };
+    const el = document.querySelector(targets[type]);
+    if (!el) return;
+    el.style.transition = 'background .25s ease';
+    el.style.background = saved || '';
   }
   function selectChatBg(id, type, style, el) {
     document.querySelectorAll('#chatBgGrid .chat-bg-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
+    const tgts = { ai: '#aiChatMessages', public: '#chatMessages', private: '#pacMessages' };
+    const tgt = document.querySelector(tgts[type]);
+    if (tgt) { tgt.style.transition = 'background .3s ease'; tgt.style.background = style; }
     saveChatBgSetting(type, style);
     showToast('✅ تم تغيير الخلفية');
   }
@@ -2773,14 +2796,9 @@ async function updateAdminUI() {
   });
 
   window.addEventListener("load", function() {
-    // تحميل الأخبار المحفوظة من localStorage عشان تشتغل فوراً قبل الشبكة
-    try {
-      const stored = JSON.parse(localStorage.getItem('falak_news_cache') || 'null');
-      if (stored && stored.articles && stored.articles.length && stored.time && (Date.now() - stored.time) < (60 * 60 * 1000)) {
-        _newsCache = stored.articles;
-        _newsTime = stored.time;
-      }
-    } catch(e){}
+    // الأخبار تتجدد دايماً عند كل دخول للمنصة — امسح الكاش القديم
+    try { localStorage.removeItem('falak_news_cache'); } catch(e){}
+    _newsCache = null; _newsTime = 0;
     loadUserDataFromStorage(); hideLoader(); requestFullscreenAutomatically(); setTimeout(requestFullscreenAutomatically, 1000); initAuthState(); loadEmailSettingsFromFirestore(); try { loadAiKeyOnce(); listenAiKey(); } catch(_){} document.getElementById("googleSignInBtn").onclick = googleLogin; document.getElementById("googleLogoutBtn").onclick = googleLogout; setTimeout(() => updateAdminUI(), 500); setInterval(cleanupOldSessions, 60 * 60 * 1000); });
   setTimeout(hideLoader, 5000);
   window.addEventListener("unload", function() { if (currentUserId) saveUserDataToFirebase(currentUserId); if (unsubscribeVideos) unsubscribeVideos(); if (unsubscribeExams) unsubscribeExams(); if (unsubscribeExamResults) unsubscribeExamResults(); if (unsubscribeAIKnowledge) unsubscribeAIKnowledge(); if (unsubscribeMaintenance) unsubscribeMaintenance(); if (unsubscribeApps) unsubscribeApps(); if(feedbacksUnsubscribe) feedbacksUnsubscribe(); removePresence(); });
@@ -4580,35 +4598,52 @@ function switchProgressTab(tab) {
     <p style="font-size:.78rem;color:#9ca3af;margin-top:.65rem;text-align:center"><i class="fas fa-circle-info"></i> المصدر: The Space Devs (Launch Library 2)</p>`;
   }
 
+  // مصادر مقفولة / تحتاج login — نوجّه المستخدم لصفحة بحث بدلها
+  const PAYWALLED_DOMAINS = ['x.com','twitter.com','nytimes.com','wsj.com','ft.com','bloomberg.com','theatlantic.com','wired.com'];
+  function isBehindWall(url) {
+    try { const h = new URL(url).hostname.replace('www.',''); return PAYWALLED_DOMAINS.some(d => h === d || h.endsWith('.'+d)); } catch(e){ return false; }
+  }
+  function safeNewsUrl(a) {
+    const raw = a.url || '';
+    if (!raw || raw === '#') return '#';
+    if (isBehindWall(raw)) {
+      // fallback: Google News search بعنوان الخبر
+      return 'https://news.google.com/search?q=' + encodeURIComponent(a.title || 'space news') + '&hl=ar';
+    }
+    return raw;
+  }
+
   function renderNewsCards(articles){
     if (!articles || !articles.length) {
       return '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب التحديث أو تأكد من الاتصال.</p></div>';
     }
     const fallback = 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70';
-    // ألوان المصادر
     const sourceColors = { nasa: '#fc3d21', esa: '#003087', spaceflight: '#ec4899', default: '#6366f1' };
-    const sourceIcons = { nasa: 'fa-meteor', esa: 'fa-satellite', default: 'fa-rss' };
-    return `<div class="cosmos-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem">${articles.map(a=>{
-      const url = a.url || '#';
-      const img = a.image_url || fallback;
-      const src = a._source || 'spaceflight';
+    const sourceIcons  = { nasa: 'fa-meteor', esa: 'fa-satellite', default: 'fa-rss' };
+    return `<div class="cosmos-cards cosmos-news-grid">${articles.map(a=>{
+      const url     = safeNewsUrl(a);
+      const isWall  = isBehindWall(a.url || '');
+      const img     = a.image_url || fallback;
+      const src     = a._source || 'spaceflight';
       const srcName = a._sourceName || a.news_site || 'Space News';
-      const srcColor = sourceColors[src] || sourceColors.default;
-      const srcIcon = sourceIcons[src] || sourceIcons.default;
+      const srcColor= sourceColors[src] || sourceColors.default;
+      const srcIcon = sourceIcons[src]  || sourceIcons.default;
+      const ago     = escapeHtml(timeAgo(a.published_at));
       return `
-      <a class="cosmos-card cosmos-news-card" href="${encodeURI(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit;display:block">
+      <a class="cosmos-card cosmos-news-card" href="${url}" target="_blank" rel="noopener noreferrer">
         <div class="cosmos-card-img" style="background-image:url('${encodeURI(img)}')" onerror="this.style.backgroundImage='url(${fallback})'">
-          <span class="cosmos-card-tag floating" style="background:${srcColor};color:#fff"><i class="fas ${srcIcon}"></i> ${escapeHtml(srcName)}</span>
-          <span class="cosmos-card-time"><i class="far fa-clock"></i> ${escapeHtml(timeAgo(a.published_at))}</span>
+          <span class="cosmos-card-tag floating" style="background:${srcColor}"><i class="fas ${srcIcon}"></i> ${escapeHtml(srcName)}</span>
+          <span class="cosmos-card-time"><i class="far fa-clock"></i> ${ago}</span>
+          ${isWall ? '<span class="cosmos-wall-badge"><i class="fas fa-search"></i> بحث Google</span>' : ''}
         </div>
         <div class="cosmos-card-body">
-          <h4>${escapeHtml(a.title||'')}</h4>
-          <p>${escapeHtml((a.summary||'').slice(0, 220))}${(a.summary||'').length>220?'…':''}</p>
-          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ الخبر كاملاً من المصدر</span>
+          <h4 class="cosmos-news-title">${escapeHtml(a.title||'')}</h4>
+          <p class="cosmos-news-summary">${escapeHtml((a.summary||'').slice(0, 200))}${(a.summary||'').length>200?'…':''}</p>
+          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> ${isWall ? 'بحث عن الخبر' : 'اقرأ من المصدر'}</span>
         </div>
       </a>`;
     }).join('')}</div>
-    <p style="font-size:.78rem;color:#9ca3af;margin-top:1rem;text-align:center"><i class="fas fa-circle-info"></i> المصادر: Spaceflight News API · NASA RSS · ESA RSS — تتجدد يومياً</p>`;
+    <p class="cosmos-news-footer"><i class="fas fa-circle-info"></i> Spaceflight News · NASA · ESA — تتجدد تلقائياً عند كل دخول</p>`;
   }
 
   window.openCosmosCategory = async function(key){

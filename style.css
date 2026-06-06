@@ -4390,3 +4390,193 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+/* ═══════════════════════════════════════════════════════
+   🗞️ NEWS CARDS — Modern Editorial Redesign v2
+═══════════════════════════════════════════════════════ */
+
+/* News grid — 3 cols on desktop, adaptive */
+.cosmos-news-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+  gap: 1.5rem !important;
+}
+
+/* News card base */
+.cosmos-news-card {
+  background: linear-gradient(165deg,
+    rgba(20,13,35,.97) 0%,
+    rgba(13,8,22,.98) 100%
+  ) !important;
+  border: 1px solid rgba(139,92,246,.18) !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s, border-color .28s !important;
+  box-shadow: 0 8px 28px -12px rgba(0,0,0,.7) !important;
+  position: relative;
+}
+.cosmos-news-card:hover {
+  transform: translateY(-6px) !important;
+  border-color: rgba(167,139,250,.45) !important;
+  box-shadow: 0 20px 44px -12px rgba(99,102,241,.35) !important;
+}
+
+/* Card image */
+.cosmos-news-card .cosmos-card-img {
+  height: 190px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-color: #100820 !important;
+  position: relative !important;
+  overflow: hidden;
+}
+.cosmos-news-card .cosmos-card-img::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(180deg, rgba(0,0,0,.08) 0%, rgba(13,8,22,.85) 100%) !important;
+}
+.cosmos-news-card:hover .cosmos-card-img::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(99,102,241,.08);
+  z-index: 1;
+  transition: opacity .3s;
+}
+
+/* News title */
+.cosmos-news-title {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+  color: #f1f0f8 !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #f1f0f8 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+/* News summary */
+.cosmos-news-summary {
+  font-size: .83rem !important;
+  line-height: 1.65 !important;
+  color: #9e99b3 !important;
+  margin: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+/* Card body */
+.cosmos-news-card .cosmos-card-body {
+  padding: 1rem 1.15rem 1.25rem !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: .5rem !important;
+}
+
+/* Read more link */
+.cosmos-read-more {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: .4rem !important;
+  margin-top: auto !important;
+  padding-top: .65rem !important;
+  color: #a78bfa !important;
+  font-size: .8rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .2px;
+}
+.cosmos-news-card:hover .cosmos-read-more {
+  color: #c4b5fd !important;
+}
+
+/* X/Twitter paywall badge */
+.cosmos-wall-badge {
+  position: absolute !important;
+  bottom: .65rem !important;
+  left: .65rem !important;
+  z-index: 3 !important;
+  background: rgba(0,0,0,.75) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(234,179,8,.4) !important;
+  color: #fde047 !important;
+  padding: .22rem .65rem !important;
+  border-radius: 999px !important;
+  font-size: .7rem !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: .3rem !important;
+}
+
+/* News footer */
+.cosmos-news-footer {
+  font-size: .77rem !important;
+  color: #6b7280 !important;
+  margin-top: 1.25rem !important;
+  text-align: center !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+}
+
+/* Source tag polish for news */
+.cosmos-news-card .cosmos-card-tag.floating {
+  font-size: .7rem !important;
+  padding: .25rem .65rem !important;
+  backdrop-filter: blur(12px) !important;
+  border: none !important;
+  letter-spacing: .2px;
+}
+
+/* Background selector — instant preview indicator */
+.chat-bg-item {
+  transition: transform .2s ease, box-shadow .2s ease, outline .15s ease !important;
+}
+.chat-bg-item:hover {
+  transform: scale(1.04) !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,.6), 0 8px 20px rgba(0,0,0,.4) !important;
+  outline: none !important;
+}
+
+/* News tab buttons — modern pill style */
+.news-tab-btn {
+  padding: .4rem 1rem !important;
+  border-radius: 999px !important;
+  font-size: .8rem !important;
+  font-weight: 700 !important;
+  transition: all .2s ease !important;
+}
+.news-tab-btn.active-tab {
+  background: rgba(236,72,153,.25) !important;
+  border-color: rgba(236,72,153,.6) !important;
+  color: #f9a8d4 !important;
+}
+
+@media (max-width: 768px) {
+  .cosmos-news-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  .cosmos-news-card .cosmos-card-img {
+    height: 170px !important;
+  }
+}
+@media (min-width: 769px) and (max-width: 1100px) {
+  .cosmos-news-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
