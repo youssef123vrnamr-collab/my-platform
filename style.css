@@ -4827,44 +4827,20 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
 
 
-/* ══════════════════════════════════════════
-   ⚡ PAUSE ANIMATIONS WHEN ANY MODAL IS OPEN
-   لما أي صفحة/modal تتفتح — كل الـ animations
-   في الخلفية بتوقف فوراً
-══════════════════════════════════════════ */
+/* ⚡ وقف الـ animations لما modal مفتوح */
 body.modal-open .nebula,
-body.modal-open .nebula:first-child,
-body.modal-open .nebula:nth-child(2),
 body.modal-open body::before,
 body.modal-open body::after,
 body.modal-open .brand-logo,
-body.modal-open .landing-icon,
-body.modal-open .maintenance-icon,
-body.modal-open .chat-header::after,
-body.modal-open .pac-header::after,
-body.modal-open .chat-btn::before,
-body.modal-open .ai-chat-btn::before,
-body.modal-open .storage-bar::after,
-body.modal-open .upload-progress-fill::after,
-body.modal-open .progress-overall-fill::after,
-body.modal-open .sl-progress-fill::after,
-body.modal-open .sl-welcome-mascot,
 body.modal-open .hero h2 span,
-body.modal-open .online-dot,
-body.modal-open .notification-badge,
-body.modal-open .online-indicator,
-body.modal-open .cosmos-pill-progress .pill-icon,
-body.modal-open .cosmos-pill-contact .pill-icon,
-body.modal-open [class*="planet"],
-body.modal-open [class*="orbit"],
-body.modal-open [class*="laser"],
-body.modal-open [class*="star-glow"] {
+body.modal-open .storage-bar::after,
+body.modal-open .sl-welcome-mascot,
+body.modal-open .chat-header::after,
+body.modal-open .chat-btn::before,
+body.modal-open .ai-chat-btn::before {
   animation-play-state: paused !important;
 }
-
-/* وقف الـ background pseudo-elements على الـ body */
 body.modal-open::before,
 body.modal-open::after {
   animation-play-state: paused !important;
 }
-

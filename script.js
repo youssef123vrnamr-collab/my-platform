@@ -10720,46 +10720,52 @@ setInterval(() => { if (currentUserId) updateFriendChatBadge(); }, 30000);
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge, 3000));
 
 
-/* ══════════════════════════════════════════
-   ⚡ ANIMATION PAUSE — لما أي modal يتفتح
-   الـ animations بتوقف، لما يتقفل بتشتغل تاني
-══════════════════════════════════════════ */
-(function() {
-  function checkAnyModalOpen() {
-    // شوف لو أي modal أو dq أو lb مفتوح
-    const anyOpen =
-      document.querySelector('.modal.active') ||
-      document.querySelector('.dq-modal.active') ||
-      document.querySelector('.lb-modal.active') ||
-      document.querySelector('#aiPersonaModal.active') ||
-      document.querySelector('.chat-modal.active') ||
-      document.querySelector('.maintenance-overlay.active') ||
-      document.querySelector('.landing-page[style*="flex"]') ||
-      document.querySelector('.apps-modal.active');
+/* ══════════ ANIMATION PAUSE SYSTEM ══════════ */
+function pauseBgAnimations() {
+  document.body.classList.add('modal-open');
+}
+function resumeBgAnimations() {
+  // شوف لو في modal تاني مفتوح الأول
+  const stillOpen = document.querySelector(
+    '.modal.active, .dq-modal.active, .lb-modal.active, #aiPersonaModal.active'
+  );
+  if (!stillOpen) document.body.classList.remove('modal-open');
+}
 
-    if (anyOpen) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-  }
+// Hook على كل الـ open/close functions الموجودة
+(function(){
+  const opens = [
+    'playVideo','openTakeExamModal','openTeachAICircleModal',
+    'showCoursesList','openManageAppsModal','openAppsModal',
+    'openFeedbackModal','openViewFeedbacksModal','openEmailSettingsModal',
+    'openVoiceSettings','openAiKeyModal','openMaintenanceModal',
+    'openSetAdminsModal','openChatBgModal','openZoomLinkSettings',
+    'openSupervisorPayoutModal','openPdfManagerModal','openExamResultModal',
+    'openHowToUseModal','openSelfLearning','showAddAppForm',
+    'openStudentProgress','openCertificatesManager'
+  ];
+  const closes = [
+    'closeModal','closeLogin','closeTeachAICircleModal','closeDescriptionModal',
+    'closeEditVideoModal','closeManageAppsModal','closeAppsModal',
+    'closeFeedbackModal','closeViewFeedbacksModal','closeEmailSettingsModal',
+    'closeVoiceSettings','closeAiKeyModal','closeMaintenanceModal',
+    'closeSetAdminsModal','closeChatBgModal','closeZoomLinkSettings',
+    'closeSupervisorPayoutModal','closePdfManagerModal','closeExamResultModal',
+    'closeHowToUseModal','closeAddAppModal','closeTakeExamModal',
+    'closeAdminPasswordModal','closeAddExamModal','closeViewResultsModal',
+    'closeImageViewer','closeReplyModal'
+  ];
 
-  // راقب أي تغيير في الـ class على أي عنصر في الصفحة
-  const observer = new MutationObserver(function(mutations) {
-    for (const m of mutations) {
-      if (m.type === 'attributes' && m.attributeName === 'class') {
-        checkAnyModalOpen();
-        break;
-      }
+  opens.forEach(fn => {
+    if (typeof window[fn] === 'function') {
+      const orig = window[fn];
+      window[fn] = function() { pauseBgAnimations(); return orig.apply(this, arguments); };
     }
   });
-
-  observer.observe(document.body, {
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['class', 'style']
+  closes.forEach(fn => {
+    if (typeof window[fn] === 'function') {
+      const orig = window[fn];
+      window[fn] = function() { const r = orig.apply(this, arguments); resumeBgAnimations(); return r; };
+    }
   });
-
-  // شغل مرة أول ما الصفحة تحمل
-  document.addEventListener('DOMContentLoaded', checkAnyModalOpen);
 })();
