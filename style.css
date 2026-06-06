@@ -4827,20 +4827,90 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
 
 
-/* ⚡ وقف الـ animations لما modal مفتوح */
-body.modal-open .nebula,
-body.modal-open body::before,
-body.modal-open body::after,
-body.modal-open .brand-logo,
-body.modal-open .hero h2 span,
-body.modal-open .storage-bar::after,
-body.modal-open .sl-welcome-mascot,
-body.modal-open .chat-header::after,
-body.modal-open .chat-btn::before,
-body.modal-open .ai-chat-btn::before {
-  animation-play-state: paused !important;
+/* ══════════════════════════════════════════
+   🚫 إزالة النيازك والـ laser rings والنجوم
+══════════════════════════════════════════ */
+.shooting-star, .s1, .s2, .s3,
+.laser-ring, .laser-ring-1, .laser-ring-2, .laser-ring-3,
+.star-glow, .nebula {
+  display: none !important;
+  animation: none !important;
 }
-body.modal-open::before,
-body.modal-open::after {
-  animation-play-state: paused !important;
+
+/* ══════════════════════════════════════════
+   ✨ خلفية جديدة خفيفة واحترافية
+   حلقات ضوئية هادئة بتتحرك ببطء
+══════════════════════════════════════════ */
+
+/* حلقة ضوئية كبيرة في اليسار */
+.app-wrapper::before {
+  content: '';
+  position: fixed;
+  top: -200px;
+  left: -200px;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  border: 1px solid rgba(99,102,241,0.08);
+  box-shadow:
+    0 0 0 40px rgba(99,102,241,0.03),
+    0 0 0 80px rgba(99,102,241,0.02),
+    0 0 0 120px rgba(99,102,241,0.01);
+  pointer-events: none;
+  z-index: 0;
+  animation: haloFloat 18s ease-in-out infinite;
+  will-change: transform;
 }
+
+/* حلقة ضوئية في اليمين */
+.app-wrapper::after {
+  content: '';
+  position: fixed;
+  bottom: -150px;
+  right: -150px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  border: 1px solid rgba(6,182,212,0.07);
+  box-shadow:
+    0 0 0 35px rgba(6,182,212,0.025),
+    0 0 0 70px rgba(6,182,212,0.015),
+    0 0 0 105px rgba(6,182,212,0.008);
+  pointer-events: none;
+  z-index: 0;
+  animation: haloFloat 22s ease-in-out infinite reverse;
+  will-change: transform;
+}
+
+@keyframes haloFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -25px) scale(1.04); }
+  66%       { transform: translate(-20px, 20px) scale(0.97); }
+}
+
+/* خط أفقي متوهج خفيف في المنتصف */
+.app-wrapper .navbar::after {
+  content: '';
+  position: fixed;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(99,102,241,0.06) 20%,
+    rgba(139,92,246,0.12) 50%,
+    rgba(99,102,241,0.06) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: lineGlow 8s ease-in-out infinite;
+}
+
+@keyframes lineGlow {
+  0%, 100% { opacity: 0.4; transform: translateY(0); }
+  50%       { opacity: 1;   transform: translateY(-8px); }
+}
+

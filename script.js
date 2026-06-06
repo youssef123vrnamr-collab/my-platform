@@ -10226,19 +10226,7 @@ function slStopAllAnimations() {
 
 
 (function(){
-  // ── 5A: Generate breathing stars ──
-  function addGlowStars(){
-    var frag = document.createDocumentFragment();
-    for(var i=0;i<28;i++){
-      var s=document.createElement('div');
-      var sz=(Math.random()*3+1).toFixed(1);
-      s.className='star-glow';
-      s.style.cssText='width:'+sz+'px;height:'+sz+'px;top:'+(Math.random()*100)+'vh;left:'+(Math.random()*100)+'vw;animation:starGlow '+(Math.random()*4+3).toFixed(1)+'s '+(Math.random()*5).toFixed(1)+'s infinite;';
-      frag.appendChild(s);
-    }
-    document.body.appendChild(frag);
-  }
-  addGlowStars();
+  // Stars removed
 
   // ── 5B: Lazy-load YouTube iframes with IntersectionObserver ──
   function lazyIframes(){
@@ -10718,54 +10706,3 @@ async function updateFriendChatBadge() {
 }
 setInterval(() => { if (currentUserId) updateFriendChatBadge(); }, 30000);
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge, 3000));
-
-
-/* ══════════ ANIMATION PAUSE SYSTEM ══════════ */
-function pauseBgAnimations() {
-  document.body.classList.add('modal-open');
-}
-function resumeBgAnimations() {
-  // شوف لو في modal تاني مفتوح الأول
-  const stillOpen = document.querySelector(
-    '.modal.active, .dq-modal.active, .lb-modal.active, #aiPersonaModal.active'
-  );
-  if (!stillOpen) document.body.classList.remove('modal-open');
-}
-
-// Hook على كل الـ open/close functions الموجودة
-(function(){
-  const opens = [
-    'playVideo','openTakeExamModal','openTeachAICircleModal',
-    'showCoursesList','openManageAppsModal','openAppsModal',
-    'openFeedbackModal','openViewFeedbacksModal','openEmailSettingsModal',
-    'openVoiceSettings','openAiKeyModal','openMaintenanceModal',
-    'openSetAdminsModal','openChatBgModal','openZoomLinkSettings',
-    'openSupervisorPayoutModal','openPdfManagerModal','openExamResultModal',
-    'openHowToUseModal','openSelfLearning','showAddAppForm',
-    'openStudentProgress','openCertificatesManager'
-  ];
-  const closes = [
-    'closeModal','closeLogin','closeTeachAICircleModal','closeDescriptionModal',
-    'closeEditVideoModal','closeManageAppsModal','closeAppsModal',
-    'closeFeedbackModal','closeViewFeedbacksModal','closeEmailSettingsModal',
-    'closeVoiceSettings','closeAiKeyModal','closeMaintenanceModal',
-    'closeSetAdminsModal','closeChatBgModal','closeZoomLinkSettings',
-    'closeSupervisorPayoutModal','closePdfManagerModal','closeExamResultModal',
-    'closeHowToUseModal','closeAddAppModal','closeTakeExamModal',
-    'closeAdminPasswordModal','closeAddExamModal','closeViewResultsModal',
-    'closeImageViewer','closeReplyModal'
-  ];
-
-  opens.forEach(fn => {
-    if (typeof window[fn] === 'function') {
-      const orig = window[fn];
-      window[fn] = function() { pauseBgAnimations(); return orig.apply(this, arguments); };
-    }
-  });
-  closes.forEach(fn => {
-    if (typeof window[fn] === 'function') {
-      const orig = window[fn];
-      window[fn] = function() { const r = orig.apply(this, arguments); resumeBgAnimations(); return r; };
-    }
-  });
-})();
