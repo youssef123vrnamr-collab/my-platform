@@ -4743,29 +4743,48 @@ function switchProgressTab(tab) {
     }
 
     const cat = COSMOS_DATA[key]; if(!cat) return;
+
+    // ── Header: اسم القسم + أيقونة + زرار تحديث
     titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
+
     const liveContainerId = `cosmosLive_${key}`;
-    const hasLive = ['planets','universe','missions','stars','galaxies','blackholes','astronauts','telescopes','phenomena'].includes(key);
 
-    const liveBlock = hasLive ? `
-      <div class="cosmos-modal-intro" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
-        <i class="fas fa-satellite-dish" style="color:#22c55e;margin-left:.5rem"></i>
-        <strong>أخبار ومعلومات مباشرة من مصادر موثوقة</strong>
-        <span style="font-size:.78rem;color:#9ca3af">NASA · ESA · Spaceflight News</span>
-        <button class="cosmos-refresh-btn" onclick="refreshLiveCategory('${key}', event)"><i class="fas fa-rotate"></i> تحديث</button>
-      </div>
-      <div id="${liveContainerId}">
-        <div class="cosmos-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب أحدث البيانات...</p></div>
-      </div>
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:1.5rem 0">
-    ` : '';
+    // ── Skeleton placeholders — تظهر فوراً قبل ما تيجي الأخبار
+    const skeletonCards = [1,2,3,4,5,6].map(() => `
+      <div class="cat-skeleton-card">
+        <div class="cat-skeleton-img"></div>
+        <div class="cat-skeleton-body">
+          <div class="cat-skeleton-line w70"></div>
+          <div class="cat-skeleton-line w90"></div>
+          <div class="cat-skeleton-line w50"></div>
+        </div>
+      </div>`).join('');
 
-    body.innerHTML = liveBlock + renderStaticCosmos(cat);
+    body.innerHTML = `
+      <div class="cat-page-header" style="--cat-color:${cat.color}">
+        <div class="cat-page-badge">
+          <i class="fas ${cat.icon}"></i>
+          <span>${escapeHtml(cat.title)}</span>
+        </div>
+        <p class="cat-page-intro">${escapeHtml(cat.intro)}</p>
+        <div class="cat-page-meta">
+          <span class="cat-source-pill"><i class="fas fa-satellite-dish"></i> NASA</span>
+          <span class="cat-source-pill"><i class="fas fa-globe"></i> ESA</span>
+          <span class="cat-source-pill"><i class="fas fa-rss"></i> Spaceflight News</span>
+          <button class="cat-refresh-btn" onclick="refreshLiveCategory('${key}', event)">
+            <i class="fas fa-rotate"></i> تحديث
+          </button>
+        </div>
+      </div>
+      <div id="${liveContainerId}" class="cat-live-container">
+        <div class="cosmos-news-grid">${skeletonCards}</div>
+      </div>`;
+
     window._openCategoryKey = key;
     m.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    if (hasLive) loadLiveCategoryData(key, cat.color);
+    loadLiveCategoryData(key, cat.color);
   };
 
   // كلمات مفتاحية لكل قسم لفلترة الأخبار
@@ -4846,37 +4865,60 @@ function switchProgressTab(tab) {
     const container = document.getElementById(`cosmosLive_${key}`);
     if (!container) return;
     try {
+      const cat = COSMOS_DATA[key];
       const parts = [];
 
-      // أخبار مخصصة للقسم من Spaceflight News + NASA + ESA
+      // ── 1: أخبار مخصصة للقسم — دايماً تتجدد
       const catNews = await fetchCategoryNews(key);
       if (catNews && catNews.length) {
-        const cat = COSMOS_DATA[key];
-        parts.push(`
-          <div class="cosmos-modal-intro" style="background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.3);margin-bottom:.75rem">
-            <i class="fas fa-newspaper" style="color:#ec4899;margin-left:.5rem"></i>
-            <strong>أحدث أخبار ${escapeHtml(cat ? cat.title : key)}</strong>
-            <span style="font-size:.78rem;color:#9ca3af;margin-right:.5rem">— من مصادر رسمية</span>
-          </div>
-          ${renderNewsCards(catNews.slice(0, 9))}
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:1.5rem 0">
-        `);
+        parts.push(renderNewsCards(catNews.slice(0, 12)));
       }
 
-      // بيانات حية إضافية حسب القسم
+      // ── 2: محتوى إضافي حسب القسم
       if (key === 'universe') {
-        try { const apod = await fetchAPOD(); if (apod) parts.push(renderAPODCard(apod)); } catch(e){ console.warn('apod failed', e); }
+        try {
+          const apod = await fetchAPOD();
+          if (apod) parts.push(`<div class="cat-section-divider"><i class="fas fa-camera"></i> صورة اليوم — ناسا</div>` + renderAPODCard(apod));
+        } catch(e){}
       } else if (key === 'missions') {
-        try { const launches = await fetchUpcomingLaunches(); if (launches && launches.length) parts.push(renderLaunchCards(launches)); } catch(e){ console.warn('launches failed', e); }
+        try {
+          const launches = await fetchUpcomingLaunches();
+          if (launches && launches.length) parts.push(`<div class="cat-section-divider"><i class="fas fa-rocket"></i> إطلاقات قادمة</div>` + renderLaunchCards(launches));
+        } catch(e){}
       }
+
+      // ── 3: Wikipedia cards كمعلومات تكميلية
       if (WIKI_TITLES[key]) {
         const items = await fetchWikiCards(key);
-        if (items.length) parts.push(renderWikiCards(items, color));
+        if (items.length) parts.push(`<div class="cat-section-divider"><i class="fas fa-book-open"></i> معلومات علمية</div>` + renderWikiCards(items, color));
       }
-      container.innerHTML = parts.length ? parts.join('<div style="height:1rem"></div>') : '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد بيانات متاحة الآن لهذا القسم. تأكد من اتصال الإنترنت.</p></div>';
+
+      if (parts.length) {
+        container.innerHTML = parts.join('');
+        // fade-in animation
+        container.style.opacity = '0';
+        requestAnimationFrame(() => {
+          container.style.transition = 'opacity .4s ease';
+          container.style.opacity = '1';
+          setTimeout(() => { container.style.transition = ''; }, 500);
+        });
+      } else {
+        container.innerHTML = `
+          <div class="cosmos-empty">
+            <i class="fas fa-satellite-dish" style="font-size:3rem;color:#6366f1;margin-bottom:1rem;display:block"></i>
+            <p>لا توجد أخبار متاحة الآن لهذا القسم</p>
+            <p style="font-size:.82rem;color:#666;margin-top:.5rem">تأكد من الاتصال بالإنترنت وحاول التحديث</p>
+          </div>`;
+      }
     } catch (e) {
       console.error('live category fetch failed', e);
-      container.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب البيانات الحية، المحتوى المحفوظ ظاهر بالأسفل.</p></div>';
+      const container2 = document.getElementById(`cosmosLive_${key}`);
+      if (container2) container2.innerHTML = `
+        <div class="cosmos-empty">
+          <i class="fas fa-triangle-exclamation" style="font-size:2.5rem;color:#f59e0b;margin-bottom:1rem;display:block"></i>
+          <p>تعذّر جلب الأخبار — تأكد من الاتصال</p>
+          <button class="cat-refresh-btn" style="margin-top:1rem" onclick="refreshLiveCategory('${key}',event)"><i class="fas fa-rotate"></i> إعادة المحاولة</button>
+        </div>`;
     }
   }
 
@@ -4931,9 +4973,18 @@ function switchProgressTab(tab) {
   window.closeCosmosModal = function(){
     window._openCategoryKey = null;
     clearTimeout(window._newsQuestTimer);
-    clearInterval(window._newsReadInterval); // إلغاء عداد الـ progress bar
-    document.getElementById('cosmosModal').classList.remove('active');
-    document.body.style.overflow = '';
+    clearInterval(window._newsReadInterval);
+    const cm = document.getElementById('cosmosModal');
+    if (!cm) return;
+    // إغلاق فوري بدون تأخير
+    cm.style.transition = 'opacity .15s ease';
+    cm.style.opacity = '0';
+    requestAnimationFrame(() => {
+      cm.classList.remove('active');
+      cm.style.opacity = '';
+      cm.style.transition = '';
+      document.body.style.overflow = '';
+    });
   };
 
   window.scrollCosmosCarousel = function(dir){

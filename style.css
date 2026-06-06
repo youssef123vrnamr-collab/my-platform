@@ -4580,3 +4580,248 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   🌌 CATEGORY PAGES — Ultra-Premium Editorial Design v3
+   النجوم · الكواكب · المجرات · الثقوب السوداء · كل الأقسام
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Category Page Header ── */
+.cat-page-header {
+  position: relative;
+  padding: 1.75rem 1.5rem 1.5rem;
+  margin: -1.5rem -1.5rem 1.75rem;
+  background: linear-gradient(165deg,
+    color-mix(in srgb, var(--cat-color, #6366f1) 12%, #0a0510) 0%,
+    rgba(10,5,18,.95) 100%
+  );
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  overflow: hidden;
+}
+.cat-page-header::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--cat-color, #6366f1) 30%, transparent) 0%,
+    transparent 70%
+  );
+  filter: blur(50px);
+  pointer-events: none;
+  opacity: .6;
+}
+
+.cat-page-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  background: color-mix(in srgb, var(--cat-color, #6366f1) 20%, rgba(0,0,0,.4));
+  border: 1px solid color-mix(in srgb, var(--cat-color, #6366f1) 50%, transparent);
+  padding: .45rem 1.1rem;
+  border-radius: 999px;
+  font-size: .88rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: .9rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px -6px color-mix(in srgb, var(--cat-color, #6366f1) 50%, transparent);
+}
+.cat-page-badge i {
+  color: var(--cat-color, #6366f1);
+  font-size: 1rem;
+}
+
+.cat-page-intro {
+  color: rgba(220,215,235,.75);
+  font-size: .9rem;
+  line-height: 1.7;
+  max-width: 680px;
+  margin: 0 0 1.1rem;
+}
+
+.cat-page-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.cat-source-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #a1a0b8;
+  padding: .28rem .75rem;
+  border-radius: 999px;
+  font-size: .73rem;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}
+
+.cat-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  background: rgba(99,102,241,.18);
+  border: 1px solid rgba(99,102,241,.45);
+  color: #a5b4fc;
+  padding: .42rem 1.1rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Cairo', sans-serif;
+  transition: all .2s ease;
+  margin-right: auto;
+}
+.cat-refresh-btn:hover {
+  background: rgba(99,102,241,.32);
+  color: #c7d2fe;
+  transform: translateY(-1px);
+}
+.cat-refresh-btn i {
+  transition: transform .5s ease;
+}
+.cat-refresh-btn:hover i { transform: rotate(180deg); }
+
+/* ── Live container ── */
+.cat-live-container {
+  animation: catFadeIn .35s ease both;
+}
+@keyframes catFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Section dividers between content blocks ── */
+.cat-section-divider {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin: 2rem 0 1.25rem;
+  font-size: .88rem;
+  font-weight: 800;
+  color: #c4b5fd;
+  letter-spacing: .2px;
+}
+.cat-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(167,139,250,.3), transparent);
+}
+.cat-section-divider i {
+  width: 28px; height: 28px;
+  background: rgba(99,102,241,.2);
+  border: 1px solid rgba(99,102,241,.4);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .78rem;
+  color: #a5b4fc;
+}
+
+/* ── Skeleton loading cards ── */
+.cat-skeleton-card {
+  background: rgba(99,102,241,.06);
+  border: 1px solid rgba(99,102,241,.12);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.cat-skeleton-img {
+  height: 175px;
+  background: linear-gradient(90deg,
+    rgba(99,102,241,.08) 25%,
+    rgba(139,92,246,.15) 50%,
+    rgba(99,102,241,.08) 75%
+  );
+  background-size: 300% 100%;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+.cat-skeleton-body {
+  padding: 1rem 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.cat-skeleton-line {
+  height: 11px;
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,.05) 25%,
+    rgba(255,255,255,.1) 50%,
+    rgba(255,255,255,.05) 75%
+  );
+  background-size: 300% 100%;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+.cat-skeleton-line.w70 { width: 70%; }
+.cat-skeleton-line.w90 { width: 90%; }
+.cat-skeleton-line.w50 { width: 50%; animation-delay: .2s; }
+@keyframes skeletonShimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Cosmos Modal — instant open/close ── */
+#cosmosModal {
+  transition: opacity .15s ease !important;
+}
+#cosmosModal.active {
+  opacity: 1 !important;
+}
+#cosmosModal:not(.active) {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Modal content slide-in */
+#cosmosModal .modal-content {
+  transition: transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s ease !important;
+}
+#cosmosModal.active .modal-content {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+}
+
+/* ── Category header — use color-mix fallback for older browsers ── */
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+  .cat-page-header {
+    background: linear-gradient(165deg, rgba(99,102,241,.12) 0%, rgba(10,5,18,.95) 100%);
+  }
+  .cat-page-badge {
+    background: rgba(99,102,241,.2);
+    border-color: rgba(99,102,241,.5);
+  }
+  .cat-refresh-btn { background: rgba(99,102,241,.18); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .cat-page-header {
+    padding: 1.25rem 1rem 1.1rem;
+    margin: -1rem -1rem 1.25rem;
+  }
+  .cat-page-badge { font-size: .82rem; }
+  .cat-page-intro { font-size: .84rem; }
+  .cat-source-pill { display: none; }
+  .cat-refresh-btn { margin-right: 0; }
+}
+
+/* ── Empty & error states ── */
+.cosmos-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+.cosmos-empty i {
+  font-size: 3rem;
+  color: #4b5563;
+  display: block;
+  margin-bottom: 1rem;
+}
+
