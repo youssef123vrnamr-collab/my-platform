@@ -3159,12 +3159,12 @@ body {
 .persona-close-btn {
   position: absolute;
   top: 1rem; left: 1rem;
-  width: 40px; height: 40px;
-  background: rgba(239,68,68,.2);
-  border: none;
-  border-radius: 10px;
+  width: 44px; height: 44px;
+  background: rgba(239,68,68,.25);
+  border: 1.5px solid rgba(239,68,68,.5);
+  border-radius: 12px;
   color: #ef4444;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background .2s;
@@ -3187,11 +3187,12 @@ body {
 .persona-modal-title p { color: #888; font-size: .88rem; }
 .persona-grid {
   display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: .85rem;
+  grid-template-columns: repeat(3,1fr);
+  gap: .75rem;
   margin-bottom: 1.5rem;
 }
-@media(max-width:420px) { .persona-grid { grid-template-columns: 1fr; } }
+@media(max-width:520px) { .persona-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:360px) { .persona-grid { grid-template-columns: 1fr; } }
 .persona-card {
   background: rgba(255,255,255,.04);
   border: 2px solid rgba(99,102,241,.22);
@@ -4874,3 +4875,18 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   flex: 1 !important;
 }
 
+
+/* ===== إصلاح overflow — منع تعليق الـ scroll بعد إغلاق أي modal ===== */
+html, body {
+  overflow-x: hidden !important;
+}
+/* body بيرجع scroll لما كل الـ modals متغلقة */
+body:not(:has(.modal.active)):not(:has(#aiPersonaModal.active)):not(:has(.dq-modal.active)):not(:has(.lb-modal.active)) {
+  overflow-y: auto !important;
+}
+
+/* ===== إصلاح: لو الـ body خسانه scroll بسبب modal قديم ===== */
+.app-wrapper {
+  overflow-y: visible !important;
+  min-height: 100vh !important;
+}

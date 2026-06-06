@@ -10703,3 +10703,34 @@ async function updateFriendChatBadge() {
 }
 setInterval(() => { if (currentUserId) updateFriendChatBadge(); }, 30000);
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge, 3000));
+
+// ===== FIX: ضمان إن body overflow بيرجع صح لما modals تتغلق =====
+(function() {
+  function fixBodyScroll() {
+    // لو في modal نشط، خلي overflow hidden
+    var openModal = document.querySelector('.modal.active, #aiPersonaModal.active, .dq-modal.active, .lb-modal.active, .chat-modal.active');
+    if (!openModal) {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+  }
+
+  // MutationObserver يراقب تغييرات الـ class
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.attributeName === 'class' || m.attributeName === 'style') {
+        setTimeout(fixBodyScroll, 50);
+      }
+    });
+  });
+
+  // راقب كل الـ modals
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.modal, #aiPersonaModal, .dq-modal, .lb-modal').forEach(function(el) {
+      observer.observe(el, { attributes: true });
+    });
+  });
+
+  // برضو راقب بشكل دوري كضمان إضافي
+  setInterval(fixBodyScroll, 2000);
+})();
