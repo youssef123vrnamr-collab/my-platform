@@ -10718,3 +10718,48 @@ async function updateFriendChatBadge() {
 }
 setInterval(() => { if (currentUserId) updateFriendChatBadge(); }, 30000);
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge, 3000));
+
+
+/* ══════════════════════════════════════════
+   ⚡ ANIMATION PAUSE — لما أي modal يتفتح
+   الـ animations بتوقف، لما يتقفل بتشتغل تاني
+══════════════════════════════════════════ */
+(function() {
+  function checkAnyModalOpen() {
+    // شوف لو أي modal أو dq أو lb مفتوح
+    const anyOpen =
+      document.querySelector('.modal.active') ||
+      document.querySelector('.dq-modal.active') ||
+      document.querySelector('.lb-modal.active') ||
+      document.querySelector('#aiPersonaModal.active') ||
+      document.querySelector('.chat-modal.active') ||
+      document.querySelector('.maintenance-overlay.active') ||
+      document.querySelector('.landing-page[style*="flex"]') ||
+      document.querySelector('.apps-modal.active');
+
+    if (anyOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+  }
+
+  // راقب أي تغيير في الـ class على أي عنصر في الصفحة
+  const observer = new MutationObserver(function(mutations) {
+    for (const m of mutations) {
+      if (m.type === 'attributes' && m.attributeName === 'class') {
+        checkAnyModalOpen();
+        break;
+      }
+    }
+  });
+
+  observer.observe(document.body, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'style']
+  });
+
+  // شغل مرة أول ما الصفحة تحمل
+  document.addEventListener('DOMContentLoaded', checkAnyModalOpen);
+})();

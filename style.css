@@ -4828,132 +4828,43 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
 
 /* ══════════════════════════════════════════
-   🔧 FIXES — Full Screen Modals + Fast Close
-   تطبيق: كل الـ modals full screen بدون border-radius
-   وإلغاء backdrop-filter المُبطئ للإغلاق
+   ⚡ PAUSE ANIMATIONS WHEN ANY MODAL IS OPEN
+   لما أي صفحة/modal تتفتح — كل الـ animations
+   في الخلفية بتوقف فوراً
 ══════════════════════════════════════════ */
-
-/* ── 1. Fix: cosmos news card — no top border-radius on first card ── */
-.cosmos-news-grid .cosmos-news-card:first-child,
-.cosmos-news-card {
-  border-radius: 0 !important;
+body.modal-open .nebula,
+body.modal-open .nebula:first-child,
+body.modal-open .nebula:nth-child(2),
+body.modal-open body::before,
+body.modal-open body::after,
+body.modal-open .brand-logo,
+body.modal-open .landing-icon,
+body.modal-open .maintenance-icon,
+body.modal-open .chat-header::after,
+body.modal-open .pac-header::after,
+body.modal-open .chat-btn::before,
+body.modal-open .ai-chat-btn::before,
+body.modal-open .storage-bar::after,
+body.modal-open .upload-progress-fill::after,
+body.modal-open .progress-overall-fill::after,
+body.modal-open .sl-progress-fill::after,
+body.modal-open .sl-welcome-mascot,
+body.modal-open .hero h2 span,
+body.modal-open .online-dot,
+body.modal-open .notification-badge,
+body.modal-open .online-indicator,
+body.modal-open .cosmos-pill-progress .pill-icon,
+body.modal-open .cosmos-pill-contact .pill-icon,
+body.modal-open [class*="planet"],
+body.modal-open [class*="orbit"],
+body.modal-open [class*="laser"],
+body.modal-open [class*="star-glow"] {
+  animation-play-state: paused !important;
 }
 
-/* ── 2. Fix: modal-content backdrop-filter causes slow close on mobile ── */
-.modal:not(.chat-modal) > .modal-content {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* ── 3. Fix: modal open animation — faster so close feels instant ── */
-.modal.active .modal-content {
-  animation: modal-cosmic-in .2s cubic-bezier(.2,.8,.2,1) both !important;
-}
-
-/* ── 4. Fix: ALL modals = full screen, zero border-radius ── */
-.modal,
-.lb-modal,
-.dq-modal,
-#aiPersonaModal,
-#groupVoiceRoomModal,
-#zoomLinkModal {
-  padding: 0 !important;
-  border-radius: 0 !important;
-  align-items: stretch !important;
-  justify-content: stretch !important;
-  background: #0f0a1a !important;
-  backdrop-filter: none !important;
-}
-
-.modal > .modal-content,
-.modal-content {
-  border-radius: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-/* ── 5. Fix: leaderboard modal — full screen ── */
-.lb-modal {
-  display: none;
-  align-items: stretch !important;
-  justify-content: stretch !important;
-  padding: 0 !important;
-}
-.lb-modal.active { display: flex !important; }
-.lb-card {
-  border-radius: 0 !important;
-  border: none !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  max-height: 100vh !important;
-  height: 100vh !important;
-  overflow-y: auto !important;
-  flex: 1 !important;
-}
-
-/* ── 6. Fix: daily quests modal — full screen ── */
-.dq-modal {
-  display: none;
-  align-items: stretch !important;
-  justify-content: stretch !important;
-  padding: 0 !important;
-  backdrop-filter: none !important;
-}
-.dq-modal.active { display: flex !important; }
-.dq-sheet {
-  border-radius: 0 !important;
-  border: none !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  max-height: 100vh !important;
-  height: 100vh !important;
-  overflow-y: auto !important;
-  flex: 1 !important;
-}
-
-/* ── 7. Fix: aiPersonaModal — full screen ── */
-#aiPersonaModal {
-  padding: 0 !important;
-  backdrop-filter: none !important;
-}
-.persona-modal-box {
-  border-radius: 0 !important;
-  border: none !important;
-  max-width: 100% !important;
-  width: 100% !important;
-  max-height: 100vh !important;
-  height: 100vh !important;
-  overflow-y: auto !important;
-  flex: 1 !important;
-  box-shadow: none !important;
-}
-
-/* ── 8. Fix: groupVoiceRoomModal + zoomLinkModal — full screen ── */
-#groupVoiceRoomModal,
-#zoomLinkModal {
-  align-items: stretch !important;
-  justify-content: stretch !important;
-  padding: 0 !important;
-  backdrop-filter: none !important;
-}
-#groupVoiceRoomModal > .modal-content,
-#zoomLinkModal > .modal-content {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-height: 100vh !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  border-radius: 0 !important;
-  border: none !important;
-}
-
-/* ── 9. Fix: mobile media query was adding border-radius ── */
-@media (max-width: 480px) {
-  .modal-content { border-radius: 0 !important; }
+/* وقف الـ background pseudo-elements على الـ body */
+body.modal-open::before,
+body.modal-open::after {
+  animation-play-state: paused !important;
 }
 
