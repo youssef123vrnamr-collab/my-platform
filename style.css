@@ -239,21 +239,22 @@
       gap: 1rem;
       padding: 1.5rem !important;
     }
-    /* Voice room modal - full screen */
+    /* Voice room modal - centered dialog */
     #groupVoiceRoomModal {
-      align-items: stretch !important;
-      justify-content: stretch !important;
-      background: #0f0a1a !important;
-      padding: 0 !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: rgba(0,0,0,.8) !important;
+      padding: 1rem !important;
     }
     #groupVoiceRoomModal > .modal-content {
-      width: 100% !important;
-      max-width: 100% !important;
-      min-height: 100vh !important;
-      height: 100vh !important;
-      max-height: 100vh !important;
-      border-radius: 0 !important;
+      width: 94% !important;
+      max-width: 480px !important;
+      min-height: unset !important;
+      height: auto !important;
+      max-height: 92dvh !important;
+      border-radius: 20px !important;
       overflow: hidden !important;
+      animation: fadeInUp .25s ease;
     }
 
     .course-actions-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; width: 100%; align-items: center; gap: 0.75rem; margin: 1rem 0; min-height: 3rem; }
@@ -3125,33 +3126,33 @@ body {
   
 
 
-#groupVoiceRoomModal > .modal-content { max-width: 100% !important; width: 100% !important; min-height: 100vh !important; height: 100vh !important; max-height: 100vh !important; margin: 0 !important; border-radius: 0 !important; }
-#groupVoiceRoomModal { align-items: stretch !important; justify-content: stretch !important; background: #0f0a1a !important; }
+#groupVoiceRoomModal > .modal-content { max-width: 480px !important; width: 94% !important; min-height: unset !important; height: auto !important; max-height: 92vh !important; margin: auto !important; border-radius: 20px !important; }
+#groupVoiceRoomModal { align-items: center !important; justify-content: center !important; background: rgba(0,0,0,.75) !important; }
 
 
 
-#zoomLinkModal { align-items: stretch !important; justify-content: stretch !important; background: #0f0a1a !important; padding: 0 !important; }
-#zoomLinkModal > .modal-content { width: 100% !important; max-width: 100% !important; min-height: 100vh !important; height: 100vh !important; max-height: 100vh !important; border-radius: 0 !important; overflow: hidden !important; }
+#zoomLinkModal { align-items: center !important; justify-content: center !important; background: rgba(0,0,0,.8) !important; padding: 1rem !important; }
+#zoomLinkModal > .modal-content { width: 94% !important; max-width: 480px !important; min-height: unset !important; height: auto !important; max-height: 92dvh !important; border-radius: 20px !important; overflow: hidden !important; }
 
 
 
 /* ===== Modal اختيار الشخصية ===== */
 #aiPersonaModal {
   position: fixed; inset: 0; z-index: 99999;
-  background: #0f0a1a;
-  display: none; align-items: stretch; justify-content: stretch;
-  padding: 0;
+  background: rgba(5,3,8,0.97);
+  display: none; align-items: center; justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(12px);
 }
 #aiPersonaModal.active { display: flex; }
 .persona-modal-box {
   background: linear-gradient(145deg,#12091e,#1a0f2e);
-  border: none;
-  border-radius: 0;
+  border: 1px solid rgba(99,102,241,0.45);
+  border-radius: 24px;
   padding: 2rem 1.5rem 1.75rem;
-  max-width: 100%; width: 100%;
-  box-shadow: none;
-  max-height: 100vh; height: 100vh; overflow-y: auto;
-  flex: 1;
+  max-width: 560px; width: 100%;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(236,72,153,0.12);
+  max-height: 90dvh; overflow-y: auto;
   animation: personaFadeIn .35s ease;
 }
 @keyframes personaFadeIn {
@@ -3269,9 +3270,9 @@ body {
 /* ── Daily Quest Bar ── */
 .dq-bar{display:none;}
 /* ── Quest Modal ── */
-.dq-modal{position:fixed;inset:0;z-index:9999;background:#0f0a1a;display:none;align-items:stretch;justify-content:stretch;padding:0;}
+.dq-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;padding:1rem;}
 .dq-modal.active{display:flex;}
-.dq-sheet{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:none;border-radius:0;width:100%;max-width:100%;padding:1.5rem;max-height:100vh;height:100vh;overflow-y:auto;flex:1;}
+.dq-sheet{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.4);border-radius:28px 28px 18px 18px;width:100%;max-width:480px;padding:1.5rem;max-height:85vh;overflow-y:auto;}
 .dq-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
 .dq-title{font-size:1.15rem;font-weight:900;background:linear-gradient(135deg,#fde047,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .dq-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;}
@@ -3301,9 +3302,9 @@ body {
 
 
 
-.lb-modal{position:fixed;inset:0;z-index:9998;background:#0f0a1a;display:none;align-items:stretch;justify-content:stretch;padding:0;}
+.lb-modal{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.82);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .lb-modal.active{display:flex;}
-.lb-card{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:none;border-radius:0;width:100%;max-width:100%;padding:1.5rem;max-height:100vh;height:100vh;overflow-y:auto;flex:1;}
+.lb-card{background:linear-gradient(160deg,#1a1025,#0f0a1a);border:1px solid rgba(99,102,241,.4);border-radius:24px;width:100%;max-width:460px;padding:1.5rem;max-height:85vh;overflow-y:auto;}
 .lb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
 .lb-head-title{font-size:1.15rem;font-weight:900;color:#e0e7ff;display:flex;align-items:center;gap:.5rem;}
 .lb-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;}
@@ -3626,7 +3627,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 @media (max-width: 480px) {
   .landing-card { padding: 2rem 1.25rem !important; border-radius: 24px !important; }
   .landing-title { font-size: 1.5rem !important; }
-  .modal-content { border-radius: 0 !important; }
+  .modal-content { border-radius: 20px !important; }
   .btn { padding: 0.55rem 0.9rem !important; font-size: 0.82rem !important; }
   .hero { padding: 3rem 1.25rem !important; }
   .hero h2 { font-size: 1.6rem !important; }
@@ -4766,41 +4767,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   100% { background-position: 0% 50%; }
 }
 
-/* ══════════════════════════════════════════
-   📱 GLOBAL FULL-SCREEN MODALS OVERRIDE
-   كل الـ modals تبقى full screen بدون border-radius
-══════════════════════════════════════════ */
-.modal,
-.lb-modal,
-.dq-modal,
-#aiPersonaModal,
-#groupVoiceRoomModal,
-#zoomLinkModal {
-  padding: 0 !important;
-  border-radius: 0 !important;
-  align-items: stretch !important;
-  justify-content: stretch !important;
-}
-
-.modal > .modal-content,
-.modal-content {
-  border-radius: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-}
-
-.dq-sheet,
-.lb-card,
-.persona-modal-box {
-  border-radius: 0 !important;
-  max-width: 100% !important;
-  width: 100% !important;
-  max-height: 100vh !important;
-  height: 100vh !important;
-  flex: 1 !important;
-}
- */
+/* ── Cosmos Modal — instant open/close ── */
 #cosmosModal {
   transition: opacity .15s ease !important;
 }
@@ -4856,5 +4823,137 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   color: #4b5563;
   display: block;
   margin-bottom: 1rem;
+}
+
+
+
+/* ══════════════════════════════════════════
+   🔧 FIXES — Full Screen Modals + Fast Close
+   تطبيق: كل الـ modals full screen بدون border-radius
+   وإلغاء backdrop-filter المُبطئ للإغلاق
+══════════════════════════════════════════ */
+
+/* ── 1. Fix: cosmos news card — no top border-radius on first card ── */
+.cosmos-news-grid .cosmos-news-card:first-child,
+.cosmos-news-card {
+  border-radius: 0 !important;
+}
+
+/* ── 2. Fix: modal-content backdrop-filter causes slow close on mobile ── */
+.modal:not(.chat-modal) > .modal-content {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── 3. Fix: modal open animation — faster so close feels instant ── */
+.modal.active .modal-content {
+  animation: modal-cosmic-in .2s cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+/* ── 4. Fix: ALL modals = full screen, zero border-radius ── */
+.modal,
+.lb-modal,
+.dq-modal,
+#aiPersonaModal,
+#groupVoiceRoomModal,
+#zoomLinkModal {
+  padding: 0 !important;
+  border-radius: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  background: #0f0a1a !important;
+  backdrop-filter: none !important;
+}
+
+.modal > .modal-content,
+.modal-content {
+  border-radius: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* ── 5. Fix: leaderboard modal — full screen ── */
+.lb-modal {
+  display: none;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+}
+.lb-modal.active { display: flex !important; }
+.lb-card {
+  border-radius: 0 !important;
+  border: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 100vh !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  flex: 1 !important;
+}
+
+/* ── 6. Fix: daily quests modal — full screen ── */
+.dq-modal {
+  display: none;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+  backdrop-filter: none !important;
+}
+.dq-modal.active { display: flex !important; }
+.dq-sheet {
+  border-radius: 0 !important;
+  border: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 100vh !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  flex: 1 !important;
+}
+
+/* ── 7. Fix: aiPersonaModal — full screen ── */
+#aiPersonaModal {
+  padding: 0 !important;
+  backdrop-filter: none !important;
+}
+.persona-modal-box {
+  border-radius: 0 !important;
+  border: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  max-height: 100vh !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  flex: 1 !important;
+  box-shadow: none !important;
+}
+
+/* ── 8. Fix: groupVoiceRoomModal + zoomLinkModal — full screen ── */
+#groupVoiceRoomModal,
+#zoomLinkModal {
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+  backdrop-filter: none !important;
+}
+#groupVoiceRoomModal > .modal-content,
+#zoomLinkModal > .modal-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+/* ── 9. Fix: mobile media query was adding border-radius ── */
+@media (max-width: 480px) {
+  .modal-content { border-radius: 0 !important; }
 }
 
