@@ -3166,9 +3166,12 @@ body {
   color: #ef4444;
   font-size: 1.2rem;
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  display: flex !important;
+  align-items: center; justify-content: center;
   transition: background .2s;
-  z-index: 10;
+  z-index: 100;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 .persona-close-btn:hover { background: rgba(239,68,68,.4); }
 @keyframes personaFadeIn {
@@ -3191,8 +3194,8 @@ body {
   gap: .75rem;
   margin-bottom: 1.5rem;
 }
-@media(max-width:520px) { .persona-grid { grid-template-columns: repeat(2,1fr); } }
-@media(max-width:360px) { .persona-grid { grid-template-columns: 1fr; } }
+@media(max-width:500px) { .persona-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:340px) { .persona-grid { grid-template-columns: 1fr; } }
 .persona-card {
   background: rgba(255,255,255,.04);
   border: 2px solid rgba(99,102,241,.22);
@@ -4875,18 +4878,3 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   flex: 1 !important;
 }
 
-
-/* ===== إصلاح overflow — منع تعليق الـ scroll بعد إغلاق أي modal ===== */
-html, body {
-  overflow-x: hidden !important;
-}
-/* body بيرجع scroll لما كل الـ modals متغلقة */
-body:not(:has(.modal.active)):not(:has(#aiPersonaModal.active)):not(:has(.dq-modal.active)):not(:has(.lb-modal.active)) {
-  overflow-y: auto !important;
-}
-
-/* ===== إصلاح: لو الـ body خسانه scroll بسبب modal قديم ===== */
-.app-wrapper {
-  overflow-y: visible !important;
-  min-height: 100vh !important;
-}
