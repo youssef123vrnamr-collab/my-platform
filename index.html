@@ -404,8 +404,6 @@
     <textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="unified-textarea" onkeypress="handleAIKeyPress(event)"></textarea>
     <div class="unified-bottom-row">
       <div class="unified-left-btns">
-        <button class="unified-tool-btn" onclick='document.getElementById("aiImageInput").click()' title="إرفاق ملف"><i class="fas fa-paperclip"></i></button>
-        <input id="aiImageInput" type="file" style="display:none" accept="image/*,.txt,.md,.json,.js,.html,.css,.csv" onchange="handleAIFileSelect(this)">
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
         <button class="unified-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية"><i class="fas fa-headphones"></i></button>
       </div>

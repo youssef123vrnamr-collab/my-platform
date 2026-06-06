@@ -2022,29 +2022,29 @@ async function updateAdminUI() {
     cont.appendChild(msgEl);
     cont.scrollTop = cont.scrollHeight;
 
-    // Improve prompt using Groq
+    // ترجمة (6 ثواني timeout)
     let enPrompt = "";
     try {
       const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 10000);
+      setTimeout(() => ctrl.abort(), 6000);
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST", signal: ctrl.signal,
         headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [
-            { role: "system", content: "You are an expert prompt engineer for image generation. The user will provide a request in Arabic. Translate and expand it into a highly detailed, stunning, masterpiece English image generation prompt. Include lighting, atmosphere, and artistic style. Max 50 words. Do NOT include any intro text, just the raw prompt." },
+            { role: "system", content: "Translate Arabic to English for AI image generation. Reply ONLY with a concise English description, max 20 words. No quotes, no explanation." },
             { role: "user", content: prompt }
           ],
-          max_tokens: 150, temperature: 0.7
+          max_tokens: 60, temperature: 0.3
         })
       });
       const d = await r.json();
       enPrompt = (d?.choices?.[0]?.message?.content || "").trim();
     } catch(e) {}
 
-    if (!enPrompt) enPrompt = prompt.substring(0, 100) + " highly detailed masterpiece";
-    const finalPrompt = enPrompt;
+    if (!enPrompt) enPrompt = prompt.substring(0, 100);
+    const finalPrompt = `epic space astronomy ${enPrompt} cinematic dramatic 8k ultra detailed`;
 
     // استدعاء Vercel proxy بدل Pollinations مباشرة
     await _doGenerate(finalPrompt, uid, prompt, cont, seed, 1);
@@ -6866,28 +6866,10 @@ window.playChatSound = function() {
     showToast('🗑️ تم مسح المحادثة');
   };
 
-  // Fix handleAIFileSelect - ensure it works correctly and robustly
+  // Fix handleAIFileSelect - ensure it works correctly
   window.handleAIFileSelect = function(input) {
     const file = input.files[0];
     if (!file) return;
-
-    // Check file size (max 5MB)
-    const MAX_SIZE_MB = 5;
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      if (typeof showToast === 'function') showToast(`❌ حجم الملف كبير جداً! الحد الأقصى هو ${MAX_SIZE_MB} ميجابايت.`);
-      input.value = '';
-      return;
-    }
-
-    // Basic type checking
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'text/plain', 'text/html', 'text/css', 'text/javascript', 'application/json', 'text/csv'];
-    const isTextExt = file.name.match(/\.(txt|md|js|css|html|json|csv)$/i);
-    if (!file.type.startsWith('image/') && !validTypes.includes(file.type) && !isTextExt) {
-      if (typeof showToast === 'function') showToast('⚠️ يرجى رفع صورة أو ملف نصي فقط.');
-      input.value = '';
-      return;
-    }
-
     window._aiSelectedFile = file;
     const preview = document.getElementById('aiFilePreview');
     const name = document.getElementById('aiFilePreviewName');
@@ -9915,7 +9897,7 @@ function slStopAllAnimations() {
     clearInterval(iv);
 
     // ── THE ONE CLEAN sendAIMessage ──
-    window.sendAIMessage = async function(injectedMsg, injectedImage) {
+    window.sendAIMessage = async function(injectedMsg) {
       var inp  = document.getElementById('aiChatInput');
       var msgs = document.getElementById('aiChatMessages');
 
@@ -9937,7 +9919,7 @@ function slStopAllAnimations() {
               div.innerHTML = '<img src="'+e.target.result+'" style="max-width:180px;border-radius:10px;display:block;margin-bottom:.3rem"><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
               msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
             }
-            await window.sendAIMessage(extraText || ('صف هذه الصورة باللغة العربية: "'+file.name+'"'), e.target.result);
+            await window.sendAIMessage(extraText || ('صف هذه الصورة باللغة العربية: "'+file.name+'"'));
           };
           reader.readAsDataURL(file);
         } else {
@@ -10009,21 +9991,9 @@ function slStopAllAnimations() {
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
 
       function buildPayload(model, maxTok, hist) {
-        var messages = [{ role:'system', content: persona.systemPrompt }].concat(hist);
-        var userContent;
-        if (injectedImage) {
-            userContent = [
-                { type: "text", text: userMsg },
-                { type: "image_url", image_url: { url: injectedImage } }
-            ];
-            model = 'llama-3.2-90b-vision-preview'; // Override model for vision capabilities
-        } else {
-            userContent = userMsg;
-        }
-        messages.push({ role: 'user', content: userContent });
         return {
           model: model,
-          messages: messages,
+          messages: [{ role:'system', content: persona.systemPrompt }].concat(hist).concat([{ role:'user', content: userMsg }]),
           max_tokens: maxTok,
           temperature: 0.4
         };
