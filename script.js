@@ -7897,8 +7897,6 @@ function showCertificateModal(courseTitle, certUrl) {
     drawGrid(now);
     drawHexGrid(now);
     drawStreams();
-    drawNetwork(now);
-    drawPulses();
     drawScanLines(now);
     drawCornerAccents();
   }
@@ -10226,7 +10224,19 @@ function slStopAllAnimations() {
 
 
 (function(){
-  // Stars removed
+  // ── 5A: Generate breathing stars ──
+  function addGlowStars(){
+    var frag = document.createDocumentFragment();
+    for(var i=0;i<28;i++){
+      var s=document.createElement('div');
+      var sz=(Math.random()*3+1).toFixed(1);
+      s.className='star-glow';
+      s.style.cssText='width:'+sz+'px;height:'+sz+'px;top:'+(Math.random()*100)+'vh;left:'+(Math.random()*100)+'vw;animation:starGlow '+(Math.random()*4+3).toFixed(1)+'s '+(Math.random()*5).toFixed(1)+'s infinite;';
+      frag.appendChild(s);
+    }
+    document.body.appendChild(frag);
+  }
+  addGlowStars();
 
   // ── 5B: Lazy-load YouTube iframes with IntersectionObserver ──
   function lazyIframes(){
