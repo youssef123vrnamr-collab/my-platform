@@ -3139,22 +3139,38 @@ body {
 /* ===== Modal اختيار الشخصية ===== */
 #aiPersonaModal {
   position: fixed; inset: 0; z-index: 99999;
-  background: rgba(5,3,8,0.97);
-  display: none; align-items: center; justify-content: center;
-  padding: 1rem;
-  backdrop-filter: blur(12px);
+  background: linear-gradient(145deg,#12091e,#1a0f2e);
+  display: none; align-items: stretch; justify-content: stretch;
+  padding: 0;
 }
 #aiPersonaModal.active { display: flex; }
 .persona-modal-box {
-  background: linear-gradient(145deg,#12091e,#1a0f2e);
-  border: 1px solid rgba(99,102,241,0.45);
-  border-radius: 24px;
-  padding: 2rem 1.5rem 1.75rem;
-  max-width: 560px; width: 100%;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(236,72,153,0.12);
-  max-height: 90dvh; overflow-y: auto;
-  animation: personaFadeIn .35s ease;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 1.5rem 1.25rem 1.75rem;
+  max-width: 100%; width: 100%;
+  box-shadow: none;
+  max-height: 100vh; height: 100vh; overflow-y: auto;
+  flex: 1;
+  position: relative;
+  animation: personaFadeIn .2s ease;
 }
+.persona-close-btn {
+  position: absolute;
+  top: 1rem; left: 1rem;
+  width: 40px; height: 40px;
+  background: rgba(239,68,68,.2);
+  border: none;
+  border-radius: 10px;
+  color: #ef4444;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+  z-index: 10;
+}
+.persona-close-btn:hover { background: rgba(239,68,68,.4); }
 @keyframes personaFadeIn {
   from { opacity:0; transform: translateY(24px) scale(.97); }
   to   { opacity:1; transform: translateY(0) scale(1); }
@@ -4827,90 +4843,34 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
 
 
-/* ══════════════════════════════════════════
-   🚫 إزالة النيازك والـ laser rings والنجوم
-══════════════════════════════════════════ */
-.shooting-star, .s1, .s2, .s3,
-.laser-ring, .laser-ring-1, .laser-ring-2, .laser-ring-3,
-.star-glow, .nebula {
+/* ══ FIXES ══ */
+
+/* شيل النجوم والنيازك والـ laser rings */
+.star-glow, .nebula, .shooting-star, .s1, .s2, .s3,
+.laser-ring, .laser-ring-1, .laser-ring-2, .laser-ring-3 {
   display: none !important;
-  animation: none !important;
 }
 
-/* ══════════════════════════════════════════
-   ✨ خلفية جديدة خفيفة واحترافية
-   حلقات ضوئية هادئة بتتحرك ببطء
-══════════════════════════════════════════ */
-
-/* حلقة ضوئية كبيرة في اليسار */
-.app-wrapper::before {
-  content: '';
-  position: fixed;
-  top: -200px;
-  left: -200px;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  border: 1px solid rgba(99,102,241,0.08);
-  box-shadow:
-    0 0 0 40px rgba(99,102,241,0.03),
-    0 0 0 80px rgba(99,102,241,0.02),
-    0 0 0 120px rgba(99,102,241,0.01);
-  pointer-events: none;
-  z-index: 0;
-  animation: haloFloat 18s ease-in-out infinite;
-  will-change: transform;
+/* صفحة الأخبار — زوايا حادة */
+.cosmos-news-card,
+.cosmos-news-card:first-child,
+.cosmos-news-grid .cosmos-news-card {
+  border-radius: 0 !important;
 }
 
-/* حلقة ضوئية في اليمين */
-.app-wrapper::after {
-  content: '';
-  position: fixed;
-  bottom: -150px;
-  right: -150px;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  border: 1px solid rgba(6,182,212,0.07);
-  box-shadow:
-    0 0 0 35px rgba(6,182,212,0.025),
-    0 0 0 70px rgba(6,182,212,0.015),
-    0 0 0 105px rgba(6,182,212,0.008);
-  pointer-events: none;
-  z-index: 0;
-  animation: haloFloat 22s ease-in-out infinite reverse;
-  will-change: transform;
+/* صفحة الشخصية — full screen بدون كيرف */
+#aiPersonaModal {
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
 }
-
-@keyframes haloFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%       { transform: translate(30px, -25px) scale(1.04); }
-  66%       { transform: translate(-20px, 20px) scale(0.97); }
-}
-
-/* خط أفقي متوهج خفيف في المنتصف */
-.app-wrapper .navbar::after {
-  content: '';
-  position: fixed;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(99,102,241,0.06) 20%,
-    rgba(139,92,246,0.12) 50%,
-    rgba(99,102,241,0.06) 80%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 0;
-  animation: lineGlow 8s ease-in-out infinite;
-}
-
-@keyframes lineGlow {
-  0%, 100% { opacity: 0.4; transform: translateY(0); }
-  50%       { opacity: 1;   transform: translateY(-8px); }
+.persona-modal-box {
+  border-radius: 0 !important;
+  border: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  flex: 1 !important;
 }
 
