@@ -3919,3 +3919,474 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border: 1px solid rgba(255,255,255,.15) !important;
   box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   🌌 FALAK PLATFORM — PREMIUM VISUAL UPGRADE v4.0
+   Landing · Navbar · Video Cards · Buttons · Floating Actions
+═══════════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────
+   LANDING PAGE — Full Cosmic Cinematic Redesign
+────────────────────────────────────────────── */
+
+/* Animated star particles canvas for landing */
+.landing-page {
+  background: #020109 !important;
+  overflow: hidden;
+}
+
+/* Cosmic nebula layers behind landing card */
+.landing-page::before,
+.landing-page::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  will-change: transform;
+  animation: nebulaOrbit 18s ease-in-out infinite;
+}
+.landing-page::before {
+  width: 700px; height: 700px;
+  top: -200px; right: -200px;
+  background: radial-gradient(circle, rgba(99,102,241,.22) 0%, rgba(139,92,246,.12) 40%, transparent 70%);
+}
+.landing-page::after {
+  width: 600px; height: 600px;
+  bottom: -200px; left: -200px;
+  background: radial-gradient(circle, rgba(236,72,153,.18) 0%, rgba(99,102,241,.1) 45%, transparent 70%);
+  animation-delay: -9s;
+}
+@keyframes nebulaOrbit {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(40px,-50px) scale(1.12); }
+  66%      { transform: translate(-30px,30px) scale(0.88); }
+}
+
+/* Star field dots */
+.landing-page .star-field {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 55%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 10%, rgba(255,255,255,.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 40%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 90% 70%, rgba(255,255,255,.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 90%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(2px 2px at 25% 35%, rgba(167,139,250,.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 82% 20%, rgba(244,114,182,.8) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 5% 50%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 15%, rgba(255,255,255,.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 85%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(2px 2px at 55% 60%, rgba(99,102,241,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 75%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 45%, rgba(255,255,255,.4) 0%, transparent 100%);
+  animation: starTwinkle 6s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes starTwinkle {
+  0%   { opacity: .7; }
+  50%  { opacity: 1; }
+  100% { opacity: .5; }
+}
+
+/* Landing Card — deep glass with aurora border */
+.landing-card {
+  background: linear-gradient(145deg,
+    rgba(26,16,37,.92) 0%,
+    rgba(15,10,26,.95) 60%,
+    rgba(20,12,35,.9) 100%
+  ) !important;
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+  border-radius: 28px !important;
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,.35),
+    0 0 0 2px rgba(236,72,153,.12),
+    0 40px 80px -20px rgba(0,0,0,.9),
+    0 0 60px -20px rgba(99,102,241,.25),
+    inset 0 1px 0 rgba(255,255,255,.07),
+    inset 0 -1px 0 rgba(139,92,246,.12) !important;
+  padding: 2.75rem 2.25rem !important;
+  animation: cardFloat 0.8s cubic-bezier(.16,1,.3,1) both !important;
+  position: relative;
+  overflow: hidden;
+}
+@keyframes cardFloat {
+  from { opacity:0; transform: translateY(32px) scale(.97); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+
+/* Shimmer line at top of card */
+.landing-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(167,139,250,.7), rgba(244,114,182,.5), transparent);
+  border-radius: 1px;
+}
+
+/* Landing icon — planetary ring effect */
+.landing-icon {
+  width: 96px !important; height: 96px !important;
+  background: linear-gradient(145deg, #6366f1, #a855f7, #ec4899) !important;
+  box-shadow:
+    0 0 0 4px rgba(99,102,241,.2),
+    0 0 0 8px rgba(139,92,246,.1),
+    0 16px 48px -8px rgba(99,102,241,.55),
+    inset 0 2px 4px rgba(255,255,255,.2) !important;
+  animation: iconPulse 4s ease-in-out infinite !important;
+}
+@keyframes iconPulse {
+  0%,100% { box-shadow: 0 0 0 4px rgba(99,102,241,.2), 0 0 0 8px rgba(139,92,246,.1), 0 16px 48px -8px rgba(99,102,241,.55), inset 0 2px 4px rgba(255,255,255,.2); }
+  50%      { box-shadow: 0 0 0 6px rgba(236,72,153,.25), 0 0 0 12px rgba(99,102,241,.08), 0 20px 56px -8px rgba(236,72,153,.5), inset 0 2px 4px rgba(255,255,255,.25); }
+}
+
+/* Landing title — multi-stop aurora gradient */
+.landing-title {
+  font-size: 1.9rem !important;
+  font-weight: 900 !important;
+  background: linear-gradient(120deg,
+    #e0e7ff 0%, #a5b4fc 20%, #c084fc 45%,
+    #f472b6 65%, #fb923c 85%, #fde68a 100%
+  ) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  background-size: 250% 100%;
+  animation: titleFlow 7s ease-in-out infinite !important;
+  letter-spacing: .5px;
+}
+@keyframes titleFlow {
+  0%,100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+.landing-sub {
+  color: rgba(200,195,220,.7) !important;
+  font-size: .95rem;
+  letter-spacing: .3px;
+  margin-bottom: 2rem !important;
+}
+
+/* Google Sign-in Button — premium dark style */
+.google-btn {
+  background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.04)) !important;
+  color: #e2e0f0 !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: 16px !important;
+  padding: 1rem 1.25rem !important;
+  font-size: .97rem !important;
+  font-weight: 700 !important;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 8px 24px -8px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.1) !important;
+  transition: all .3s cubic-bezier(.2,.8,.2,1) !important;
+  letter-spacing: .2px;
+  position: relative;
+  overflow: hidden;
+}
+.google-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,.08) 50%, transparent 80%);
+  transform: translateX(-100%);
+  transition: transform .6s ease;
+}
+.google-btn:hover::after { transform: translateX(100%); }
+.google-btn:hover {
+  background: linear-gradient(145deg, rgba(99,102,241,.25), rgba(139,92,246,.15)) !important;
+  border-color: rgba(139,92,246,.5) !important;
+  color: #fff !important;
+  transform: translateY(-3px) !important;
+  box-shadow:
+    0 16px 36px -8px rgba(99,102,241,.4),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+/* ──────────────────────────────────────────────
+   NAVBAR — Ultra-Premium Glass
+────────────────────────────────────────────── */
+.navbar {
+  background: linear-gradient(180deg,
+    rgba(10,6,20,.92) 0%,
+    rgba(15,10,26,.85) 100%
+  ) !important;
+  backdrop-filter: blur(28px) saturate(160%) !important;
+  border-bottom: 1px solid rgba(139,92,246,.15) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.04),
+    0 8px 32px -12px rgba(0,0,0,.7) !important;
+}
+
+.brand-logo {
+  background: linear-gradient(145deg, #6366f1, #a855f7, #ec4899) !important;
+  box-shadow:
+    0 4px 16px rgba(99,102,241,.4),
+    0 0 0 2px rgba(139,92,246,.2),
+    inset 0 1px 2px rgba(255,255,255,.2) !important;
+}
+
+/* ──────────────────────────────────────────────
+   VIDEO CARDS — YouTube-style, clean & modern
+────────────────────────────────────────────── */
+.video-card {
+  background: transparent !important;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: transform .2s ease !important;
+}
+.video-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: none !important;
+}
+
+.video-thumbnail {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background: #1a1025 !important;
+}
+.video-card:hover .video-thumbnail .bg-image {
+  transform: scale(1.04) !important;
+}
+
+/* Play overlay — soft dark vignette */
+.play-overlay {
+  background: rgba(0,0,0,.3) !important;
+  border-radius: 12px !important;
+}
+.play-btn {
+  width: 48px !important; height: 48px !important;
+  background: rgba(255,255,255,.95) !important;
+  color: #111 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  font-size: 1.1rem !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4) !important;
+  transition: transform .2s ease !important;
+}
+.video-card:hover .play-btn {
+  transform: scale(1.1) !important;
+}
+
+/* Video info — cleaner typography like YouTube */
+.video-info {
+  padding: .65rem .1rem .4rem !important;
+  background: transparent !important;
+}
+.video-title {
+  font-size: .93rem !important;
+  font-weight: 600 !important;
+  color: #f1f1f1 !important;
+  line-height: 1.45 !important;
+  letter-spacing: .1px;
+}
+.video-description {
+  color: #999 !important;
+  font-size: .79rem !important;
+}
+.video-meta {
+  color: #777 !important;
+  font-size: .76rem !important;
+}
+
+/* Duration badge — Netflix-style pill */
+.video-duration {
+  background: rgba(0,0,0,.82) !important;
+  backdrop-filter: blur(6px) !important;
+  border-radius: 6px !important;
+  font-size: .73rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .3px;
+  padding: .18rem .55rem !important;
+  border: none !important;
+}
+
+/* ──────────────────────────────────────────────
+   FLOATING BUTTONS — Refined with depth
+────────────────────────────────────────────── */
+.chat-btn {
+  background: linear-gradient(145deg, #6366f1, #8b5cf6) !important;
+  box-shadow:
+    0 8px 28px -4px rgba(99,102,241,.55),
+    0 0 0 2px rgba(139,92,246,.2),
+    inset 0 1px 1px rgba(255,255,255,.2) !important;
+  transition: all .3s cubic-bezier(.2,.8,.2,1) !important;
+}
+.chat-btn:hover {
+  transform: scale(1.08) !important;
+  box-shadow:
+    0 14px 36px -4px rgba(99,102,241,.7),
+    0 0 0 3px rgba(139,92,246,.3),
+    inset 0 1px 1px rgba(255,255,255,.25) !important;
+}
+
+.ai-chat-btn {
+  background: linear-gradient(145deg, #06b6d4, #0ea5e9) !important;
+  box-shadow:
+    0 8px 28px -4px rgba(6,182,212,.5),
+    0 0 0 2px rgba(14,165,233,.2),
+    inset 0 1px 1px rgba(255,255,255,.2) !important;
+  transition: all .3s cubic-bezier(.2,.8,.2,1) !important;
+}
+.ai-chat-btn:hover {
+  transform: scale(1.08) rotate(8deg) !important;
+  box-shadow:
+    0 14px 36px -4px rgba(6,182,212,.65),
+    0 0 0 3px rgba(14,165,233,.3) !important;
+}
+
+/* Notification badge — pulse ring effect */
+.notification-badge {
+  box-shadow:
+    0 0 0 3px rgba(239,68,68,.3),
+    0 4px 12px rgba(239,68,68,.4) !important;
+  animation: badgePop 2s ease-in-out infinite !important;
+}
+@keyframes badgePop {
+  0%,100% { box-shadow: 0 0 0 3px rgba(239,68,68,.3), 0 4px 12px rgba(239,68,68,.4); }
+  50%      { box-shadow: 0 0 0 5px rgba(239,68,68,.15), 0 4px 16px rgba(239,68,68,.55); }
+}
+
+/* ──────────────────────────────────────────────
+   SECTION HEADINGS — More visual authority
+────────────────────────────────────────────── */
+.videos-library-heading {
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  color: #f1f1f1 !important;
+  letter-spacing: .2px;
+}
+.videos-heading-icon {
+  background: linear-gradient(135deg, #ec4899, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Video count badge */
+#videoCount {
+  background: rgba(99,102,241,.18) !important;
+  border: 1px solid rgba(139,92,246,.3) !important;
+  color: #a5b4fc !important;
+  font-weight: 700 !important;
+  border-radius: 999px !important;
+  backdrop-filter: blur(8px);
+}
+
+/* ──────────────────────────────────────────────
+   HERO — Cinematic depth
+────────────────────────────────────────────── */
+.hero h2 {
+  text-shadow: 0 0 80px rgba(99,102,241,.2), 0 4px 24px rgba(0,0,0,.3) !important;
+}
+.hero-badge {
+  background: rgba(16,185,129,.12) !important;
+  border: 1px solid rgba(16,185,129,.35) !important;
+  box-shadow: 0 0 20px -8px rgba(16,185,129,.4), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  font-weight: 700 !important;
+}
+
+/* ──────────────────────────────────────────────
+   TOAST — Glass pill
+────────────────────────────────────────────── */
+.toast {
+  background: rgba(20,14,34,.95) !important;
+  border: 1px solid rgba(139,92,246,.4) !important;
+  backdrop-filter: blur(20px) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 20px 48px -12px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+/* ──────────────────────────────────────────────
+   SETTINGS MENU — Tighter, glass-morphism
+────────────────────────────────────────────── */
+.settings-menu {
+  background: rgba(16,10,28,.97) !important;
+  border: 1px solid rgba(139,92,246,.3) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  box-shadow:
+    0 20px 48px -8px rgba(0,0,0,.7),
+    0 0 0 1px rgba(255,255,255,.03),
+    inset 0 1px 0 rgba(255,255,255,.05) !important;
+  border-radius: 18px !important;
+}
+.settings-menu-item {
+  transition: background .18s ease, padding-right .18s ease !important;
+}
+.settings-menu-item:hover {
+  background: rgba(99,102,241,.18) !important;
+}
+
+/* ──────────────────────────────────────────────
+   MODAL — Smooth dark glass
+────────────────────────────────────────────── */
+.modal-header {
+  background: linear-gradient(135deg,
+    rgba(99,102,241,.15),
+    rgba(236,72,153,.1)
+  ) !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+}
+
+/* ──────────────────────────────────────────────
+   LOADER — Upgraded ring
+────────────────────────────────────────────── */
+.loader-ring {
+  border-top-color: #a5b4fc !important;
+  border-right-color: #c084fc !important;
+  border-bottom-color: rgba(99,102,241,.15) !important;
+  border-left-color: rgba(139,92,246,.15) !important;
+  box-shadow:
+    0 0 0 1px rgba(99,102,241,.1),
+    0 0 32px rgba(99,102,241,.2) !important;
+}
+.loader-text {
+  color: #a5b4fc !important;
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+
+/* ──────────────────────────────────────────────
+   RESPONSIVE TWEAKS
+────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .landing-card {
+    padding: 2.25rem 1.75rem !important;
+    border-radius: 24px !important;
+  }
+  .landing-icon {
+    width: 78px !important; height: 78px !important;
+  }
+  .landing-title {
+    font-size: 1.55rem !important;
+  }
+  .google-btn {
+    padding: .9rem 1rem !important;
+    font-size: .93rem !important;
+    border-radius: 14px !important;
+  }
+  .videos-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: .9rem !important;
+  }
+}
+@media (max-width: 480px) {
+  .videos-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .landing-card {
+    padding: 2rem 1.25rem !important;
+    border-radius: 20px !important;
+  }
+}
+
