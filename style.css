@@ -7083,3 +7083,181 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   .db-tools-panel { max-height: 230px !important; }
 }
 
+/* ============================================================
+   ✨ USER TOOLS STRIP — شريط أدوات المستخدم تحت الفيديو
+   ============================================================ */
+.user-tools-strip {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .85rem;
+  background: rgba(15,10,26,.85);
+  border-top: 1px solid rgba(99,102,241,.2);
+  border-bottom: 1px solid rgba(99,102,241,.12);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  direction: rtl;
+}
+.user-tools-strip::-webkit-scrollbar { display: none; }
+.uts-label {
+  font-size: .72rem;
+  color: #6366f1;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+.uts-tools {
+  display: flex;
+  gap: .3rem;
+  align-items: center;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.uts-tools::-webkit-scrollbar { display: none; }
+.uts-empty {
+  color: #555;
+  font-size: .78rem;
+  white-space: nowrap;
+}
+.uts-tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .18rem;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(99,102,241,.25);
+  border-radius: 10px;
+  color: #ccc;
+  cursor: pointer;
+  padding: .38rem .55rem;
+  font-size: .7rem;
+  font-family: 'Cairo', sans-serif;
+  white-space: nowrap;
+  min-width: 46px;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.uts-tool-btn i { font-size: .85rem; }
+.uts-tool-btn:hover {
+  background: rgba(99,102,241,.25);
+  border-color: rgba(99,102,241,.6);
+  color: #fff;
+  transform: translateY(-2px);
+}
+.uts-tool-btn.active {
+  background: linear-gradient(135deg, rgba(99,102,241,.4), rgba(236,72,153,.3));
+  border-color: #6366f1;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(99,102,241,.4);
+}
+.uts-edit-btn {
+  background: rgba(245,158,11,.12);
+  border: 1px solid rgba(245,158,11,.35);
+  border-radius: 10px;
+  color: #f59e0b;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .9rem;
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.uts-edit-btn:hover {
+  background: rgba(245,158,11,.25);
+  transform: scale(1.1);
+}
+
+/* ── Tools Library Modal ── */
+.tlm-cat { margin-bottom: 1.25rem; }
+.tlm-cat-title {
+  font-size: .82rem;
+  font-weight: 700;
+  color: #a78bfa;
+  margin-bottom: .5rem;
+  letter-spacing: .03em;
+  border-bottom: 1px solid rgba(167,139,250,.2);
+  padding-bottom: .3rem;
+}
+.tlm-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: .45rem;
+}
+.tlm-tool-card {
+  background: rgba(255,255,255,.05);
+  border: 2px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: .6rem .4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .3rem;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  font-family: 'Cairo', sans-serif;
+  color: #ccc;
+  overflow: hidden;
+}
+.tlm-tool-card:hover {
+  background: rgba(99,102,241,.15);
+  border-color: rgba(99,102,241,.5);
+  color: #fff;
+  transform: translateY(-2px);
+}
+.tlm-tool-card.selected {
+  background: linear-gradient(135deg, rgba(99,102,241,.3), rgba(236,72,153,.2));
+  border-color: #6366f1;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(99,102,241,.3);
+}
+.tlm-tool-icon { font-size: 1.15rem; line-height: 1; }
+.tlm-tool-label { font-size: .68rem; text-align: center; line-height: 1.2; }
+.tlm-check {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  background: #6366f1;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: .55rem;
+  color: #fff;
+}
+.tlm-tool-card.selected .tlm-check { display: flex; }
+
+/* strip chips (current selected preview) */
+.tlm-strip-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  background: rgba(99,102,241,.18);
+  border: 1px solid rgba(99,102,241,.4);
+  border-radius: 8px;
+  padding: .25rem .5rem;
+  font-size: .75rem;
+  color: #c4b5fd;
+  cursor: grab;
+  transition: all .15s;
+}
+.tlm-strip-chip:hover { background: rgba(99,102,241,.3); }
+.tlm-strip-chip:active { cursor: grabbing; }
+
+@media (max-width: 768px) {
+  .user-tools-strip { padding: .45rem .65rem; gap: .4rem; }
+  .uts-tool-btn { min-width: 40px; padding: .3rem .4rem; font-size: .65rem; }
+  .uts-label { font-size: .65rem; }
+  .tlm-cat-grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); }
+}

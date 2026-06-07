@@ -611,6 +611,7 @@ async function updateAdminUI() {
             addItem("manageCertificatesMenuItem","fas fa-certificate","إدارة شهادات الكورسات", () => { menu.classList.remove("active"); openCertificatesManager(); });
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
             addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); });
+            addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); });
 
             if (uploadZone) uploadZone.classList.add("active");
             if (storageBar) storageBar.style.display = "block";
@@ -627,6 +628,7 @@ async function updateAdminUI() {
             addItem("chatBgMenuItem","fas fa-palette","تغيير خلفية الدردشة", () => { menu.classList.remove("active"); openChatBgModal(); });
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
             addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); });
+            addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); });
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
@@ -10921,3 +10923,233 @@ async function updateFriendChatBadge() {
 }
 setInterval(() => { if (currentUserId) updateFriendChatBadge(); }, 30000);
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge, 3000));
+
+// ============================================================
+// ✨ TOOLS LIBRARY SYSTEM — مكتبة أدوات المستخدم
+// ============================================================
+
+const ALL_TOOLS_LIBRARY = [
+  // ── رسم ──
+  { id:'pen',        cat:'✏️ رسم',    icon:'fas fa-pen',            label:'قلم',        onclick:"setDrawTool('pen');updateActiveToolLabel('قلم')" },
+  { id:'marker',     cat:'✏️ رسم',    icon:'fas fa-highlighter',    label:'ماركر',      onclick:"setDrawTool('marker');updateActiveToolLabel('ماركر')" },
+  { id:'brush',      cat:'✏️ رسم',    icon:'fas fa-paintbrush',     label:'فرشاة',      onclick:"setDrawTool('brush');updateActiveToolLabel('فرشاة')" },
+  { id:'eraser',     cat:'✏️ رسم',    icon:'fas fa-eraser',         label:'ممحاة',      onclick:"setDrawTool('eraser');updateActiveToolLabel('ممحاة')" },
+  { id:'select',     cat:'✏️ رسم',    icon:'fas fa-hand-pointer',   label:'تحريك',      onclick:"setDrawTool('select');updateActiveToolLabel('تحريك')" },
+  // ── أشكال ──
+  { id:'line',       cat:'🔷 أشكال', icon:'fas fa-minus',           label:'خط',         onclick:"setDrawTool('line');updateActiveToolLabel('خط')" },
+  { id:'rect',       cat:'🔷 أشكال', icon:'far fa-square',          label:'مستطيل',     onclick:"setDrawTool('rect');updateActiveToolLabel('مستطيل')" },
+  { id:'circle',     cat:'🔷 أشكال', icon:'far fa-circle',          label:'دائرة',      onclick:"setDrawTool('circle');updateActiveToolLabel('دائرة')" },
+  { id:'triangle',   cat:'🔷 أشكال', icon:'fas fa-play',            label:'مثلث',       onclick:"setDrawTool('triangle');updateActiveToolLabel('مثلث')" },
+  { id:'arrow',      cat:'🔷 أشكال', icon:'fas fa-arrow-right',     label:'سهم',        onclick:"setDrawTool('arrow');updateActiveToolLabel('سهم')" },
+  { id:'arrow2',     cat:'🔷 أشكال', icon:'fas fa-arrows-left-right',label:'مزدوج',     onclick:"setDrawTool('arrow2');updateActiveToolLabel('سهم مزدوج')" },
+  { id:'star',       cat:'🔷 أشكال', icon:'fas fa-star',            label:'نجمة',       onclick:"setDrawTool('star');updateActiveToolLabel('نجمة')" },
+  { id:'heart',      cat:'🔷 أشكال', icon:'fas fa-heart',           label:'قلب',        onclick:"setDrawTool('heart');updateActiveToolLabel('قلب')" },
+  { id:'diamond',    cat:'🔷 أشكال', icon:'',                       label:'معين',       onclick:"setDrawTool('diamond');updateActiveToolLabel('معين')",  emoji:'◇' },
+  { id:'pentagon',   cat:'🔷 أشكال', icon:'',                       label:'خماسي',      onclick:"setDrawTool('pentagon');updateActiveToolLabel('خماسي')", emoji:'⬠' },
+  // ── نص ──
+  { id:'text',       cat:'🔤 نص',    icon:'fas fa-font',            label:'نص عادي',    onclick:"setDrawTool('text');updateActiveToolLabel('نص')" },
+  { id:'textbox',    cat:'🔤 نص',    icon:'fas fa-text-width',      label:'مربع نص',    onclick:"setDrawTool('textbox');updateActiveToolLabel('مربع نص')" },
+  { id:'stickyNote', cat:'🔤 نص',    icon:'fas fa-sticky-note',     label:'ملاحظة',     onclick:"setDrawTool('stickyNote');updateActiveToolLabel('ملاحظة')" },
+  // ── إجراءات ──
+  { id:'undo',       cat:'⚙️ إجراءات', icon:'fas fa-rotate-left',   label:'تراجع',      onclick:'undoDraw()' },
+  { id:'redo',       cat:'⚙️ إجراءات', icon:'fas fa-rotate-right',  label:'إعادة',      onclick:'redoDraw()' },
+  { id:'clear',      cat:'⚙️ إجراءات', icon:'fas fa-trash',         label:'مسح الكل',   onclick:'clearDrawing()' },
+  { id:'save_img',   cat:'⚙️ إجراءات', icon:'fas fa-download',      label:'حفظ صورة',   onclick:'saveDrawingAsImage()' },
+  { id:'copy_img',   cat:'⚙️ إجراءات', icon:'fas fa-copy',          label:'نسخ',        onclick:'copyDrawingToClipboard()' },
+];
+
+// الأدوات الافتراضية
+const DEFAULT_USER_TOOLS = ['pen','eraser','line','rect','circle'];
+
+let _userSelectedTools = [...DEFAULT_USER_TOOLS]; // الأدوات المختارة حالياً (مؤقتة في المودال)
+let _savedUserTools    = [...DEFAULT_USER_TOOLS]; // الأدوات المحفوظة
+
+// ── حد الأدوات حسب الجهاز ──
+function getToolsMax() {
+  return window.innerWidth >= 768 ? 10 : 5;
+}
+
+// ── تحميل الأدوات من Firestore ──
+async function loadUserToolsFromFirestore() {
+  if (!currentUserId) return;
+  try {
+    const doc = await db.collection('user_preferences').doc(currentUserId).get();
+    if (doc.exists && doc.data().selectedTools && Array.isArray(doc.data().selectedTools)) {
+      _savedUserTools = doc.data().selectedTools;
+    }
+  } catch(e) { console.warn('loadUserTools error:', e); }
+  renderUserToolsStrip();
+}
+
+// ── حفظ الأدوات في Firestore ──
+async function saveUserTools() {
+  if (!currentUserId) { showToast('⚠️ سجل دخولك أولاً'); return; }
+  const max = getToolsMax();
+  if (_userSelectedTools.length > max) {
+    showToast(`⚠️ الحد الأقصى ${max} أدوات على جهازك`);
+    return;
+  }
+  try {
+    await db.collection('user_preferences').doc(currentUserId).set(
+      { selectedTools: _userSelectedTools },
+      { merge: true }
+    );
+    _savedUserTools = [..._userSelectedTools];
+    renderUserToolsStrip();
+    closeToolsLibraryModal();
+    showToast('✅ تم حفظ أدواتك!');
+  } catch(e) {
+    console.error('saveUserTools error:', e);
+    showToast('❌ فشل الحفظ، حاول تاني');
+  }
+}
+
+// ── رسم شريط الأدوات تحت الفيديو ──
+function renderUserToolsStrip() {
+  const strip = document.getElementById('utsTools');
+  if (!strip) return;
+  if (!_savedUserTools || !_savedUserTools.length) {
+    strip.innerHTML = `<span class="uts-empty">اضغط ✏️ لإضافة أدواتك</span>`;
+    return;
+  }
+  strip.innerHTML = _savedUserTools.map(toolId => {
+    const t = ALL_TOOLS_LIBRARY.find(x => x.id === toolId);
+    if (!t) return '';
+    const iconHtml = t.emoji
+      ? `<span style="font-size:1rem">${t.emoji}</span>`
+      : `<i class="${t.icon}"></i>`;
+    return `<button class="uts-tool-btn" onclick="${t.onclick};highlightUtsBtn(this)" title="${t.label}">${iconHtml}<span>${t.label}</span></button>`;
+  }).join('');
+}
+
+function highlightUtsBtn(btn) {
+  document.querySelectorAll('.uts-tool-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // فتح لوحة الرسم لو مش مفتوحة
+  const panel = document.getElementById('dbToolsPanel');
+  if (panel && !panel.classList.contains('open')) {
+    toggleDrawTools && toggleDrawTools();
+  }
+}
+
+// ── فتح مودال مكتبة الأدوات ──
+function openToolsLibraryModal() {
+  _userSelectedTools = [..._savedUserTools];
+  renderToolsLibraryModal();
+  document.getElementById('toolsLibraryModal').classList.add('active');
+}
+
+function closeToolsLibraryModal() {
+  document.getElementById('toolsLibraryModal').classList.remove('active');
+}
+
+// ── رسم محتوى مودال مكتبة الأدوات ──
+function renderToolsLibraryModal() {
+  const max = getToolsMax();
+  document.getElementById('tlmMaxLabel').textContent = max;
+  updateTlmCounter();
+  renderTlmCurrentStrip();
+  renderTlmCategories();
+}
+
+function updateTlmCounter() {
+  const max = getToolsMax();
+  const el = document.getElementById('tlmSelectedCount');
+  if (el) {
+    el.textContent = `${_userSelectedTools.length} / ${max}`;
+    el.style.color = _userSelectedTools.length >= max ? '#ef4444' : '#fbbf24';
+  }
+}
+
+function renderTlmCurrentStrip() {
+  const el = document.getElementById('tlmCurrentStrip');
+  if (!el) return;
+  if (!_userSelectedTools.length) {
+    el.innerHTML = `<span style="color:#555;font-size:.8rem">لا توجد أدوات مختارة</span>`;
+    return;
+  }
+  el.innerHTML = _userSelectedTools.map((id, idx) => {
+    const t = ALL_TOOLS_LIBRARY.find(x => x.id === id);
+    if (!t) return '';
+    const iconHtml = t.emoji
+      ? `<span style="font-size:.95rem">${t.emoji}</span>`
+      : `<i class="${t.icon}" style="font-size:.85rem"></i>`;
+    return `<div class="tlm-strip-chip" draggable="true" data-idx="${idx}" ondragstart="tlmDragStart(event,${idx})" ondragover="tlmDragOver(event)" ondrop="tlmDrop(event,${idx})">
+      ${iconHtml}
+      <span style="font-size:.72rem">${t.label}</span>
+      <button onclick="tlmRemoveTool('${id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0;font-size:.7rem;margin-right:2px;line-height:1"><i class="fas fa-times"></i></button>
+    </div>`;
+  }).join('');
+}
+
+function renderTlmCategories() {
+  const container = document.getElementById('tlmCategories');
+  if (!container) return;
+  const cats = [...new Set(ALL_TOOLS_LIBRARY.map(t => t.cat))];
+  container.innerHTML = cats.map(cat => {
+    const tools = ALL_TOOLS_LIBRARY.filter(t => t.cat === cat);
+    return `<div class="tlm-cat">
+      <div class="tlm-cat-title">${cat}</div>
+      <div class="tlm-cat-grid">
+        ${tools.map(t => {
+          const selected = _userSelectedTools.includes(t.id);
+          const iconHtml = t.emoji
+            ? `<span style="font-size:1.1rem">${t.emoji}</span>`
+            : `<i class="${t.icon}"></i>`;
+          return `<button class="tlm-tool-card ${selected ? 'selected' : ''}" id="tlmCard_${t.id}" onclick="tlmToggleTool('${t.id}')">
+            <div class="tlm-tool-icon">${iconHtml}</div>
+            <span class="tlm-tool-label">${t.label}</span>
+            <div class="tlm-check"><i class="fas fa-check"></i></div>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function tlmToggleTool(id) {
+  const max = getToolsMax();
+  if (_userSelectedTools.includes(id)) {
+    // إزالة
+    _userSelectedTools = _userSelectedTools.filter(x => x !== id);
+  } else {
+    // إضافة
+    if (_userSelectedTools.length >= max) {
+      showToast(`⚠️ وصلت للحد الأقصى (${max} أدوات)`);
+      // إزالة الأول وإضافة الجديد
+      _userSelectedTools.shift();
+    }
+    _userSelectedTools.push(id);
+  }
+  // تحديث الكارت
+  const card = document.getElementById(`tlmCard_${id}`);
+  if (card) card.classList.toggle('selected', _userSelectedTools.includes(id));
+  updateTlmCounter();
+  renderTlmCurrentStrip();
+}
+
+function tlmRemoveTool(id) {
+  _userSelectedTools = _userSelectedTools.filter(x => x !== id);
+  const card = document.getElementById(`tlmCard_${id}`);
+  if (card) card.classList.remove('selected');
+  updateTlmCounter();
+  renderTlmCurrentStrip();
+}
+
+// ── drag & drop لإعادة ترتيب الأدوات المختارة ──
+let _tlmDragIdx = null;
+function tlmDragStart(e, idx) { _tlmDragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function tlmDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function tlmDrop(e, toIdx) {
+  e.preventDefault();
+  if (_tlmDragIdx === null || _tlmDragIdx === toIdx) return;
+  const arr = [..._userSelectedTools];
+  const [moved] = arr.splice(_tlmDragIdx, 1);
+  arr.splice(toIdx, 0, moved);
+  _userSelectedTools = arr;
+  _tlmDragIdx = null;
+  renderTlmCurrentStrip();
+}
+
+// ── تحميل الأدوات عند تسجيل الدخول ──
+document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFirestore, 2000));
