@@ -155,28 +155,28 @@
         background: #000 !important;
       }
 
-      /* video-with-board: row جنب جنب */
+      /* video-with-board: column — فيديو فوق، رسم تحت */
       #videoModal .video-with-board {
         display: flex !important;
-        flex-direction: row !important;
+        flex-direction: column !important;
         width: 100% !important;
         height: 100% !important;
         gap: 0 !important;
         padding: 0 !important;
         margin: 0 !important;
         overflow: hidden !important;
-        align-items: stretch !important;
       }
 
-      /* الفيديو على اليمين: 62% */
+      /* الفيديو فوق: 60% من الارتفاع */
       #videoModal .video-player-container {
-        order: 2 !important;
-        flex: 0 0 62% !important;
-        width: 62% !important;
-        height: 100% !important;
+        order: 1 !important;
+        flex: 0 0 60% !important;
+        width: 100% !important;
+        height: 60% !important;
         position: relative !important;
         background: #000 !important;
-        border-right: 1px solid rgba(99,102,241,0.15) !important;
+        border-bottom: 1px solid rgba(99,102,241,0.15) !important;
+        border-right: none !important;
         border-radius: 0 !important;
         padding: 0 !important;
         margin: 0 !important;
@@ -202,13 +202,13 @@
         aspect-ratio: unset !important;
       }
 
-      /* لوحة الرسم على الشمال: 38% */
+      /* لوحة الرسم تحت: 40% من الارتفاع */
       #videoModal .drawing-board {
-        order: 1 !important;
-        flex: 0 0 38% !important;
-        width: 38% !important;
-        height: 100% !important;
-        min-height: unset !important;
+        order: 2 !important;
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        height: 40% !important;
+        min-height: 0 !important;
         border-radius: 0 !important;
         border: none !important;
         background: linear-gradient(160deg,#0d0a1c,#07040e) !important;
@@ -580,7 +580,7 @@
     </div>
   </div>
 </div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard">
+  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard">
 
   <!-- ── زرار فتح الأدوات (الوحيد الظاهر دائماً) ── -->
   <div class="db-topbar">
@@ -1797,5 +1797,66 @@
 </div>
 
 <script src="script.js"></script>
+<script>
+// ===== Fullscreen للـ Video Modal كله =====
+function toggleVideoModalFullscreen() {
+  const modal = document.getElementById('videoModal');
+  const icon = document.getElementById('fsIcon');
+  const elem = modal; // نعمل fullscreen للـ modal كله
+
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    // دخول fullscreen
+    const req = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
+    if (req) {
+      req.call(elem).then(() => {
+        if (icon) { icon.classList.remove('fa-expand'); icon.classList.add('fa-compress'); }
+      }).catch(() => {
+        // fallback: نكبّر الـ modal-content لـ 100vw/100vh
+        _toggleModalMaximize(true);
+      });
+    }
+  } else {
+    // خروج fullscreen
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exit) exit.call(document);
+    if (icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
+    _toggleModalMaximize(false);
+  }
+}
+
+// fallback لو الـ fullscreen API مش شغالة — نكبّر الـ modal-content يدوياً
+function _toggleModalMaximize(on) {
+  const mc = document.getElementById('videoModalContent');
+  const icon = document.getElementById('fsIcon');
+  if (!mc) return;
+  if (on) {
+    mc.style.cssText = 'width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;margin:0!important;';
+    if (icon) { icon.classList.remove('fa-expand'); icon.classList.add('fa-compress'); }
+  } else {
+    mc.style.cssText = '';
+    if (icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
+  }
+}
+
+// إعادة الأيقونة لما يطلع من fullscreen بأي طريقة
+document.addEventListener('fullscreenchange', function() {
+  const icon = document.getElementById('fsIcon');
+  if (!icon) return;
+  if (!document.fullscreenElement) {
+    icon.classList.remove('fa-compress');
+    icon.classList.add('fa-expand');
+    _toggleModalMaximize(false);
+  }
+});
+document.addEventListener('webkitfullscreenchange', function() {
+  const icon = document.getElementById('fsIcon');
+  if (!icon) return;
+  if (!document.webkitFullscreenElement) {
+    icon.classList.remove('fa-compress');
+    icon.classList.add('fa-expand');
+    _toggleModalMaximize(false);
+  }
+});
+</script>
 </body>
 </html>
