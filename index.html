@@ -118,12 +118,11 @@
     /* ===== video-with-board: المنطقة الرئيسية للفيديو ===== */
     .video-with-board {
       display: flex;
-      height: 100%;
-      min-height: 300px;
+      min-height: 260px;
     }
     .video-with-board .video-player-container {
       flex: 1;
-      min-height: 300px;
+      min-height: 260px;
     }
   </style>
 </head>
@@ -244,7 +243,7 @@
   <div id="coursesProgressList" style="display:none"></div>
   <div id="recentActivities" style="display:none"></div>
 </div>
-    <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fab fa-youtube"></i> إضافة فيديو من YouTube</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط الفيديو من YouTube"><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fab fa-youtube"></i> إضافة</button></div></div></div>
+    <div class="upload-zone" id="uploadZone"><div class="upload-icon" onclick="openCloudinaryWidget()"><i class="fas fa-cloud-upload-alt"></i></div><h3>رفع فيديو جديد إلى Cloudinary</h3><p>استخدم واجهة Cloudinary لرفع الفيديوهات بشكل آمن وسريع</p><button class="upload-btn" onclick="openCloudinaryWidget()"><i class="fas fa-plus"></i> فتح واجهة الرفع</button><div class="upload-progress-container" id="uploadProgressContainer"><div class="upload-progress-header"><span id="uploadProgressText">جاري الرفع...</span> <span id="uploadProgressPercent">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill" style="width:0%"></div></div><div class="upload-stats"><span id="uploadSpeed">0 MB/s</span> <span id="uploadTimeRemaining">--:-- متبقي</span></div></div><div class="upload-info"><i class="fas fa-info-circle"></i> يتم الرفع مباشرة إلى Cloudinary | يدعم الفيديوهات حتى 100 ميجابايت<div class="upload-speed-indicator"><i class="fas fa-bolt"></i> رفع سريع (10MB/chunk)</div></div><div class="cloudinary-badge"><i class="fas fa-shield-alt"></i> محمي بواسطة Cloudinary Upload Widget</div><div class="youtube-section"><h4><i class="fas fa-link"></i> إضافة فيديو برابط خارجي</h4><div class="youtube-input-group"><input type="text" id="youtubeUrlInput" class="youtube-input" placeholder="رابط YouTube أو Google Drive..."><button class="youtube-add-btn" onclick="addYouTubeVideo()"><i class="fas fa-plus"></i> إضافة</button></div><div style="margin-top:.4rem;font-size:.78rem;color:#94a3b8;display:flex;align-items:center;gap:.5rem"><i class="fab fa-youtube" style="color:#ef4444"></i> YouTube &nbsp;|&nbsp; <i class="fab fa-google-drive" style="color:#34a853"></i> Google Drive</div></div></div>
     <div class="resume-notification" id="resumeNotification"><div class="resume-info"><div class="resume-icon"><i class="fas fa-history"></i></div><div class="resume-text"><h4 id="resumeVideoTitle">عنوان الفيديو</h4><p id="resumeTimeDisplay">توقفت عند: 0:00</p></div></div><div class="resume-actions"><button class="resume-btn" onclick="resumeWatching()"><i class="fas fa-play"></i> استئناف</button><button class="dismiss-btn" onclick="dismissResume()"><i class="fas fa-times"></i> تجاهل</button></div></div>
     <div class="course-actions-toolbar" style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;gap:.75rem;flex-wrap:wrap">
       <!-- زرار الكورسات المدفوعة — ظاهر للجميع دائماً -->

@@ -1241,7 +1241,7 @@ async function updateAdminUI() {
         if (hasExam && !v.private) { examButtons = `<button class="quiz-btn" onclick="event.stopPropagation(); openTakeExamModal('${v.id}')" style="margin-top:0.5rem;"><i class="fas fa-clipboard-check"></i> دخول الامتحان</button>`; }
       }
       let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="if(this.src.includes('hqdefault')){this.src=this.src.replace('hqdefault','mqdefault');}else{this.style.display='none';this.parentNode.querySelector('.fallback-icon').style.display='flex';}">` : "";
-      return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
+      return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' && v.type !== 'gdrive' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : v.type === 'gdrive' ? '<span><i class="fab fa-google-drive" style="color:#34a853"></i> Google Drive</span>' : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
     })();
   }
   function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
@@ -1296,6 +1296,22 @@ async function updateAdminUI() {
     wrapper.appendChild(botOverlay);
     playerContainer.appendChild(wrapper);
     if (currentUserId) setupYouTubeProgressTracking(id);
+  } else if (v.type === "gdrive") {
+    let iframe = document.createElement("iframe");
+    iframe.classList.add("youtube-iframe");
+    iframe.width = "100%";
+    iframe.height = "100%";
+    iframe.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;top:0;left:0;";
+    iframe.src = `https://drive.google.com/file/d/${v.fileId}/preview`;
+    iframe.allow = "autoplay; encrypted-media";
+    iframe.allowFullscreen = true;
+    iframe.id = "videoPlayer";
+    playerContainer.innerHTML = "";
+    let wrapper = document.createElement("div");
+    wrapper.className = "yt-wrapper";
+    wrapper.style.cssText = "position:relative;width:100%;height:100%;";
+    wrapper.appendChild(iframe);
+    playerContainer.appendChild(wrapper);
   } else {
     let video = document.createElement("video");
     video.controls = true;
@@ -2563,7 +2579,20 @@ async function updateAdminUI() {
 
   // YouTube Functions
   function extractYouTubeId(url) { const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
-  async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط يوتيوب صحيح"); return; } const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
+  async function addYouTubeVideo() { if (!isAdmin) { showToast("❌ المشرف فقط يمكنه الإضافة"); return; } const urlInput = document.getElementById("youtubeUrlInput"); const rawUrl = urlInput.value.trim(); if (!rawUrl) { showToast("⚠️ أدخل رابط صحيح"); return; }
+    // Check if Google Drive
+    const gdriveMath = rawUrl.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (gdriveMath) {
+      const fileId = gdriveMath[1];
+      const title = prompt("أدخل عنوان الفيديو:", "فيديو من Google Drive");
+      if (!title) return;
+      const description = prompt("أدخل وصف الفيديو (اختياري):", "");
+      const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "gdrive", fileId: fileId, thumbnail: "", createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false };
+      try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو Google Drive"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); }
+      return;
+    }
+    // YouTube
+    const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح — يجب أن يكون YouTube أو Google Drive"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
 
   function localLogout() { if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) { if (currentUser && currentUserPhone) { endUserSession(currentUser, currentUserPhone); } localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; updateAdminUI(); location.reload(); } }
 
