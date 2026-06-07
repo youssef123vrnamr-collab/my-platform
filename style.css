@@ -5764,3 +5764,135 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   order: 2 !important;
 }
 
+
+
+/* ══ YOUTUBE STYLE: video fills top of screen edge to edge ══ */
+
+#videoModal .modal-content {
+  background: #000 !important;
+}
+
+#videoModal .modal-header {
+  display: none !important;
+}
+
+/* زرار الإغلاق يطفو فوق الفيديو */
+#videoModal .modal-close {
+  display: flex !important;
+  position: fixed !important;
+  top: 12px !important;
+  left: 12px !important;
+  z-index: 9999 !important;
+  background: rgba(0,0,0,0.6) !important;
+  border: none !important;
+  color: #fff !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+#videoModal .modal-share,
+#videoModal .modal-fullscreen {
+  display: flex !important;
+  position: fixed !important;
+  top: 12px !important;
+  z-index: 9999 !important;
+  background: rgba(0,0,0,0.6) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+#videoModal .modal-fullscreen { right: 12px !important; }
+#videoModal .modal-share { right: 56px !important; }
+
+#videoModal .modal-body {
+  padding: 0 !important;
+  background: #000 !important;
+  overflow-y: auto !important;
+}
+
+#videoModal .video-with-board {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 0 !important;
+}
+
+#videoModal .video-player-container {
+  order: 1 !important;
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  height: auto !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #000 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  position: relative !important;
+}
+
+#videoModal .video-player-container::before,
+#videoModal .video-player-container::after {
+  display: none !important;
+}
+
+#videoModal .video-player {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+  aspect-ratio: unset !important;
+  background: #000 !important;
+}
+
+#videoModal .drawing-board {
+  order: 2 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  border-top: 1px solid rgba(139,92,246,0.2) !important;
+}
+
+
+
+/* ══ VIDEO STARTS RIGHT BELOW HEADER — no gap ══ */
+
+#videoModal .modal-header {
+  display: flex !important;
+  position: relative !important;
+  padding: 0.6rem 1rem !important;
+  min-height: unset !important;
+  background: rgba(15,8,26,0.98) !important;
+  border-bottom: none !important;
+}
+
+#videoModal .modal-close,
+#videoModal .modal-share,
+#videoModal .modal-fullscreen {
+  display: flex !important;
+  position: relative !important;
+  top: unset !important;
+  left: unset !important;
+  right: unset !important;
+  background: rgba(255,255,255,0.1) !important;
+  border-radius: 10px !important;
+  backdrop-filter: none !important;
+}
+
+#videoModal .modal-body {
+  padding: 0 !important;
+}
+
+#videoModal .video-player-container {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
