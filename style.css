@@ -5286,3 +5286,99 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+
+/* ══ VIDEO FILLS FRAME — no letterbox, no gaps ══ */
+
+.video-player {
+  border-radius: 18px !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.yt-wrapper {
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+.video-player-container {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+}
+
+@media (max-width: 768px) {
+  .video-player {
+    border-radius: 12px !important;
+    object-fit: cover !important;
+  }
+  .video-player-container {
+    border-radius: 12px !important;
+  }
+  .yt-wrapper {
+    border-radius: 12px !important;
+  }
+}
+
+
+
+/* ══ GLOW BORDER ON ALL DEVICES (mobile + desktop) ══ */
+
+.video-player-container,
+.video-player-container:not(.video-playing) {
+  box-shadow:
+    0 0 0 1px rgba(99,102,241,0.55),
+    0 0 0 2px rgba(139,92,246,0.28),
+    0 0 0 4px rgba(236,72,153,0.13),
+    0 8px 24px rgba(0,0,0,0.55),
+    0 24px 56px rgba(0,0,0,0.45),
+    0 0 80px rgba(99,102,241,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+.video-player-container::before {
+  display: block !important;
+  content: '' !important;
+  position: absolute !important;
+  top: -1px !important;
+  left: 10% !important;
+  right: 10% !important;
+  height: 2px !important;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(99,102,241,0.6) 20%,
+    rgba(168,85,247,0.95) 45%,
+    rgba(236,72,153,0.95) 65%,
+    rgba(99,102,241,0.6) 85%,
+    transparent 100%
+  ) !important;
+  border-radius: 2px !important;
+  z-index: 10 !important;
+  animation: topBarShimmer 3s ease-in-out infinite !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 768px) {
+  .video-player-container,
+  .video-player-container:not(.video-playing) {
+    box-shadow:
+      0 0 0 1px rgba(99,102,241,0.55),
+      0 0 0 2px rgba(139,92,246,0.28),
+      0 0 0 4px rgba(236,72,153,0.13),
+      0 6px 18px rgba(0,0,0,0.55),
+      0 0 50px rgba(99,102,241,0.1),
+      inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  }
+
+  .video-player-container::before {
+    display: block !important;
+    left: 8% !important;
+    right: 8% !important;
+  }
+}
+
