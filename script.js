@@ -1276,24 +1276,16 @@ async function updateAdminUI() {
     iframe.width = "100%";
     iframe.height = "100%";
     iframe.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;top:0;left:0;";
-    iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3&cc_load_policy=0`;
+    const ytOrigin = encodeURIComponent(window.location.origin || 'https://astronomy-platform.web.app');
+    iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1&rel=0&disablekb=0&iv_load_policy=3&cc_load_policy=0&origin=${ytOrigin}`;
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope";
     iframe.allowFullscreen = true;
     iframe.id = "videoPlayer";
     playerContainer.innerHTML = "";
-    // ── Overlay يخفي controls يوتيوب ──
     let wrapper = document.createElement("div");
     wrapper.className = "yt-wrapper";
     wrapper.style.cssText = "position:relative;width:100%;height:100%;";
     wrapper.appendChild(iframe);
-    // overlay علوي (channel name / CC / settings / share)
-    let topOverlay = document.createElement("div");
-    topOverlay.className = "yt-overlay yt-overlay-top";
-    wrapper.appendChild(topOverlay);
-    // overlay سفلي (لوجو YouTube / watermark)
-    let botOverlay = document.createElement("div");
-    botOverlay.className = "yt-overlay yt-overlay-bot";
-    wrapper.appendChild(botOverlay);
     playerContainer.appendChild(wrapper);
     if (currentUserId) setupYouTubeProgressTracking(id);
   } else if (v.type === "gdrive") {
