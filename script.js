@@ -1330,6 +1330,61 @@ async function updateAdminUI() {
   }
 
   document.getElementById("videoModal").classList.add("active");
+
+  // ── تطبيق layout: فيديو فوق + رسم تحت (desktop فقط) ──
+  function applyDesktopLayout() {
+    if (window.innerWidth < 769) return;
+    var vwb = document.querySelector('#videoModal .video-with-board');
+    var vpc = document.querySelector('#videoModal .video-player-container');
+    var db  = document.querySelector('#videoModal .drawing-board');
+    var mb  = document.querySelector('#videoModal .modal-body');
+    var mc  = document.getElementById('videoModalContent');
+    if (!vwb || !vpc || !db) return;
+    // modal
+    mc.style.cssText += ';width:98vw!important;max-width:98vw!important;height:95dvh!important;max-height:95dvh!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;';
+    // modal-body
+    mb.style.cssText += ';flex:1!important;min-height:0!important;overflow:hidden!important;padding:0!important;';
+    // video-with-board
+    vwb.style.setProperty('display','flex','important');
+    vwb.style.setProperty('flex-direction','column','important');
+    vwb.style.setProperty('width','100%','important');
+    vwb.style.setProperty('height','100%','important');
+    vwb.style.setProperty('gap','0','important');
+    vwb.style.setProperty('padding','0','important');
+    vwb.style.setProperty('margin','0','important');
+    vwb.style.setProperty('min-height','0','important');
+    // video container فوق
+    vpc.style.setProperty('order','1','important');
+    vpc.style.setProperty('flex','0 0 58%','important');
+    vpc.style.setProperty('width','100%','important');
+    vpc.style.setProperty('height','58%','important');
+    vpc.style.setProperty('min-width','unset','important');
+    vpc.style.setProperty('max-width','100%','important');
+    vpc.style.setProperty('position','relative','important');
+    vpc.style.setProperty('background','#000','important');
+    vpc.style.setProperty('border-radius','0','important');
+    vpc.style.setProperty('border','none','important');
+    vpc.style.setProperty('border-bottom','1px solid rgba(99,102,241,0.2)','important');
+    vpc.style.setProperty('padding','0','important');
+    vpc.style.setProperty('padding-top','0','important');
+    vpc.style.setProperty('margin','0','important');
+    vpc.style.setProperty('overflow','hidden','important');
+    vpc.style.setProperty('aspect-ratio','unset','important');
+    vpc.style.setProperty('max-height','none','important');
+    vpc.style.setProperty('min-height','0','important');
+    // drawing board تحت
+    db.style.setProperty('order','2','important');
+    db.style.setProperty('flex','1 1 auto','important');
+    db.style.setProperty('width','100%','important');
+    db.style.setProperty('height','auto','important');
+    db.style.setProperty('min-height','0','important');
+    db.style.setProperty('border-radius','0','important');
+    db.style.setProperty('border','none','important');
+    db.style.setProperty('border-top','1px solid rgba(99,102,241,0.2)','important');
+  }
+  applyDesktopLayout();
+  window.addEventListener('resize', applyDesktopLayout);
+
   setTimeout(() => { try { initDrawingBoard(); } catch(e) { console.warn("drawing init failed", e); } }, 100);
 
   let quizContainer = document.getElementById("videoQuizContainer");
