@@ -629,7 +629,7 @@
     </div>
   </div>
 </div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard">
+  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board" id="videoWithBoard"><div class="drawing-board" id="drawingBoard" style="order:2">
 
   <!-- ── زرار فتح الأدوات (الوحيد الظاهر دائماً) ── -->
   <div class="db-topbar">
@@ -728,7 +728,7 @@
     <div id="dbSelectBox" style="display:none;position:absolute;border:2px dashed #6366f1;border-radius:4px;pointer-events:none;box-shadow:0 0 0 1px rgba(99,102,241,0.3);"></div>
   </div>
 
-</div><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div>
+</div><div class="video-player-container" id="videoPlayerContainer" style="order:1"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div>
 
   <!-- ── شريط أدوات المستخدم تحت الفيديو ── -->
   <div class="user-tools-strip" id="userToolsStrip">
@@ -1893,6 +1893,77 @@ function _onFSChange() {
 }
 document.addEventListener('fullscreenchange', _onFSChange);
 document.addEventListener('webkitfullscreenchange', _onFSChange);
+</script>
+
+<script>
+(function(){
+  function fixLayout(){
+    var vwb = document.getElementById('videoWithBoard');
+    var vpc = document.getElementById('videoPlayerContainer');
+    var db  = document.getElementById('drawingBoard');
+    if(!vwb||!vpc||!db) return;
+    if(window.innerWidth < 769) return;
+    // force column on parent
+    vwb.setAttribute('style',
+      'display:flex!important;'+
+      'flex-direction:column!important;'+
+      'width:100%!important;'+
+      'height:100%!important;'+
+      'gap:0!important;'+
+      'padding:0!important;'+
+      'margin:0!important;'+
+      'min-height:0!important;'+
+      'align-items:stretch!important;'
+    );
+    // video on top
+    vpc.setAttribute('style',
+      'order:1!important;'+
+      'flex:0 0 58%!important;'+
+      'width:100%!important;'+
+      'height:58%!important;'+
+      'position:relative!important;'+
+      'background:#000!important;'+
+      'border:none!important;'+
+      'border-bottom:1px solid rgba(99,102,241,0.2)!important;'+
+      'padding:0!important;'+
+      'padding-top:0!important;'+
+      'margin:0!important;'+
+      'overflow:hidden!important;'+
+      'aspect-ratio:unset!important;'+
+      'max-height:none!important;'+
+      'min-height:0!important;'+
+      'min-width:unset!important;'+
+      'border-radius:0!important;'
+    );
+    // drawing board below
+    db.setAttribute('style',
+      'order:2!important;'+
+      'flex:1 1 auto!important;'+
+      'width:100%!important;'+
+      'height:auto!important;'+
+      'min-height:0!important;'+
+      'border-radius:0!important;'+
+      'border:none!important;'+
+      'border-top:1px solid rgba(99,102,241,0.2)!important;'
+    );
+  }
+  
+  // run on modal open
+  var modal = document.getElementById('videoModal');
+  if(modal){
+    var obs = new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        if(m.attributeName==='class' && modal.classList.contains('active')){
+          setTimeout(fixLayout, 50);
+          setTimeout(fixLayout, 300);
+        }
+      });
+    });
+    obs.observe(modal, {attributes:true});
+  }
+  
+  window.addEventListener('resize', fixLayout);
+})();
 </script>
 </body>
 </html>
