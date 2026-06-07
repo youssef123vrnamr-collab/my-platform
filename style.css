@@ -6593,3 +6593,121 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border-top: 1px solid rgba(16,185,129,0.2) !important;
 }
 
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║   🔥 KILL BLACK BARS v3 — object-fit cover everywhere      ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+/* موبايل — الفيديو يملأ الـ container بدون أي مربع أسود */
+@media (max-width: 768px) {
+  #videoModal .video-player {
+    object-fit: cover !important;
+  }
+
+  /* YouTube: الـ iframe يملأ بالكامل وبيتعامل مع الـ letterbox داخلياً */
+  #videoModal .yt-wrapper,
+  #videoModal .yt-wrapper .youtube-iframe,
+  #videoModal .youtube-iframe {
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    object-fit: cover !important;
+  }
+
+  /* container الفيديو — ارتفاع ثابت بيناسب الشاشة ويسيب مساحة للرسم */
+  #videoModal .video-player-container {
+    padding-top: 0 !important;
+    height: 42vw !important;
+    min-height: 200px !important;
+    max-height: 260px !important;
+  }
+}
+
+/* كمبيوتر كمان */
+@media (min-width: 769px) {
+  #videoModal .video-player {
+    object-fit: cover !important;
+  }
+}
+
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║   📱 MOBILE FINAL — fixed video height, space for drawing  ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+@media (max-width: 768px) {
+
+  /* الـ modal body يتسكرول عمودياً */
+  #videoModal .modal-body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background: #0a0614 !important;
+  }
+
+  /* الـ video-with-board: column عادي */
+  #videoModal .video-with-board {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: unset !important;
+  }
+
+  /* container الفيديو: ارتفاع ثابت بيناسب أي شاشة */
+  #videoModal .video-player-container {
+    position: relative !important;
+    width: 100% !important;
+    height: 0 !important;
+    padding-top: 56.25% !important;   /* 16:9 */
+    min-height: unset !important;
+    max-height: unset !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+    background: #000 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(139,92,246,0.15) !important;
+  }
+
+  /* الفيديو والـ iframe يتمركزوا جوا الـ container */
+  #videoModal .video-player,
+  #videoModal .yt-wrapper,
+  #videoModal .yt-wrapper .youtube-iframe,
+  #videoModal .youtube-iframe {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border: none !important;
+    border-radius: 0 !important;
+    aspect-ratio: unset !important;
+    max-height: none !important;
+    background: #000 !important;
+  }
+
+  /* لوحة الرسم تحته بمساحة مريحة */
+  #videoModal .drawing-board {
+    flex: 1 1 auto !important;
+    min-height: 320px !important;
+    height: auto !important;
+    order: 2 !important;
+  }
+
+  /* إخفاء أي overflow من الـ modal */
+  #videoModal .modal-content {
+    overflow: hidden !important;
+    height: 100dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  #videoModal .modal-body {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
