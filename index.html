@@ -226,6 +226,97 @@
       height: 100vh !important; max-height: 100vh !important;
       border-radius: 0 !important; border: none !important; margin: 0 !important;
     }
+    /* fullscreen: video+drawing layout */
+    #videoModal:fullscreen .modal-body,
+    #videoModal:-webkit-full-screen .modal-body {
+      flex: 1 !important; min-height: 0 !important; overflow: hidden !important;
+      padding: 0 !important; background: #000 !important;
+    }
+    #videoModal:fullscreen .video-with-board,
+    #videoModal:-webkit-full-screen .video-with-board {
+      display: flex !important; flex-direction: column !important;
+      width: 100% !important; height: 100% !important;
+      gap: 0 !important; padding: 0 !important; margin: 0 !important;
+      min-height: 0 !important; align-items: stretch !important;
+    }
+    #videoModal:fullscreen .video-player-container,
+    #videoModal:-webkit-full-screen .video-player-container {
+      order: 1 !important; flex: 0 0 58% !important;
+      width: 100% !important; height: 58% !important;
+      position: relative !important; background: #000 !important;
+      border: none !important; border-bottom: 1px solid rgba(99,102,241,0.2) !important;
+      padding: 0 !important; margin: 0 !important;
+      overflow: hidden !important; aspect-ratio: unset !important;
+      max-height: none !important; min-height: 0 !important; border-radius: 0 !important;
+    }
+    #videoModal:fullscreen .video-player-container .video-player,
+    #videoModal:fullscreen .video-player-container .yt-wrapper,
+    #videoModal:fullscreen .video-player-container iframe,
+    #videoModal:-webkit-full-screen .video-player-container .video-player,
+    #videoModal:-webkit-full-screen .video-player-container .yt-wrapper,
+    #videoModal:-webkit-full-screen .video-player-container iframe {
+      position: absolute !important; top: 0 !important; left: 0 !important;
+      width: 100% !important; height: 100% !important;
+      border: none !important; object-fit: contain !important;
+    }
+    #videoModal:fullscreen .drawing-board,
+    #videoModal:-webkit-full-screen .drawing-board {
+      order: 2 !important; flex: 1 1 auto !important;
+      width: 100% !important; height: auto !important; min-height: 0 !important;
+      border-radius: 0 !important; border: none !important;
+      border-top: 1px solid rgba(99,102,241,0.2) !important;
+      display: flex !important; flex-direction: column !important; overflow: hidden !important;
+    }
+    #videoModal:fullscreen .drawing-canvas-wrap,
+    #videoModal:-webkit-full-screen .drawing-canvas-wrap {
+      flex: 1 !important; min-height: 0 !important; overflow: hidden !important;
+    }
+
+    /* موبايل: فيديو فوق + رسم تحت */
+    @media (max-width: 768px) {
+      #videoModal .video-with-board {
+        display: flex !important; flex-direction: column !important;
+        width: 100% !important; height: 100% !important;
+        gap: 0 !important; padding: 0 !important; margin: 0 !important;
+        min-height: 0 !important; align-items: stretch !important;
+      }
+      #videoModal .video-player-container {
+        order: 1 !important; flex: 0 0 55% !important;
+        width: 100% !important; height: 55% !important;
+        position: relative !important; background: #000 !important;
+        border: none !important; border-bottom: 1px solid rgba(99,102,241,0.2) !important;
+        padding: 0 !important; margin: 0 !important;
+        overflow: hidden !important; aspect-ratio: unset !important;
+        max-height: none !important; min-height: 0 !important; border-radius: 0 !important;
+      }
+      #videoModal .video-player-container .video-player,
+      #videoModal .video-player-container .yt-wrapper,
+      #videoModal .video-player-container iframe {
+        position: absolute !important; top: 0 !important; left: 0 !important;
+        width: 100% !important; height: 100% !important;
+        border: none !important; object-fit: contain !important;
+      }
+      #videoModal .drawing-board {
+        order: 2 !important; flex: 1 1 auto !important;
+        width: 100% !important; height: auto !important; min-height: 0 !important;
+        border-radius: 0 !important; border: none !important;
+        border-top: 1px solid rgba(99,102,241,0.2) !important;
+        display: flex !important; flex-direction: column !important; overflow: hidden !important;
+      }
+      #videoModal .drawing-canvas-wrap {
+        flex: 1 !important; min-height: 0 !important; overflow: hidden !important;
+      }
+      #videoModalContent {
+        width: 100vw !important; max-width: 100vw !important;
+        height: 100dvh !important; max-height: 100dvh !important;
+        border-radius: 0 !important; border: none !important; margin: 0 !important;
+        display: flex !important; flex-direction: column !important;
+      }
+      #videoModalContent > .modal-body {
+        flex: 1 !important; min-height: 0 !important; overflow: hidden !important;
+        padding: 0 !important; background: #000 !important;
+      }
+    }
 
     /* ═══ User Tools Strip ═══ */
     .user-tools-strip {
@@ -1874,13 +1965,15 @@ function _maximizeModal(on) {
   if (!mc) return;
   if (on) {
     mc.setAttribute('data-maximized','1');
-    mc.style.cssText = 'width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:none!important;margin:0!important;';
+    mc.style.cssText = 'width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:none!important;margin:0!important;display:flex!important;flex-direction:column!important;';
     if(icon){icon.classList.remove('fa-expand');icon.classList.add('fa-compress');}
   } else {
     mc.removeAttribute('data-maximized');
     mc.style.cssText = '';
     if(icon){icon.classList.remove('fa-compress');icon.classList.add('fa-expand');}
   }
+  setTimeout(function(){ if(typeof fixLayout === 'function') fixLayout(); }, 100);
+  setTimeout(function(){ if(typeof fixLayout === 'function') fixLayout(); }, 400);
 }
 
 function _onFSChange() {
@@ -1902,7 +1995,6 @@ document.addEventListener('webkitfullscreenchange', _onFSChange);
     var vpc = document.getElementById('videoPlayerContainer');
     var db  = document.getElementById('drawingBoard');
     if(!vwb||!vpc||!db) return;
-    if(window.innerWidth < 769) return;
     // force column on parent
     vwb.setAttribute('style',
       'display:flex!important;'+
@@ -1962,6 +2054,7 @@ document.addEventListener('webkitfullscreenchange', _onFSChange);
     obs.observe(modal, {attributes:true});
   }
   
+  window.fixLayout = fixLayout;
   window.addEventListener('resize', fixLayout);
 })();
 </script>
