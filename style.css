@@ -5896,3 +5896,23 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border: none !important;
 }
 
+
+
+/* ══ CROP letterbox bars: tighter aspect ratio ══ */
+
+#videoModal .video-player-container {
+  aspect-ratio: 16/8 !important;
+  overflow: hidden !important;
+}
+
+#videoModal .video-player {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 100% !important;
+  height: 120% !important;
+  max-height: none !important;
+  object-fit: cover !important;
+}
+
