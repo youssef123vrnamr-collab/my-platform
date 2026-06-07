@@ -6711,3 +6711,83 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║   💥 LETTERBOX KILLER — scale iframe beyond borders        ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+@media (max-width: 768px) {
+
+  /* container يأخذ ارتفاع محدد يناسب الشاشة ويفضل مساحة للرسم */
+  #videoModal .video-player-container {
+    position: relative !important;
+    width: 100% !important;
+    /* ارتفاع ثابت يناسب معظم الشاشات الموبايل */
+    height: 52vw !important;
+    min-height: 210px !important;
+    max-height: 280px !important;
+    padding-top: 0 !important;
+    overflow: hidden !important;
+    background: #000 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* الـ yt-wrapper يتمدد أكبر من الـ container لإخفاء الـ letterbox */
+  #videoModal .yt-wrapper {
+    position: absolute !important;
+    /* نمدد الـ wrapper بنسبة 18% فوق وتحت لإخفاء الأجزاء السوداء */
+    top: -18% !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 136% !important;
+    aspect-ratio: unset !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    background: #000 !important;
+  }
+
+  #videoModal .yt-wrapper .youtube-iframe,
+  #videoModal .youtube-iframe {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    aspect-ratio: unset !important;
+    max-height: none !important;
+    display: block !important;
+  }
+
+  /* فيديو Cloudinary — object-fit cover بيقطع الحواف بدل الـ letterbox */
+  #videoModal .video-player {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 0 !important;
+    aspect-ratio: unset !important;
+    max-height: none !important;
+    background: #000 !important;
+  }
+
+  /* لوحة الرسم — مساحة أكبر بكتير */
+  #videoModal .drawing-board {
+    flex: 1 1 auto !important;
+    min-height: 420px !important;
+    height: auto !important;
+    order: 2 !important;
+    background: linear-gradient(160deg, #0d0a1c, #08040f) !important;
+  }
+
+  .drawing-canvas-wrap {
+    min-height: 320px !important;
+    flex: 1 !important;
+  }
+}
+
