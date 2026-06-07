@@ -276,17 +276,17 @@
     .modal-share:hover, .modal-fullscreen:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
     .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
     .modal-body { padding: 1.5rem; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-    .video-player-container { background: #000; border-radius: 12px; padding: 0; transition: all 0.3s ease; margin-bottom: 1rem; overflow: hidden; }
+    .video-player-container { background: linear-gradient(145deg, rgba(26,16,37,0.6), rgba(15,10,26,0.8)); backdrop-filter: blur(12px); border-radius: 32px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.3), 0 0 0 3px rgba(236,72,153,0.2); transition: all 0.3s ease; margin-bottom: 1rem; }
     .video-player-container.video-playing { padding: 0 !important; background: #000 !important; box-shadow: none !important; backdrop-filter: none !important; margin-bottom: 0 !important; }
     .modal.video-active .modal-body { padding: 0 !important; }
-    .video-player, .youtube-iframe { width: 100%; height: auto; border-radius: 0; background: #000; aspect-ratio: 16/9; display: block; }
+    .video-player, .youtube-iframe { width: 100%; height: auto; max-height: 70vh; border-radius: 24px; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); aspect-ratio: 16 / 9; }
     .video-player:fullscreen, .video-player:-webkit-full-screen { width: 100% !important; height: 100% !important; max-height: 100vh !important; object-fit: contain !important; border-radius: 0 !important; background: #000; }
     .youtube-iframe:fullscreen, .youtube-iframe:-webkit-full-screen { width: 100% !important; height: 100% !important; max-height: 100vh !important; border-radius: 0 !important; }
-    .yt-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 0; overflow: hidden; background: #000; }
+    .yt-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 70vh; border-radius: 24px; overflow: hidden; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
     .yt-wrapper .youtube-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; max-height: none; border-radius: 0; box-shadow: none; }
     .yt-overlay { position: absolute; left: 0; right: 0; pointer-events: all; z-index: 10; background: #000; cursor: default; }
-    .yt-overlay-top { top: 0; height: 20%; }
-    .yt-overlay-bot { bottom: 0; height: 14%; }
+    .yt-overlay-top { top: 0; height: 8%; }
+    .yt-overlay-bot { bottom: 0; height: 6%; }
     .yt-wrapper:fullscreen .yt-overlay, .yt-wrapper:-webkit-full-screen .yt-overlay { display: none; }
     .video-player-container:fullscreen, .video-player-container:-webkit-full-screen { padding: 0 !important; background: #000 !important; border-radius: 0 !important; box-shadow: none !important; backdrop-filter: none !important; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
@@ -324,8 +324,8 @@
     .upload-progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 5px; transition: width .3s; position: relative; }
     .upload-progress-fill::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); background-size: 200% 100%; animation: shimmer 1s infinite; }
     .upload-stats { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .8rem; color: #888; }
-    .video-with-board { display: flex; flex-direction: row; gap: 1rem; align-items: flex-start; direction: ltr; margin-bottom: 1rem; }
-    .video-with-board > .video-player-container { flex: 1 1 65%; min-width: 0; margin-bottom: 0; direction: rtl; }
+    .video-with-board { display: flex; flex-direction: row; gap: 1rem; align-items: stretch; direction: ltr; margin-bottom: 1rem; }
+    .video-with-board > .video-player-container { flex: 1 1 65%; min-width: 0; margin-bottom: 0; direction: rtl; display: flex; align-items: center; justify-content: center; }
     .video-with-board > .video-player-container > .video-player, .video-with-board > .video-player-container > .youtube-iframe { max-height: 70vh; }
     .drawing-board { flex: 0 0 35%; display: flex; flex-direction: column; background: linear-gradient(145deg, rgba(26,16,37,0.85), rgba(10,5,18,0.95)); backdrop-filter: blur(12px); border-radius: 24px; overflow: hidden; border: 1px solid rgba(99,102,241,0.35); box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(236,72,153,0.15); direction: rtl; min-height: 320px; }
     .drawing-board.collapsed .drawing-canvas-wrap { display: none; }
