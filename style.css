@@ -324,10 +324,11 @@
     .upload-progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 5px; transition: width .3s; position: relative; }
     .upload-progress-fill::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); background-size: 200% 100%; animation: shimmer 1s infinite; }
     .upload-stats { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .8rem; color: #888; }
+    /* ===== Desktop: فيديو + لوح رسم جنب بعض ===== */
     .video-with-board { display: flex; flex-direction: row; gap: 1rem; align-items: stretch; direction: ltr; margin-bottom: 1rem; max-height: 55vh; }
-    .video-with-board > .video-player-container { flex: 1 1 60%; min-width: 0; margin-bottom: 0; direction: rtl; display: flex; align-items: center; justify-content: center; max-height: 55vh; }
-    .video-with-board > .video-player-container > .video-player, .video-with-board > .video-player-container > .youtube-iframe { max-height: 55vh; }
-    .drawing-board { flex: 0 0 38%; max-width: 38%; display: flex; flex-direction: column; background: linear-gradient(145deg, rgba(26,16,37,0.85), rgba(10,5,18,0.95)); backdrop-filter: blur(12px); border-radius: 24px; overflow: hidden; border: 1px solid rgba(99,102,241,0.35); box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(236,72,153,0.15); direction: rtl; min-height: 260px; max-height: 55vh; }
+    .video-with-board > .video-player-container { flex: 1 1 62%; min-width: 0; margin-bottom: 0; direction: rtl; display: flex; align-items: center; justify-content: center; max-height: 55vh; overflow: hidden; }
+    .video-with-board > .video-player-container > .video-player, .video-with-board > .video-player-container > .youtube-iframe { max-height: 55vh; width: 100%; }
+    .drawing-board { flex: 0 0 36%; max-width: 36%; display: flex; flex-direction: column; background: linear-gradient(145deg, rgba(26,16,37,0.85), rgba(10,5,18,0.95)); backdrop-filter: blur(12px); border-radius: 24px; overflow: hidden; border: 1px solid rgba(99,102,241,0.35); box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(236,72,153,0.15); direction: rtl; min-height: 260px; max-height: 55vh; }
     .drawing-board.collapsed .drawing-canvas-wrap { display: none; }
     .drawing-toolbar { display: flex; gap: 0.4rem; padding: 0.6rem 0.7rem; background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(236,72,153,0.12)); border-bottom: 1px solid rgba(99,102,241,0.3); flex-wrap: nowrap; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: rgba(99,102,241,0.5) transparent; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
     .drawing-toolbar::-webkit-scrollbar { height: 4px; }
@@ -350,7 +351,17 @@
     .drawing-empty-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; color: #b8b8c8; pointer-events: none; font-size: 0.95rem; }
     .drawing-empty-hint i { font-size: 2.5rem; color: #c9cad8; }
     .drawing-empty-hint.hidden { display: none; }
-    @media (max-width:768px) { .video-with-board { flex-direction: column; direction: rtl; } .video-with-board > .video-player-container { flex: 0 0 auto; order: 1; } .drawing-board { flex: 0 0 auto; order: 2; min-height: 360px; } .drawing-toolbar .db-btn { min-width: 42px; min-height: 42px; padding: 0.5rem; } .drawing-toolbar .db-range-wrap input[type=range] { width: 70px; } }
+    /* ===== Mobile: فيديو فوق ولوح رسم تحته ===== */
+    @media (max-width:768px) {
+      .video-with-board { flex-direction: column; direction: rtl; max-height: none; gap: .75rem; }
+      .video-with-board > .video-player-container { flex: 0 0 auto; order: 1; max-height: 35vh; min-height: 200px; width: 100%; }
+      .video-with-board > .video-player-container > .video-player,
+      .video-with-board > .video-player-container > .youtube-iframe { max-height: 35vh; width: 100%; }
+      .drawing-board { flex: 0 0 auto; order: 2; min-height: 280px; max-height: 40vh; max-width: 100%; width: 100%; }
+      .drawing-canvas-wrap { min-height: 220px; }
+      .drawing-toolbar .db-btn { min-width: 38px; min-height: 38px; padding: .4rem; }
+      .drawing-toolbar .db-range-wrap input[type=range] { width: 65px; }
+    }
     @media (max-width:768px) { .navbar { padding: .75rem 1rem; } .brand-text h1 { font-size: 1.2rem; } .hero { padding: 2rem 1rem; } .hero h2 { font-size: 2rem; } .hero p { font-size: 1rem; } .container { padding: 1rem; } .videos-grid { grid-template-columns: 1fr; gap: 1rem; } .upload-zone { padding: 1.5rem; } .resume-notification { padding: 1rem; flex-direction: column; align-items: stretch; text-align: center; } .resume-info { justify-content: center; } .resume-actions { justify-content: center; } .modal-content { max-width: 100% !important; } .video-info { margin-top: -40px; min-height: 300px; padding: 1.5rem; } .video-title { font-size: 1.3rem; } .video-description { font-size: 0.95rem; line-height: 1.7; } .storage-bar-container { padding: 1rem; } .form-group textarea { min-height: 150px; } }
     .chat-btn { position: fixed; bottom: 2rem; left: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #ec4899); border-radius: 50%; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(99,102,241,.5); z-index: 999; transition: all .3s; display: flex; align-items: center; justify-content: center; }
     .chat-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 15px 40px rgba(99,102,241,.7); }
