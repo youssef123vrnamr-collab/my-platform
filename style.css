@@ -5553,3 +5553,49 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+
+/* ══ FIX: remove black space above/below video in modal ══ */
+
+#videoModal .modal-content {
+  background: #000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#videoModal .modal-header {
+  flex-shrink: 0 !important;
+  background: rgba(15,8,26,0.95) !important;
+}
+
+#videoModal .modal-body {
+  padding: 0 !important;
+  background: #000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+#videoModal .video-with-board {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+#videoModal .video-player-container {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: 1px solid rgba(139,92,246,0.3) !important;
+}
+
+@media (max-width: 768px) {
+  #videoModal .video-player-container {
+    border-radius: 0 !important;
+  }
+}
+
