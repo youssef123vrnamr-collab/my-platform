@@ -203,19 +203,6 @@
       min-height: 100vh;
       min-height: 100dvh;
     }
-    /* ===== DESKTOP OVERRIDE: videoModal يتمركز مش يتمدد ===== */
-    @media (min-width: 769px) {
-      #videoModal {
-        align-items: center !important;
-        justify-content: center !important;
-        background: rgba(5,3,8,0.92) !important;
-      }
-      #toolsLibraryModal {
-        align-items: center !important;
-        justify-content: center !important;
-        background: rgba(5,3,8,0.85) !important;
-      }
-    }
     .modal:not(.chat-modal) > .modal-content {
       width: 100% !important;
       max-width: 100% !important;
@@ -228,34 +215,6 @@
       display: flex !important;
       flex-direction: column !important;
       box-sizing: border-box !important;
-    }
-    /* Desktop: videoModal يأخذ حجمه الصح */
-    @media (min-width: 769px) {
-      #videoModal > .modal-content {
-        width: 96vw !important;
-        max-width: 1280px !important;
-        height: 92dvh !important;
-        max-height: 92dvh !important;
-        min-height: unset !important;
-        margin: auto !important;
-        border-radius: 18px !important;
-        border: 1px solid rgba(99,102,241,0.25) !important;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.9) !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-      }
-      #toolsLibraryModal > .modal-content {
-        width: 640px !important;
-        max-width: 96vw !important;
-        height: auto !important;
-        min-height: unset !important;
-        max-height: 88dvh !important;
-        border-radius: 20px !important;
-        border: 1px solid rgba(245,158,11,0.3) !important;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8) !important;
-        margin: auto !important;
-      }
     }
     .modal:not(.chat-modal) > .modal-content:has(.modal-body) {
       overflow: hidden !important;
@@ -7178,103 +7137,3 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   .db-tools-panel { max-height: 230px !important; }
 }
 
-
-
-/* ╔══════════════════════════════════════════════════════════════╗
-   ║   🧰 USER TOOLS STRIP + TLM CARDS — مكتبة الأدوات         ║
-   ╚══════════════════════════════════════════════════════════════╝ */
-
-.user-tools-strip {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.4rem !important;
-  padding: 0.5rem 0.75rem !important;
-  background: rgba(8,5,18,0.97) !important;
-  border-top: 1px solid rgba(99,102,241,0.15) !important;
-  flex-shrink: 0 !important;
-  overflow-x: auto !important;
-  scrollbar-width: none !important;
-  flex-wrap: nowrap !important;
-}
-.user-tools-strip::-webkit-scrollbar { display: none !important; }
-
-.uts-label {
-  font-size: 0.72rem !important;
-  color: #666 !important;
-  white-space: nowrap !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.3rem !important;
-  flex-shrink: 0 !important;
-  font-family: 'Cairo', sans-serif !important;
-}
-
-.uts-tools {
-  display: flex !important;
-  gap: 0.35rem !important;
-  align-items: center !important;
-  flex: 1 !important;
-  overflow-x: auto !important;
-  scrollbar-width: none !important;
-}
-.uts-tools::-webkit-scrollbar { display: none !important; }
-
-.uts-tool-btn {
-  background: rgba(99,102,241,0.12) !important;
-  border: 1px solid rgba(99,102,241,0.3) !important;
-  border-radius: 9px !important;
-  color: #c4b5fd !important;
-  padding: 0.35rem 0.6rem !important;
-  font-size: 0.75rem !important;
-  font-family: 'Cairo', sans-serif !important;
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.3rem !important;
-  white-space: nowrap !important;
-  transition: all 0.18s !important;
-  flex-shrink: 0 !important;
-}
-.uts-tool-btn:hover { background: rgba(99,102,241,0.3) !important; border-color: rgba(99,102,241,0.6) !important; color: #fff !important; }
-.uts-tool-btn.active { background: linear-gradient(135deg,rgba(99,102,241,0.5),rgba(139,92,246,0.4)) !important; border-color: rgba(139,92,246,0.7) !important; color: #fff !important; box-shadow: 0 0 10px rgba(99,102,241,0.3) !important; }
-.uts-empty { color: #555 !important; font-size: 0.78rem !important; font-family: 'Cairo', sans-serif !important; }
-
-.uts-edit-btn {
-  background: rgba(245,158,11,0.15) !important;
-  border: 1px solid rgba(245,158,11,0.4) !important;
-  border-radius: 9px !important;
-  color: #fbbf24 !important;
-  width: 30px !important;
-  height: 30px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  font-size: 0.82rem !important;
-  flex-shrink: 0 !important;
-  transition: all 0.18s !important;
-  margin-right: auto !important;
-}
-.uts-edit-btn:hover { background: rgba(245,158,11,0.3) !important; border-color: rgba(245,158,11,0.7) !important; }
-
-/* Desktop: شريط الأدوات داخل لوحة الرسم */
-@media (min-width: 769px) {
-  #videoModal .user-tools-strip {
-    order: 99;
-    border-top: 1px solid rgba(99,102,241,0.15) !important;
-    border-bottom: none !important;
-  }
-}
-
-/* TLM Cards */
-.tlm-cat { margin-bottom: 1.25rem; }
-.tlm-cat-title { font-size: 0.8rem; color: #888; font-weight: 700; margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
-.tlm-cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.5rem; }
-.tlm-tool-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.65rem 0.5rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; transition: all 0.2s; position: relative; font-family: 'Cairo', sans-serif; color: #ccc; }
-.tlm-tool-card:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); color: #fff; transform: translateY(-1px); }
-.tlm-tool-card.selected { background: linear-gradient(135deg,rgba(99,102,241,0.3),rgba(139,92,246,0.2)); border-color: rgba(99,102,241,0.6); color: #fff; }
-.tlm-tool-icon { font-size: 1.2rem; }
-.tlm-tool-label { font-size: 0.72rem; text-align: center; }
-.tlm-check { position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; background: #6366f1; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 0.55rem; color: #fff; }
-.tlm-tool-card.selected .tlm-check { display: flex; }
-.tlm-strip-chip { display: inline-flex; align-items: center; gap: 0.3rem; background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); border-radius: 20px; padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #c4b5fd; font-family: 'Cairo', sans-serif; cursor: grab; }

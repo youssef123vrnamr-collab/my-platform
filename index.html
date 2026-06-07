@@ -115,6 +115,168 @@
       object-fit: cover;
       background: #000;
     }
+
+    /* ═══════════════════════════════════════════════════
+       🖥️ DESKTOP VIDEO MODAL — INLINE OVERRIDE (v3)
+       أعلى أولوية — مباشرة في الـ HTML
+    ═══════════════════════════════════════════════════ */
+    @media (min-width: 769px) {
+
+      /* الـ modal نفسه: تمركز مش stretch */
+      #videoModal {
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(4,2,10,0.93) !important;
+        padding: 0 !important;
+      }
+
+      /* modal-content: حجم محدد مش fullscreen */
+      #videoModal > .modal-content {
+        width: 96vw !important;
+        max-width: 1300px !important;
+        height: 91dvh !important;
+        max-height: 91dvh !important;
+        min-height: unset !important;
+        margin: auto !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(99,102,241,0.3) !important;
+        box-shadow: 0 40px 100px rgba(0,0,0,0.95) !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      /* modal-body: لا overflow */
+      #videoModal > .modal-content > .modal-body {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        background: #000 !important;
+      }
+
+      /* video-with-board: row جنب جنب */
+      #videoModal .video-with-board {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        height: 100% !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        align-items: stretch !important;
+      }
+
+      /* الفيديو على اليمين: 62% */
+      #videoModal .video-player-container {
+        order: 2 !important;
+        flex: 0 0 62% !important;
+        width: 62% !important;
+        height: 100% !important;
+        position: relative !important;
+        background: #000 !important;
+        border-right: 1px solid rgba(99,102,241,0.15) !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        overflow: hidden !important;
+        aspect-ratio: unset !important;
+        max-height: none !important;
+      }
+
+      /* الفيديو وايفريم داخل الـ container */
+      #videoModal .video-player-container .video-player,
+      #videoModal .video-player-container .yt-wrapper,
+      #videoModal .video-player-container .youtube-iframe,
+      #videoModal .video-player-container iframe {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+        object-fit: contain !important;
+        max-height: none !important;
+        aspect-ratio: unset !important;
+      }
+
+      /* لوحة الرسم على الشمال: 38% */
+      #videoModal .drawing-board {
+        order: 1 !important;
+        flex: 0 0 38% !important;
+        width: 38% !important;
+        height: 100% !important;
+        min-height: unset !important;
+        border-radius: 0 !important;
+        border: none !important;
+        background: linear-gradient(160deg,#0d0a1c,#07040e) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+      }
+
+      /* لوحة الرسم canvas */
+      #videoModal .drawing-canvas-wrap {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+      }
+
+      /* toolsLibraryModal على الـ Desktop */
+      #toolsLibraryModal {
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(4,2,10,0.88) !important;
+      }
+      #toolsLibraryModal > .modal-content {
+        width: 640px !important;
+        max-width: 95vw !important;
+        height: auto !important;
+        min-height: unset !important;
+        max-height: 88dvh !important;
+        border-radius: 20px !important;
+        border: 1px solid rgba(245,158,11,0.35) !important;
+        box-shadow: 0 25px 70px rgba(0,0,0,0.85) !important;
+        margin: auto !important;
+      }
+    }
+
+    /* ═══ User Tools Strip CSS ═══ */
+    .user-tools-strip {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0.4rem !important;
+      padding: 0.45rem 0.7rem !important;
+      background: rgba(8,5,18,0.98) !important;
+      border-top: 1px solid rgba(99,102,241,0.15) !important;
+      flex-shrink: 0 !important;
+      overflow-x: auto !important;
+      scrollbar-width: none !important;
+    }
+    .user-tools-strip::-webkit-scrollbar { display: none !important; }
+    .uts-label { font-size: 0.7rem !important; color: #555 !important; white-space: nowrap !important; flex-shrink: 0 !important; font-family: 'Cairo', sans-serif !important; }
+    .uts-tools { display: flex !important; gap: 0.3rem !important; align-items: center !important; flex: 1 !important; overflow-x: auto !important; scrollbar-width: none !important; }
+    .uts-tool-btn { background: rgba(99,102,241,0.12) !important; border: 1px solid rgba(99,102,241,0.3) !important; border-radius: 8px !important; color: #c4b5fd !important; padding: 0.3rem 0.55rem !important; font-size: 0.73rem !important; font-family: 'Cairo', sans-serif !important; cursor: pointer !important; display: flex !important; align-items: center !important; gap: 0.3rem !important; white-space: nowrap !important; flex-shrink: 0 !important; transition: all 0.15s !important; }
+    .uts-tool-btn:hover { background: rgba(99,102,241,0.3) !important; color: #fff !important; }
+    .uts-tool-btn.active { background: linear-gradient(135deg,rgba(99,102,241,0.5),rgba(139,92,246,0.4)) !important; color: #fff !important; }
+    .uts-empty { color: #555 !important; font-size: 0.75rem !important; font-family: 'Cairo', sans-serif !important; }
+    .uts-edit-btn { background: rgba(245,158,11,0.15) !important; border: 1px solid rgba(245,158,11,0.4) !important; border-radius: 8px !important; color: #fbbf24 !important; width: 28px !important; height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-size: 0.8rem !important; flex-shrink: 0 !important; margin-right: auto !important; }
+    .uts-edit-btn:hover { background: rgba(245,158,11,0.3) !important; }
+
+    /* ═══ TLM Cards CSS ═══ */
+    .tlm-cat { margin-bottom: 1.2rem; }
+    .tlm-cat-title { font-size: 0.78rem; color: #777; font-weight: 700; margin-bottom: 0.55rem; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255,255,255,0.07); font-family: 'Cairo', sans-serif; }
+    .tlm-cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px,1fr)); gap: 0.45rem; }
+    .tlm-tool-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 11px; padding: 0.6rem 0.4rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transition: all 0.18s; position: relative; font-family: 'Cairo', sans-serif; color: #bbb; }
+    .tlm-tool-card:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); color: #fff; transform: translateY(-1px); }
+    .tlm-tool-card.selected { background: linear-gradient(135deg,rgba(99,102,241,0.3),rgba(139,92,246,0.2)); border-color: rgba(99,102,241,0.6); color: #fff; }
+    .tlm-tool-icon { font-size: 1.1rem; }
+    .tlm-tool-label { font-size: 0.7rem; text-align: center; }
+    .tlm-check { position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; background: #6366f1; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 0.5rem; color: #fff; }
+    .tlm-tool-card.selected .tlm-check { display: flex; }
+    .tlm-strip-chip { display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(99,102,241,0.18); border: 1px solid rgba(99,102,241,0.4); border-radius: 18px; padding: 0.2rem 0.55rem; font-size: 0.72rem; color: #c4b5fd; font-family: 'Cairo', sans-serif; cursor: grab; }
   </style>
 </head>
 <body>
