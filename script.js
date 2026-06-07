@@ -1276,16 +1276,24 @@ async function updateAdminUI() {
     iframe.width = "100%";
     iframe.height = "100%";
     iframe.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;top:0;left:0;";
-    const ytOrigin = encodeURIComponent(window.location.origin || 'https://astronomy-platform.web.app');
-    iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1&rel=0&disablekb=0&iv_load_policy=3&cc_load_policy=0&origin=${ytOrigin}`;
+    iframe.src = `https://www.youtube.com/embed/${v.videoId}?autoplay=1&start=${Math.floor(startTime)}&enablejsapi=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3&cc_load_policy=0`;
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope";
     iframe.allowFullscreen = true;
     iframe.id = "videoPlayer";
     playerContainer.innerHTML = "";
+    // ── Overlay يخفي controls يوتيوب ──
     let wrapper = document.createElement("div");
     wrapper.className = "yt-wrapper";
     wrapper.style.cssText = "position:relative;width:100%;height:100%;";
     wrapper.appendChild(iframe);
+    // overlay علوي (channel name / CC / settings / share)
+    let topOverlay = document.createElement("div");
+    topOverlay.className = "yt-overlay yt-overlay-top";
+    wrapper.appendChild(topOverlay);
+    // overlay سفلي (لوجو YouTube / watermark)
+    let botOverlay = document.createElement("div");
+    botOverlay.className = "yt-overlay yt-overlay-bot";
+    wrapper.appendChild(botOverlay);
     playerContainer.appendChild(wrapper);
     if (currentUserId) setupYouTubeProgressTracking(id);
   } else if (v.type === "gdrive") {
@@ -5728,15 +5736,48 @@ window.playChatSound = function() {
 
 /* ========================================== */
 
+// ── وظائف Panel الأدوات ──
+window.toggleDrawTools = function() {
+  const panel = document.getElementById('dbToolsPanel');
+  const btn = document.getElementById('dbToggleToolsBtn');
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  if (btn) btn.classList.toggle('open', !isOpen);
+};
+
+window.switchDrawTab = function(tab, el) {
+  document.querySelectorAll('.db-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.db-tab-content').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const content = document.getElementById('dbTab-' + tab);
+  if (content) content.classList.add('active');
+};
+
+window.updateActiveToolLabel = function(label) {
+  const el = document.getElementById('dbActiveTool');
+  if (el) el.textContent = label;
+  // إغلاق الـ panel بعد اختيار الأداة
+  const panel = document.getElementById('dbToolsPanel');
+  const btn = document.getElementById('dbToggleToolsBtn');
+  if (panel) panel.classList.remove('open');
+  if (btn) btn.classList.remove('open');
+};
 
 // ============================
 // 1. DRAWING BOARD - ENHANCED (FIXED)
 // ============================
 (function() {
-  let drawState = { tool: 'pen', color: '#ff4d6d', fill: null, width: 3, opacity: 1 };
+  let drawState = { tool: 'pen', color: '#ff4d6d', fill: 'transparent', width: 3, opacity: 1 };
   let drawHistory = [], drawRedo = [];
   let isDrawing = false, startX, startY, snapshot;
   let currentPath = [];
+
+  // ── select / move state ──
+  let selectMode = false;
+  let selX = 0, selY = 0, selW = 0, selH = 0;
+  let isDraggingSelect = false, selectSnapshot = null, selectImgData = null;
+  let dragOffX = 0, dragOffY = 0;
 
   function getCanvas() { return document.getElementById('drawingCanvas'); }
   function getCtx() { const c = getCanvas(); return c ? c.getContext('2d') : null; }
@@ -5744,13 +5785,19 @@ window.playChatSound = function() {
   // ===== ضبط الأداة =====
   window.setDrawTool = function(tool) {
     drawState.tool = tool;
-    document.querySelectorAll('.drawing-toolbar .db-btn[data-tool]').forEach(b => b.classList.remove('active'));
-    const btn = document.querySelector(`.drawing-toolbar .db-btn[data-tool="${tool}"]`);
-    if (btn) btn.classList.add('active');
+    document.querySelectorAll('.db-btn[data-tool]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll(`.db-btn[data-tool="${tool}"]`).forEach(b => b.classList.add('active'));
     const canvas = getCanvas();
     if (canvas) {
-      canvas.style.cursor = tool === 'eraser' ? 'cell' :
-                            (tool === 'text' || tool === 'textbox') ? 'text' : 'crosshair';
+      canvas.style.cursor =
+        tool === 'eraser'  ? 'cell' :
+        tool === 'select'  ? 'move' :
+        (tool === 'text' || tool === 'textbox' || tool === 'stickyNote') ? 'text' : 'crosshair';
+    }
+    // إخفاء select box عند تغيير الأداة
+    if (tool !== 'select') {
+      const box = document.getElementById('dbSelectBox');
+      if (box) box.style.display = 'none';
     }
   };
 
@@ -5764,8 +5811,16 @@ window.playChatSound = function() {
     const sw = document.getElementById('drawFillSwatch');
     if (sw) sw.style.background = v;
   };
-  window.setDrawWidth = function(v) { drawState.width = parseInt(v) || 3; };
-  window.setDrawOpacity = function(v) { drawState.opacity = parseFloat(v) || 1; };
+  window.setDrawWidth = function(v) {
+    drawState.width = parseInt(v) || 3;
+    const el = document.getElementById('drawWidthVal');
+    if (el) el.textContent = v;
+  };
+  window.setDrawOpacity = function(v) {
+    drawState.opacity = parseFloat(v) || 1;
+    const el = document.getElementById('drawOpacityVal');
+    if (el) el.textContent = Math.round(parseFloat(v) * 100) + '%';
+  };
 
   // ===== Undo / Redo =====
   window.undoDraw = function() {
@@ -5911,13 +5966,18 @@ window.playChatSound = function() {
     function drawShapePreview(tool, x0, y0, x1, y1) {
       ctx.beginPath();
       const w = x1 - x0, h = y1 - y0;
+      const cx = x0 + w / 2, cy = y0 + h / 2;
+      const r = Math.sqrt(w * w + h * h) / 2;
+
       if (tool === 'line') {
         ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+
       } else if (tool === 'rect') {
         ctx.rect(x0, y0, w, h);
+
       } else if (tool === 'circle') {
-        const r = Math.sqrt(w * w + h * h) / 2;
-        ctx.arc(x0 + w / 2, y0 + h / 2, r, 0, Math.PI * 2);
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+
       } else if (tool === 'arrow') {
         const ang = Math.atan2(h, w);
         const len = Math.sqrt(w * w + h * h);
@@ -5926,8 +5986,64 @@ window.playChatSound = function() {
         ctx.lineTo(x1 - aLen * Math.cos(ang - 0.4), y1 - aLen * Math.sin(ang - 0.4));
         ctx.moveTo(x1, y1);
         ctx.lineTo(x1 - aLen * Math.cos(ang + 0.4), y1 - aLen * Math.sin(ang + 0.4));
+
+      } else if (tool === 'arrow2') {
+        // سهم مزدوج
+        const ang = Math.atan2(h, w);
+        const len = Math.sqrt(w * w + h * h);
+        const aLen = Math.min(len * 0.25, 25);
+        ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+        // رأس اليمين
+        ctx.lineTo(x1 - aLen * Math.cos(ang - 0.4), y1 - aLen * Math.sin(ang - 0.4));
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 - aLen * Math.cos(ang + 0.4), y1 - aLen * Math.sin(ang + 0.4));
+        // رأس اليسار
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x0 + aLen * Math.cos(ang - 0.4 + Math.PI), y0 + aLen * Math.sin(ang - 0.4 + Math.PI));
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x0 + aLen * Math.cos(ang + 0.4 + Math.PI), y0 + aLen * Math.sin(ang + 0.4 + Math.PI));
+
       } else if (tool === 'triangle') {
         ctx.moveTo(x0 + w / 2, y0); ctx.lineTo(x1, y1); ctx.lineTo(x0, y1); ctx.closePath();
+
+      } else if (tool === 'star') {
+        const outerR = r, innerR = r * 0.45;
+        const points = 5;
+        for (let i = 0; i < points * 2; i++) {
+          const angle = (i * Math.PI) / points - Math.PI / 2;
+          const rr = i % 2 === 0 ? outerR : innerR;
+          const px = cx + rr * Math.cos(angle);
+          const py = cy + rr * Math.sin(angle);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+
+      } else if (tool === 'heart') {
+        const s = r * 0.9;
+        ctx.moveTo(cx, cy + s * 0.6);
+        ctx.bezierCurveTo(cx - s * 1.2, cy - s * 0.2, cx - s * 1.4, cy - s * 1.0, cx, cy - s * 0.4);
+        ctx.bezierCurveTo(cx + s * 1.4, cy - s * 1.0, cx + s * 1.2, cy - s * 0.2, cx, cy + s * 0.6);
+
+      } else if (tool === 'diamond') {
+        ctx.moveTo(cx, y0);
+        ctx.lineTo(x1, cy);
+        ctx.lineTo(cx, y1);
+        ctx.lineTo(x0, cy);
+        ctx.closePath();
+
+      } else if (tool === 'pentagon') {
+        const sides = 5;
+        for (let i = 0; i < sides; i++) {
+          const angle = (2 * Math.PI * i) / sides - Math.PI / 2;
+          const px = cx + r * Math.cos(angle);
+          const py = cy + r * Math.sin(angle);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+
+      } else if (tool === 'stickyNote') {
+        // مستطيل مع ظل
+        ctx.rect(x0, y0, w, h);
       }
     }
 
@@ -5935,6 +6051,35 @@ window.playChatSound = function() {
       e.preventDefault();
       const pos = getPos(e);
       startX = pos.x; startY = pos.y;
+
+      // ── أداة التحريك / Select ──
+      if (drawState.tool === 'select') {
+        // هل الضغط داخل الـ selection الحالية؟
+        if (selW > 0 && selH > 0 &&
+            pos.x >= selX && pos.x <= selX + selW &&
+            pos.y >= selY && pos.y <= selY + selH) {
+          // ابدأ سحب
+          isDraggingSelect = true;
+          dragOffX = pos.x - selX;
+          dragOffY = pos.y - selY;
+          // احفظ المنطقة المحددة
+          selectImgData = ctx.getImageData(selX, selY, selW, selH);
+          // امسح من الـ canvas
+          ctx.clearRect(selX, selY, selW, selH);
+          ctx.fillStyle = '#fdfdfd';
+          ctx.fillRect(selX, selY, selW, selH);
+        } else {
+          // ابدأ تحديد جديد
+          isDraggingSelect = false;
+          selectImgData = null;
+          selX = pos.x; selY = pos.y; selW = 0; selH = 0;
+          isDrawing = true;
+          saveSnapshot();
+          snapshot = ctx.getImageData(0, 0, c.width, c.height);
+        }
+        updateSelectBox();
+        return;
+      }
 
       // أداة النص
       if (drawState.tool === 'text' || drawState.tool === 'textbox') {
@@ -6005,9 +6150,30 @@ window.playChatSound = function() {
     }
 
     function doDraw(e) {
-      if (!isDrawing) return;
+      if (!isDrawing && !isDraggingSelect) return;
       e.preventDefault();
       const pos = getPos(e);
+
+      // ── سحب الـ selection ──
+      if (isDraggingSelect && selectImgData) {
+        const newX = Math.round(pos.x - dragOffX);
+        const newY = Math.round(pos.y - dragOffY);
+        ctx.putImageData(snapshot || ctx.getImageData(0,0,c.width,c.height), 0, 0);
+        ctx.putImageData(selectImgData, newX, newY);
+        selX = newX; selY = newY;
+        updateSelectBox();
+        return;
+      }
+
+      // ── رسم selection box ──
+      if (drawState.tool === 'select' && isDrawing) {
+        selX = Math.min(startX, pos.x);
+        selY = Math.min(startY, pos.y);
+        selW = Math.abs(pos.x - startX);
+        selH = Math.abs(pos.y - startY);
+        updateSelectBox();
+        return;
+      }
 
       if (['pen','brush','marker','eraser'].includes(drawState.tool)) {
         applyCtxStyle();
@@ -6030,10 +6196,39 @@ window.playChatSound = function() {
     }
 
     function endDraw(e) {
-      if (!isDrawing) return;
+      if (!isDrawing && !isDraggingSelect) return;
+
+      if (isDraggingSelect) {
+        isDraggingSelect = false;
+        saveSnapshot();
+        snapshot = ctx.getImageData(0, 0, c.width, c.height);
+        return;
+      }
+
+      if (drawState.tool === 'select') {
+        isDrawing = false;
+        return;
+      }
+
       isDrawing = false;
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function updateSelectBox() {
+      const box = document.getElementById('dbSelectBox');
+      if (!box) return;
+      const wrap = document.getElementById('drawingCanvasWrap');
+      if (!wrap) return;
+      const wRect = wrap.getBoundingClientRect();
+      const scaleX = wRect.width / c.width;
+      const scaleY = wRect.height / c.height;
+      if (selW < 2 || selH < 2) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      box.style.left = (selX * scaleX) + 'px';
+      box.style.top  = (selY * scaleY) + 'px';
+      box.style.width  = (selW * scaleX) + 'px';
+      box.style.height = (selH * scaleY) + 'px';
     }
 
     c.addEventListener('mousedown', startDraw);

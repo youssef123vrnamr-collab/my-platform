@@ -6791,3 +6791,295 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║   🎨 NEW DRAWING PANEL UI — Single Button + Bottom Sheet   ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+/* ── لوحة الرسم الكاملة ── */
+.drawing-board {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #0d0a1c !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* ── الشريط العلوي (الوحيد الظاهر دائماً) ── */
+.db-topbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0.45rem 0.65rem !important;
+  background: rgba(6,3,12,0.98) !important;
+  border-bottom: 1px solid rgba(99,102,241,0.15) !important;
+  flex-shrink: 0 !important;
+  gap: 0.5rem !important;
+  z-index: 20 !important;
+  position: relative !important;
+}
+.db-topbar-left, .db-topbar-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+}
+
+/* زرار فتح الأدوات */
+.db-toggle-tools-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2)) !important;
+  border: 1px solid rgba(99,102,241,0.4) !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  padding: 0.38rem 0.7rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  white-space: nowrap !important;
+}
+.db-toggle-tools-btn:hover,
+.db-toggle-tools-btn.open {
+  background: linear-gradient(135deg, rgba(99,102,241,0.45), rgba(139,92,246,0.35)) !important;
+  border-color: rgba(99,102,241,0.7) !important;
+  box-shadow: 0 0 12px rgba(99,102,241,0.3) !important;
+}
+.db-toggle-tools-btn.open #dbToggleChevron {
+  transform: rotate(180deg) !important;
+}
+.db-active-tool-label {
+  font-size: 0.78rem !important;
+  color: #c4b5fd !important;
+}
+
+/* سواتش اللون السريع */
+.db-color-quick {
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.db-color-quick input[type="color"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+.db-color-quick .db-color-swatch {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255,255,255,0.25) !important;
+  cursor: pointer !important;
+  display: block !important;
+  transition: transform 0.2s, border-color 0.2s !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+.db-color-quick:hover .db-color-swatch {
+  transform: scale(1.15) !important;
+  border-color: rgba(255,255,255,0.5) !important;
+}
+
+/* أزرار الأيقونات في topbar */
+.db-icon-btn {
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255,255,255,0.07) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  color: #bbb !important;
+  cursor: pointer !important;
+  font-size: 0.82rem !important;
+  transition: all 0.18s !important;
+}
+.db-icon-btn:hover { background: rgba(99,102,241,0.3) !important; color: #fff !important; border-color: rgba(99,102,241,0.5) !important; }
+.db-icon-btn.db-danger:hover { background: rgba(239,68,68,0.3) !important; color: #ef4444 !important; border-color: rgba(239,68,68,0.4) !important; }
+
+/* ── Panel الأدوات (يظهر/يخفي) ── */
+.db-tools-panel {
+  display: none !important;
+  flex-direction: column !important;
+  background: rgba(8,5,18,0.98) !important;
+  border-bottom: 1px solid rgba(99,102,241,0.15) !important;
+  flex-shrink: 0 !important;
+  animation: dbPanelIn 0.2s ease !important;
+  max-height: 260px !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(99,102,241,0.3) transparent !important;
+  z-index: 15 !important;
+}
+.db-tools-panel.open {
+  display: flex !important;
+}
+@keyframes dbPanelIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tabs */
+.db-tabs {
+  display: flex !important;
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  flex-shrink: 0 !important;
+  background: rgba(6,3,12,0.5) !important;
+}
+.db-tab {
+  flex: 1 !important;
+  padding: 0.42rem 0.3rem !important;
+  background: transparent !important;
+  border: none !important;
+  color: #888 !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.18s !important;
+  border-bottom: 2px solid transparent !important;
+  white-space: nowrap !important;
+}
+.db-tab.active {
+  color: #c4b5fd !important;
+  border-bottom-color: #8b5cf6 !important;
+  background: rgba(99,102,241,0.08) !important;
+}
+.db-tab:hover { color: #ddd !important; }
+
+/* Tab content */
+.db-tab-content {
+  display: none !important;
+  padding: 0.6rem !important;
+}
+.db-tab-content.active {
+  display: block !important;
+}
+
+/* Grid الأدوات */
+.db-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 0.35rem !important;
+}
+
+.db-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.2rem !important;
+  padding: 0.5rem 0.3rem !important;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 10px !important;
+  color: #ccc !important;
+  cursor: pointer !important;
+  font-size: 1rem !important;
+  transition: all 0.18s !important;
+  min-height: 52px !important;
+}
+.db-btn span {
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.6rem !important;
+  color: #999 !important;
+  line-height: 1 !important;
+}
+.db-btn:hover {
+  background: rgba(99,102,241,0.22) !important;
+  border-color: rgba(99,102,241,0.4) !important;
+  color: #fff !important;
+  transform: scale(1.04) !important;
+}
+.db-btn.active {
+  background: linear-gradient(135deg, rgba(99,102,241,0.4), rgba(139,92,246,0.3)) !important;
+  border-color: rgba(139,92,246,0.6) !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(99,102,241,0.25) !important;
+}
+.db-btn.active span { color: #c4b5fd !important; }
+
+/* إعدادات row */
+.db-settings-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  margin-bottom: 0.6rem !important;
+}
+.db-settings-row label {
+  font-size: 0.75rem !important;
+  color: #888 !important;
+  white-space: nowrap !important;
+  min-width: 60px !important;
+}
+.db-settings-row input[type="range"] {
+  flex: 1 !important;
+  accent-color: #8b5cf6 !important;
+}
+.db-settings-row span {
+  font-size: 0.72rem !important;
+  color: #aaa !important;
+  min-width: 30px !important;
+  text-align: right !important;
+}
+
+/* fill row */
+.db-fill-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  padding-top: 0.5rem !important;
+  border-top: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+/* زرار صغير */
+.db-small-btn {
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  color: #ccc !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 0.72rem !important;
+  padding: 0.3rem 0.65rem !important;
+  cursor: pointer !important;
+  transition: all 0.18s !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+}
+.db-small-btn:hover { background: rgba(99,102,241,0.25) !important; color: #fff !important; }
+
+/* select box */
+#dbSelectBox {
+  z-index: 50 !important;
+  pointer-events: none !important;
+}
+
+/* hint */
+.drawing-empty-hint {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  color: #bbb !important;
+  font-size: 0.9rem !important;
+  pointer-events: none !important;
+  opacity: 0.5 !important;
+  font-family: 'Cairo', sans-serif !important;
+}
+.drawing-empty-hint.hidden { display: none !important; }
+
+/* mobile: grid 4 cols */
+@media (max-width: 480px) {
+  .db-grid { grid-template-columns: repeat(4, 1fr) !important; }
+  .db-tools-panel { max-height: 230px !important; }
+}
+

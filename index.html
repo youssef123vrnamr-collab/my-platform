@@ -418,47 +418,105 @@
     </div>
   </div>
 </div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard"><div class="drawing-toolbar" id="drawingToolbar">
-  <!-- أدوات الرسم الأساسية -->
-  <span class="db-tool-label">رسم</span>
-  <button type="button" data-tool="pen" class="db-btn active" onclick="setDrawTool('pen')" title="قلم"><i class="fas fa-pen"></i></button>
-  <button type="button" data-tool="marker" class="db-btn" onclick="setDrawTool('marker')" title="ماركر"><i class="fas fa-highlighter"></i></button>
-  <button type="button" data-tool="brush" class="db-btn" onclick="setDrawTool('brush')" title="فرشاة"><i class="fas fa-paintbrush"></i></button>
-  <button type="button" data-tool="eraser" class="db-btn" onclick="setDrawTool('eraser')" title="ممحاة"><i class="fas fa-eraser"></i></button>
-  <div class="db-separator"></div>
-  <!-- الأشكال -->
-  <span class="db-tool-label">أشكال</span>
-  <button type="button" data-tool="line" class="db-btn" onclick="setDrawTool('line')" title="خط"><i class="fas fa-minus"></i></button>
-  <button type="button" data-tool="rect" class="db-btn" onclick="setDrawTool('rect')" title="مستطيل"><i class="far fa-square"></i></button>
-  <button type="button" data-tool="circle" class="db-btn" onclick="setDrawTool('circle')" title="دائرة"><i class="far fa-circle"></i></button>
-  <button type="button" data-tool="arrow" class="db-btn" onclick="setDrawTool('arrow')" title="سهم"><i class="fas fa-arrow-right"></i></button>
-  <button type="button" data-tool="triangle" class="db-btn" onclick="setDrawTool('triangle')" title="مثلث"><i class="fas fa-play"></i></button>
-  <div class="db-separator"></div>
-  <!-- النص -->
-  <span class="db-tool-label">نص</span>
-  <button type="button" data-tool="text" class="db-btn" onclick="setDrawTool('text')" title="كتابة نص"><i class="fas fa-font"></i></button>
-  <button type="button" data-tool="textbox" class="db-btn" onclick="setDrawTool('textbox')" title="مربع نص"><i class="fas fa-text-width"></i></button>
-  <div class="db-separator"></div>
-  <!-- اللون والسُمك -->
-  <span class="db-tool-label">لون</span>
-  <label class="db-color-wrap" title="اللون الرئيسي"><input type="color" id="drawColorInput" value="#ff4d6d" onchange="setDrawColor(this.value)"><span class="db-color-swatch" id="drawColorSwatch" style="background:#ff4d6d"></span></label>
-  <label class="db-color-wrap" title="لون التعبئة"><input type="color" id="drawFillInput" value="#00000000" onchange="setDrawFill(this.value)"><span class="db-color-swatch" id="drawFillSwatch" style="background:transparent;border-style:dashed"></span></label>
-  <!-- إعداد الشفافية -->
-  <label class="db-range-wrap" title="شفافية"><i class="fas fa-droplet" style="font-size:0.7rem"></i><input type="range" id="drawOpacityInput" min="0.1" max="1" value="1" step="0.1" oninput="setDrawOpacity(this.value)"></label>
-  <div class="db-separator"></div>
-  <!-- السُمك -->
-  <span class="db-tool-label">سُمك</span>
-  <label class="db-range-wrap" title="سُمك القلم"><i class="fas fa-circle" style="font-size:0.5rem"></i><input type="range" id="drawWidthInput" min="1" max="30" value="3" oninput="setDrawWidth(this.value)"><i class="fas fa-circle" style="font-size:1rem"></i></label>
-  <div class="db-separator"></div>
-  <!-- أدوات متقدمة -->
-  <span class="db-tool-label">أدوات</span>
-  <button type="button" class="db-btn" onclick="undoDraw()" title="تراجع"><i class="fas fa-rotate-left"></i></button>
-  <button type="button" class="db-btn" onclick="redoDraw()" title="إعادة"><i class="fas fa-rotate-right"></i></button>
-  <button type="button" class="db-btn" onclick="saveDrawingAsImage()" title="حفظ كصورة"><i class="fas fa-download"></i></button>
-  <button type="button" class="db-btn" onclick="copyDrawingToClipboard()" title="نسخ"><i class="fas fa-copy"></i></button>
-  <button type="button" class="db-btn db-btn-danger" onclick="clearDrawing()" title="مسح الكل"><i class="fas fa-trash"></i></button>
-  <button type="button" class="db-btn" onclick="toggleDrawingBoard()" title="إخفاء/إظهار" id="drawToggleBtn"><i class="fas fa-eye"></i></button>
-</div><div class="drawing-canvas-wrap" id="drawingCanvasWrap"><canvas id="drawingCanvas"></canvas><div class="drawing-empty-hint" id="drawingEmptyHint"><i class="fas fa-pen-fancy"></i><span>ارسم أو اكتب ملاحظاتك هنا</span></div></div></div><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
+  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard">
+
+  <!-- ── زرار فتح الأدوات (الوحيد الظاهر دائماً) ── -->
+  <div class="db-topbar">
+    <div class="db-topbar-left">
+      <button type="button" class="db-toggle-tools-btn" id="dbToggleToolsBtn" onclick="toggleDrawTools()" title="الأدوات">
+        <i class="fas fa-pen-ruler"></i>
+        <span id="dbActiveTool" class="db-active-tool-label">قلم</span>
+        <i class="fas fa-chevron-down" id="dbToggleChevron" style="font-size:0.65rem;margin-right:2px;transition:transform 0.2s"></i>
+      </button>
+      <!-- الألوان السريعة دايماً ظاهرة -->
+      <label class="db-color-quick" title="اللون"><input type="color" id="drawColorInput" value="#ff4d6d" onchange="setDrawColor(this.value)"><span class="db-color-swatch" id="drawColorSwatch" style="background:#ff4d6d"></span></label>
+    </div>
+    <div class="db-topbar-right">
+      <button type="button" class="db-icon-btn" onclick="undoDraw()" title="تراجع"><i class="fas fa-rotate-left"></i></button>
+      <button type="button" class="db-icon-btn" onclick="redoDraw()" title="إعادة"><i class="fas fa-rotate-right"></i></button>
+      <button type="button" class="db-icon-btn db-danger" onclick="clearDrawing()" title="مسح الكل"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>
+
+  <!-- ── Panel الأدوات — يظهر عند الضغط ── -->
+  <div class="db-tools-panel" id="dbToolsPanel">
+    <!-- الـ tabs -->
+    <div class="db-tabs">
+      <button class="db-tab active" onclick="switchDrawTab('draw',this)">✏️ رسم</button>
+      <button class="db-tab" onclick="switchDrawTab('shapes',this)">🔷 أشكال</button>
+      <button class="db-tab" onclick="switchDrawTab('text',this)">🔤 نص</button>
+      <button class="db-tab" onclick="switchDrawTab('settings',this)">⚙️ إعدادات</button>
+    </div>
+
+    <!-- TAB: رسم -->
+    <div class="db-tab-content active" id="dbTab-draw">
+      <div class="db-grid">
+        <button type="button" data-tool="pen" class="db-btn active" onclick="setDrawTool('pen');updateActiveToolLabel('قلم')"><i class="fas fa-pen"></i><span>قلم</span></button>
+        <button type="button" data-tool="marker" class="db-btn" onclick="setDrawTool('marker');updateActiveToolLabel('ماركر')"><i class="fas fa-highlighter"></i><span>ماركر</span></button>
+        <button type="button" data-tool="brush" class="db-btn" onclick="setDrawTool('brush');updateActiveToolLabel('فرشاة')"><i class="fas fa-paintbrush"></i><span>فرشاة</span></button>
+        <button type="button" data-tool="eraser" class="db-btn" onclick="setDrawTool('eraser');updateActiveToolLabel('ممحاة')"><i class="fas fa-eraser"></i><span>ممحاة</span></button>
+        <button type="button" data-tool="select" class="db-btn" onclick="setDrawTool('select');updateActiveToolLabel('تحريك')"><i class="fas fa-hand-pointer"></i><span>تحريك</span></button>
+      </div>
+    </div>
+
+    <!-- TAB: أشكال -->
+    <div class="db-tab-content" id="dbTab-shapes">
+      <div class="db-grid">
+        <button type="button" data-tool="line" class="db-btn" onclick="setDrawTool('line');updateActiveToolLabel('خط')"><i class="fas fa-minus"></i><span>خط</span></button>
+        <button type="button" data-tool="rect" class="db-btn" onclick="setDrawTool('rect');updateActiveToolLabel('مستطيل')"><i class="far fa-square"></i><span>مستطيل</span></button>
+        <button type="button" data-tool="circle" class="db-btn" onclick="setDrawTool('circle');updateActiveToolLabel('دائرة')"><i class="far fa-circle"></i><span>دائرة</span></button>
+        <button type="button" data-tool="triangle" class="db-btn" onclick="setDrawTool('triangle');updateActiveToolLabel('مثلث')"><i class="fas fa-play"></i><span>مثلث</span></button>
+        <button type="button" data-tool="arrow" class="db-btn" onclick="setDrawTool('arrow');updateActiveToolLabel('سهم')"><i class="fas fa-arrow-right"></i><span>سهم</span></button>
+        <button type="button" data-tool="arrow2" class="db-btn" onclick="setDrawTool('arrow2');updateActiveToolLabel('سهم مزدوج')"><i class="fas fa-arrows-left-right"></i><span>مزدوج</span></button>
+        <button type="button" data-tool="star" class="db-btn" onclick="setDrawTool('star');updateActiveToolLabel('نجمة')"><i class="fas fa-star"></i><span>نجمة</span></button>
+        <button type="button" data-tool="heart" class="db-btn" onclick="setDrawTool('heart');updateActiveToolLabel('قلب')"><i class="fas fa-heart"></i><span>قلب</span></button>
+        <button type="button" data-tool="diamond" class="db-btn" onclick="setDrawTool('diamond');updateActiveToolLabel('معين')">◇<span>معين</span></button>
+        <button type="button" data-tool="pentagon" class="db-btn" onclick="setDrawTool('pentagon');updateActiveToolLabel('خماسي')">⬠<span>خماسي</span></button>
+      </div>
+      <!-- لون التعبئة -->
+      <div class="db-fill-row">
+        <span style="font-size:0.75rem;color:#888">تعبئة:</span>
+        <label class="db-color-quick"><input type="color" id="drawFillInput" value="#ff4d6d" onchange="setDrawFill(this.value)"><span class="db-color-swatch" id="drawFillSwatch" style="background:#ff4d6d"></span></label>
+        <button class="db-small-btn" onclick="setDrawFill('transparent')">بلا تعبئة</button>
+      </div>
+    </div>
+
+    <!-- TAB: نص -->
+    <div class="db-tab-content" id="dbTab-text">
+      <div class="db-grid">
+        <button type="button" data-tool="text" class="db-btn" onclick="setDrawTool('text');updateActiveToolLabel('نص')"><i class="fas fa-font"></i><span>نص عادي</span></button>
+        <button type="button" data-tool="textbox" class="db-btn" onclick="setDrawTool('textbox');updateActiveToolLabel('مربع نص')"><i class="fas fa-text-width"></i><span>مربع نص</span></button>
+        <button type="button" data-tool="stickyNote" class="db-btn" onclick="setDrawTool('stickyNote');updateActiveToolLabel('ملاحظة')"><i class="fas fa-sticky-note"></i><span>ملاحظة</span></button>
+      </div>
+    </div>
+
+    <!-- TAB: إعدادات -->
+    <div class="db-tab-content" id="dbTab-settings">
+      <div class="db-settings-row">
+        <label>سُمك القلم</label>
+        <input type="range" id="drawWidthInput" min="1" max="30" value="3" oninput="setDrawWidth(this.value)">
+        <span id="drawWidthVal">3</span>
+      </div>
+      <div class="db-settings-row">
+        <label>الشفافية</label>
+        <input type="range" id="drawOpacityInput" min="0.1" max="1" value="1" step="0.1" oninput="setDrawOpacity(this.value)">
+        <span id="drawOpacityVal">100%</span>
+      </div>
+      <div class="db-settings-row" style="gap:0.5rem;flex-wrap:wrap">
+        <button class="db-small-btn" onclick="saveDrawingAsImage()"><i class="fas fa-download"></i> حفظ</button>
+        <button class="db-small-btn" onclick="copyDrawingToClipboard()"><i class="fas fa-copy"></i> نسخ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawing-canvas-wrap" id="drawingCanvasWrap">
+    <canvas id="drawingCanvas"></canvas>
+    <div class="drawing-empty-hint" id="drawingEmptyHint"><i class="fas fa-pen-fancy"></i><span>ارسم هنا</span></div>
+    <!-- حدود التحديد للـ select tool -->
+    <div id="dbSelectBox" style="display:none;position:absolute;border:2px dashed #6366f1;border-radius:4px;pointer-events:none;box-shadow:0 0 0 1px rgba(99,102,241,0.3);"></div>
+  </div>
+
+</div><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div><div id="videoQuizContainer" style="display:none"></div></div></div></div>
   <!-- ===== Zoom-like Video Conference Modal ===== -->
   <div class="modal" id="zoomModal" style="z-index:10002;padding:0">
     <div style="width:100%;height:100vh;background:#0a0a1a;display:flex;flex-direction:column;overflow:hidden">
