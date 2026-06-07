@@ -5431,3 +5431,45 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+
+/* ══ FIX: remove black bars, video fills container fully ══ */
+
+.video-player-container,
+.video-player-container:not(.video-playing) {
+  border-radius: 16px !important;
+  border: 1px solid rgba(139,92,246,0.35) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #000 !important;
+  display: block !important;
+}
+
+.video-player {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  object-fit: fill !important;
+  aspect-ratio: unset !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.yt-wrapper {
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+}
+
+.yt-wrapper .youtube-iframe {
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
