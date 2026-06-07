@@ -5599,3 +5599,98 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   }
 }
 
+
+
+/* ══ VIDEO 100% WIDTH — fills exactly the modal width ══ */
+
+#videoModal .modal-content,
+#videoModal .modal-body,
+#videoModal .video-with-board,
+#videoModal .video-player-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  box-sizing: border-box !important;
+}
+
+#videoModal .video-player,
+#videoModal .youtube-iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  display: block !important;
+  border-radius: 0 !important;
+  object-fit: fill !important;
+  aspect-ratio: 16/9 !important;
+}
+
+#videoModal .yt-wrapper {
+  width: 100% !important;
+  border-radius: 0 !important;
+  max-height: none !important;
+}
+
+
+
+/* ══ VIDEO FILLS ITS BOX EXACTLY — no more, no less ══ */
+
+#videoModal .modal-content,
+#videoModal .modal-body {
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  background: #0f0a1a !important;
+  border-radius: 0 !important;
+}
+
+#videoModal .video-with-board {
+  padding: 1rem !important;
+  gap: 1rem !important;
+}
+
+#videoModal .video-player-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(139,92,246,0.35) !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+#videoModal .video-player {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  aspect-ratio: 16/9 !important;
+  object-fit: fill !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#videoModal .yt-wrapper {
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 768px) {
+  #videoModal .video-with-board {
+    padding: 0.75rem !important;
+  }
+  #videoModal .video-player-container {
+    border-radius: 12px !important;
+  }
+}
+
