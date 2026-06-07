@@ -112,17 +112,17 @@
         padding: 0 !important;
       }
 
-      /* الـ modal-content: حجم محدد */
+      /* الـ modal-content: حجم محدد — عرض أقل للتمركز بشكل أحسن */
       #videoModalContent {
-        width: 98vw !important;
-        max-width: 98vw !important;
-        height: 95dvh !important;
-        max-height: 95dvh !important;
+        width: 92vw !important;
+        max-width: 1200px !important;
+        height: 93dvh !important;
+        max-height: 93dvh !important;
         min-height: unset !important;
         margin: auto !important;
-        border-radius: 14px !important;
-        border: 1px solid rgba(99,102,241,0.3) !important;
-        box-shadow: 0 30px 80px rgba(0,0,0,0.95) !important;
+        border-radius: 18px !important;
+        border: 1px solid rgba(99,102,241,0.35) !important;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.95), 0 0 0 1px rgba(99,102,241,0.1) !important;
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
@@ -149,15 +149,15 @@
         overflow: hidden !important;
       }
 
-      /* الفيديو فوق: 58% */
+      /* الفيديو فوق: 62% — أكبر شوية */
       #videoModal .video-player-container {
         order: 1 !important;
-        flex: 0 0 58% !important;
+        flex: 0 0 62% !important;
         width: 100% !important;
-        height: 58% !important;
+        height: 62% !important;
         position: relative !important;
         background: #000 !important;
-        border-bottom: 1px solid rgba(99,102,241,0.15) !important;
+        border-bottom: 2px solid rgba(99,102,241,0.2) !important;
         border-right: none !important;
         border-radius: 0 !important;
         padding: 0 !important; margin: 0 !important;
@@ -181,12 +181,12 @@
         aspect-ratio: unset !important;
       }
 
-      /* لوحة الرسم تحت: 42% */
+      /* لوحة الرسم تحت: 38% — بارتفاع مريح */
       #videoModal .drawing-board {
         order: 2 !important;
-        flex: 1 1 auto !important;
+        flex: 0 0 38% !important;
         width: 100% !important;
-        height: 42% !important;
+        height: 38% !important;
         min-height: 0 !important;
         border-radius: 0 !important;
         border: none !important;
