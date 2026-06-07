@@ -325,9 +325,9 @@
     .upload-progress-fill::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); background-size: 200% 100%; animation: shimmer 1s infinite; }
     .upload-stats { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .8rem; color: #888; }
     .video-with-board { display: flex; flex-direction: column; gap: 0; align-items: stretch; direction: rtl; margin-bottom: 0; }
-    .video-with-board > .video-player-container { flex: 0 0 auto; width: 100%; min-width: 0; margin-bottom: 0; direction: rtl; order: 1; }
-    .video-with-board > .video-player-container > .video-player, .video-with-board > .video-player-container > .youtube-iframe { max-height: none; width: 100%; height: 100%; }
-    .drawing-board { flex: 0 0 auto; order: 2; display: flex; flex-direction: column; background: linear-gradient(145deg, rgba(26,16,37,0.85), rgba(10,5,18,0.95)); backdrop-filter: blur(12px); border-radius: 0; overflow: hidden; border: none; border-top: 1px solid rgba(99,102,241,0.25); direction: rtl; min-height: 320px; }
+    .video-with-board > .video-player-container { flex: 0 0 auto; width: 100%; min-width: 0; margin-bottom: 0; direction: rtl; }
+    .video-with-board > .video-player-container > .video-player, .video-with-board > .video-player-container > .youtube-iframe { max-height: none; width: 100%; }
+    .drawing-board { flex: 1 1 auto; display: flex; flex-direction: column; background: linear-gradient(145deg, rgba(26,16,37,0.85), rgba(10,5,18,0.95)); backdrop-filter: blur(12px); border-radius: 0; overflow: hidden; border: none; border-top: 1px solid rgba(99,102,241,0.25); direction: rtl; min-height: 220px; }
     .drawing-board.collapsed .drawing-canvas-wrap { display: none; }
     .drawing-toolbar { display: flex; gap: 0.4rem; padding: 0.6rem 0.7rem; background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(236,72,153,0.12)); border-bottom: 1px solid rgba(99,102,241,0.3); flex-wrap: nowrap; align-items: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: rgba(99,102,241,0.5) transparent; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
     .drawing-toolbar::-webkit-scrollbar { height: 4px; }
@@ -5244,7 +5244,6 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   direction: rtl !important;
   display: block !important;
   padding: 0 !important;
-  order: 1 !important;
 }
 
 .video-with-board > .video-player-container > .video-player,
@@ -5252,7 +5251,6 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   max-height: none !important;
   border-radius: 0 !important;
   width: 100% !important;
-  height: 100% !important;
 }
 
 
@@ -6006,45 +6004,41 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 @media (min-width: 769px) {
   #videoModal .video-with-board {
     display: flex !important;
-    flex-direction: row !important;
+    flex-direction: column !important;
     gap: 0 !important;
     padding: 0 !important;
     align-items: stretch !important;
-    min-height: 420px !important;
+    min-height: 0 !important;
   }
 
-  /* الفيديو على اليمين — 62% */
+  /* الفيديو فوق */
   #videoModal .video-player-container {
-    flex: 0 0 62% !important;
-    width: 62% !important;
+    flex: 0 0 58% !important;
+    width: 100% !important;
     aspect-ratio: unset !important;
-    height: auto !important;
-    min-height: 360px !important;
-    order: 2 !important;
+    height: 58% !important;
+    min-height: 0 !important;
+    order: 1 !important;
     border-radius: 0 !important;
     border: none !important;
-    border-right: 1px solid rgba(139,92,246,0.2) !important;
-    border-left: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
+    border-bottom: 1px solid rgba(139,92,246,0.2) !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
     background: #000 !important;
     position: relative !important;
-    display: flex !important;
-    align-items: stretch !important;
+    display: block !important;
   }
 
-  /* لوحة الرسم على الشمال — 38% */
+  /* لوحة الرسم تحت */
   #videoModal .drawing-board {
-    flex: 0 0 38% !important;
-    width: 38% !important;
-    order: 1 !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    order: 2 !important;
     border-radius: 0 !important;
     border: none !important;
-    border-left: 1px solid rgba(99,102,241,0.2) !important;
-    min-height: 360px !important;
+    border-top: 1px solid rgba(99,102,241,0.2) !important;
+    min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     background: linear-gradient(160deg, #0f0b1e 0%, #0a0614 100%) !important;
@@ -6225,31 +6219,31 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   #videoModal .video-with-board {
     height: calc(100dvh - 48px) !important;
     max-height: calc(100dvh - 48px) !important;
-    flex-direction: row !important;
+    flex-direction: column !important;
   }
 
-  /* ── الفيديو 65% على اليمين ── */
+  /* ── الفيديو فوق ── */
   #videoModal .video-player-container {
-    flex: 0 0 65% !important;
-    width: 65% !important;
-    height: 100% !important;
+    flex: 0 0 58% !important;
+    width: 100% !important;
+    height: 58% !important;
     aspect-ratio: unset !important;
-    order: 2 !important;
-    border-right: 1px solid rgba(139,92,246,0.2) !important;
+    order: 1 !important;
+    border-bottom: 1px solid rgba(139,92,246,0.2) !important;
     border-left: none !important;
     border-top: none !important;
-    border-bottom: none !important;
+    border-right: none !important;
     position: relative !important;
     overflow: hidden !important;
     background: #000 !important;
     border-radius: 0 !important;
   }
 
-  /* ── لوحة الرسم 35% على الشمال ── */
+  /* ── لوحة الرسم تحت ── */
   #videoModal .drawing-board {
-    flex: 0 0 35% !important;
-    width: 35% !important;
-    height: 100% !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
     order: 1 !important;
     border-radius: 0 !important;
     border: none !important;
@@ -6502,7 +6496,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
   #videoModal .video-with-board {
     display: flex !important;
-    flex-direction: row !important;
+    flex-direction: column !important;
     gap: 0 !important;
     padding: 0 !important;
     width: 100% !important;
@@ -6511,13 +6505,13 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     overflow: hidden !important;
   }
 
-  /* الفيديو — 63% من العرض على الجانب الأيمن */
+  /* الفيديو فوق */
   #videoModal .video-player-container {
-    order: 2 !important;
-    flex: 0 0 63% !important;
-    width: 63% !important;
-    height: 100% !important;
-    min-height: unset !important;
+    order: 1 !important;
+    flex: 0 0 58% !important;
+    width: 100% !important;
+    height: 58% !important;
+    min-height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     aspect-ratio: unset !important;
@@ -6525,16 +6519,16 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     background: #000 !important;
     border-radius: 0 !important;
     border: none !important;
-    border-right: 1px solid rgba(139,92,246,0.15) !important;
+    border-bottom: 1px solid rgba(139,92,246,0.15) !important;
     position: relative !important;
   }
 
-  /* لوحة الرسم — 37% على الجانب الأيسر */
+  /* لوحة الرسم تحت */
   #videoModal .drawing-board {
-    order: 1 !important;
-    flex: 0 0 37% !important;
-    width: 37% !important;
-    height: 100% !important;
+    order: 2 !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
     min-height: unset !important;
     border-radius: 0 !important;
     border: none !important;

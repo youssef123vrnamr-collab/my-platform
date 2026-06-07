@@ -104,7 +104,6 @@
        ════════════════════════════════════════════ */
     @media (min-width: 769px) {
 
-      /* الـ modal: مركزي مش stretch */
       #videoModal {
         align-items: center !important;
         justify-content: center !important;
@@ -112,23 +111,21 @@
         padding: 0 !important;
       }
 
-      /* الـ modal-content: حجم محدد — عرض أقل للتمركز بشكل أحسن */
       #videoModalContent {
-        width: 92vw !important;
-        max-width: 1200px !important;
-        height: 93dvh !important;
-        max-height: 93dvh !important;
+        width: 98vw !important;
+        max-width: 98vw !important;
+        height: 95dvh !important;
+        max-height: 95dvh !important;
         min-height: unset !important;
         margin: auto !important;
-        border-radius: 18px !important;
-        border: 1px solid rgba(99,102,241,0.35) !important;
-        box-shadow: 0 30px 80px rgba(0,0,0,0.95), 0 0 0 1px rgba(99,102,241,0.1) !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(99,102,241,0.3) !important;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.95) !important;
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
       }
 
-      /* modal-body */
       #videoModalContent > .modal-body {
         flex: 1 !important;
         min-height: 0 !important;
@@ -137,7 +134,6 @@
         background: #000 !important;
       }
 
-      /* video-with-board: column */
       #videoModal .video-with-board {
         display: flex !important;
         flex-direction: column !important;
@@ -149,25 +145,22 @@
         overflow: hidden !important;
       }
 
-      /* الفيديو فوق: 62% — أكبر شوية */
       #videoModal .video-player-container {
-        order: 1 !important;
-        flex: 0 0 62% !important;
+        flex: 0 0 58% !important;
         width: 100% !important;
-        height: 62% !important;
         position: relative !important;
         background: #000 !important;
-        border-bottom: 2px solid rgba(99,102,241,0.2) !important;
+        border-bottom: 1px solid rgba(99,102,241,0.2) !important;
         border-right: none !important;
         border-radius: 0 !important;
         padding: 0 !important; margin: 0 !important;
         overflow: hidden !important;
         aspect-ratio: unset !important;
         max-height: none !important;
+        min-height: 0 !important;
         display: block !important;
       }
 
-      /* الفيديو وايفريم */
       #videoModal .video-player-container .video-player,
       #videoModal .video-player-container .yt-wrapper,
       #videoModal .video-player-container .youtube-iframe,
@@ -179,14 +172,12 @@
         object-fit: contain !important;
         max-height: none !important;
         aspect-ratio: unset !important;
+        border-radius: 0 !important;
       }
 
-      /* لوحة الرسم تحت: 38% — بارتفاع مريح */
       #videoModal .drawing-board {
-        order: 2 !important;
-        flex: 0 0 38% !important;
+        flex: 1 1 auto !important;
         width: 100% !important;
-        height: 38% !important;
         min-height: 0 !important;
         border-radius: 0 !important;
         border: none !important;
@@ -200,7 +191,6 @@
         flex: 1 !important; min-height: 0 !important; overflow: hidden !important;
       }
 
-      /* toolsLibraryModal: dialog مركزي */
       #toolsLibraryModal {
         align-items: center !important;
         justify-content: center !important;
@@ -559,7 +549,7 @@
     </div>
   </div>
 </div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard">
+  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div><div class="drawing-board" id="drawingBoard">
 
   <!-- ── زرار فتح الأدوات (الوحيد الظاهر دائماً) ── -->
   <div class="db-topbar">
@@ -658,7 +648,7 @@
     <div id="dbSelectBox" style="display:none;position:absolute;border:2px dashed #6366f1;border-radius:4px;pointer-events:none;box-shadow:0 0 0 1px rgba(99,102,241,0.3);"></div>
   </div>
 
-</div><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div>
+</div></div>
 
   <!-- ── شريط أدوات المستخدم تحت الفيديو ── -->
   <div class="user-tools-strip" id="userToolsStrip">
