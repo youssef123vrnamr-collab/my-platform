@@ -84,251 +84,36 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* ===== إصلاح الفيديو ===== */
+    /* ===== إصلاح الفيديو: يملأ المساحة السوداء بالكامل ===== */
     .video-player-container {
-      position: relative; width: 100%; height: 100%;
-      background: #000; display: flex;
-      align-items: center; justify-content: center; overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
-    .video-player-container .yt-wrapper { position: relative; width: 100%; height: 100%; }
+    .video-player-container .yt-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
     .video-player-container .yt-wrapper iframe,
     .video-player-container .youtube-iframe {
-      position: absolute; top: 0; left: 0;
-      width: 100% !important; height: 100% !important;
-      border: none !important; aspect-ratio: unset !important;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      aspect-ratio: unset !important;
     }
-    .video-player-container .video-player { width: 100%; height: 100%; object-fit: cover; background: #000; }
-
-    /* ════════════════════════════════════════════
-       🖥️ DESKTOP — فيديو فوق، رسم تحت (COLUMN)
-       ════════════════════════════════════════════ */
-    @media (min-width: 769px) {
-
-      /* الـ modal: فول سكرين */
-      #videoModal {
-        align-items: stretch !important;
-        justify-content: stretch !important;
-        background: #000 !important;
-        padding: 0 !important;
-      }
-
-      /* الـ modal-content: فول سكرين */
-      #videoModalContent {
-        width: 100vw !important;
-        max-width: 100vw !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
-        min-height: unset !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-      }
-
-      /* modal-body */
-      #videoModalContent > .modal-body {
-        flex: 1 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-        padding: 0 !important;
-        background: #000 !important;
-      }
-
-      /* video-with-board: column */
-      #videoModal .video-with-board {
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100% !important;
-        height: 100% !important;
-        gap: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-      }
-
-      /* الفيديو فوق: 58% */
-      #videoModal .video-player-container {
-        order: 1 !important;
-        flex: 0 0 58% !important;
-        width: 100% !important;
-        height: 58% !important;
-        position: relative !important;
-        background: #000 !important;
-        border-bottom: 1px solid rgba(99,102,241,0.15) !important;
-        border-right: none !important;
-        border-radius: 0 !important;
-        padding: 0 !important; margin: 0 !important;
-        overflow: hidden !important;
-        aspect-ratio: unset !important;
-        max-height: none !important;
-        display: block !important;
-      }
-
-      /* الفيديو وايفريم */
-      #videoModal .video-player-container .video-player,
-      #videoModal .video-player-container .yt-wrapper,
-      #videoModal .video-player-container .youtube-iframe,
-      #videoModal .video-player-container iframe {
-        position: absolute !important;
-        top: 0 !important; left: 0 !important;
-        width: 100% !important; height: 100% !important;
-        border: none !important;
-        object-fit: contain !important;
-        max-height: none !important;
-        aspect-ratio: unset !important;
-      }
-
-      /* لوحة الرسم تحت: 42% */
-      #videoModal .drawing-board {
-        order: 2 !important;
-        flex: 1 1 auto !important;
-        width: 100% !important;
-        height: 42% !important;
-        min-height: 0 !important;
-        border-radius: 0 !important;
-        border: none !important;
-        background: linear-gradient(160deg,#0d0a1c,#07040e) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        overflow: hidden !important;
-      }
-
-      #videoModal .drawing-canvas-wrap {
-        flex: 1 !important; min-height: 0 !important; overflow: hidden !important;
-      }
-
-      /* toolsLibraryModal: فول سكرين */
-      #toolsLibraryModal {
-        align-items: stretch !important;
-        justify-content: stretch !important;
-        background: rgba(3,2,8,0.95) !important;
-        padding: 0 !important;
-      }
-      #toolsLibraryModal > .modal-content {
-        width: 100vw !important;
-        max-width: 100vw !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
-        min-height: unset !important;
-        border-radius: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-      }
-    }
-
-    /* fullscreen mode */
-    #videoModal:fullscreen #videoModalContent,
-    #videoModal:-webkit-full-screen #videoModalContent {
-      width: 100vw !important; max-width: 100vw !important;
-      height: 100vh !important; max-height: 100vh !important;
-      border-radius: 0 !important; border: none !important; margin: 0 !important;
-    }
-
-    /* ═══ User Tools Strip ═══ */
-    .user-tools-strip {
-      display: flex !important; align-items: center !important; gap: 0.4rem !important;
-      padding: 0.45rem 0.7rem !important; background: rgba(8,5,18,0.98) !important;
-      border-top: 1px solid rgba(99,102,241,0.15) !important;
-      flex-shrink: 0 !important; overflow-x: auto !important; scrollbar-width: none !important;
-    }
-    .user-tools-strip::-webkit-scrollbar { display: none !important; }
-    .uts-label { font-size: 0.7rem !important; color: #555 !important; white-space: nowrap !important; flex-shrink: 0 !important; font-family: Cairo,sans-serif !important; }
-    .uts-tools { display: flex !important; gap: 0.3rem !important; align-items: center !important; flex: 1 !important; overflow-x: auto !important; scrollbar-width: none !important; }
-    .uts-tool-btn { background: rgba(99,102,241,0.12) !important; border: 1px solid rgba(99,102,241,0.3) !important; border-radius: 8px !important; color: #c4b5fd !important; padding: 0.3rem 0.55rem !important; font-size: 0.73rem !important; font-family: Cairo,sans-serif !important; cursor: pointer !important; display: flex !important; align-items: center !important; gap: 0.3rem !important; white-space: nowrap !important; flex-shrink: 0 !important; transition: all 0.15s !important; }
-    .uts-tool-btn:hover { background: rgba(99,102,241,0.3) !important; color: #fff !important; }
-    .uts-tool-btn.active { background: linear-gradient(135deg,rgba(99,102,241,0.5),rgba(139,92,246,0.4)) !important; color: #fff !important; }
-    .uts-empty { color: #555 !important; font-size: 0.75rem !important; font-family: Cairo,sans-serif !important; }
-    .uts-edit-btn { background: rgba(245,158,11,0.15) !important; border: 1px solid rgba(245,158,11,0.4) !important; border-radius: 8px !important; color: #fbbf24 !important; width: 28px !important; height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-size: 0.8rem !important; flex-shrink: 0 !important; margin-right: auto !important; }
-    .uts-edit-btn:hover { background: rgba(245,158,11,0.3) !important; }
-
-    /* ═══ TLM Cards ═══ */
-    .tlm-cat { margin-bottom: 1.2rem; }
-    .tlm-cat-title { font-size: 0.78rem; color: #777; font-weight: 700; margin-bottom: 0.55rem; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255,255,255,0.07); font-family: Cairo,sans-serif; }
-    .tlm-cat-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(105px,1fr)); gap: 0.45rem; }
-    .tlm-tool-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 11px; padding: 0.6rem 0.4rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transition: all 0.18s; position: relative; font-family: Cairo,sans-serif; color: #bbb; }
-    .tlm-tool-card:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); color: #fff; transform: translateY(-1px); }
-    .tlm-tool-card.selected { background: linear-gradient(135deg,rgba(99,102,241,0.3),rgba(139,92,246,0.2)); border-color: rgba(99,102,241,0.6); color: #fff; }
-    .tlm-tool-icon { font-size: 1.1rem; }
-    .tlm-tool-label { font-size: 0.7rem; text-align: center; }
-    .tlm-check { position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; background: #6366f1; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 0.5rem; color: #fff; }
-    .tlm-tool-card.selected .tlm-check { display: flex; }
-    .tlm-strip-chip { display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(99,102,241,0.18); border: 1px solid rgba(99,102,241,0.4); border-radius: 18px; padding: 0.2rem 0.55rem; font-size: 0.72rem; color: #c4b5fd; font-family: Cairo,sans-serif; cursor: grab; }
-  </style>
-
-  <!-- LAYOUT OVERRIDE: يجب أن يكون بعد style.css -->
-  <style id="layoutOverride">
-    /* فيديو فوق + رسم تحت على الكمبيوتر */
-    @media (min-width: 769px) {
-      #videoModal .video-with-board {
-        display: flex !important;
-        flex-direction: column !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-        height: 100% !important;
-        gap: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        min-height: 0 !important;
-        align-items: stretch !important;
-      }
-      #videoModal .video-player-container {
-        order: 1 !important;
-        flex: 0 0 58% !important;
-        width: 100% !important;
-        height: 58% !important;
-        min-width: unset !important;
-        max-width: 100% !important;
-        position: relative !important;
-        background: #000 !important;
-        border-radius: 0 !important;
-        border: none !important;
-        border-bottom: 1px solid rgba(99,102,241,0.2) !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-        aspect-ratio: unset !important;
-        max-height: none !important;
-        min-height: 0 !important;
-        padding-top: 0 !important;
-      }
-      #videoModal .video-player-container .video-player,
-      #videoModal .video-player-container .yt-wrapper,
-      #videoModal .video-player-container .youtube-iframe,
-      #videoModal .video-player-container iframe {
-        position: absolute !important;
-        top: 0 !important; left: 0 !important;
-        width: 100% !important; height: 100% !important;
-        border: none !important;
-        object-fit: contain !important;
-        max-height: none !important;
-        aspect-ratio: unset !important;
-        border-radius: 0 !important;
-      }
-      #videoModal .drawing-board {
-        order: 2 !important;
-        flex: 1 1 auto !important;
-        width: 100% !important;
-        height: auto !important;
-        min-height: 0 !important;
-        border-radius: 0 !important;
-        border: none !important;
-        border-top: 1px solid rgba(99,102,241,0.2) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        overflow: hidden !important;
-      }
-      #videoModal .drawing-canvas-wrap {
-        flex: 1 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-      }
+    .video-player-container .video-player {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
     }
   </style>
 </head>
@@ -633,7 +418,7 @@
     </div>
   </div>
 </div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board" id="videoWithBoard"><div class="drawing-board" id="drawingBoard" style="order:2">
+  <div class="modal" id="videoModal"><div class="modal-content"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" onclick="toggleFullscreenVideo()" title="ملء الشاشة"><i class="fas fa-expand"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board"><div class="drawing-board" id="drawingBoard">
 
   <!-- ── زرار فتح الأدوات (الوحيد الظاهر دائماً) ── -->
   <div class="db-topbar">
@@ -650,7 +435,6 @@
       <button type="button" class="db-icon-btn" onclick="undoDraw()" title="تراجع"><i class="fas fa-rotate-left"></i></button>
       <button type="button" class="db-icon-btn" onclick="redoDraw()" title="إعادة"><i class="fas fa-rotate-right"></i></button>
       <button type="button" class="db-icon-btn db-danger" onclick="clearDrawing()" title="مسح الكل"><i class="fas fa-trash"></i></button>
-      <button type="button" class="db-icon-btn db-expand-btn" id="dbExpandBtn" onclick="toggleDrawingBoardExpand()" title="تكبير لوحة الرسم"><i class="fas fa-expand" id="dbExpandIcon"></i></button>
     </div>
   </div>
 
@@ -732,7 +516,7 @@
     <div id="dbSelectBox" style="display:none;position:absolute;border:2px dashed #6366f1;border-radius:4px;pointer-events:none;box-shadow:0 0 0 1px rgba(99,102,241,0.3);"></div>
   </div>
 
-</div><div class="video-player-container" id="videoPlayerContainer" style="order:1"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div>
+</div><div class="video-player-container" id="videoPlayerContainer"><video class="video-player" controls id="videoPlayer" playsinline preload="none"></video></div></div>
 
   <!-- ── شريط أدوات المستخدم تحت الفيديو ── -->
   <div class="user-tools-strip" id="userToolsStrip">
@@ -1830,17 +1614,22 @@
       <button class="modal-close" onclick="closeToolsLibraryModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body" style="flex:1;overflow-y:auto;padding:1.25rem">
+      <!-- info bar -->
       <div id="tlmInfoBar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:.65rem 1rem;font-size:.85rem;color:#fbbf24">
         <span><i class="fas fa-info-circle"></i> اختر حتى <strong id="tlmMaxLabel">5</strong> أدوات تظهر تحت الفيديو</span>
         <span id="tlmSelectedCount" style="font-weight:700">0 / 5</span>
       </div>
+
+      <!-- current strip preview -->
       <div style="margin-bottom:1.25rem">
         <div style="font-size:.8rem;color:#888;margin-bottom:.5rem;font-weight:600">الأدوات المختارة حالياً:</div>
         <div id="tlmCurrentStrip" style="display:flex;gap:.4rem;flex-wrap:wrap;min-height:40px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12);border-radius:10px;padding:.5rem .75rem;align-items:center">
           <span style="color:#555;font-size:.8rem">لا توجد أدوات مختارة</span>
         </div>
       </div>
-      <div id="tlmCategories"></div>
+
+      <!-- categories -->
+      <div id="tlmCategories"><!-- تُحقن بـ JS --></div>
     </div>
     <div style="padding:.85rem 1.25rem;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:.6rem;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="closeToolsLibraryModal()"><i class="fas fa-times"></i> إلغاء</button>
@@ -1850,124 +1639,5 @@
 </div>
 
 <script src="script.js"></script>
-
-<script>
-// ═══ Fullscreen للـ Video Modal كله ═══
-function toggleVideoModalFullscreen() {
-  var modal = document.getElementById('videoModal');
-  var icon  = document.getElementById('fsIcon');
-  if (!modal) return;
-
-  var isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-
-  if (!isFS) {
-    var req = modal.requestFullscreen || modal.webkitRequestFullscreen || modal.mozRequestFullScreen || modal.msRequestFullscreen;
-    if (req) {
-      req.call(modal).catch(function() { _maximizeModal(true); });
-    } else { _maximizeModal(true); }
-  } else {
-    var exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-    if (exit) exit.call(document);
-    _maximizeModal(false);
-  }
-}
-
-function _maximizeModal(on) {
-  var mc   = document.getElementById('videoModalContent');
-  var icon = document.getElementById('fsIcon');
-  if (!mc) return;
-  if (on) {
-    mc.setAttribute('data-maximized','1');
-    mc.style.cssText = 'width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:none!important;margin:0!important;';
-    if(icon){icon.classList.remove('fa-expand');icon.classList.add('fa-compress');}
-  } else {
-    mc.removeAttribute('data-maximized');
-    mc.style.cssText = '';
-    if(icon){icon.classList.remove('fa-compress');icon.classList.add('fa-expand');}
-  }
-}
-
-function _onFSChange() {
-  var isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-  if (!isFS) { _maximizeModal(false); }
-  else {
-    var icon = document.getElementById('fsIcon');
-    if(icon){icon.classList.remove('fa-expand');icon.classList.add('fa-compress');}
-  }
-}
-document.addEventListener('fullscreenchange', _onFSChange);
-document.addEventListener('webkitfullscreenchange', _onFSChange);
-</script>
-
-<script>
-(function(){
-  function fixLayout(){
-    var vwb = document.getElementById('videoWithBoard');
-    var vpc = document.getElementById('videoPlayerContainer');
-    var db  = document.getElementById('drawingBoard');
-    if(!vwb||!vpc||!db) return;
-    if(window.innerWidth < 769) return;
-    // force column on parent
-    vwb.setAttribute('style',
-      'display:flex!important;'+
-      'flex-direction:column!important;'+
-      'width:100%!important;'+
-      'height:100%!important;'+
-      'gap:0!important;'+
-      'padding:0!important;'+
-      'margin:0!important;'+
-      'min-height:0!important;'+
-      'align-items:stretch!important;'
-    );
-    // video on top
-    vpc.setAttribute('style',
-      'order:1!important;'+
-      'flex:0 0 58%!important;'+
-      'width:100%!important;'+
-      'height:58%!important;'+
-      'position:relative!important;'+
-      'background:#000!important;'+
-      'border:none!important;'+
-      'border-bottom:1px solid rgba(99,102,241,0.2)!important;'+
-      'padding:0!important;'+
-      'padding-top:0!important;'+
-      'margin:0!important;'+
-      'overflow:hidden!important;'+
-      'aspect-ratio:unset!important;'+
-      'max-height:none!important;'+
-      'min-height:0!important;'+
-      'min-width:unset!important;'+
-      'border-radius:0!important;'
-    );
-    // drawing board below
-    db.setAttribute('style',
-      'order:2!important;'+
-      'flex:1 1 auto!important;'+
-      'width:100%!important;'+
-      'height:auto!important;'+
-      'min-height:0!important;'+
-      'border-radius:0!important;'+
-      'border:none!important;'+
-      'border-top:1px solid rgba(99,102,241,0.2)!important;'
-    );
-  }
-  
-  // run on modal open
-  var modal = document.getElementById('videoModal');
-  if(modal){
-    var obs = new MutationObserver(function(muts){
-      muts.forEach(function(m){
-        if(m.attributeName==='class' && modal.classList.contains('active')){
-          setTimeout(fixLayout, 50);
-          setTimeout(fixLayout, 300);
-        }
-      });
-    });
-    obs.observe(modal, {attributes:true});
-  }
-  
-  window.addEventListener('resize', fixLayout);
-})();
-</script>
 </body>
 </html>
