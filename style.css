@@ -6505,9 +6505,10 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     min-height: 0 !important;
   }
 
+  /* فيديو على اليمين + رسم على الشمال جنب بجنب */
   #videoModal .video-with-board {
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     gap: 0 !important;
     padding: 0 !important;
     width: 100% !important;
@@ -6516,12 +6517,12 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     overflow: hidden !important;
   }
 
-  /* الفيديو فوق */
+  /* الفيديو على اليمين: 58% */
   #videoModal .video-player-container {
     order: 1 !important;
     flex: 0 0 58% !important;
-    width: 100% !important;
-    height: 58% !important;
+    width: 58% !important;
+    height: 100% !important;
     min-height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -6530,23 +6531,35 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     background: #000 !important;
     border-radius: 0 !important;
     border: none !important;
-    border-bottom: 1px solid rgba(139,92,246,0.15) !important;
+    border-left: 1px solid rgba(139,92,246,0.2) !important;
     position: relative !important;
   }
 
-  /* لوحة الرسم تحت */
+  /* لوحة الرسم على الشمال: الباقي */
   #videoModal .drawing-board {
     order: 2 !important;
     flex: 1 1 auto !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: unset !important;
+    width: auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
     border-radius: 0 !important;
     border: none !important;
     background: linear-gradient(160deg, #0d0a1c, #08040f) !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
+  }
+
+  /* لما لوحة الرسم تتكبر تاخد كل المساحة */
+  #videoModal .video-with-board.db-board-fullmode .video-player-container {
+    flex: 0 0 0% !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+  }
+  #videoModal .video-with-board.db-board-fullmode .drawing-board {
+    flex: 1 1 100% !important;
+    width: 100% !important;
   }
 
   #videoModal .video-player {
@@ -7145,7 +7158,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
-/* ══ toolsLibraryModal: فول سكرين على الكمبيوتر ══ */
+/* ══ toolsLibraryModal فول سكرين على desktop ══ */
 @media (min-width: 769px) {
   #toolsLibraryModal {
     padding: 0 !important;
@@ -7165,4 +7178,21 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     flex-direction: column !important;
     overflow: hidden !important;
   }
+}
+
+/* ══ زرار تكبير لوحة الرسم db-expanded ══ */
+.video-with-board.db-board-fullmode .video-player-container {
+  flex: 0 0 0% !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.video-with-board.db-board-fullmode .drawing-board {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+}
+.drawing-board.db-expanded {
+  flex: 1 1 100% !important;
 }
