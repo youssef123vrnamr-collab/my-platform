@@ -100,7 +100,7 @@
     .video-player-container .video-player { width: 100%; height: 100%; object-fit: cover; background: #000; }
 
     /* ════════════════════════════════════════════
-       🖥️ DESKTOP — فيديو فوق، رسم تحت (COLUMN)
+       🖥️ DESKTOP — فيديو يمين، رسم شمال (ROW)
        ════════════════════════════════════════════ */
     @media (min-width: 769px) {
 
@@ -137,28 +137,30 @@
         background: #000 !important;
       }
 
-      /* video-with-board: column */
+      /* video-with-board: ROW — فيديو يمين + رسم شمال */
       #videoModal .video-with-board {
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
         width: 100% !important;
         height: 100% !important;
         gap: 0 !important;
         padding: 0 !important;
         margin: 0 !important;
         overflow: hidden !important;
+        align-items: stretch !important;
       }
 
-      /* الفيديو فوق: 58% */
+      /* الفيديو يمين: 62% */
       #videoModal .video-player-container {
-        order: 1 !important;
-        flex: 0 0 58% !important;
-        width: 100% !important;
-        height: 58% !important;
+        order: 2 !important;
+        flex: 0 0 62% !important;
+        width: 62% !important;
+        height: 100% !important;
         position: relative !important;
         background: #000 !important;
-        border-bottom: 1px solid rgba(99,102,241,0.15) !important;
+        border-bottom: none !important;
         border-right: none !important;
+        border-left: 1px solid rgba(99,102,241,0.15) !important;
         border-radius: 0 !important;
         padding: 0 !important; margin: 0 !important;
         overflow: hidden !important;
@@ -181,15 +183,16 @@
         aspect-ratio: unset !important;
       }
 
-      /* لوحة الرسم تحت: 42% */
+      /* لوحة الرسم شمال: 38% */
       #videoModal .drawing-board {
-        order: 2 !important;
-        flex: 1 1 auto !important;
-        width: 100% !important;
-        height: 42% !important;
+        order: 1 !important;
+        flex: 0 0 38% !important;
+        width: 38% !important;
+        height: 100% !important;
         min-height: 0 !important;
         border-radius: 0 !important;
         border: none !important;
+        border-right: 1px solid rgba(99,102,241,0.15) !important;
         background: linear-gradient(160deg,#0d0a1c,#07040e) !important;
         display: flex !important;
         flex-direction: column !important;
@@ -264,11 +267,11 @@
 
   <!-- LAYOUT OVERRIDE: يجب أن يكون بعد style.css -->
   <style id="layoutOverride">
-    /* فيديو فوق + رسم تحت على الكمبيوتر */
+    /* فيديو يمين + رسم شمال على الكمبيوتر (ROW) */
     @media (min-width: 769px) {
       #videoModal .video-with-board {
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
         flex-wrap: nowrap !important;
         width: 100% !important;
         height: 100% !important;
@@ -279,24 +282,23 @@
         align-items: stretch !important;
       }
       #videoModal .video-player-container {
-        order: 1 !important;
-        flex: 0 0 58% !important;
-        width: 100% !important;
-        height: 58% !important;
+        order: 2 !important;
+        flex: 0 0 62% !important;
+        width: 62% !important;
+        height: 100% !important;
         min-width: unset !important;
-        max-width: 100% !important;
+        max-width: 62% !important;
         position: relative !important;
         background: #000 !important;
         border-radius: 0 !important;
         border: none !important;
-        border-bottom: 1px solid rgba(99,102,241,0.2) !important;
+        border-left: 1px solid rgba(99,102,241,0.2) !important;
         padding: 0 !important;
         margin: 0 !important;
         overflow: hidden !important;
         aspect-ratio: unset !important;
         max-height: none !important;
         min-height: 0 !important;
-        padding-top: 0 !important;
       }
       #videoModal .video-player-container .video-player,
       #videoModal .video-player-container .yt-wrapper,
@@ -312,14 +314,14 @@
         border-radius: 0 !important;
       }
       #videoModal .drawing-board {
-        order: 2 !important;
-        flex: 1 1 auto !important;
-        width: 100% !important;
-        height: auto !important;
+        order: 1 !important;
+        flex: 0 0 38% !important;
+        width: 38% !important;
+        height: 100% !important;
         min-height: 0 !important;
         border-radius: 0 !important;
         border: none !important;
-        border-top: 1px solid rgba(99,102,241,0.2) !important;
+        border-right: 1px solid rgba(99,102,241,0.2) !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
@@ -633,7 +635,7 @@
     </div>
   </div>
 </div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board" id="videoWithBoard"><div class="drawing-board" id="drawingBoard" style="order:2">
+  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-fullscreen" id="fsBtn" onclick="toggleVideoModalFullscreen()" title="ملء الشاشة"><i class="fas fa-expand" id="fsIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board" id="videoWithBoard"><div class="drawing-board" id="drawingBoard">
 
   <!-- ── زرار فتح الأدوات (الوحيد الظاهر دائماً) ── -->
   <div class="db-topbar">
@@ -1907,10 +1909,10 @@ document.addEventListener('webkitfullscreenchange', _onFSChange);
     var db  = document.getElementById('drawingBoard');
     if(!vwb||!vpc||!db) return;
     if(window.innerWidth < 769) return;
-    // force column on parent
+    // force row on parent — فيديو يمين + رسم شمال
     vwb.setAttribute('style',
       'display:flex!important;'+
-      'flex-direction:column!important;'+
+      'flex-direction:row!important;'+
       'width:100%!important;'+
       'height:100%!important;'+
       'gap:0!important;'+
@@ -1919,36 +1921,36 @@ document.addEventListener('webkitfullscreenchange', _onFSChange);
       'min-height:0!important;'+
       'align-items:stretch!important;'
     );
-    // video on top
+    // video on right (order:2)
     vpc.setAttribute('style',
-      'order:1!important;'+
-      'flex:0 0 58%!important;'+
-      'width:100%!important;'+
-      'height:58%!important;'+
+      'order:2!important;'+
+      'flex:0 0 62%!important;'+
+      'width:62%!important;'+
+      'height:100%!important;'+
       'position:relative!important;'+
       'background:#000!important;'+
       'border:none!important;'+
-      'border-bottom:1px solid rgba(99,102,241,0.2)!important;'+
+      'border-left:1px solid rgba(99,102,241,0.2)!important;'+
       'padding:0!important;'+
-      'padding-top:0!important;'+
       'margin:0!important;'+
       'overflow:hidden!important;'+
       'aspect-ratio:unset!important;'+
       'max-height:none!important;'+
       'min-height:0!important;'+
       'min-width:unset!important;'+
+      'max-width:62%!important;'+
       'border-radius:0!important;'
     );
-    // drawing board below
+    // drawing board on left (order:1)
     db.setAttribute('style',
-      'order:2!important;'+
-      'flex:1 1 auto!important;'+
-      'width:100%!important;'+
-      'height:auto!important;'+
+      'order:1!important;'+
+      'flex:0 0 38%!important;'+
+      'width:38%!important;'+
+      'height:100%!important;'+
       'min-height:0!important;'+
       'border-radius:0!important;'+
       'border:none!important;'+
-      'border-top:1px solid rgba(99,102,241,0.2)!important;'
+      'border-right:1px solid rgba(99,102,241,0.2)!important;'
     );
   }
   
