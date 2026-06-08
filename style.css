@@ -7261,3 +7261,157 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   .uts-label { font-size: .65rem; }
   .tlm-cat-grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); }
 }
+
+
+/* ══════════════════════════════════════════════════════
+   🖥️ DESKTOP VIDEO MODAL — فول سكرين + ROW LAYOUT
+   يجب أن يكون في آخر الملف ليكسر كل الـ overrides
+   ══════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+
+  /* Modal نفسه: يملأ الشاشة كلها */
+  #videoModal {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    padding: 0 !important; margin: 0 !important;
+    background: #000 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    overflow: hidden !important;
+  }
+
+  /* Modal content: 100vw × 100vh بدون أي padding أو margin */
+  #videoModal > #videoModalContent,
+  #videoModal .modal-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: #000 !important;
+  }
+
+  /* Modal header */
+  #videoModal .modal-header {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    padding: 0.5rem 1rem !important;
+    background: rgba(10,5,20,0.98) !important;
+    border-bottom: 1px solid rgba(99,102,241,0.15) !important;
+    min-height: unset !important;
+  }
+  #videoModal .modal-close,
+  #videoModal .modal-share,
+  #videoModal .modal-fullscreen {
+    position: relative !important;
+    top: unset !important; left: unset !important; right: unset !important;
+    background: rgba(255,255,255,0.08) !important;
+    border-radius: 10px !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Modal body: يملأ الباقي */
+  #videoModal .modal-body {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+    overflow-y: unset !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #000 !important;
+  }
+
+  /* video-with-board: ROW — فيديو يمين + رسم شمال */
+  #videoModal .video-with-board {
+    flex: 1 1 0% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+  }
+
+  /* الفيديو: يمين — 62% */
+  #videoModal .video-player-container {
+    order: 2 !important;
+    flex: 0 0 62% !important;
+    width: 62% !important;
+    height: 100% !important;
+    max-width: 62% !important;
+    min-width: unset !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    position: relative !important;
+    background: #000 !important;
+    border: none !important;
+    border-left: 1px solid rgba(99,102,241,0.2) !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    margin-bottom: 0 !important;
+    overflow: hidden !important;
+    aspect-ratio: unset !important;
+    flex-shrink: 0 !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+  #videoModal .video-player-container .video-player,
+  #videoModal .video-player-container .yt-wrapper,
+  #videoModal .video-player-container .youtube-iframe,
+  #videoModal .video-player-container iframe {
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    object-fit: contain !important;
+    aspect-ratio: unset !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* لوحة الرسم: شمال — 38% */
+  #videoModal .drawing-board {
+    order: 1 !important;
+    flex: 0 0 38% !important;
+    width: 38% !important;
+    height: 100% !important;
+    max-width: 38% !important;
+    min-width: unset !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    background: linear-gradient(160deg,#0d0a1c,#07040e) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+  #videoModal .drawing-canvas-wrap {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* شريط الأدوات: تحت */
+  #videoModal .user-tools-strip {
+    flex-shrink: 0 !important;
+    width: 100% !important;
+  }
+}
