@@ -1826,19 +1826,33 @@ function _maximizeModal(on) {
   }
 }
 
-// _onFSChange اتنقل للـ script التاني
+function _onFSChange() {
+  var isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (!isFS) {
+    _maximizeModal(false);
+    // رجّع الـ layout بعد الخروج من fullscreen
+    setTimeout(function() {
+      if (typeof window._onResize === 'function') window._onResize();
+      else if (window.innerWidth >= 769 && typeof window._fixLayout === 'function') window._fixLayout();
+    }, 100);
+  } else {
+    var icon = document.getElementById('fsIcon');
+    if(icon){icon.classList.remove('fa-expand');icon.classList.add('fa-compress');}
+  }
+}
+document.addEventListener('fullscreenchange', _onFSChange);
+document.addEventListener('webkitfullscreenchange', _onFSChange);
 </script>
 
 <script>
 (function(){
-  var _modalFS = false; // هل الـ modal هو اللي عمل fullscreen؟
-
   function fixLayout(){
     var vwb = document.getElementById('videoWithBoard');
     var vpc = document.getElementById('videoPlayerContainer');
     var db  = document.getElementById('drawingBoard');
     if(!vwb||!vpc||!db) return;
     if(window.innerWidth < 769) return;
+    // ROW: فيديو يمين + رسم شمال
     vwb.setAttribute('style',
       'display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;'+
       'width:100%!important;height:100%!important;min-height:0!important;'+
@@ -1859,6 +1873,7 @@ function _maximizeModal(on) {
       'max-width:38%!important;min-width:unset!important;min-height:0!important;'+
       'border-radius:0!important;border:none!important;border-left:1px solid rgba(99,102,241,0.2)!important;'
     );
+    // modal content: لا نغير حجمه — يبقى زي ما هو من الـ CSS
   }
 
   function resetLayout() {
@@ -1871,75 +1886,21 @@ function _maximizeModal(on) {
   }
 
   function onResize() {
-    if(window.innerWidth < 769) resetLayout();
-    else fixLayout();
-  }
-
-  // ══ فتح الـ modal → fullscreen أوتوماتيك ══
-  function enterModalFS() {
-    var modal = document.getElementById('videoModal');
-    if(!modal) return;
-    var already = document.fullscreenElement || document.webkitFullscreenElement;
-    if(already) return; // already fullscreen
-    var req = modal.requestFullscreen || modal.webkitRequestFullscreen || modal.mozRequestFullScreen || modal.msRequestFullscreen;
-    if(req){
-      _modalFS = true;
-      req.call(modal).catch(function(){_modalFS=false;});
-    }
-  }
-
-  // ══ إغلاق الـ modal → اخرج من fullscreen لو إحنا اللي دخلناه ══
-  function exitModalFS() {
-    if(!_modalFS) return;
-    _modalFS = false;
-    var isFS = document.fullscreenElement || document.webkitFullscreenElement;
-    if(isFS){
-      var ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-      if(ex) ex.call(document);
-    }
-  }
-
-  // ══ لو حصل fullscreenchange من مصدر تاني (زي زرار اليوتيوب) ══
-  // نرجع fullscreen على الـ modal بعد ما يخرج منه
-  function onFSChange() {
-    var modal = document.getElementById('videoModal');
-    if(!modal || !modal.classList.contains('active')) return;
-    var currentFS = document.fullscreenElement || document.webkitFullscreenElement;
-    if(!currentFS) {
-      // خرج من fullscreen — لو الـ modal لسه مفتوح، ارجع فول سكرين عليه
-      setTimeout(function(){
-        var stillActive = modal.classList.contains('active');
-        var stillNoFS   = !(document.fullscreenElement || document.webkitFullscreenElement);
-        if(stillActive && stillNoFS){
-          _modalFS = true;
-          var req = modal.requestFullscreen || modal.webkitRequestFullscreen;
-          if(req) req.call(modal).catch(function(){_modalFS=false;});
-        }
-        fixLayout();
-      }, 150);
+    if(window.innerWidth < 769) {
+      resetLayout();
     } else {
-      // دخل fullscreen — اعمل fixLayout
-      setTimeout(fixLayout, 150);
+      fixLayout();
     }
   }
 
-  document.addEventListener('fullscreenchange',       onFSChange);
-  document.addEventListener('webkitfullscreenchange', onFSChange);
-
-  // ══ MutationObserver على الـ modal ══
+  // run on modal open
   var modal = document.getElementById('videoModal');
   if(modal){
     var obs = new MutationObserver(function(muts){
       muts.forEach(function(m){
-        if(m.attributeName !== 'class') return;
-        if(modal.classList.contains('active')){
-          // فُتح
-          setTimeout(function(){ onResize(); enterModalFS(); }, 50);
-          setTimeout(function(){ onResize(); }, 300);
-        } else {
-          // أُغلق
-          exitModalFS();
-          resetLayout();
+        if(m.attributeName==='class' && modal.classList.contains('active')){
+          setTimeout(onResize, 50);
+          setTimeout(onResize, 300);
         }
       });
     });
@@ -1947,6 +1908,7 @@ function _maximizeModal(on) {
   }
 
   window.addEventListener('resize', onResize);
+  // expose للـ _onFSChange اللي في scope تاني
   window._fixLayout = fixLayout;
   window._onResize  = onResize;
 })();
