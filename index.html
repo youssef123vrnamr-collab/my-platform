@@ -1819,13 +1819,23 @@ function _maximizeModal(on) {
     mc.removeAttribute('data-maximized');
     mc.style.cssText = '';
     if(icon){icon.classList.remove('fa-compress');icon.classList.add('fa-expand');}
+    // رجّع الـ layout الـ side-by-side
+    setTimeout(function() {
+      if (typeof window._onResize === 'function') window._onResize();
+    }, 50);
   }
 }
 
 function _onFSChange() {
   var isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-  if (!isFS) { _maximizeModal(false); }
-  else {
+  if (!isFS) {
+    _maximizeModal(false);
+    // رجّع الـ layout بعد الخروج من fullscreen
+    setTimeout(function() {
+      if (typeof window._onResize === 'function') window._onResize();
+      else if (window.innerWidth >= 769 && typeof window._fixLayout === 'function') window._fixLayout();
+    }, 100);
+  } else {
     var icon = document.getElementById('fsIcon');
     if(icon){icon.classList.remove('fa-expand');icon.classList.add('fa-compress');}
   }
@@ -1898,6 +1908,9 @@ document.addEventListener('webkitfullscreenchange', _onFSChange);
   }
 
   window.addEventListener('resize', onResize);
+  // expose للـ _onFSChange اللي في scope تاني
+  window._fixLayout = fixLayout;
+  window._onResize  = onResize;
 })();
 </script>
 </body>
