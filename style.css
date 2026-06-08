@@ -5557,365 +5557,6 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
 /* ══ FIX: remove black space above/below video in modal ══ */
 
-#videoModal .modal-content {
-  background: #000 !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-#videoModal .modal-header {
-  flex-shrink: 0 !important;
-  background: rgba(15,8,26,0.95) !important;
-}
-
-#videoModal .modal-body {
-  padding: 0 !important;
-  background: #000 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-  overflow: hidden !important;
-}
-
-#videoModal .video-with-board {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 0 !important;
-}
-
-#videoModal .video-player-container {
-  margin: 0 !important;
-  border-radius: 0 !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-top: none !important;
-  border-bottom: 1px solid rgba(139,92,246,0.3) !important;
-}
-
-@media (max-width: 768px) {
-  #videoModal .video-player-container {
-    border-radius: 0 !important;
-  }
-}
-
-
-
-/* ══ VIDEO 100% WIDTH — fills exactly the modal width ══ */
-
-#videoModal .modal-content,
-#videoModal .modal-body,
-#videoModal .video-with-board,
-#videoModal .video-player-container {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  border-radius: 0 !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-top: none !important;
-  box-sizing: border-box !important;
-}
-
-#videoModal .video-player,
-#videoModal .youtube-iframe {
-  width: 100% !important;
-  max-width: 100% !important;
-  height: auto !important;
-  max-height: none !important;
-  display: block !important;
-  border-radius: 0 !important;
-  object-fit: fill !important;
-  aspect-ratio: 16/9 !important;
-}
-
-#videoModal .yt-wrapper {
-  width: 100% !important;
-  border-radius: 0 !important;
-  max-height: none !important;
-}
-
-
-
-/* ══ VIDEO FILLS ITS BOX EXACTLY — no more, no less ══ */
-
-#videoModal .modal-content,
-#videoModal .modal-body {
-  width: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-  background: #0f0a1a !important;
-  border-radius: 0 !important;
-}
-
-#videoModal .video-with-board {
-  padding: 1rem !important;
-  gap: 1rem !important;
-}
-
-#videoModal .video-player-container {
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 16px !important;
-  border: 1px solid rgba(139,92,246,0.35) !important;
-  overflow: hidden !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-#videoModal .video-player {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-height: none !important;
-  aspect-ratio: 16/9 !important;
-  object-fit: fill !important;
-  border-radius: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-#videoModal .yt-wrapper {
-  width: 100% !important;
-  aspect-ratio: 16/9 !important;
-  max-height: none !important;
-  border-radius: 0 !important;
-  overflow: hidden !important;
-}
-
-@media (max-width: 768px) {
-  #videoModal .video-with-board {
-    padding: 0.75rem !important;
-  }
-  #videoModal .video-player-container {
-    border-radius: 12px !important;
-  }
-}
-
-
-
-/* ══ DEFINITIVE FIX: crop black bars with cover ══ */
-
-#videoModal .video-player {
-  object-fit: cover !important;
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  border-radius: 0 !important;
-}
-
-#videoModal .video-player-container {
-  position: relative !important;
-  width: 100% !important;
-  aspect-ratio: 16/9 !important;
-  overflow: hidden !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(139,92,246,0.35) !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: #000 !important;
-}
-
-
-
-/* ══ FINAL FIX: video container fixed aspect ratio, no stretching ══ */
-
-#videoModal .video-with-board {
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 0 !important;
-  gap: 0 !important;
-}
-
-#videoModal .video-player-container {
-  order: 1 !important;
-  width: 100% !important;
-  aspect-ratio: 16/9 !important;
-  height: auto !important;
-  min-height: unset !important;
-  max-height: unset !important;
-  flex-shrink: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  background: #000 !important;
-  border-radius: 0 !important;
-  border: none !important;
-  border-bottom: 1px solid rgba(139,92,246,0.3) !important;
-  position: relative !important;
-}
-
-#videoModal .video-player {
-  position: absolute !important;
-  top: 0 !important; left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-height: none !important;
-  object-fit: cover !important;
-  border-radius: 0 !important;
-  aspect-ratio: unset !important;
-}
-
-#videoModal .drawing-board {
-  order: 2 !important;
-}
-
-
-
-/* ══ YOUTUBE STYLE: video fills top of screen edge to edge ══ */
-
-#videoModal .modal-content {
-  background: #000 !important;
-}
-
-#videoModal .modal-header {
-  display: none !important;
-}
-
-/* زرار الإغلاق يطفو فوق الفيديو */
-#videoModal .modal-close {
-  display: flex !important;
-  position: fixed !important;
-  top: 12px !important;
-  left: 12px !important;
-  z-index: 9999 !important;
-  background: rgba(0,0,0,0.6) !important;
-  border: none !important;
-  color: #fff !important;
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 50% !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-#videoModal .modal-share,
-#videoModal .modal-fullscreen {
-  display: flex !important;
-  position: fixed !important;
-  top: 12px !important;
-  z-index: 9999 !important;
-  background: rgba(0,0,0,0.6) !important;
-  border: none !important;
-  border-radius: 50% !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-#videoModal .modal-fullscreen { right: 12px !important; }
-#videoModal .modal-share { right: 56px !important; }
-
-#videoModal .modal-body {
-  padding: 0 !important;
-  background: #000 !important;
-  overflow-y: auto !important;
-}
-
-#videoModal .video-with-board {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 0 !important;
-  padding: 0 !important;
-}
-
-#videoModal .video-player-container {
-  order: 1 !important;
-  width: 100% !important;
-  aspect-ratio: 16/9 !important;
-  height: auto !important;
-  flex-shrink: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  background: #000 !important;
-  border-radius: 0 !important;
-  border: none !important;
-  position: relative !important;
-}
-
-#videoModal .video-player-container::before,
-#videoModal .video-player-container::after {
-  display: none !important;
-}
-
-#videoModal .video-player {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-height: none !important;
-  object-fit: contain !important;
-  border-radius: 0 !important;
-  aspect-ratio: unset !important;
-  background: #000 !important;
-}
-
-#videoModal .drawing-board {
-  order: 2 !important;
-  border-radius: 0 !important;
-  border: none !important;
-  border-top: 1px solid rgba(139,92,246,0.2) !important;
-}
-
-
-
-/* ══ VIDEO STARTS RIGHT BELOW HEADER — no gap ══ */
-
-#videoModal .modal-header {
-  display: flex !important;
-  position: relative !important;
-  padding: 0.6rem 1rem !important;
-  min-height: unset !important;
-  background: rgba(15,8,26,0.98) !important;
-  border-bottom: none !important;
-}
-
-#videoModal .modal-close,
-#videoModal .modal-share,
-#videoModal .modal-fullscreen {
-  display: flex !important;
-  position: relative !important;
-  top: unset !important;
-  left: unset !important;
-  right: unset !important;
-  background: rgba(255,255,255,0.1) !important;
-  border-radius: 10px !important;
-  backdrop-filter: none !important;
-}
-
-#videoModal .modal-body {
-  padding: 0 !important;
-}
-
-#videoModal .video-player-container {
-  margin: 0 !important;
-  border-radius: 0 !important;
-  border: none !important;
-}
-
-
-
-/* ══ CROP letterbox bars: tighter aspect ratio ══ */
-
-#videoModal .video-player-container {
-  aspect-ratio: 16/8 !important;
-  overflow: hidden !important;
-}
-
-#videoModal .video-player {
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 100% !important;
-  height: 120% !important;
-  max-height: none !important;
-  object-fit: cover !important;
-}
-
 
 
 /* ╔══════════════════════════════════════════════════════════════╗
@@ -7264,40 +6905,35 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
 
 /* ══════════════════════════════════════════════════════
-   🖥️ DESKTOP VIDEO MODAL — فول سكرين + ROW LAYOUT
+   🖥️ DESKTOP VIDEO MODAL — ROW LAYOUT (side by side)
    يجب أن يكون في آخر الملف ليكسر كل الـ overrides
    ══════════════════════════════════════════════════════ */
 @media (min-width: 769px) {
 
-  /* Modal نفسه: يملأ الشاشة كلها */
+  /* Modal: centered, normal size */
   #videoModal {
-    position: fixed !important;
-    top: 0 !important; left: 0 !important;
-    width: 100vw !important; height: 100vh !important;
-    padding: 0 !important; margin: 0 !important;
-    background: #000 !important;
-    align-items: stretch !important;
-    justify-content: stretch !important;
-    overflow: hidden !important;
+    padding: 1rem !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
-  /* Modal content: 100vw × 100vh بدون أي padding أو margin */
+  /* Modal content: حجم طبيعي — الـ JS بيكبره لما تضغط fullscreen */
   #videoModal > #videoModalContent,
   #videoModal .modal-content {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    max-height: 100vh !important;
-    margin: 0 !important;
+    width: 96vw !important;
+    max-width: 1400px !important;
+    height: 90vh !important;
+    min-height: unset !important;
+    max-height: 95vh !important;
+    margin: auto !important;
     padding: 0 !important;
-    border-radius: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(99,102,241,0.25) !important;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.8) !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
-    background: #000 !important;
+    background: #0c0816 !important;
   }
 
   /* Modal header */

@@ -1813,7 +1813,7 @@ function _maximizeModal(on) {
   if (!mc) return;
   if (on) {
     mc.setAttribute('data-maximized','1');
-    mc.style.cssText = 'width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:none!important;margin:0!important;';
+    mc.style.cssText = 'width:100vw!important;max-width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:none!important;box-shadow:none!important;margin:0!important;';
     if(icon){icon.classList.remove('fa-expand');icon.classList.add('fa-compress');}
   } else {
     mc.removeAttribute('data-maximized');
@@ -1822,7 +1822,7 @@ function _maximizeModal(on) {
     // رجّع الـ layout الـ side-by-side
     setTimeout(function() {
       if (typeof window._onResize === 'function') window._onResize();
-    }, 50);
+    }, 80);
   }
 }
 
