@@ -568,7 +568,7 @@
     </div>
   </div>
 </div></div></div>
-  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button><button class="modal-share" id="videoSizeBtn" onclick="toggleVideoSize()" title="تكبير/تصغير الفيديو" style="margin-right:4px"><i class="fas fa-expand-alt" id="videoSizeIcon"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board" id="videoWithBoard"><div class="drawing-board" id="drawingBoard" style="order:2">
+  <div class="modal" id="videoModal"><div class="modal-content" id="videoModalContent"><div class="modal-header"><div class="modal-header-left"><button class="modal-share" onclick="shareCurrentTime()" title="مشاركة هذه اللحظة"><i class="fas fa-share-alt"></i></button></div><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="video-with-board" id="videoWithBoard"><div class="drawing-board" id="drawingBoard" style="order:2">
 
   <!-- ── زرار فتح الأدوات (الوحيد الظاهر دائماً) ── -->
   <div class="db-topbar">
@@ -1787,46 +1787,51 @@
 <script src="script.js"></script>
 
 <script>
-// ═══ Video Size Toggle — يتحكم في حجم الفيديو بس (مش الصفحة) ═══
-var _videoExpanded = false;
+// ═══ Fullscreen للـ Video Modal كله ═══
+function toggleVideoModalFullscreen() {
+  var modal = document.getElementById('videoModal');
+  var icon  = document.getElementById('fsIcon');
+  if (!modal) return;
 
-function toggleVideoSize() {
-  _videoExpanded = !_videoExpanded;
-  var vpc  = document.getElementById('videoPlayerContainer');
-  var db   = document.getElementById('drawingBoard');
-  var vwb  = document.getElementById('videoWithBoard');
-  var icon = document.getElementById('videoSizeIcon');
-  if (!vpc) return;
+  var isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
 
-  if (_videoExpanded) {
-    // فيديو كبير: 85% ، رسم 15%
-    vpc.style.cssText = 'order:2!important;flex:0 0 85%!important;width:85%!important;height:100%!important;max-width:85%!important;position:relative!important;background:#000!important;border:none!important;border-left:1px solid rgba(99,102,241,0.2)!important;padding:0!important;margin:0!important;overflow:hidden!important;aspect-ratio:unset!important;border-radius:0!important;flex-shrink:0!important;';
-    if (db) db.style.cssText = 'order:1!important;flex:0 0 15%!important;width:15%!important;height:100%!important;max-width:15%!important;min-width:unset!important;min-height:0!important;border-radius:0!important;border:none!important;border-left:1px solid rgba(99,102,241,0.2)!important;overflow:hidden!important;';
-    if (icon) { icon.classList.remove('fa-expand-alt'); icon.classList.add('fa-compress-alt'); }
+  if (!isFS) {
+    var req = modal.requestFullscreen || modal.webkitRequestFullscreen || modal.mozRequestFullScreen || modal.msRequestFullscreen;
+    if (req) {
+      req.call(modal).catch(function() { _maximizeModal(true); });
+    } else { _maximizeModal(true); }
   } else {
-    // رجّع الحجم الأصلي
-    if (window._fixLayout) window._fixLayout();
-    if (icon) { icon.classList.remove('fa-compress-alt'); icon.classList.add('fa-expand-alt'); }
+    var exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exit) exit.call(document);
+    _maximizeModal(false);
   }
 }
 
-// إعادة ضبط حجم الفيديو عند إغلاق المودال
-document.addEventListener('DOMContentLoaded', function() {
-  var modal = document.getElementById('videoModal');
-  if (!modal) return;
-  var origClose = window.closeModal;
-  window.closeModal = function() {
-    _videoExpanded = false;
-    var icon = document.getElementById('videoSizeIcon');
-    if (icon) { icon.classList.remove('fa-compress-alt'); icon.classList.add('fa-expand-alt'); }
-    if (origClose) origClose();
-  };
-});
+function _maximizeModal(on) {
+  var mc   = document.getElementById('videoModalContent');
+  var icon = document.getElementById('fsIcon');
+  if (!mc) return;
+  if (on) {
+    mc.setAttribute('data-maximized','1');
+    mc.style.cssText = 'width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:none!important;margin:0!important;';
+    if(icon){icon.classList.remove('fa-expand');icon.classList.add('fa-compress');}
+  } else {
+    mc.removeAttribute('data-maximized');
+    mc.style.cssText = '';
+    if(icon){icon.classList.remove('fa-compress');icon.classList.add('fa-expand');}
+    // رجّع الـ layout الـ side-by-side
+    setTimeout(function() {
+      if (typeof window._onResize === 'function') window._onResize();
+    }, 50);
+  }
+}
+
+// _onFSChange اتنقل للـ script التاني
 </script>
 
 <script>
 (function(){
-  var _modalFS = false;
+  var _modalFS = false; // هل الـ modal هو اللي عمل fullscreen؟
 
   function fixLayout(){
     var vwb = document.getElementById('videoWithBoard');
@@ -1875,7 +1880,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var modal = document.getElementById('videoModal');
     if(!modal) return;
     var already = document.fullscreenElement || document.webkitFullscreenElement;
-    if(already) return;
+    if(already) return; // already fullscreen
     var req = modal.requestFullscreen || modal.webkitRequestFullscreen || modal.mozRequestFullScreen || modal.msRequestFullscreen;
     if(req){
       _modalFS = true;
@@ -1883,7 +1888,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // ══ إغلاق الـ modal → اخرج من fullscreen ══
+  // ══ إغلاق الـ modal → اخرج من fullscreen لو إحنا اللي دخلناه ══
   function exitModalFS() {
     if(!_modalFS) return;
     _modalFS = false;
@@ -1894,20 +1899,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // ══ fullscreenchange ══
-  // لو اليوتيوب دخل/خرج من fullscreen → متحاربوش، بس اعمل fixLayout لما يرجع
+  // ══ لو حصل fullscreenchange من مصدر تاني (زي زرار اليوتيوب) ══
+  // نرجع fullscreen على الـ modal بعد ما يخرج منه
   function onFSChange() {
     var modal = document.getElementById('videoModal');
     if(!modal || !modal.classList.contains('active')) return;
     var currentFS = document.fullscreenElement || document.webkitFullscreenElement;
-
-    if(!currentFS && _modalFS) {
-      // خرج من fullscreen وإحنا اللي كنا أدخلناه (مش اليوتيوب)
-      // مش نرجعه تاني — لأن ممكن اليوتيوب هو اللي خرج منه
-      // بس نعمل fixLayout
-      _modalFS = false;
-      setTimeout(fixLayout, 150);
-    } else if(currentFS) {
+    if(!currentFS) {
+      // خرج من fullscreen — لو الـ modal لسه مفتوح، ارجع فول سكرين عليه
+      setTimeout(function(){
+        var stillActive = modal.classList.contains('active');
+        var stillNoFS   = !(document.fullscreenElement || document.webkitFullscreenElement);
+        if(stillActive && stillNoFS){
+          _modalFS = true;
+          var req = modal.requestFullscreen || modal.webkitRequestFullscreen;
+          if(req) req.call(modal).catch(function(){_modalFS=false;});
+        }
+        fixLayout();
+      }, 150);
+    } else {
+      // دخل fullscreen — اعمل fixLayout
       setTimeout(fixLayout, 150);
     }
   }
@@ -1922,15 +1933,13 @@ document.addEventListener('DOMContentLoaded', function() {
       muts.forEach(function(m){
         if(m.attributeName !== 'class') return;
         if(modal.classList.contains('active')){
+          // فُتح
           setTimeout(function(){ onResize(); enterModalFS(); }, 50);
           setTimeout(function(){ onResize(); }, 300);
         } else {
+          // أُغلق
           exitModalFS();
           resetLayout();
-          // إعادة ضبط حجم الفيديو
-          window._videoExpanded = false;
-          var icon = document.getElementById('videoSizeIcon');
-          if(icon){ icon.classList.remove('fa-compress-alt'); icon.classList.add('fa-expand-alt'); }
         }
       });
     });
