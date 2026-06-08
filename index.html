@@ -585,7 +585,7 @@
       <button type="button" class="db-icon-btn" onclick="undoDraw()" title="تراجع"><i class="fas fa-rotate-left"></i></button>
       <button type="button" class="db-icon-btn" onclick="redoDraw()" title="إعادة"><i class="fas fa-rotate-right"></i></button>
       <button type="button" class="db-icon-btn db-danger" onclick="clearDrawing()" title="مسح الكل"><i class="fas fa-trash"></i></button>
-      <button type="button" class="db-icon-btn db-expand-btn" id="dbExpandBtn" onclick="toggleDrawingBoardExpand()" title="تكبير لوحة الرسم"><i class="fas fa-expand" id="dbExpandIcon"></i></button>
+
     </div>
   </div>
 
@@ -1863,33 +1863,41 @@ document.addEventListener('webkitfullscreenchange', _onFSChange);
       'max-width:38%!important;min-width:unset!important;min-height:0!important;'+
       'border-radius:0!important;border:none!important;border-left:1px solid rgba(99,102,241,0.2)!important;'
     );
-    // modal content نفسه: فول سكرين
-    var mc = document.getElementById('videoModalContent');
-    if(mc){
-      mc.style.cssText =
-        'width:100vw!important;max-width:100vw!important;'+
-        'height:100vh!important;min-height:100vh!important;max-height:100vh!important;'+
-        'margin:0!important;padding:0!important;border-radius:0!important;border:none!important;'+
-        'box-shadow:none!important;display:flex!important;flex-direction:column!important;'+
-        'overflow:hidden!important;background:#000!important;';
+    // modal content: لا نغير حجمه — يبقى زي ما هو من الـ CSS
+  }
+
+  function resetLayout() {
+    var vwb = document.getElementById('videoWithBoard');
+    var vpc = document.getElementById('videoPlayerContainer');
+    var db  = document.getElementById('drawingBoard');
+    if(vwb) vwb.removeAttribute('style');
+    if(vpc) vpc.removeAttribute('style');
+    if(db)  db.removeAttribute('style');
+  }
+
+  function onResize() {
+    if(window.innerWidth < 769) {
+      resetLayout();
+    } else {
+      fixLayout();
     }
   }
-  
+
   // run on modal open
   var modal = document.getElementById('videoModal');
   if(modal){
     var obs = new MutationObserver(function(muts){
       muts.forEach(function(m){
         if(m.attributeName==='class' && modal.classList.contains('active')){
-          setTimeout(fixLayout, 50);
-          setTimeout(fixLayout, 300);
+          setTimeout(onResize, 50);
+          setTimeout(onResize, 300);
         }
       });
     });
     obs.observe(modal, {attributes:true});
   }
-  
-  window.addEventListener('resize', fixLayout);
+
+  window.addEventListener('resize', onResize);
 })();
 </script>
 </body>
