@@ -7417,106 +7417,64 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 /* =====================================================
-   🌍 GLOBAL RESPONSIVE — كل الشاشات
+   🔧 FIX: سكرول الصفحة الرئيسية + شكل الأزرار
    ===================================================== */
 
-/* ── Tablets (768px → 1024px) ── */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .modal-content {
-    max-width: 90vw !important;
-    width: 90vw !important;
-  }
-  .video-grid, .course-section-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  .header-nav {
-    gap: 0.5rem !important;
-  }
+/* 1. منع الـ horizontal overflow بس — مش الـ vertical */
+html {
+  overflow-x: hidden !important;
+}
+body {
+  overflow-x: hidden !important;
+  /* overflow-y: اتركها default عشان السكرول يشتغل */
 }
 
-/* ── Large Desktop (≥1440px) ── */
-@media (min-width: 1440px) {
-  .modal-content {
-    max-width: 900px !important;
-  }
-  .video-grid {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
+/* 2. إصلاح الـ hero عشان مش يعمل horizontal overflow */
+.hero, .epic-hero {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-/* ── Ultra-wide (≥2560px) ── */
-@media (min-width: 2560px) {
-  .modal-content {
-    max-width: 1200px !important;
-  }
-  .video-grid {
-    grid-template-columns: repeat(5, 1fr) !important;
-  }
-  body { font-size: 18px; }
+/* 3. الـ app-wrapper متكسرش السكرول */
+.app-wrapper {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
 }
 
-/* ── Small phones (≤360px) ── */
-@media (max-width: 360px) {
-  .modal-content {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-  }
-  .btn { font-size: 0.8rem !important; padding: 0.5rem 0.75rem !important; }
-  .header-title { font-size: 0.85rem !important; }
+/* 4. الأزرار الدايرة تفضل دايرة */
+.modal-close,
+button[style*="border-radius: 50%"],
+button[style*="border-radius:50%"],
+[class*="fab"],
+[class*="Fab"] {
+  border-radius: 50% !important;
+  min-height: unset !important;
+  min-width: unset !important;
 }
 
-/* ── فول سكرين على كل الشاشات عند فتح مودال الفيديو ── */
-@media (display-mode: standalone) {
-  #app-header, .header-bar {
-    padding-top: env(safe-area-inset-top, 0px) !important;
-  }
-  .bottom-bar, .footer-bar {
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-  }
-}
-
-/* ── course card image ── */
-.course-card-item {
-  overflow: hidden !important;
-}
-.course-card-item img[loading="lazy"] {
-  transition: transform 0.3s ease;
-}
-.course-card-item:hover img[loading="lazy"] {
-  transform: scale(1.03);
-}
-
-/* ── Fix modal scroll on all screens ── */
+/* 5. modal-body تتسكرول صح */
 .modal-body {
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
 }
 
-/* ── Prevent ONLY horizontal scroll — لا نمس vertical scroll أبداً ── */
-html {
-  overflow-x: hidden !important;
+/* ── Responsive: tablets ── */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .modal-content { max-width: 90vw !important; width: 90vw !important; }
+  .video-grid, .course-section-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
-body {
-  overflow-x: hidden !important;
-  /* overflow-y: يفضل default (auto/scroll) عشان الصفحة تتسكرول */
+@media (min-width: 1440px) {
+  .modal-content { max-width: 900px !important; }
 }
+/* ── course card image ── */
+.course-card-item { overflow: hidden !important; }
+.course-card-item img[loading="lazy"] { transition: transform 0.3s ease; }
+.course-card-item:hover img[loading="lazy"] { transform: scale(1.03); }
 
-/* ── أزرار عادية: touch-action بس ── */
-.btn {
-  touch-action: manipulation !important;
-}
-
-/* ── الأزرار الدايرة تفضل دايرة بدون min-height ── */
-button[style*="border-radius: 50%"],
-button[style*="border-radius:50%"],
-.modal-close,
-.chat-fab, .ai-fab, .upload-fab,
-[class*="-fab"] {
-  border-radius: 50% !important;
-  min-height: unset !important;
-  min-width: unset !important;
+/* ── PWA safe-area ── */
+@media all and (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 
