@@ -7495,15 +7495,28 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   overscroll-behavior: contain !important;
 }
 
-/* ── Prevent horizontal scroll globally ── */
-html, body {
+/* ── Prevent ONLY horizontal scroll — لا نمس vertical scroll أبداً ── */
+html {
   overflow-x: hidden !important;
-  max-width: 100vw !important;
+}
+body {
+  overflow-x: hidden !important;
+  /* overflow-y: يفضل default (auto/scroll) عشان الصفحة تتسكرول */
 }
 
-/* ── Touch targets ≥44px (accessibility) ── */
-button, .btn, [role="button"] {
-  min-height: 44px !important;
+/* ── أزرار عادية: touch-action بس ── */
+.btn {
   touch-action: manipulation !important;
+}
+
+/* ── الأزرار الدايرة تفضل دايرة بدون min-height ── */
+button[style*="border-radius: 50%"],
+button[style*="border-radius:50%"],
+.modal-close,
+.chat-fab, .ai-fab, .upload-fab,
+[class*="-fab"] {
+  border-radius: 50% !important;
+  min-height: unset !important;
+  min-width: unset !important;
 }
 
