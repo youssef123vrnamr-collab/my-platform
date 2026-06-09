@@ -1178,16 +1178,19 @@ async function updateAdminUI() {
           }
           return "";
         })();
-        const thumbStyle = firstThumb ? `background-image:url('${firstThumb}');background-size:cover;background-position:center` : "background:linear-gradient(135deg,#1a1025,#2d1b4e)";
+        const thumbInner = firstThumb
+          ? `<img src="${firstThumb}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1025,#2d1b4e);align-items:center;justify-content:center;"><i class='fas fa-photo-film' style='font-size:2rem;color:#6366f1;opacity:.5'></i></div>`
+          : `<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1025,#2d1b4e);display:flex;align-items:center;justify-content:center;"><i class='fas fa-photo-film' style='font-size:2rem;color:#6366f1;opacity:.5'></i></div>`;
         const adminDeleteBtn = isAdmin ? `<button onclick="event.stopPropagation();deleteCourse('${course.id}','${escapeHtml(course.title).replace(/'/g,"\\'")}'); document.getElementById('courseLibrarySection') && document.getElementById('courseLibrarySection').remove();" style="position:absolute;top:.5rem;left:.5rem;width:30px;height:30px;border-radius:50%;border:none;background:rgba(239,68,68,.85);color:#fff;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 8px rgba(239,68,68,.5)"><i class="fas fa-trash"></i></button>` : "";
         const statusBadge = isPaid
           ? `<span style="position:absolute;top:.5rem;right:.5rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.2rem .55rem;border-radius:8px;font-size:.7rem;font-weight:700;z-index:5"><i class="fas fa-lock" style="font-size:.6rem"></i> ${price} جنيه</span>`
           : `<span style="position:absolute;top:.5rem;right:.5rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:.2rem .55rem;border-radius:8px;font-size:.7rem;font-weight:700;z-index:5"><i class="fas fa-unlock" style="font-size:.6rem"></i> مجاني</span>`;
         return `<div class="video-card" onclick="openPaidCourseModal('${course.id}')" style="cursor:pointer;position:relative">
-          <div class="video-thumbnail" style="${thumbStyle}">
+          <div class="video-thumbnail" style="position:relative;overflow:hidden;background:#1a1025;">
+            ${thumbInner}
             ${statusBadge}
             ${adminDeleteBtn}
-            <div class="play-overlay"><div class="play-btn" style="${isPaid ? "background:rgba(245,158,11,.85);border-color:rgba(255,255,255,.9)" : ""}"><i class="fas ${isPaid ? "fa-lock" : "fa-play"}"></i></div></div>
+            <div class="play-overlay" style="position:relative;z-index:2;"><div class="play-btn" style="${isPaid ? 'background:rgba(245,158,11,.85);border-color:rgba(255,255,255,.9)' : ''}"><i class="fas ${isPaid ? 'fa-lock' : 'fa-play'}"></i></div></div>
           </div>
           <div class="video-info">
             <h4 class="video-title">${escapeHtml(course.title)}</h4>
