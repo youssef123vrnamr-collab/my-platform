@@ -2922,17 +2922,20 @@ function previewCourseImage(url) {
   img.src = converted;
 }
 
-// تحويل رابط Google Drive لرابط عرض مباشر
+// تحويل رابط Google Drive لرابط عرض مباشر (thumbnail endpoint يتجاوز CORS)
 function convertDriveUrl(url) {
   if (!url) return url;
-  // https://drive.google.com/file/d/FILE_ID/view  → direct
-  let m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  // https://drive.google.com/file/d/FILE_ID/view  → thumbnail
+  let m = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
   // https://drive.google.com/open?id=FILE_ID
   m = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-  // إذا كان بالفعل uc?export=view
-  if (url.includes("uc?export=view")) return url;
+  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+  // https://drive.google.com/uc?export=view&id=FILE_ID
+  m = url.match(/[?&]id=([^&]+)/);
+  if (m && url.includes("drive.google.com")) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+  // lh3 already
+  if (url.includes("lh3.googleusercontent.com")) return url;
   return url;
 }
 
@@ -3224,7 +3227,7 @@ async function showCoursesList() {
     const paidBadge = paid ? `<span style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.15rem .55rem;border-radius:8px;font-size:.7rem;margin-right:.4rem;vertical-align:middle">مدفوع</span>` : '';
     const enrolledBadge = isEnrolledInThis ? `<span style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:.15rem .55rem;border-radius:8px;font-size:.7rem;margin-right:.4rem;vertical-align:middle"><i class="fas fa-check" style="font-size:.6rem"></i> مشترك</span>` : '';
     listHtml += `<div class="course-card-item" style="position:relative; background: rgba(255,255,255,0.06); border-radius: 20px; overflow:hidden; border: 1px solid ${isEnrolledInThis ? 'rgba(16,185,129,.4)' : paid ? 'rgba(245,158,11,.35)' : 'rgba(255,255,255,.08)'};padding:0;">
-      ${c.imageUrl ? `<div style="width:100%;height:160px;overflow:hidden;position:relative;"><img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(c.title)}" loading="lazy" onerror="this.parentElement.style.display='none'" style="width:100%;height:100%;object-fit:cover;display:block;"></div>` : ''}
+      ${c.imageUrl ? `<div style="width:100%;height:180px;overflow:hidden;position:relative;background:linear-gradient(135deg,#1a0d2e,#0f172a);"><img src="${escapeHtml(convertDriveUrl(c.imageUrl))}" alt="${escapeHtml(c.title)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" style="width:100%;height:100%;object-fit:cover;display:block;"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;position:absolute;top:0;left:0;flex-direction:column;gap:.5rem;color:#6366f1;opacity:.6;"><i class='fas fa-book-open' style='font-size:2.5rem'></i></div></div>` : `<div style="width:100%;height:8px;background:linear-gradient(90deg,#6366f1,#a855f7,#ec4899);"></div>`}
       <div style="padding:1.25rem 1.5rem;">
       ${isAdmin ? `<button type="button" aria-label="حذف الكورس" title="حذف الكورس" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="position:absolute;top:.65rem;left:.65rem;width:34px;height:34px;border-radius:50%;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(239,68,68,.4);z-index:2"><i class="fas fa-times"></i></button>` : ''}
       <h4 style="font-size:1.25rem;margin-bottom:.5rem;${isAdmin ? 'padding-left:2.5rem;' : ''}"><i class="fas fa-book-open"></i> ${escapeHtml(c.title)} ${paidBadge}${enrolledBadge}</h4>
