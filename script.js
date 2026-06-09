@@ -1330,61 +1330,6 @@ async function updateAdminUI() {
   }
 
   document.getElementById("videoModal").classList.add("active");
-
-  // ── تطبيق layout: فيديو فوق + رسم تحت (desktop فقط) ──
-  function applyDesktopLayout() {
-    if (window.innerWidth < 769) return;
-    var vwb = document.querySelector('#videoModal .video-with-board');
-    var vpc = document.querySelector('#videoModal .video-player-container');
-    var db  = document.querySelector('#videoModal .drawing-board');
-    var mb  = document.querySelector('#videoModal .modal-body');
-    var mc  = document.getElementById('videoModalContent');
-    if (!vwb || !vpc || !db) return;
-    // modal
-    mc.style.cssText += ';width:98vw!important;max-width:98vw!important;height:95dvh!important;max-height:95dvh!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;';
-    // modal-body
-    mb.style.cssText += ';flex:1!important;min-height:0!important;overflow:hidden!important;padding:0!important;';
-    // video-with-board
-    vwb.style.setProperty('display','flex','important');
-    vwb.style.setProperty('flex-direction','column','important');
-    vwb.style.setProperty('width','100%','important');
-    vwb.style.setProperty('height','100%','important');
-    vwb.style.setProperty('gap','0','important');
-    vwb.style.setProperty('padding','0','important');
-    vwb.style.setProperty('margin','0','important');
-    vwb.style.setProperty('min-height','0','important');
-    // video container فوق
-    vpc.style.setProperty('order','1','important');
-    vpc.style.setProperty('flex','0 0 58%','important');
-    vpc.style.setProperty('width','100%','important');
-    vpc.style.setProperty('height','58%','important');
-    vpc.style.setProperty('min-width','unset','important');
-    vpc.style.setProperty('max-width','100%','important');
-    vpc.style.setProperty('position','relative','important');
-    vpc.style.setProperty('background','#000','important');
-    vpc.style.setProperty('border-radius','0','important');
-    vpc.style.setProperty('border','none','important');
-    vpc.style.setProperty('border-bottom','1px solid rgba(99,102,241,0.2)','important');
-    vpc.style.setProperty('padding','0','important');
-    vpc.style.setProperty('padding-top','0','important');
-    vpc.style.setProperty('margin','0','important');
-    vpc.style.setProperty('overflow','hidden','important');
-    vpc.style.setProperty('aspect-ratio','unset','important');
-    vpc.style.setProperty('max-height','none','important');
-    vpc.style.setProperty('min-height','0','important');
-    // drawing board تحت
-    db.style.setProperty('order','2','important');
-    db.style.setProperty('flex','1 1 auto','important');
-    db.style.setProperty('width','100%','important');
-    db.style.setProperty('height','auto','important');
-    db.style.setProperty('min-height','0','important');
-    db.style.setProperty('border-radius','0','important');
-    db.style.setProperty('border','none','important');
-    db.style.setProperty('border-top','1px solid rgba(99,102,241,0.2)','important');
-  }
-  applyDesktopLayout();
-  window.addEventListener('resize', applyDesktopLayout);
-
   setTimeout(() => { try { initDrawingBoard(); } catch(e) { console.warn("drawing init failed", e); } }, 100);
 
   let quizContainer = document.getElementById("videoQuizContainer");
@@ -1490,31 +1435,6 @@ async function updateAdminUI() {
   window.addEventListener("beforeunload", window._beforeUnloadHandler);
 }
   function toggleFullscreenVideo() { const video = document.getElementById("videoPlayer"); if (!video) return; if (video.requestFullscreen) video.requestFullscreen(); else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen(); else if (video.msRequestFullscreen) video.msRequestFullscreen(); }
-
-  // ── تكبير / تصغير لوحة الرسم ──
-  let _drawingBoardExpanded = false;
-  function toggleDrawingBoardExpand() {
-    const board = document.getElementById("drawingBoard");
-    const icon  = document.getElementById("dbExpandIcon");
-    const vwb   = document.querySelector(".video-with-board");
-    if (!board) return;
-    _drawingBoardExpanded = !_drawingBoardExpanded;
-    if (_drawingBoardExpanded) {
-      board.classList.add("db-expanded");
-      if (vwb) vwb.classList.add("db-board-fullmode");
-      if (icon) { icon.classList.remove("fa-expand"); icon.classList.add("fa-compress"); }
-      const btn = document.getElementById("dbExpandBtn");
-      if (btn) { btn.title = "تصغير لوحة الرسم"; btn.style.background = "rgba(99,102,241,0.3)"; btn.style.borderColor = "#6366f1"; btn.style.color = "#fff"; }
-    } else {
-      board.classList.remove("db-expanded");
-      if (vwb) vwb.classList.remove("db-board-fullmode");
-      if (icon) { icon.classList.remove("fa-compress"); icon.classList.add("fa-expand"); }
-      const btn = document.getElementById("dbExpandBtn");
-      if (btn) { btn.title = "تكبير لوحة الرسم"; btn.style.background = ""; btn.style.borderColor = ""; btn.style.color = ""; }
-    }
-    // إعادة رسم الـ canvas بعد تغيير الحجم
-    setTimeout(() => { window.dispatchEvent(new Event("resize")); }, 320);
-  }
   function shareCurrentTime() { let currentTime = 0; let videoId = null; let video = document.getElementById("videoPlayer"); if (video && video.tagName === "VIDEO" && video.src) { currentTime = Math.floor(video.currentTime); let foundVideo = videos.find(v => v.url === video.src || v.originalUrl === video.src); if (foundVideo) videoId = foundVideo.id; } if (!videoId) { let iframe = document.getElementById("videoPlayer"); if (iframe && iframe.tagName === "IFRAME" && iframe.src) { let match = iframe.src.match(/embed\/([^?&]+)/); if (match && match[1]) { let foundVideo = videos.find(v => v.type === "youtube" && v.videoId === match[1]); if (foundVideo) videoId = foundVideo.id; } } } if (!videoId) { showToast("⚠️ لا يمكن مشاركة هذا الفيديو"); return; } let exp = Date.now() + 60000; let url = window.location.href.split("?")[0] + "?video=" + videoId + "&t=" + currentTime + "&exp=" + exp; navigator.clipboard.writeText(url).then(() => { showToast("🔗 تم نسخ الرابط مع التوقيت (" + formatDuration(currentTime) + ") — صالح لمدة دقيقة"); SoundEffects.success(); }).catch(() => { showToast("⚠️ تعذر نسخ الرابط"); }); }
   function checkUrlForShare() { let params = new URLSearchParams(window.location.search); let vid = params.get("video"); let t = params.get("t"); let exp = params.get("exp"); if (vid && videos.length > 0) { if (exp && Date.now() > parseInt(exp)) { window.history.replaceState({}, document.title, window.location.href.split("?")[0]); showToast("❌ انتهت صلاحية هذا الرابط (أكثر من دقيقة)"); return; } if (videos.find(v => v.id === vid)) { window.history.replaceState({}, document.title, window.location.href.split("?")[0]); playVideo(vid, parseInt(t) || 0); } else showToast("❌ الفيديو غير موجود"); } }
 
@@ -2976,6 +2896,10 @@ function showCreateCourseModal() {
   document.getElementById("coursePrice").value = 0;
   const cpl = document.getElementById("coursePaymentLink");
   if (cpl) cpl.value = "";
+  const imgEl = document.getElementById("courseImageUrl");
+  if (imgEl) imgEl.value = "";
+  const prevWrap = document.getElementById("courseImagePreview");
+  if (prevWrap) prevWrap.style.display = "none";
   currentEditingCourseId = null;
   let container = document.getElementById("courseVideosChecklist");
   container.innerHTML = "";
@@ -2985,16 +2909,45 @@ function showCreateCourseModal() {
   document.getElementById("courseModal").classList.add("active");
 }
 
+// معاينة صورة الكورس لحظياً
+function previewCourseImage(url) {
+  const wrap = document.getElementById("courseImagePreview");
+  const img  = document.getElementById("courseImagePreviewImg");
+  if (!wrap || !img) return;
+  if (!url || !url.trim()) { wrap.style.display = "none"; img.src = ""; return; }
+  // تحويل رابط Google Drive تلقائياً
+  const converted = convertDriveUrl(url.trim());
+  img.onerror = () => { wrap.style.display = "none"; };
+  img.onload  = () => { wrap.style.display = "block"; };
+  img.src = converted;
+}
+
+// تحويل رابط Google Drive لرابط عرض مباشر
+function convertDriveUrl(url) {
+  if (!url) return url;
+  // https://drive.google.com/file/d/FILE_ID/view  → direct
+  let m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  // https://drive.google.com/open?id=FILE_ID
+  m = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  // إذا كان بالفعل uc?export=view
+  if (url.includes("uc?export=view")) return url;
+  return url;
+}
+
 async function saveCourse() {
   const name = document.getElementById("courseName").value.trim();
   const desc = document.getElementById("courseDesc").value.trim();
   const price = parseInt(document.getElementById("coursePrice").value) || 0;
   const paymentLink = (document.getElementById("coursePaymentLink") && document.getElementById("coursePaymentLink").value.trim()) || "";
+  const rawImageUrl = (document.getElementById("courseImageUrl") && document.getElementById("courseImageUrl").value.trim()) || "";
+  const imageUrl = convertDriveUrl(rawImageUrl) || "";
   const selectedVideos = Array.from(document.querySelectorAll("#courseVideosChecklist input:checked")).map(cb => cb.value);
   if (!name) { showToast("⚠️ أدخل اسم الكورس"); return; }
   if (selectedVideos.length === 0) { showToast("⚠️ اختر فيديو واحد على الأقل"); return; }
   if (price > 0 && !paymentLink) { showToast("⚠️ أدخل رابط دفع آمن للكورس المدفوع أو اجعل السعر 0"); return; }
-  const courseData = { title: name, description: desc, videoIds: selectedVideos, price, paymentLink: paymentLink || null, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+  const courseData = { title: name, description: desc, videoIds: selectedVideos, price, paymentLink: paymentLink || null, imageUrl: imageUrl || null, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
   if (currentEditingCourseId) {
     await db.collection("courses").doc(currentEditingCourseId).update(courseData);
     showToast("✅ تم تحديث الكورس");
@@ -3270,7 +3223,9 @@ async function showCoursesList() {
     const isEnrolledInThis = userEnrolledCourseIds.has(doc.id);
     const paidBadge = paid ? `<span style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.15rem .55rem;border-radius:8px;font-size:.7rem;margin-right:.4rem;vertical-align:middle">مدفوع</span>` : '';
     const enrolledBadge = isEnrolledInThis ? `<span style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:.15rem .55rem;border-radius:8px;font-size:.7rem;margin-right:.4rem;vertical-align:middle"><i class="fas fa-check" style="font-size:.6rem"></i> مشترك</span>` : '';
-    listHtml += `<div class="course-card-item" style="position:relative; background: rgba(255,255,255,0.06); border-radius: 20px; padding: 1.25rem 1.5rem; border: 1px solid ${isEnrolledInThis ? 'rgba(16,185,129,.4)' : paid ? 'rgba(245,158,11,.35)' : 'rgba(255,255,255,.08)'};">
+    listHtml += `<div class="course-card-item" style="position:relative; background: rgba(255,255,255,0.06); border-radius: 20px; overflow:hidden; border: 1px solid ${isEnrolledInThis ? 'rgba(16,185,129,.4)' : paid ? 'rgba(245,158,11,.35)' : 'rgba(255,255,255,.08)'};padding:0;">
+      ${c.imageUrl ? `<div style="width:100%;height:160px;overflow:hidden;position:relative;"><img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(c.title)}" loading="lazy" onerror="this.parentElement.style.display='none'" style="width:100%;height:100%;object-fit:cover;display:block;"></div>` : ''}
+      <div style="padding:1.25rem 1.5rem;">
       ${isAdmin ? `<button type="button" aria-label="حذف الكورس" title="حذف الكورس" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="position:absolute;top:.65rem;left:.65rem;width:34px;height:34px;border-radius:50%;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(239,68,68,.4);z-index:2"><i class="fas fa-times"></i></button>` : ''}
       <h4 style="font-size:1.25rem;margin-bottom:.5rem;${isAdmin ? 'padding-left:2.5rem;' : ''}"><i class="fas fa-book-open"></i> ${escapeHtml(c.title)} ${paidBadge}${enrolledBadge}</h4>
       <p style="line-height:1.7;color:#ddd">${escapeHtml(c.description || '')}</p>
@@ -3286,6 +3241,7 @@ async function showCoursesList() {
       ${isAdmin ? `<button type="button" class="btn btn-info" onclick="showCourseExamsManager('${doc.id}','${safeTitle}')"><i class="fas fa-clipboard-list"></i> امتحانات الكورس</button>` : ''}
       ${isAdmin && paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="background:linear-gradient(135deg,#ef4444,#b91c1c);font-weight:700"><i class="fas fa-trash"></i> حذف الكورس المدفوع</button>` : ''}
       ${isAdmin && !paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
+      </div>
       </div>
     </div>`;
   }
@@ -3308,6 +3264,8 @@ async function editCourse(courseId) {
   document.getElementById("coursePrice").value = data.price;
   const cplEl = document.getElementById("coursePaymentLink");
   if (cplEl) cplEl.value = data.paymentLink || "";
+  const imgEl = document.getElementById("courseImageUrl");
+  if (imgEl) { imgEl.value = data.imageUrl || ""; previewCourseImage(data.imageUrl || ""); }
   currentEditingCourseId = courseId;
   const container = document.getElementById("courseVideosChecklist");
   container.innerHTML = "";
@@ -11009,80 +10967,110 @@ document.addEventListener('userLoggedIn', () => setTimeout(updateFriendChatBadge
 // ============================================================
 
 const ALL_TOOLS_LIBRARY = [
-  { id:'pen',        cat:'✏️ رسم',      icon:'fas fa-pen',              label:'قلم',        onclick:"setDrawTool('pen');updateActiveToolLabel('قلم')" },
-  { id:'marker',     cat:'✏️ رسم',      icon:'fas fa-highlighter',      label:'ماركر',      onclick:"setDrawTool('marker');updateActiveToolLabel('ماركر')" },
-  { id:'brush',      cat:'✏️ رسم',      icon:'fas fa-paintbrush',       label:'فرشاة',      onclick:"setDrawTool('brush');updateActiveToolLabel('فرشاة')" },
-  { id:'eraser',     cat:'✏️ رسم',      icon:'fas fa-eraser',           label:'ممحاة',      onclick:"setDrawTool('eraser');updateActiveToolLabel('ممحاة')" },
-  { id:'select',     cat:'✏️ رسم',      icon:'fas fa-hand-pointer',     label:'تحريك',      onclick:"setDrawTool('select');updateActiveToolLabel('تحريك')" },
-  { id:'line',       cat:'🔷 أشكال',   icon:'fas fa-minus',            label:'خط',         onclick:"setDrawTool('line');updateActiveToolLabel('خط')" },
-  { id:'rect',       cat:'🔷 أشكال',   icon:'far fa-square',           label:'مستطيل',     onclick:"setDrawTool('rect');updateActiveToolLabel('مستطيل')" },
-  { id:'circle',     cat:'🔷 أشكال',   icon:'far fa-circle',           label:'دائرة',      onclick:"setDrawTool('circle');updateActiveToolLabel('دائرة')" },
-  { id:'triangle',   cat:'🔷 أشكال',   icon:'fas fa-play',             label:'مثلث',       onclick:"setDrawTool('triangle');updateActiveToolLabel('مثلث')" },
-  { id:'arrow',      cat:'🔷 أشكال',   icon:'fas fa-arrow-right',      label:'سهم',        onclick:"setDrawTool('arrow');updateActiveToolLabel('سهم')" },
-  { id:'arrow2',     cat:'🔷 أشكال',   icon:'fas fa-arrows-left-right',label:'مزدوج',      onclick:"setDrawTool('arrow2');updateActiveToolLabel('سهم مزدوج')" },
-  { id:'star',       cat:'🔷 أشكال',   icon:'fas fa-star',             label:'نجمة',       onclick:"setDrawTool('star');updateActiveToolLabel('نجمة')" },
-  { id:'heart',      cat:'🔷 أشكال',   icon:'fas fa-heart',            label:'قلب',        onclick:"setDrawTool('heart');updateActiveToolLabel('قلب')" },
-  { id:'diamond',    cat:'🔷 أشكال',   icon:'', emoji:'◇',             label:'معين',       onclick:"setDrawTool('diamond');updateActiveToolLabel('معين')" },
-  { id:'pentagon',   cat:'🔷 أشكال',   icon:'', emoji:'⬠',             label:'خماسي',      onclick:"setDrawTool('pentagon');updateActiveToolLabel('خماسي')" },
-  { id:'text',       cat:'🔤 نص',      icon:'fas fa-font',             label:'نص عادي',    onclick:"setDrawTool('text');updateActiveToolLabel('نص')" },
-  { id:'textbox',    cat:'🔤 نص',      icon:'fas fa-text-width',       label:'مربع نص',    onclick:"setDrawTool('textbox');updateActiveToolLabel('مربع نص')" },
-  { id:'stickyNote', cat:'🔤 نص',      icon:'fas fa-sticky-note',      label:'ملاحظة',     onclick:"setDrawTool('stickyNote');updateActiveToolLabel('ملاحظة')" },
-  { id:'undo',       cat:'⚙️ إجراءات', icon:'fas fa-rotate-left',      label:'تراجع',      onclick:'undoDraw()' },
-  { id:'redo',       cat:'⚙️ إجراءات', icon:'fas fa-rotate-right',     label:'إعادة',      onclick:'redoDraw()' },
-  { id:'clear',      cat:'⚙️ إجراءات', icon:'fas fa-trash',            label:'مسح الكل',   onclick:'clearDrawing()' },
-  { id:'save_img',   cat:'⚙️ إجراءات', icon:'fas fa-download',         label:'حفظ صورة',   onclick:'saveDrawingAsImage()' },
-  { id:'copy_img',   cat:'⚙️ إجراءات', icon:'fas fa-copy',             label:'نسخ',        onclick:'copyDrawingToClipboard()' },
+  // ── رسم ──
+  { id:'pen',        cat:'✏️ رسم',    icon:'fas fa-pen',            label:'قلم',        onclick:"setDrawTool('pen');updateActiveToolLabel('قلم')" },
+  { id:'marker',     cat:'✏️ رسم',    icon:'fas fa-highlighter',    label:'ماركر',      onclick:"setDrawTool('marker');updateActiveToolLabel('ماركر')" },
+  { id:'brush',      cat:'✏️ رسم',    icon:'fas fa-paintbrush',     label:'فرشاة',      onclick:"setDrawTool('brush');updateActiveToolLabel('فرشاة')" },
+  { id:'eraser',     cat:'✏️ رسم',    icon:'fas fa-eraser',         label:'ممحاة',      onclick:"setDrawTool('eraser');updateActiveToolLabel('ممحاة')" },
+  { id:'select',     cat:'✏️ رسم',    icon:'fas fa-hand-pointer',   label:'تحريك',      onclick:"setDrawTool('select');updateActiveToolLabel('تحريك')" },
+  // ── أشكال ──
+  { id:'line',       cat:'🔷 أشكال', icon:'fas fa-minus',           label:'خط',         onclick:"setDrawTool('line');updateActiveToolLabel('خط')" },
+  { id:'rect',       cat:'🔷 أشكال', icon:'far fa-square',          label:'مستطيل',     onclick:"setDrawTool('rect');updateActiveToolLabel('مستطيل')" },
+  { id:'circle',     cat:'🔷 أشكال', icon:'far fa-circle',          label:'دائرة',      onclick:"setDrawTool('circle');updateActiveToolLabel('دائرة')" },
+  { id:'triangle',   cat:'🔷 أشكال', icon:'fas fa-play',            label:'مثلث',       onclick:"setDrawTool('triangle');updateActiveToolLabel('مثلث')" },
+  { id:'arrow',      cat:'🔷 أشكال', icon:'fas fa-arrow-right',     label:'سهم',        onclick:"setDrawTool('arrow');updateActiveToolLabel('سهم')" },
+  { id:'arrow2',     cat:'🔷 أشكال', icon:'fas fa-arrows-left-right',label:'مزدوج',     onclick:"setDrawTool('arrow2');updateActiveToolLabel('سهم مزدوج')" },
+  { id:'star',       cat:'🔷 أشكال', icon:'fas fa-star',            label:'نجمة',       onclick:"setDrawTool('star');updateActiveToolLabel('نجمة')" },
+  { id:'heart',      cat:'🔷 أشكال', icon:'fas fa-heart',           label:'قلب',        onclick:"setDrawTool('heart');updateActiveToolLabel('قلب')" },
+  { id:'diamond',    cat:'🔷 أشكال', icon:'',                       label:'معين',       onclick:"setDrawTool('diamond');updateActiveToolLabel('معين')",  emoji:'◇' },
+  { id:'pentagon',   cat:'🔷 أشكال', icon:'',                       label:'خماسي',      onclick:"setDrawTool('pentagon');updateActiveToolLabel('خماسي')", emoji:'⬠' },
+  // ── نص ──
+  { id:'text',       cat:'🔤 نص',    icon:'fas fa-font',            label:'نص عادي',    onclick:"setDrawTool('text');updateActiveToolLabel('نص')" },
+  { id:'textbox',    cat:'🔤 نص',    icon:'fas fa-text-width',      label:'مربع نص',    onclick:"setDrawTool('textbox');updateActiveToolLabel('مربع نص')" },
+  { id:'stickyNote', cat:'🔤 نص',    icon:'fas fa-sticky-note',     label:'ملاحظة',     onclick:"setDrawTool('stickyNote');updateActiveToolLabel('ملاحظة')" },
+  // ── إجراءات ──
+  { id:'undo',       cat:'⚙️ إجراءات', icon:'fas fa-rotate-left',   label:'تراجع',      onclick:'undoDraw()' },
+  { id:'redo',       cat:'⚙️ إجراءات', icon:'fas fa-rotate-right',  label:'إعادة',      onclick:'redoDraw()' },
+  { id:'clear',      cat:'⚙️ إجراءات', icon:'fas fa-trash',         label:'مسح الكل',   onclick:'clearDrawing()' },
+  { id:'save_img',   cat:'⚙️ إجراءات', icon:'fas fa-download',      label:'حفظ صورة',   onclick:'saveDrawingAsImage()' },
+  { id:'copy_img',   cat:'⚙️ إجراءات', icon:'fas fa-copy',          label:'نسخ',        onclick:'copyDrawingToClipboard()' },
 ];
 
+// الأدوات الافتراضية
 const DEFAULT_USER_TOOLS = ['pen','eraser','line','rect','circle'];
-let _userSelectedTools = [...DEFAULT_USER_TOOLS];
-let _savedUserTools    = [...DEFAULT_USER_TOOLS];
 
-function getToolsMax() { return window.innerWidth >= 768 ? 10 : 5; }
+let _userSelectedTools = [...DEFAULT_USER_TOOLS]; // الأدوات المختارة حالياً (مؤقتة في المودال)
+let _savedUserTools    = [...DEFAULT_USER_TOOLS]; // الأدوات المحفوظة
 
+// ── حد الأدوات حسب الجهاز ──
+function getToolsMax() {
+  return window.innerWidth >= 768 ? 10 : 5;
+}
+
+// ── تحميل الأدوات من Firestore ──
 async function loadUserToolsFromFirestore() {
   if (!currentUserId) return;
   try {
     const doc = await db.collection('user_preferences').doc(currentUserId).get();
-    if (doc.exists && Array.isArray(doc.data().selectedTools)) {
+    if (doc.exists && doc.data().selectedTools && Array.isArray(doc.data().selectedTools)) {
       _savedUserTools = doc.data().selectedTools;
     }
   } catch(e) { console.warn('loadUserTools error:', e); }
   renderUserToolsStrip();
 }
 
+// ── حفظ الأدوات في Firestore ──
 async function saveUserTools() {
   if (!currentUserId) { showToast('⚠️ سجل دخولك أولاً'); return; }
   const max = getToolsMax();
-  if (_userSelectedTools.length > max) { showToast(`⚠️ الحد الأقصى ${max} أدوات`); return; }
+  if (_userSelectedTools.length > max) {
+    showToast(`⚠️ الحد الأقصى ${max} أدوات على جهازك`);
+    return;
+  }
   try {
-    await db.collection('user_preferences').doc(currentUserId).set({ selectedTools: _userSelectedTools }, { merge: true });
+    await db.collection('user_preferences').doc(currentUserId).set(
+      { selectedTools: _userSelectedTools },
+      { merge: true }
+    );
     _savedUserTools = [..._userSelectedTools];
     renderUserToolsStrip();
     closeToolsLibraryModal();
     showToast('✅ تم حفظ أدواتك!');
-  } catch(e) { console.error('saveUserTools error:', e); showToast('❌ فشل الحفظ'); }
+  } catch(e) {
+    console.error('saveUserTools error:', e);
+    showToast('❌ فشل الحفظ، حاول تاني');
+  }
 }
 
+// ── رسم شريط الأدوات تحت الفيديو ──
 function renderUserToolsStrip() {
   const strip = document.getElementById('utsTools');
   if (!strip) return;
-  if (!_savedUserTools.length) { strip.innerHTML = `<span class="uts-empty">اضغط ✏️ لإضافة أدواتك</span>`; return; }
-  strip.innerHTML = _savedUserTools.map(id => {
-    const t = ALL_TOOLS_LIBRARY.find(x => x.id === id);
+  if (!_savedUserTools || !_savedUserTools.length) {
+    strip.innerHTML = `<span class="uts-empty">اضغط ✏️ لإضافة أدواتك</span>`;
+    return;
+  }
+  strip.innerHTML = _savedUserTools.map(toolId => {
+    const t = ALL_TOOLS_LIBRARY.find(x => x.id === toolId);
     if (!t) return '';
-    const ico = t.emoji ? `<span style="font-size:1rem">${t.emoji}</span>` : `<i class="${t.icon}"></i>`;
-    return `<button class="uts-tool-btn" onclick="${t.onclick};highlightUtsBtn(this)" title="${t.label}">${ico}<span>${t.label}</span></button>`;
+    const iconHtml = t.emoji
+      ? `<span style="font-size:1rem">${t.emoji}</span>`
+      : `<i class="${t.icon}"></i>`;
+    return `<button class="uts-tool-btn" onclick="${t.onclick};highlightUtsBtn(this)" title="${t.label}">${iconHtml}<span>${t.label}</span></button>`;
   }).join('');
 }
 
 function highlightUtsBtn(btn) {
   document.querySelectorAll('.uts-tool-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  // فتح لوحة الرسم لو مش مفتوحة
   const panel = document.getElementById('dbToolsPanel');
-  if (panel && !panel.classList.contains('open')) toggleDrawTools && toggleDrawTools();
+  if (panel && !panel.classList.contains('open')) {
+    toggleDrawTools && toggleDrawTools();
+  }
 }
 
+// ── فتح مودال مكتبة الأدوات ──
 function openToolsLibraryModal() {
   _userSelectedTools = [..._savedUserTools];
   renderToolsLibraryModal();
@@ -11093,6 +11081,7 @@ function closeToolsLibraryModal() {
   document.getElementById('toolsLibraryModal').classList.remove('active');
 }
 
+// ── رسم محتوى مودال مكتبة الأدوات ──
 function renderToolsLibraryModal() {
   const max = getToolsMax();
   document.getElementById('tlmMaxLabel').textContent = max;
@@ -11104,20 +11093,29 @@ function renderToolsLibraryModal() {
 function updateTlmCounter() {
   const max = getToolsMax();
   const el = document.getElementById('tlmSelectedCount');
-  if (el) { el.textContent = `${_userSelectedTools.length} / ${max}`; el.style.color = _userSelectedTools.length >= max ? '#ef4444' : '#fbbf24'; }
+  if (el) {
+    el.textContent = `${_userSelectedTools.length} / ${max}`;
+    el.style.color = _userSelectedTools.length >= max ? '#ef4444' : '#fbbf24';
+  }
 }
 
 function renderTlmCurrentStrip() {
   const el = document.getElementById('tlmCurrentStrip');
   if (!el) return;
-  if (!_userSelectedTools.length) { el.innerHTML = `<span style="color:#555;font-size:.8rem">لا توجد أدوات مختارة</span>`; return; }
+  if (!_userSelectedTools.length) {
+    el.innerHTML = `<span style="color:#555;font-size:.8rem">لا توجد أدوات مختارة</span>`;
+    return;
+  }
   el.innerHTML = _userSelectedTools.map((id, idx) => {
     const t = ALL_TOOLS_LIBRARY.find(x => x.id === id);
     if (!t) return '';
-    const ico = t.emoji ? `<span style="font-size:.95rem">${t.emoji}</span>` : `<i class="${t.icon}" style="font-size:.85rem"></i>`;
+    const iconHtml = t.emoji
+      ? `<span style="font-size:.95rem">${t.emoji}</span>`
+      : `<i class="${t.icon}" style="font-size:.85rem"></i>`;
     return `<div class="tlm-strip-chip" draggable="true" data-idx="${idx}" ondragstart="tlmDragStart(event,${idx})" ondragover="tlmDragOver(event)" ondrop="tlmDrop(event,${idx})">
-      ${ico}<span style="font-size:.72rem">${t.label}</span>
-      <button onclick="tlmRemoveTool('${id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0;font-size:.7rem;margin-right:2px"><i class="fas fa-times"></i></button>
+      ${iconHtml}
+      <span style="font-size:.72rem">${t.label}</span>
+      <button onclick="tlmRemoveTool('${id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0;font-size:.7rem;margin-right:2px;line-height:1"><i class="fas fa-times"></i></button>
     </div>`;
   }).join('');
 }
@@ -11132,10 +11130,12 @@ function renderTlmCategories() {
       <div class="tlm-cat-title">${cat}</div>
       <div class="tlm-cat-grid">
         ${tools.map(t => {
-          const sel = _userSelectedTools.includes(t.id);
-          const ico = t.emoji ? `<span style="font-size:1.1rem">${t.emoji}</span>` : `<i class="${t.icon}"></i>`;
-          return `<button class="tlm-tool-card ${sel ? 'selected' : ''}" id="tlmCard_${t.id}" onclick="tlmToggleTool('${t.id}')">
-            <div class="tlm-tool-icon">${ico}</div>
+          const selected = _userSelectedTools.includes(t.id);
+          const iconHtml = t.emoji
+            ? `<span style="font-size:1.1rem">${t.emoji}</span>`
+            : `<i class="${t.icon}"></i>`;
+          return `<button class="tlm-tool-card ${selected ? 'selected' : ''}" id="tlmCard_${t.id}" onclick="tlmToggleTool('${t.id}')">
+            <div class="tlm-tool-icon">${iconHtml}</div>
             <span class="tlm-tool-label">${t.label}</span>
             <div class="tlm-check"><i class="fas fa-check"></i></div>
           </button>`;
@@ -11148,11 +11148,18 @@ function renderTlmCategories() {
 function tlmToggleTool(id) {
   const max = getToolsMax();
   if (_userSelectedTools.includes(id)) {
+    // إزالة
     _userSelectedTools = _userSelectedTools.filter(x => x !== id);
   } else {
-    if (_userSelectedTools.length >= max) { showToast(`⚠️ وصلت للحد الأقصى (${max} أدوات)`); _userSelectedTools.shift(); }
+    // إضافة
+    if (_userSelectedTools.length >= max) {
+      showToast(`⚠️ وصلت للحد الأقصى (${max} أدوات)`);
+      // إزالة الأول وإضافة الجديد
+      _userSelectedTools.shift();
+    }
     _userSelectedTools.push(id);
   }
+  // تحديث الكارت
   const card = document.getElementById(`tlmCard_${id}`);
   if (card) card.classList.toggle('selected', _userSelectedTools.includes(id));
   updateTlmCounter();
@@ -11167,6 +11174,7 @@ function tlmRemoveTool(id) {
   renderTlmCurrentStrip();
 }
 
+// ── drag & drop لإعادة ترتيب الأدوات المختارة ──
 let _tlmDragIdx = null;
 function tlmDragStart(e, idx) { _tlmDragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
 function tlmDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
@@ -11181,5 +11189,5 @@ function tlmDrop(e, toIdx) {
   renderTlmCurrentStrip();
 }
 
+// ── تحميل الأدوات عند تسجيل الدخول ──
 document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFirestore, 2000));
-
