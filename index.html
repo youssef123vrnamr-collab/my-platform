@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"> 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Astronomy and space</title>
+  <title>منصة الفلك المتكاملة | تعلم علم الفلك والفضاء بالعربي</title>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4196603400741665" crossorigin="anonymous"></script>
@@ -52,18 +52,18 @@
   }
   <\/script>
 
-  <link rel="manifest" href="manifest.json">
-  <!-- PWA Icons - كل الأحجام لضمان الظهور على كل جهاز -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="icon.png">
-  <link rel="apple-touch-icon" sizes="144x144" href="icon.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="icon.png">
-  <link rel="apple-touch-icon" sizes="76x76"  href="icon.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <link rel="icon" type="image/png" sizes="96x96"  href="icon.png">
-  <link rel="icon" type="image/png" sizes="32x32"  href="icon.png">
-  <link rel="icon" type="image/png" sizes="16x16"  href="icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <!-- PWA Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/152.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="/144.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/128.png">
+  <link rel="apple-touch-icon" sizes="96x96"   href="/96.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/192.png">
+  <link rel="icon" type="image/png" sizes="96x96"   href="/96.png">
+  <link rel="icon" type="image/png" sizes="48x48"   href="/48.png">
+  <link rel="shortcut icon" href="/192.png">
   <meta name="theme-color" content="#6366f1">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1265,136 +1265,132 @@
 <!-- ===== PWA INSTALL GUIDE MODAL ===== -->
 <div id="pwaInstallModal" style="
   display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(0,0,0,0.85); z-index:99999; align-items:center;
-  justify-content:center; padding:1rem; backdrop-filter:blur(8px);
+  background:rgba(0,0,0,0.88); z-index:99999; align-items:center;
+  justify-content:center; padding:1rem; backdrop-filter:blur(10px);
 " onclick="if(event.target===this)closePwaModal()">
   <div style="
     background:linear-gradient(145deg,#1a1025,#0f0a1a);
     border:1px solid rgba(99,102,241,0.5); border-radius:24px;
-    max-width:420px; width:100%; overflow:hidden;
-    box-shadow:0 25px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(236,72,153,0.2);
+    max-width:420px; width:100%; overflow:hidden; max-height:90vh; overflow-y:auto;
+    box-shadow:0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(139,92,246,0.15);
     animation:fadeInUp 0.3s ease;
   ">
     <!-- Header -->
     <div style="
-      background:linear-gradient(135deg,rgba(99,102,241,0.3),rgba(236,72,153,0.2));
+      background:linear-gradient(135deg,rgba(99,102,241,0.25),rgba(139,92,246,0.15));
       padding:1.25rem 1.5rem; display:flex; align-items:center;
-      justify-content:space-between; border-bottom:1px solid rgba(99,102,241,0.3);
+      justify-content:space-between; border-bottom:1px solid rgba(99,102,241,0.2);
+      position:sticky; top:0; z-index:1;
     ">
       <div style="display:flex;align-items:center;gap:0.75rem;">
         <div style="
-          width:42px;height:42px;border-radius:12px;
-          background:linear-gradient(135deg,#6366f1,#ec4899);
-          display:flex;align-items:center;justify-content:center;font-size:1.3rem;
+          width:44px;height:44px;border-radius:13px;
+          background:linear-gradient(135deg,#6366f1,#8b5cf6);
+          display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+          box-shadow:0 4px 12px rgba(99,102,241,0.4);
         ">📲</div>
         <div>
-          <div style="font-size:1.1rem;font-weight:700;color:#fff;">تثبيت التطبيق</div>
-          <div style="font-size:0.78rem;color:#aaa;">أضف المنصة لشاشتك الرئيسية</div>
+          <div style="font-size:1.05rem;font-weight:700;color:#fff;">تثبيت فلك كتطبيق</div>
+          <div style="font-size:0.76rem;color:#9ca3af;">يعمل بدون متصفح — تطبيق حقيقي</div>
         </div>
       </div>
       <button onclick="closePwaModal()" style="
-        background:rgba(239,68,68,0.2);border:none;color:#ef4444;
+        background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;
         width:36px;height:36px;border-radius:10px;cursor:pointer;
-        font-size:1.1rem;display:flex;align-items:center;justify-content:center;
+        font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;
       ">✕</button>
     </div>
 
     <!-- Body -->
-    <div style="padding:1.5rem;">
-      <!-- صورة معاينة الشاشة الرئيسية -->
+    <div style="padding:1.25rem 1.5rem 1.5rem;">
+
+      <!-- App preview badge -->
       <div style="
-        text-align:center;margin-bottom:1.25rem;
-        background:rgba(99,102,241,0.08);border-radius:16px;
-        padding:1rem;border:1px solid rgba(99,102,241,0.2);
+        display:flex;align-items:center;gap:0.85rem;
+        background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.08));
+        border:1px solid rgba(99,102,241,0.25);border-radius:14px;
+        padding:0.85rem 1rem;margin-bottom:1.1rem;
       ">
-        <div style="font-size:0.82rem;color:#aaa;margin-bottom:0.75rem;">
-          📱 هكذا يظهر التطبيق على شاشتك الرئيسية
-        </div>
-        <img
-          src="1000093591.jpg"
-          alt="صورة الشاشة الرئيسية"
-          style="
-            width:130px;height:130px;object-fit:cover;
-            border-radius:22px;
-            box-shadow:0 8px 24px rgba(99,102,241,0.4),0 0 0 3px rgba(99,102,241,0.3);
-          "
-          onerror="this.style.display='none'"
-        />
-        <div style="margin-top:0.6rem;font-size:0.85rem;font-weight:600;color:#c4b5fd;">
-          Astronomy and space
+        <img src="/192.png" alt="فلك" style="
+          width:52px;height:52px;border-radius:14px;flex-shrink:0;
+          box-shadow:0 4px 12px rgba(99,102,241,0.35);
+          object-fit:cover;
+        " onerror="this.src='/512.png';this.onerror=null;">
+        <div>
+          <div style="font-size:0.95rem;font-weight:700;color:#fff;">منصة الفلك المتكاملة</div>
+          <div style="font-size:0.75rem;color:#9ca3af;margin-top:0.15rem;">تطبيق تعليمي — فلك وعلوم الفضاء</div>
+          <div style="display:flex;gap:0.4rem;margin-top:0.4rem;flex-wrap:wrap;">
+            <span style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:99px;">✓ يعمل أوفلاين</span>
+            <span style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c4b5fd;font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:99px;">✓ مجاني</span>
+            <span style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fcd34d;font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:99px;">✓ بدون متصفح</span>
+          </div>
         </div>
       </div>
+
+      <!-- زرار التثبيت المباشر — يظهر لو Chrome Android عنده الـ prompt -->
+      <button id="pwaDirectInstallBtn" onclick="triggerDirectInstall()" style="
+        display:none; width:100%; margin-bottom:0.75rem;
+        background:linear-gradient(135deg,#6366f1,#8b5cf6);
+        color:#fff; border:none; padding:0.95rem;
+        border-radius:14px; font-family:'Cairo',sans-serif;
+        font-size:1rem; font-weight:700; cursor:pointer;
+        box-shadow:0 8px 24px rgba(99,102,241,0.45);
+        transition:transform 0.2s;
+      " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+        <i class="fas fa-download" style="margin-left:0.5rem;"></i> تثبيت الآن مباشرة ✨
+      </button>
 
       <!-- خطوات التثبيت -->
       <div id="pwaInstallSteps">
         <!-- Android Chrome -->
         <div id="pwaAndroidSteps">
-          <div style="font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-size:1.1rem;">🤖</span> خطوات التثبيت على Android
+          <div style="font-size:0.85rem;font-weight:700;color:#c4b5fd;margin-bottom:0.65rem;display:flex;align-items:center;gap:0.45rem;">
+            <i class="fab fa-android" style="color:#78c16a;font-size:1rem;"></i> التثبيت على Android (Chrome)
           </div>
-          <div style="display:flex;flex-direction:column;gap:0.6rem;">
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
-              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">1</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط على <strong style="color:#c4b5fd;">⋮</strong> (القائمة) في الزاوية العلوية من المتصفح</span>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <div style="display:flex;align-items:flex-start;gap:0.65rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.65rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;">1</span>
+              <span style="font-size:0.82rem;color:#d1d5db;line-height:1.6;">اضغط <strong style="color:#c4b5fd;">⋮</strong> في Chrome ← اختر <strong style="color:#10b981;">"تثبيت التطبيق"</strong> أو <strong style="color:#10b981;">"إضافة للشاشة الرئيسية"</strong></span>
             </div>
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
-              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">2</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اختر <strong style="color:#10b981;">"إضافة إلى الشاشة الرئيسية"</strong> أو <strong style="color:#10b981;">"تثبيت التطبيق"</strong></span>
+            <div style="display:flex;align-items:flex-start;gap:0.65rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.65rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;">2</span>
+              <span style="font-size:0.82rem;color:#d1d5db;line-height:1.6;">اضغط <strong style="color:#10b981;">"تثبيت"</strong> ← ستجد الأيقونة على شاشتك 🎉</span>
             </div>
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
-              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">3</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستجد الأيقونة على شاشتك مباشرة! 🎉</span>
+            <div style="display:flex;align-items:flex-start;gap:0.65rem;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:0.65rem;">
+              <span style="font-size:0.9rem;flex-shrink:0;">💡</span>
+              <span style="font-size:0.78rem;color:#9ca3af;line-height:1.6;">بعد التثبيت يفتح التطبيق مباشرة بدون شريط المتصفح — تماماً زي أي تطبيق أندرويد</span>
             </div>
           </div>
         </div>
 
         <!-- iOS Safari -->
         <div id="pwaIOSSteps" style="display:none;">
-          <div style="font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-size:1.1rem;">🍎</span> خطوات التثبيت على iPhone/iPad
+          <div style="font-size:0.85rem;font-weight:700;color:#c4b5fd;margin-bottom:0.65rem;display:flex;align-items:center;gap:0.45rem;">
+            <i class="fab fa-apple" style="font-size:1rem;"></i> التثبيت على iPhone / iPad
           </div>
-          <div style="display:flex;flex-direction:column;gap:0.6rem;">
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
-              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">1</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">افتح الصفحة في <strong style="color:#c4b5fd;">Safari</strong> واضغط زر <strong style="color:#10b981;">المشاركة 📤</strong> في الأسفل</span>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <div style="display:flex;align-items:flex-start;gap:0.65rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.65rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;">1</span>
+              <span style="font-size:0.82rem;color:#d1d5db;line-height:1.6;">افتح في <strong style="color:#c4b5fd;">Safari</strong> — اضغط زر <strong style="color:#10b981;">المشاركة 📤</strong> في الأسفل</span>
             </div>
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
-              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">2</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اختر <strong style="color:#10b981;">"إضافة إلى الشاشة الرئيسية"</strong></span>
-            </div>
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
-              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">3</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستظهر الأيقونة على شاشتك! 🎉</span>
+            <div style="display:flex;align-items:flex-start;gap:0.65rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.65rem;">
+              <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;">2</span>
+              <span style="font-size:0.82rem;color:#d1d5db;line-height:1.6;">اختر <strong style="color:#10b981;">"إضافة إلى الشاشة الرئيسية"</strong> ← اضغط <strong style="color:#10b981;">"إضافة"</strong> 🎉</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- زرار التثبيت المباشر (يظهر لو Chrome Android) -->
-      <!-- زرار تنزيل APK لـ Android -->
-      <a id="pwaApkDownloadBtn" href="https://drive.google.com/uc?export=download&id=1kyIMZRVwk0hwdZuHf4QbfriBcnQDUig6" style="display:none; width:100%; margin-top:1rem; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; padding:0.85rem; border-radius:14px; font-family:'Cairo',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 8px 20px rgba(16,185,129,0.4); text-align:center; text-decoration:none; align-items:center; justify-content:center; gap:0.5rem;">
-        <i class="fas fa-download" style="margin-left:0.5rem;"></i> تنزيل تطبيق Android APK 🤖
-      </a>
-
-      <button id="pwaDirectInstallBtn" onclick="triggerDirectInstall()" style="
-        display:none; width:100%; margin-top:1rem;
-        background:linear-gradient(135deg,#6366f1,#8b5cf6);
-        color:#fff; border:none; padding:0.85rem;
-        border-radius:14px; font-family:'Cairo',sans-serif;
-        font-size:1rem; font-weight:700; cursor:pointer;
-        box-shadow:0 8px 20px rgba(99,102,241,0.4);
-        transition:all 0.3s;
-      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        <i class="fas fa-download" style="margin-left:0.5rem;"></i> تثبيت الآن مباشرة
-      </button>
+      <!-- Divider + APK hidden placeholder (kept for JS compatibility) -->
+      <a id="pwaApkDownloadBtn" href="#" onclick="return false;" style="display:none;"></a>
 
       <button onclick="closePwaModal()" style="
-        width:100%; margin-top:0.75rem;
-        background:rgba(255,255,255,0.07); color:#ccc;
-        border:1px solid rgba(255,255,255,0.15); padding:0.7rem;
+        width:100%; margin-top:0.85rem;
+        background:rgba(255,255,255,0.06); color:#9ca3af;
+        border:1px solid rgba(255,255,255,0.1); padding:0.75rem;
         border-radius:14px; font-family:'Cairo',sans-serif;
-        font-size:0.9rem; cursor:pointer;
-      ">إغلاق</button>
+        font-size:0.88rem; cursor:pointer; transition:background 0.2s;
+      " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">إغلاق</button>
     </div>
   </div>
 </div>

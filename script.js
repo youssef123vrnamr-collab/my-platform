@@ -9329,9 +9329,20 @@ function slStopAllAnimations() {
 
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js")
-      .then(reg => console.log("SW registered", reg))
-      .catch(err => console.log("SW error", err));
+    navigator.serviceWorker.register("/sw.js", { scope: "/" })
+      .then(reg => {
+        console.log("SW registered, scope:", reg.scope);
+        // تحقق من وجود تحديث
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker && newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('SW update available');
+            }
+          });
+        });
+      })
+      .catch(err => console.warn("SW error", err));
   }
 
 

@@ -1,19 +1,25 @@
 /* ============================================================
-   sw.js — Service Worker لمنصة الفلك  |  v4
+   sw.js — Service Worker لمنصة الفلك  |  v5
    ============================================================ */
 
-const CACHE_NAME = 'falak-v4';
+const CACHE_NAME = 'falak-v5';
 
 const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './style.css',
-  './script.js',
-  './manifest.json',
-  './icon.png',
-  './48.png',  './72.png',  './96.png',  './128.png',
-  './144.png', './152.png', './180.png', './192.png',
-  './256.png', './512.png'
+  '/',
+  '/index.html',
+  '/style.css',
+  '/script.js',
+  '/manifest.json',
+  '/48.png',
+  '/72.png',
+  '/96.png',
+  '/128.png',
+  '/144.png',
+  '/152.png',
+  '/180.png',
+  '/192.png',
+  '/256.png',
+  '/512.png'
 ];
 
 const OFFLINE_HTML = `<!DOCTYPE html>
@@ -44,7 +50,7 @@ button:active{transform:scale(.96)}
 </body>
 </html>`;
 
-/* تثبيت */
+/* ── تثبيت ── */
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache =>
@@ -54,7 +60,7 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-/* تفعيل */
+/* ── تفعيل: احذف الكاشات القديمة ── */
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -64,11 +70,11 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-/* الطلبات */
+/* ── استقبال الطلبات ── */
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  /* APIs خارجية — network فقط */
+  /* APIs خارجية — network only, لا تتدخل */
   if (
     url.hostname.includes('firestore.googleapis.com') ||
     url.hostname.includes('firebase.googleapis.com') ||
@@ -82,10 +88,11 @@ self.addEventListener('fetch', e => {
     url.hostname.includes('groq.com') ||
     url.hostname.includes('pollinations.ai') ||
     url.hostname.includes('img.youtube.com') ||
-    url.hostname.includes('youtube.com')
+    url.hostname.includes('youtube.com') ||
+    url.hostname.includes('anthropic.com')
   ) { return; }
 
-  /* Fonts — cache */
+  /* Google Fonts — cache first */
   if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     e.respondWith(
       caches.open(CACHE_NAME).then(cache =>
@@ -101,13 +108,18 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* ملفات ثابتة — cache first */
-  if (e.request.method === 'GET' && /\.(css|js|png|jpg|jpeg|webp|ico|woff2|woff|svg)$/.test(url.pathname)) {
+  /* ملفات static — cache first, network fallback */
+  if (
+    e.request.method === 'GET' &&
+    /\.(css|js|png|jpg|jpeg|webp|ico|woff2|woff|svg)$/.test(url.pathname)
+  ) {
     e.respondWith(
       caches.match(e.request).then(cached => {
         if (cached) return cached;
         return fetch(e.request).then(resp => {
-          if (resp.ok) caches.open(CACHE_NAME).then(c => c.put(e.request, resp.clone()));
+          if (resp.ok) {
+            caches.open(CACHE_NAME).then(c => c.put(e.request, resp.clone()));
+          }
           return resp;
         }).catch(() => new Response('', { status: 503 }));
       })
@@ -115,14 +127,24 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* HTML — network first + offline fallback */
+  /* HTML navigation — network first, offline fallback */
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).catch(() =>
-        caches.match('./index.html').then(cached =>
-          cached || new Response(OFFLINE_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+      fetch(e.request)
+        .then(resp => {
+          // خزّن نسخة حديثة في الكاش
+          if (resp.ok) {
+            caches.open(CACHE_NAME).then(c => c.put(e.request, resp.clone()));
+          }
+          return resp;
+        })
+        .catch(() =>
+          caches.match('/index.html').then(cached =>
+            cached || new Response(OFFLINE_HTML, {
+              headers: { 'Content-Type': 'text/html; charset=utf-8' }
+            })
+          )
         )
-      )
     );
   }
 });
