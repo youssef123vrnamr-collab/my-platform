@@ -9331,18 +9331,31 @@ function slStopAllAnimations() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js", { scope: "/" })
       .then(reg => {
-        console.log("SW registered, scope:", reg.scope);
+        console.log("✅ SW registered v6, scope:", reg.scope);
         // تحقق من وجود تحديث
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker && newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('SW update available');
+              console.log('🔄 SW update available');
+              // أرسل رسالة للـ SW الجديد لينشط فوراً
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+              // أعد تحميل الصفحة بعد تفعيل الـ SW الجديد
+              navigator.serviceWorker.addEventListener('controllerchange', () => {
+                window.location.reload();
+              }, { once: true });
             }
           });
         });
       })
-      .catch(err => console.warn("SW error", err));
+      .catch(err => console.warn("SW error:", err));
+
+    // تحقق دوري من التحديثات (كل 60 ثانية)
+    setInterval(() => {
+      navigator.serviceWorker.getRegistration('/').then(reg => {
+        if (reg) reg.update();
+      });
+    }, 60 * 1000);
   }
 
 
