@@ -3,7 +3,7 @@
   "name": "منصة الفلك المتكاملة",
   "short_name": "فلك",
   "description": "تعلم علم الفلك والفضاء بمحتوى عربي احترافي — كورسات، فيديوهات، وشهادات",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -15,30 +15,21 @@
   "categories": ["education", "science"],
   "prefer_related_applications": false,
   "icons": [
-    { "src": "/48.png",           "sizes": "48x48",     "type": "image/png", "purpose": "any" },
-    { "src": "/72.png",           "sizes": "72x72",     "type": "image/png", "purpose": "any" },
-    { "src": "/96.png",           "sizes": "96x96",     "type": "image/png", "purpose": "any" },
-    { "src": "/128.png",          "sizes": "128x128",   "type": "image/png", "purpose": "any" },
-    { "src": "/144.png",          "sizes": "144x144",   "type": "image/png", "purpose": "any" },
-    { "src": "/152.png",          "sizes": "152x152",   "type": "image/png", "purpose": "any" },
-    { "src": "/180.png",          "sizes": "180x180",   "type": "image/png", "purpose": "any" },
-    { "src": "/192.png",          "sizes": "192x192",   "type": "image/png", "purpose": "any" },
-    { "src": "/256.png",          "sizes": "256x256",   "type": "image/png", "purpose": "any" },
-    { "src": "/512.png",          "sizes": "512x512",   "type": "image/png", "purpose": "any" },
-    { "src": "/1024.png",         "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
-    { "src": "/192-maskable.png", "sizes": "192x192",   "type": "image/png", "purpose": "maskable" },
-    { "src": "/512-maskable.png", "sizes": "512x512",   "type": "image/png", "purpose": "maskable" }
+    { "src": "/api/icon",    "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/api/icon512", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/api/icon",    "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/api/icon512", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [
-    { "src": "/512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" }
+    { "src": "/api/icon512", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" }
   ],
   "shortcuts": [
     {
       "name": "مكتبة الفيديوهات",
       "short_name": "المكتبة",
       "description": "افتح مكتبة الفيديوهات مباشرة",
-      "url": "/?section=videos",
-      "icons": [{ "src": "/96.png", "sizes": "96x96" }]
+      "url": "/",
+      "icons": [{ "src": "/api/icon", "sizes": "192x192" }]
     }
   ]
 }
