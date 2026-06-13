@@ -2,7 +2,7 @@
    sw.js — Service Worker لمنصة الفلك  |  v6
    ============================================================ */
 
-const CACHE_NAME = 'falak-v6';
+const CACHE_NAME = 'falak-v7';
 
 const STATIC_ASSETS = [
   '/',
@@ -108,12 +108,16 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-/* ── تفعيل: احذف الكاشات القديمة ── */
+/* ── تفعيل: احذف الكاشات القديمة + إشعار بالتحديث ── */
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    ).then(() => {
+      self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+      });
+    })
   );
   self.clients.claim();
 });

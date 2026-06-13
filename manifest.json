@@ -3,7 +3,7 @@
   "name": "منصة الفلك المتكاملة",
   "short_name": "فلك",
   "description": "تعلم علم الفلك والفضاء بمحتوى عربي احترافي — كورسات، فيديوهات، وشهادات",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -25,15 +25,36 @@
     { "src": "/512-maskable.png",  "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [
-    { "src": "/512-maskable.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" }
+    { "src": "/512-maskable.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" },
+    { "src": "/512-maskable.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide" }
   ],
   "shortcuts": [
     {
       "name": "مكتبة الفيديوهات",
       "short_name": "المكتبة",
       "description": "افتح مكتبة الفيديوهات مباشرة",
-      "url": "/",
+      "url": "/?section=videos",
+      "icons": [{ "src": "/192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "المساعد الذكي",
+      "short_name": "AI",
+      "description": "تحدث مع المساعد الذكي",
+      "url": "/?section=ai",
       "icons": [{ "src": "/192.png", "sizes": "192x192", "type": "image/png" }]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }
