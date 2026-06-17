@@ -1319,8 +1319,6 @@ async function updateAdminUI() {
     wrapper.appendChild(iframe);
     playerContainer.appendChild(wrapper);
   } else {
-    let wrapper = document.createElement("div");
-    wrapper.className = "yt-wrapper";
     let video = document.createElement("video");
     video.controls = true;
     video.src = v.url;
@@ -1328,10 +1326,8 @@ async function updateAdminUI() {
     video.className = "video-player";
     video.id = "videoPlayer";
     video.playsInline = true;
-    video.autoplay = true;
-    wrapper.appendChild(video);
     playerContainer.innerHTML = "";
-    playerContainer.appendChild(wrapper);
+    playerContainer.appendChild(video);
     if (startTime > 0) video.currentTime = startTime;
     video.addEventListener("ended", () => { markVideoAsWatched(id); });
     setupProgressTracking(id);
@@ -9333,40 +9329,9 @@ function slStopAllAnimations() {
 
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" })
-      .then(reg => {
-        console.log("✅ SW registered v7, scope:", reg.scope);
-        // تحقق من وجود تحديث
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker && newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('🔄 SW update available');
-              // أرسل رسالة للـ SW الجديد لينشط فوراً
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-              // أعد تحميل الصفحة بعد تفعيل الـ SW الجديد
-              navigator.serviceWorker.addEventListener('controllerchange', () => {
-                window.location.reload();
-              }, { once: true });
-            }
-          });
-        });
-      })
-      .catch(err => console.warn("SW error:", err));
-
-    // استقبال رسالة التحديث من SW
-    navigator.serviceWorker.addEventListener('message', event => {
-      if (event.data && event.data.type === 'SW_UPDATED') {
-        showToast('✅ تم تحديث التطبيق');
-      }
-    });
-
-    // تحقق دوري من التحديثات (كل 60 ثانية)
-    setInterval(() => {
-      navigator.serviceWorker.getRegistration('/').then(reg => {
-        if (reg) reg.update();
-      });
-    }, 60 * 1000);
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg => console.log("SW registered", reg))
+      .catch(err => console.log("SW error", err));
   }
 
 
