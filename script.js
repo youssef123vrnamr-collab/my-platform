@@ -1745,7 +1745,14 @@ async function updateAdminUI() {
       });
 
       // حسابات المشرفين بالـ UID
-      const snapUid = await db.collection("admin_accounts_uid").get();
+      let snapUid;
+      try {
+        snapUid = await db.collection("admin_accounts_uid").get();
+        alert("✅ نجح الجلب\nعدد الحسابات بالـ UID: " + snapUid.size + "\nمن داخل الكاش؟ " + (snapUid.metadata ? snapUid.metadata.fromCache : "غير معروف"));
+      } catch(uidErr) {
+        alert("❌ فشل جلب حسابات الـ UID\nرسالة الخطأ: " + uidErr.message + "\nكود الخطأ: " + (uidErr.code || "غير محدد"));
+        throw uidErr;
+      }
       snapUid.forEach(doc => {
         const d = doc.data() || {};
         const uidVal = doc.id;
