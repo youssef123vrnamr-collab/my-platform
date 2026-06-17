@@ -1721,10 +1721,12 @@ async function updateAdminUI() {
     if (!el) return;
     el.innerHTML = '<div style="text-align:center;color:#aaa;padding:.5rem"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
     try {
-      const snap = await db.collection(ADMIN_ACCOUNTS_COL).get();
-      if (snap.empty) { el.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem">لا توجد حسابات مسجّلة بعد.</div>'; return; }
       const myEmail = _normEmail(auth.currentUser && auth.currentUser.email);
+      const myUid = (auth.currentUser && auth.currentUser.uid) || null;
       const rows = [];
+
+      // حسابات المشرفين بالبريد الإلكتروني
+      const snap = await db.collection(ADMIN_ACCOUNTS_COL).get();
       snap.forEach(doc => {
         const d = doc.data() || {};
         const em = doc.id;
@@ -1741,6 +1743,27 @@ async function updateAdminUI() {
           + '<button onclick="removeAdminAccount(\''+em.replace(/'/g,"\\'")+'\')" '+(isMe?'disabled title="لا يمكنك حذف نفسك"':'')+' style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;width:38px;height:38px;border-radius:8px;cursor:'+(isMe?'not-allowed':'pointer')+';opacity:'+(isMe?'.4':'1')+'"><i class="fas fa-trash"></i></button>'
           + '</div>');
       });
+
+      // حسابات المشرفين بالـ UID
+      const snapUid = await db.collection("admin_accounts_uid").get();
+      snapUid.forEach(doc => {
+        const d = doc.data() || {};
+        const uidVal = doc.id;
+        const role = d.role || "admin";
+        const isMe = myUid && uidVal === myUid;
+        const roleBadge = role === "super_admin"
+          ? '<span style="background:rgba(168,85,247,.2);color:#c4b5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف رئيسي</span>'
+          : '<span style="background:rgba(59,130,246,.2);color:#93c5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف</span>';
+        rows.push('<div style="display:flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.04);padding:.7rem .85rem;border-radius:10px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)">'
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="color:#fff;direction:ltr;text-align:left;font-family:monospace;font-size:.92rem;overflow-wrap:anywhere">'+escapeHtml(uidVal)+(isMe?' <span style="color:#86efac;font-size:.75rem">(أنت)</span>':'')+'</div>'
+          + '<div style="margin-top:.3rem">'+roleBadge+' <span style="background:rgba(34,211,238,.15);color:#67e8f9;padding:.2rem .5rem;border-radius:8px;font-size:.7rem;margin-right:.3rem">UID</span></div>'
+          + '</div>'
+          + '<button onclick="removeAdminAccountUid(\''+uidVal.replace(/'/g,"\\'")+'\')" '+(isMe?'disabled title="لا يمكنك حذف نفسك"':'')+' style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;width:38px;height:38px;border-radius:8px;cursor:'+(isMe?'not-allowed':'pointer')+';opacity:'+(isMe?'.4':'1')+'"><i class="fas fa-trash"></i></button>'
+          + '</div>');
+      });
+
+      if (!rows.length) { el.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem">لا توجد حسابات مسجّلة بعد.</div>'; return; }
       el.innerHTML = rows.join("");
     } catch(e) {
       console.error(e);
@@ -1809,6 +1832,18 @@ async function updateAdminUI() {
       renderAdminAccountsList();
     } catch(e){ console.error(e); showToast("❌ فشل الحذف"); }
   }
+  async function removeAdminAccountUid(uidVal){
+    if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
+    const myUid = (auth.currentUser && auth.currentUser.uid) || null;
+    if (myUid && uidVal === myUid) { showToast("❌ لا يمكنك حذف نفسك"); return; }
+    if (!confirm("حذف " + uidVal + " من قائمة المشرفين؟")) return;
+    try {
+      await db.collection("admin_accounts_uid").doc(uidVal).delete();
+      SoundEffects.delete();
+      showToast("🗑️ تم الحذف");
+      renderAdminAccountsList();
+    } catch(e){ console.error(e); showToast("❌ فشل الحذف"); }
+  }
   // Stubs (للحفاظ على التوافق مع المراجع القديمة في window.onclick / Escape)
   function closeAdminPasswordModal(){ const m = document.getElementById("adminPasswordModal"); if (m) m.classList.remove("active"); }
   function verifyAdminPassword(){ openSetAdminsModal(); }
@@ -1818,7 +1853,7 @@ async function updateAdminUI() {
   window.bootstrapFirstAdmin = bootstrapFirstAdmin;
   window.openSetAdminsModal = openSetAdminsModal; window.closeSetAdminsModal = closeSetAdminsModal;
   window.addAdminAccount = addAdminAccount; window.removeAdminAccount = removeAdminAccount;
-  window.addAdminByUid = addAdminByUid;
+  window.addAdminByUid = addAdminByUid; window.removeAdminAccountUid = removeAdminAccountUid;
   window.refreshAdminStatusFromFirestore = refreshAdminStatusFromFirestore;
   window.fetchMyAdminInfo = fetchMyAdminInfo;
   window.closeAdminPasswordModal = closeAdminPasswordModal;
