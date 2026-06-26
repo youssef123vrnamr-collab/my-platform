@@ -3791,8 +3791,21 @@ function renderStudentProgress(data) {
     ? `<button class="progress-back-btn" onclick="setProgressView('all')"><i class="fas fa-arrow-right"></i> رجوع لكل الطلاب</button>`
     : '';
 
+  // زر إضافة صديق: يظهر فقط لو:
+  // 1. بتشوف ملف شخص تاني (مش نفسك)
+  // 2. أنت مش مشرف (المشرفون لا يضيفون طلاب كأصدقاء)
   const isOtherStudent = !!__studentDetailFor && student.userId !== currentUserId;
-  const friendBtnHtml = isOtherStudent ? `<button class="btn btn-friend-add" id="hero-friend-btn" onclick="sendFriendRequest(decodeURIComponent('${encodeURIComponent(student.userId || '')}'),decodeURIComponent('${encodeURIComponent(displayName)}'), this)" style="margin-top:.75rem;display:inline-flex;align-items:center;gap:.5rem;"><i class="fas fa-user-plus"></i> إضافة صديق</button>` : '';
+  // نعرض الزر فقط لو أنت طالب عادي (مش مشرف)
+  const friendBtnHtml = (isOtherStudent && !isAdmin) ? `<button class="btn btn-friend-add" id="hero-friend-btn" onclick="sendFriendRequest(decodeURIComponent('${encodeURIComponent(student.userId || '')}'),decodeURIComponent('${encodeURIComponent(displayName)}'), this)" style="margin-top:.75rem;display:inline-flex;align-items:center;gap:.5rem;"><i class="fas fa-user-plus"></i> إضافة صديق</button>` : '';
+  // Async: نتحقق إن الـ target مش مشرف ونخفي الزر لو كان
+  if (isOtherStudent && !isAdmin && student.userId) {
+    db.collection('admin_accounts_uid').doc(student.userId).get().then(snap => {
+      if (snap.exists) {
+        const btn = document.getElementById('hero-friend-btn');
+        if (btn) btn.style.display = 'none';
+      }
+    }).catch(() => {});
+  }
 
   const hero = `
     <div class="progress-hero">
@@ -10680,6 +10693,19 @@ async function sendFriendRequest(encodedUid, encodedName, btnEl) {
 
   if (btnEl) { btnEl.disabled = true; btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
   try {
+    // ❌ منع إرسال طلب صداقة لمشرف أو من مشرف لطالب
+    // المشرفون يُحدَّدون عبر admin_accounts_uid (بالـ UID)
+    const targetAdminSnap = await db.collection('admin_accounts_uid').doc(targetUid).get();
+    if (targetAdminSnap.exists) {
+      showToast('❌ لا يمكن إضافة المشرفين كأصدقاء');
+      if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-user-plus"></i> إضافة'; }
+      return;
+    }
+    if (isAdmin) {
+      showToast('❌ المشرفون لا يستطيعون إرسال طلبات صداقة للطلاب');
+      if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-user-plus"></i> إضافة'; }
+      return;
+    }
     // Check if request already sent — بـ where واحد بس عشان مش نحتاج Composite Index
     const existingSnap = await db.collection('friend_requests')
       .where('from', '==', currentUserId)
@@ -10753,6 +10779,15 @@ async function acceptFriendRequest(encodedReqId, encodedUid, encodedName, btnEl)
   const fromName = decodeURIComponent(encodedName);
   if (btnEl) btnEl.disabled = true;
   try {
+    // ❌ منع قبول طلب صداقة لو المُرسِل مشرف أو أنت مشرف
+    const senderAdminSnap = await db.collection('admin_accounts_uid').doc(fromUid).get();
+    if (senderAdminSnap.exists || isAdmin) {
+      showToast('❌ لا يمكن إنشاء صداقة بين مشرف وطالب');
+      // احذف الطلب عشان ما يظهرش تاني
+      await db.collection('friend_requests').doc(reqId).update({ status: 'rejected' });
+      loadIncomingRequests();
+      return;
+    }
     await db.collection('friend_requests').doc(reqId).update({ status: 'accepted' });
     await db.collection('friendships').add({
       users: [currentUserId, fromUid],
