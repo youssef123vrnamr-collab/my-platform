@@ -3112,9 +3112,9 @@ window.openPaidCourseModal = async function(courseId) {
     modal.style.zIndex = '10010';
     modal.innerHTML = `
       <div class="modal-content" style="max-width:580px">
-        <div class="modal-header" style="background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(217,119,6,.12));border-bottom:1px solid rgba(245,158,11,.3)">
-          <h3 style="color:#fbbf24"><i class="fas fa-graduation-cap"></i> ${escapeHtml(title)}</h3>
-          <button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button>
+        <div class="modal-header" style="background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(217,119,6,.12));border-bottom:1px solid rgba(245,158,11,.3);flex-wrap:nowrap;align-items:flex-start">
+          <h3 style="color:#fbbf24;flex:1;min-width:0"><i class="fas fa-graduation-cap"></i> ${escapeHtml(title)}</h3>
+          <button class="modal-close" onclick="this.closest('.modal').remove()" style="flex-shrink:0;margin-right:.25rem"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
           ${desc ? `<p style="color:#cbd5e1;font-size:.92rem;line-height:1.7;margin-bottom:1.25rem;padding:.75rem 1rem;background:rgba(255,255,255,.04);border-radius:10px;border-right:3px solid #f59e0b">${escapeHtml(desc)}</p>` : ''}
