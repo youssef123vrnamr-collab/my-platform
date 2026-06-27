@@ -1326,8 +1326,14 @@ async function updateAdminUI() {
     video.className = "video-player";
     video.id = "videoPlayer";
     video.playsInline = true;
+    video.style.cssText = "width:100%;height:100%;border-radius:0;display:block;background:#000;object-fit:contain;-webkit-mask-image:none;mask-image:none;border:none;outline:none;";
+    // غلاف بنفس style يوتيوب عشان الحجم متطابق
+    let wrapper = document.createElement("div");
+    wrapper.className = "yt-wrapper";
+    wrapper.style.cssText = "position:relative;width:100%;aspect-ratio:16/9;max-height:70vh;border-radius:18px;overflow:hidden;background:#000;";
+    wrapper.appendChild(video);
     playerContainer.innerHTML = "";
-    playerContainer.appendChild(video);
+    playerContainer.appendChild(wrapper);
     if (startTime > 0) video.currentTime = startTime;
     video.addEventListener("ended", () => { markVideoAsWatched(id); });
     setupProgressTracking(id);
@@ -4194,38 +4200,116 @@ function switchProgressTab(tab) {
     news:       'اكتب 6 بطاقات أخبار فلكية وفضائية مثيرة ومتنوعة كأنها أخبار حديثة 2025. كل بطاقة: title، text (2-3 جمل خبر علمي مشوق)، tag (سنة أو وصف). JSON فقط: [{"title":"...","text":"...","tag":"..."}]'
   };
 
-  const COSMOS_IMG_POOL = [
-    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
-    'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
-    'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
-    'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
-    'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',
-    'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',
-    'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=900&q=70',
-    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70',
-    'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70',
-    'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70',
-    'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70',
-    'https://images.unsplash.com/photo-1630839437035-dac17da580d0?w=900&q=70',
-    'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=900&q=70',
-    'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',
-    'https://images.unsplash.com/photo-1539593395743-7da5ee10ff07?w=900&q=70',
-    'https://images.unsplash.com/photo-1628458483547-6c399d07a598?w=900&q=70',
-    'https://images.unsplash.com/photo-1504192010706-dd7f569ee2be?w=900&q=70',
-    'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900&q=70',
-    'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=900&q=70',
-    'https://images.unsplash.com/photo-1636819488537-a9b1980df19f?w=900&q=70',
-    'https://images.unsplash.com/photo-1494022299300-899b96e49893?w=900&q=70',
-    'https://images.unsplash.com/photo-1608178398319-48f814d0750c?w=900&q=70'
-  ];
+  // صور مخصصة لكل قسم — كل صورة مرتبطة بالموضوع
+  const COSMOS_IMG_POOLS = {
+    stars: [
+      'https://images.unsplash.com/photo-1464802686167-b939a6910659?w=900&q=70',  // نجوم سماء
+      'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70',  // نجوم ليل
+      'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',  // سماء نجوم
+      'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=900&q=70',  // مجرة
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',     // نجوم فضاء
+      'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900&q=70',  // نجوم ليل
+    ],
+    planets: [
+      'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=900&q=70',  // كوكب
+      'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=900&q=70',  // أرض من الفضاء
+      'https://images.unsplash.com/photo-1630839437035-dac17da580d0?w=900&q=70',  // قمر
+      'https://images.unsplash.com/photo-1504192010706-dd7f569ee2be?w=900&q=70',  // كوكب حلقات
+      'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',  // كوكب
+      'https://images.unsplash.com/photo-1608178398319-48f814d0750c?w=900&q=70',  // كوكب فضاء
+    ],
+    galaxies: [
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',  // مجرة
+      'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',  // كون
+      'https://images.unsplash.com/photo-1636819488537-a9b1980df19f?w=900&q=70',  // مجرة ملونة
+      'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=900&q=70',  // مجرة درب التبانة
+      'https://images.unsplash.com/photo-1494022299300-899b96e49893?w=900&q=70',  // فضاء عميق
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',     // كون بعيد
+    ],
+    blackholes: [
+      'https://images.unsplash.com/photo-1617042375876-a13e36732a04?w=900&q=70',  // ثقب أسود
+      'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70',  // فضاء مظلم
+      'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',  // فضاء عميق
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',  // كون مظلم
+      'https://images.unsplash.com/photo-1494022299300-899b96e49893?w=900&q=70',  // فضاء مجرات
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',     // فضاء
+    ],
+    astronauts: [
+      'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',     // رائد فضاء
+      'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70',  // رائد فضاء
+      'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70',  // فضاء أرض
+      'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=900&q=70',  // محطة فضائية
+      'https://images.unsplash.com/photo-1628458483547-6c399d07a598?w=900&q=70',  // مركبة فضائية
+      'https://images.unsplash.com/photo-1539593395743-7da5ee10ff07?w=900&q=70',  // رائد فضاء
+    ],
+    missions: [
+      'https://images.unsplash.com/photo-1628458483547-6c399d07a598?w=900&q=70',  // صاروخ
+      'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=900&q=70',  // أرض فضاء
+      'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70',  // مسبار
+      'https://images.unsplash.com/photo-1530982011887-3cc11cc85693?w=900&q=70',  // إطلاق صاروخ
+      'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',  // فضاء مهمة
+      'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=900&q=70',     // رائد فضاء مهمة
+    ],
+    telescopes: [
+      'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&q=70',  // تلسكوب
+      'https://images.unsplash.com/photo-1614314107768-6018061e5e10?w=900&q=70',  // مرصد
+      'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=900&q=70',  // تلسكوب فضائي
+      'https://images.unsplash.com/photo-1504192010706-dd7f569ee2be?w=900&q=70',  // مرصد ليل
+      'https://images.unsplash.com/photo-1636819488537-a9b1980df19f?w=900&q=70',  // صورة تلسكوب
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',  // كون من تلسكوب
+    ],
+    phenomena: [
+      'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',  // شهب
+      'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',  // شفق قطبي
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',     // كسوف
+      'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=900&q=70',  // ظاهرة ليل
+      'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900&q=70',  // ظاهرة نجوم
+      'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',  // مستعر
+    ],
+    universe: [
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',  // كون
+      'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',  // فضاء عميق
+      'https://images.unsplash.com/photo-1494022299300-899b96e49893?w=900&q=70',  // مجرات بعيدة
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',     // كون واسع
+      'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=900&q=70',  // درب التبانة
+      'https://images.unsplash.com/photo-1636819488537-a9b1980df19f?w=900&q=70',  // كون ملون
+    ],
+    news: [
+      'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=900&q=70',  // JWST
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',     // كوكب خارجي
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',  // موجات جاذبية
+      'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',  // مهمة فضاء
+      'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',  // رواد فضاء
+      'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',  // كسوف شمسي
+    ],
+    // افتراضي للأقسام غير المحددة
+    default: [
+      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
+      'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
+      'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
+      'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70',
+      'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=70',
+      'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70',
+    ]
+  };
 
-  function getShuffledImgs(count) {
-    const pool = [...COSMOS_IMG_POOL];
+  // للتوافق مع الكود القديم
+  const COSMOS_IMG_POOL = COSMOS_IMG_POOLS.default;
+
+  function getShuffledImgs(count, categoryKey) {
+    const pool = [...(COSMOS_IMG_POOLS[categoryKey] || COSMOS_IMG_POOLS.default)];
+    // shuffle deterministic بناءً على الوقت عشان يتغير تدريجياً مش عشوائي
+    const seed = Math.floor(Date.now() / (30 * 60 * 1000));
+    let s = seed;
     for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      s = (s * 1664525 + 1013904223) & 0xffffffff;
+      const j = Math.abs(s) % (i + 1);
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    return pool.slice(0, count);
+    // لو المطلوب أكثر من المتاح، كرر
+    const result = [];
+    for (let i = 0; i < count; i++) result.push(pool[i % pool.length]);
+    return result;
   }
 
   async function fetchAIContent(key) {
@@ -4250,8 +4334,8 @@ function switchProgressTab(tab) {
       const clean = text.replace(/```json|```/g, '').trim();
       const items = JSON.parse(clean);
       if (!Array.isArray(items) || !items.length) return null;
-      const imgs = getShuffledImgs(items.length);
-      const enriched = items.map((it, i) => ({ ...it, img: imgs[i] || COSMOS_IMG_POOL[i % COSMOS_IMG_POOL.length] }));
+      const imgs = getShuffledImgs(items.length, key);
+      const enriched = items.map((it, i) => ({ ...it, img: it.img || imgs[i] || COSMOS_IMG_POOLS.default[i % COSMOS_IMG_POOLS.default.length] }));
       _aiContentCache[key] = { data: enriched, time: Date.now() };
       return enriched;
     } catch(e) {
@@ -4305,22 +4389,26 @@ function switchProgressTab(tab) {
     return indices.slice(0, 6).map(i => all[i]);
   }
 
-  function renderStaticCosmos(cat) {
+  function renderStaticCosmos(cat, key) {
     const items = getRotatedStaticItems(cat);
     return `
       <div class="cosmos-modal-intro"><i class="fas fa-info-circle" style="color:${cat.color};margin-left:.5rem"></i>${escapeHtml(cat.intro)}</div>
       <div class="cosmos-cards" id="staticCards_${cat.title}">
-        ${items.map(it=>`
+        ${items.map((it, idx)=>{
+          // استخدم الصورة الأصلية من البيانات لو موجودة، وإلا خذ من pool الصحيح
+          const pool = COSMOS_IMG_POOLS[key] || COSMOS_IMG_POOLS.default;
+          const imgSrc = it.img && !it.img.includes('unsplash') ? it.img : (it.img || pool[idx % pool.length]);
+          return `
           <article class="cosmos-card">
-            <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')">
+            <div class="cosmos-card-img" style="background-image:url('${encodeURI(imgSrc)}')">
               ${it.tag?`<span class="cosmos-card-tag floating"><i class="fas fa-tag"></i> ${escapeHtml(it.tag)}</span>`:''}
             </div>
             <div class="cosmos-card-body">
               <h4>${escapeHtml(it.title)}</h4>
               <p>${escapeHtml(it.text)}</p>
             </div>
-          </article>
-        `).join('')}
+          </article>`;
+        }).join('')}
       </div>
     `;
   }
