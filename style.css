@@ -4981,8 +4981,10 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   box-shadow: none !important;
   outline: none !important;
   border: none !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
+
+  /* Vignette داخلي */
+  -webkit-mask-image: radial-gradient(ellipse 98% 98% at 50% 50%, black 90%, transparent 100%);
+  mask-image: radial-gradient(ellipse 98% 98% at 50% 50%, black 90%, transparent 100%);
 }
 
 /* غلاف اليوتيوب */
@@ -4997,18 +4999,10 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   box-shadow: none !important;
 }
 
-.yt-wrapper .youtube-iframe,
-.yt-wrapper video {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+.yt-wrapper .youtube-iframe {
   -webkit-mask-image: none !important;
   mask-image: none !important;
   border-radius: 0 !important;
-  max-height: none !important;
-  object-fit: contain !important;
 }
 
 /* حين يبدأ التشغيل – وضع Cinema Mode */
@@ -5296,28 +5290,11 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 
 /* ══ VIDEO FILLS FRAME — no letterbox, no gaps ══ */
 
-/* فيديو Cloudinary داخل yt-wrapper — نفس سلوك YouTube iframe */
-.yt-wrapper video.video-player {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  border-radius: 0 !important;
-  max-height: none !important;
-  aspect-ratio: unset !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-  display: block !important;
-}
-
-/* فيديو عادي خارج yt-wrapper */
-.video-player:not(.yt-wrapper video) {
+.video-player {
   border-radius: 18px !important;
   width: 100% !important;
-  height: auto !important;
-  object-fit: contain !important;
+  height: 100% !important;
+  object-fit: cover !important;
   display: block !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
@@ -7602,58 +7579,3 @@ button[style*="border-radius:50%"],
    MANIFEST / PWA - إضافة splash screen colors
    ============================================================ */
 meta[name="theme-color"] { content: "#0f0a1a"; }
-
-
-/* ══════════════════════════════════════════════════════════════
-   CLOUDINARY VIDEO FIX — يملا الـ wrapper تماماً زي YouTube
-   ══════════════════════════════════════════════════════════════ */
-
-/* الـ video-player-container لما يحتوي yt-wrapper يبقى transparent */
-#videoModal .video-player-container:has(> .yt-wrapper) {
-  aspect-ratio: unset !important;
-  height: auto !important;
-  padding: 0 !important;
-  background: #000 !important;
-  border-radius: 14px !important;
-  overflow: hidden !important;
-  position: static !important;
-}
-
-/* الـ yt-wrapper هو اللي يتحكم في الحجم */
-#videoModal .yt-wrapper {
-  width: 100% !important;
-  aspect-ratio: 16/9 !important;
-  max-height: 70vh !important;
-  border-radius: 14px !important;
-  overflow: hidden !important;
-  background: #000 !important;
-  position: relative !important;
-}
-
-/* الفيديو والـ iframe جوا yt-wrapper يملوه بالكامل */
-#videoModal .yt-wrapper video,
-#videoModal .yt-wrapper iframe,
-#videoModal .yt-wrapper .youtube-iframe {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-height: none !important;
-  aspect-ratio: unset !important;
-  object-fit: contain !important;
-  border-radius: 0 !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-}
-
-/* على موبايل */
-@media (max-width: 768px) {
-  #videoModal .yt-wrapper {
-    max-height: 56vw !important;
-    border-radius: 0 !important;
-  }
-  #videoModal .video-player-container:has(> .yt-wrapper) {
-    border-radius: 0 !important;
-  }
-}
