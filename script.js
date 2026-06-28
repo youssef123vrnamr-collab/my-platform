@@ -425,7 +425,7 @@ async function isAdminUser(userId) {
   };
 
   // ========== User Data Management ==========
-  async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
+  async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
   async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
@@ -1231,12 +1231,14 @@ async function updateAdminUI() {
         let duration = v.duration ? formatDuration(v.duration) : "";
         let thumb = v.thumbnail;
         if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
+        if (!thumb && v.type === "gdrive" && v.fileId) thumb = `https://drive.google.com/thumbnail?id=${v.fileId}&sz=w400`;
         let thumbHtml = thumb ? `<img src="${thumb}" alt="${escapeHtml(v.title)}" class="bg-image" width="400" height="225" loading="lazy" onerror="if(this.src.includes('hqdefault')){this.src=this.src.replace('hqdefault','mqdefault');}else{this.style.display='none';this.parentNode.querySelector('.fallback-icon').style.display='flex';}">` : "";
         return `<div class="video-card" onclick="openPaidCourseModal('${courseId}')" style="cursor:pointer"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas fa-film"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}<div style="position:absolute;top:7px;right:7px;z-index:5;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:.18rem .55rem;border-radius:8px;font-size:.72rem;font-weight:700;display:flex;align-items:center;gap:.3rem;box-shadow:0 2px 8px rgba(245,158,11,.5)"><i class="fas fa-lock" style="font-size:.65rem"></i> مدفوع</div><div class="play-overlay"><div class="play-btn" style="background:rgba(245,158,11,.85);border-color:rgba(255,255,255,.9)"><i class="fas fa-lock"></i></div></div></div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)}</h4><div style="display:flex;align-items:center;gap:.35rem;margin-top:.3rem;font-size:.78rem;color:#f59e0b;font-weight:600"><i class="fas fa-graduation-cap"></i> ${courseTitle}${coursePrice ? ' · ' + coursePrice + ' جنيه' : ''}</div></div></div>`;
       }
       let duration = v.duration ? formatDuration(v.duration) : "";
       let thumb = v.thumbnail;
       if (!thumb && v.type === "youtube") thumb = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
+      if (!thumb && v.type === "gdrive" && v.fileId) thumb = `https://drive.google.com/thumbnail?id=${v.fileId}&sz=w400`;
       let hasExam = exams.some(e => e.videoId === v.id);
       let adminButtons = isAdmin ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteVideo('${v.id}', '${v.publicId || ""}')"><i class="fas fa-trash"></i> حذف</button><button class="edit-title-btn" onclick="event.stopPropagation(); editVideoTitle('${v.id}')"><i class="fas fa-edit"></i> تعديل</button><button class="private-toggle-btn" onclick="event.stopPropagation(); togglePrivate('${v.id}', ${v.private || false})"><i class="fas ${v.private ? 'fa-lock' : 'fa-lock-open'}"></i> ${v.private ? 'خاص' : 'عام'}</button>` : "";
       let privateBadge = v.private ? '<div class="private-badge"><i class="fas fa-lock"></i> خاص</div>' : "";
@@ -2458,7 +2460,7 @@ async function updateAdminUI() {
   }
 }
   function closeChat() { document.getElementById("chatModal").classList.remove("active"); document.body.style.overflow = ""; if(window.teardownChatKeyboard) teardownChatKeyboard("chatModal"); if (currentAudio) { currentAudio.pause(); currentAudio = null; } removePresence(); if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; } }
-  async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!name) { SoundEffects.error(); showToast("⚠️ أدخل اسمك الكامل"); return; } if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-20 حرف) ولا يحتوي على رموز"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح — اختر الدولة وأدخل الأرقام بدون صفر في البداية"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
+  async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!name) { SoundEffects.error(); showToast("⚠️ أدخل اسمك الكامل"); return; } if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-20 حرف) ولا يحتوي على رموز"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح — اختر الدولة وأدخل الأرقام بدون صفر في البداية"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); setTimeout(function(){ document.dispatchEvent(new Event("userLoggedIn")); }, 1500); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   // loadUserDashboard() — يتعمل بعد تسجيل دخول ناجح فقط
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone && !data.senderPhone.includes('@')) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
@@ -2635,7 +2637,8 @@ async function updateAdminUI() {
       const title = prompt("أدخل عنوان الفيديو:", "فيديو من Google Drive");
       if (!title) return;
       const description = prompt("أدخل وصف الفيديو (اختياري):", "");
-      const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "gdrive", fileId: fileId, thumbnail: "", createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false };
+      const gdriveThumbnail = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+      const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "gdrive", fileId: fileId, thumbnail: gdriveThumbnail, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false };
       try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو Google Drive"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); }
       return;
     }
@@ -2856,7 +2859,7 @@ async function updateAdminUI() {
   // تحقق من الحالة عند التحميل
   window.addEventListener("load", function() { setTimeout(updateInstallMenuVisibility, 1000); });
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500);
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
 
         } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
@@ -3311,7 +3314,21 @@ async function editCourse(courseId) {
   const cplEl = document.getElementById("coursePaymentLink");
   if (cplEl) cplEl.value = data.paymentLink || "";
   const imgEl = document.getElementById("courseImageUrl");
-  if (imgEl) { imgEl.value = data.imageUrl || ""; previewCourseImage(data.imageUrl || ""); }
+  if (imgEl) {
+    // لو مفيش imageUrl محفوظ، جيب thumbnail أول فيديو في الكورس تلقائياً
+    let autoThumb = data.imageUrl || "";
+    if (!autoThumb && data.videoIds && data.videoIds.length > 0) {
+      for (const vid of data.videoIds) {
+        const v = videos.find(x => x.id === vid);
+        if (!v) continue;
+        if (v.thumbnail) { autoThumb = v.thumbnail; break; }
+        if (v.type === "youtube" && v.videoId) { autoThumb = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`; break; }
+        if (v.type === "gdrive" && v.fileId) { autoThumb = `https://drive.google.com/thumbnail?id=${v.fileId}&sz=w400`; break; }
+      }
+    }
+    imgEl.value = data.imageUrl || "";
+    previewCourseImage(autoThumb);
+  }
   currentEditingCourseId = courseId;
   const container = document.getElementById("courseVideosChecklist");
   container.innerHTML = "";
@@ -3589,6 +3606,126 @@ async function openStudentProgress() {
   }
 }
 
+
+// ======= تعديل البروفايل =======
+function openEditProfileModal() {
+  buildEditProfileModal();
+  const nameEl = document.getElementById('epName');
+  const phoneEl = document.getElementById('epPhone');
+  if (nameEl) nameEl.value = currentUser || '';
+  if (phoneEl) phoneEl.value = currentUserPhone || '';
+  if (currentUserId) {
+    db.collection('user_progress').doc(currentUserId).get().then(doc => {
+      if (doc.exists) {
+        const d = doc.data();
+        const natEl = document.getElementById('epNationality');
+        const countryEl = document.getElementById('epCountry');
+        const photoEl = document.getElementById('epPhotoUrl');
+        if (natEl) natEl.value = d.nationality || '';
+        if (countryEl) countryEl.value = d.country || '';
+        if (photoEl) photoEl.value = d.photoUrl || '';
+        updateEpPhotoPreview(d.photoUrl || '');
+      }
+    }).catch(() => {});
+  }
+  document.getElementById('editProfileModal').classList.add('active');
+}
+
+function closeEditProfileModal() {
+  const m = document.getElementById('editProfileModal');
+  if (m) m.classList.remove('active');
+}
+
+function updateEpPhotoPreview(url) {
+  const prev = document.getElementById('epPhotoPrev');
+  if (!prev) return;
+  if (url && url.trim()) {
+    const converted = (typeof convertDriveUrl === 'function') ? convertDriveUrl(url.trim()) : url.trim();
+    prev.style.display = 'flex';
+    prev.innerHTML = '<img src="' + converted + '" alt="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid rgba(99,102,241,.5);" onerror="this.parentNode.innerHTML=\'<span style=color:#ef4444;font-size:.8rem>رابط غير صحيح</span>\'">';
+  } else {
+    prev.innerHTML = '';
+    prev.style.display = 'none';
+  }
+}
+
+async function saveEditProfile() {
+  if (!currentUserId) { showToast('\u26a0\ufe0f سجل دخولك أولاً'); return; }
+  const name = (document.getElementById('epName').value || '').trim();
+  const photoUrl = (document.getElementById('epPhotoUrl').value || '').trim();
+  const nationality = (document.getElementById('epNationality').value || '').trim();
+  const country = (document.getElementById('epCountry').value || '').trim();
+  if (!name) { showToast('\u26a0\ufe0f أدخل اسمك أولاً'); return; }
+  if (name.length < 2 || name.length > 50) { showToast('\u26a0\ufe0f الاسم من 2 إلى 50 حرف'); return; }
+  try {
+    const patch = {
+      username: name,
+      nationality: nationality,
+      country: country,
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (photoUrl) patch.photoUrl = photoUrl;
+    else patch.photoUrl = firebase.firestore.FieldValue.delete();
+    await db.collection('user_progress').doc(currentUserId).set(patch, { merge: true });
+    currentUser = name;
+    localStorage.setItem('falak_username', name);
+    showToast('\u2705 تم حفظ البروفايل');
+    closeEditProfileModal();
+    if (document.getElementById('studentProgressModal').classList.contains('active')) {
+      loadStudentProgressData({ name: currentUser, phone: currentUserPhone, userId: currentUserId })
+        .then(renderStudentProgress).catch(() => {});
+    }
+  } catch(e) {
+    console.error('saveEditProfile error:', e);
+    showToast('\u274c فشل الحفظ، حاول تاني');
+  }
+}
+
+function buildEditProfileModal() {
+  if (document.getElementById('editProfileModal')) return;
+  const div = document.createElement('div');
+  div.className = 'modal';
+  div.id = 'editProfileModal';
+  div.innerHTML = `
+    <div class="modal-content" style="max-width:460px;">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;"><i class="fas fa-user-edit" style="color:#a5b4fc"></i> تعديل البروفايل</h3>
+        <button class="modal-close" onclick="closeEditProfileModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
+        <div id="epPhotoPrev" style="display:none;justify-content:center;margin-bottom:.5rem"></div>
+        <div class="form-group">
+          <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">📸 رابط صورة البروفايل</label>
+          <input id="epPhotoUrl" type="url" placeholder="https://..." style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit" oninput="updateEpPhotoPreview(this.value)">
+          <div style="font-size:.74rem;color:#6b7280;margin-top:.3rem">Google Drive: افتح الصورة → مشاركة → أي شخص لديه الرابط → انسخ الرابط</div>
+        </div>
+        <div class="form-group">
+          <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">👤 الاسم الكامل</label>
+          <input id="epName" type="text" placeholder="اسمك الكامل" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit">
+        </div>
+        <div class="form-group">
+          <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">📱 رقم الهاتف</label>
+          <input id="epPhone" type="tel" disabled style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#666;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit">
+          <div style="font-size:.74rem;color:#6b7280;margin-top:.2rem">رقم الهاتف لا يمكن تغييره</div>
+        </div>
+        <div class="form-group">
+          <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">🌍 الجنسية</label>
+          <input id="epNationality" type="text" placeholder="مثال: مصري، سعودي" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit">
+        </div>
+        <div class="form-group">
+          <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">🗺️ البلد</label>
+          <input id="epCountry" type="text" placeholder="مثال: مصر، السعودية" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit">
+        </div>
+        <button onclick="saveEditProfile()" style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;padding:.8rem;border-radius:.75rem;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit">
+          <i class="fas fa-save"></i> حفظ البروفايل
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+}
+
+setTimeout(buildEditProfileModal, 800);
+
 function closeStudentProgress() {
   document.getElementById('studentProgressModal').classList.remove('active');
   __studentDetailFor = null;
@@ -3660,7 +3797,14 @@ async function loadStudentProgressData(student) {
   if (student.userId) {
     try {
       const userDoc = await db.collection("user_progress").doc(student.userId).get();
-      if (userDoc.exists) points = userDoc.data().points || 0;
+      if (userDoc.exists) {
+        const udata = userDoc.data();
+        points = udata.points || 0;
+        // حقول البروفايل الإضافية
+        if (udata.photoUrl) student.photoUrl = udata.photoUrl;
+        if (udata.nationality) student.nationality = udata.nationality;
+        if (udata.country) student.country = udata.country;
+      }
     } catch (e) { /* silent */ }
   }
 
@@ -3794,15 +3938,36 @@ function renderStudentProgress(data) {
   const isOtherStudent = !!__studentDetailFor && student.userId !== currentUserId;
   const friendBtnHtml = isOtherStudent ? `<button class="btn btn-friend-add" id="hero-friend-btn" onclick="sendFriendRequest(decodeURIComponent('${encodeURIComponent(student.userId || '')}'),decodeURIComponent('${encodeURIComponent(displayName)}'), this)" style="margin-top:.75rem;display:inline-flex;align-items:center;gap:.5rem;"><i class="fas fa-user-plus"></i> إضافة صديق</button>` : '';
 
+  // Avatar: صورة البروفايل لو موجودة
+  const avatarUrl = student.photoUrl || "";
+  const avatarHtml = avatarUrl
+    ? `<div class="progress-avatar" style="background:none;padding:0;overflow:hidden;"><img src="${escapeHtml(avatarUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.innerHTML='${escapeHtml(initial)}'"></div>`
+    : `<div class="progress-avatar">${escapeHtml(initial)}</div>`;
+  
+  // زر تعديل البروفايل — يظهر فقط لصاحب الحساب
+  const isOwn = !__studentDetailFor || student.userId === currentUserId;
+  const editProfileBtn = isOwn ? `
+    <button onclick="openEditProfileModal()" style="margin-top:.6rem;display:inline-flex;align-items:center;gap:.45rem;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;padding:.35rem .85rem;border-radius:.65rem;font-size:.8rem;cursor:pointer;font-family:inherit;">
+      <i class="fas fa-user-edit"></i> تعديل البروفايل
+    </button>` : "";
+
+  // بيانات إضافية
+  const extraInfo = [];
+  if (student.nationality) extraInfo.push(`<span style="color:#94a3b8;font-size:.8rem"><i class="fas fa-flag" style="margin-left:.3rem"></i>${escapeHtml(student.nationality)}</span>`);
+  if (student.country) extraInfo.push(`<span style="color:#94a3b8;font-size:.8rem"><i class="fas fa-map-marker-alt" style="margin-left:.3rem"></i>${escapeHtml(student.country)}</span>`);
+  const extraHtml = extraInfo.length ? `<div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.35rem">${extraInfo.join('')}</div>` : '';
+
   const hero = `
     <div class="progress-hero">
       <div class="progress-hero-row">
-        <div class="progress-avatar">${escapeHtml(initial)}</div>
+        ${avatarHtml}
         <div class="progress-hero-info">
           <h3>${escapeHtml(displayName)}</h3>
           <p>${student.phone ? escapeHtml(student.phone) : 'رحلتك في عالم الفلك والفضاء'}</p>
+          ${extraHtml}
           <span class="progress-level-badge"><i class="fas ${level.icon}"></i> ${level.name}</span>
           ${friendBtnHtml}
+          ${editProfileBtn}
         </div>
       </div>
     </div>`;
@@ -9903,19 +10068,9 @@ function slStopAllAnimations() {
       _persona = getById(saved);
       setTimeout(updatePersonaUI, 1200);
     } else {
-      // انتظار فتح AI chat لعرض Modal الاختيار
-      var targetModal = document.getElementById('aiChatModal');
-      if (targetModal) {
-        var obs = new MutationObserver(function(muts) {
-          muts.forEach(function(mut) {
-            if (mut.attributeName === 'class' && targetModal.classList.contains('active') && !getSavedId()) {
-              obs.disconnect();
-              setTimeout(function() { buildGrid(); document.getElementById('aiPersonaModal').classList.add('active'); }, 300);
-            }
-          });
-        });
-        obs.observe(targetModal, { attributes: true });
-      }
+      // اختيار الشخصية الافتراضية تلقائياً بدون إظهار المودال
+      _persona = AI_PERSONAS[0];
+      setTimeout(updatePersonaUI, 1200);
     }
     patchSendAI();
     patchVoiceChat();
