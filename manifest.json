@@ -1,60 +1,63 @@
 {
-  "id": "/",
-  "name": "منصة الفلك المتكاملة",
-  "short_name": "فلك",
-  "description": "تعلم علم الفلك والفضاء بمحتوى عربي احترافي — كورسات، فيديوهات، وشهادات",
-  "start_url": "/?utm_source=pwa",
+  "name": "Astronomy and Space",
+  "short_name": "Astronomy",
+  "description": "منصة الفلك المتكاملة — تعلم علم الفلك وعلوم الفضاء",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-  "orientation": "any",
-  "background_color": "#0f0a1a",
+  "orientation": "portrait",
+  "background_color": "#0a0512",
   "theme_color": "#6366f1",
   "lang": "ar",
   "dir": "rtl",
-  "categories": ["education", "science"],
-  "prefer_related_applications": false,
   "icons": [
-    { "src": "/48.png",            "sizes": "48x48",   "type": "image/png", "purpose": "any" },
-    { "src": "/72.png",            "sizes": "72x72",   "type": "image/png", "purpose": "any" },
-    { "src": "/96.png",            "sizes": "96x96",   "type": "image/png", "purpose": "any" },
-    { "src": "/192.png",           "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/256.png",           "sizes": "256x256", "type": "image/png", "purpose": "any" },
-    { "src": "/512-maskable.png",  "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/192-maskable.png",  "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/512-maskable.png",  "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ],
-  "screenshots": [
-    { "src": "/512-maskable.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" },
-    { "src": "/512-maskable.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide" }
-  ],
-  "shortcuts": [
     {
-      "name": "مكتبة الفيديوهات",
-      "short_name": "المكتبة",
-      "description": "افتح مكتبة الفيديوهات مباشرة",
-      "url": "/?section=videos",
-      "icons": [{ "src": "/192.png", "sizes": "192x192", "type": "image/png" }]
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "name": "المساعد الذكي",
-      "short_name": "AI",
-      "description": "تحدث مع المساعد الذكي",
-      "url": "/?section=ai",
-      "icons": [{ "src": "/192.png", "sizes": "192x192", "type": "image/png" }]
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/youssef123vrnamr-collab/my-platform/main/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ],
-  "share_target": {
-    "action": "/",
-    "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "handle_links": "preferred",
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  }
+  ]
 }
