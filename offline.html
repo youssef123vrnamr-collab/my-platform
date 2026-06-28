@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astronomy and Space — غير متصل</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0a0512;
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    overflow: hidden;
+    position: relative;
+  }
+  canvas { position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .content { position:relative; z-index:1; max-width: 360px; }
+  .icon { font-size: 4.5rem; margin-bottom: 1.5rem; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.6rem; color: #e2e8f0; }
+  p { color: #94a3b8; font-size: 0.9rem; line-height: 1.7; margin-bottom: 2rem; }
+  .btn {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    padding: 0.9rem 2rem;
+    border-radius: 14px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 25px rgba(99,102,241,0.4);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99,102,241,0.5); }
+  .app-name { font-size: 0.75rem; color: rgba(99,102,241,0.6); letter-spacing: 3px; text-transform: uppercase; margin-top: 2rem; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="content">
+  <div class="icon">🌌</div>
+  <h1>لا يوجد اتصال بالإنترنت</h1>
+  <p>تحتاج إلى اتصال بالإنترنت لتحميل محتوى المنصة والفيديوهات. تأكد من اتصالك ثم حاول مرة أخرى.</p>
+  <button class="btn" onclick="location.reload()">
+    <span>🔄</span> إعادة المحاولة
+  </button>
+  <div class="app-name">Astronomy and Space</div>
+</div>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight;
+  const stars = Array.from({length:120}, () => ({
+    x: Math.random()*c.width, y: Math.random()*c.height,
+    r: Math.random()*1.5+0.3, o: Math.random(), s: Math.random()*0.01+0.003
+  }));
+  function draw() {
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s => {
+      s.o += s.s; if(s.o>1||s.o<0) s.s*=-1;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${s.o})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('online', () => location.reload());
+</script>
+</body>
+</html>
