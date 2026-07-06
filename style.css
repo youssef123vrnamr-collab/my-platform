@@ -27,8 +27,7 @@ button, [onclick] {
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
     .settings-icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.5); border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #fff; font-size: 1.2rem; margin-left: 8px; }
-    @media (hover:hover) and (pointer:fine) { .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); } }
-    .settings-icon-btn:active { background: rgba(99,102,241,0.35); }
+    .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .center-action { flex: 1; display: flex; justify-content: center; }
@@ -933,11 +932,10 @@ button, [onclick] {
 
     /* ===== Private Admin Chat (PAC) styles ===== */
     .pac-modal-content { max-width: 760px !important; width: 92%; height: 86vh; max-height: 86vh; display:flex; flex-direction:column; padding: 0; overflow: hidden; }
-    .pac-header { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.08); background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(16,185,129,.04)); flex-wrap: nowrap !important; align-items: flex-start !important; }
-    .pac-header .modal-header-left { min-width: 0; flex: 1 1 auto; }
+    .pac-header { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.08); background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(16,185,129,.04)); }
     .pac-header h3 { display:flex; align-items:center; gap:.6rem; margin:0; font-size:1.15rem; font-weight:900; }
     .pac-sub { margin: .35rem 0 0; font-size:.78rem; color:#9ca3af; line-height:1.5; }
-    .pac-header-actions { display:flex; align-items:center; gap:.5rem; align-self:flex-start; flex-shrink:0; margin-inline-start:.5rem; }
+    .pac-header-actions { display:flex; align-items:center; gap:.5rem; align-self:flex-start; flex-shrink:0; }
     .pac-back-btn { width:38px; height:38px; border-radius:50%; border:1px solid rgba(34,197,94,.4); background:rgba(34,197,94,.12); color:#22c55e; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: all .25s; }
     .pac-back-btn:hover { background:rgba(34,197,94,.25); transform: translateX(2px); }
     .pac-body { flex:1; min-height:0; padding:0; display:flex; flex-direction:column; }
