@@ -3326,8 +3326,15 @@ async function deleteCourseVideoExam(examId, videoId, courseId, courseTitle) {
 }
 
 async function showCoursesList() {
+  // إظهار مودال تحميل فوري عشان الضغطة تدي إحساس فوري وملهاش "تهنيج"
+  const loadingModal = document.createElement("div");
+  loadingModal.className = "modal active courses-list-modal";
+  loadingModal.id = "coursesListLoadingModal";
+  loadingModal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3><i class="fas fa-layer-group"></i> قائمة الكورسات</h3><button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="text-align:center;padding:2.5rem 1rem;color:#aaa"><i class="fas fa-spinner fa-spin" style="font-size:1.8rem"></i><p style="margin-top:.75rem">جاري تحميل الكورسات...</p></div></div></div>`;
+  document.body.appendChild(loadingModal);
+
   const coursesSnap = await db.collection("courses").get();
-  if (coursesSnap.empty) { showToast("لا توجد كورسات بعد"); return; }
+  if (coursesSnap.empty) { loadingModal.remove(); showToast("لا توجد كورسات بعد"); return; }
 
   // جلب اشتراكات المستخدم الحالي
   let userEnrolledCourseIds = new Set();
@@ -3377,6 +3384,7 @@ async function showCoursesList() {
     </div>`;
   }
   listHtml += `</div>`;
+  loadingModal.remove();
   const modal = document.createElement("div");
   modal.className = "modal active courses-list-modal";
   modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3><i class="fas fa-layer-group"></i> قائمة الكورسات</h3><button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button></div><div class="modal-body">${listHtml}</div></div>`;
