@@ -1750,9 +1750,8 @@ async function updateAdminUI() {
       let snapUid;
       try {
         snapUid = await db.collection("admin_accounts_uid").get();
-        alert("✅ نجح الجلب\nعدد الحسابات بالـ UID: " + snapUid.size + "\nمن داخل الكاش؟ " + (snapUid.metadata ? snapUid.metadata.fromCache : "غير معروف"));
       } catch(uidErr) {
-        alert("❌ فشل جلب حسابات الـ UID\nرسالة الخطأ: " + uidErr.message + "\nكود الخطأ: " + (uidErr.code || "غير محدد"));
+        console.error("فشل جلب حسابات الـ UID", uidErr);
         throw uidErr;
       }
       snapUid.forEach(doc => {
@@ -1817,17 +1816,75 @@ async function updateAdminUI() {
     const uid = (inp && inp.value) ? inp.value.trim() : "";
     const role = (roleSel && roleSel.value) || "admin";
     if (!uid || uid.length < 10) { SoundEffects.error(); showToast("❌ أدخل UID صالح"); return; }
+    const done = await addAdminByUidValue(uid, role);
+    if (done && inp) inp.value = "";
+  }
+  // إضافة مشرف مباشرة بالـ UID (مستخدمة من زر الإدخال اليدوي وأيضاً من قائمة اختيار المستخدمين المسجلين)
+  async function addAdminByUidValue(uid, role){
+    if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return false; }
+    role = role || "admin";
+    if (!uid || uid.length < 10) { SoundEffects.error(); showToast("❌ UID غير صالح"); return false; }
     try {
       const ref = db.collection("admin_accounts_uid").doc(uid);
       const ex = await ref.get();
-      if (ex.exists) { showToast("⚠️ هذا الـ UID مسجَّل بالفعل"); return; }
+      if (ex.exists) { showToast("⚠️ هذا الحساب مشرف بالفعل"); return false; }
       await ref.set({ uid: uid, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
-      if (inp) inp.value = "";
       SoundEffects.success();
-      showToast("✅ تمت إضافة المشرف بالـ UID");
+      showToast("✅ تمت إضافة المشرف");
       renderAdminAccountsList();
-    } catch(e){ console.error(e); showToast("❌ فشل الإضافة"); }
+      return true;
+    } catch(e){ console.error(e); showToast("❌ فشل الإضافة"); return false; }
   }
+
+  // ============================================================
+  // 👥 اختيار مشرف مباشرة من حسابات المستخدمين المسجّلين في المنصة
+  // ============================================================
+  let _adminAllPlatformUsers = null;
+  async function loadPlatformUsersForAdminPicker(force){
+    if (_adminAllPlatformUsers && !force) return _adminAllPlatformUsers;
+    const el = document.getElementById("adminUserSearchResults");
+    try {
+      const snap = await db.collection("user_progress").get();
+      const list = [];
+      snap.forEach(doc => {
+        const d = doc.data() || {};
+        const name = (d.username || d.name || d.displayName || "").trim();
+        if (!name) return;
+        list.push({ uid: doc.id, name: name, phone: d.phone || "" });
+      });
+      _adminAllPlatformUsers = list;
+    } catch(e) {
+      console.error("loadPlatformUsersForAdminPicker failed", e);
+      if (el) el.innerHTML = '<div style="color:#fca5a5;text-align:center;padding:.75rem">❌ فشل تحميل قائمة المستخدمين</div>';
+      _adminAllPlatformUsers = [];
+    }
+    return _adminAllPlatformUsers;
+  }
+  async function searchPlatformUsersForAdmin(){
+    const q = (document.getElementById("adminUserSearchInput")?.value || "").trim().toLowerCase();
+    const el = document.getElementById("adminUserSearchResults");
+    if (!el) return;
+    if (!q) { el.innerHTML = '<div style="color:#888;text-align:center;padding:.75rem;font-size:.85rem">اكتب اسم أو رقم هاتف المستخدم للبحث...</div>'; return; }
+    el.innerHTML = '<div style="text-align:center;color:#aaa;padding:.5rem"><i class="fas fa-spinner fa-spin"></i></div>';
+    const list = await loadPlatformUsersForAdminPicker(false);
+    const results = list.filter(u => u.name.toLowerCase().includes(q) || (u.phone || "").includes(q)).slice(0, 15);
+    if (!results.length) { el.innerHTML = '<div style="color:#888;text-align:center;padding:.75rem;font-size:.85rem">لا يوجد مستخدم بهذا الاسم</div>'; return; }
+    const roleSel = document.getElementById("newAdminUidRoleSelect");
+    const role = (roleSel && roleSel.value) || "admin";
+    el.innerHTML = results.map(u => {
+      const initial = (u.name || "?").trim().charAt(0).toUpperCase();
+      return '<div style="display:flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.04);padding:.6rem .75rem;border-radius:10px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)">'
+        + '<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#ec4899);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">'+escapeHtml(initial)+'</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(u.name)+'</div>'
+        + (u.phone ? '<div style="font-size:.75rem;color:#888">'+escapeHtml(u.phone)+'</div>' : '')
+        + '</div>'
+        + '<button onclick="addAdminByUidValue(\''+u.uid.replace(/'/g,"\\'")+'\', document.getElementById(\'newAdminUidRoleSelect\').value)" style="background:linear-gradient(135deg,#06b6d4,#6366f1);border:none;color:#fff;border-radius:10px;padding:.4rem .8rem;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-user-plus"></i> إضافة كمشرف</button>'
+        + '</div>';
+    }).join("");
+  }
+  window.searchPlatformUsersForAdmin = searchPlatformUsersForAdmin;
+  window.addAdminByUidValue = addAdminByUidValue;
   async function removeAdminAccount(email){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
     email = _normEmail(email);
