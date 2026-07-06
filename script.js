@@ -1716,6 +1716,7 @@ async function updateAdminUI() {
     document.getElementById("setAdminsModal").classList.add("active");
     const inp = document.getElementById("newAdminEmailInput"); if (inp) inp.value = "";
     await renderAdminAccountsList();
+    renderAllPlatformUsersForAdmin();
   }
   function closeSetAdminsModal(){ document.getElementById("setAdminsModal").classList.remove("active"); }
   async function renderAdminAccountsList(){
@@ -1842,7 +1843,6 @@ async function updateAdminUI() {
   let _adminAllPlatformUsers = null;
   async function loadPlatformUsersForAdminPicker(force){
     if (_adminAllPlatformUsers && !force) return _adminAllPlatformUsers;
-    const el = document.getElementById("adminUserSearchResults");
     try {
       const snap = await db.collection("user_progress").get();
       const list = [];
@@ -1852,26 +1852,18 @@ async function updateAdminUI() {
         if (!name) return;
         list.push({ uid: doc.id, name: name, phone: d.phone || "" });
       });
+      list.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
       _adminAllPlatformUsers = list;
     } catch(e) {
       console.error("loadPlatformUsersForAdminPicker failed", e);
-      if (el) el.innerHTML = '<div style="color:#fca5a5;text-align:center;padding:.75rem">❌ فشل تحميل قائمة المستخدمين</div>';
       _adminAllPlatformUsers = [];
+      throw e;
     }
     return _adminAllPlatformUsers;
   }
-  async function searchPlatformUsersForAdmin(){
-    const q = (document.getElementById("adminUserSearchInput")?.value || "").trim().toLowerCase();
-    const el = document.getElementById("adminUserSearchResults");
-    if (!el) return;
-    if (!q) { el.innerHTML = '<div style="color:#888;text-align:center;padding:.75rem;font-size:.85rem">اكتب اسم أو رقم هاتف المستخدم للبحث...</div>'; return; }
-    el.innerHTML = '<div style="text-align:center;color:#aaa;padding:.5rem"><i class="fas fa-spinner fa-spin"></i></div>';
-    const list = await loadPlatformUsersForAdminPicker(false);
-    const results = list.filter(u => u.name.toLowerCase().includes(q) || (u.phone || "").includes(q)).slice(0, 15);
-    if (!results.length) { el.innerHTML = '<div style="color:#888;text-align:center;padding:.75rem;font-size:.85rem">لا يوجد مستخدم بهذا الاسم</div>'; return; }
-    const roleSel = document.getElementById("newAdminUidRoleSelect");
-    const role = (roleSel && roleSel.value) || "admin";
-    el.innerHTML = results.map(u => {
+  function renderPlatformUserRows(list){
+    if (!list.length) { return '<div style="color:#888;text-align:center;padding:.75rem;font-size:.85rem">لا يوجد مستخدمون مسجّلون بعد</div>'; }
+    return list.map(u => {
       const initial = (u.name || "?").trim().charAt(0).toUpperCase();
       return '<div style="display:flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.04);padding:.6rem .75rem;border-radius:10px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)">'
         + '<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#ec4899);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">'+escapeHtml(initial)+'</div>'
@@ -1883,7 +1875,30 @@ async function updateAdminUI() {
         + '</div>';
     }).join("");
   }
+  async function renderAllPlatformUsersForAdmin(){
+    const el = document.getElementById("adminUserSearchResults");
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;color:#aaa;padding:.5rem"><i class="fas fa-spinner fa-spin"></i> جاري تحميل كل الحسابات...</div>';
+    try {
+      const list = await loadPlatformUsersForAdminPicker(true);
+      el.innerHTML = renderPlatformUserRows(list);
+    } catch(e) {
+      el.innerHTML = '<div style="color:#fca5a5;text-align:center;padding:.75rem">❌ فشل تحميل قائمة المستخدمين</div>';
+    }
+  }
+  async function searchPlatformUsersForAdmin(){
+    const q = (document.getElementById("adminUserSearchInput")?.value || "").trim().toLowerCase();
+    const el = document.getElementById("adminUserSearchResults");
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;color:#aaa;padding:.5rem"><i class="fas fa-spinner fa-spin"></i></div>';
+    let list;
+    try { list = await loadPlatformUsersForAdminPicker(false); }
+    catch(e) { el.innerHTML = '<div style="color:#fca5a5;text-align:center;padding:.75rem">❌ فشل تحميل قائمة المستخدمين</div>'; return; }
+    const filtered = q ? list.filter(u => u.name.toLowerCase().includes(q) || (u.phone || "").includes(q)) : list;
+    el.innerHTML = renderPlatformUserRows(filtered);
+  }
   window.searchPlatformUsersForAdmin = searchPlatformUsersForAdmin;
+  window.renderAllPlatformUsersForAdmin = renderAllPlatformUsersForAdmin;
   window.addAdminByUidValue = addAdminByUidValue;
   async function removeAdminAccount(email){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
