@@ -27,7 +27,8 @@ button, [onclick] {
     .brand-text { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
     .brand-text h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #fff, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
     .settings-icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(99,102,241,0.5); border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; color: #fff; font-size: 1.2rem; margin-left: 8px; }
-    .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); }
+    @media (hover:hover) and (pointer:fine) { .settings-icon-btn:hover { background: rgba(99,102,241,0.3); transform: rotate(30deg); } }
+    .settings-icon-btn:active { background: rgba(99,102,241,0.35); }
     @keyframes glow { 0%,100% { box-shadow: 0 10px 30px rgba(99,102,241,.4); } 50% { box-shadow: 0 10px 40px rgba(236,72,153,.6); } }
     .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
     .center-action { flex: 1; display: flex; justify-content: center; }

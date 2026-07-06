@@ -408,6 +408,15 @@ async function isAdminUser(userId) {
   function formatDuration(sec) { if (!sec && sec !== 0) return "0:00"; const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ":" + (s < 10 ? "0" : "") + s; }
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
+  // أداة عامة لتأخير تنفيذ الدوال (debounce) — بتقلل من تهنيج الواجهة أثناء الكتابة السريعة في خانات البحث
+  function debounce(fn, delay) {
+    let t = null;
+    return function(...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), delay || 250);
+    };
+  }
+  window.debounce = debounce;
 
   // ========== Sound Effects (مبسط) ==========
   const SoundEffects = {
@@ -1821,20 +1830,21 @@ async function updateAdminUI() {
     if (done && inp) inp.value = "";
   }
   // إضافة مشرف مباشرة بالـ UID (مستخدمة من زر الإدخال اليدوي وأيضاً من قائمة اختيار المستخدمين المسجلين)
-  async function addAdminByUidValue(uid, role){
+  async function addAdminByUidValue(uid, role, btnEl){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return false; }
     role = role || "admin";
     if (!uid || uid.length < 10) { SoundEffects.error(); showToast("❌ UID غير صالح"); return false; }
+    if (btnEl) { if (btnEl.disabled) return false; btnEl.disabled = true; btnEl.style.opacity = '.6'; btnEl.style.cursor = 'not-allowed'; }
     try {
       const ref = db.collection("admin_accounts_uid").doc(uid);
       const ex = await ref.get();
-      if (ex.exists) { showToast("⚠️ هذا الحساب مشرف بالفعل"); return false; }
+      if (ex.exists) { showToast("⚠️ هذا الحساب مشرف بالفعل"); if (btnEl) { btnEl.disabled = false; btnEl.style.opacity = ''; btnEl.style.cursor = ''; } return false; }
       await ref.set({ uid: uid, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
       SoundEffects.success();
       showToast("✅ تمت إضافة المشرف");
       renderAdminAccountsList();
       return true;
-    } catch(e){ console.error(e); showToast("❌ فشل الإضافة"); return false; }
+    } catch(e){ console.error(e); showToast("❌ فشل الإضافة"); if (btnEl) { btnEl.disabled = false; btnEl.style.opacity = ''; btnEl.style.cursor = ''; } return false; }
   }
 
   // ============================================================
@@ -1871,7 +1881,7 @@ async function updateAdminUI() {
         + '<div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(u.name)+'</div>'
         + (u.phone ? '<div style="font-size:.75rem;color:#888">'+escapeHtml(u.phone)+'</div>' : '')
         + '</div>'
-        + '<button onclick="addAdminByUidValue(\''+u.uid.replace(/'/g,"\\'")+'\', document.getElementById(\'newAdminUidRoleSelect\').value)" style="background:linear-gradient(135deg,#06b6d4,#6366f1);border:none;color:#fff;border-radius:10px;padding:.4rem .8rem;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-user-plus"></i> إضافة كمشرف</button>'
+        + '<button onclick="addAdminByUidValue(\''+u.uid.replace(/'/g,"\\'")+'\', document.getElementById(\'newAdminUidRoleSelect\').value, this)" style="background:linear-gradient(135deg,#06b6d4,#6366f1);border:none;color:#fff;border-radius:10px;padding:.4rem .8rem;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-user-plus"></i> إضافة كمشرف</button>'
         + '</div>';
     }).join("");
   }
@@ -1897,7 +1907,8 @@ async function updateAdminUI() {
     const filtered = q ? list.filter(u => u.name.toLowerCase().includes(q) || (u.phone || "").includes(q)) : list;
     el.innerHTML = renderPlatformUserRows(filtered);
   }
-  window.searchPlatformUsersForAdmin = searchPlatformUsersForAdmin;
+  const searchPlatformUsersForAdminDebounced = debounce(searchPlatformUsersForAdmin, 220);
+  window.searchPlatformUsersForAdmin = searchPlatformUsersForAdminDebounced;
   window.renderAllPlatformUsersForAdmin = renderAllPlatformUsersForAdmin;
   window.addAdminByUidValue = addAdminByUidValue;
   async function removeAdminAccount(email){
@@ -2945,7 +2956,6 @@ async function updateAdminUI() {
   function closeAppsModal() { document.getElementById("appsModal").classList.remove("active"); }
 
   document.addEventListener("DOMContentLoaded", function() {
-    const dropdownBtn = document.getElementById("settingsDropdownBtn"); if (dropdownBtn) dropdownBtn.addEventListener("click", toggleSettingsMenu);
     document.addEventListener("click", closeSettingsMenuOnClickOutside);
   });
 
@@ -10855,7 +10865,7 @@ function switchFriendTab(tab) {
   }
 }
 
-function searchStudentsForFriend() {
+function searchStudentsForFriendImpl() {
   const q = (document.getElementById('friendSearchInput')?.value || '').trim().toLowerCase();
   const container = document.getElementById('friendSearchResults');
   if (!q) {
@@ -10875,6 +10885,8 @@ function searchStudentsForFriend() {
   }
   container.innerHTML = results.map(s => friendUserCard(s, 'search')).join('');
 }
+const searchStudentsForFriend = (typeof debounce === 'function') ? debounce(searchStudentsForFriendImpl, 200) : searchStudentsForFriendImpl;
+window.searchStudentsForFriend = searchStudentsForFriend;
 
 function friendUserCard(s, mode, status) {
   const initial = (s.name || '?').trim().charAt(0).toUpperCase();
