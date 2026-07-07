@@ -1725,53 +1725,73 @@ async function updateAdminUI() {
     try {
       const myEmail = _normEmail(auth.currentUser && auth.currentUser.email);
       const myUid = (auth.currentUser && auth.currentUser.uid) || null;
-      const rows = [];
 
-      // حسابات المشرفين بالبريد الإلكتروني
-      const snap = await db.collection(ADMIN_ACCOUNTS_COL).get();
-      snap.forEach(doc => {
+      const [emailSnap, uidSnap, accounts] = await Promise.all([
+        db.collection(ADMIN_ACCOUNTS_COL).get(),
+        db.collection("admin_accounts_uid").get(),
+        loadAdminPickerAccounts().catch(() => [])
+      ]);
+
+      // خريطة إيميل → UID مبنية من الحسابات المسجّلة فعلياً في المنصة (user_progress)
+      const emailToUid = {};
+      accounts.forEach(a => { if (a.email) emailToUid[a.email] = a.uid; });
+
+      // merged: key = identity موحّدة (UID لو معروف، وإلا الإيميل نفسه)
+      const merged = new Map();
+
+      uidSnap.forEach(doc => {
+        const d = doc.data() || {};
+        const uidVal = doc.id;
+        merged.set(uidVal, {
+          uid: uidVal,
+          email: _normEmail(d.email || "") || null,
+          role: d.role || "admin",
+          hasUidDoc: true,
+          hasEmailDoc: false
+        });
+      });
+
+      emailSnap.forEach(doc => {
         const d = doc.data() || {};
         const em = doc.id;
         const role = d.role || "admin";
-        const isMe = em === myEmail;
-        const roleBadge = role === "super_admin"
+        // حدّد الـ UID المرتبط بالإيميل ده لو موجود (من بيانات المستند نفسه أو من قائمة الحسابات)
+        const linkedUid = d.uid || emailToUid[em] || null;
+        const identity = linkedUid && merged.has(linkedUid) ? linkedUid : (linkedUid || ("email:" + em));
+        if (merged.has(identity)) {
+          const existing = merged.get(identity);
+          existing.email = em;
+          existing.hasEmailDoc = true;
+          if (role === "super_admin") existing.role = "super_admin";
+        } else {
+          merged.set(identity, {
+            uid: linkedUid || null,
+            email: em,
+            role,
+            hasUidDoc: false,
+            hasEmailDoc: true
+          });
+        }
+      });
+
+      if (!merged.size) { el.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem">لا توجد حسابات مسجّلة بعد.</div>'; return; }
+
+      const rows = Array.from(merged.values()).map(acc => {
+        const isMe = (acc.uid && myUid && acc.uid === myUid) || (acc.email && myEmail && acc.email === myEmail);
+        const roleBadge = acc.role === "super_admin"
           ? '<span style="background:rgba(168,85,247,.2);color:#c4b5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف رئيسي</span>'
           : '<span style="background:rgba(59,130,246,.2);color:#93c5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف</span>';
-        rows.push('<div style="display:flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.04);padding:.7rem .85rem;border-radius:10px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)">'
+        const label = acc.email || acc.uid || "";
+        const removeArg = "'" + (acc.uid || "").replace(/'/g,"\\'") + "','" + (acc.email || "").replace(/'/g,"\\'") + "'";
+        return '<div style="display:flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.04);padding:.7rem .85rem;border-radius:10px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)">'
           + '<div style="flex:1;min-width:0">'
-          + '<div style="color:#fff;direction:ltr;text-align:left;font-family:monospace;font-size:.92rem;overflow-wrap:anywhere">'+escapeHtml(em)+(isMe?' <span style="color:#86efac;font-size:.75rem">(أنت)</span>':'')+'</div>'
+          + '<div style="color:#fff;direction:ltr;text-align:left;font-family:monospace;font-size:.92rem;overflow-wrap:anywhere">'+escapeHtml(label)+(isMe?' <span style="color:#86efac;font-size:.75rem">(أنت)</span>':'')+'</div>'
           + '<div style="margin-top:.3rem">'+roleBadge+'</div>'
           + '</div>'
-          + '<button onclick="removeAdminAccount(\''+em.replace(/'/g,"\\'")+'\')" '+(isMe?'disabled title="لا يمكنك حذف نفسك"':'')+' style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;width:38px;height:38px;border-radius:8px;cursor:'+(isMe?'not-allowed':'pointer')+';opacity:'+(isMe?'.4':'1')+'"><i class="fas fa-trash"></i></button>'
-          + '</div>');
+          + '<button onclick="removeAdminAccountByUid('+removeArg+')" '+(isMe?'disabled title="لا يمكنك حذف نفسك"':'')+' style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;width:38px;height:38px;border-radius:8px;cursor:'+(isMe?'not-allowed':'pointer')+';opacity:'+(isMe?'.4':'1')+'"><i class="fas fa-trash"></i></button>'
+          + '</div>';
       });
 
-      // حسابات المشرفين بالـ UID
-      let snapUid;
-      try {
-        snapUid = await db.collection("admin_accounts_uid").get();
-      } catch(uidErr) {
-        console.error("فشل جلب حسابات الـ UID", uidErr);
-        throw uidErr;
-      }
-      snapUid.forEach(doc => {
-        const d = doc.data() || {};
-        const uidVal = doc.id;
-        const role = d.role || "admin";
-        const isMe = myUid && uidVal === myUid;
-        const roleBadge = role === "super_admin"
-          ? '<span style="background:rgba(168,85,247,.2);color:#c4b5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف رئيسي</span>'
-          : '<span style="background:rgba(59,130,246,.2);color:#93c5fd;padding:.2rem .6rem;border-radius:8px;font-size:.75rem">مشرف</span>';
-        rows.push('<div style="display:flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.04);padding:.7rem .85rem;border-radius:10px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)">'
-          + '<div style="flex:1;min-width:0">'
-          + '<div style="color:#fff;direction:ltr;text-align:left;font-family:monospace;font-size:.92rem;overflow-wrap:anywhere">'+escapeHtml(uidVal)+(isMe?' <span style="color:#86efac;font-size:.75rem">(أنت)</span>':'')+'</div>'
-          + '<div style="margin-top:.3rem">'+roleBadge+' <span style="background:rgba(34,211,238,.15);color:#67e8f9;padding:.2rem .5rem;border-radius:8px;font-size:.7rem;margin-right:.3rem">UID</span></div>'
-          + '</div>'
-          + '<button onclick="removeAdminAccountUid(\''+uidVal.replace(/'/g,"\\'")+'\')" '+(isMe?'disabled title="لا يمكنك حذف نفسك"':'')+' style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;width:38px;height:38px;border-radius:8px;cursor:'+(isMe?'not-allowed':'pointer')+';opacity:'+(isMe?'.4':'1')+'"><i class="fas fa-trash"></i></button>'
-          + '</div>');
-      });
-
-      if (!rows.length) { el.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem">لا توجد حسابات مسجّلة بعد.</div>'; return; }
       el.innerHTML = rows.join("");
     } catch(e) {
       console.error(e);
