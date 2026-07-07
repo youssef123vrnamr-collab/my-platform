@@ -2076,15 +2076,19 @@ async function updateAdminUI() {
       var vpHeight = vv ? vv.height     : window.innerHeight;
       var vpWidth  = vv ? vv.width      : window.innerWidth;
 
+      // ارتفاع inputArea الفعلي (من قبل ما نغيّر موضعه)
+      var iaHeight = inputArea.offsetHeight || 70;
+
       // inputArea: ثابت في أسفل الـ visualViewport
+      // مهم: بنستخدم top بدل bottom، لأن bottom:0 بيتحسب بالنسبة
+      // للـ layout viewport (اللي مش بيتقلص لما الكيبورد يظهر)،
+      // فيخلي الصندوق يترسم تحت الكيبورد فعليًا (مخفي) بدل فوقه.
       inputArea.style.position = "fixed";
-      inputArea.style.bottom   = "0";
+      inputArea.style.bottom   = "auto";
+      inputArea.style.top      = (vpTop + vpHeight - iaHeight) + "px";
       inputArea.style.left     = vpLeft + "px";
       inputArea.style.width    = vpWidth + "px";
       inputArea.style.zIndex   = "99999";
-
-      // ارتفاع inputArea الفعلي بعد ما اتحسبت
-      var iaHeight = inputArea.offsetHeight || 70;
 
       // container: يأخذ ارتفاع الـ viewport كله
       container.style.height    = vpHeight + "px";
