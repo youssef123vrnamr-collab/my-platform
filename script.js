@@ -4845,6 +4845,59 @@ function switchProgressTab(tab) {
     phenomena:  ['زخة شهب','كسوف الشمس','خسوف القمر','شفق قطبي','مذنب هالي','اقتران كوكبي','عبور فلكي','نيزك']
   };
 
+  // كلمة بحث إنجليزية دقيقة لكل موضوع — تُستخدم لجلب صورة حقيقية ومطابقة من مكتبة صور ناسا الرسمية
+  const TOPIC_IMAGE_QUERY = {
+    'عطارد':'Mercury planet surface', 'الزهرة':'Venus planet surface', 'الأرض':'Earth planet from space',
+    'المريخ':'Mars planet surface rover', 'المشتري':'Jupiter planet great red spot', 'زحل':'Saturn planet rings',
+    'أورانوس':'Uranus planet', 'نبتون':'Neptune planet',
+    'الشمس':'Sun solar surface', 'منكب الجوزاء':'Betelgeuse red giant star', 'بروكسيما قنطورس':'Proxima Centauri star',
+    'الشعرى اليمانية':'Sirius star', 'نجم قطبي':'Polaris north star', 'نجم نيوتروني':'neutron star pulsar',
+    'قزم أبيض':'white dwarf star', 'مستعر أعظم':'supernova remnant',
+    'درب التبانة':'Milky Way galaxy', 'مجرة المرأة المسلسلة':'Andromeda galaxy', 'مجرة المثلث':'Triangulum galaxy',
+    'مجرة دوامة':'Whirlpool galaxy M51', 'مجرة سومبريرو':'Sombrero galaxy', 'مجرة بيضوية':'elliptical galaxy',
+    'نشاط مجري':'active galactic nucleus jet',
+    'ثقب أسود':'black hole', 'إم 87 (مجرة)':'M87 galaxy black hole image', 'القوس A*':'Sagittarius A black hole',
+    'أفق الحدث':'event horizon telescope black hole', 'إشعاع هوكينغ':'black hole simulation',
+    'ثقب أسود فائق الكتلة':'supermassive black hole', 'ثقب أسود نجمي':'stellar black hole illustration',
+    'يوري غاغارين':'Yuri Gagarin cosmonaut', 'نيل أرمسترونغ':'Neil Armstrong Apollo 11',
+    'فالنتينا تيريشكوفا':'Valentina Tereshkova cosmonaut', 'هزاع المنصوري':'Hazza Al Mansouri astronaut UAE',
+    'سلطان بن سلمان آل سعود':'Sultan bin Salman astronaut Saudi', 'سكوت كيلي':'Scott Kelly astronaut NASA',
+    'بز ألدرين':'Buzz Aldrin Apollo 11', 'كريستينا كوخ':'Christina Koch astronaut NASA',
+    'تلسكوب هابل الفضائي':'Hubble Space Telescope', 'تلسكوب جيمس ويب الفضائي':'James Webb Space Telescope',
+    'تلسكوب فاست':'FAST radio telescope China', 'مرصد ليغو':'LIGO observatory laser interferometer',
+    'تلسكوب أفق الحدث':'Event Horizon Telescope array', 'مرصد فيرا روبين':'Vera Rubin Observatory',
+    'مصفوفة أتاكاما الكبيرة المليمترية':'ALMA telescope array Atacama',
+    'زخة شهب':'meteor shower night sky', 'كسوف الشمس':'solar eclipse', 'خسوف القمر':'lunar eclipse blood moon',
+    'شفق قطبي':'aurora borealis northern lights', 'مذنب هالي':'Halley comet', 'اقتران كوكبي':'planetary conjunction night sky',
+    'عبور فلكي':'planet transit sun astronomy', 'نيزك':'meteorite meteor'
+  };
+
+  // cache للصور المجلوبة ديناميكياً من مكتبة صور ناسا — عشان مانبعتش نفس الطلب كل مرة
+  const _topicImgCache = {};
+  async function fetchTopicImage(title) {
+    if (_topicImgCache[title]) return _topicImgCache[title];
+    const query = TOPIC_IMAGE_QUERY[title];
+    if (!query) return null;
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 6000);
+      const r = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image`, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!r.ok) return null;
+      const d = await r.json();
+      const items = (d.collection && d.collection.items) || [];
+      for (const it of items) {
+        const links = it.links || [];
+        const preview = links.find(l => l.rel === 'preview') || links[0];
+        if (preview && preview.href) {
+          _topicImgCache[title] = preview.href;
+          return preview.href;
+        }
+      }
+      return null;
+    } catch (e) { return null; }
+  }
+
   const _wikiCache = {};
   async function fetchWikiCards(key){
     const TTL = 60 * 60 * 1000;
@@ -4856,18 +4909,22 @@ function switchProgressTab(tab) {
       try{
         const ctrl = new AbortController();
         const t = setTimeout(()=>ctrl.abort(), 6000);
-        const r = await fetch(`https://ar.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { signal: ctrl.signal });
+        const [wikiRes, imgUrl] = await Promise.all([
+          fetch(`https://ar.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { signal: ctrl.signal }),
+          fetchTopicImage(title)
+        ]);
         clearTimeout(t);
-        if (!r.ok) return null;
-        const d = await r.json();
+        if (!wikiRes.ok) return null;
+        const d = await wikiRes.json();
         if (!d.extract) return null;
-        return { title, data: d };
+        return { title, data: d, img: imgUrl };
       }catch(e){ return null; }
     }));
     const data = results.filter(Boolean);
     _wikiCache[key] = { data, time: Date.now() };
     return data;
   }
+
 
 
   // خريطة صور ثابتة لكل موضوع - تمنع ويكيبيديا من جلب صور خاطئة
@@ -4945,15 +5002,15 @@ function switchProgressTab(tab) {
     ];
     return `<div class="cosmos-cards">${items.map((p,i)=>{
       const d = p.data;
-      // استخدم الخريطة دايماً - امنع ويكيبيديا من جلب صور خاطئة
-      const img = WIKI_IMAGE_MAP[p.title] || WIKI_IMAGE_MAP[d.title] || fallbacks[i % fallbacks.length];
+      // الأولوية: صورة حقيقية من مكتبة صور ناسا مطابقة للموضوع بالظبط، بعدها الخريطة الثابتة، وأخيراً صورة عامة
+      const img = p.img || WIKI_IMAGE_MAP[p.title] || WIKI_IMAGE_MAP[d.title] || fallbacks[i % fallbacks.length];
       const extract = d.extract || '';
       const displayTitle = (d.titles && d.titles.normalized) || p.title;
       const url = (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || `https://ar.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
       return `
       <article class="cosmos-card" onclick="window.open('${encodeURI(url)}','_blank','noopener')" style="cursor:pointer">
         <div class="cosmos-card-img" style="background-image:url('${encodeURI(img)}')">
-          <span class="cosmos-card-tag floating"><i class="fas fa-satellite-dish"></i> محدّث</span>
+          <span class="cosmos-card-tag floating"><i class="fas fa-satellite-dish"></i> ${p.img ? 'NASA' : 'محدّث'}</span>
         </div>
         <div class="cosmos-card-body">
           <h4><i class="fas fa-bookmark" style="color:${color}"></i> ${escapeHtml(displayTitle)}</h4>
@@ -4962,7 +5019,7 @@ function switchProgressTab(tab) {
         </div>
       </article>`;
     }).join('')}</div>
-    <p style="font-size:.78rem;color:#9ca3af;margin-top:.65rem;text-align:center"><i class="fas fa-circle-info"></i> المصدر: ويكيبيديا العربية (محتوى محدَّث باستمرار)</p>`;
+    <p style="font-size:.78rem;color:#9ca3af;margin-top:.65rem;text-align:center"><i class="fas fa-circle-info"></i> المصدر: ويكيبيديا العربية وصور ناسا الرسمية (محتوى محدَّث باستمرار)</p>`;
   }
 
   let _apodCache = null, _apodTime = 0;
@@ -5281,7 +5338,15 @@ function switchProgressTab(tab) {
     });
 
     // لو مفيش نتايج خالص بعد الفلترة، نعرض نتايج الـ API بدون فلترة (أحسن من مزج)
-    const final = filtered.length > 0 ? filtered : results.slice(0, 9);
+    let final = filtered.length > 0 ? filtered : results.slice(0, 9);
+
+    // لو لسه فاضي خالص (مفيش أي نتيجة من البحث المخصص)، نجيب آخر الأخبار العامة عشان القسم مايفضلش فاضي
+    if (!final.length) {
+      try {
+        const general = await fetchLiveNews();
+        final = (general || []).slice(0, 9);
+      } catch(e) { /* تجاهل */ }
+    }
 
     // احفظ في cache القسم — مش في الـ cache العام
     _catNewsCache[key] = { data: final, time: Date.now() };

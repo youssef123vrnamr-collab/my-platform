@@ -4629,9 +4629,12 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   filter: blur(50px);
   pointer-events: none;
   opacity: .6;
+  z-index: 0;
 }
 
 .cat-page-badge {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: .6rem;
@@ -4652,6 +4655,8 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 .cat-page-intro {
+  position: relative;
+  z-index: 1;
   color: rgba(220,215,235,.75);
   font-size: .9rem;
   line-height: 1.7;
@@ -4660,6 +4665,8 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 .cat-page-meta {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
