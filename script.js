@@ -3683,24 +3683,47 @@ async function openStudentProgress() {
 function openEditProfileModal() {
   buildEditProfileModal();
   const nameEl = document.getElementById('epName');
-  const phoneEl = document.getElementById('epPhone');
   if (nameEl) nameEl.value = currentUser || '';
-  if (phoneEl) phoneEl.value = currentUserPhone || '';
+  setupEpPhoneField();
   if (currentUserId) {
     db.collection('user_progress').doc(currentUserId).get().then(doc => {
       if (doc.exists) {
         const d = doc.data();
-        const natEl = document.getElementById('epNationality');
         const countryEl = document.getElementById('epCountry');
+        const genderEl = document.getElementById('epGender');
         const photoEl = document.getElementById('epPhotoUrl');
-        if (natEl) natEl.value = d.nationality || '';
         if (countryEl) countryEl.value = d.country || '';
+        if (genderEl) genderEl.value = d.gender || '';
         if (photoEl) photoEl.value = d.photoUrl || '';
         updateEpPhotoPreview(d.photoUrl || '');
       }
     }).catch(() => {});
   }
   document.getElementById('editProfileModal').classList.add('active');
+}
+
+// يظهر رقم الهاتف مقفول لو موجود، أو يفتح حقل إدخاله لو لسه مش متسجل (زي حسابات جوجل)
+function setupEpPhoneField() {
+  const lockedEl = document.getElementById('epPhone');
+  const lockedNote = document.getElementById('epPhoneLockedNote');
+  const entryWrap = document.getElementById('epPhoneEntryWrap');
+  const missingNote = document.getElementById('epPhoneMissingNote');
+  const hasPhone = !!(currentUserPhone && currentUserPhone.trim());
+  if (hasPhone) {
+    if (lockedEl) { lockedEl.value = currentUserPhone; lockedEl.style.display = ''; }
+    if (lockedNote) lockedNote.style.display = '';
+    if (entryWrap) entryWrap.style.display = 'none';
+    if (missingNote) missingNote.style.display = 'none';
+  } else {
+    if (lockedEl) lockedEl.style.display = 'none';
+    if (lockedNote) lockedNote.style.display = 'none';
+    if (entryWrap) entryWrap.style.display = 'flex';
+    if (missingNote) missingNote.style.display = '';
+    const entryInput = document.getElementById('epPhoneEntry');
+    const hintEl = document.getElementById('epPhoneHint');
+    if (entryInput) entryInput.value = '';
+    if (hintEl) hintEl.innerHTML = '';
+  }
 }
 
 function closeEditProfileModal() {
@@ -3725,22 +3748,42 @@ async function saveEditProfile() {
   if (!currentUserId) { showToast('\u26a0\ufe0f سجل دخولك أولاً'); return; }
   const name = (document.getElementById('epName').value || '').trim();
   const photoUrl = (document.getElementById('epPhotoUrl').value || '').trim();
-  const nationality = (document.getElementById('epNationality').value || '').trim();
+  const gender = (document.getElementById('epGender').value || '').trim();
   const country = (document.getElementById('epCountry').value || '').trim();
   if (!name) { showToast('\u26a0\ufe0f أدخل اسمك أولاً'); return; }
   if (name.length < 2 || name.length > 50) { showToast('\u26a0\ufe0f الاسم من 2 إلى 50 حرف'); return; }
+
+  // لو المستخدم لسه ما دخلش رقم هاتفه (مثلاً دخل بجوجل)، لازم يدخله هنا الأول
+  let newPhoneToSave = null;
+  const hasPhone = !!(currentUserPhone && currentUserPhone.trim());
+  if (!hasPhone) {
+    const entryInput = document.getElementById('epPhoneEntry');
+    const codeSelect = document.getElementById('epCountryCode');
+    const phoneRaw = (entryInput?.value || '').trim();
+    const code = codeSelect?.value || '+20';
+    if (!phoneRaw) { showToast('\u26a0\ufe0f أدخل رقم هاتفك — مطلوب عشان تقدر تضيف أصدقاء'); return; }
+    const fullPhone = normalizePhone(phoneRaw, code);
+    if (!validatePhone(fullPhone, code)) { showToast('\u26a0\ufe0f رقم الهاتف غير صحيح — تأكد من اختيار الدولة والأرقام'); return; }
+    newPhoneToSave = fullPhone;
+  }
+
   try {
     const patch = {
       username: name,
-      nationality: nationality,
+      gender: gender,
       country: country,
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
     if (photoUrl) patch.photoUrl = photoUrl;
     else patch.photoUrl = firebase.firestore.FieldValue.delete();
+    if (newPhoneToSave) patch.phone = newPhoneToSave;
     await db.collection('user_progress').doc(currentUserId).set(patch, { merge: true });
     currentUser = name;
     localStorage.setItem('falak_username', name);
+    if (newPhoneToSave) {
+      currentUserPhone = newPhoneToSave;
+      localStorage.setItem('falak_userphone', newPhoneToSave);
+    }
     showToast('\u2705 تم حفظ البروفايل');
     closeEditProfileModal();
     if (document.getElementById('studentProgressModal').classList.contains('active')) {
@@ -3778,11 +3821,41 @@ function buildEditProfileModal() {
         <div class="form-group">
           <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">📱 رقم الهاتف</label>
           <input id="epPhone" type="tel" disabled style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#666;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit">
-          <div style="font-size:.74rem;color:#6b7280;margin-top:.2rem">رقم الهاتف لا يمكن تغييره</div>
+          <div id="epPhoneLockedNote" style="font-size:.74rem;color:#6b7280;margin-top:.2rem">رقم الهاتف لا يمكن تغييره</div>
+          <div id="epPhoneEntryWrap" style="display:none;gap:.5rem;margin-top:.2rem">
+            <select id="epCountryCode" style="width:38%;text-align:center;direction:ltr;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem .3rem;border-radius:.65rem;font-family:inherit">
+              <option value="+20">🇪🇬 +20 (مصر)</option>
+              <option value="+966">🇸🇦 +966 (السعودية)</option>
+              <option value="+971">🇦🇪 +971 (الإمارات)</option>
+              <option value="+965">🇰🇼 +965 (الكويت)</option>
+              <option value="+974">🇶🇦 +974 (قطر)</option>
+              <option value="+973">🇧🇭 +973 (البحرين)</option>
+              <option value="+968">🇴🇲 +968 (عمان)</option>
+              <option value="+962">🇯🇴 +962 (الأردن)</option>
+              <option value="+961">🇱🇧 +961 (لبنان)</option>
+              <option value="+963">🇸🇾 +963 (سوريا)</option>
+              <option value="+970">🇵🇸 +970 (فلسطين)</option>
+              <option value="+218">🇱🇾 +218 (ليبيا)</option>
+              <option value="+213">🇩🇿 +213 (الجزائر)</option>
+              <option value="+212">🇲🇦 +212 (المغرب)</option>
+              <option value="+216">🇹🇳 +216 (تونس)</option>
+              <option value="+1">🇺🇸 +1 (الولايات المتحدة)</option>
+              <option value="+44">🇬🇧 +44 (المملكة المتحدة)</option>
+              <option value="+49">🇩🇪 +49 (ألمانيا)</option>
+              <option value="+33">🇫🇷 +33 (فرنسا)</option>
+            </select>
+            <input id="epPhoneEntry" type="tel" maxlength="15" placeholder="رقم الهاتف بدون صفر" style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit" oninput="liveValidatePhone('epPhoneEntry','epCountryCode','epPhoneHint')">
+          </div>
+          <div id="epPhoneHint" class="field-hint" style="margin-top:.3rem"></div>
+          <div id="epPhoneMissingNote" style="display:none;font-size:.78rem;color:#fbbf24;margin-top:.3rem"><i class="fas fa-exclamation-triangle"></i> لازم تدخل رقم هاتفك هنا عشان تقدر تضيف أو تستقبل أصدقاء</div>
         </div>
         <div class="form-group">
-          <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">🌍 الجنسية</label>
-          <input id="epNationality" type="text" placeholder="مثال: مصري، سعودي" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit">
+          <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">🚻 الجنس</label>
+          <select id="epGender" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.65rem 1rem;border-radius:.65rem;font-family:inherit">
+            <option value="">تفضيل عدم الإفصاح</option>
+            <option value="male">ذكر</option>
+            <option value="female">أنثى</option>
+          </select>
         </div>
         <div class="form-group">
           <label style="display:block;margin-bottom:.4rem;color:#c4b5fd;font-size:.9rem">🗺️ البلد</label>
@@ -10890,6 +10963,12 @@ function friendUserCard(s, mode, status) {
 
 async function sendFriendRequest(encodedUid, encodedName, btnEl) {
   if (!currentUserId) { showToast('سجّل دخولك أولاً 🔐'); return; }
+  if (!currentUserPhone || !currentUserPhone.trim()) {
+    showToast('⚠️ لازم تدخل رقم هاتفك في صفحة البروفايل الأول عشان تقدر تضيف أصدقاء');
+    closeAddFriendModal();
+    openEditProfileModal();
+    return;
+  }
   const targetUid = decodeURIComponent(encodedUid);
   const targetName = decodeURIComponent(encodedName);
   if (!targetUid || targetUid === currentUserId) return;
