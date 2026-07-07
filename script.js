@@ -2071,34 +2071,17 @@ async function updateAdminUI() {
 
     function applyLayout() {
       var vv = getVV();
-      var vpTop    = vv ? vv.offsetTop  : 0;
-      var vpLeft   = vv ? vv.offsetLeft : 0;
       var vpHeight = vv ? vv.height     : window.innerHeight;
-      var vpWidth  = vv ? vv.width      : window.innerWidth;
 
-      // ارتفاع inputArea الفعلي (من قبل ما نغيّر موضعه)
-      var iaHeight = inputArea.offsetHeight || 70;
-
-      // inputArea: ثابت في أسفل الـ visualViewport
-      // مهم: بنستخدم top بدل bottom، لأن bottom:0 بيتحسب بالنسبة
-      // للـ layout viewport (اللي مش بيتقلص لما الكيبورد يظهر)،
-      // فيخلي الصندوق يترسم تحت الكيبورد فعليًا (مخفي) بدل فوقه.
-      inputArea.style.position = "fixed";
-      inputArea.style.bottom   = "auto";
-      inputArea.style.top      = (vpTop + vpHeight - iaHeight) + "px";
-      inputArea.style.left     = vpLeft + "px";
-      inputArea.style.width    = vpWidth + "px";
-      inputArea.style.zIndex   = "99999";
-
-      // container: يأخذ ارتفاع الـ viewport كله
+      // container: ياخد ارتفاع الـ viewport كله (بيتقلص لما الكيبورد يطلع)
       container.style.height    = vpHeight + "px";
       container.style.maxHeight = vpHeight + "px";
 
-      // msgs: كل المساحة إلا الـ header والـ inputArea
-      var header = container.querySelector(".chat-header");
-      var headerH = header ? header.offsetHeight : 70;
-      msgs.style.height    = (vpHeight - headerH - iaHeight) + "px";
-      msgs.style.maxHeight = (vpHeight - headerH - iaHeight) + "px";
+      // inputArea يفضل في مكانه الطبيعي جوه الـ flex column (مش fixed)
+      // ده بيتجنب مشكلة التصادم مع transform اللي بتخلي الصندوق يختفي
+      inputArea.style.position = "relative";
+
+      // msgs: تاخد كل المساحة الباقية تلقائيًا بفضل flex:1
       msgs.style.paddingBottom = "0";
 
       // scroll لآخر رسالة
@@ -2134,14 +2117,8 @@ async function updateAdminUI() {
       if (textarea) textarea.removeEventListener("input", autoResize);
       // إعادة كل الستايلات
       inputArea.style.position = "";
-      inputArea.style.bottom   = "";
-      inputArea.style.left     = "";
-      inputArea.style.width    = "";
-      inputArea.style.zIndex   = "";
       container.style.height   = "";
       container.style.maxHeight= "";
-      msgs.style.height        = "";
-      msgs.style.maxHeight     = "";
       msgs.style.paddingBottom = "";
     };
   }
