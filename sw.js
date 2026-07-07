@@ -1,7 +1,7 @@
 // ===== Astronomy and Space - Service Worker =====
-const CACHE_NAME = 'astronomy-space-v3';
-const STATIC_CACHE = 'astronomy-static-v3';
-const DYNAMIC_CACHE = 'astronomy-dynamic-v3';
+const CACHE_NAME = 'astronomy-space-v4';
+const STATIC_CACHE = 'astronomy-static-v4';
+const DYNAMIC_CACHE = 'astronomy-dynamic-v4';
 
 // ===== الملفات اللي هتتحفظ دايماً (Shell) =====
 const STATIC_ASSETS = [
@@ -104,13 +104,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ===== استراتيجية: Cache First للـ CSS/JS/Images =====
-  if (
-    request.destination === 'style' ||
-    request.destination === 'script' ||
-    request.destination === 'image' ||
-    request.destination === 'font'
-  ) {
+  // ===== استراتيجية: Network First للـ CSS/JS (عشان أي تعديل يوصل فورًا)، Cache First للصور/الخطوط =====
+  if (request.destination === 'style' || request.destination === 'script') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  if (request.destination === 'image' || request.destination === 'font') {
     event.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
