@@ -426,7 +426,7 @@ async function isAdminUser(userId) {
 
   // ========== User Data Management ==========
   async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
-  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
+  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); if (currentUser) { db.collection("student_directory").doc(userId).set({ name: currentUser, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.warn("student_directory upsert failed", e)); } } catch (e) { console.error("Error saving user data:", e); } }
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
   // ====== تسجيل مشاهدة فيديو (موحّد لكل أنواع الفيديوهات) ======
@@ -468,6 +468,7 @@ async function isAdminUser(userId) {
           }
         } catch(_){}
         await db.collection("user_progress").doc(currentUserId).set(userPatch, { merge: true });
+        if (userPatch.username) { db.collection("student_directory").doc(currentUserId).set({ name: userPatch.username, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(()=>{}); }
       } catch (e) { console.warn("user_progress upsert (on watch) failed", e); }
       try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch (e) { console.warn("addPoints failed", e); }
       try {
@@ -1714,8 +1715,8 @@ async function updateAdminUI() {
       if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف الرئيسي فقط"); return; }
     }
     document.getElementById("setAdminsModal").classList.add("active");
-    const inp = document.getElementById("newAdminEmailInput"); if (inp) inp.value = "";
     await renderAdminAccountsList();
+    renderAdminAccountsPicker();
   }
   function closeSetAdminsModal(){ document.getElementById("setAdminsModal").classList.remove("active"); }
   async function renderAdminAccountsList(){
@@ -1750,9 +1751,8 @@ async function updateAdminUI() {
       let snapUid;
       try {
         snapUid = await db.collection("admin_accounts_uid").get();
-        alert("✅ نجح الجلب\nعدد الحسابات بالـ UID: " + snapUid.size + "\nمن داخل الكاش؟ " + (snapUid.metadata ? snapUid.metadata.fromCache : "غير معروف"));
       } catch(uidErr) {
-        alert("❌ فشل جلب حسابات الـ UID\nرسالة الخطأ: " + uidErr.message + "\nكود الخطأ: " + (uidErr.code || "غير محدد"));
+        console.error("فشل جلب حسابات الـ UID", uidErr);
         throw uidErr;
       }
       snapUid.forEach(doc => {
@@ -1779,54 +1779,103 @@ async function updateAdminUI() {
       el.innerHTML = '<div style="color:#fca5a5;text-align:center;padding:1rem">❌ فشل التحميل</div>';
     }
   }
-  async function addAdminAccount(){
-    if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
-    const inp = document.getElementById("newAdminEmailInput");
-    const roleSel = document.getElementById("newAdminRoleSelect");
-    const rawVal = (inp && inp.value) ? inp.value.trim() : "";
-    const role = (roleSel && roleSel.value) || "admin";
-    if (!rawVal) { SoundEffects.error(); showToast("❌ أدخل البريد الإلكتروني أو الـ UID"); return; }
-    // detect if it looks like an email or a UID
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawVal);
-    const email = isEmail ? _normEmail(rawVal) : null;
-    const uid = !isEmail ? rawVal : null;
-    if (isEmail && !email) { SoundEffects.error(); showToast("❌ بريد إلكتروني غير صالح"); return; }
-    try {
-      if (isEmail) {
-        const ref = db.collection(ADMIN_ACCOUNTS_COL).doc(email);
-        const ex = await ref.get();
-        if (ex.exists) { showToast("⚠️ هذا البريد مسجَّل بالفعل"); return; }
-        await ref.set({ email: email, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
-      } else {
-        // add by uid: store in admin_accounts_uid collection
-        const ref = db.collection("admin_accounts_uid").doc(uid);
-        const ex = await ref.get();
-        if (ex.exists) { showToast("⚠️ هذا الـ UID مسجَّل بالفعل"); return; }
-        await ref.set({ uid: uid, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
-      }
-      if (inp) inp.value = "";
-      SoundEffects.success();
-      showToast("✅ تمت إضافة المشرف");
-      renderAdminAccountsList();
-    } catch(e){ console.error(e); showToast("❌ فشل الإضافة (تحقق من قواعد Firestore)"); }
+  let _adminPickerAllAccounts = null;
+  async function loadAdminPickerAccounts(force){
+    if (_adminPickerAllAccounts && !force) return _adminPickerAllAccounts;
+    const snap = await db.collection("user_progress").get();
+    const list = [];
+    snap.forEach(doc => {
+      const d = doc.data() || {};
+      const name = (d.username || d.name || "").trim();
+      if (!name) return;
+      list.push({ uid: doc.id, name, email: _normEmail(d.email || "") || "", phone: d.phone || "", photoURL: d.photoURL || "" });
+    });
+    list.sort((a,b) => a.name.localeCompare(b.name, "ar"));
+    _adminPickerAllAccounts = list;
+    return list;
   }
-  async function addAdminByUid(){
-    if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
-    const inp = document.getElementById("newAdminUidInput");
-    const roleSel = document.getElementById("newAdminUidRoleSelect");
-    const uid = (inp && inp.value) ? inp.value.trim() : "";
-    const role = (roleSel && roleSel.value) || "admin";
-    if (!uid || uid.length < 10) { SoundEffects.error(); showToast("❌ أدخل UID صالح"); return; }
+  async function renderAdminAccountsPicker(){
+    const el = document.getElementById("adminAccountsPickerList");
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;color:#aaa;padding:.5rem"><i class="fas fa-spinner fa-spin"></i> جاري تحميل كل الحسابات...</div>';
     try {
-      const ref = db.collection("admin_accounts_uid").doc(uid);
-      const ex = await ref.get();
-      if (ex.exists) { showToast("⚠️ هذا الـ UID مسجَّل بالفعل"); return; }
-      await ref.set({ uid: uid, role: role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
-      if (inp) inp.value = "";
+      const [accounts, emailSnap, uidSnap] = await Promise.all([
+        loadAdminPickerAccounts(true),
+        db.collection(ADMIN_ACCOUNTS_COL).get(),
+        db.collection("admin_accounts_uid").get()
+      ]);
+      const adminEmails = new Set(emailSnap.docs.map(d => d.id));
+      const adminUids = new Set(uidSnap.docs.map(d => d.id));
+      const myUid = (auth.currentUser && auth.currentUser.uid) || null;
+      window._adminPickerRows = accounts.map(acc => {
+        const isAdminAlready = adminUids.has(acc.uid) || (acc.email && adminEmails.has(acc.email));
+        const isMe = myUid && acc.uid === myUid;
+        return { ...acc, isAdminAlready, isMe };
+      });
+      drawAdminAccountsPicker(window._adminPickerRows);
+    } catch(e) {
+      console.error(e);
+      el.innerHTML = '<div style="color:#fca5a5;text-align:center;padding:1rem">❌ فشل تحميل الحسابات</div>';
+    }
+  }
+  function drawAdminAccountsPicker(rows){
+    const el = document.getElementById("adminAccountsPickerList");
+    if (!el) return;
+    if (!rows.length) { el.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem">لا توجد حسابات مسجّلة بعد.</div>'; return; }
+    el.innerHTML = rows.map(acc => {
+      const initial = acc.name.trim().charAt(0).toUpperCase();
+      const contact = acc.email || acc.phone || "—";
+      let actionHtml;
+      if (acc.isMe) {
+        actionHtml = '<span style="color:#86efac;font-size:.75rem">(أنت)</span>';
+      } else if (acc.isAdminAlready) {
+        actionHtml = '<button onclick="removeAdminAccountByUid(\''+acc.uid.replace(/'/g,"\\'")+'\',\''+(acc.email||"").replace(/'/g,"\\'")+'\')" style="background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;padding:.5rem .9rem;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:700;white-space:nowrap"><i class="fas fa-user-minus"></i> إزالة</button>';
+      } else {
+        actionHtml = '<select id="role_'+acc.uid+'" style="padding:.4rem .5rem;background:rgba(20,20,30,.95);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-family:Cairo;font-size:.75rem"><option value="admin">مشرف</option><option value="super_admin">مشرف رئيسي</option></select> <button onclick="addAdminFromPicker(\''+acc.uid.replace(/'/g,"\\'")+'\',\''+(acc.email||"").replace(/'/g,"\\'")+'\',\''+acc.name.replace(/'/g,"\\'")+'\')" style="background:linear-gradient(135deg,#10b981,#059669);border:none;color:#fff;padding:.5rem .9rem;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:700;white-space:nowrap"><i class="fas fa-user-plus"></i> أضف</button>';
+      }
+      return '<div style="display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.04);padding:.65rem .8rem;border-radius:10px;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)'+(acc.isAdminAlready?';border-color:rgba(34,197,94,.3)':'')+'">'
+        + '<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#ec4899);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex-shrink:0">'+escapeHtml(initial)+'</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="color:#fff;font-weight:700;font-size:.9rem;overflow-wrap:anywhere">'+escapeHtml(acc.name)+(acc.isAdminAlready?' <i class="fas fa-shield-alt" style="color:#22c55e;font-size:.75rem"></i>':'')+'</div>'
+        + '<div style="color:#9ca3af;font-size:.75rem;direction:ltr;text-align:right;overflow-wrap:anywhere">'+escapeHtml(contact)+'</div>'
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">'+actionHtml+'</div>'
+        + '</div>';
+    }).join("");
+  }
+  function filterAdminAccountsPicker(){
+    const q = (document.getElementById("adminPickerSearchInput")?.value || "").trim().toLowerCase();
+    const rows = window._adminPickerRows || [];
+    if (!q) { drawAdminAccountsPicker(rows); return; }
+    drawAdminAccountsPicker(rows.filter(a => (a.name+" "+a.email+" "+a.phone).toLowerCase().includes(q)));
+  }
+  async function addAdminFromPicker(uid, email, name){
+    if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
+    const roleSel = document.getElementById("role_"+uid);
+    const role = (roleSel && roleSel.value) || "admin";
+    try {
+      if (email) {
+        await db.collection(ADMIN_ACCOUNTS_COL).doc(email).set({ email, role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
+      } else {
+        await db.collection("admin_accounts_uid").doc(uid).set({ uid, role, addedAt: firebase.firestore.FieldValue.serverTimestamp(), addedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown" });
+      }
       SoundEffects.success();
-      showToast("✅ تمت إضافة المشرف بالـ UID");
+      showToast("✅ تمت إضافة " + name + " كمشرف");
       renderAdminAccountsList();
-    } catch(e){ console.error(e); showToast("❌ فشل الإضافة"); }
+      renderAdminAccountsPicker();
+    } catch(e) { console.error(e); showToast("❌ فشل الإضافة (تحقق من قواعد Firestore)"); }
+  }
+  async function removeAdminAccountByUid(uid, email){
+    if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
+    if (!confirm("إزالة هذا الحساب من قائمة المشرفين؟")) return;
+    try {
+      if (email) { try { await db.collection(ADMIN_ACCOUNTS_COL).doc(email).delete(); } catch(e){} }
+      try { await db.collection("admin_accounts_uid").doc(uid).delete(); } catch(e){}
+      SoundEffects.delete();
+      showToast("🗑️ تم الحذف");
+      renderAdminAccountsList();
+      renderAdminAccountsPicker();
+    } catch(e) { console.error(e); showToast("❌ فشل الحذف"); }
   }
   async function removeAdminAccount(email){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
@@ -1861,8 +1910,12 @@ async function updateAdminUI() {
   window.showLogin = showLogin; window.closeLogin = closeLogin;
   window.bootstrapFirstAdmin = bootstrapFirstAdmin;
   window.openSetAdminsModal = openSetAdminsModal; window.closeSetAdminsModal = closeSetAdminsModal;
-  window.addAdminAccount = addAdminAccount; window.removeAdminAccount = removeAdminAccount;
-  window.addAdminByUid = addAdminByUid; window.removeAdminAccountUid = removeAdminAccountUid;
+  window.removeAdminAccount = removeAdminAccount;
+  window.removeAdminAccountUid = removeAdminAccountUid;
+  window.renderAdminAccountsPicker = renderAdminAccountsPicker;
+  window.filterAdminAccountsPicker = filterAdminAccountsPicker;
+  window.addAdminFromPicker = addAdminFromPicker;
+  window.removeAdminAccountByUid = removeAdminAccountByUid;
   window.refreshAdminStatusFromFirestore = refreshAdminStatusFromFirestore;
   window.fetchMyAdminInfo = fetchMyAdminInfo;
   window.closeAdminPasswordModal = closeAdminPasswordModal;
@@ -10743,21 +10796,17 @@ async function openAddFriendModal() {
   // Load students cache for search
   try {
     if (!_friendAllStudents) {
-      const snap = await db.collection('user_progress').get();
+      const snap = await db.collection('student_directory').get();
       _friendAllStudents = [];
       const seenKeys = new Set();
       snap.forEach(doc => {
         const d = doc.data();
-        const name = (d.username || d.name || d.displayName || '').trim();
+        const name = (d.name || '').trim();
         if (!name || doc.id === currentUserId) return;
-        // Normalize phone: keep digits only
-        const rawPhone = (d.phone || '').replace(/\D/g, '').slice(-9);
-        // Dedup key: use uid (each doc is unique per uid already)
-        // But also dedup by normalized name+phone to avoid duplicate registrations
-        const dedupKey = name.toLowerCase() + '|' + rawPhone;
+        const dedupKey = doc.id;
         if (seenKeys.has(dedupKey)) return;
         seenKeys.add(dedupKey);
-        _friendAllStudents.push({ uid: doc.id, name, phone: d.phone || '' });
+        _friendAllStudents.push({ uid: doc.id, name, phone: '' });
       });
     }
   } catch(e) { console.warn('friend students load failed', e); }
