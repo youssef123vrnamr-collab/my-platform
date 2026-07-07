@@ -4,7 +4,7 @@
   "description": "منصة الفلك المتكاملة — تعلم علم الفلك وعلوم الفضاء بمحتوى عربي احترافي",
   "start_url": "/",
   "scope": "/",
-  "display": "standalone",
+  "display": "minimal-ui",
   "orientation": "portrait",
   "background_color": "#0a0512",
   "theme_color": "#6366f1",
