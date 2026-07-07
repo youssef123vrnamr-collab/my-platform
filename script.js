@@ -9993,14 +9993,6 @@ function slStopAllAnimations() {
     if (avatar) avatar.innerHTML = p.emoji;
     var nameEl = document.querySelector('#aiChatModal .chat-header-text h3');
     if (nameEl) nameEl.textContent = p.name + ' ' + p.emoji;
-    var actions = document.querySelector('#aiChatModal .chat-actions');
-    if (actions && !actions.querySelector('.ai-persona-change-btn')) {
-      var btn = document.createElement('button');
-      btn.className = 'ai-persona-change-btn';
-      btn.innerHTML = '<i class="fas fa-user-astronaut"></i> شخصية';
-      btn.onclick = window.openPersonaModal;
-      actions.insertBefore(btn, actions.firstChild);
-    }
   }
 
   // ===== 9. Patch sendAIMessage — DISABLED (replaced by unified fix at end of file) =====
