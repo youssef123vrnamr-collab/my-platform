@@ -426,7 +426,7 @@ async function isAdminUser(userId) {
 
   // ========== User Data Management ==========
   async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
-  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); if (currentUser) { db.collection("student_directory").doc(userId).set({ name: currentUser, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(e => console.warn("student_directory upsert failed", e)); } } catch (e) { console.error("Error saving user data:", e); } }
+  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
   // ====== تسجيل مشاهدة فيديو (موحّد لكل أنواع الفيديوهات) ======
@@ -468,7 +468,6 @@ async function isAdminUser(userId) {
           }
         } catch(_){}
         await db.collection("user_progress").doc(currentUserId).set(userPatch, { merge: true });
-        if (userPatch.username) { db.collection("student_directory").doc(currentUserId).set({ name: userPatch.username, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(()=>{}); }
       } catch (e) { console.warn("user_progress upsert (on watch) failed", e); }
       try { await addPoints(currentUserId, 5, "مشاهدة فيديو كاملة"); } catch (e) { console.warn("addPoints failed", e); }
       try {
@@ -2493,7 +2492,7 @@ async function updateAdminUI() {
     } 
 }
   // loadUserDashboard() — يتعمل من داخل googleLogin بعد login ناجح فقط
-  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
+  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
@@ -2914,7 +2913,7 @@ async function updateAdminUI() {
 
   function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
 
-        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
+        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
@@ -10796,17 +10795,18 @@ async function openAddFriendModal() {
   // Load students cache for search
   try {
     if (!_friendAllStudents) {
-      const snap = await db.collection('student_directory').get();
+      const snap = await db.collection('user_progress').get();
       _friendAllStudents = [];
       const seenKeys = new Set();
       snap.forEach(doc => {
         const d = doc.data();
-        const name = (d.name || '').trim();
+        const name = (d.username || d.name || d.displayName || '').trim();
         if (!name || doc.id === currentUserId) return;
-        const dedupKey = doc.id;
+        const rawPhone = (d.phone || '').replace(/\D/g, '').slice(-9);
+        const dedupKey = name.toLowerCase() + '|' + rawPhone;
         if (seenKeys.has(dedupKey)) return;
         seenKeys.add(dedupKey);
-        _friendAllStudents.push({ uid: doc.id, name, phone: '' });
+        _friendAllStudents.push({ uid: doc.id, name, phone: d.phone || '' });
       });
     }
   } catch(e) { console.warn('friend students load failed', e); }
@@ -11037,10 +11037,64 @@ async function updateFriendReqBadge() {
   } catch(e) { console.error('updateFriendReqBadge error:', e); }
 }
 
-// Check for incoming requests every 60 seconds when logged in
+// Check for incoming requests every 60 seconds when logged in (fallback safety net)
 setInterval(() => { if (currentUserId) updateFriendReqBadge(); }, 60000);
 // Check on login
 document.addEventListener('userLoggedIn', () => setTimeout(updateFriendReqBadge, 2000));
+
+// ============================================================
+// 🔔 REAL-TIME NOTIFICATION FOR INCOMING FRIEND REQUESTS
+// بدل ما ننتظر الـ 60 ثانية، بنعمل listener حي يبلغ الطالب فوراً
+// ============================================================
+let _friendReqUnsub = null;
+let _friendReqFirstSnapshot = true;
+let _friendReqSeenIds = new Set();
+
+function startFriendRequestsListener() {
+  stopFriendRequestsListener();
+  if (!currentUserId) return;
+  _friendReqFirstSnapshot = true;
+  _friendReqSeenIds = new Set();
+  try {
+    _friendReqUnsub = db.collection('friend_requests')
+      .where('to', '==', currentUserId)
+      .onSnapshot(snap => {
+        const pending = snap.docs.filter(d => d.data().status === 'pending');
+        // تحديث البادچ فوراً
+        const badge = document.getElementById('friendReqBadge');
+        const inBadge = document.getElementById('incomingCount');
+        if (badge) { badge.textContent = pending.length; badge.style.display = pending.length ? '' : 'none'; }
+        if (inBadge) { inBadge.textContent = pending.length; inBadge.style.display = pending.length ? '' : 'none'; }
+        // لو المستخدم فاتح تبويب "الطلبات" حدّثه مباشرة
+        if (typeof _friendCurrentTab !== 'undefined' && _friendCurrentTab === 'requests') {
+          const modal = document.getElementById('addFriendModal');
+          if (modal && modal.classList.contains('active')) loadIncomingRequests();
+        }
+        if (_friendReqFirstSnapshot) {
+          // أول تحميل: سجّل الطلبات الموجودة من غير ما نعمل تنبيه عشان مايبقاش فيه سبام عند فتح الصفحة
+          pending.forEach(d => _friendReqSeenIds.add(d.id));
+          _friendReqFirstSnapshot = false;
+          return;
+        }
+        snap.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            const data = change.doc.data();
+            if (data.status === 'pending' && !_friendReqSeenIds.has(change.doc.id)) {
+              _friendReqSeenIds.add(change.doc.id);
+              if (typeof SoundEffects !== 'undefined' && SoundEffects.receive) { try { SoundEffects.receive(); } catch(_){} }
+              showToast('🔔 طلب صداقة جديد من ' + (data.fromName || 'طالب'));
+            }
+          }
+        });
+      }, err => console.error('friend_requests listener error:', err));
+  } catch(e) { console.error('startFriendRequestsListener failed', e); }
+}
+
+function stopFriendRequestsListener() {
+  if (_friendReqUnsub) { try { _friendReqUnsub(); } catch(_){} _friendReqUnsub = null; }
+}
+
+document.addEventListener('userLoggedIn', () => setTimeout(startFriendRequestsListener, 1500));
 
 
 /* ========================================== */
