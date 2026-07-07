@@ -5284,71 +5284,65 @@ function switchProgressTab(tab) {
     universe:   ['universe','cosmos','big bang','dark matter','dark energy','cosmic','كون','كوزموس','طاقة مظلمة']
   };
 
-  // مصطلح بحث مخصص لكل قسم في Spaceflight News API
-  const CATEGORY_SEARCH_TERM = {
-    stars:      'star OR stellar OR supernova OR pulsar OR neutron',
-    planets:    'planet OR mars OR venus OR jupiter OR saturn OR exoplanet',
-    galaxies:   'galaxy OR galaxies OR milky way OR andromeda',
-    blackholes: 'black hole OR event horizon OR singularity',
-    missions:   'mission OR launch OR rocket OR spacecraft OR probe',
-    astronauts: 'astronaut OR cosmonaut OR crew OR spacewalk OR ISS',
-    telescopes: 'telescope OR observatory OR Webb OR Hubble',
-    phenomena:  'meteor OR eclipse OR aurora OR comet OR asteroid',
-    universe:   'universe OR big bang OR dark matter OR dark energy OR cosmic'
-  };
-
   // cache مستقل لكل قسم
   const _catNewsCache = {};
   const CAT_NEWS_TTL = 0; // تتجدد عند كل فتح
 
+  // ملحوظة: Spaceflight News API مش بتدعم صيغة "OR" جوه باراميتر search، فكانت
+  // بترجع نتائج عامة (مش متعلقة بالقسم فعليًا)، والفلترة المحلية بترفضها كلها،
+  // فكان الكود بيرجع يعرض نفس أخبار fetchLiveNews العامة لكل الأقسام — عشان كده
+  // كل الأزرار كانت بتظهر بنفس الأخبار بالظبط (النجوم = الكواكب = ...).
+  // الحل: نفلتر محليًا من مجمّع الأخبار العام (اللي بيجمع من 3 مصادر حقيقية)،
+  // ولو مش كفاية ندور بكلمة مفتاحية واحدة في كل مرة (مش OR) مباشرة على الـ API.
   async function fetchCategoryNews(key) {
-    // cache مخصص لكل قسم
     const cached = _catNewsCache[key];
     if (cached && (Date.now() - cached.time) < CAT_NEWS_TTL) return cached.data;
 
     const keywords = CATEGORY_KEYWORDS[key];
-    const searchTerm = CATEGORY_SEARCH_TERM[key];
-    if (!keywords || !searchTerm) return [];
+    if (!keywords) return [];
 
-    const results = [];
-
-    // جلب مباشر من Spaceflight News بـ search term مخصص لهذا القسم فقط
-    try {
-      const term = encodeURIComponent(searchTerm);
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 10000);
-      const res = await fetch(
-        `https://api.spaceflightnewsapi.net/v4/articles/?limit=30&ordering=-published_at&search=${term}`,
-        { signal: ctrl.signal }
-      );
-      clearTimeout(timer);
-      if (res.ok) {
-        const data = await res.json();
-        (data.results || []).forEach(a => {
-          results.push({ ...a, _source: 'spaceflight', _sourceName: a.news_site || 'Spaceflight News' });
-        });
-      }
-    } catch(e) { console.warn('cat news fetch failed:', key, e.message); }
-
-    // فلترة صارمة: الخبر لازم يحتوي كلمة مفتاحية خاصة بالقسم
     const lower = keywords.map(k => k.toLowerCase());
-    const filtered = results.filter(a => {
+    const matchesKeywords = a => {
       const txt = ((a.title || '') + ' ' + (a.summary || '')).toLowerCase();
       return lower.some(kw => txt.includes(kw));
-    });
+    };
 
-    // لو مفيش نتايج خالص بعد الفلترة، نعرض نتايج الـ API بدون فلترة (أحسن من مزج)
-    let final = filtered.length > 0 ? filtered : results.slice(0, 9);
+    // 1) فلترة صارمة من مجمّع الأخبار العام (Spaceflight + NASA RSS + ESA RSS)
+    let pool = [];
+    try { pool = await fetchLiveNews(); } catch(e) { /* تجاهل */ }
+    let final = (pool || []).filter(matchesKeywords);
 
-    // لو لسه فاضي خالص (مفيش أي نتيجة من البحث المخصص)، نجيب آخر الأخبار العامة عشان القسم مايفضلش فاضي
-    if (!final.length) {
-      try {
-        const general = await fetchLiveNews();
-        final = (general || []).slice(0, 9);
-      } catch(e) { /* تجاهل */ }
+    // 2) لو النتايج قليلة، ندور بكل كلمة مفتاحية إنجليزي لوحدها (بدون OR) على Spaceflight News
+    if (final.length < 6) {
+      const seen = new Set(final.map(a => a.url || a.title));
+      const englishKeywords = keywords.filter(k => /[a-zA-Z]/.test(k)).slice(0, 4);
+      for (const kw of englishKeywords) {
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 8000);
+          const res = await fetch(
+            `https://api.spaceflightnewsapi.net/v4/articles/?limit=15&ordering=-published_at&search=${encodeURIComponent(kw)}`,
+            { signal: ctrl.signal }
+          );
+          clearTimeout(timer);
+          if (res.ok) {
+            const data = await res.json();
+            (data.results || []).forEach(a => {
+              const item = { ...a, _source: 'spaceflight', _sourceName: a.news_site || 'Spaceflight News' };
+              if (!matchesKeywords(item)) return;
+              const k2 = item.url || item.title;
+              if (!seen.has(k2)) { seen.add(k2); final.push(item); }
+            });
+          }
+        } catch(e) { console.warn('cat news kw fetch failed:', key, kw, e.message); }
+      }
     }
 
-    // احفظ في cache القسم — مش في الـ cache العام
+    // ترتيب حسب الأحدث
+    final.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+
+    // ملحوظة: لو القسم فاضي فعلاً دلوقتي، مش هنعرض أخبار أقسام تانية بدالها —
+    // بيظهر بدل كده رسالة "لا توجد أخبار متاحة الآن لهذا القسم" (موجودة أصلاً في loadLiveCategoryData)
     _catNewsCache[key] = { data: final, time: Date.now() };
     return final;
   }
