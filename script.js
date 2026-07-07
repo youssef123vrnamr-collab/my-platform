@@ -11318,6 +11318,17 @@ function closeFriendChatMenu() {
   document.getElementById('friendChatMenuModal').classList.remove('active');
 }
 
+// يخلي محتوى المودال يتظبط لما الكيبورد يفتح/يقفل (بدل ما يغطي مكان الكتابة)
+function _pfcAdjustForKeyboard() {
+  const modalContent = document.querySelector('#privateFriendChatModal .modal-content');
+  if (!modalContent) return;
+  if (window.visualViewport) {
+    const vh = window.visualViewport.height;
+    modalContent.style.height = vh + 'px';
+    modalContent.style.maxHeight = vh + 'px';
+  }
+}
+
 async function openPrivateFriendChat(encodedUid, encodedName) {
   _pfcFriendUid = decodeURIComponent(encodedUid);
   _pfcFriendName = decodeURIComponent(encodedName);
@@ -11327,6 +11338,23 @@ async function openPrivateFriendChat(encodedUid, encodedName) {
   document.getElementById('pfcMessages').innerHTML = '<div style="text-align:center;color:#888;padding:2rem"><i class="fas fa-spinner fa-spin"></i></div>';
   document.getElementById('privateFriendChatModal').classList.add('active');
   closeFriendChatMenu();
+
+  // ضبط الارتفاع فورًا ولما الكيبورد يفتح/يقفل
+  _pfcAdjustForKeyboard();
+  if (window.visualViewport && !window._pfcViewportListenerAdded) {
+    window.visualViewport.addEventListener('resize', _pfcAdjustForKeyboard);
+    window._pfcViewportListenerAdded = true;
+  }
+  const pfcInputEl = document.getElementById('pfcInput');
+  if (pfcInputEl && !pfcInputEl._pfcFocusBound) {
+    pfcInputEl.addEventListener('focus', () => {
+      setTimeout(() => {
+        _pfcAdjustForKeyboard();
+        pfcInputEl.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      }, 300);
+    });
+    pfcInputEl._pfcFocusBound = true;
+  }
 
   // Mark messages as read — بـ where واحد بس عشان مش نحتاج Composite Index
   try {
@@ -11357,9 +11385,13 @@ async function openPrivateFriendChat(encodedUid, encodedName) {
         const msg = d.data();
         const isMe = msg.from === currentUserId;
         const time = msg.createdAt?.toDate?.()?.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'}) || '';
+        const deleteBtn = isMe ? `<button onclick="deletePrivateFriendMsg('${d.id}',this)" title="حذف الرسالة" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:.75rem;padding:.15rem .3rem;opacity:.7;flex-shrink:0"><i class="fas fa-trash-alt"></i></button>` : '';
         return `
-          <div style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'}">
-            <div style="max-width:75%;padding:.65rem 1rem;border-radius:${isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isMe ? 'linear-gradient(135deg,#f472b6,#a855f7)' : 'rgba(255,255,255,.1)'};color:#fff;font-size:.9rem;line-height:1.5;word-break:break-word">${escapeHtml(msg.text || '')}</div>
+          <div style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'}" data-msgid="${d.id}">
+            <div style="display:flex;align-items:center;gap:.35rem;max-width:100%">
+              ${isMe ? deleteBtn : ''}
+              <div style="max-width:75%;padding:.65rem 1rem;border-radius:${isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};background:${isMe ? 'linear-gradient(135deg,#f472b6,#a855f7)' : 'rgba(255,255,255,.1)'};color:#fff;font-size:.9rem;line-height:1.5;word-break:break-word">${escapeHtml(msg.text || '')}</div>
+            </div>
             <span style="font-size:.68rem;color:#666;margin-top:.2rem;padding:0 .3rem">${time}</span>
           </div>`;
       }).join('');
@@ -11374,8 +11406,30 @@ async function openPrivateFriendChat(encodedUid, encodedName) {
 function closePrivateFriendChat() {
   document.getElementById('privateFriendChatModal').classList.remove('active');
   if (_pfcUnsubscribe) { _pfcUnsubscribe(); _pfcUnsubscribe = null; }
+  const modalContent = document.querySelector('#privateFriendChatModal .modal-content');
+  if (modalContent) { modalContent.style.height = ''; modalContent.style.maxHeight = ''; }
   _pfcFriendUid = null;
   _pfcFriendName = null;
+}
+
+// حذف رسالة خاصة (بتاعة المستخدم نفسه بس)
+async function deletePrivateFriendMsg(msgId, btnEl) {
+  if (!msgId || !currentUserId) return;
+  if (!confirm('تأكيد حذف الرسالة دي؟')) return;
+  if (btnEl) btnEl.disabled = true;
+  try {
+    const doc = await db.collection('private_messages').doc(msgId).get();
+    if (!doc.exists) return;
+    if (doc.data().from !== currentUserId) {
+      showToast('❌ مينفعش تمسح رسالة مش بتاعتك');
+      return;
+    }
+    await db.collection('private_messages').doc(msgId).delete();
+  } catch(e) {
+    console.error('deletePrivateFriendMsg error:', e);
+    showToast('❌ تعذر حذف الرسالة');
+    if (btnEl) btnEl.disabled = false;
+  }
 }
 
 async function sendPrivateFriendMsg() {
