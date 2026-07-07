@@ -276,8 +276,8 @@ button, [onclick] {
     .modal-content { background: #0f0a1a; width: 100%; height: 100%; max-width: none; border: none; border-radius: 0; overflow-y: auto; display: flex; flex-direction: column; overscroll-behavior: contain; }
     .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.1); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(236,72,153,.2)); flex-wrap: wrap; gap: 0.75rem; }
     .modal-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    .modal-close { width: 40px; height: 40px; border: none; background: rgba(239,68,68,.2); color: #ef4444; border-radius: 10px; cursor: pointer; transition: all .3s; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-    .modal-close:hover { background: rgba(239,68,68,.4); transform: rotate(90deg); }
+    .modal-close { width: 40px; height: 40px; border: none; background: rgba(239,68,68,.2); color: #ef4444; border-radius: 10px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .modal-close:hover { background: rgba(239,68,68,.4); }
     .modal-share, .modal-fullscreen { width: 40px; height: 40px; border: none; background: rgba(16,185,129,.2); color: #10b981; border-radius: 10px; cursor: pointer; transition: all .3s; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
     .modal-share:hover, .modal-fullscreen:hover { background: rgba(16,185,129,.4); transform: scale(1.1); }
     .modal-fullscreen { background: rgba(99,102,241,.2); color: #6366f1; }
@@ -416,8 +416,8 @@ button, [onclick] {
     .image-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.95); display: none; align-items: center; justify-content: center; z-index: 10001; padding: 2rem; }
     .image-viewer.active { display: flex; }
     .image-viewer img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
-    .image-viewer-close { position: absolute; top: 2rem; right: 2rem; width: 50px; height: 50px; background: rgba(255,255,255,.1); border: none; color: #fff; border-radius: 50%; font-size: 1.5rem; cursor: pointer; transition: all .3s; }
-    .image-viewer-close:hover { background: rgba(239,68,68,.5); transform: rotate(90deg); }
+    .image-viewer-close { position: absolute; top: 2rem; right: 2rem; width: 50px; height: 50px; background: rgba(255,255,255,.1); border: none; color: #fff; border-radius: 50%; font-size: 1.5rem; cursor: pointer; }
+    .image-viewer-close:hover { background: rgba(239,68,68,.5); }
     .message-time { font-size: .75rem; color: #888; margin-top: .5rem; text-align: left; direction: ltr; }
     .message.sent .message-time { color: rgba(255,255,255,.7); text-align: right; }
     @media (max-width:768px) { .chat-container { height: 100vh; max-width: 100%; border-radius: 0; } .chat-btn { bottom: 1rem; left: 1rem; width: 55px; height: 55px; } .message { max-width: 85%; padding: .875rem 1rem; } .chat-header { padding: 1rem; } .chat-avatar { width: 40px; height: 40px; font-size: 1.2rem; } .message-delete-btn { display: flex; } .voice-message { min-width: 140px; max-width: 200px; } }
@@ -2192,7 +2192,6 @@ body {
 }
 .modal-close:hover {
   background: rgba(239,68,68,0.3) !important;
-  transform: rotate(90deg) scale(1.05) !important;
 }
 .modal-share, .modal-fullscreen {
   background: rgba(16,185,129,0.1) !important;
@@ -3532,12 +3531,9 @@ body {
   background: rgba(239,68,68,.12) !important;
   border: 1px solid rgba(239,68,68,.25) !important;
   border-radius: 10px;
-  transition: all .25s;
 }
 .modal-close:hover {
   background: rgba(239,68,68,.3) !important;
-  transform: rotate(90deg) scale(1.1) !important;
-  box-shadow: 0 4px 16px rgba(239,68,68,.3);
 }
 
 /* ══════════════════════════════════════════
@@ -5986,7 +5982,6 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   color: #fff !important;
   cursor: pointer !important;
   font-size: 0.9rem !important;
-  transition: background 0.2s !important;
 }
 #videoModal .modal-close:hover,
 #videoModal .modal-share:hover,
@@ -6305,7 +6300,6 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   font-size: 0.9rem !important;
   cursor: pointer !important;
   backdrop-filter: none !important;
-  transition: background 0.2s, border-color 0.2s !important;
 }
 #videoModal .modal-close:hover { background: rgba(239,68,68,0.3) !important; border-color: rgba(239,68,68,0.4) !important; }
 #videoModal .modal-share:hover,
