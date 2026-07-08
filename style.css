@@ -7508,8 +7508,11 @@ button[style*="border-radius:50%"],
     padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
   }
   /* Chat floating btns - رفعهم فوق الـ safe area */
-  .chat-btn, .ai-chat-btn, .teach-ai-circle-btn {
+  .chat-btn, .teach-ai-circle-btn {
     bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .ai-chat-btn {
+    bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
