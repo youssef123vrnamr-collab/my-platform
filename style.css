@@ -7590,3 +7590,38 @@ button[style*="border-radius:50%"],
    MANIFEST / PWA - إضافة splash screen colors
    ============================================================ */
 meta[name="theme-color"] { content: "#0f0a1a"; }
+
+/* ============================================================
+   FIX نهائي: فيديو الموبايل يملأ الحاوية بالكامل
+   (لازم يفضل آخر قاعدة في الملف عشان يكسب أي تعارض قديم)
+   ============================================================ */
+@media (max-width: 768px) {
+  #videoModal .video-player-container {
+    position: relative !important;
+    width: 100% !important;
+    height: 52vw !important;
+    min-height: 210px !important;
+    max-height: 280px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: #000 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+  }
+  #videoModal .video-player-container .video-player,
+  #videoModal .video-player-container video {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    aspect-ratio: unset !important;
+    border-radius: 0 !important;
+    background: #000 !important;
+  }
+}
