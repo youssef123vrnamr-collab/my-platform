@@ -9690,9 +9690,6 @@ function slStopAllAnimations() {
     // لو في deferredPrompt (Chrome Android) اعرض زر التثبيت المباشر
     const directBtn = document.getElementById('pwaDirectInstallBtn');
     if (directBtn) directBtn.style.display = (deferredPrompt && !isIOS) ? 'flex' : 'none';
-    // زرار APK — يظهر لو Android وملوش deferredPrompt
-    const apkBtn = document.getElementById('pwaApkDownloadBtn');
-    if (apkBtn) apkBtn.style.display = (!isIOS) ? 'flex' : 'none';
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
