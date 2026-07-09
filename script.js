@@ -2340,6 +2340,8 @@ async function updateAdminUI() {
     if (sendBtn) { sendBtn.classList.remove("sending"); void sendBtn.offsetWidth; sendBtn.classList.add("sending"); setTimeout(() => sendBtn.classList.remove("sending"), 600); }
     displayAIMessage(text, "user");
     input.value = "";
+    input.style.height = "";
+    input.dispatchEvent(new Event("input"));
 
     // لو الرسالة طلب توليد صورة
     if (isImageRequest(text)) {
@@ -2375,7 +2377,7 @@ async function updateAdminUI() {
     }
   }
   function displayAIMessage(text, sender) { let cont = document.getElementById("aiChatMessages"); if (!cont) return; let msg = document.createElement("div"); msg.className = "message " + (sender === "user" ? "sent" : "received"); let time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }); let html = ""; if (sender === "received") html += '<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>'; html += '<div class="message-content">' + escapeHtml(text) + '</div><div class="message-time">' + time + '</div>'; msg.innerHTML = html; cont.appendChild(msg); cont.scrollTop = cont.scrollHeight; }
-  function handleAIKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAIMessage(); } }
+  function handleAIKeyPress(e) { /* زر Enter من الكيبورد بيعمل سطر جديد بس، الإرسال يبقى فقط بالضغط على زر الإرسال */ }
 
   // ========== Chat Functions with Validation ==========
   async function checkIfUserAlreadyActive(name, phone) { try { const activeUserQuery = await db.collection("active_sessions").where("name", "==", name).where("phone", "==", phone).where("active", "==", true).get(); if (!activeUserQuery.empty) { const currentDeviceId = localStorage.getItem("falak_device_id"); if (!currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } const session = activeUserQuery.docs[0].data(); if (session.deviceId !== currentDeviceId) { for (const doc of activeUserQuery.docs) { await db.collection("active_sessions").doc(doc.id).delete(); } return { allowed: true }; } } return { allowed: true }; } catch (error) { console.error("Error checking active user:", error); return { allowed: true }; } }
@@ -2542,13 +2544,15 @@ async function updateAdminUI() {
   }).then(() => {
     SoundEffects.send();
     inp.value = "";
+    inp.style.height = "";
+    inp.dispatchEvent(new Event("input"));
   }).catch(() => {
     SoundEffects.error();
     showToast("فشل الإرسال");
   });
 }
   window.sendMessage = sendMessage;
-  function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+  function handleKeyPress(e) { /* زر Enter من الكيبورد بيعمل سطر جديد بس، الإرسال يبقى فقط بالضغط على زر الإرسال */ }
   function sendImage(input) {
   let file = input.files[0];
   if (!file || !googleUser) return;
@@ -5748,7 +5752,7 @@ function switchProgressTab(tab) {
   }
 
   window.pacInputKeydown = function(ev){
-    if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); window.pacSendMessage(); }
+    /* زر Enter من الكيبورد بيعمل سطر جديد بس، الإرسال يبقى فقط بالضغط على زر الإرسال */
   };
 window.pacSendMessage = async function(){
   const input = document.getElementById('pacInput');
