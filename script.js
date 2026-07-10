@@ -397,6 +397,30 @@ async function isAdminUser(userId) {
   window.testAiKey = testAiKey;
   window.resetAiKey = resetAiKey;
 
+  // ====== مفتاح Gemini API (لتحليل الصور — مجاني وأكثر استقراراً من Groq للصور) ======
+  // يُحفظ محلياً على جهاز كل مستخدم (localStorage). المشرف يقدر يحط مفتاحه المجاني من
+  // https://aistudio.google.com/apikey مرة واحدة والباقي يعمل تلقائياً.
+  const GEMINI_KEY_STORAGE = "falak_gemini_key";
+  function getGeminiApiKey(){
+    try { return (localStorage.getItem(GEMINI_KEY_STORAGE) || "").trim(); } catch(e){ return ""; }
+  }
+  function setGeminiApiKey(){
+    const current = getGeminiApiKey();
+    const v = window.prompt(
+      "الصق مفتاح Gemini API المجاني هنا (احصل عليه من aistudio.google.com/apikey):",
+      current || ""
+    );
+    if (v === null) return; // المستخدم ضغط إلغاء
+    const trimmed = v.trim();
+    if (!trimmed) { showToast("⚠️ لم يتم إدخال أي مفتاح"); return; }
+    try {
+      localStorage.setItem(GEMINI_KEY_STORAGE, trimmed);
+      showToast("✅ تم حفظ مفتاح Gemini على هذا الجهاز");
+    } catch(e){ showToast("❌ فشل حفظ المفتاح"); }
+  }
+  window.getGeminiApiKey = getGeminiApiKey;
+  window.setGeminiApiKey = setGeminiApiKey;
+
 
   const MAX_VIDEO_SIZE = 104857600;
   const CHUNK_SIZE = 10485760;
@@ -10661,20 +10685,44 @@ function slStopAllAnimations() {
               msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
             }
             try {
-              var apiKey2 = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
+              var geminiKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
+              if (!geminiKey) {
+                if (typingEl2) typingEl2.remove();
+                if (msgs) {
+                  var edNoKey = document.createElement('div');
+                  edNoKey.className = 'message received';
+                  edNoKey.innerHTML = '<div class="message-content" style="color:#f59e0b">⚠️ لسه مفيش مفتاح Gemini متسجل. من قائمة الإعدادات ⚙️ اختر "مفتاح تحليل الصور" وحط مفتاحك المجاني من aistudio.google.com/apikey</div>';
+                  msgs.appendChild(edNoKey); msgs.scrollTop = msgs.scrollHeight;
+                }
+                return;
+              }
               var promptText = extraText || 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.';
-              var visionRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              // فصل البيانات base64 عن الـ prefix (data:image/jpeg;base64,....)
+              var _commaIdx = dataUrl.indexOf(',');
+              var base64Data = _commaIdx > -1 ? dataUrl.slice(_commaIdx + 1) : dataUrl;
+              var mimeMatch = /^data:([^;]+);base64/.exec(dataUrl);
+              var mimeType = mimeMatch ? mimeMatch[1] : (file.type || 'image/jpeg');
+
+              var visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(geminiKey), {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer '+apiKey2, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  model: 'qwen/qwen3.6-27b',
-                  messages: [{ role: 'user', content: [ { type: 'text', text: promptText }, { type: 'image_url', image_url: { url: dataUrl } } ] }],
-                  max_tokens: 1000,
-                  temperature: 0.4
+                  contents: [{
+                    parts: [
+                      { text: promptText },
+                      { inline_data: { mime_type: mimeType, data: base64Data } }
+                    ]
+                  }]
                 })
               });
+
+              if (visionRes.status === 429) {
+                throw Object.assign(new Error('rate-limited'), { _rateLimited: true });
+              }
               var visionData = await visionRes.json();
-              var visionAnswer = (visionData.choices && visionData.choices[0] && visionData.choices[0].message && visionData.choices[0].message.content) || null;
+              var visionAnswer = (visionData.candidates && visionData.candidates[0] && visionData.candidates[0].content &&
+                visionData.candidates[0].content.parts && visionData.candidates[0].content.parts[0] &&
+                visionData.candidates[0].content.parts[0].text) || null;
               if (!visionAnswer && visionData.error) throw new Error(JSON.stringify(visionData.error));
               if (!visionAnswer) visionAnswer = 'عذراً، مقدرتش أحلل الصورة.';
               if (window.aiChatHistory) {
@@ -10697,7 +10745,10 @@ function slStopAllAnimations() {
               if (msgs) {
                 var ed2 = document.createElement('div');
                 ed2.className = 'message received';
-                ed2.innerHTML = '<div class="message-content" style="color:#ef4444">❌ مقدرتش أحلل الصورة. تأكد من مفتاح الـ API.</div>';
+                var _msg2 = errImg && errImg._rateLimited
+                  ? '⏳ في زحمة على الخدمة المجانية دلوقتي (تجاوزنا الحد المسموح للدقيقة). جرّب تاني بعد شوية.'
+                  : '❌ مقدرتش أحلل الصورة. تأكد إن مفتاح Gemini صحيح ومفعّل.';
+                ed2.innerHTML = '<div class="message-content" style="color:#ef4444">'+_msg2+'</div>';
                 msgs.appendChild(ed2); msgs.scrollTop = msgs.scrollHeight;
               }
               console.error('AI vision error:', errImg);
