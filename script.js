@@ -10720,9 +10720,9 @@ function slStopAllAnimations() {
               var mimeMatch = /^data:([^;]+);base64/.exec(dataUrl);
               var mimeType = mimeMatch ? mimeMatch[1] : (file.type || 'image/jpeg');
 
-              var visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(geminiKey), {
+              var visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
                 body: JSON.stringify({
                   contents: [{
                     parts: [
@@ -10762,9 +10762,13 @@ function slStopAllAnimations() {
               if (msgs) {
                 var ed2 = document.createElement('div');
                 ed2.className = 'message received';
-                var _msg2 = errImg && errImg._rateLimited
-                  ? '⏳ في زحمة على الخدمة المجانية دلوقتي (تجاوزنا الحد المسموح للدقيقة). جرّب تاني بعد شوية.'
-                  : '❌ مقدرتش أحلل الصورة. تأكد إن مفتاح Gemini صحيح ومفعّل.';
+                var _msg2;
+                if (errImg && errImg._rateLimited) {
+                  _msg2 = '⏳ في زحمة على الخدمة المجانية دلوقتي (تجاوزنا الحد المسموح للدقيقة). جرّب تاني بعد شوية.';
+                } else {
+                  var _detail = (errImg && errImg.message ? String(errImg.message) : '').slice(0, 200);
+                  _msg2 = '❌ مقدرتش أحلل الصورة. تأكد إن مفتاح Gemini صحيح ومفعّل.' + (_detail ? '<br><span style="font-size:.75rem;opacity:.7;direction:ltr;display:inline-block">' + escapeHtml(_detail) + '</span>' : '');
+                }
                 ed2.innerHTML = '<div class="message-content" style="color:#ef4444">'+_msg2+'</div>';
                 msgs.appendChild(ed2); msgs.scrollTop = msgs.scrollHeight;
               }
