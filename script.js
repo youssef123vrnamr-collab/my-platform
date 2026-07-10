@@ -277,6 +277,7 @@ async function isAdminUser(userId) {
   // قابل للتغيير من قائمة الترس بواسطة المشرف فقط، بدون لمس الكود.
   const AI_KEY_DEFAULT = "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";
   let _currentAiKey = AI_KEY_DEFAULT;
+  let _currentGeminiKey = "";
   let _aiKeyUnsub = null;
   function _maskKey(k){
     const s = (k || "").toString();
@@ -291,6 +292,7 @@ async function isAdminUser(userId) {
         snap => {
           const d = snap.exists ? (snap.data() || {}) : {};
           _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
+          _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
           const disp = document.getElementById("currentAiKeyDisplay");
           if (disp) disp.textContent = _maskKey(_currentAiKey);
         },
@@ -303,6 +305,7 @@ async function isAdminUser(userId) {
       const snap = await db.collection("system").doc("ai_settings").get();
       const d = snap.exists ? (snap.data() || {}) : {};
       _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
+      _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
     } catch(e){ console.warn("loadAiKeyOnce failed", e); }
   }
   function openAiKeyModal(){
@@ -398,28 +401,41 @@ async function isAdminUser(userId) {
   window.resetAiKey = resetAiKey;
 
   // ====== مفتاح Gemini API (لتحليل الصور — مجاني وأكثر استقراراً من Groq للصور) ======
-  // يُحفظ محلياً على جهاز كل مستخدم (localStorage). المشرف يقدر يحط مفتاحه المجاني من
-  // https://aistudio.google.com/apikey مرة واحدة والباقي يعمل تلقائياً.
-  const GEMINI_KEY_STORAGE = "falak_gemini_key";
-  function getGeminiApiKey(){
-    try { return (localStorage.getItem(GEMINI_KEY_STORAGE) || "").trim(); } catch(e){ return ""; }
-  }
-  function setGeminiApiKey(){
-    const current = getGeminiApiKey();
+  // بيتحفظ على السيرفر (Firestore: system/ai_settings, field: geminiApiKey) بالظبط زي مفتاح Groq،
+  // المشرف بس هو اللي يقدر يحطه/يغيّره، وكل المستخدمين بياخدوه تلقائياً من غير ما يعملوا حاجة.
+  function getGeminiApiKey(){ return (_currentGeminiKey && String(_currentGeminiKey).trim()) || ""; }
+  function openGeminiKeyModal(){
+    if (!isAdmin) { SoundEffects && SoundEffects.error && SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
     const v = window.prompt(
-      "الصق مفتاح Gemini API المجاني هنا (احصل عليه من aistudio.google.com/apikey):",
-      current || ""
+      "الصق مفتاح Gemini API المجاني هنا (احصل عليه من aistudio.google.com/apikey):\nهيتحفظ على السيرفر ويشتغل تلقائياً لكل المستخدمين.",
+      _currentGeminiKey || ""
     );
-    if (v === null) return; // المستخدم ضغط إلغاء
+    if (v === null) return; // إلغاء
     const trimmed = v.trim();
     if (!trimmed) { showToast("⚠️ لم يتم إدخال أي مفتاح"); return; }
+    saveGeminiKey(trimmed);
+  }
+  async function saveGeminiKey(v){
+    if (!isAdmin) { SoundEffects && SoundEffects.error && SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
     try {
-      localStorage.setItem(GEMINI_KEY_STORAGE, trimmed);
-      showToast("✅ تم حفظ مفتاح Gemini على هذا الجهاز");
-    } catch(e){ showToast("❌ فشل حفظ المفتاح"); }
+      await db.collection("system").doc("ai_settings").set({
+        geminiApiKey: v,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown"
+      }, { merge: true });
+      _currentGeminiKey = v;
+      SoundEffects && SoundEffects.success && SoundEffects.success();
+      showToast("✅ تم حفظ مفتاح Gemini على السيرفر لكل المستخدمين");
+    } catch(e){
+      console.error("saveGeminiKey err", e);
+      let msg = "❌ فشل الحفظ";
+      const code = (e && (e.code || e.message)) || "";
+      if (/permission|denied|insufficient/i.test(code)) msg = "❌ صلاحيات Firestore لا تسمح بالكتابة في system/ai_settings";
+      showToast(msg);
+    }
   }
   window.getGeminiApiKey = getGeminiApiKey;
-  window.setGeminiApiKey = setGeminiApiKey;
+  window.setGeminiApiKey = openGeminiKeyModal;
 
 
   const MAX_VIDEO_SIZE = 104857600;
@@ -620,6 +636,7 @@ async function updateAdminUI() {
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
             addItem("setAdminsMenuItem","fas fa-users-cog","تحديد المشرفين", () => { menu.classList.remove("active"); openSetAdminsModal(); });
             addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); });
+            addItem("geminiKeyMenuItem","fas fa-key","مفتاح تحليل الصور 🖼️", () => { menu.classList.remove("active"); openGeminiKeyModal(); });
             addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); });
             addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); });
             addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); });
