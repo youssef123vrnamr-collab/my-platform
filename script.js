@@ -368,7 +368,7 @@ async function isAdminUser(userId) {
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": "Bearer " + candidate, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: "ping" }], max_tokens: 5 })
+        body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: [{ role: "user", content: "ping" }], max_tokens: 5 })
       });
       if (r.ok) { SoundEffects.success(); showToast("✅ المفتاح يعمل بنجاح"); }
       else if (r.status === 401) { SoundEffects.error(); showToast("❌ المفتاح غير صالح (401)"); }
@@ -2175,7 +2175,7 @@ async function updateAdminUI() {
         method: "POST", signal: ctrl.signal,
         headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
+          model: "openai/gpt-oss-120b",
           messages: [
             { role: "system", content: "Translate Arabic to English for AI image generation. Reply ONLY with a concise English description, max 20 words. No quotes, no explanation." },
             { role: "user", content: prompt }
@@ -2358,7 +2358,7 @@ async function updateAdminUI() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
+          model: "openai/gpt-oss-120b",
           messages: [
             { role: "system", content: "أنت مساعد متخصص في الفلك. جاوب بالعربية بدقة." },
             { role: "user", content: text }
@@ -2518,7 +2518,7 @@ async function updateAdminUI() {
   async function saveUserName() { let name = document.getElementById("userNameInput").value.trim(); let countryCode = document.getElementById("userCountryCode").value; let phoneNumber = document.getElementById("userPhoneInput").value.trim(); if (!name) { SoundEffects.error(); showToast("⚠️ أدخل اسمك الكامل"); return; } if (!isValidName(name)) { SoundEffects.error(); showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-20 حرف) ولا يحتوي على رموز"); return; } if (!phoneNumber) { SoundEffects.error(); showToast("⚠️ رقم الهاتف مطلوب"); return; } let fullPhone = normalizePhone(phoneNumber, countryCode); if (!validatePhone(fullPhone, countryCode)) { SoundEffects.error(); showToast("⚠️ رقم الهاتف غير صحيح — اختر الدولة وأدخل الأرقام بدون صفر في البداية"); return; } showToast("⏳ جاري التحقق من البيانات..."); const checkResult = await checkIfUserAlreadyActive(name, fullPhone); if (!checkResult.allowed) { SoundEffects.error(); showToast(checkResult.message); return; } saveUserDataToStorage(name, fullPhone); if (currentUserId) await saveUserDataToFirebase(currentUserId); await registerActiveSession(name, fullPhone); document.getElementById("nameModal").classList.remove("active"); document.getElementById("chatModal").classList.add("active"); SoundEffects.join(); initPresenceSystem(); loadMessages(); setTimeout(function(){ document.dispatchEvent(new Event("userLoggedIn")); }, 1500); db.collection("chat_users").add({ name: name, phone: fullPhone, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => console.warn("Could not save chat user:", err)); updateAdminUI(); }
   // loadUserDashboard() — يتعمل بعد تسجيل دخول ناجح فقط
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
-  function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone && !data.senderPhone.includes('@')) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
+  function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone && !data.senderPhone.includes('@')) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.replyTo && typeof window.renderQuotedReply === "function") html += window.renderQuotedReply(data.replyTo); if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
   function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
   function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
@@ -2533,7 +2533,8 @@ async function updateAdminUI() {
   const senderName = (googleUser && googleUser.displayName) || currentUser || "مجهول";
   const senderPhone = (googleUser && googleUser.phoneNumber) || currentUserPhone || "";
   if (!senderName || senderName === "مجهول" && !senderPhone) { showToast("⚠️ الرجاء تسجيل الدخول أولاً"); return; }
-  db.collection("messages").add({
+  const _replyPayload = (window._replyState && window._replyState.public) ? window._replyState.public : null;
+  db.collection("messages").add(Object.assign({
     type: "text",
     text: text,
     sender: senderName,
@@ -2541,11 +2542,12 @@ async function updateAdminUI() {
     userId: currentUserId,
     senderId: currentUserId,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
+  }, _replyPayload ? { replyTo: _replyPayload } : {})).then(() => {
     SoundEffects.send();
     inp.value = "";
     inp.style.height = "";
     inp.dispatchEvent(new Event("input"));
+    if (typeof cancelReply === "function") cancelReply("public");
   }).catch(() => {
     SoundEffects.error();
     showToast("فشل الإرسال");
@@ -5736,6 +5738,7 @@ function switchProgressTab(tab) {
           html.push(`
             <div class="pac-msg ${cls}" data-msg-id="${doc.id}">
               <div class="pac-msg-meta"><i class="fas ${senderIcon}"></i> ${pacEsc(senderName)} ${deleteBtn}</div>
+              ${m.replyTo && typeof window.renderQuotedReply === 'function' ? window.renderQuotedReply(m.replyTo) : ''}
               <div class="pac-msg-text">${pacEsc(m.text||'')}</div>
               <span class="pac-msg-time">${pacEsc(pacFmtFull(m.timestamp))}</span>
             </div>`);
@@ -5765,12 +5768,14 @@ window.pacSendMessage = async function(){
   const senderName = pacIsAdminView ? 'المشرف' : pacUserName();
   input.value = '';
   input.style.height = 'auto';
+  const _pacReplyPayload = (window._replyState && window._replyState.pac) ? window._replyState.pac : null;
   try {
-    await dbi.collection(PAC_COL).doc(threadId).collection('messages').add({
+    await dbi.collection(PAC_COL).doc(threadId).collection('messages').add(Object.assign({
       text, sender, senderName,
       senderId: currentUserId,   // ✅ هذا هو التعديل الوحيد
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    }, _pacReplyPayload ? { replyTo: _pacReplyPayload } : {}));
+    if (typeof cancelReply === 'function') cancelReply('pac');
     const meta = {
       lastMessage: text,
       lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
@@ -6900,7 +6905,7 @@ window.updateActiveToolLabel = function(label) {
           const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + (typeof getAiApiKey==='function'?getAiApiKey():''), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role:'system', content:'أنت مساعد فلكي. أجب بالعربية بشكل مختصر وواضح.' }, { role:'user', content:text }], max_tokens: 400, temperature: 0.3 })
+            body: JSON.stringify({ model: 'openai/gpt-oss-120b', messages: [{ role:'system', content:'أنت مساعد فلكي. أجب بالعربية بشكل مختصر وواضح.' }, { role:'user', content:text }], max_tokens: 400, temperature: 0.3 })
           });
           const data = await res.json();
           const answer = (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'عذراً، حدث خطأ.';
@@ -9301,7 +9306,7 @@ async function slTranslateQuestions(items, lang) {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           max_tokens: 2000,
           temperature: 0.1,
           messages: [
@@ -10152,7 +10157,7 @@ function slStopAllAnimations() {
           ? aiChatHistory.slice(-histLimit) : [];
 
         // ✅ نختار الموديل والـ max_tokens بناءً على حجم الرسالة
-        var chosenModel = 'llama-3.3-70b-versatile';
+        var chosenModel = 'openai/gpt-oss-120b';
         var chosenMaxTokens = 8000; // رفعنا من 2000 → 8000
 
         function buildPayload(model, maxTok, hist) {
@@ -10181,11 +10186,11 @@ function slStopAllAnimations() {
           // لو فشل بسبب context overflow → retry بموديل أخف وبدون history
           if (!res.ok && (res.status === 400 || res.status === 413 ||
               (data && data.error && /context|length|token/i.test(JSON.stringify(data.error))))) {
-            console.warn('Context too large, retrying with llama-3.1-8b-instant and no history...');
+            console.warn('Context too large, retrying with openai/gpt-oss-20b and no history...');
             var res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
               method: 'POST',
               headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-              body: JSON.stringify(buildPayload('llama-3.1-8b-instant', 4000, []))
+              body: JSON.stringify(buildPayload('openai/gpt-oss-20b', 4000, []))
             });
             data = await res2.json();
             res = res2;
@@ -10631,18 +10636,80 @@ function slStopAllAnimations() {
         if (inp) { inp.value = ''; inp.style.height = 'auto'; }
 
         if (file.type.startsWith('image/')) {
+          if (file.size > 4 * 1024 * 1024) { showToast('⚠️ الصورة كبيرة، الحد الأقصى 4 ميجا'); return; }
           var reader = new FileReader();
           reader.onload = async function(e) {
+            var dataUrl = e.target.result;
+            var _imgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+            var _replyPayloadImg = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
             if (msgs) {
               var div = document.createElement('div');
               div.className = 'message sent';
-              div.innerHTML = '<img src="'+e.target.result+'" style="max-width:180px;border-radius:10px;display:block;margin-bottom:.3rem"><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+              div.id = 'msg-'+_imgUid; div.dataset.msgId = _imgUid;
+              var _quotedImg = (_replyPayloadImg && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadImg) : '';
+              div.innerHTML = _quotedImg + '<img src="'+dataUrl+'" style="max-width:180px;border-radius:10px;display:block;margin-bottom:.3rem">' + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
               msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
             }
-            await window.sendAIMessage(extraText || ('صف هذه الصورة باللغة العربية: "'+file.name+'"'));
+            if (_replyPayloadImg && typeof cancelReply === 'function') cancelReply('ai');
+
+            var persona2 = (typeof window.getCurrentAIPersona === 'function' ? window.getCurrentAIPersona() : null) || { name:'Astronomy AI', emoji:'🔭' };
+            var typingEl2 = null;
+            if (msgs) {
+              typingEl2 = document.createElement('div');
+              typingEl2.className = 'message received';
+              typingEl2.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> '+persona2.name+' بيشوف الصورة...</div>';
+              msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
+            }
+            try {
+              var apiKey2 = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
+              var promptText = extraText || 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.';
+              var visionRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer '+apiKey2, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model: 'qwen/qwen3.6-27b',
+                  messages: [{ role: 'user', content: [ { type: 'text', text: promptText }, { type: 'image_url', image_url: { url: dataUrl } } ] }],
+                  max_tokens: 1000,
+                  temperature: 0.4
+                })
+              });
+              var visionData = await visionRes.json();
+              var visionAnswer = (visionData.choices && visionData.choices[0] && visionData.choices[0].message && visionData.choices[0].message.content) || null;
+              if (!visionAnswer && visionData.error) throw new Error(JSON.stringify(visionData.error));
+              if (!visionAnswer) visionAnswer = 'عذراً، مقدرتش أحلل الصورة.';
+              if (window.aiChatHistory) {
+                window.aiChatHistory.push({ role:'user', content: '[أرسل المستخدم صورة] ' + (extraText||'') });
+                window.aiChatHistory.push({ role:'assistant', content: visionAnswer });
+                if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+              }
+              if (typingEl2) typingEl2.remove();
+              if (msgs) {
+                var aiImgDiv = document.createElement('div');
+                aiImgDiv.className = 'message received';
+                var _ansUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+                aiImgDiv.id = 'msg-'+_ansUid; aiImgDiv.dataset.msgId = _ansUid;
+                aiImgDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona2.emoji+' '+persona2.name+'</div><div class="message-content">'+visionAnswer+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+                msgs.appendChild(aiImgDiv); msgs.scrollTop = msgs.scrollHeight;
+                if (typeof window.addAIMuteButton === 'function') { var _t2 = aiImgDiv.querySelector('.message-content'); if (_t2) window.addAIMuteButton(aiImgDiv, _t2.textContent); }
+              }
+            } catch(errImg) {
+              if (typingEl2) typingEl2.remove();
+              if (msgs) {
+                var ed2 = document.createElement('div');
+                ed2.className = 'message received';
+                ed2.innerHTML = '<div class="message-content" style="color:#ef4444">❌ مقدرتش أحلل الصورة. تأكد من مفتاح الـ API.</div>';
+                msgs.appendChild(ed2); msgs.scrollTop = msgs.scrollHeight;
+              }
+              console.error('AI vision error:', errImg);
+            }
           };
           reader.readAsDataURL(file);
         } else {
+          var _binaryExt = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|exe|apk|mp3|mp4|mov|wav)$/i;
+          if (_binaryExt.test(file.name) || (file.type && !file.type.startsWith('text/') && file.type !== 'application/json')) {
+            showToast('⚠️ نوع الملف ده مش مدعوم للقراءة المباشرة دلوقتي. جرّب ملف نصي (txt, csv, json...) أو ابعت صورة/سكرين شوت من المحتوى بدل كده.');
+            return;
+          }
           var reader2 = new FileReader();
           reader2.onload = async function(e) {
             var content = typeof e.target.result === 'string' ? e.target.result.substring(0,3000) : '';
@@ -10684,13 +10751,25 @@ function slStopAllAnimations() {
       }
       document.dispatchEvent(new Event('dqAiSent'));
 
+      // ── الرد على رسالة سابقة (لو مفعّل) ──
+      var _aiReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
+      var _aiApiMsg = userMsg;
+      if (_aiReplyPayload && injectedMsg === undefined) {
+        _aiApiMsg = 'بالرد على رسالة سابقة ("'+_aiReplyPayload.text+'"):\n' + userMsg;
+      }
+
       // ── Show user bubble ──
+      var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
       if (msgs) {
         var ud = document.createElement('div');
         ud.className = 'message sent';
-        ud.innerHTML = '<div class="message-content">'+userMsg+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+        ud.id = 'msg-'+_aiMsgUid;
+        ud.dataset.msgId = _aiMsgUid;
+        var _quoted = (_aiReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_aiReplyPayload) : '';
+        ud.innerHTML = _quoted + '<div class="message-content">'+userMsg+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
         msgs.appendChild(ud); msgs.scrollTop = msgs.scrollHeight;
       }
+      if (_aiReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
 
       // ── Typing indicator ──
       var typingEl = null;
@@ -10713,7 +10792,7 @@ function slStopAllAnimations() {
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt }].concat(hist).concat([{ role:'user', content: userMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
           temperature: 0.4
         };
@@ -10730,11 +10809,11 @@ function slStopAllAnimations() {
       }
 
       try {
-        var result = await callGroq('llama-3.3-70b-versatile', 1500, histMsgs);
+        var result = await callGroq('openai/gpt-oss-120b', 1500, histMsgs);
         // Retry with smaller model if context overflow
         if (!result.res.ok && (result.res.status===400||result.res.status===413||
             (result.data&&result.data.error&&/context|length|token/i.test(JSON.stringify(result.data.error))))) {
-          result = await callGroq('llama-3.1-8b-instant', 4000, []);
+          result = await callGroq('openai/gpt-oss-20b', 4000, []);
         }
         var answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
         if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));
@@ -10750,6 +10829,9 @@ function slStopAllAnimations() {
         if (msgs) {
           var aiDiv = document.createElement('div');
           aiDiv.className = 'message received';
+          var _aiAnswerUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+          aiDiv.id = 'msg-'+_aiAnswerUid;
+          aiDiv.dataset.msgId = _aiAnswerUid;
           aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+answer+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
           if (typeof window.addAIMuteButton === 'function') {
@@ -11681,3 +11763,119 @@ function tlmDrop(e, toIdx) {
 
 // ── تحميل الأدوات عند تسجيل الدخول ──
 document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFirestore, 2000));
+
+// ============================================================
+// 💬 نظام الرد بالضغط المطول (Long-press to reply) — الجماعي + المشرفين + الذكاء الاصطناعي
+// ============================================================
+(function(){
+  window._replyState = { public: null, pac: null, ai: null };
+
+  const REPLY_CFG = {
+    public: { container: 'chatMessages',   msgSelector: '.message', input: 'messageInput', previewBar: 'chatReplyPreview', previewSender: 'chatReplyPreviewSender', previewText: 'chatReplyPreviewText' },
+    pac:    { container: 'pacMessages',    msgSelector: '.pac-msg', input: 'pacInput',      previewBar: 'pacReplyPreview',  previewSender: 'pacReplyPreviewSender',  previewText: 'pacReplyPreviewText' },
+    ai:     { container: 'aiChatMessages', msgSelector: '.message', input: 'aiChatInput',   previewBar: 'aiReplyPreview',   previewSender: 'aiReplyPreviewSender',   previewText: 'aiReplyPreviewText' }
+  };
+
+  function replyEscHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function extractMsgInfo(type, el){
+    let id = (el.dataset && el.dataset.msgId) ? el.dataset.msgId : (el.id ? el.id.replace(/^msg-/,'') : '');
+    let sender = '', text = '';
+    if (type === 'pac') {
+      const metaEl = el.querySelector('.pac-msg-meta');
+      sender = metaEl ? metaEl.textContent.replace(/حذف الرسالة/g,'').trim() : (el.classList.contains('me') ? 'أنت' : 'مشرف');
+      const textEl = el.querySelector('.pac-msg-text');
+      text = textEl ? textEl.textContent.trim() : '';
+    } else {
+      const senderEl = el.querySelector('.message-sender');
+      sender = senderEl ? senderEl.textContent.trim() : (el.classList.contains('sent') ? 'أنت' : (type==='ai' ? 'المساعد' : 'مستخدم'));
+      const contentEl = el.querySelector('.message-content');
+      const imgEl = el.querySelector('.message-image, img');
+      if (contentEl && contentEl.textContent.trim()) text = contentEl.textContent.trim();
+      else if (imgEl) text = '📷 صورة';
+    }
+    if (!text) text = '📎 مرفق';
+    return { id: id, sender: sender, text: text.length > 120 ? text.slice(0,120)+'…' : text };
+  }
+
+  window.startReplyTo = function(type, el){
+    if (!el || el.classList.contains('system')) return;
+    const info = extractMsgInfo(type, el);
+    window._replyState[type] = info;
+    const cfg = REPLY_CFG[type];
+    const bar = document.getElementById(cfg.previewBar);
+    const senderEl = document.getElementById(cfg.previewSender);
+    const textEl = document.getElementById(cfg.previewText);
+    if (senderEl) senderEl.textContent = info.sender;
+    if (textEl) textEl.textContent = info.text;
+    if (bar) bar.style.display = 'flex';
+    const inputEl = document.getElementById(cfg.input);
+    if (inputEl) inputEl.focus();
+  };
+
+  window.cancelReply = function(type){
+    window._replyState[type] = null;
+    const cfg = REPLY_CFG[type];
+    const bar = document.getElementById(cfg.previewBar);
+    if (bar) bar.style.display = 'none';
+  };
+
+  function attachLongPress(type){
+    const cfg = REPLY_CFG[type];
+    const cont = document.getElementById(cfg.container);
+    if (!cont || cont._replyBound) return;
+    cont._replyBound = true;
+    let timer = null, targetEl = null, startX = 0, startY = 0, longPressed = false;
+
+    function clearState(){
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (targetEl) targetEl.classList.remove('long-press-active');
+      targetEl = null;
+    }
+    function onStart(e){
+      const el = e.target.closest(cfg.msgSelector);
+      if (!el || el.classList.contains('system')) return;
+      targetEl = el; longPressed = false;
+      const pt = e.touches ? e.touches[0] : e;
+      startX = pt.clientX; startY = pt.clientY;
+      timer = setTimeout(function(){
+        longPressed = true;
+        el.classList.add('long-press-active');
+        if (navigator.vibrate) { try{ navigator.vibrate(25); }catch(err){} }
+        window.startReplyTo(type, el);
+        setTimeout(function(){ el.classList.remove('long-press-active'); }, 220);
+      }, 480);
+    }
+    function onMove(e){
+      if (!timer) return;
+      const pt = e.touches ? e.touches[0] : e;
+      if (Math.abs(pt.clientX - startX) > 10 || Math.abs(pt.clientY - startY) > 10) clearState();
+    }
+    function onEnd(){ clearState(); }
+
+    cont.addEventListener('touchstart', onStart, { passive: true });
+    cont.addEventListener('touchmove', onMove, { passive: true });
+    cont.addEventListener('touchend', onEnd);
+    cont.addEventListener('touchcancel', onEnd);
+    cont.addEventListener('mousedown', onStart);
+    cont.addEventListener('mousemove', onMove);
+    cont.addEventListener('mouseup', onEnd);
+    cont.addEventListener('mouseleave', onEnd);
+    cont.addEventListener('click', function(e){ if (longPressed) { e.stopPropagation(); e.preventDefault(); longPressed = false; } }, true);
+  }
+
+  function initAllReply(){ attachLongPress('public'); attachLongPress('pac'); attachLongPress('ai'); }
+  let _replyTries = 0;
+  const _replyIv = setInterval(function(){ _replyTries++; initAllReply(); if (_replyTries > 60) clearInterval(_replyIv); }, 500);
+  document.addEventListener('DOMContentLoaded', initAllReply);
+
+  window.renderQuotedReply = function(replyTo){
+    if (!replyTo || !replyTo.text) return '';
+    return '<div class="msg-quoted-reply" onclick="scrollToOriginalMsg(\''+replyEscHtml(replyTo.id||'')+'\')"><div class="msg-quoted-reply-line"></div><div class="msg-quoted-reply-body"><span class="msg-quoted-reply-sender">'+replyEscHtml(replyTo.sender)+'</span><span class="msg-quoted-reply-text">'+replyEscHtml(replyTo.text)+'</span></div></div>';
+  };
+  window.scrollToOriginalMsg = function(id){
+    if (!id) return;
+    let el = document.getElementById('msg-'+id) || document.querySelector('[data-msg-id="'+id+'"]');
+    if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('long-press-active'); setTimeout(()=>el.classList.remove('long-press-active'), 700); }
+  };
+})();

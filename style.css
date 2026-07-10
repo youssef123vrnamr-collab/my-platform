@@ -7625,3 +7625,169 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
     background: #000 !important;
   }
 }
+
+/* ============================================================
+   🔘 توحيد احترافي لكل أزرار إغلاق/إجراءات الصفحات في المنصة
+   (بتلغي كل التعريفات المتفرقة والمتضاربة اللي فوق وتخليهم بنفس المقاس)
+   ============================================================ */
+.modal-close,
+.chat-action-btn,
+.sl-close-btn,
+.persona-close-btn,
+.dq-close,
+.lb-close,
+.image-viewer-close,
+.modal-share,
+.modal-fullscreen,
+#videoModal .modal-close,
+#videoModal .modal-share,
+#videoModal .modal-fullscreen {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  max-width: 38px !important;
+  max-height: 38px !important;
+  border-radius: 50% !important;
+  font-size: 1.05rem !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  line-height: 1 !important;
+  transition: background .25s ease, transform .2s ease, border-color .25s ease !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* إغلاق (أحمر) — نفس الأسلوب في كل مكان: مودالات، شات، تعلم ذاتي، مهام، متصدرين، عارض الصور */
+.modal-close,
+.sl-close-btn,
+.persona-close-btn,
+.dq-close,
+.lb-close,
+.image-viewer-close,
+#videoModal .modal-close {
+  background: rgba(239,68,68,.14) !important;
+  border: 1px solid rgba(239,68,68,.28) !important;
+  color: #ef4444 !important;
+}
+.modal-close:hover,
+.sl-close-btn:hover,
+.persona-close-btn:hover,
+.dq-close:hover,
+.lb-close:hover,
+.image-viewer-close:hover,
+#videoModal .modal-close:hover {
+  background: rgba(239,68,68,.35) !important;
+  transform: scale(1.08);
+}
+.sl-close-btn:hover { transform: scale(1.08) !important; } /* إلغاء دوران 90 درجة القديم عشان يبقى متسق مع الباقي */
+
+/* مشاركة (أخضر) */
+.modal-share,
+#videoModal .modal-share {
+  background: rgba(16,185,129,.14) !important;
+  border: 1px solid rgba(16,185,129,.28) !important;
+  color: #10b981 !important;
+}
+.modal-share:hover,
+#videoModal .modal-share:hover {
+  background: rgba(16,185,129,.35) !important;
+  transform: scale(1.08);
+}
+
+/* تكبير الشاشة (بنفسجي) */
+.modal-fullscreen,
+#videoModal .modal-fullscreen {
+  background: rgba(99,102,241,.14) !important;
+  border: 1px solid rgba(99,102,241,.28) !important;
+  color: #6366f1 !important;
+}
+.modal-fullscreen:hover,
+#videoModal .modal-fullscreen:hover {
+  background: rgba(99,102,241,.35) !important;
+  transform: scale(1.08);
+}
+
+/* أزرار إجراءات الشات العامة (زي مسح المحادثة) */
+.chat-action-btn {
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  color: #fff !important;
+}
+.chat-action-btn:hover {
+  background: rgba(255,255,255,.18) !important;
+  transform: scale(1.08);
+}
+.chat-action-btn.call-btn {
+  background: rgba(16,185,129,.2) !important;
+  border-color: rgba(16,185,129,.32) !important;
+  color: #10b981 !important;
+}
+.chat-action-btn.call-btn:hover { background: rgba(16,185,129,.4) !important; }
+
+/* عارض الصور: يفضل عايم فوق يمين الشاشة */
+.image-viewer-close { position: absolute !important; top: 1.25rem !important; right: 1.25rem !important; left: unset !important; }
+
+/* موبايل صغير: كل الأزرار تصغر مع بعض بنفس النسبة */
+@media (max-width: 480px) {
+  .modal-close, .chat-action-btn, .sl-close-btn, .persona-close-btn,
+  .dq-close, .lb-close, .image-viewer-close, .modal-share, .modal-fullscreen,
+  #videoModal .modal-close, #videoModal .modal-share, #videoModal .modal-fullscreen {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    max-width: 34px !important;
+    max-height: 34px !important;
+    font-size: .95rem !important;
+  }
+}
+
+/* ============================================================
+   💬 نظام الرد بالضغط المطول على الرسائل (Long-press to reply)
+   ============================================================ */
+.reply-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  background: rgba(99,102,241,.1);
+  border-top: 1px solid rgba(99,102,241,.25);
+  padding: .55rem .85rem;
+  animation: replySlideIn .18s ease;
+}
+@keyframes replySlideIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform: translateY(0);} }
+.reply-preview-line { width: 3px; align-self: stretch; min-height: 32px; border-radius: 3px; background: linear-gradient(180deg,#6366f1,#a855f7); flex-shrink: 0; }
+.reply-preview-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.reply-preview-sender { font-size: .78rem; font-weight: 800; color: #a5b4fc; }
+.reply-preview-text { font-size: .82rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; }
+.reply-preview-close { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; border: none; background: rgba(255,255,255,.08); color: #aaa; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: .85rem; }
+.reply-preview-close:hover { background: rgba(239,68,68,.3); color: #ef4444; }
+
+/* الاقتباس اللي بيظهر جوه فقاعة الرسالة نفسها بعد الإرسال */
+.msg-quoted-reply {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(0,0,0,.18);
+  border-radius: 8px;
+  padding: .4rem .6rem;
+  margin-bottom: .4rem;
+  cursor: pointer;
+  max-width: 100%;
+}
+.message.sent .msg-quoted-reply, .pac-msg.me .msg-quoted-reply { background: rgba(255,255,255,.14); }
+.msg-quoted-reply-line { width: 3px; align-self: stretch; min-height: 26px; border-radius: 3px; background: linear-gradient(180deg,#6366f1,#a855f7); flex-shrink: 0; }
+.msg-quoted-reply-body { min-width: 0; overflow: hidden; }
+.msg-quoted-reply-sender { display:block; font-size: .72rem; font-weight: 800; color: #a5b4fc; }
+.msg-quoted-reply-text { display: block; font-size: .78rem; color: #d1d5db; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* لمسة بصرية بسيطة أثناء الضغط المطول عشان المستخدم يحس إنه بيرد */
+.message.long-press-active, .pac-msg.long-press-active {
+  background: rgba(99,102,241,.16) !important;
+  transform: scale(.985);
+  transition: background .15s ease, transform .15s ease;
+}
