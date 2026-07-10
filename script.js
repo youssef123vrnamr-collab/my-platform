@@ -66,36 +66,47 @@ async function isAdminUser(userId) {
 
   // ========== VALIDATION FUNCTIONS (محسّنة) ==========
 
-  // تنظيف أي مدخل من HTML/XSS مع الإبقاء على النص العادي (عربي/إنجليزي/أرقام)
+  // تنظيف أي مدخل من HTML/XSS (تستخدم FalakApp.Security إن وجد)
   function sanitizeInput(str) {
     if (!str) return '';
+    if (window.FalakApp && FalakApp.Security && FalakApp.Security.sanitize) {
+      return FalakApp.Security.sanitize(str);
+    }
     return str
-      .replace(/<[^>]*>/g, '')           // إزالة أي HTML tag
-      .replace(/javascript\s*:/gi, '')   // منع javascript: URLs
-      .replace(/on\w+\s*=/gi, '')       // منع onclick= وأمثالها
-      .replace(/[<>]/g, '')              // إزالة < و > المتبقية
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript\s*:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .replace(/[<>]/g, '')
       .trim();
   }
 
   // تنظيف الرسائل الطويلة مع حد أقصى
   function sanitizeMessage(str) {
     if (!str) return '';
+    if (window.FalakApp && FalakApp.Security && FalakApp.Security.sanitizeMessage) {
+      return FalakApp.Security.sanitizeMessage(str, 2000);
+    }
     return sanitizeInput(str).substring(0, 2000);
   }
 
-  // التحقق من البريد الإلكتروني
+  // التحقق من البريد الإلكتروني (تستخدم FalakApp.Security إن وجد)
   function validateEmail(email) {
     if (!email) return false;
+    if (window.FalakApp && FalakApp.Security && FalakApp.Security.validateEmail) {
+      return FalakApp.Security.validateEmail(email);
+    }
     const trimmed = email.trim();
     if (trimmed.length < 5 || trimmed.length > 100) return false;
-    // regex دقيق يقبل الصيغ الشائعة فقط
     const re = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
     return re.test(trimmed);
   }
 
   // ========== خريطة أكواد الدول — لكل كود: الأرقام المسموح بها كبادئة محلية ==========
   // key = كود الدولة (مثل '+20')، value = مصفوفة من البادئات المحلية الصحيحة (2 رقم أو أكثر)
-  const COUNTRY_PREFIX_MAP = {
+  // خريطة أكواد الدول (تستخدم FalakApp.Security.COUNTRY_PREFIXES إن وجد)
+  const COUNTRY_PREFIX_MAP = window.FalakApp && FalakApp.Security && FalakApp.Security.COUNTRY_PREFIXES 
+    ? FalakApp.Security.COUNTRY_PREFIXES 
+    : {
     '+20':  ['01','02','03'],           // مصر
     '+966': ['05','011','012','013'],    // السعودية
     '+971': ['05','02','03','04','06','07','09'], // الإمارات
@@ -194,11 +205,12 @@ async function isAdminUser(userId) {
   // التحقق من الاسم: يجب أن يحتوي على حروف عربية أو إنجليزية
   function isValidName(name) {
     if (!name) return false;
+    if (window.FalakApp && FalakApp.Security && FalakApp.Security.validateName) {
+      return FalakApp.Security.validateName(name).valid;
+    }
     const trimmed = name.trim();
     if (trimmed.length < 2 || trimmed.length > 50) return false;
-    // منع HTML/Script
     if (/<[^>]*>/.test(trimmed) || /javascript\s*:/i.test(trimmed)) return false;
-    // يجب أن يحتوي على حرف واحد على الأقل (عربي أو إنجليزي)
     if (!/[\u0600-\u06FFa-zA-Z]/.test(trimmed)) return false;
     return true;
   }
@@ -206,14 +218,16 @@ async function isAdminUser(userId) {
   // ========== تحقق لحظي من المدخلات (يُظهر ✅ أو ❌ أثناء الكتابة) ==========
 
   function _setFieldState(inputId, hintId, ok, msg) {
+    if (window.FalakApp && FalakApp.Security && FalakApp.Security.setFieldState) {
+      return FalakApp.Security.setFieldState(inputId, hintId, ok, msg);
+    }
     let el = document.getElementById(inputId);
     let hint = document.getElementById(hintId);
     if (el) { el.classList.toggle('v-ok', ok); el.classList.toggle('v-err', !ok && msg !== null); }
     if (hint && msg !== null) {
       hint.className = 'field-hint ' + (ok ? 'hint-ok' : 'hint-err');
-      hint.innerHTML = ok
-        ? '<i class="fas fa-check-circle"></i> ' + msg
-        : '<i class="fas fa-exclamation-circle"></i> ' + msg;
+      const icon = ok ? 'fa-check-circle' : 'fa-exclamation-circle';
+      hint.innerHTML = '<i class="fas ' + icon + '"></i> ' + msg;
     }
   }
 
@@ -444,10 +458,43 @@ async function isAdminUser(userId) {
   const STORAGE_KEY = "falak_last_watched";
 
   // ========== Helper Functions ==========
-  function showToast(msg) { const t = document.getElementById("toast"); t && (t.textContent = msg, t.classList.add("show"), setTimeout(() => t.classList.remove("show"), 4000)); }
-  function formatDuration(sec) { if (!sec && sec !== 0) return "0:00"; const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ":" + (s < 10 ? "0" : "") + s; }
-  function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
-  function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
+  function showToast(msg, type, duration) {
+    if (window.FalakApp && FalakApp.UI && FalakApp.UI.showToast) {
+      return FalakApp.UI.showToast(msg, type || 'info', duration || 4000);
+    }
+    const t = document.getElementById("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), duration || 4000);
+  }
+  function formatDuration(sec) {
+    if (window.FalakApp && FalakApp.Utils && FalakApp.Utils.formatDuration) {
+      return FalakApp.Utils.formatDuration(sec);
+    }
+    if (!sec && sec !== 0) return "0:00";
+    const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  function formatSize(b) {
+    if (window.FalakApp && FalakApp.Utils && FalakApp.Utils.formatSize) {
+      return FalakApp.Utils.formatSize(b);
+    }
+    if (!b && b !== 0) return "0 B";
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+    if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB";
+    return (b / 1073741824).toFixed(2) + " GB";
+  }
+  function escapeHtml(unsafe) {
+    if (window.FalakApp && FalakApp.Security && FalakApp.Security.escapeHtml) {
+      return FalakApp.Security.escapeHtml(unsafe);
+    }
+    if (!unsafe) return '';
+    const div = document.createElement("div");
+    div.textContent = unsafe;
+    return div.innerHTML;
+  }
 
   // ========== Sound Effects (مبسط) ==========
   const SoundEffects = {
@@ -652,6 +699,7 @@ async function updateAdminUI() {
             addItem("manageCertificatesMenuItem","fas fa-certificate","إدارة شهادات الكورسات", () => { menu.classList.remove("active"); openCertificatesManager(); });
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
             addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); });
+            addItem("adminDashboardMenuItem","fas fa-tachometer-alt","لوحة تحكم المشرف 🚀", () => { menu.classList.remove("active"); openAdminDashboard(); });
             addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); });
 
             if (uploadZone) uploadZone.classList.add("active");
@@ -879,6 +927,175 @@ async function updateAdminUI() {
   function autoEndMaintenance() { SoundEffects.success(); db.collection("system").doc("maintenance").update({ status: "active" }).catch(console.error); }
   function openMaintenanceModal() { isAdmin && (document.getElementById("maintenanceModal").classList.add("active"), document.getElementById("maintenanceMinutes").value = 5, document.getElementById("maintenanceMessageInput").value = ""); }
   function closeMaintenanceModal() { document.getElementById("maintenanceModal").classList.remove("active"); }
+
+  // ====== Admin Dashboard ======
+  // إحصائيات عامة — تُحتسب من مصادير متعددة
+  let _adStatsCache = null;
+  async function openAdminDashboard() {
+    if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
+    document.getElementById("adminDashboardModal").classList.add("active");
+    await loadAdminDashboardData();
+  }
+  function closeAdminDashboard() {
+    document.getElementById("adminDashboardModal").classList.remove("active");
+  }
+  async function refreshAdminDashboard() {
+    if (!isAdmin) return;
+    const refreshBtn = document.querySelector('#adminDashboardModal .btn-info i');
+    if (refreshBtn) refreshBtn.classList.add('fa-spin');
+    try {
+      await loadAdminDashboardData();
+    } finally {
+      if (refreshBtn) refreshBtn.classList.remove('fa-spin');
+    }
+  }
+  async function loadAdminDashboardData() {
+    try {
+      // 1. عدد الفيديوهات (من المتغير العام)
+      const videoCount = (window.videos || []).length;
+
+      // 2. عدد الكورسات (paidCoursesData)
+      const courseCount = (window.paidCoursesData || []).length;
+
+      // 3. عدد المستخدمين (user_progress المجموعة)
+      let userCount = 0, watchedCount = 0, feedbackCount = 0;
+      try {
+        const userSnap = await db.collection("user_progress").get();
+        userCount = userSnap.size;
+      } catch(e) { console.warn('user_progress count failed', e); }
+
+      // 4. عدد المشاهدات المسجلة
+      try {
+        const watchSnap = await db.collection("watch_history").get();
+        watchedCount = watchSnap.size;
+      } catch(e) { console.warn('watch_history count failed', e); }
+
+      // 5. عدد التقييمات
+      try {
+        const fbSnap = await db.collection("feedback").get();
+        feedbackCount = fbSnap.size;
+      } catch(e) { console.warn('feedback count failed', e); }
+
+      // 6. عدد الامتحانات (من المتغير العام)
+      const examCount = (window.exams || []).length;
+
+      // 7. عدد معارف AI
+      const aiCount = (window.aiKnowledgeBase || []).length;
+
+      // 8. التخزين
+      const usedBytes = (window.videos || []).reduce((acc, v) => acc + (v.size || 0), 0);
+      const maxBytes = 26843545600; // 25 GB
+      const storagePercent = Math.min(usedBytes / maxBytes * 100, 100);
+
+      // ===== تحديث الواجهة =====
+      const setNum = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) {
+          const isNum = typeof val === 'number';
+          el.textContent = isNum ? val.toLocaleString('ar-EG') : val;
+        }
+      };
+      setNum('adStatVideos', videoCount);
+      setNum('adStatUsers', userCount);
+      setNum('adStatCourses', courseCount);
+      setNum('adStatExams', examCount);
+      setNum('adStatFeedbacks', feedbackCount);
+      setNum('adStatAI', aiCount);
+      setNum('adStatWatched', watchedCount);
+      setNum('adStatStorage', formatSize(usedBytes) + ' / ' + formatSize(maxBytes));
+
+      // شريط التخزين
+      const fillEl = document.getElementById('adStorageFill');
+      if (fillEl) fillEl.style.width = storagePercent + '%';
+      const usedEl = document.getElementById('adStorageUsed');
+      if (usedEl) usedEl.textContent = formatSize(usedBytes);
+
+      // ===== آخر النشاطات =====
+      await loadAdminRecentActivity();
+
+    } catch(e) { console.error('loadAdminDashboardData failed:', e); }
+  }
+
+  async function loadAdminRecentActivity() {
+    const container = document.getElementById('adRecentActivity');
+    if (!container) return;
+    try {
+      // نجلب آخر 5 فيديوهات مضافة + آخر 5 تقييمات
+      let activities = [];
+
+      // آخر فيديوهات
+      const recentVids = (window.videos || []).slice(-5).reverse();
+      recentVids.forEach(v => {
+        const title = v.title || 'فيديو بدون اسم';
+        const ts = v.createdAt ? v.createdAt.toDate().getTime() : 0;
+        const time = v.createdAt ? v.createdAt.toDate().toLocaleDateString('ar-EG', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+        activities.push({
+          icon: 'fa-video',
+          iconBg: 'var(--color-primary)',
+          text: `<strong>${escapeHtml(title)}</strong> — تمت إضافته`,
+          time,
+          ts
+        });
+      });
+
+      // آخر التقييمات (آخر 3)
+      try {
+        const fbSnap = await db.collection("feedback").orderBy("createdAt", "desc").limit(3).get();
+        fbSnap.forEach(d => {
+          const data = d.data() || {};
+          const name = data.name || data.fullName || 'مستخدم';
+          const ts = data.createdAt ? data.createdAt.toDate().getTime() : 0;
+          const time = data.createdAt ? data.createdAt.toDate().toLocaleDateString('ar-EG', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+          activities.push({
+            icon: 'fa-star',
+            iconBg: 'var(--color-warning)',
+            text: `تقييم جديد من <strong>${escapeHtml(name)}</strong>`,
+            time,
+            ts
+          });
+        });
+      } catch(e) {}
+
+      // آخر المسجلين (آخر 3)
+      try {
+        const userSnap = await db.collection("user_progress").orderBy("lastUpdated", "desc").limit(3).get();
+        userSnap.forEach(d => {
+          const data = d.data() || {};
+          const name = data.username || 'مستخدم';
+          const ts = data.lastUpdated ? data.lastUpdated.toDate().getTime() : 0;
+          const time = data.lastUpdated ? data.lastUpdated.toDate().toLocaleDateString('ar-EG', { day:'numeric', month:'short' }) : '';
+          activities.push({
+            icon: 'fa-user-plus',
+            iconBg: 'var(--color-success)',
+            text: `تسجيل جديد: <strong>${escapeHtml(name)}</strong>`,
+            time,
+            ts
+          });
+        });
+      } catch(e) {}
+
+      // ترتيب حسب الوقت (timestamp, وليس نص التاريخ)
+      activities.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+      if (activities.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#888;padding:1rem">لا توجد نشاطات بعد</div>';
+        return;
+      }
+
+      container.innerHTML = activities.slice(0, 8).map(a => `
+        <div class="ad-activity-item">
+          <div class="ad-activity-icon" style="--a:${a.iconBg};--b:${a.iconBg}"><i class="fas ${a.icon}"></i></div>
+          <div class="ad-activity-text">${a.text}</div>
+          <div class="ad-activity-time">${a.time || ''}</div>
+        </div>
+      `).join('');
+    } catch(e) {
+      container.innerHTML = '<div style="text-align:center;color:#888;padding:1rem">فشل تحميل النشاطات</div>';
+    }
+  }
+  window.openAdminDashboard = openAdminDashboard;
+  window.closeAdminDashboard = closeAdminDashboard;
+  window.refreshAdminDashboard = refreshAdminDashboard;
 
   // ============================================================
   // CHAT BACKGROUND CHANGER
