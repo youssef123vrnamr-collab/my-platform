@@ -7022,12 +7022,16 @@ window.updateActiveToolLabel = function(label) {
       // كل دالة بتستخدم الـ input الخاص بها
       const inputId = fnName === 'sendAIMessage' ? 'aiChatInput' : 'messageInput';
       const inputEl = document.getElementById(inputId);
-      if (inputEl) {
+      const hasAttachedFile = fnName === 'sendAIMessage' && !!window._aiSelectedFile;
+      if (inputEl && !hasAttachedFile) {
         const v = window.secureValidateMessage(inputEl.value);
         if (!v.valid) {
           if (typeof showToast === 'function') showToast(v.error);
           return;
         }
+      } else if (inputEl && hasAttachedFile && inputEl.value.trim().length > 2000) {
+        if (typeof showToast === 'function') showToast('⚠️ الرسالة طويلة جداً (الحد 2000 حرف)');
+        return;
       }
       return orig.apply(this, args);
     };
@@ -10720,23 +10724,38 @@ function slStopAllAnimations() {
               var mimeMatch = /^data:([^;]+);base64/.exec(dataUrl);
               var mimeType = mimeMatch ? mimeMatch[1] : (file.type || 'image/jpeg');
 
-              var visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-                body: JSON.stringify({
-                  contents: [{
-                    parts: [
-                      { text: promptText },
-                      { inline_data: { mime_type: mimeType, data: base64Data } }
-                    ]
-                  }]
-                })
+              var _visionBody = JSON.stringify({
+                contents: [{
+                  parts: [
+                    { text: promptText },
+                    { inline_data: { mime_type: mimeType, data: base64Data } }
+                  ]
+                }]
               });
+              var visionRes, visionData;
+              var _maxRetries = 3;
+              for (var _attempt = 0; _attempt <= _maxRetries; _attempt++) {
+                visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
+                  body: _visionBody
+                });
 
-              if (visionRes.status === 429) {
-                throw Object.assign(new Error('rate-limited'), { _rateLimited: true });
+                if (visionRes.status === 429) {
+                  throw Object.assign(new Error('rate-limited'), { _rateLimited: true });
+                }
+
+                if (visionRes.status === 503 && _attempt < _maxRetries) {
+                  if (typingEl2) {
+                    var _tEl = typingEl2.querySelector('.message-content');
+                    if (_tEl) _tEl.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> السيرفر مزدحم، بحاول تاني... (' + (_attempt + 1) + '/' + _maxRetries + ')';
+                  }
+                  await new Promise(function(r){ setTimeout(r, 1500 * (_attempt + 1)); });
+                  continue;
+                }
+                break;
               }
-              var visionData = await visionRes.json();
+              visionData = await visionRes.json();
               var visionAnswer = (visionData.candidates && visionData.candidates[0] && visionData.candidates[0].content &&
                 visionData.candidates[0].content.parts && visionData.candidates[0].content.parts[0] &&
                 visionData.candidates[0].content.parts[0].text) || null;
