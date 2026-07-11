@@ -763,6 +763,7 @@ async function updateAdminUI() {
             addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); });
             addItem("geminiKeyMenuItem","fas fa-key","مفتاح تحليل الصور 🖼️", () => { menu.classList.remove("active"); openGeminiKeyModal(); });
             addItem("tavilyKeyMenuItem","fas fa-globe","مفتاح البحث في الإنترنت 🔎", () => { menu.classList.remove("active"); openTavilyKeyModal(); });
+            addItem("issuesLogMenuItem","fas fa-triangle-exclamation","المشاكل 🛠️", () => { menu.classList.remove("active"); window.openIssuesModal(); });
             addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); });
             addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); });
             addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); });
@@ -10173,6 +10174,7 @@ function slStopAllAnimations() {
         var msg = (err.error && err.error.message) || ('HTTP ' + resp.status);
         console.warn('[TTS] Groq failed, trying ElevenLabs...', msg);
         if (window.AIHealth) window.AIHealth.record('groq_tts', false);
+        if (window.logPlatformIssue) window.logPlatformIssue('Groq TTS', msg);
         await tryElevenLabsTTS(clean, btn, isArabic);
         return;
       }
@@ -10195,6 +10197,7 @@ function slStopAllAnimations() {
     } catch(e) {
       console.error('[TTS] Groq error:', e);
       if (window.AIHealth) window.AIHealth.record('groq_tts', false);
+      if (window.logPlatformIssue) window.logPlatformIssue('Groq TTS', String(e && e.message || e).slice(0,150));
       await tryElevenLabsTTS(clean, btn, isArabic);
     }
   };
@@ -10232,6 +10235,7 @@ function slStopAllAnimations() {
         var errData = await resp.json().catch(function(){ return {}; });
         var errMsg = errData.detail && errData.detail.message ? errData.detail.message : (errData.detail || JSON.stringify(errData));
         if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
+        if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', 'HTTP ' + resp.status + ' — ' + String(errMsg).slice(0,150));
         if (typeof showToast === 'function') showToast('ElevenLabs خطأ ' + resp.status + ': ' + errMsg);
         stopGroqTTS();
         return;
@@ -10261,6 +10265,7 @@ function slStopAllAnimations() {
     } catch(e) {
       console.error('[TTS] ElevenLabs error:', e);
       if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
+      if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', String(e && e.message || e).slice(0,150));
       stopGroqTTS();
     }
   }
@@ -10849,6 +10854,60 @@ function slStopAllAnimations() {
       }
     };
   })();
+  // ══════════════════════════════════════════════════════════════
+  // ── سجل مشاكل المنصة (للمشرف) — بيسجّل أي فشل حقيقي (Groq/Gemini/Tavily/TTS)
+  // بتفاصيله عشان المشرف يقدر يشوفه من جوّه التطبيق نفسه (من غير Console)، خصوصاً من الموبايل.
+  // ══════════════════════════════════════════════════════════════
+  window._platformIssueLog = (function () {
+    try { return JSON.parse(localStorage.getItem('falak_issue_log') || '[]'); } catch (e) { return []; }
+  })();
+  window.logPlatformIssue = function (source, detail) {
+    try {
+      window._platformIssueLog.unshift({ t: Date.now(), source: source, detail: String(detail || '').slice(0, 300) });
+      if (window._platformIssueLog.length > 60) window._platformIssueLog.length = 60;
+      localStorage.setItem('falak_issue_log', JSON.stringify(window._platformIssueLog));
+    } catch (e) { /* تجاهل */ }
+  };
+  window.openIssuesModal = function () {
+    if (typeof isAdmin !== 'undefined' && !isAdmin) { if (typeof showToast === 'function') showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
+    var old = document.getElementById('issuesLogModal');
+    if (old) old.remove();
+    var modal = document.createElement('div');
+    modal.id = 'issuesLogModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10090;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(8px)';
+    modal.innerHTML =
+      '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(239,68,68,.4);border-radius:22px;width:95%;max-width:480px;max-height:85vh;display:flex;flex-direction:column;padding:1.3rem;box-shadow:0 30px 70px rgba(0,0,0,.7)">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">'
+      + '<h2 style="color:#fca5a5;font-size:1.1rem;font-weight:900;margin:0">🛠️ سجل مشاكل المنصة</h2>'
+      + '<button id="issuesCloseBtn" style="background:rgba(255,255,255,.08);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">×</button>'
+      + '</div>'
+      + '<div id="issuesLogBox" style="overflow-y:auto;flex:1"></div>'
+      + '<div style="display:flex;gap:.5rem;margin-top:.8rem">'
+      + '<button id="issuesClearBtn" style="flex:1;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:.6rem;font-family:Cairo,inherit;font-weight:700;cursor:pointer">مسح السجل</button>'
+      + '<button id="issuesRefreshBtn" style="flex:1;background:rgba(6,182,212,.15);color:#67e8f9;border:1px solid rgba(6,182,212,.3);border-radius:12px;padding:.6rem;font-family:Cairo,inherit;font-weight:700;cursor:pointer">تحديث</button>'
+      + '</div>'
+      + '</div>';
+    document.body.appendChild(modal);
+    var box = document.getElementById('issuesLogBox');
+    function esc(s) { return typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function render() {
+      var log = window._platformIssueLog || [];
+      box.innerHTML = log.length ? log.map(function (it) {
+        var time = new Date(it.t).toLocaleString('ar-EG');
+        return '<div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .9rem;margin-bottom:.6rem;text-align:right">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">'
+          + '<span style="color:#f87171;font-weight:800;font-size:.85rem">' + esc(it.source) + '</span>'
+          + '<span style="color:#94a3b8;font-size:.7rem">' + time + '</span></div>'
+          + '<div style="color:#e2e8f0;font-size:.78rem;direction:ltr;text-align:left;word-break:break-word">' + esc(it.detail) + '</div>'
+          + '</div>';
+      }).join('') : '<p style="color:#94a3b8;text-align:center;padding:2rem 0">لا توجد مشاكل مسجّلة 🎉</p>';
+    }
+    render();
+    document.getElementById('issuesCloseBtn').addEventListener('click', function () { modal.remove(); });
+    document.getElementById('issuesClearBtn').addEventListener('click', function () { window._platformIssueLog = []; try { localStorage.removeItem('falak_issue_log'); } catch (e) {} render(); });
+    document.getElementById('issuesRefreshBtn').addEventListener('click', render);
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.remove(); });
+  };
   // للمشرف: window.AIHealth.snapshot() في الـ console يوريه حالة كل مزوّد لحظياً
 
   // ── Space context helpers ──
@@ -11076,6 +11135,7 @@ function slStopAllAnimations() {
           }
         } catch(errImg) {
           if (window.AIHealth) window.AIHealth.record('gemini', false);
+          if (window.logPlatformIssue) window.logPlatformIssue('Gemini (تحليل صور/ملفات)', (errImg && errImg.message) ? String(errImg.message).slice(0,200) : (errImg && errImg._rateLimited ? 'rate-limited (429)' : 'خطأ غير معروف'));
           if (typingEl2) typingEl2.remove();
           if (msgs) {
             var ed2 = document.createElement('div');
@@ -11196,7 +11256,7 @@ function slStopAllAnimations() {
               }
             }
           }
-        } catch(eSearch){ if (window.AIHealth) window.AIHealth.record('tavily', false); console.warn('web search step failed', eSearch); }
+        } catch(eSearch){ if (window.AIHealth) window.AIHealth.record('tavily', false); if (window.logPlatformIssue) window.logPlatformIssue('Tavily (بحث إنترنت)', String(eSearch && eSearch.message || eSearch).slice(0,200)); console.warn('web search step failed', eSearch); }
         if (_searchStatusEl && _searchStatusEl.parentNode) _searchStatusEl.parentNode.removeChild(_searchStatusEl);
       }
 
@@ -11340,23 +11400,27 @@ function slStopAllAnimations() {
       }
 
       // ── خط دفاع ثاني: لو Groq فشل تمامًا، Gemini بياخد نفس السؤال والسياق ويجاوب بدله — بصمت وبدون ما المستخدم يحس ──
+      var _debugGroqDetail = '';
+      var _debugGeminiDetail = '';
       async function callGeminiTextFallback() {
         var gKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
-        if (!gKey) return null;
+        if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
         try {
           var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock;
           var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
           _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
-          var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+          var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
             body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: 2200 } })
           });
           var d = await r.json();
           var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
+          if (!txt && d && d.error) { _debugGeminiDetail = 'HTTP ' + r.status + ' — ' + JSON.stringify(d.error).slice(0,150); console.warn('AI Router: Gemini fallback رجّع خطأ:', d.error); }
+          else if (!txt) { _debugGeminiDetail = 'HTTP ' + r.status + ' — رد غير متوقع: ' + JSON.stringify(d).slice(0,150); }
           if (window.AIHealth) window.AIHealth.record('gemini', !!txt);
           return txt || null;
-        } catch (eG) { if (window.AIHealth) window.AIHealth.record('gemini', false); return null; }
+        } catch (eG) { _debugGeminiDetail = String(eG && eG.message || eG).slice(0,150); if (window.AIHealth) window.AIHealth.record('gemini', false); console.warn('AI Router: Gemini fallback فشل هو كمان:', eG); return null; }
       }
 
       var answer = null;
@@ -11380,18 +11444,27 @@ function slStopAllAnimations() {
           result = { res: _res2, data: await _res2.json() };
         }
         answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
+        if (!answer) {
+          _debugGroqDetail = 'HTTP ' + result.res.status + ' — ' + (result.data && result.data.error ? JSON.stringify(result.data.error).slice(0,150) : JSON.stringify(result.data).slice(0,150));
+        }
         if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));
         if (window.AIHealth) window.AIHealth.record('groq', !!answer);
       } catch (errGroq) {
+        if (!_debugGroqDetail) _debugGroqDetail = String(errGroq && errGroq.message || errGroq).slice(0,150);
         if (window.AIHealth) window.AIHealth.record('groq', false);
         console.warn('AI Router: Groq فشل، بنجرّب Gemini كخط دفاع ثاني...', errGroq);
       }
 
       // ── Fallback صامت: Groq فشل أو رجّع فاضي → نسيب Gemini يتولى الرد ──
-      if (!answer) answer = await callGeminiTextFallback();
+      if (_debugGroqDetail && window.logPlatformIssue) window.logPlatformIssue('Groq (شات نصي)', _debugGroqDetail);
+      if (!answer) {
+        answer = await callGeminiTextFallback();
+        if (!answer && _debugGeminiDetail && window.logPlatformIssue) window.logPlatformIssue('Gemini (خط الدفاع الثاني)', _debugGeminiDetail);
+      }
 
       if (!answer) {
         // ── الاتنين فشلوا فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
+        if (window.logPlatformIssue) window.logPlatformIssue('Router (فشل شامل نص)', 'Groq: ' + (_debugGroqDetail||'—') + ' | Gemini: ' + (_debugGeminiDetail||'—'));
         if (typingEl) typingEl.remove();
         if (msgs) {
           var edBoth = document.createElement('div');
