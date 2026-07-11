@@ -2369,14 +2369,27 @@ async function updateAdminUI() {
 
 
     // استدعاء Vercel proxy بدل Pollinations مباشرة
-    await _doGenerate(finalPrompt, uid, prompt, cont, seed, 1);
+    const _genSuccess = await _doGenerate(finalPrompt, uid, prompt, cont, seed, 1);
+
+    // ── نسجّل طلب الصورة ونتيجتها في نفس ذاكرة المحادثة (aiChatHistory) اللي بيستخدمها الشات النصي ──
+    // عشان لو المستخدم رجع كلّم النص بعدها (مثلاً "غيّر لونها" أو "دي كانت بتوصف ايه")، الموديل يكون عارف إن فيه صورة اتعملت وهي بتوصف ايه بالظبط.
+    if (window.aiChatHistory) {
+      window.aiChatHistory.push({ role: 'user', content: 'طلبت توليد صورة: "' + prompt + '"' });
+      window.aiChatHistory.push({
+        role: 'assistant',
+        content: _genSuccess
+          ? ('تم توليد وعرض صورة للمستخدم في الشات، وهي تصور: ' + enPrompt + '. لو المستخدم اتكلم بعد كده عن "الصورة" أو طلب تعديل عليها، فاهم إنه بيقصد الصورة دي بالتحديد، ولو طلب تعديل اقترح عليه يعيد صياغة الطلب بالتفاصيل الجديدة عشان أولّد نسخة معدّلة.')
+          : 'حاولت أولّد صورة للمستخدم بناءً على طلبه لكن العملية فشلت تقنياً.'
+      });
+      if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+    }
   }
 
   async function _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt) {
     const stEl = document.getElementById(uid + "_st");
     const txEl = document.getElementById(uid + "_tx");
     const box  = document.getElementById(uid + "_box");
-    if (!stEl || !box) return;
+    if (!stEl || !box) return false;
 
     const safeP = encodeURIComponent(origPrompt);
 
@@ -2390,7 +2403,7 @@ async function updateAdminUI() {
            <i class="fas fa-redo"></i> إعادة المحاولة
          </button>`;
       box.innerHTML = "";
-      return;
+      return false;
     }
 
     if (txEl) txEl.textContent = attempt === 1 ? "🎨 جاري توليد الصورة..." : `🔄 محاولة ${attempt}/3...`;
@@ -2437,12 +2450,13 @@ async function updateAdminUI() {
       box.innerHTML = "";
       box.appendChild(img);
       if (cont) cont.scrollTop = cont.scrollHeight;
+      return true;
 
     } catch (err) {
       clearInterval(ticker);
       console.warn("_doGenerate pollinations error:", err);
       if (attempt < 3) {
-        _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
+        return await _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt + 1);
       } else {
         stEl.innerHTML = `❌ فشل توليد الصورة.
           <button onclick="generateAndDisplayImage(decodeURIComponent('${safeP}'))"
@@ -2451,6 +2465,7 @@ async function updateAdminUI() {
                    font-size:.85rem;margin-top:6px;display:inline-block;">
             <i class="fas fa-redo"></i> إعادة المحاولة
           </button>`;
+        return false;
       }
     }
   }
@@ -2690,7 +2705,7 @@ async function updateAdminUI() {
     } 
 }
   // loadUserDashboard() — يتعمل من داخل googleLogin بعد login ناجح فقط
-  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
+  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
@@ -3115,7 +3130,7 @@ async function updateAdminUI() {
 
   function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
 
-        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
+        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); try { window.aiChatHistory = []; window.__cosmosPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
@@ -11024,6 +11039,18 @@ function slStopAllAnimations() {
       // ── Image generation check ──
       if (typeof isImageRequest === 'function' && isImageRequest(userMsg)) {
         var imgPrompt = typeof extractImagePrompt === 'function' ? extractImagePrompt(userMsg) : userMsg;
+        // نعرض فقاعة رسالة المستخدم زي أي رسالة عادية، عشان المحادثة تفضل متسلسلة ومفهومة بدل ما تقفز على طول لرسالة "بيولّد"
+        var _imgReqReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
+        if (msgs) {
+          var _imgReqDiv = document.createElement('div');
+          _imgReqDiv.className = 'message sent';
+          var _imgReqUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+          _imgReqDiv.id = 'msg-'+_imgReqUid; _imgReqDiv.dataset.msgId = _imgReqUid;
+          var _quotedImgReq = (_imgReqReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_imgReqReplyPayload) : '';
+          _imgReqDiv.innerHTML = _quotedImgReq + '<div class="message-content">'+escapeHtml(userMsg)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          msgs.appendChild(_imgReqDiv); msgs.scrollTop = msgs.scrollHeight;
+        }
+        if (_imgReqReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
         await generateAndDisplayImage(imgPrompt);
         return;
       }
