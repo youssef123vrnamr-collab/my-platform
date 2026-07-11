@@ -7889,3 +7889,91 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   0%, 100% { opacity: .25; }
   50%      { opacity: 1; }
 }
+
+/* ============================================================
+   🤖 COSMOS AI — ChatGPT-style message layout (no bubble, free text)
+   ============================================================ */
+#aiChatModal #aiChatMessages .message.received {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: .15rem 0 .5rem !important;
+  margin: 0 0 .75rem !important;
+  align-self: stretch !important;
+  border-radius: 0 !important;
+  transform: none !important;
+}
+#aiChatModal #aiChatMessages .message.received:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+#aiChatModal #aiChatMessages .message.received .message-sender {
+  display: none !important;
+}
+#aiChatModal #aiChatMessages .message.received .message-content {
+  color: #e7e9ee !important;
+  line-height: 1.85 !important;
+  font-size: .98rem !important;
+}
+#aiChatModal #aiChatMessages .message.received .message-time {
+  display: none !important;
+}
+#aiChatModal #aiChatMessages .ai-msg-mute-btn {
+  display: none !important; /* replaced by the new action bar */
+}
+
+/* action bar under each AI answer */
+.cosmos-action-bar {
+  display: flex;
+  align-items: center;
+  gap: .15rem;
+  margin-top: .4rem;
+}
+.cosmos-action-btn {
+  background: transparent;
+  border: none;
+  color: #8b93a1;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  transition: background .15s ease, color .15s ease;
+}
+.cosmos-action-btn:hover {
+  background: rgba(255,255,255,.08);
+  color: #e7e9ee;
+}
+.cosmos-action-btn.liked { color: #22c55e; }
+.cosmos-action-btn.disliked { color: #ef4444; }
+
+/* typing caret while the answer is being typed out */
+.cosmos-typing-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #06b6d4;
+  margin-inline-start: 2px;
+  vertical-align: middle;
+  animation: cosmosCaretBlink .8s steps(1) infinite;
+}
+@keyframes cosmosCaretBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+/* أيقونة الموقع اللي بيتصفحه الذكاء الاصطناعي وقت التفكير */
+.cosmos-thinking-label { display: inline-flex !important; align-items: center; gap: .4rem; }
+.cosmos-browse-favicon {
+  width: 16px; height: 16px; border-radius: 3px;
+  vertical-align: middle;
+  animation: cosmosFaviconPop .25s ease;
+}
+@keyframes cosmosFaviconPop {
+  from { opacity: 0; transform: scale(.6); }
+  to   { opacity: 1; transform: scale(1); }
+}

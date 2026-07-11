@@ -12276,3 +12276,232 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     new MutationObserver(decorateAIMessages).observe(_aiChatCont, { childList: true });
   }, 500);
 })();
+
+// ============================================================
+// 🤖 COSMOS AI — ChatGPT-style overhaul:
+//   1) رد الذكاء الاصطناعي بيتكتب حرف حرف (typewriter) بدل ما يظهر مرة واحدة
+//   2) شريط أزرار موحّد في آخر كل رد (⋮ / مشاركة / سماعة / 👎 / 👍 / نسخ) وبس
+//   3) مؤشر "بيفكر" بيتنقّل بين كذا جملة (بيفكر / بيبحث / بيراجع البيانات...)
+// ============================================================
+(function(){
+
+  // خطوات "التصفح" الوهمية اللي بتظهر وقت التفكير — بتحاكي شكل البحث في المواقع
+  var BROWSE_STEPS = [
+    { text: 'بيفتح nasa.gov',        domain: 'nasa.gov' },
+    { text: 'بيدور في ويكيبيديا',     domain: 'wikipedia.org' },
+    { text: 'بيراجع مصادر ESA',       domain: 'esa.int' },
+    { text: 'بيتأكد من Space.com',    domain: 'space.com' },
+    { text: 'بيجمع ويرتب المعلومات', domain: null }
+  ];
+
+  function isThinkingNode(contentEl){
+    return !!contentEl.querySelector('.cosmos-thinking');
+  }
+
+  function cycleThinkingLabel(labelEl){
+    var i = -1;
+    var tries = 0;
+    function render(){
+      var dots = labelEl.querySelectorAll('.cosmos-thinking-dot');
+      i = (i + 1) % BROWSE_STEPS.length;
+      var step = BROWSE_STEPS[i];
+      labelEl.innerHTML = '';
+      if (step.domain) {
+        var favicon = document.createElement('img');
+        favicon.className = 'cosmos-browse-favicon';
+        favicon.alt = '';
+        favicon.src = 'https://www.google.com/s2/favicons?sz=32&domain=' + step.domain;
+        labelEl.appendChild(favicon);
+      }
+      labelEl.appendChild(document.createTextNode(step.text));
+      for (var d = 0; d < dots.length; d++) labelEl.appendChild(dots[d]);
+      if (!dots.length) {
+        ['.', '.', '.'].forEach(function(ch){
+          var s = document.createElement('span');
+          s.className = 'cosmos-thinking-dot';
+          s.textContent = ch;
+          labelEl.appendChild(s);
+        });
+      }
+    }
+    render();
+    var iv = setInterval(function(){
+      tries++;
+      if (!labelEl || !document.body.contains(labelEl) || tries > 40) { clearInterval(iv); return; }
+      render();
+    }, 1400);
+  }
+
+  function copyToClipboard(text, cb){
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(cb).catch(cb);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta);
+      cb();
+    }
+  }
+
+  function buildActionBar(msgEl, plainText){
+    if (msgEl.querySelector('.cosmos-action-bar')) return;
+    var bar = document.createElement('div');
+    bar.className = 'cosmos-action-bar';
+
+    function mkBtn(icon, title, handler){
+      var b = document.createElement('button');
+      b.className = 'cosmos-action-btn';
+      b.type = 'button';
+      b.title = title;
+      b.innerHTML = '<i class="' + icon + '"></i>';
+      b.addEventListener('click', function(e){ e.stopPropagation(); handler(b); });
+      return b;
+    }
+
+    bar.appendChild(mkBtn('fas fa-ellipsis-h', 'مزيد', function(){
+      if (typeof window.showToast === 'function') window.showToast('⚙️ خيارات إضافية قريباً');
+    }));
+    bar.appendChild(mkBtn('fas fa-share', 'إرسال للمشرف', function(){
+      if (typeof window.forwardAIMessageToAdmin === 'function') window.forwardAIMessageToAdmin(plainText);
+      else if (navigator.share) navigator.share({ text: plainText }).catch(function(){});
+    }));
+    bar.appendChild(mkBtn('fas fa-volume-up', 'استمع للرد', function(btn){
+      if (typeof window.aiSpeak === 'function') window.aiSpeak(plainText, btn);
+    }));
+    bar.appendChild(mkBtn('fas fa-thumbs-down', 'مش مفيد', function(btn){
+      var wasActive = btn.classList.contains('disliked');
+      bar.querySelectorAll('.cosmos-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
+      if (!wasActive) { btn.classList.add('disliked'); if (typeof window.showToast === 'function') window.showToast('📝 شكراً لتقييمك'); }
+    }));
+    bar.appendChild(mkBtn('fas fa-thumbs-up', 'مفيد', function(btn){
+      var wasActive = btn.classList.contains('liked');
+      bar.querySelectorAll('.cosmos-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
+      if (!wasActive) { btn.classList.add('liked'); if (typeof window.showToast === 'function') window.showToast('📝 شكراً لتقييمك'); }
+    }));
+    bar.appendChild(mkBtn('fas fa-copy', 'نسخ', function(){
+      copyToClipboard(plainText, function(){
+        if (typeof window.showToast === 'function') window.showToast('✅ تم نسخ الرد');
+      });
+    }));
+
+    msgEl.appendChild(bar);
+  }
+
+  // ── يفكك الـ HTML لعمليات (حرف / فتح تاج / قفل تاج) وبيعيد بناءه تدريجياً ──
+  function typewriterReveal(container, html, onDone){
+    var temp = document.createElement('div');
+    temp.innerHTML = html;
+    var ops = [];
+    (function walk(node){
+      var kids = node.childNodes;
+      for (var i = 0; i < kids.length; i++) {
+        var child = kids[i];
+        if (child.nodeType === 3) {
+          var t = child.nodeValue;
+          for (var c = 0; c < t.length; c++) ops.push({ type: 'char', ch: t[c] });
+        } else if (child.nodeType === 1) {
+          ops.push({ type: 'open', tag: child.tagName.toLowerCase(), attrs: child.attributes });
+          walk(child);
+          ops.push({ type: 'close' });
+        }
+      }
+    })(temp);
+
+    container.innerHTML = '';
+    var caret = document.createElement('span');
+    caret.className = 'cosmos-typing-caret';
+    container.appendChild(caret);
+
+    var stack = [container];
+    var idx = 0;
+    var msgsBox = document.getElementById('aiChatMessages');
+
+    function tick(){
+      var n = 3;
+      while (n-- > 0 && idx < ops.length) {
+        var op = ops[idx++];
+        var top = stack[stack.length - 1];
+        if (op.type === 'char') {
+          if (top.lastChild && top.lastChild.nodeType === 3) top.lastChild.nodeValue += op.ch;
+          else top.insertBefore(document.createTextNode(op.ch), top === container ? caret : null);
+        } else if (op.type === 'open') {
+          var el = document.createElement(op.tag);
+          if (op.attrs) for (var a = 0; a < op.attrs.length; a++) el.setAttribute(op.attrs[a].name, op.attrs[a].value);
+          top.insertBefore(el, top === container ? caret : null);
+          stack.push(el);
+        } else {
+          stack.pop();
+        }
+      }
+      if (msgsBox) msgsBox.scrollTop = msgsBox.scrollHeight;
+      if (idx < ops.length) {
+        setTimeout(tick, 10);
+      } else {
+        if (caret.parentNode) caret.parentNode.removeChild(caret);
+        if (onDone) onDone();
+      }
+    }
+    tick();
+  }
+
+  function hideLegacyBar(m){
+    var tries = 0;
+    var iv = setInterval(function(){
+      tries++;
+      if (!document.body.contains(m) || tries > 15) { clearInterval(iv); return; }
+      var legacyBtn = m.querySelector('button[title="ابعت للمشرف"]');
+      if (legacyBtn && legacyBtn.parentElement) {
+        legacyBtn.parentElement.style.display = 'none';
+        clearInterval(iv);
+      }
+    }, 250);
+  }
+
+  function handleNewMessage(m){
+    if (!m.classList || !m.classList.contains('received') || m.dataset.cosmosHandled) return;
+    var contentEl = m.querySelector('.message-content');
+    if (!contentEl) return;
+    m.dataset.cosmosHandled = '1';
+
+    hideLegacyBar(m);
+
+    if (isThinkingNode(contentEl)) {
+      var label = contentEl.querySelector('.cosmos-thinking-label');
+      if (label) cycleThinkingLabel(label);
+      return;
+    }
+
+    var fullHtml = contentEl.innerHTML;
+    var plainText = contentEl.textContent || '';
+    if (!plainText.trim()) return;
+    typewriterReveal(contentEl, fullHtml, function(){
+      buildActionBar(m, plainText);
+    });
+  }
+
+  function scanExisting(){
+    var cont = document.getElementById('aiChatMessages');
+    if (!cont) return;
+    cont.querySelectorAll('.message.received').forEach(handleNewMessage);
+  }
+
+  var mo = new MutationObserver(function(mutations){
+    mutations.forEach(function(mut){
+      mut.addedNodes.forEach(function(n){
+        if (n.nodeType === 1 && n.classList && n.classList.contains('message')) handleNewMessage(n);
+      });
+    });
+  });
+
+  function attachObserver(){
+    var cont = document.getElementById('aiChatMessages');
+    if (!cont) { setTimeout(attachObserver, 400); return; }
+    mo.observe(cont, { childList: true });
+    scanExisting();
+  }
+  attachObserver();
+
+  console.log('✅ Cosmos AI ChatGPT-style UI جاهزة — typewriter + action bar + thinking phrases');
+})();
