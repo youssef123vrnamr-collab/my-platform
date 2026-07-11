@@ -278,6 +278,7 @@ async function isAdminUser(userId) {
   const AI_KEY_DEFAULT = "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";
   let _currentAiKey = AI_KEY_DEFAULT;
   let _currentGeminiKey = "";
+  let _currentTavilyKey = "";
   let _aiKeyUnsub = null;
   function _maskKey(k){
     const s = (k || "").toString();
@@ -293,6 +294,7 @@ async function isAdminUser(userId) {
           const d = snap.exists ? (snap.data() || {}) : {};
           _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
           _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
+          _currentTavilyKey = (d.tavilyApiKey && String(d.tavilyApiKey).trim()) || "";
           const disp = document.getElementById("currentAiKeyDisplay");
           if (disp) disp.textContent = _maskKey(_currentAiKey);
         },
@@ -306,6 +308,7 @@ async function isAdminUser(userId) {
       const d = snap.exists ? (snap.data() || {}) : {};
       _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
       _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
+      _currentTavilyKey = (d.tavilyApiKey && String(d.tavilyApiKey).trim()) || "";
     } catch(e){ console.warn("loadAiKeyOnce failed", e); }
   }
   function openAiKeyModal(){
@@ -436,6 +439,127 @@ async function isAdminUser(userId) {
   }
   window.getGeminiApiKey = getGeminiApiKey;
   window.setGeminiApiKey = openGeminiKeyModal;
+
+  // ====== مفتاح Tavily API (بحث حقيقي في الإنترنت — مجاني حتى 1000 بحث/شهر) ======
+  // نفس باترن Gemini بالظبط: بيتحفظ في Firestore: system/ai_settings, field: tavilyApiKey
+  function getTavilyApiKey(){ return (_currentTavilyKey && String(_currentTavilyKey).trim()) || ""; }
+  function openTavilyKeyModal(){
+    if (!isAdmin) { SoundEffects && SoundEffects.error && SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
+    const v = window.prompt(
+      "الصق مفتاح Tavily API المجاني هنا (احصل عليه مجاناً من app.tavily.com — 1000 بحث حقيقي شهرياً بدون فلوس):\nهيتحفظ على السيرفر ويشتغل تلقائياً لكل المستخدمين.",
+      _currentTavilyKey || ""
+    );
+    if (v === null) return; // إلغاء
+    const trimmed = v.trim();
+    if (!trimmed) { showToast("⚠️ لم يتم إدخال أي مفتاح"); return; }
+    saveTavilyKey(trimmed);
+  }
+  async function saveTavilyKey(v){
+    if (!isAdmin) { SoundEffects && SoundEffects.error && SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
+    try {
+      await db.collection("system").doc("ai_settings").set({
+        tavilyApiKey: v,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown"
+      }, { merge: true });
+      _currentTavilyKey = v;
+      SoundEffects && SoundEffects.success && SoundEffects.success();
+      showToast("✅ تم حفظ مفتاح البحث على السيرفر لكل المستخدمين");
+    } catch(e){
+      console.error("saveTavilyKey err", e);
+      let msg = "❌ فشل الحفظ";
+      const code = (e && (e.code || e.message)) || "";
+      if (/permission|denied|insufficient/i.test(code)) msg = "❌ صلاحيات Firestore لا تسمح بالكتابة في system/ai_settings";
+      showToast(msg);
+    }
+  }
+  window.getTavilyApiKey = getTavilyApiKey;
+  window.openTavilyKeyModal = openTavilyKeyModal;
+  window.setTavilyApiKey = openTavilyKeyModal;
+
+  // ====== دالة البحث الحقيقي في الإنترنت عبر Tavily ======
+  // بترجع نتائج بحث حقيقية (عناوين + روابط + مقتطفات) من الإنترنت كله —
+  // شامل أي محتوى عام مفهرَس (مواقع إخبارية، صفحات ويكيبيديا، بوستات ريديت/فورومات عامة، فيديوهات يوتيوب...)
+  // ملحوظة: مفيش API رسمي مجاني بيدّي بحث مباشر جوه فيسبوك/انستجرام/تيك توك أو تويتر/X —
+  // المنصات دي قافلة البحث العام في محتواها (تيك توك وميتا) أو بتطلب اشتراك مدفوع (X)،
+  // وأي محاولة "سحب" بيانات منها من غير API رسمي بتخالف شروط استخدامها.
+  window.performWebSearch = async function(query, includeDomains){
+    var key = getTavilyApiKey();
+    if (!key) return null;
+    try {
+      var body = {
+        api_key: key,
+        query: query,
+        search_depth: 'basic',
+        max_results: 5,
+        include_answer: false
+      };
+      if (includeDomains && includeDomains.length) body.include_domains = includeDomains;
+      var r = await fetch('https://api.tavily.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch(e){ console.warn('performWebSearch failed', e); return null; }
+  };
+
+  // ── مرحلة أولى سريعة: كلمات صريحة بتدل على طلب بحث (رد فوري من غير انتظار) ──
+  var WEB_SEARCH_TRIGGERS = [
+    'ابحث', 'دور لي', 'دور على', 'فتش', 'اخبار', 'أخبار', 'اخر اخبار', 'آخر أخبار',
+    'احدث', 'أحدث', 'صحيح ان', 'صحيح إن', 'هل صحيح', 'اتأكد', 'تأكد من',
+    'معلومات عن', 'ايه اخبار', 'إيه أخبار', 'اخر حاجة', 'جديد في'
+  ];
+  window.shouldWebSearch = function(t){
+    if (!t) return false;
+    var l = String(t).toLowerCase();
+    return WEB_SEARCH_TRIGGERS.some(function(k){ return l.includes(k); });
+  };
+
+  // ── مرحلة تانية ذكية: لو مفيش كلمة صريحة، الذكاء الاصطناعي نفسه بيقرر
+  //    (زي ما إنسان بيفكر "الحاجة دي محتاجة أتأكد منها من النت ولا معلومة عامة عندي"). ──
+  window.classifyNeedsSearch = async function(userMsg){
+    try {
+      var apiKey = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
+      if (!apiKey || !userMsg || userMsg.trim().length < 4) return false;
+      var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-20b',
+          max_tokens: 3,
+          temperature: 0,
+          messages: [
+            { role: 'system', content: 'رد بكلمة واحدة بس: "نعم" لو الرسالة محتاجة معلومة حديثة/حقيقية أو حدث حالي أو حاجة لازم تتأكد منها من الإنترنت (زي أخبار، أسعار، تواريخ قريبة، أسماء أشخاص أو شركات أو منتجات حالية، نتائج، إحصائيات، حاجة بتتغيّر بمرور الوقت). أو رد "لا" لو مجرد كلام عادي، تحية، سؤال عن مفهوم علمي/تاريخي ثابت، أو طلب مساعدة عامة مش محتاجة تصفح إنترنت. رد بكلمة واحدة بس من غير أي شرح.' },
+            { role: 'user', content: userMsg }
+          ]
+        })
+      });
+      if (!r.ok) return false;
+      var d = await r.json();
+      var ans = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '';
+      return /نعم|yes/i.test(ans.trim());
+    } catch(e){ console.warn('classifyNeedsSearch failed', e); return false; }
+  };
+
+  // ── لو المستخدم سمّى موقع معين في كلامه، نضيّق البحث عليه بس بدل الإنترنت كله ──
+  var SITE_NAME_MAP = [
+    [/يوتيوب|youtube/i, 'youtube.com'],
+    [/ويكيبيديا|wikipedia/i, 'wikipedia.org'],
+    [/ناسا|nasa/i, 'nasa.gov'],
+    [/ريديت|reddit/i, 'reddit.com'],
+    [/تويتر|اكس منصة|elon.*x\b|(?:^|\s)x\.com/i, 'x.com'],
+    [/فيسبوك|facebook/i, 'facebook.com'],
+    [/انستجرام|انستغرام|instagram/i, 'instagram.com'],
+    [/تيك ?توك|tiktok/i, 'tiktok.com']
+  ];
+  window.extractMentionedDomains = function(t){
+    if (!t) return [];
+    var found = [];
+    SITE_NAME_MAP.forEach(function(pair){ if (pair[0].test(t) && found.indexOf(pair[1]) === -1) found.push(pair[1]); });
+    return found;
+  };
 
 
   const MAX_VIDEO_SIZE = 104857600;
@@ -637,6 +761,7 @@ async function updateAdminUI() {
             addItem("setAdminsMenuItem","fas fa-users-cog","تحديد المشرفين", () => { menu.classList.remove("active"); openSetAdminsModal(); });
             addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); });
             addItem("geminiKeyMenuItem","fas fa-key","مفتاح تحليل الصور 🖼️", () => { menu.classList.remove("active"); openGeminiKeyModal(); });
+            addItem("tavilyKeyMenuItem","fas fa-globe","مفتاح البحث في الإنترنت 🔎", () => { menu.classList.remove("active"); openTavilyKeyModal(); });
             addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); });
             addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); });
             addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); });
@@ -10918,6 +11043,55 @@ function slStopAllAnimations() {
       }
       document.dispatchEvent(new Event('dqAiSent'));
 
+      // ── بحث حقيقي في الإنترنت (Tavily) — الذكاء الاصطناعي بيقرر لوحده لو محتاج يبحث، من غير ما تقوله "ابحث" ──
+      var _tavilyReady = typeof window.getTavilyApiKey === 'function' && window.getTavilyApiKey() && typeof window.performWebSearch === 'function';
+      var _needsSearch = _tavilyReady && typeof window.shouldWebSearch === 'function' && window.shouldWebSearch(userMsg);
+      if (_tavilyReady && !_needsSearch && typeof window.classifyNeedsSearch === 'function') {
+        _needsSearch = await window.classifyNeedsSearch(userMsg);
+      }
+      if (_needsSearch) {
+        var _mentionedDomains = typeof window.extractMentionedDomains === 'function' ? window.extractMentionedDomains(userMsg) : [];
+        var _searchStatusEl = null;
+        if (msgs) {
+          _searchStatusEl = document.createElement('div');
+          _searchStatusEl.className = 'message received';
+          _searchStatusEl.dataset.cosmosSkip = '1'; // نتحكم فيه يدوياً، من غير ما الديكوريتر العام يلمسه
+          var _searchLbl = _mentionedDomains.length ? ('بيدور في ' + _mentionedDomains[0]) : 'بيبحث على الإنترنت';
+          _searchStatusEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_searchLbl) + '</div>';
+          msgs.appendChild(_searchStatusEl); msgs.scrollTop = msgs.scrollHeight;
+        }
+        try {
+          var _searchRes = await window.performWebSearch(userMsg, _mentionedDomains);
+          if (_searchRes && _searchRes.results && _searchRes.results.length) {
+            var _foundDomains = [];
+            var _wctx = '\n\n--- نتائج بحث حقيقية من الإنترنت الآن ---\n';
+            _searchRes.results.slice(0, 5).forEach(function(r, ri){
+              var _dom = '';
+              try { _dom = new URL(r.url).hostname.replace(/^www\./,''); } catch(eU) {}
+              if (_dom && _foundDomains.indexOf(_dom) === -1) _foundDomains.push(_dom);
+              _wctx += (ri+1) + '. ' + (r.title||'') + ' (' + _dom + ')\n' + (r.content||'').slice(0,300) + '\n';
+            });
+            _wctx += '---\nاستخدم النتائج الحقيقية دي عشان تتأكد من المعلومة وتجاوب بدقة، واذكر المصدر باختصار لو مفيد.';
+            userMsg = userMsg + _wctx;
+            if (_searchStatusEl && _foundDomains.length) {
+              var _sLabel = _searchStatusEl.querySelector('.cosmos-thinking-label');
+              if (_sLabel) {
+                _sLabel.innerHTML = '';
+                var _fav = document.createElement('img');
+                _fav.className = 'cosmos-browse-favicon';
+                _fav.alt = '';
+                _fav.src = 'https://www.google.com/s2/favicons?sz=32&domain=' + _foundDomains[0];
+                _sLabel.appendChild(_fav);
+                _sLabel.appendChild(document.createTextNode('لقى نتائج من: ' + _foundDomains.slice(0,3).join('، ')));
+                if (msgs) msgs.scrollTop = msgs.scrollHeight;
+                await new Promise(function(r){ setTimeout(r, 900); });
+              }
+            }
+          }
+        } catch(eSearch){ console.warn('web search step failed', eSearch); }
+        if (_searchStatusEl && _searchStatusEl.parentNode) _searchStatusEl.parentNode.removeChild(_searchStatusEl);
+      }
+
       // ── الرد على رسالة سابقة (لو مفعّل) ──
       var _aiReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
       var _aiApiMsg = userMsg;
@@ -12460,7 +12634,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
 
   function handleNewMessage(m){
-    if (!m.classList || !m.classList.contains('received') || m.dataset.cosmosHandled) return;
+    if (!m.classList || !m.classList.contains('received') || m.dataset.cosmosHandled || m.dataset.cosmosSkip) return;
     var contentEl = m.querySelector('.message-content');
     if (!contentEl) return;
     m.dataset.cosmosHandled = '1';
