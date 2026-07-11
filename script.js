@@ -10783,7 +10783,7 @@ function slStopAllAnimations() {
             return;
           }
           var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock;
-          promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة.';
+          promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'كوزموس')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
 
           // فصل البيانات base64 عن الـ prefix (data:image/jpeg;base64,....) لكل صورة
           var _parts = [{ text: promptText }];
@@ -10838,7 +10838,7 @@ function slStopAllAnimations() {
             aiImgDiv.className = 'message received';
             var _ansUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
             aiImgDiv.id = 'msg-'+_ansUid; aiImgDiv.dataset.msgId = _ansUid;
-            aiImgDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona2.emoji+' '+persona2.name+'</div><div class="message-content">'+visionAnswer+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+            aiImgDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona2.emoji+' '+persona2.name+'</div><div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(visionAnswer):visionAnswer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
             msgs.appendChild(aiImgDiv); msgs.scrollTop = msgs.scrollHeight;
             if (typeof window.addAIMuteButton === 'function') { var _t2 = aiImgDiv.querySelector('.message-content'); if (_t2) window.addAIMuteButton(aiImgDiv, _t2.textContent); }
           }
@@ -10939,7 +10939,7 @@ function slStopAllAnimations() {
         _videoContextBlock = '\n\n--- مكتبة فيديوهات المنصة ---\nعدد الفيديوهات الكلي: ' + videos.length + '\nقائمة الفيديوهات وأسماءها ووصفها:\n' + _vList + '\n---\nلو المستخدم سأل عن عدد الفيديوهات أو أسمائها أو محتواها، استخدم القائمة دي في إجابتك.';
       }
 
-      var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.';
+      var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.\n- هوية إلزامية: إنت مساعد ذكاء اصطناعي اسمه "'+persona.name+'"، جزء من منصة "فلك" التعليمية. لو حد سألك "مين انت" أو "انت شغال على ايه" أو "انت اي موديل" أو "انت اي تطبيق" أو أي سؤال عن هويتك أو التقنية اللي بتشتغل بيها، جاوب إنك "'+persona.name+'" المساعد الذكي بتاع منصة فلك، ومتقولش أبداً اسم أي شركة أو موديل أو منصة تقنية تانية (زي OpenAI أو ChatGPT أو أي حد تاني) حتى لو حد ألحّ في السؤال.\n- تنسيق النص إلزامي: إنت بترد جوه فقاعة شات على الموبايل مش صفحة ويب. ممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة | أو عناوين Markdown، لأنها بتظهر كرموز غريبة للمستخدم. استخدم بس: **نص عريض** لو محتاج تمييز، سطور جديدة، إيموجي، وأرقام أو نقاط (1. 2. 3. أو •) للتعداد. لو محتاج تعرض كود، حطه بين ```لغة البرمجة``` عادي بس متستخدمش جداول أو عناوين markdown أبداً.';
 
       function buildPayload(model, maxTok, hist) {
         return {
@@ -10997,7 +10997,7 @@ function slStopAllAnimations() {
           var _aiAnswerUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
           aiDiv.id = 'msg-'+_aiAnswerUid;
           aiDiv.dataset.msgId = _aiAnswerUid;
-          aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+answer+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
           if (typeof window.addAIMuteButton === 'function') {
             var txtEl = aiDiv.querySelector('.message-content');
@@ -12047,6 +12047,42 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     if (!id) return;
     let el = document.getElementById('msg-'+id) || document.querySelector('[data-msg-id="'+id+'"]');
     if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('long-press-active'); setTimeout(()=>el.classList.remove('long-press-active'), 700); }
+  };
+})();
+
+// ============================================================
+// 📝 تنسيق ردود الذكاء الاصطناعي — تحويل الماركداون الخام (###, ---, |جداول|)
+// لشكل نضيف يتقرأ كويس جوه فقاعة الشات، بدل ما يظهر كرموز غريبة
+// ============================================================
+(function(){
+  window.formatAIAnswer = function(raw){
+    if (!raw) return '';
+    var s = String(raw);
+    s = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    s = s.replace(/```([a-zA-Z0-9]*)\n?([\s\S]*?)```/g, function(m, lang, code){
+      return '<pre style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.6rem;overflow-x:auto;direction:ltr;text-align:left;margin:.4rem 0;font-size:.82rem"><code>'+code.replace(/\n$/,'')+'</code></pre>';
+    });
+    var lines = s.split('\n'), out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/<pre[\s>]|<\/pre>|<code>/.test(line)) { out.push(line); continue; }
+      var t = line.trim();
+      if (/^[-=_]{3,}$/.test(t)) continue; // خط أفقي فاصل
+      if (/^\|?[\s:|-]{3,}\|?$/.test(t) && t.indexOf('-') > -1 && t.indexOf('|') > -1) continue; // صف فاصل جدول
+      var hMatch = t.match(/^#{1,6}\s*(.+)$/);
+      if (hMatch) { out.push('<b>' + hMatch[1].trim() + '</b>'); continue; }
+      if (t.indexOf('|') > -1 && t.indexOf('|') !== t.lastIndexOf('|')) {
+        var cells = t.split('|').map(function(c){ return c.trim(); }).filter(function(c){ return c.length; });
+        if (cells.length) { out.push(cells.join('  •  ')); continue; }
+      }
+      line = line.replace(/^(\s*)[-*]\s+/, '$1• ');
+      out.push(line);
+    }
+    s = out.join('\n');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    s = s.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,.08);padding:.1rem .3rem;border-radius:4px;direction:ltr;display:inline-block">$1</code>');
+    s = s.replace(/\n{3,}/g, '\n\n').replace(/\n/g, '<br>');
+    return s;
   };
 })();
 
