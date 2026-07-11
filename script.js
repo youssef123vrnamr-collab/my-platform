@@ -492,7 +492,8 @@ async function isAdminUser(userId) {
         query: query,
         search_depth: 'basic',
         max_results: 5,
-        include_answer: false
+        include_answer: false,
+        include_images: true
       };
       if (includeDomains && includeDomains.length) body.include_domains = includeDomains;
       var r = await fetch('https://api.tavily.com/search', {
@@ -11027,6 +11028,9 @@ function slStopAllAnimations() {
         return;
       }
 
+      // ── سياق إضافي هيتضاف بس لطلب الذكاء الاصطناعي، ومش هيظهر في فقاعة رسالتك ──
+      var _extraContextForAI = '';
+
       // ── Space context injection ──
       if (hasTrigger(userMsg)) {
         var apod = await fetchNASAApod();
@@ -11038,7 +11042,7 @@ function slStopAllAnimations() {
           ctx += '\n[أحدث أخبار الفضاء الحية]:\n';
           news.forEach(function(n,i){ ctx += (i+1)+'. '+n.title+' ('+(n.news_site||'')+') — '+(n.summary||'').slice(0,150)+'\n'; });
         }
-        if (ctx) userMsg = userMsg + '\n\n--- معلومات حية الآن ---'+ctx+'---\nاستخدم المعلومات الحية أعلاه للإجابة إذا كانت ذات صلة.';
+        if (ctx) _extraContextForAI += '\n\n--- معلومات حية الآن ---'+ctx+'---\nاستخدم المعلومات الحية أعلاه للإجابة إذا كانت ذات صلة.';
         document.dispatchEvent(new Event('dqNewsSeen'));
       }
       document.dispatchEvent(new Event('dqAiSent'));
@@ -11069,10 +11073,15 @@ function slStopAllAnimations() {
               var _dom = '';
               try { _dom = new URL(r.url).hostname.replace(/^www\./,''); } catch(eU) {}
               if (_dom && _foundDomains.indexOf(_dom) === -1) _foundDomains.push(_dom);
-              _wctx += (ri+1) + '. ' + (r.title||'') + ' (' + _dom + ')\n' + (r.content||'').slice(0,300) + '\n';
+              _wctx += (ri+1) + '. ' + (r.title||'') + ' — الرابط: ' + (r.url||'') + '\n' + (r.content||'').slice(0,300) + '\n';
             });
-            _wctx += '---\nاستخدم النتائج الحقيقية دي عشان تتأكد من المعلومة وتجاوب بدقة، واذكر المصدر باختصار لو مفيد.';
-            userMsg = userMsg + _wctx;
+            _wctx += '---\nاستخدم النتائج الحقيقية دي بس عشان تتأكد من المعلومة وتجاوب بدقة. لو في رابط حقيقي مناسب من النتائج دي، اذكره صريح في ردك. متخترعش أي رابط أو موقع مش موجود فوق.';
+            _extraContextForAI += _wctx;
+
+            // صور حقيقية من نتائج البحث (لو موجودة) — هتتعرض فعلياً تحت رد الذكاء الاصطناعي
+            var _imgs = (_searchRes.images || []).map(function(im){ return typeof im === 'string' ? im : (im && im.url); }).filter(Boolean).slice(0, 4);
+            if (_imgs.length) window.__cosmosPendingSearchImages = _imgs;
+
             if (_searchStatusEl && _foundDomains.length) {
               var _sLabel = _searchStatusEl.querySelector('.cosmos-thinking-label');
               if (_sLabel) {
@@ -11094,9 +11103,9 @@ function slStopAllAnimations() {
 
       // ── الرد على رسالة سابقة (لو مفعّل) ──
       var _aiReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
-      var _aiApiMsg = userMsg;
+      var _aiApiMsg = userMsg + _extraContextForAI;
       if (_aiReplyPayload && injectedMsg === undefined) {
-        _aiApiMsg = 'بالرد على رسالة سابقة ("'+_aiReplyPayload.text+'"):\n' + userMsg;
+        _aiApiMsg = 'بالرد على رسالة سابقة ("'+_aiReplyPayload.text+'"):\n' + userMsg + _extraContextForAI;
       }
 
       // ── Show user bubble ──
@@ -11268,6 +11277,21 @@ function slStopAllAnimations() {
           aiDiv.id = 'msg-'+_aiAnswerUid;
           aiDiv.dataset.msgId = _aiAnswerUid;
           aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          if (window.__cosmosPendingSearchImages && window.__cosmosPendingSearchImages.length) {
+            var _gal = document.createElement('div');
+            _gal.className = 'cosmos-search-gallery';
+            window.__cosmosPendingSearchImages.forEach(function(_imgUrl){
+              var _a = document.createElement('a');
+              _a.href = _imgUrl; _a.target = '_blank'; _a.rel = 'noopener noreferrer';
+              var _im = document.createElement('img');
+              _im.src = _imgUrl; _im.loading = 'lazy'; _im.alt = 'نتيجة بحث';
+              _a.appendChild(_im);
+              _gal.appendChild(_a);
+            });
+            var _timeEl = aiDiv.querySelector('.message-time');
+            if (_timeEl) aiDiv.insertBefore(_gal, _timeEl); else aiDiv.appendChild(_gal);
+            window.__cosmosPendingSearchImages = null;
+          }
           msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
           if (typeof window.addAIMuteButton === 'function') {
             var txtEl = aiDiv.querySelector('.message-content');
@@ -12304,7 +12328,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     cont.addEventListener('click', function(e){ if (longPressed) { e.stopPropagation(); e.preventDefault(); longPressed = false; } }, true);
   }
 
-  function initAllReply(){ attachLongPress('public'); attachLongPress('pac'); attachLongPress('ai'); }
+  function initAllReply(){ attachLongPress('public'); attachLongPress('pac'); /* تم إلغاء الرد بالضغط المطول في شات كوزموس بناءً على طلب المستخدم */ }
   let _replyTries = 0;
   const _replyIv = setInterval(function(){ _replyTries++; initAllReply(); if (_replyTries > 60) clearInterval(_replyIv); }, 500);
   document.addEventListener('DOMContentLoaded', initAllReply);
@@ -12634,7 +12658,12 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
 
   function handleNewMessage(m){
-    if (!m.classList || !m.classList.contains('received') || m.dataset.cosmosHandled || m.dataset.cosmosSkip) return;
+    if (!m.classList) return;
+    if (m.classList.contains('sent')) {
+      if (!m.dataset.cosmosSentHandled) { m.dataset.cosmosSentHandled = '1'; hideLegacyBar(m); }
+      return;
+    }
+    if (!m.classList.contains('received') || m.dataset.cosmosHandled || m.dataset.cosmosSkip) return;
     var contentEl = m.querySelector('.message-content');
     if (!contentEl) return;
     m.dataset.cosmosHandled = '1';
@@ -12658,7 +12687,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   function scanExisting(){
     var cont = document.getElementById('aiChatMessages');
     if (!cont) return;
-    cont.querySelectorAll('.message.received').forEach(handleNewMessage);
+    cont.querySelectorAll('.message.received, .message.sent').forEach(handleNewMessage);
   }
 
   var mo = new MutationObserver(function(mutations){
