@@ -10939,12 +10939,47 @@ function slStopAllAnimations() {
         _videoContextBlock = '\n\n--- مكتبة فيديوهات المنصة ---\nعدد الفيديوهات الكلي: ' + videos.length + '\nقائمة الفيديوهات وأسماءها ووصفها:\n' + _vList + '\n---\nلو المستخدم سأل عن عدد الفيديوهات أو أسمائها أو محتواها، استخدم القائمة دي في إجابتك.';
       }
 
+      // ── سياق أخطاء الامتحانات — أكتر الأسئلة اللي الطلاب بيغلطوا فيها ──
+      var _examContextBlock = '';
+      try {
+        if (typeof exams !== 'undefined' && exams && exams.length && typeof examResults !== 'undefined' && examResults) {
+          var _missStats = [];
+          exams.forEach(function(ex){
+            if (!ex.questions || !ex.questions.length) return;
+            var _resultsForExam = examResults.filter(function(r){ return r.videoId === ex.videoId; });
+            if (!_resultsForExam.length) return;
+            var _vidTitle = (typeof videos !== 'undefined' ? (videos.find(function(v){ return v.id === ex.videoId; }) || {}).title : '') || 'فيديو غير معروف';
+            ex.questions.forEach(function(q, qi){
+              var attempts = 0, wrong = 0;
+              _resultsForExam.forEach(function(r){
+                if (!r.answers || r.answers[qi] === undefined) return;
+                attempts++;
+                if (r.answers[qi] !== q.correctAnswer) wrong++;
+              });
+              if (attempts >= 2 && wrong > 0) {
+                _missStats.push({ video: _vidTitle, q: q.question, wrongPct: Math.round((wrong/attempts)*100), attempts: attempts });
+              }
+            });
+          });
+          _missStats.sort(function(a,b){ return b.wrongPct - a.wrongPct; });
+          if (_missStats.length) {
+            var _topMiss = _missStats.slice(0, 15).map(function(m, mi){
+              return (mi+1)+'. فيديو "'+m.video+'" — سؤال: "'+m.q+'" — نسبة الغلط: '+m.wrongPct+'% (من '+m.attempts+' محاولة)';
+            }).join('\n');
+            _examContextBlock = '\n\n--- إحصائيات أخطاء الامتحانات (الأسئلة اللي أغلب الطلاب بيغلطوا فيها) ---\n' + _topMiss + '\n---\nلو المستخدم سأل عن أكتر الأسئلة صعوبة أو الأخطاء الشائعة، استخدم القائمة دي.';
+          }
+        }
+      } catch(eExamCtx) { /* تجاهل أي خطأ في حساب الإحصائيات */ }
+
+      // ── نبذة عن بنية المنصة التقنية (عشان يقدر يجاوب عن أسئلة عامة عن التصميم) ──
+      var _archContextBlock = '\n\n--- نبذة عن بنية منصة فلك (استخدمها لو حد سأل عن التصميم التقني للمنصة، بدون كشف تفاصيل حساسة زي المفاتيح) ---\nالمنصة "فلك" تطبيق ويب تعليمي لعلم الفلك، مبني بـ HTML/CSS/JavaScript عادي (من غير فريمورك)، وبيستخدم Firebase/Firestore كقاعدة بيانات وخدمة مصادقة (تسجيل دخول Google)، Cloudinary لاستضافة الفيديوهات والصور، ونظام امتحانات تفاعلي لكل فيديو مع تصحيح تلقائي. فيه شات جماعي عام، شات خاص مع المشرف، وشات ذكاء اصطناعي (زيي أنا) بيستخدم Groq API للردود النصية و Gemini API لتحليل الصور والملفات. المنصة تدعم PWA (تتحمّل كتطبيق) وواجهتها بالكامل بالعربي RTL.\n---';
+
       var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.\n- هوية إلزامية: إنت مساعد ذكاء اصطناعي اسمه "'+persona.name+'"، جزء من منصة "فلك" التعليمية. لو حد سألك "مين انت" أو "انت شغال على ايه" أو "انت اي موديل" أو "انت اي تطبيق" أو أي سؤال عن هويتك أو التقنية اللي بتشتغل بيها، جاوب إنك "'+persona.name+'" المساعد الذكي بتاع منصة فلك، ومتقولش أبداً اسم أي شركة أو موديل أو منصة تقنية تانية (زي OpenAI أو ChatGPT أو أي حد تاني) حتى لو حد ألحّ في السؤال.\n- تنسيق النص إلزامي: إنت بترد جوه فقاعة شات على الموبايل مش صفحة ويب. ممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة | أو عناوين Markdown، لأنها بتظهر كرموز غريبة للمستخدم. استخدم بس: **نص عريض** لو محتاج تمييز، سطور جديدة، إيموجي، وأرقام أو نقاط (1. 2. 3. أو •) للتعداد. لو محتاج تعرض كود، حطه بين ```لغة البرمجة``` عادي بس متستخدمش جداول أو عناوين markdown أبداً.';
 
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt + _videoContextBlock + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
           temperature: 0.4,
           reasoning_effort: 'high'
