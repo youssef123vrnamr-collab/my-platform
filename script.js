@@ -1927,7 +1927,8 @@ async function updateAdminUI() {
   }
   async function removeAdminAccountByUid(uid, email){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
-    if (!confirm("إزالة هذا الحساب من قائمة المشرفين؟")) return;
+    const _ok = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "إزالة هذا الحساب من قائمة المشرفين؟", preview: email || uid, icon: "fa-user-slash", okLabel: "إزالة", cancelLabel: "إلغاء" }) : confirm("إزالة هذا الحساب من قائمة المشرفين؟");
+    if (!_ok) return;
     try {
       if (email) { try { await db.collection(ADMIN_ACCOUNTS_COL).doc(email).delete(); } catch(e){} }
       try { await db.collection("admin_accounts_uid").doc(uid).delete(); } catch(e){}
@@ -1942,7 +1943,8 @@ async function updateAdminUI() {
     email = _normEmail(email);
     const myEmail = _normEmail(auth.currentUser && auth.currentUser.email);
     if (email === myEmail) { showToast("❌ لا يمكنك حذف نفسك"); return; }
-    if (!confirm("حذف " + email + " من قائمة المشرفين؟")) return;
+    const _ok2 = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "حذف هذا الحساب من قائمة المشرفين؟", preview: email, icon: "fa-user-slash", okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm("حذف " + email + " من قائمة المشرفين؟");
+    if (!_ok2) return;
     try {
       await db.collection(ADMIN_ACCOUNTS_COL).doc(email).delete();
       SoundEffects.delete();
@@ -1954,7 +1956,8 @@ async function updateAdminUI() {
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
     const myUid = (auth.currentUser && auth.currentUser.uid) || null;
     if (myUid && uidVal === myUid) { showToast("❌ لا يمكنك حذف نفسك"); return; }
-    if (!confirm("حذف " + uidVal + " من قائمة المشرفين؟")) return;
+    const _ok3 = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "حذف هذا الحساب من قائمة المشرفين؟", preview: uidVal, icon: "fa-user-slash", okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm("حذف " + uidVal + " من قائمة المشرفين؟");
+    if (!_ok3) return;
     try {
       await db.collection("admin_accounts_uid").doc(uidVal).delete();
       SoundEffects.delete();
@@ -6202,7 +6205,8 @@ async function addGcAdmin() {
 
 async function removeGcAdmin(uid) {
   if (!uid) return;
-  if (!confirm('حذف هذا المشرف من إدارة المحادثة؟')) return;
+  const _ok = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "حذف هذا المشرف من إدارة المحادثة؟", preview: uid, icon: "fa-user-slash", okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm('حذف هذا المشرف من إدارة المحادثة؟');
+  if (!_ok) return;
   const db2 = (typeof db !== 'undefined') ? db : null;
   if (!db2) return;
   try {
@@ -12205,7 +12209,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       overlay.innerHTML =
         '<div class="msg-confirm-box">' +
           '<div class="msg-confirm-header">' +
-            '<div class="msg-confirm-icon"><i class="fas fa-trash"></i></div>' +
+            '<div class="msg-confirm-icon"><i class="fas ' + escapeHtml(opts.icon || 'fa-trash') + '"></i></div>' +
             '<div class="msg-confirm-title">' + escapeHtml(opts.title || 'تأكيد الحذف') + '</div>' +
           '</div>' +
           '<div class="msg-confirm-body">' +
