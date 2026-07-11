@@ -10172,10 +10172,12 @@ function slStopAllAnimations() {
         var err = await resp.json().catch(function(){ return {}; });
         var msg = (err.error && err.error.message) || ('HTTP ' + resp.status);
         console.warn('[TTS] Groq failed, trying ElevenLabs...', msg);
+        if (window.AIHealth) window.AIHealth.record('groq_tts', false);
         await tryElevenLabsTTS(clean, btn, isArabic);
         return;
       }
 
+      if (window.AIHealth) window.AIHealth.record('groq_tts', true);
       if (!_ttsActive) return;
 
       var blob  = await resp.blob();
@@ -10192,6 +10194,7 @@ function slStopAllAnimations() {
 
     } catch(e) {
       console.error('[TTS] Groq error:', e);
+      if (window.AIHealth) window.AIHealth.record('groq_tts', false);
       await tryElevenLabsTTS(clean, btn, isArabic);
     }
   };
@@ -10228,11 +10231,13 @@ function slStopAllAnimations() {
       if (!resp.ok) {
         var errData = await resp.json().catch(function(){ return {}; });
         var errMsg = errData.detail && errData.detail.message ? errData.detail.message : (errData.detail || JSON.stringify(errData));
+        if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
         if (typeof showToast === 'function') showToast('ElevenLabs خطأ ' + resp.status + ': ' + errMsg);
         stopGroqTTS();
         return;
       }
 
+      if (window.AIHealth) window.AIHealth.record('elevenlabs', true);
       if (!_ttsActive) return;
 
       var blob = await resp.blob();
@@ -10255,6 +10260,7 @@ function slStopAllAnimations() {
 
     } catch(e) {
       console.error('[TTS] ElevenLabs error:', e);
+      if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
       stopGroqTTS();
     }
   }
@@ -10814,6 +10820,37 @@ function slStopAllAnimations() {
   // ── Global history array (stays alive across turns) ──
   window.aiChatHistory = [];
 
+  // ══════════════════════════════════════════════════════════════
+  // ── نظام "المدير الذكي" (AI Router): مراقبة صحة المزوّدين ──
+  // بيسجّل نجاح/فشل كل نداء لكل مزوّد (Groq / Gemini / Tavily / ElevenLabs)
+  // ولو مزوّد فشل 3 مرات على التوالي، بنعتبره "متعب" مؤقتاً (دقيقتين)
+  // وناخد بالنا من كده لما نقرر مين ينفّذ الطلب — كل ده من غير ما المستخدم يحس بأي حاجة.
+  // ══════════════════════════════════════════════════════════════
+  window.AIHealth = window.AIHealth || (function () {
+    var stats = {};
+    function get(p) { return stats[p] || (stats[p] = { ok: 0, fail: 0, consecFail: 0, lastFailAt: 0, lastOkAt: 0 }); }
+    return {
+      record: function (provider, ok) {
+        var s = get(provider);
+        if (ok) { s.ok++; s.consecFail = 0; s.lastOkAt = Date.now(); }
+        else { s.fail++; s.consecFail++; s.lastFailAt = Date.now(); }
+      },
+      isDegraded: function (provider) {
+        var s = get(provider);
+        return s.consecFail >= 3 && (Date.now() - s.lastFailAt) < 120000;
+      },
+      snapshot: function () {
+        var out = {};
+        Object.keys(stats).forEach(function (k) {
+          var s = stats[k];
+          out[k] = { ok: s.ok, fail: s.fail, consecFail: s.consecFail, degraded: (s.consecFail >= 3 && (Date.now() - s.lastFailAt) < 120000) };
+        });
+        return out;
+      }
+    };
+  })();
+  // للمشرف: window.AIHealth.snapshot() في الـ console يوريه حالة كل مزوّد لحظياً
+
   // ── Space context helpers ──
   var NASA_KEY = 'DEMO_KEY';
   var SPACE_TRIGGERS = ['اليوم','النهارده','الآن','الأخبار','أحدث','جديد','ايش في','إيه في','news','today','latest','launch','صاروخ','إطلاق','ناسا','nasa','تلسكوب','webb','جيمس ويب'];
@@ -10995,7 +11032,33 @@ function slStopAllAnimations() {
             visionData.candidates[0].content.parts && visionData.candidates[0].content.parts[0] &&
             visionData.candidates[0].content.parts[0].text) || null;
           if (!visionAnswer && visionData.error) throw new Error(JSON.stringify(visionData.error));
+          if (window.AIHealth) window.AIHealth.record('gemini', !!visionAnswer);
           if (!visionAnswer) visionAnswer = 'عذراً، مقدرتش أحلل المرفقات.';
+
+          // ── تعاون بين النماذج: Gemini بيحلل الصورة (شغلته)، وGroq بياخد التحليل الخام ويصيغه كتقرير احترافي منظم (شغلته) ──
+          // بنعمل الخطوة دي بس لو التحليل طويل/فيه محتوى كفاية يستاهل صياغة، عشان منزودش تكلفة/تأخير على ردود بسيطة
+          try {
+            var _groqKeyForPolish = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
+            if (_groqKeyForPolish && visionAnswer && visionAnswer.length > 180 && visionAnswer !== 'عذراً، مقدرتش أحلل المرفقات.') {
+              var _polishRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + _groqKeyForPolish, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model: 'openai/gpt-oss-120b',
+                  messages: [
+                    { role: 'system', content: 'أنت محرر محتوى محترف. هتستلم تحليل خام لصورة/ملف من نموذج تاني، ومطلوب منك تعيد صياغته كرد نهائي احترافي ومنظم بالعربية للمستخدم — بنقاط أو عناوين فرعية عند الحاجة، من غير حشو، ومن غير ما تقول إنك "أعدت صياغة" حاجة أو تشير لأي نموذج تاني. ممنوع ماركداون خام زي ### أو --- أو جداول |؛ استخدم بس **نص عريض** وأرقام/نقاط للتعداد.' },
+                    { role: 'user', content: 'طلب المستخدم الأصلي: "' + (extraText || 'صف المرفقات') + '"\n\nالتحليل الخام:\n' + visionAnswer }
+                  ],
+                  max_tokens: 1800, temperature: 0.35
+                })
+              });
+              var _polishData = await _polishRes.json();
+              var _polished = _polishData && _polishData.choices && _polishData.choices[0] && _polishData.choices[0].message && _polishData.choices[0].message.content;
+              if (window.AIHealth) window.AIHealth.record('groq', !!_polished);
+              if (_polished) visionAnswer = _polished;
+            }
+          } catch (ePolish) { console.warn('AI Router: تعذّرت خطوة صقل التحليل عبر Groq، هنعرض تحليل Gemini كما هو.', ePolish); }
+
           if (window.aiChatHistory) {
             window.aiChatHistory.push({ role:'user', content: '[أرسل المستخدم '+imgs.length+' صورة'+(validDocs.length ? (' و'+validDocs.length+' ملف') : '')+'] ' + (extraText||'') });
             window.aiChatHistory.push({ role:'assistant', content: visionAnswer });
@@ -11012,6 +11075,7 @@ function slStopAllAnimations() {
             if (typeof window.addAIMuteButton === 'function') { var _t2 = aiImgDiv.querySelector('.message-content'); if (_t2) window.addAIMuteButton(aiImgDiv, _t2.textContent); }
           }
         } catch(errImg) {
+          if (window.AIHealth) window.AIHealth.record('gemini', false);
           if (typingEl2) typingEl2.remove();
           if (msgs) {
             var ed2 = document.createElement('div');
@@ -11100,6 +11164,7 @@ function slStopAllAnimations() {
         }
         try {
           var _searchRes = await window.performWebSearch(userMsg, _mentionedDomains);
+          if (window.AIHealth) window.AIHealth.record('tavily', !!(_searchRes && _searchRes.results && _searchRes.results.length));
           if (_searchRes && _searchRes.results && _searchRes.results.length) {
             var _foundDomains = [];
             var _wctx = '\n\n--- نتائج بحث حقيقية من الإنترنت الآن ---\n';
@@ -11131,7 +11196,7 @@ function slStopAllAnimations() {
               }
             }
           }
-        } catch(eSearch){ console.warn('web search step failed', eSearch); }
+        } catch(eSearch){ if (window.AIHealth) window.AIHealth.record('tavily', false); console.warn('web search step failed', eSearch); }
         if (_searchStatusEl && _searchStatusEl.parentNode) _searchStatusEl.parentNode.removeChild(_searchStatusEl);
       }
 
@@ -11274,6 +11339,27 @@ function slStopAllAnimations() {
         return { res: res, data: data };
       }
 
+      // ── خط دفاع ثاني: لو Groq فشل تمامًا، Gemini بياخد نفس السؤال والسياق ويجاوب بدله — بصمت وبدون ما المستخدم يحس ──
+      async function callGeminiTextFallback() {
+        var gKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
+        if (!gKey) return null;
+        try {
+          var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock;
+          var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
+          _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
+          var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
+            body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: 2200 } })
+          });
+          var d = await r.json();
+          var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
+          if (window.AIHealth) window.AIHealth.record('gemini', !!txt);
+          return txt || null;
+        } catch (eG) { if (window.AIHealth) window.AIHealth.record('gemini', false); return null; }
+      }
+
+      var answer = null;
       try {
         var result = await callGroq('openai/gpt-oss-120b', 2200, histMsgs);
         // Retry with smaller model if context overflow
@@ -11293,10 +11379,30 @@ function slStopAllAnimations() {
           });
           result = { res: _res2, data: await _res2.json() };
         }
-        var answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
+        answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
         if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));
-        if (!answer) answer = 'عذراً، حدث خطأ غير متوقع.';
+        if (window.AIHealth) window.AIHealth.record('groq', !!answer);
+      } catch (errGroq) {
+        if (window.AIHealth) window.AIHealth.record('groq', false);
+        console.warn('AI Router: Groq فشل، بنجرّب Gemini كخط دفاع ثاني...', errGroq);
+      }
 
+      // ── Fallback صامت: Groq فشل أو رجّع فاضي → نسيب Gemini يتولى الرد ──
+      if (!answer) answer = await callGeminiTextFallback();
+
+      if (!answer) {
+        // ── الاتنين فشلوا فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
+        if (typingEl) typingEl.remove();
+        if (msgs) {
+          var edBoth = document.createElement('div');
+          edBoth.className = 'message received';
+          edBoth.innerHTML = '<div class="message-content" style="color:#ef4444">⏳ في زحمة على الخدمة دلوقتي، جرّب تاني بعد لحظات.</div>';
+          msgs.appendChild(edBoth); msgs.scrollTop = msgs.scrollHeight;
+        }
+        return;
+      }
+
+      {
         // ── Save to history ──
         window.aiChatHistory.push({ role:'user', content: userMsg });
         window.aiChatHistory.push({ role:'assistant', content: answer });
@@ -11347,16 +11453,6 @@ function slStopAllAnimations() {
             window.aiSpeak(cleanAnswer, null);
           }
         }
-      } catch(err) {
-        if (typingEl) typingEl.remove();
-        if (msgs) {
-          var ed = document.createElement('div');
-          ed.className = 'message received';
-          var _errDetail = (err && err.message ? String(err.message) : '').slice(0, 200);
-          ed.innerHTML = '<div class="message-content" style="color:#ef4444">❌ فشل الاتصال بالمساعد.' + (_errDetail ? '<br><span style="font-size:.75rem;opacity:.7;direction:ltr;display:inline-block">' + escapeHtml(_errDetail) + '</span>' : '') + '</div>';
-          msgs.appendChild(ed); msgs.scrollTop = msgs.scrollHeight;
-        }
-        console.error('AI send error:', err);
       }
     };
 
