@@ -10704,7 +10704,7 @@ function slStopAllAnimations() {
         // ── لو مفيش صور، منطق نصي بحت عبر المسار العادي (Groq) ──
         if (!imgs.length) {
           var textOnlyPrompt = (extraText || 'حلل الملفات دي وقدّم لي ملخص احترافي منظم بأهم النقاط.') + docsBlock;
-          await window.sendAIMessage(textOnlyPrompt);
+          await (window.__aiSendMessageCore || window.sendAIMessage)(textOnlyPrompt);
           return;
         }
 
@@ -10985,6 +10985,11 @@ function slStopAllAnimations() {
         console.error('AI send error:', err);
       }
     };
+
+    // ── مرجع مباشر للدالة النظيفة (قبل أي wrapper لاحق) — يُستخدم للنداءات الداخلية
+    // (زي إرسال محتوى الملفات المرفقة) عشان نتجنب دخول حارس التحقق تاني وهو بيشوف
+    // مربع الكتابة فاضي أو المحتوى طويل فيرفض الإرسال بصمت ──
+    window.__aiSendMessageCore = window.sendAIMessage;
 
     // ── Also patch clearAIChat to reset history ──
     var _origClear = window.clearAIChat;
