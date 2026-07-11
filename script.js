@@ -11049,7 +11049,14 @@ function slStopAllAnimations() {
 
       // ── بحث حقيقي في الإنترنت (Tavily) — الذكاء الاصطناعي بيقرر لوحده لو محتاج يبحث، من غير ما تقوله "ابحث" ──
       var _tavilyReady = typeof window.getTavilyApiKey === 'function' && window.getTavilyApiKey() && typeof window.performWebSearch === 'function';
-      var _needsSearch = _tavilyReady && typeof window.shouldWebSearch === 'function' && window.shouldWebSearch(userMsg);
+      var _userAskedToSearch = typeof window.shouldWebSearch === 'function' && window.shouldWebSearch(userMsg);
+      if (_userAskedToSearch && !_tavilyReady && msgs) {
+        var _noTavilyEl = document.createElement('div');
+        _noTavilyEl.className = 'message received';
+        _noTavilyEl.innerHTML = '<div class="message-content" style="color:#f59e0b">⚠️ البحث الحقيقي في الإنترنت مش مفعّل — لازم المشرف يحط مفتاح Tavily من القائمة (مفتاح البحث في الإنترنت 🔎) عشان يقدر يبحث فعلياً بدل ما يجاوب من معلوماته العامة.</div>';
+        msgs.appendChild(_noTavilyEl); msgs.scrollTop = msgs.scrollHeight;
+      }
+      var _needsSearch = _tavilyReady && _userAskedToSearch;
       if (_tavilyReady && !_needsSearch && typeof window.classifyNeedsSearch === 'function') {
         _needsSearch = await window.classifyNeedsSearch(userMsg);
       }
@@ -11318,7 +11325,8 @@ function slStopAllAnimations() {
         if (msgs) {
           var ed = document.createElement('div');
           ed.className = 'message received';
-          ed.innerHTML = '<div class="message-content" style="color:#ef4444">❌ فشل الاتصال بالمساعد. تأكد من مفتاح API.</div>';
+          var _errDetail = (err && err.message ? String(err.message) : '').slice(0, 200);
+          ed.innerHTML = '<div class="message-content" style="color:#ef4444">❌ فشل الاتصال بالمساعد.' + (_errDetail ? '<br><span style="font-size:.75rem;opacity:.7;direction:ltr;display:inline-block">' + escapeHtml(_errDetail) + '</span>' : '') + '</div>';
           msgs.appendChild(ed); msgs.scrollTop = msgs.scrollHeight;
         }
         console.error('AI send error:', err);
