@@ -381,7 +381,7 @@ async function isAdminUser(userId) {
   }
   async function resetAiKey(){
     if (!isAdmin) { SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
-    if (!await confirmDialog("هل تريد إرجاع المفتاح إلى القيمة الافتراضية؟")) return;
+    if (!confirm("هل تريد إرجاع المفتاح إلى القيمة الافتراضية؟")) return;
     try {
       await db.collection("system").doc("ai_settings").set({
         groqApiKey: AI_KEY_DEFAULT,
@@ -1000,7 +1000,7 @@ async function updateAdminUI() {
   // تم استبدال setTimeout هنا بحدث userLoggedIn أسفل
   // ============================================================
   function startMaintenance() { if (!isAdmin) { SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let minutes = parseInt(document.getElementById("maintenanceMinutes").value) || 5; if (minutes < 1 || minutes > 10080) { showToast("❌ المدة يجب أن تكون بين 1 و 10080 دقيقة (أسبوع)"); return; } let msg = document.getElementById("maintenanceMessageInput").value.trim() || "جاري تحديث المحتوى، يرجى الانتظار..."; let end = new Date(Date.now() + minutes * 60 * 1000); db.collection("system").doc("maintenance").set({ status: "maintenance", endTime: firebase.firestore.Timestamp.fromDate(end), message: msg }, { merge: true }).then(() => { SoundEffects.recordStart(); showToast("✅ تم بدء التحديث"); closeMaintenanceModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل بدء التحديث"); }); }
-  async function cancelMaintenance() { if (!isAdmin) { showToast("❌ المشرف فقط يستطيع إلغاء التحديث"); return; } if (!await confirmDialog("هل أنت متأكد؟")) return; db.collection("system").doc("maintenance").update({ status: "active" }).then(() => { SoundEffects.success(); showToast("✅ تم إلغاء التحديث"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل إلغاء التحديث"); }); }
+  function cancelMaintenance() { isAdmin ? (confirm("هل أنت متأكد؟") && db.collection("system").doc("maintenance").update({ status: "active" }).then(() => { SoundEffects.success(); showToast("✅ تم إلغاء التحديث"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل إلغاء التحديث"); })) : showToast("❌ المشرف فقط يستطيع إلغاء التحديث"); }
   function updateStorageBar() { if (!isAdmin) return; let used = videos.reduce((acc, v) => acc + (v.size || 0), 0); let percent = Math.min(used / MAX_STORAGE * 100, 100); let remaining = MAX_STORAGE - used; document.getElementById("usedSpace").textContent = (used / 1073741824).toFixed(2) + " GB"; document.getElementById("percentage").textContent = percent.toFixed(2) + "%"; document.getElementById("remainingText").textContent = "المتبقي: " + (remaining / 1073741824).toFixed(2) + " GB"; document.getElementById("videosCount").textContent = videos.length + " فيديو"; let bar = document.getElementById("storageProgress"); bar.style.width = percent + "%"; bar.classList.remove("low", "medium", "high"); if (percent < 50) bar.classList.add("low"); else if (percent < 80) bar.classList.add("medium"); else bar.classList.add("high"); document.getElementById("storageBar").style.display = "block"; }
 
 
@@ -1293,7 +1293,7 @@ async function updateAdminUI() {
       return `<div class="video-card" onclick="playVideo('${v.id}')"><div class="video-thumbnail">${thumbHtml}<div class="fallback-icon" style="display:${thumb ? "none" : "flex"}; position:absolute; z-index:2;"><i class="fas ${v.type === 'youtube' ? 'fa-youtube' : 'film'}"></i></div>${duration ? '<div class="video-duration"><i class="fas fa-clock"></i> ' + duration + "</div>" : ""}${hasExam ? '<div class="gif-badge" style="background:#10b981;"><i class="fas fa-question-circle"></i> يوجد امتحان</div>' : ""}${privateBadge}<div class="play-overlay"><div class="play-btn"><i class="fas fa-play"></i></div></div>${adminButtons}</div><div class="video-info"><h4 class="video-title">${escapeHtml(v.title)} ${v.size > 104857600 ? '<span style="color:#ec4899; font-size:0.8rem;"> <i class="fas fa-hd"></i> HD</span>' : ''}</h4>${v.description ? '<div class="video-description">' + escapeHtml(v.description) + "</div>" : ""}${examButtons}<div class="video-meta"><span><i class="fas fa-calendar"></i> ${v.createdAt ? new Date(v.createdAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span>${v.type !== 'youtube' && v.type !== 'gdrive' ? `<span><i class="fas fa-hdd"></i> ${formatSize(v.size)}</span>` : v.type === 'gdrive' ? '<span><i class="fab fa-google-drive" style="color:#34a853"></i> Google Drive</span>' : '<span><i class="fab fa-youtube"></i> YouTube</span>'}${v.width ? '<span><i class="fas fa-expand"></i> ' + v.width + "x" + v.height + "</span>" : ""}</div></div></div>`;
     })();
   }
-  async function deleteVideo(id, publicId) { if (await confirmDialog("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
+  function deleteVideo(id, publicId) { if (confirm("هل أنت متأكد من الحذف؟")) db.collection("videos").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
 
   function playVideo(id, startTime = 0) {
   // ✅ منع تشغيل الفيديو إذا لم يكن هناك مستخدم مسجل بحساب Google
@@ -1927,8 +1927,7 @@ async function updateAdminUI() {
   }
   async function removeAdminAccountByUid(uid, email){
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
-    const _ok = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "إزالة هذا الحساب من قائمة المشرفين؟", preview: email || uid, icon: "fa-user-slash", okLabel: "إزالة", cancelLabel: "إلغاء" }) : confirm("إزالة هذا الحساب من قائمة المشرفين؟");
-    if (!_ok) return;
+    if (!confirm("إزالة هذا الحساب من قائمة المشرفين؟")) return;
     try {
       if (email) { try { await db.collection(ADMIN_ACCOUNTS_COL).doc(email).delete(); } catch(e){} }
       try { await db.collection("admin_accounts_uid").doc(uid).delete(); } catch(e){}
@@ -1943,8 +1942,7 @@ async function updateAdminUI() {
     email = _normEmail(email);
     const myEmail = _normEmail(auth.currentUser && auth.currentUser.email);
     if (email === myEmail) { showToast("❌ لا يمكنك حذف نفسك"); return; }
-    const _ok2 = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "حذف هذا الحساب من قائمة المشرفين؟", preview: email, icon: "fa-user-slash", okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm("حذف " + email + " من قائمة المشرفين؟");
-    if (!_ok2) return;
+    if (!confirm("حذف " + email + " من قائمة المشرفين؟")) return;
     try {
       await db.collection(ADMIN_ACCOUNTS_COL).doc(email).delete();
       SoundEffects.delete();
@@ -1956,8 +1954,7 @@ async function updateAdminUI() {
     if (!isSuperAdmin) { SoundEffects.error(); showToast("❌ المشرف الرئيسي فقط"); return; }
     const myUid = (auth.currentUser && auth.currentUser.uid) || null;
     if (myUid && uidVal === myUid) { showToast("❌ لا يمكنك حذف نفسك"); return; }
-    const _ok3 = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "حذف هذا الحساب من قائمة المشرفين؟", preview: uidVal, icon: "fa-user-slash", okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm("حذف " + uidVal + " من قائمة المشرفين؟");
-    if (!_ok3) return;
+    if (!confirm("حذف " + uidVal + " من قائمة المشرفين؟")) return;
     try {
       await db.collection("admin_accounts_uid").doc(uidVal).delete();
       SoundEffects.delete();
@@ -1996,7 +1993,7 @@ async function updateAdminUI() {
   function editApp(appId) { const app = apps.find(a => a.id === appId); if (!app) return; document.getElementById("addAppModalTitle").innerHTML = '<i class="fas fa-edit"></i> تعديل تطبيق'; document.getElementById("appNameInput").value = app.name; document.getElementById("appDescInput").value = app.desc || ""; document.getElementById("appUrlInput").value = app.url; document.getElementById("appIconUrlInput").value = app.iconUrl || ""; document.getElementById("editAppId").value = appId; if (app.iconUrl) { document.getElementById("iconPreviewImg").src = app.iconUrl; document.getElementById("iconPreviewContainer").style.display = "block"; } else { document.getElementById("iconPreviewContainer").style.display = "none"; } document.getElementById("addAppModal").classList.add("active"); }
   function previewAppIcon() { const url = document.getElementById("appIconUrlInput").value.trim(); if (!url) { showToast("⚠️ أدخل رابط الصورة أولاً"); return; } const previewDiv = document.getElementById("iconPreviewContainer"); const img = document.getElementById("iconPreviewImg"); img.src = url; previewDiv.style.display = "block"; img.onerror = () => { showToast("⚠️ الرابط غير صالح أو الصورة لا تظهر"); previewDiv.style.display = "none"; }; }
   function saveApp() { const name = document.getElementById("appNameInput").value.trim(); const desc = document.getElementById("appDescInput").value.trim(); const url = document.getElementById("appUrlInput").value.trim(); const iconUrl = document.getElementById("appIconUrlInput").value.trim(); const editId = document.getElementById("editAppId").value; if (!name || !url) { showToast("⚠️ الاسم والرابط مطلوبان"); return; } if (!url.startsWith("http://") && !url.startsWith("https://")) { showToast("⚠️ الرابط يجب أن يبدأ بـ http:// أو https://"); return; } const appData = { name, desc, url, icon: "fa-rocket", iconUrl: iconUrl || null, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }; if (editId) { db.collection("apps").doc(editId).update(appData).then(() => { SoundEffects.success(); showToast("✅ تم تعديل التطبيق"); closeAddAppModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل التعديل"); }); } else { appData.createdAt = firebase.firestore.FieldValue.serverTimestamp(); appData.createdBy = currentUser || "مشرف"; db.collection("apps").add(appData).then(() => { SoundEffects.success(); showToast("✅ تم إضافة التطبيق"); closeAddAppModal(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الإضافة"); }); } }
-  async function deleteApp(appId) { if (await confirmDialog("هل أنت متأكد من حذف هذا التطبيق؟")) { db.collection("apps").doc(appId).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف التطبيق"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); } }
+  function deleteApp(appId) { if (confirm("هل أنت متأكد من حذف هذا التطبيق؟")) { db.collection("apps").doc(appId).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف التطبيق"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); } }
   function closeAddAppModal() { document.getElementById("addAppModal").classList.remove("active"); document.getElementById("editAppId").value = ""; }
   function openApp(url) { window.open(url, "_blank", "noopener,noreferrer"); }
 
@@ -2008,7 +2005,7 @@ async function updateAdminUI() {
   async function uploadImageForQuestion(input) { let file = input.files[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { showToast("⚠️ حجم الصورة يجب أن أقل من 5 ميجا"); return; } showToast("⏳ جاري رفع الصورة..."); let fd = new FormData(); fd.append("file", file); fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset); fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName); try { let resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, { method: "POST", body: fd }); let data = await resp.json(); if (!data.secure_url) throw new Error("لم يتم استلام الرابط"); let card = input.closest(".question-card"); let old = card.querySelector(".question-image-preview-container"); old && old.remove(); let div = document.createElement("div"); div.className = "question-image-preview-container"; div.innerHTML = `<img src="${data.secure_url}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0; border:2px solid rgba(99,102,241,0.5);"><button class="remove-image-btn" onclick="removeQuestionImage(this)"><i class="fas fa-times"></i> إزالة الصورة</button>`; card.querySelector(".upload-image-btn").insertAdjacentElement("beforebegin", div); showToast("✅ تم رفع الصورة"); } catch (e) { console.error(e); SoundEffects.error(); showToast("❌ فشل رفع الصورة"); } }
   function removeQuestionImage(btn) { btn.closest(".question-image-preview-container").remove(); }
   function saveExam() { let videoId = document.getElementById("quizVideoSelect").value; if (!videoId) { showToast("⚠️ اختر فيديو أولاً"); return; } let cards = document.querySelectorAll("#questionsContainer .question-card"); let questions = []; for (let i = 0; i < cards.length; i++) { let card = cards[i]; let qText = card.querySelector(".question-input").value.trim(); if (!qText) { showToast("⚠️ أكمل جميع الأسئلة"); return; } let imgUrl = null; let preview = card.querySelector(".question-image-preview"); if (preview) imgUrl = preview.src; let opts = card.querySelectorAll(".option-input"); let options = []; let correct = -1; opts.forEach((opt, idx) => { let val = opt.value.trim(); if (val) options.push(val); let radio = card.querySelector(`input[name="correct-${i}"][value="${idx}"]`); if (radio && radio.checked) correct = idx; }); if (options.length < 2) { showToast("⚠️ كل سؤال يحتاج خيارين على الأقل"); return; } if (correct === -1) { showToast("⚠️ اختر الإجابة الصحيحة لكل سؤال"); return; } questions.push({ question: qText, options: options, correctAnswer: correct, imageUrl: imgUrl }); } if (questions.length === 0) { showToast("⚠️ أضف سؤالاً واحداً على الأقل"); return; } let existing = exams.find(e => e.videoId === videoId); if (existing) { db.collection("exams").doc(existing.id).update({ questions: questions, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم تحديث الامتحان"); closeAddExamModal(); if(document.getElementById('courseExamsManagerModal')){const m=document.getElementById('courseExamsManagerModal');const ci=m.dataset.courseId;const ct=m.dataset.courseTitle;if(ci)showCourseExamsManager(ci,ct);}; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تحديث الامتحان"); }); } else { db.collection("exams").add({ videoId: videoId, questions: questions, createdAt: firebase.firestore.FieldValue.serverTimestamp(), createdBy: currentUser || "مشرف" }).then(() => { SoundEffects.success(); showToast("✅ تم حفظ الامتحان"); closeAddExamModal(); if(document.getElementById('courseExamsManagerModal')){const m=document.getElementById('courseExamsManagerModal');const ci=m.dataset.courseId;const ct=m.dataset.courseTitle;if(ci)showCourseExamsManager(ci,ct);}; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل حفظ الامتحان"); }); } }
-  async function deleteExam(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } if (!await confirmDialog("⚠️ هل أنت متأكد؟ حذف الامتحان سيؤدي لحذف جميع نتائج الطلاب!")) return; let exam = exams.find(e => e.videoId === videoId); if (!exam) { showToast("⚠️ لا يوجد امتحان"); return; } let batch = db.batch(); db.collection("exam_results").where("videoId", "==", videoId).get().then(snap => { snap.docs.forEach(d => batch.delete(d.ref)); batch.delete(db.collection("exams").doc(exam.id)); return batch.commit(); }).then(() => { SoundEffects.delete(); showToast("✅ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
+  function deleteExam(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } if (!confirm("⚠️ هل أنت متأكد؟ حذف الامتحان سيؤدي لحذف جميع نتائج الطلاب!")) return; let exam = exams.find(e => e.videoId === videoId); if (!exam) { showToast("⚠️ لا يوجد امتحان"); return; } let batch = db.batch(); db.collection("exam_results").where("videoId", "==", videoId).get().then(snap => { snap.docs.forEach(d => batch.delete(d.ref)); batch.delete(db.collection("exams").doc(exam.id)); return batch.commit(); }).then(() => { SoundEffects.delete(); showToast("✅ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   function openViewResultsModal(videoId) { if (!isAdmin) { showToast("❌ هذه الصلاحية للمشرف فقط"); return; } let sel = document.getElementById("resultsVideoSelect"); sel.innerHTML = '<option value="">-- اختر فيديو --</option>'; videos.forEach(v => { let o = document.createElement("option"); o.value = v.id; o.textContent = v.title; sel.appendChild(o); }); if (videoId) { sel.value = videoId; loadResultsForVideo(); } document.getElementById("viewResultsModal").classList.add("active"); }
   function closeViewResultsModal() { document.getElementById("viewResultsModal").classList.remove("active"); }
   function loadResultsForVideo() { let vid = document.getElementById("resultsVideoSelect").value; let cont = document.getElementById("resultsContainer"); if (!cont) return; if (!vid) { cont.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">اختر فيديو لعرض النتائج</p>'; return; } let filtered = examResults.filter(r => r.videoId === vid); if (filtered.length === 0) { cont.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">لا توجد نتائج بعد</p>'; return; } let exam = exams.find(e => e.videoId === vid); cont.innerHTML = filtered.map(r => { let correctCount = r.answers.filter((ans, idx) => { let q = exam?.questions?.[idx]; return q && ans === q.correctAnswer; }).length; let total = exam?.questions?.length || r.answers.length; let percent = Math.round(correctCount / total * 100); let visible = r.resultVisible || false; return `<div class="result-item"><div class="result-student-name"><i class="fas fa-user-graduate"></i> ${escapeHtml(r.studentName)}<span class="result-phone" style="background:rgba(99,102,241,0.2); padding:0.3rem 0.8rem; border-radius:20px; display:inline-block; font-size:0.9rem; direction:ltr; margin-right:0.5rem; border:1px solid #6366f1;"><i class="fas fa-phone"></i> ${escapeHtml(r.studentPhone)}</span></div><div class="result-details"><span><i class="fas fa-calendar"></i> ${r.submittedAt ? new Date(r.submittedAt.toDate()).toLocaleDateString("ar-EG") : "الآن"}</span><span><i class="fas fa-check-circle" style="color:#10b981;"></i> ${correctCount}/${total}</span><span><i class="fas fa-percentage" style="color:#6366f1;"></i> ${percent}%</span></div><div class="result-answers">${r.answers.map((ans, idx) => { let q = exam?.questions?.[idx]; let correct = q && ans === q.correctAnswer; return `<div class="answer-item ${correct ? "correct" : "incorrect"}"><strong>س${idx + 1}:</strong> ${correct ? "✓ صحيح" : "✗ خطأ"} ${q ? "(الإجابة: " + escapeHtml(q.options[q.correctAnswer]) + ")" : ""}</div>`; }).join("")}</div>${visible ? '<div class="grade-sent"><i class="fas fa-check-circle"></i> تم إرسال النتيجة</div>' : `<button class="send-grade-btn" onclick="sendResultToStudent('${r.id}')"><i class="fas fa-paper-plane"></i> إرسال النتيجة للطالب</button>`}</div>`; }).join(""); }
@@ -2019,7 +2016,7 @@ async function updateAdminUI() {
   function startExam() { let name = document.getElementById("studentNameInput").value.trim(); let phone = document.getElementById("studentPhoneInput").value.trim(); let countryCode = (document.getElementById("examCountryCode") || {value:'+20'}).value; if (!name) { showToast("⚠️ أدخل اسمك الكامل أولاً"); return; } if (!isValidName(name)) { showToast("⚠️ الاسم يجب أن يحتوي على حروف (2-50 حرف) ولا يحتوي على رموز غير صالحة"); return; } if (!phone) { showToast("⚠️ أدخل رقم الهاتف أو البريد الإلكتروني"); return; } let normalizedPhone; if (phone.includes("@")) { if (!validateEmail(phone)) { showToast("⚠️ البريد الإلكتروني غير صحيح — مثال: name@gmail.com"); return; } normalizedPhone = phone.toLowerCase().trim(); } else { normalizedPhone = normalizePhone(phone, countryCode); if (!validatePhone(phone, countryCode)) { let pfx=(COUNTRY_PREFIX_MAP[countryCode]||[]).slice(0,3).join("، "); let cn=getCountryName(countryCode); showToast("⚠️ رقم غير صحيح لـ"+cn+" — يجب أن يبدأ بـ: "+pfx+"..."); return; } } currentExamAnswers = {}; if (examResults.find(r => r.videoId === currentVideoIdForExam && r.studentName === name && r.studentPhone === normalizedPhone && r.submittedAt && Date.now() - r.submittedAt.toDate().getTime() < 86400000)) { showToast("⚠️ لقد قمت بهذا الامتحان مؤخراً"); return; } document.getElementById("studentNameSection").style.display = "none"; let qSec = document.getElementById("quizSection"); qSec.style.display = "block"; qSec.innerHTML = '<div class="quiz-header"><div class="quiz-title"><i class="fas fa-clipboard-list"></i> امتحان الفيديو</div><div class="quiz-timer" id="quizTimer"><i class="fas fa-clock"></i> <span id="timerDisplay">10:00</span></div></div>'; currentExam.questions.forEach((q, idx) => { let div = document.createElement("div"); div.className = "question-card"; div.innerHTML = `<div class="question-number"><i class="fas fa-question-circle"></i> السؤال ${idx + 1}</div>${q.imageUrl ? `<img src="${q.imageUrl}" class="question-image-preview" style="max-width:100%; max-height:200px; border-radius:12px; margin:1rem 0;">` : ""}<div class="question-text">${escapeHtml(q.question)}</div><div class="options-list">${q.options.map((opt, optIdx) => `<label class="option-label" onclick="selectExamAnswer(${idx}, ${optIdx})"><input type="radio" name="q${idx}" value="${optIdx}"><span class="option-text">${escapeHtml(opt)}</span></label>`).join("")}</div>`; qSec.appendChild(div); }); let btn = document.createElement("button"); btn.className = "quiz-submit-btn"; btn.innerHTML = '<i class="fas fa-check-circle"></i> تسليم الامتحان'; btn.onclick = submitExam; qSec.appendChild(btn); examTimeRemaining = 600; updateExamTimer(); if (examTimer) clearInterval(examTimer); examTimer = setInterval(() => { examTimeRemaining--; updateExamTimer(); if (examTimeRemaining <= 0) { clearInterval(examTimer); submitExam(); } }, 1000); }
   function updateExamTimer() { let mins = Math.floor(examTimeRemaining / 60); let secs = examTimeRemaining % 60; let d = document.getElementById("timerDisplay"); d && (d.textContent = mins + ":" + secs.toString().padStart(2, "0")); let timer = document.getElementById("quizTimer"); timer && (examTimeRemaining < 60 ? timer.classList.add("warning") : timer.classList.remove("warning")); }
   function selectExamAnswer(q, a) { currentExamAnswers[q] = a; }
-  async function submitExam() {
+  function submitExam() {
   if (examTimer) {
     clearInterval(examTimer);
     examTimer = null;
@@ -2030,7 +2027,7 @@ async function updateAdminUI() {
   let normalizedPhone = phone.includes("@") ? phone.toLowerCase() : normalizePhone(phone, countryCode);
   let total = currentExam.questions.length;
   let answered = Object.keys(currentExamAnswers).length;
-  if (answered < total && !await confirmDialog(`لم تجب على ${total - answered} سؤال. هل تريد التسليم؟`)) {
+  if (answered < total && !confirm(`لم تجب على ${total - answered} سؤال. هل تريد التسليم؟`)) {
     examTimeRemaining = Math.max(examTimeRemaining, 1);
     examTimer = setInterval(() => {
       examTimeRemaining--;
@@ -2079,7 +2076,7 @@ async function updateAdminUI() {
   function closeTeachAICircleModal() { document.getElementById("teachAICircleModal").classList.remove("active"); }
   function renderAIKnowledgeList() { let list = document.getElementById("aiKnowledgeList"); if (!list) return; if (aiKnowledgeBase.length === 0) list.innerHTML = '<p style="text-align:center; color:#888; padding:2rem;">لا توجد معلومات بعد</p>'; else list.innerHTML = aiKnowledgeBase.map(k => `<div class="ai-knowledge-item"><div class="ai-knowledge-content"><div class="ai-knowledge-question"><i class="fas fa-question-circle"></i> ${escapeHtml(k.question)}</div><div class="ai-knowledge-answer">${escapeHtml(k.answer)}</div></div><button class="ai-knowledge-delete" onclick="deleteAIKnowledge('${k.id}')" title="حذف"><i class="fas fa-trash"></i></button></div>`).join(""); }
   function saveAIKnowledge() { let q = document.getElementById("aiQuestionInput").value.trim(); let a = document.getElementById("aiAnswerInput").value.trim(); if (!q || !a) { showToast("⚠️ أدخل السؤال والإجابة"); return; } db.collection("ai_knowledge").add({ question: q, answer: a, createdBy: currentUser || "مشرف", createdAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { SoundEffects.success(); showToast("✅ تم تعليم الذكاء الاصطناعي"); document.getElementById("aiQuestionInput").value = ""; document.getElementById("aiAnswerInput").value = ""; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحفظ"); }); }
-  async function deleteAIKnowledge(id) { if (await confirmDialog("هل أنت متأكد؟")) db.collection("ai_knowledge").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
+  function deleteAIKnowledge(id) { if (confirm("هل أنت متأكد؟")) db.collection("ai_knowledge").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم الحذف"); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل الحذف"); }); }
   function openAIChat() {
     var modal = document.getElementById("aiChatModal");
     modal.classList.add("active");
@@ -2186,7 +2183,7 @@ async function updateAdminUI() {
   document.addEventListener("fullscreenchange",       onFullscreenChange);
   document.addEventListener("webkitfullscreenchange", onFullscreenChange);
   document.addEventListener("mozfullscreenchange",    onFullscreenChange);
-  async function clearAIChat() { if (!await confirmDialog("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
+  function clearAIChat() { if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
   // ========== Image Generation via Vercel Proxy ==========
   async function generateAndDisplayImage(prompt) {
     const cont = document.getElementById("aiChatMessages");
@@ -2591,7 +2588,7 @@ async function updateAdminUI() {
   // loadUserDashboard() — يتعمل بعد تسجيل دخول ناجح فقط
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone && !data.senderPhone.includes('@')) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.replyTo && typeof window.renderQuotedReply === "function") html += window.renderQuotedReply(data.replyTo); if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
-  async function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } var _elPreview = document.getElementById("msg-" + id); var _txtPreview = (_elPreview && _elPreview.querySelector(".message-content") || {}).textContent || ""; var _ok = window.showMsgConfirm ? await window.showMsgConfirm({ title: "حذف الرسالة", question: isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟", preview: _txtPreview, okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟"); if (!_ok) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
+  function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
   function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
   function sendMessage() {
@@ -2776,7 +2773,7 @@ async function updateAdminUI() {
     // YouTube
     const videoId = extractYouTubeId(rawUrl); if (!videoId) { showToast("⚠️ الرابط غير صالح — يجب أن يكون YouTube أو Google Drive"); return; } const title = prompt("أدخل عنوان الفيديو:", "فيديو من يوتيوب"); if (!title) return; const description = prompt("أدخل وصف الفيديو (اختياري):", ""); const videoData = { title: sanitizeInput(title), description: sanitizeInput(description) || "", type: "youtube", videoId: videoId, thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`, createdAt: firebase.firestore.FieldValue.serverTimestamp(), private: false }; try { await db.collection("videos").add(videoData); showToast("✅ تم إضافة فيديو يوتيوب"); urlInput.value = ""; } catch(e) { console.error(e); SoundEffects.error(); showToast("❌ فشل إضافة الفيديو"); } }
 
-  async function localLogout() { if (await confirmDialog("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) { if (currentUser && currentUserPhone) { endUserSession(currentUser, currentUserPhone); } localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; updateAdminUI(); location.reload(); } }
+  function localLogout() { if (confirm("هل تريد تسجيل الخروج من حسابك المحلي؟ سيتم مسح اسمك ورقم هاتفك من هذه المتصفح.")) { if (currentUser && currentUserPhone) { endUserSession(currentUser, currentUserPhone); } localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; updateAdminUI(); location.reload(); } }
 
   // EmailJS settings
   async function loadEmailSettingsFromFirestore() {
@@ -2944,10 +2941,7 @@ async function updateAdminUI() {
     } catch(e) { console.error(e); showToast("❌ فشل إرسال البريد، تأكد من إعدادات EmailJS"); }
   }
   async function deleteFeedback(id) {
-    const ok = window.showMsgConfirm
-      ? await window.showMsgConfirm({ title: "حذف التقييم", question: "هل أنت متأكد من حذف هذا التقييم؟", icon: "fa-trash", okLabel: "حذف", cancelLabel: "إلغاء" })
-      : confirm("هل أنت متأكد من حذف هذا التقييم؟");
-    if (ok) {
+    if(confirm("هل أنت متأكد من حذف هذا التقييم؟")) {
       await db.collection("feedbacks").doc(id).delete();
       showToast("🗑️ تم الحذف");
     }
@@ -3161,7 +3155,7 @@ window.openManageCoursesAdmin = async function() {
           <div style="font-weight:700;font-size:.95rem;color:#e2e8f0">${escapeHtml(c.title||'بدون اسم')}</div>
           <div style="font-size:.78rem;color:#94a3b8;margin-top:.2rem"><i class="fas fa-photo-film"></i> ${nV} فيديو &nbsp;·&nbsp; <span style="color:${price>0?'#f59e0b':'#10b981'}">${price>0?price+' جنيه':'مجاني'}</span></div>
         </div>
-        <button onclick="(async()=>{if(await confirmDialog('حذف كورس ${safeTitle}؟')){db.collection('courses').doc('${doc.id}').delete().then(()=>{showToast('🗑️ تم الحذف');this.closest('div').parentElement.remove()}).catch(()=>showToast('❌ فشل'))}})()" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.5);color:#f87171;border-radius:8px;padding:.4rem .75rem;cursor:pointer;font-family:Cairo;font-size:.82rem;white-space:nowrap"><i class="fas fa-trash"></i> حذف</button>
+        <button onclick="if(confirm('حذف كورس ${safeTitle}؟')){db.collection('courses').doc('${doc.id}').delete().then(()=>{showToast('🗑️ تم الحذف');this.closest('div').parentElement.remove()}).catch(()=>showToast('❌ فشل'))}" style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.5);color:#f87171;border-radius:8px;padding:.4rem .75rem;cursor:pointer;font-family:Cairo;font-size:.82rem;white-space:nowrap"><i class="fas fa-trash"></i> حذف</button>
       </div>`;
     });
     const modal = document.createElement('div');
@@ -3174,8 +3168,8 @@ window.openManageCoursesAdmin = async function() {
       </div>
       <div class="modal-body">
         <div style="margin-bottom:1rem;display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end">
-          <button onclick="(async()=>{if(await confirmDialog('حذف كل الكورسات المدفوعة؟')){deleteAllPaidCourses()}})()" class="btn btn-warning" style="font-size:.82rem"><i class="fas fa-coins"></i> مسح المدفوعة</button>
-          <button onclick="(async()=>{if(await confirmDialog('حذف كل الكورسات؟')){deleteAllCourses()}})()" class="btn btn-danger" style="font-size:.82rem"><i class="fas fa-trash"></i> مسح الكل</button>
+          <button onclick="if(confirm('حذف كل الكورسات المدفوعة؟')){deleteAllPaidCourses()}" class="btn btn-warning" style="font-size:.82rem"><i class="fas fa-coins"></i> مسح المدفوعة</button>
+          <button onclick="if(confirm('حذف كل الكورسات؟')){deleteAllCourses()}" class="btn btn-danger" style="font-size:.82rem"><i class="fas fa-trash"></i> مسح الكل</button>
         </div>
         <div>${rows}</div>
       </div>
@@ -3368,7 +3362,7 @@ function closeCourseExamsManager() {
 }
 
 async function deleteCourseVideoExam(examId, videoId, courseId, courseTitle) {
-  if (!await confirmDialog('هل تريد حذف امتحان هذا الفيديو؟')) return;
+  if (!confirm('هل تريد حذف امتحان هذا الفيديو؟')) return;
   try {
     await db.collection('exams').doc(examId).delete();
     showToast('🗑️ تم حذف الامتحان');
@@ -3476,7 +3470,7 @@ async function editCourse(courseId) {
 
 async function deleteCourse(courseId, courseTitle) {
   if (!isAdmin) { showToast("❌ غير مصرح"); return; }
-  const ok = await confirmDialog(`هل تريد حذف الكورس "${courseTitle || ''}" نهائياً؟\n\nسيتم حذف جميع اشتراكات الطلاب في هذا الكورس أيضاً.`);
+  const ok = confirm(`هل تريد حذف الكورس "${courseTitle || ''}" نهائياً؟\n\nسيتم حذف جميع اشتراكات الطلاب في هذا الكورس أيضاً.`);
   if (!ok) return;
   try {
     const enrollSnap = await db.collection("course_enrollments").where("courseId", "==", courseId).get();
@@ -3492,7 +3486,7 @@ async function deleteCourse(courseId, courseTitle) {
 
 async function deleteAllPaidCourses() {
   if (!isAdmin) { showToast("❌ غير مصرح"); return; }
-  const ok = await confirmDialog("⚠️ هل تريد حذف جميع الكورسات المدفوعة فقط؟\n\nالكورسات المجانية لن تتأثر.");
+  const ok = confirm("⚠️ هل تريد حذف جميع الكورسات المدفوعة فقط؟\n\nالكورسات المجانية لن تتأثر.");
   if (!ok) return;
   try {
     const coursesSnap = await db.collection("courses").get();
@@ -3520,7 +3514,7 @@ async function deleteAllPaidCourses() {
 
 async function deleteAllCourses() {
   if (!isAdmin) { showToast("❌ غير مصرح"); return; }
-  const ok1 = await confirmDialog("⚠️ هل أنت متأكد أنك تريد حذف جميع الكورسات؟\n\nهذا الإجراء لا يمكن التراجع عنه.");
+  const ok1 = confirm("⚠️ هل أنت متأكد أنك تريد حذف جميع الكورسات؟\n\nهذا الإجراء لا يمكن التراجع عنه.");
   if (!ok1) return;
   const confirmText = prompt('للتأكيد اكتب: حذف الكل');
   if (confirmText !== 'حذف الكل') { showToast("تم الإلغاء"); return; }
@@ -3568,7 +3562,7 @@ async function enrollInCourseAndOpen(courseId) {
       const w = window.open(link, "_blank", "noopener,noreferrer");
       if (!w) showToast("اسمح بالنوافذ المنبثقة لإتمام الدفع");
     } catch(e) { showToast("تعذر فتح صفحة الدفع"); return; }
-    const ok = await confirmDialog("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟");
+    const ok = confirm("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟");
     if (!ok) { showToast("يمكنك الضغط على اشترك مرة أخرى بعد إتمام الدفع"); return; }
     await db.collection("course_enrollments").add({
       userId: currentUserId, courseId,
@@ -3609,7 +3603,7 @@ async function enrollInCourseFromList(courseId) {
       const w = window.open(link, "_blank", "noopener,noreferrer");
       if (!w) showToast("اسمح بالنوافذ المنبثقة لإتمام الدفع");
     } catch (e) { console.error(e); showToast("تعذر فتح صفحة الدفع"); return; }
-    const ok = await confirmDialog("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟\n\nسيتم تفعيل اشتراكك في المنصة. يُفضّل أن يتحقق المشرف من استلام المبلغ عند مزوّد الدفع.");
+    const ok = confirm("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟\n\nسيتم تفعيل اشتراكك في المنصة. يُفضّل أن يتحقق المشرف من استلام المبلغ عند مزوّد الدفع.");
     if (!ok) { showToast("يمكنك الضغط على اشتراك مرة أخرى بعد إتمام الدفع"); return; }
     await db.collection("course_enrollments").add({
       userId: currentUserId,
@@ -3654,7 +3648,7 @@ async function enrollInCourse(courseId) {
       const w = window.open(link, "_blank", "noopener,noreferrer");
       if (!w) showToast("اسمح بالنوافذ المنبثقة لإتمام الدفع");
     } catch (e) { console.error(e); showToast("تعذر فتح صفحة الدفع"); return; }
-    const ok = await confirmDialog("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟\n\nسيتم تفعيل اشتراكك في المنصة. يُفضّل أن يتحقق المشرف من استلام المبلغ عند مزوّد الدفع.");
+    const ok = confirm("هل أكملت الدفع في الصفحة الآمنة التي فُتحت؟\n\nسيتم تفعيل اشتراكك في المنصة. يُفضّل أن يتحقق المشرف من استلام المبلغ عند مزوّد الدفع.");
     if (!ok) { showToast("يمكنك الضغط على اشتراك مرة أخرى بعد إتمام الدفع"); return; }
     await db.collection("course_enrollments").add({
       userId: currentUserId,
@@ -4383,7 +4377,7 @@ async function deleteStudentRecord(uidEnc, nameEnc, phoneEnc) {
   const name = decodeURIComponent(nameEnc || '');
   const phone = decodeURIComponent(phoneEnc || '');
   if (!uid && !name && !phone) { showToast('⚠️ بيانات الطالب غير متاحة'); return; }
-  const ok = await confirmDialog('هل تريد حذف بيانات الطالب "' + (name || 'بدون اسم') + '" نهائياً؟\n\nسيتم مسح:\n• ملف الطالب\n• كل سجل المشاهدة\n• كل نتائج الامتحانات\n\nلا يمكن التراجع عن هذا الإجراء.');
+  const ok = confirm('هل تريد حذف بيانات الطالب "' + (name || 'بدون اسم') + '" نهائياً؟\n\nسيتم مسح:\n• ملف الطالب\n• كل سجل المشاهدة\n• كل نتائج الامتحانات\n\nلا يمكن التراجع عن هذا الإجراء.');
   if (!ok) return;
   const row = document.querySelector('#allStudentsList .progress-student-row[data-uid="' + uid + '"]');
   if (row) row.style.opacity = '0.4';
@@ -5886,7 +5880,7 @@ window.pacSendMessage = async function(){
     if (!pacIsAdmin()) { if (window.showToast) showToast('❌ صلاحيات المشرف فقط'); return; }
     const dbi = pacGetDb();
     if (!dbi) { if (window.showToast) showToast('❌ قاعدة البيانات غير متاحة'); return; }
-    if (!await confirmDialog('هل أنت متأكد من حذف جميع المحادثات الخاصة نهائياً؟\n\nسيتم مسح كل المحادثات والرسائل من جميع المستخدمين، ولا يمكن التراجع عن هذا الإجراء.')) return;
+    if (!confirm('هل أنت متأكد من حذف جميع المحادثات الخاصة نهائياً؟\n\nسيتم مسح كل المحادثات والرسائل من جميع المستخدمين، ولا يمكن التراجع عن هذا الإجراء.')) return;
     const btn = document.getElementById('pacClearAllBtn');
     const oldHtml = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المسح...'; }
@@ -5928,10 +5922,7 @@ window.pacSendMessage = async function(){
     const threadId = pacCurrentThreadUserId;
     if (!threadId) { if (window.showToast) showToast('❌ لم يتم اختيار محادثة'); return; }
     if (!pacIsAdminView && !isMine) { if (window.showToast) showToast('❌ لا يمكنك حذف رسائل الآخرين'); return; }
-    var _pacEl = document.querySelector('.pac-msg[data-msg-id="'+msgId+'"] .pac-msg-text');
-    var _pacTxt = _pacEl ? _pacEl.textContent : '';
-    var _pacOk = window.showMsgConfirm ? await window.showMsgConfirm({ title: 'حذف الرسالة', question: 'هل تريد حذف هذه الرسالة نهائياً؟', preview: _pacTxt, okLabel: 'حذف', cancelLabel: 'إلغاء' }) : confirm('هل تريد حذف هذه الرسالة نهائياً؟');
-    if (!_pacOk) return;
+    if (!confirm('هل تريد حذف هذه الرسالة نهائياً؟')) return;
     try {
       await dbi.collection(PAC_COL).doc(threadId).collection('messages').doc(msgId).delete();
       if (window.SoundEffects && SoundEffects.delete) try{SoundEffects.delete();}catch(e){}
@@ -6168,7 +6159,7 @@ async function loadGcMembers() {
 }
 
 async function removeFromGroupChat(uid, name) {
-  if (!await confirmDialog('إزالة ' + (name||uid) + ' من المحادثة؟')) return;
+  if (!confirm('إزالة ' + (name||uid) + ' من المحادثة؟')) return;
   const db2 = (typeof db !== 'undefined') ? db : null;
   if (!db2) return;
   try {
@@ -6208,8 +6199,7 @@ async function addGcAdmin() {
 
 async function removeGcAdmin(uid) {
   if (!uid) return;
-  const _ok = window.showMsgConfirm ? await window.showMsgConfirm({ title: "إزالة مشرف", question: "حذف هذا المشرف من إدارة المحادثة؟", preview: uid, icon: "fa-user-slash", okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm('حذف هذا المشرف من إدارة المحادثة؟');
-  if (!_ok) return;
+  if (!confirm('حذف هذا المشرف من إدارة المحادثة؟')) return;
   const db2 = (typeof db !== 'undefined') ? db : null;
   if (!db2) return;
   try {
@@ -7613,7 +7603,7 @@ window.updateActiveToolLabel = function(label) {
   // ---- Kick participant (admin only) ----
   window.kickVoiceParticipant = async function(uid, name) {
     if (!isAdmin) { showToast('❌ للمشرف فقط'); return; }
-    if (!await confirmDialog(`هل تريد إخراج "${name}" من المكالمة؟`)) return;
+    if (!confirm(`هل تريد إخراج "${name}" من المكالمة؟`)) return;
     try {
       await voiceRoomRef().collection('participants').doc(uid).delete();
       await voiceRoomRef().collection('kicked').doc(uid).set({ kickedAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -7693,8 +7683,8 @@ window.updateActiveToolLabel = function(label) {
 // ============================
 (function() {
   // Fix clearAIChat
-  window.clearAIChat = async function() {
-    if (!await confirmDialog('هل تريد مسح المحادثة مع الذكاء الاصطناعي؟')) return;
+  window.clearAIChat = function() {
+    if (!confirm('هل تريد مسح المحادثة مع الذكاء الاصطناعي؟')) return;
     const cont = document.getElementById('aiChatMessages');
     if (cont) cont.innerHTML = '';
     if (window.speechSynthesis) window.speechSynthesis.cancel();
@@ -7836,7 +7826,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   };
 
   window.clearZoomLink = async function() {
-    if (!await confirmDialog('هل تريد إزالة رابط Zoom؟ سيختفي الزرار من الدردشة.')) return;
+    if (!confirm('هل تريد إزالة رابط Zoom؟ سيختفي الزرار من الدردشة.')) return;
     try {
       await db.collection(ZOOM_COL).doc(ZOOM_DOC).set({ [ZOOM_FIELD]: '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
       window._zoomLink = '';
@@ -8098,7 +8088,7 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   // ---- Delete PDF ----
   window.deletePdfFile = async function(id, title) {
     if (!isAdmin) { showToast('❌ المشرف فقط'); return; }
-    if (!await confirmDialog('حذف الملف: ' + title + '؟')) return;
+    if (!confirm('حذف الملف: ' + title + '؟')) return;
     try {
       await db.collection(PDF_COL).doc(id).delete();
       showToast('🗑️ تم الحذف');
@@ -8257,7 +8247,7 @@ function showCertificateModal(courseTitle, certUrl) {
   };
 
   window.clearCertUrl = async function(courseId) {
-    if (!await confirmDialog('هل تريد إزالة الشهادة من هذا الكورس؟')) return;
+    if (!confirm('هل تريد إزالة الشهادة من هذا الكورس؟')) return;
     try {
       await db.collection('courses').doc(courseId).update({ certificateUrl: '' });
       showToast('🗑️ تم إزالة الشهادة');
@@ -11498,7 +11488,7 @@ async function loadMyFriends() {
 async function removeFriend(encodedUid, encodedName, btnEl) {
   const friendUid = decodeURIComponent(encodedUid);
   const friendName = decodeURIComponent(encodedName);
-  if (!await confirmDialog('هتحذف ' + friendName + ' من قائمة أصدقائك؟')) return;
+  if (!confirm('هتحذف ' + friendName + ' من قائمة أصدقائك؟')) return;
   if (btnEl) btnEl.disabled = true;
   try {
     const snap = await db.collection('friendships').where('users', 'array-contains', currentUserId).get();
@@ -11755,14 +11745,10 @@ function closePrivateFriendChat() {
 // حذف رسالة خاصة (بتاعة المستخدم نفسه بس)
 async function deletePrivateFriendMsg(msgId, btnEl) {
   if (!msgId || !currentUserId) return;
-  let _pfcDoc;
-  try { _pfcDoc = await db.collection('private_messages').doc(msgId).get(); } catch(e) { _pfcDoc = null; }
-  const _pfcPreview = (_pfcDoc && _pfcDoc.exists && _pfcDoc.data().text) || '';
-  const _pfcOk = window.showMsgConfirm ? await window.showMsgConfirm({ title: 'حذف الرسالة', question: 'تأكيد حذف الرسالة دي؟', preview: _pfcPreview, okLabel: 'حذف', cancelLabel: 'إلغاء' }) : confirm('تأكيد حذف الرسالة دي؟');
-  if (!_pfcOk) return;
+  if (!confirm('تأكيد حذف الرسالة دي؟')) return;
   if (btnEl) btnEl.disabled = true;
   try {
-    const doc = _pfcDoc && _pfcDoc.exists ? _pfcDoc : await db.collection('private_messages').doc(msgId).get();
+    const doc = await db.collection('private_messages').doc(msgId).get();
     if (!doc.exists) return;
     if (doc.data().from !== currentUserId) {
       showToast('❌ مينفعش تمسح رسالة مش بتاعتك');
@@ -12200,61 +12186,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 // 🗑️💬 حذف رسالتي في شات الذكاء الاصطناعي + تحويل رسالة للمشرف
 // ============================================================
 (function(){
-  // ── نافذة تأكيد مخصصة (بديل احترافي لـ confirm() الأصلية اللي بتظهر اسم الدومين) ──
-  window.confirmDialog = async function(question, opts){
-    opts = opts || {};
-    if (window.showMsgConfirm) {
-      return window.showMsgConfirm(Object.assign({ question: question }, opts));
-    }
-    return confirm(question);
-  };
-  window.showMsgConfirm = function(opts){
-    opts = opts || {};
-    return new Promise(function(resolve){
-      var overlay = document.createElement('div');
-      overlay.className = 'msg-confirm-overlay';
-      var previewHtml = opts.preview
-        ? '<div class="msg-confirm-preview">' + escapeHtml(opts.preview.slice(0, 300)) + '</div>'
-        : '';
-      overlay.innerHTML =
-        '<div class="msg-confirm-box">' +
-          '<div class="msg-confirm-header">' +
-            '<div class="msg-confirm-icon"><i class="fas ' + escapeHtml(opts.icon || 'fa-trash') + '"></i></div>' +
-            '<div class="msg-confirm-title">' + escapeHtml(opts.title || 'تأكيد الحذف') + '</div>' +
-          '</div>' +
-          '<div class="msg-confirm-body">' +
-            '<div class="msg-confirm-question">' + escapeHtml(opts.question || 'هل أنت متأكد؟') + '</div>' +
-            previewHtml +
-          '</div>' +
-          '<div class="msg-confirm-actions">' +
-            '<button class="msg-confirm-btn msg-confirm-cancel" data-act="cancel">' + escapeHtml(opts.cancelLabel || 'إلغاء') + '</button>' +
-            '<button class="msg-confirm-btn msg-confirm-ok" data-act="ok">' + escapeHtml(opts.okLabel || 'تأكيد') + '</button>' +
-          '</div>' +
-        '</div>';
-      function cleanup(result){ overlay.remove(); resolve(result); }
-      overlay.addEventListener('click', function(e){
-        if (e.target === overlay) cleanup(false);
-        var act = e.target.closest && e.target.closest('[data-act]');
-        if (act) cleanup(act.dataset.act === 'ok');
-      });
-      document.body.appendChild(overlay);
-    });
-  };
-
   // ── حذف رسالة (بتاعتي أنا بس) من شات الـ AI محلياً ──
-  window.deleteMyAIMessage = async function(msgId){
+  window.deleteMyAIMessage = function(msgId){
     if (!msgId) return;
     var el = document.getElementById('msg-' + msgId);
     if (!el || !el.classList.contains('sent')) return; // رسائل المستخدم بس (sent) يقدر يقفلها
+    if (!confirm('إخفاء الرسالة دي من المحادثة؟')) return;
     var txt = (el.querySelector('.message-content') || {}).textContent || '';
-    var ok = await window.showMsgConfirm({
-      title: 'إخفاء الرسالة',
-      question: 'هتتقفل الرسالة دي من المحادثة عندك في الجهاز ده:',
-      preview: txt,
-      okLabel: 'إخفاء',
-      cancelLabel: 'إلغاء'
-    });
-    if (!ok) return;
     el.remove();
     // شيلها من الهيستوري كمان لو موجودة عشان الذكاء الاصطناعي ما يفتكرش الرسالة القديمة
     try {
