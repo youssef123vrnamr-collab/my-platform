@@ -401,7 +401,7 @@ button, [onclick] {
     .message-delete-btn:hover { transform: scale(1.2); opacity: 1; }
     .message:hover .message-delete-btn { display: flex; }
     .message-delete-btn.admin { background: #dc2626; width: 26px; height: 26px; font-size: .8rem; top: -10px; left: -10px; }
-    .chat-input-area { padding: 1.5rem; background: rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.1); }
+    .chat-input-area { padding: 1rem 1.5rem; background: rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.1); }
     .chat-input-wrapper { background: rgba(255,255,255,.05); border-radius: 30px; padding: .5rem; border: 1px solid rgba(255,255,255,.1); display: flex; align-items: center; gap: .5rem; }
     .chat-input { background: 0 0; border: none; color: #fff; font-family: 'Cairo', sans-serif; font-size: .95rem; resize: none; padding: .5rem; outline: 0; flex: 1; }
     .chat-tool-btn { width: 40px; height: 40px; border: none; background: rgba(255,255,255,.1); color: #aaa; border-radius: 50%; cursor: pointer; transition: all .3s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -562,7 +562,247 @@ button, [onclick] {
     .reply-status { font-size: 0.75rem; color: #10b981; margin-top: 0.5rem; }
     .debug-btn { display: none !important; }
 
-    /* ===== تحسينات التحقق من المدخلات في الوقت الفعلي ===== */
+    /* ===== AI Chat Multi-File Upload Styles ===== */
+.ai-files-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0,0,0,.2);
+  border-top: 1px solid rgba(255,255,255,.06);
+  max-height: 120px;
+  overflow-y: auto;
+  animation: slideDown .25s ease;
+}
+.ai-files-preview::-webkit-scrollbar { height: 4px; }
+.ai-files-preview::-webkit-scrollbar-thumb { background: rgba(99,102,241,.4); border-radius: 2px; }
+.ai-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  background: rgba(99,102,241,.15);
+  border: 1px solid rgba(99,102,241,.35);
+  border-radius: 10px;
+  font-size: .78rem;
+  color: #e0e7ff;
+  animation: fadeInUp .2s ease both;
+  position: relative;
+  max-width: 200px;
+}
+.ai-file-chip .ai-file-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: rgba(0,0,0,.25);
+}
+.ai-file-chip .ai-file-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.ai-file-chip .ai-file-icon i {
+  font-size: .8rem;
+  color: #6366f1;
+}
+.ai-file-chip .ai-file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.ai-file-chip .ai-file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: .72rem;
+  color: #c4b5fd;
+  max-width: 100px;
+}
+.ai-file-chip .ai-file-size {
+  font-size: .65rem;
+  color: #888;
+}
+.ai-file-chip .ai-file-remove {
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: rgba(239,68,68,.25);
+  color: #ef4444;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: .6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.ai-file-chip .ai-file-remove:hover {
+  background: rgba(239,68,68,.5);
+  transform: scale(1.15);
+}
+.ai-file-chip-limit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(245,158,11,.12);
+  border: 1px dashed rgba(245,158,11,.35);
+  border-radius: 10px;
+  font-size: .72rem;
+  color: #fbbf24;
+}
+
+/* Drag & Drop Overlay */
+.ai-drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(6,182,212,.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn .2s ease;
+  pointer-events: none;
+}
+.ai-drop-overlay.drag-over {
+  background: rgba(6,182,212,.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px dashed rgba(6,182,212,.5);
+}
+.ai-drop-content {
+  text-align: center;
+  color: #06b6d4;
+  pointer-events: none;
+}
+.ai-drop-content i {
+  font-size: 3rem;
+  margin-bottom: .75rem;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+.ai-drop-content p {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 .3rem;
+}
+.ai-drop-content span {
+  font-size: .8rem;
+  color: #88b4d4;
+  opacity: .8;
+}
+
+/* Attachments inside AI chat messages */
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.message-attachment {
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 180px;
+  max-height: 180px;
+  border: 1px solid rgba(255,255,255,.1);
+  transition: transform .2s;
+  cursor: pointer;
+  position: relative;
+}
+.message-attachment:hover {
+  transform: scale(1.03);
+}
+.message-attachment img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.message-attachment .file-attach {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,.3);
+  border-radius: 10px;
+  font-size: .78rem;
+  color: #c4b5fd;
+  text-decoration: none;
+  border: 1px solid rgba(99,102,241,.2);
+  transition: all .2s;
+}
+.message-attachment .file-attach:hover {
+  background: rgba(99,102,241,.2);
+  border-color: rgba(99,102,241,.4);
+}
+.message-attachment .file-attach i {
+  font-size: 1.1rem;
+  color: #6366f1;
+}
+
+/* AI Chat Modern Polish */
+#aiChatModal .chat-header {
+  background: linear-gradient(135deg, rgba(6,182,212,.12), rgba(14,165,233,.08)) !important;
+  border-bottom: 1px solid rgba(6,182,212,.2) !important;
+}
+#aiChatModal .chat-avatar {
+  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+  box-shadow: 0 4px 14px -4px rgba(6,182,212,.5);
+}
+#aiChatModal .message.sent {
+  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+}
+#aiChatModal .chat-send-btn {
+  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+  box-shadow: 0 4px 14px -4px rgba(6,182,212,.5);
+}
+
+/* Typing indicator */
+.ai-typing-indicator {
+  display: none;
+  align-self: flex-start;
+  padding: 12px 18px;
+  background: rgba(255,255,255,.08);
+  border-radius: 18px;
+  border-bottom-left-radius: 5px;
+  margin-bottom: 4px;
+}
+.ai-typing-indicator.active {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ai-typing-dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255,255,255,.45);
+  border-radius: 50%;
+  animation: typingBounce 1.4s ease-in-out infinite both;
+}
+.ai-typing-dot:nth-child(1) { animation-delay: 0s; }
+.ai-typing-dot:nth-child(2) { animation-delay: .2s; }
+.ai-typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); background: rgba(6,182,212,.7); }
+}
+
+/* ===== تحسينات التحقق من المدخلات في الوقت الفعلي ===== */
     .field-hint {
       font-size: 0.78rem; margin-top: 0.3rem; min-height: 1rem;
       display: flex; align-items: center; gap: 0.35rem;
