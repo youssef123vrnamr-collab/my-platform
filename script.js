@@ -1,4 +1,21 @@
 
+  /* ═══════════════════════════════════════
+     AI Multi-File Enhancement:
+     window._aiSelectedFile is DEPRECATED.
+     Use window._aiAttachedFiles (array) instead.
+     The old code paths are neutralized below.
+     ═══════════════════════════════════════ */
+  // Neutralize stale _aiSelectedFile — always returns null so old code never uses it
+  (function() {
+    var _v = null;
+    Object.defineProperty(window, '_aiSelectedFile', {
+      get: function() { return null; },
+      set: function(v) { /* silently discarded — use _aiAttachedFiles instead */ },
+      configurable: true,
+      enumerable: true
+    });
+  })();
+
   // ========== Firebase Config ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
