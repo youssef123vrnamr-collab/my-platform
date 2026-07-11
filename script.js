@@ -2588,7 +2588,7 @@ async function updateAdminUI() {
   // loadUserDashboard() — يتعمل بعد تسجيل دخول ناجح فقط
   function loadMessages() { let cont = document.getElementById("chatMessages"); if (!cont) return; cont.innerHTML = '<div style="text-align:center;color:#666;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الرسائل...</div>'; if (chatUnsubscribe) chatUnsubscribe(); chatUnsubscribe = db.collection("messages").orderBy("timestamp", "asc").limitToLast(100).onSnapshot(snap => { cont.innerHTML = ""; snap.forEach(d => displayMessage(d.id, d.data())); scrollToBottom(); }, err => { console.error("Error loading messages:", err); cont.innerHTML = '<div style="text-align:center;color:#ef4444;padding:2rem;">⚠️ خطأ في تحميل الرسائل: ' + err.message + '</div>'; }); }
   function displayMessage(id, data) { if (data.type === "system") return; let cont = document.getElementById("chatMessages"); if (!cont) return; let isMe = data.sender === currentUser; let msgDiv = document.createElement("div"); msgDiv.className = "message " + (isMe ? "sent" : "received"); msgDiv.id = "msg-" + id; let html = ""; if (!isMe) { let senderDisplay = escapeHtml(data.sender); if (data.senderPhone && !data.senderPhone.includes('@')) { senderDisplay += ` <span style="font-size: 0.7rem; color: #aaa; direction: ltr; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 12px;">${escapeHtml(data.senderPhone)}</span>`; } html += '<div class="message-sender">' + senderDisplay + "</div>"; } if (isAdmin || data.sender === currentUser) { let title = isAdmin ? "حذف (مشرف)" : "حذف رسالتك"; html += '<button class="message-delete-btn ' + (isAdmin ? "admin" : "") + '" onclick="deleteMessage(\'' + id + "', '" + escapeHtml(data.sender) + '\')" title="' + title + '"><i class="fas fa-times"></i></button>'; } if (data.replyTo && typeof window.renderQuotedReply === "function") html += window.renderQuotedReply(data.replyTo); if (data.text) html += '<div class="message-content">' + escapeHtml(data.text) + "</div>"; if (data.imageUrl) html += '<img src="' + data.imageUrl + '" class="message-image" onclick="viewImage(this.src)">'; if (data.audioUrl) html += '<div class="voice-message" id="voice-' + id + '"><button class="voice-play-btn" onclick="playVoiceMessage(this, \'' + data.audioUrl + "', '" + id + '\')"><i class="fas fa-play"></i></button><div class="voice-slider" onclick="seekVoice(event, this, \'' + id + '\')"><div class="voice-progress" id="progress-' + id + '"></div></div><span class="voice-time" id="time-' + id + '">0:00</span></div><audio id="audio-' + id + '" src="' + data.audioUrl + '" preload="metadata" style="display:none;"></audio>'; html += '<div class="message-time">' + (data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "") + "</div>"; msgDiv.innerHTML = html; if (!isMe && document.getElementById("chatModal") && !document.getElementById("chatModal").classList.contains("active")) { unreadMessages++; let badge = document.getElementById("chatBadge"); badge && (badge.textContent = unreadMessages, badge.style.display = "flex"); SoundEffects.receive(); } cont.appendChild(msgDiv); }
-  function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } if (!confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟")) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
+  async function deleteMessage(id, sender) { if (!isAdmin && (!currentUser || !sender || sender.trim() !== currentUser.trim())) { SoundEffects.error(); showToast("❌ لا يمكنك حذف هذه الرسالة"); return; } var _elPreview = document.getElementById("msg-" + id); var _txtPreview = (_elPreview && _elPreview.querySelector(".message-content") || {}).textContent || ""; var _ok = window.showMsgConfirm ? await window.showMsgConfirm({ title: "حذف الرسالة", question: isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟", preview: _txtPreview, okLabel: "حذف", cancelLabel: "إلغاء" }) : confirm(isAdmin ? "هل أنت متأكد من حذف هذه الرسالة؟ (أنت مشرف)" : "هل أنت متأكد من حذف رسالتك؟"); if (!_ok) return; if (!id) { SoundEffects.error(); showToast("❌ معرف الرسالة غير صالح"); return; } db.collection("messages").doc(id).delete().then(() => { SoundEffects.delete(); showToast("🗑️ تم حذف الرسالة"); let el = document.getElementById("msg-" + id); el && el.remove(); }).catch(e => { console.error(e); SoundEffects.error(); if (e.code === "permission-denied") showToast("❌ صلاحية الحذف غير كافية"); else if (e.code === "not-found") showToast("❌ الرسالة غير موجودة"); else showToast("❌ فشل الحذف"); }); }
   function playVoiceMessage(btn, url, id) { let audio = document.getElementById("audio-" + id); let prog = document.getElementById("progress-" + id); let time = document.getElementById("time-" + id); if (!audio || !prog || !time) return; if (currentAudio && currentAudio !== audio) { currentAudio.pause(); currentAudio.currentTime = 0; if (currentAudioBtn) { currentAudioBtn.innerHTML = '<i class="fas fa-play"></i>'; currentAudioBtn.classList.remove("playing"); } } if (audio.paused) { audio.play().then(() => { currentAudio = audio; currentAudioBtn = btn; btn.innerHTML = '<i class="fas fa-pause"></i>'; btn.classList.add("playing"); audio.ontimeupdate = () => { let p = (audio.currentTime / audio.duration) * 100; prog.style.width = p + "%"; let m = Math.floor(audio.currentTime / 60); let s = Math.floor(audio.currentTime % 60); time.textContent = m + ":" + s.toString().padStart(2, "0"); }; audio.onended = () => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); prog.style.width = "0%"; time.textContent = "0:00"; currentAudio = null; currentAudioBtn = null; }; }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ لا يمكن تشغيل الصوت"); }); } else { audio.pause(); btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove("playing"); } }
   function seekVoice(e, slider, id) { let audio = document.getElementById("audio-" + id); if (!audio || !audio.duration) return; let rect = slider.getBoundingClientRect(); let pos = (e.clientX - rect.left) / rect.width; audio.currentTime = pos * audio.duration; }
   function sendMessage() {
@@ -5922,7 +5922,10 @@ window.pacSendMessage = async function(){
     const threadId = pacCurrentThreadUserId;
     if (!threadId) { if (window.showToast) showToast('❌ لم يتم اختيار محادثة'); return; }
     if (!pacIsAdminView && !isMine) { if (window.showToast) showToast('❌ لا يمكنك حذف رسائل الآخرين'); return; }
-    if (!confirm('هل تريد حذف هذه الرسالة نهائياً؟')) return;
+    var _pacEl = document.querySelector('.pac-msg[data-msg-id="'+msgId+'"] .pac-msg-text');
+    var _pacTxt = _pacEl ? _pacEl.textContent : '';
+    var _pacOk = window.showMsgConfirm ? await window.showMsgConfirm({ title: 'حذف الرسالة', question: 'هل تريد حذف هذه الرسالة نهائياً؟', preview: _pacTxt, okLabel: 'حذف', cancelLabel: 'إلغاء' }) : confirm('هل تريد حذف هذه الرسالة نهائياً؟');
+    if (!_pacOk) return;
     try {
       await dbi.collection(PAC_COL).doc(threadId).collection('messages').doc(msgId).delete();
       if (window.SoundEffects && SoundEffects.delete) try{SoundEffects.delete();}catch(e){}
@@ -11745,10 +11748,14 @@ function closePrivateFriendChat() {
 // حذف رسالة خاصة (بتاعة المستخدم نفسه بس)
 async function deletePrivateFriendMsg(msgId, btnEl) {
   if (!msgId || !currentUserId) return;
-  if (!confirm('تأكيد حذف الرسالة دي؟')) return;
+  let _pfcDoc;
+  try { _pfcDoc = await db.collection('private_messages').doc(msgId).get(); } catch(e) { _pfcDoc = null; }
+  const _pfcPreview = (_pfcDoc && _pfcDoc.exists && _pfcDoc.data().text) || '';
+  const _pfcOk = window.showMsgConfirm ? await window.showMsgConfirm({ title: 'حذف الرسالة', question: 'تأكيد حذف الرسالة دي؟', preview: _pfcPreview, okLabel: 'حذف', cancelLabel: 'إلغاء' }) : confirm('تأكيد حذف الرسالة دي؟');
+  if (!_pfcOk) return;
   if (btnEl) btnEl.disabled = true;
   try {
-    const doc = await db.collection('private_messages').doc(msgId).get();
+    const doc = _pfcDoc && _pfcDoc.exists ? _pfcDoc : await db.collection('private_messages').doc(msgId).get();
     if (!doc.exists) return;
     if (doc.data().from !== currentUserId) {
       showToast('❌ مينفعش تمسح رسالة مش بتاعتك');
@@ -12186,13 +12193,54 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 // 🗑️💬 حذف رسالتي في شات الذكاء الاصطناعي + تحويل رسالة للمشرف
 // ============================================================
 (function(){
+  // ── نافذة تأكيد مخصصة (بديل احترافي لـ confirm() الأصلية اللي بتظهر اسم الدومين) ──
+  window.showMsgConfirm = function(opts){
+    opts = opts || {};
+    return new Promise(function(resolve){
+      var overlay = document.createElement('div');
+      overlay.className = 'msg-confirm-overlay';
+      var previewHtml = opts.preview
+        ? '<div class="msg-confirm-preview">' + escapeHtml(opts.preview.slice(0, 300)) + '</div>'
+        : '';
+      overlay.innerHTML =
+        '<div class="msg-confirm-box">' +
+          '<div class="msg-confirm-header">' +
+            '<div class="msg-confirm-icon"><i class="fas fa-trash"></i></div>' +
+            '<div class="msg-confirm-title">' + escapeHtml(opts.title || 'تأكيد الحذف') + '</div>' +
+          '</div>' +
+          '<div class="msg-confirm-body">' +
+            '<div class="msg-confirm-question">' + escapeHtml(opts.question || 'هل أنت متأكد؟') + '</div>' +
+            previewHtml +
+          '</div>' +
+          '<div class="msg-confirm-actions">' +
+            '<button class="msg-confirm-btn msg-confirm-cancel" data-act="cancel">' + escapeHtml(opts.cancelLabel || 'إلغاء') + '</button>' +
+            '<button class="msg-confirm-btn msg-confirm-ok" data-act="ok">' + escapeHtml(opts.okLabel || 'تأكيد') + '</button>' +
+          '</div>' +
+        '</div>';
+      function cleanup(result){ overlay.remove(); resolve(result); }
+      overlay.addEventListener('click', function(e){
+        if (e.target === overlay) cleanup(false);
+        var act = e.target.closest && e.target.closest('[data-act]');
+        if (act) cleanup(act.dataset.act === 'ok');
+      });
+      document.body.appendChild(overlay);
+    });
+  };
+
   // ── حذف رسالة (بتاعتي أنا بس) من شات الـ AI محلياً ──
-  window.deleteMyAIMessage = function(msgId){
+  window.deleteMyAIMessage = async function(msgId){
     if (!msgId) return;
     var el = document.getElementById('msg-' + msgId);
     if (!el || !el.classList.contains('sent')) return; // رسائل المستخدم بس (sent) يقدر يقفلها
-    if (!confirm('إخفاء الرسالة دي من المحادثة؟')) return;
     var txt = (el.querySelector('.message-content') || {}).textContent || '';
+    var ok = await window.showMsgConfirm({
+      title: 'إخفاء الرسالة',
+      question: 'هتتقفل الرسالة دي من المحادثة عندك في الجهاز ده:',
+      preview: txt,
+      okLabel: 'إخفاء',
+      cancelLabel: 'إلغاء'
+    });
+    if (!ok) return;
     el.remove();
     // شيلها من الهيستوري كمان لو موجودة عشان الذكاء الاصطناعي ما يفتكرش الرسالة القديمة
     try {
