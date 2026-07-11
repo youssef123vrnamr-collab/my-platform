@@ -10681,25 +10681,59 @@ function slStopAllAnimations() {
         var extraText = inp ? inp.value.trim() : '';
         if (inp) { inp.value = ''; inp.style.height = 'auto'; }
 
-        var _binaryExt = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|exe|apk|mp3|mp4|mov|wav)$/i;
-        var validDocs = [];
+        // ── امتدادات تنفيذية خطرة تُرفض تماماً (لا فايدة من قراءتها كنص، وخطرها الأمني عالي) ──
+        var _dangerExt = /\.(exe|msi|bat|cmd|com|scr|dll|jar|apk|vbs|vbe|ws|wsf|wsh|ps1|ps1xml|psc1|msc|cpl|gadget|lnk|scf|reg|sh|bin|iso|action|workflow|command)$/i;
+        var validDocs = [], rejectedNames = [];
         for (var di = 0; di < docs.length; di++) {
-          if (_binaryExt.test(docs[di].name) || (docs[di].type && !docs[di].type.startsWith('text/') && docs[di].type !== 'application/json')) {
-            showToast('⚠️ الملف "'+docs[di].name+'" نوعه مش مدعوم للقراءة المباشرة، اتشال. جرّب ملف نصي (txt, csv, json...) أو صورة بدل كده.');
-            continue;
-          }
+          if (_dangerExt.test(docs[di].name)) { rejectedNames.push(docs[di].name + ' (نوع ملف تنفيذي خطر ومرفوض تماماً)'); continue; }
           validDocs.push(docs[di]);
         }
 
-        // ── قراءة محتوى الملفات النصية ──
+        // ── فحص أمني بسيط للأكواد/النصوص الخبيثة قبل السماح بالرفع ──
+        function _aiScanMalicious(text){
+          var flags = [];
+          var patterns = [
+            [/eval\s*\(\s*atob\s*\(/i, 'eval(atob(...)) — كود مشفّر base64 بيتفك ويتنفذ ديناميكيًا'],
+            [/document\.write\s*\(\s*unescape/i, 'حقن كود عبر document.write(unescape(...))'],
+            [/powershell(\.exe)?\s+-(enc|e)\b/i, 'أمر PowerShell مشفّر (encoded command)'],
+            [/\/bin\/(sh|bash)\s+-i\b/i, 'محاولة فتح shell تفاعلي (نمط reverse shell)'],
+            [/\bnc\s+-e\s+\/bin\//i, 'أمر Netcat لفتح reverse shell'],
+            [/rm\s+-rf\s+\/(?!\S)/i, 'أمر حذف شامل خطير (rm -rf /)'],
+            [/(wget|curl)\s+\S+\s*\|\s*(sh|bash)\b/i, 'تحميل وتنفيذ سكريبت مباشر من الإنترنت'],
+            [/base64_decode\s*\([^)]{0,40}\)\s*;?\s*(eval|assert|system|exec|passthru)/i, 'فك تشفير base64 ثم تنفيذه فورًا (نمط شائع في الفيروسات)'],
+            [/new\s+ActiveXObject/i, 'استخدام ActiveXObject (نمط فيروسات ماكرو قديمة)'],
+            [/Invoke-Expression|IEX\s*\(/i, 'تنفيذ كود PowerShell ديناميكي (IEX)'],
+            [/child_process.{0,20}exec(Sync)?\s*\(\s*['"`].{0,10}(rm|del|format|shutdown)/i, 'تنفيذ أوامر نظام خطرة عبر child_process']
+          ];
+          patterns.forEach(function(p){ if (p[0].test(text)) flags.push(p[1]); });
+          var escapeCount = (text.match(/\\x[0-9a-f]{2}/gi) || []).length;
+          if (escapeCount > 60) flags.push('كثافة عالية غير طبيعية من محارف hex-escape (احتمال تمويه/obfuscation)');
+          return flags;
+        }
+
+        // ── قراءة محتوى الملفات (نصية/كود) وفحصها أمنياً ──
         var docContents = [];
         for (var dj = 0; dj < validDocs.length; dj++) {
+          var f = validDocs[dj];
+          var looksTextual = /^text\//.test(f.type) || f.type === 'application/json' || f.type === '' ||
+            /\.(txt|csv|json|md|js|jsx|ts|tsx|py|html|htm|css|log|xml|yml|yaml|sql|c|cpp|h|java|php|rb|go|rs|sh|ini|env|conf|svg)$/i.test(f.name);
+          if (!looksTextual) {
+            // ملف ثنائي (pdf/docx/xlsx/zip/mp3...) — بيتقبل كمرفق لكن من غير استخراج نص (يحتاج مكتبة إضافية)
+            docContents.push('[ملف "'+f.name+'" — نوعه ثنائي ('+(f.type||'غير معروف')+', '+(f.size/1024).toFixed(1)+' KB)، اتقبل كمرفق لكن معايا مش قادر أستخرج نصه مباشرة دلوقتي.]');
+            continue;
+          }
           try {
-            var _txt = await readAIFileText(validDocs[dj]);
-            docContents.push('[ملف: "'+validDocs[dj].name+'"]\n' + _txt.substring(0, 3000));
-          } catch(eDoc) { docContents.push('[تعذّرت قراءة الملف: "'+validDocs[dj].name+'"]'); }
+            var _txt = await readAIFileText(f);
+            var _flags = _aiScanMalicious(_txt);
+            if (_flags.length) {
+              showToast('🚫 الملف "'+f.name+'" اتشال — فيه نمط كود مشبوه/خبيث: '+_flags[0]);
+              continue;
+            }
+            docContents.push('[ملف: "'+f.name+'" — تم فحصه أمنياً ✅]\n' + _txt.substring(0, 3000));
+          } catch(eDoc) { docContents.push('[تعذّرت قراءة الملف: "'+f.name+'"]'); }
         }
-        var docsBlock = docContents.length ? ('\n\n--- محتوى الملفات المرفقة ---\n' + docContents.join('\n\n') + '\n---') : '';
+        if (rejectedNames.length) showToast('🚫 اتشال: ' + rejectedNames.join('، '));
+        var docsBlock = docContents.length ? ('\n\n--- محتوى الملفات المرفقة (بعد الفحص الأمني) ---\n' + docContents.join('\n\n') + '\n---') : '';
 
         // ── لو مفيش صور، منطق نصي بحت عبر المسار العادي (Groq) ──
         if (!imgs.length) {
@@ -10894,12 +10928,23 @@ function slStopAllAnimations() {
       var histLimit = userMsg.length > 2000 ? 2 : userMsg.length > 800 ? 4 : 8;
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
 
+      // ── سياق مكتبة الفيديوهات — يخلي الذكاء الاصطناعي عارف عدد الفيديوهات وأسماءها ومحتواها ──
+      var _videoContextBlock = '';
+      if (typeof videos !== 'undefined' && videos && videos.length) {
+        var _vList = videos.slice(0, 80).map(function(v, vi){
+          var _t = (v.title || 'بدون عنوان');
+          var _d = v.description ? (' — ' + String(v.description).slice(0, 150)) : '';
+          return (vi + 1) + '. "' + _t + '"' + _d;
+        }).join('\n');
+        _videoContextBlock = '\n\n--- مكتبة فيديوهات المنصة ---\nعدد الفيديوهات الكلي: ' + videos.length + '\nقائمة الفيديوهات وأسماءها ووصفها:\n' + _vList + '\n---\nلو المستخدم سأل عن عدد الفيديوهات أو أسمائها أو محتواها، استخدم القائمة دي في إجابتك.';
+      }
+
       var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.';
 
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt + _videoContextBlock + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
           temperature: 0.4,
           reasoning_effort: 'high'
@@ -12003,4 +12048,99 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     let el = document.getElementById('msg-'+id) || document.querySelector('[data-msg-id="'+id+'"]');
     if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('long-press-active'); setTimeout(()=>el.classList.remove('long-press-active'), 700); }
   };
+})();
+
+// ============================================================
+// 🗑️💬 حذف رسالتي في شات الذكاء الاصطناعي + تحويل رسالة للمشرف
+// ============================================================
+(function(){
+  // ── حذف رسالة (بتاعتي أنا بس) من شات الـ AI محلياً ──
+  window.deleteMyAIMessage = function(msgId){
+    if (!msgId) return;
+    var el = document.getElementById('msg-' + msgId);
+    if (!el || !el.classList.contains('sent')) return; // رسائل المستخدم بس (sent) يقدر يقفلها
+    if (!confirm('إخفاء الرسالة دي من المحادثة؟')) return;
+    var txt = (el.querySelector('.message-content') || {}).textContent || '';
+    el.remove();
+    // شيلها من الهيستوري كمان لو موجودة عشان الذكاء الاصطناعي ما يفتكرش الرسالة القديمة
+    try {
+      if (window.aiChatHistory && txt) {
+        var idx = window.aiChatHistory.findIndex(function(h){ return h.role === 'user' && h.content === txt; });
+        if (idx > -1) window.aiChatHistory.splice(idx, 1);
+      }
+    } catch(e){}
+    if (window.showToast) showToast('🗑️ اتقفلت');
+  };
+
+  // ── تحويل رسالة (سؤالي أو رد المساعد) لمحادثة المشرف الخاصة ──
+  window.forwardAIMessageToAdmin = async function(text){
+    text = (text || '').trim();
+    if (!text) return;
+    var dbi = (typeof db !== 'undefined') ? db : (window.firebase && firebase.firestore ? firebase.firestore() : null);
+    if (!dbi) { if (window.showToast) showToast('❌ تعذر الاتصال بقاعدة البيانات'); return; }
+    var uid = (typeof currentUserId !== 'undefined' && currentUserId) ? currentUserId : (window.currentUserId || null);
+    if (!uid) { if (window.showToast) showToast('⚠️ سجّل الدخول الأول عشان تبعت للمشرف'); return; }
+    var uName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (window.currentUser || 'مستخدم');
+    var uEmail = (window.googleUser && window.googleUser.email) || '';
+    var uPhone = (typeof currentUserPhone !== 'undefined' && currentUserPhone) ? currentUserPhone : (window.currentUserPhone || '');
+    var msgText = '📨 محوّلة من محادثة الذكاء الاصطناعي:\n' + text;
+    try {
+      await dbi.collection('private_admin_chats').doc(uid).collection('messages').add({
+        text: msgText, sender: 'user', senderName: uName, senderId: uid,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await dbi.collection('private_admin_chats').doc(uid).set({
+        lastMessage: msgText.slice(0, 120),
+        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSender: 'user',
+        unreadByAdmin: firebase.firestore.FieldValue.increment(1),
+        unreadByUser: 0,
+        userName: uName, userEmail: uEmail, userPhone: uPhone
+      }, { merge: true });
+      if (window.SoundEffects && SoundEffects.success) try{ SoundEffects.success(); }catch(e){}
+      if (window.showToast) showToast('✅ اتبعتت للمشرف في المحادثة الخاصة');
+    } catch(e) {
+      console.error('forwardAIMessageToAdmin err', e);
+      if (window.showToast) showToast('❌ فشل الإرسال للمشرف');
+    }
+  };
+
+  // ── إضافة زرار "قفل" على رسايلي و"ابعت للمشرف" على كل رسالة في شات الـ AI ──
+  function decorateAIMessages(){
+    var cont = document.getElementById('aiChatMessages');
+    if (!cont) return;
+    cont.querySelectorAll('.message').forEach(function(m){
+      if (m.classList.contains('system') || m.dataset.aiDecorated) return;
+      var id = m.dataset.msgId;
+      var contentEl = m.querySelector('.message-content');
+      if (!contentEl) return;
+      m.dataset.aiDecorated = '1';
+      var bar = document.createElement('div');
+      bar.style.cssText = 'display:flex;gap:.4rem;margin-top:.3rem;justify-content:flex-end';
+      var txt = contentEl.textContent || '';
+      var fwdBtn = document.createElement('button');
+      fwdBtn.title = 'ابعت للمشرف';
+      fwdBtn.style.cssText = 'background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#9ca3af;border-radius:8px;padding:.15rem .5rem;cursor:pointer;font-size:.72rem';
+      fwdBtn.innerHTML = '<i class="fas fa-share"></i>';
+      fwdBtn.onclick = function(e){ e.stopPropagation(); window.forwardAIMessageToAdmin(txt); };
+      bar.appendChild(fwdBtn);
+      if (m.classList.contains('sent') && id) {
+        var delBtn = document.createElement('button');
+        delBtn.title = 'قفل الرسالة';
+        delBtn.style.cssText = 'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#ef4444;border-radius:8px;padding:.15rem .5rem;cursor:pointer;font-size:.72rem';
+        delBtn.innerHTML = '<i class="fas fa-times"></i>';
+        delBtn.onclick = function(e){ e.stopPropagation(); window.deleteMyAIMessage(id); };
+        bar.appendChild(delBtn);
+      }
+      m.appendChild(bar);
+    });
+  }
+  var _aiDecoIv = setInterval(decorateAIMessages, 700);
+  var _aiChatCont = null;
+  var _tryObserve = setInterval(function(){
+    _aiChatCont = document.getElementById('aiChatMessages');
+    if (!_aiChatCont) return;
+    clearInterval(_tryObserve);
+    new MutationObserver(decorateAIMessages).observe(_aiChatCont, { childList: true });
+  }, 500);
 })();

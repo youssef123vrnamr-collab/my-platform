@@ -549,8 +549,8 @@
     <textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="unified-textarea" onkeypress="handleAIKeyPress(event)"></textarea>
     <div class="unified-bottom-row">
       <div class="unified-left-btns">
-        <button class="unified-tool-btn" onclick="document.getElementById('aiFileInput').click()" title="إرفاق ملفات (حتى 5)"><i class="fas fa-paperclip"></i></button>
-        <input id="aiFileInput" type="file" style="display:none" accept=".txt,.csv,.json,.md,.js,.py,.html,.css,.log" multiple onchange="handleAIFileSelect(this)">
+        <button class="unified-tool-btn" onclick="document.getElementById('aiFileInput').click()" title="إرفاق أي ملف (حتى 5) — بيتفحص أمنياً قبل الرفع"><i class="fas fa-paperclip"></i></button>
+        <input id="aiFileInput" type="file" style="display:none" multiple onchange="handleAIFileSelect(this)">
         <button class="unified-tool-btn" onclick="document.getElementById('aiImageInput').click()" title="إرفاق صور (حتى 5)"><i class="fas fa-image"></i></button>
         <input id="aiImageInput" type="file" style="display:none" accept="image/*" multiple onchange="handleAIImageSelect(this)">
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
