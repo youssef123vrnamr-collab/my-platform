@@ -2207,21 +2207,27 @@ async function updateAdminUI() {
     cont.appendChild(msgEl);
     cont.scrollTop = cont.scrollHeight;
 
-    // ترجمة (6 ثواني timeout)
+    // كشف نية الأسلوب من كلام المستخدم نفسه (عربي) قبل الترجمة
+    const _wantsCartoon = /كرتون|انمي|أنمي|anime|cartoon|رسمة اطفال|رسمة أطفال|كاريكاتير/i.test(prompt);
+    const _styleForTranslator = _wantsCartoon
+      ? "Reply ONLY with a vivid, detailed English description for an AI image generator, max 35 words, describing a colorful cartoon/anime-style illustration. No quotes, no explanation."
+      : "Reply ONLY with a vivid, detailed English description for an AI image generator, max 35 words. Describe realistic textures, materials, lighting direction and color, and camera framing as if describing a real photograph — not a drawing. No quotes, no explanation.";
+
+    // ترجمة + إثراء الوصف (12 ثانية timeout)
     let enPrompt = "";
     try {
       const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 6000);
+      setTimeout(() => ctrl.abort(), 12000);
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST", signal: ctrl.signal,
         headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "openai/gpt-oss-120b",
           messages: [
-            { role: "system", content: "Translate Arabic to English for AI image generation. Reply ONLY with a concise English description, max 20 words. No quotes, no explanation." },
+            { role: "system", content: _styleForTranslator },
             { role: "user", content: prompt }
           ],
-          max_tokens: 60, temperature: 0.3
+          max_tokens: 110, temperature: 0.4
         })
       });
       const d = await r.json();
@@ -2229,7 +2235,12 @@ async function updateAdminUI() {
     } catch(e) {}
 
     if (!enPrompt) enPrompt = prompt.substring(0, 100);
-    const finalPrompt = `epic space astronomy ${enPrompt} cinematic dramatic 8k ultra detailed`;
+
+    // لاحقة الجودة تختلف حسب الأسلوب المطلوب — واقعي احترافي افتراضياً، أو كرتوني لو طُلب صراحةً
+    const finalPrompt = _wantsCartoon
+      ? `${enPrompt}, vibrant digital illustration, clean bold linework, rich colors, detailed concept art, trending on artstation`
+      : `${enPrompt}, photorealistic, hyper-detailed, physically-based rendering, natural lighting, sharp focus, professional astrophotography, shot on full-frame camera, 8k UHD, award-winning`;
+
 
     // استدعاء Vercel proxy بدل Pollinations مباشرة
     await _doGenerate(finalPrompt, uid, prompt, cont, seed, 1);
@@ -2264,12 +2275,12 @@ async function updateAdminUI() {
       if (txEl) txEl.textContent = `🎨 يولد... ${secs}s`;
     }, 1000);
 
-    // Pollinations.ai — مجاني 100% بدون API key
-    const pollinationsModels = ["flux", "flux-realism", "turbo"];
+    // موديلات Pollinations الحالية (تحدّث بين الحين والتاني — flux للجودة، sana للسرعة كخطة بديلة)
+    const pollinationsModels = ["flux", "sana", "flux"];
     const chosenModel = pollinationsModels[attempt - 1] || "flux";
     const encodedPrompt = encodeURIComponent(finalPrompt);
     const imgSeed = seed + attempt;
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${chosenModel}&seed=${imgSeed}&width=768&height=512&nologo=true&enhance=true`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${chosenModel}&seed=${imgSeed}&width=1024&height=1024&nologo=true&enhance=true&referrer=falak-astronomy-platform`;
 
     try {
       // نعمل preload للصورة عشان نعرف لو نجحت ولا لا
@@ -2358,7 +2369,11 @@ async function updateAdminUI() {
 
   function isImageRequest(text) {
     const t = text.trim().toLowerCase();
-    return IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger));
+    if (IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger))) return true;
+    // احتياط: أي جملة فيها كلمة "صورة/صوره/رسمة/رسم" + فعل طلب واضح، حتى لو مش من القائمة أعلاه بالظبط
+    const _hasImageWord = /صور[ةه]|رسم[ةه]?|image|picture|photo|drawing/i.test(t);
+    const _hasRequestVerb = /اعمل|اعمللي|ارسم|ولد|انشئ|أنشئ|صمم|هات|هاتلي|جيب|جيبلي|اعطي|اديني|وري|وريني|عايز|عاوز|عمل|طلعلي|سوي|دير|صاور|اريد|ابغى|ابي|make|create|generate|draw|show me|want a/i.test(t);
+    return _hasImageWord && _hasRequestVerb;
   }
 
   function extractImagePrompt(text) {
@@ -11020,10 +11035,12 @@ function slStopAllAnimations() {
 
       var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.\n- هوية إلزامية: إنت مساعد ذكاء اصطناعي اسمه "'+persona.name+'"، جزء من منصة "فلك" التعليمية. لو حد سألك "مين انت" أو "انت شغال على ايه" أو "انت اي موديل" أو "انت اي تطبيق" أو أي سؤال عن هويتك أو التقنية اللي بتشتغل بيها، جاوب إنك "'+persona.name+'" المساعد الذكي بتاع منصة فلك، ومتقولش أبداً اسم أي شركة أو موديل أو منصة تقنية تانية (زي OpenAI أو ChatGPT أو أي حد تاني) حتى لو حد ألحّ في السؤال.\n- تنسيق النص إلزامي: إنت بترد جوه فقاعة شات على الموبايل مش صفحة ويب. ممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة | أو عناوين Markdown، لأنها بتظهر كرموز غريبة للمستخدم. استخدم بس: **نص عريض** لو محتاج تمييز، سطور جديدة، إيموجي، وأرقام أو نقاط (1. 2. 3. أو •) للتعداد. لو محتاج تعرض كود، حطه بين ```لغة البرمجة``` عادي بس متستخدمش جداول أو عناوين markdown أبداً.';
 
+      var _imageGenPolicyBlock = '\n\nقاعدة إلزامية بخصوص الصور: إنت شخصياً متقدرش تولّد أو ترفع صور — التوليد الفعلي بيحصل من نظام منفصل تلقائي. ممنوع تمامًا تكتب رابط صورة وهمي (زي https://... .png أو .jpg من عندك) أو تتظاهر إنك "ولّدت" أو "أرفقت" صورة، لأن ده هيبقى معلومة كاذبة. لو حسيت إن المستخدم طالب صورة ولسه مطلعتش، قوله بوضوح إنك هتولدها له الآن أو اطلب منه يعيد صياغة طلبه بوضوح (مثلاً "اعمل لي صورة كذا")، من غير ما تخترع أي رابط أو تفاصيل ملف.';
+
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
           temperature: 0.4,
           reasoning_effort: 'high'
