@@ -1,6 +1,4 @@
 
-  // ========== Multi-file upload support loaded from multi-file-upload.js ==========
-
   // ========== Firebase Config ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
@@ -7024,7 +7022,10 @@ window.updateActiveToolLabel = function(label) {
       // كل دالة بتستخدم الـ input الخاص بها
       const inputId = fnName === 'sendAIMessage' ? 'aiChatInput' : 'messageInput';
       const inputEl = document.getElementById(inputId);
-      const hasAttachedFile = fnName === 'sendAIMessage' && !!window._aiSelectedFile;
+      const hasAttachedFile = fnName === 'sendAIMessage' && (
+        (window._aiSelectedFiles && window._aiSelectedFiles.length > 0) ||
+        (window._aiSelectedImages && window._aiSelectedImages.length > 0)
+      );
       if (inputEl && !hasAttachedFile) {
         const v = window.secureValidateMessage(inputEl.value);
         if (!v.valid) {
@@ -7662,71 +7663,63 @@ window.updateActiveToolLabel = function(label) {
     showToast('🗑️ تم مسح المحادثة');
   };
 
-  // Fix handleAIFileSelect - ensure it works correctly
-  window.handleAIFileSelect = function(input) {
-    const file = input.files[0];
-    if (!file) return;
-    window._aiSelectedFile = file;
+  // ── دعم إرفاق حتى 5 ملفات نصية + 5 صور معًا في شات الذكاء الاصطناعي ──
+  const AI_MAX_FILES = 5, AI_MAX_IMAGES = 5, AI_MAX_IMAGE_SIZE = 4 * 1024 * 1024;
+  window._aiSelectedFiles = window._aiSelectedFiles || [];
+  window._aiSelectedImages = window._aiSelectedImages || [];
+
+  function renderAIAttachPreview() {
     const preview = document.getElementById('aiFilePreview');
-    const name = document.getElementById('aiFilePreviewName');
-    if (preview) preview.style.display = 'flex';
-    if (name) name.textContent = `📎 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    if (!preview) return;
+    const items = [].concat(
+      window._aiSelectedFiles.map((f, i) => ({ type: 'file', i, f })),
+      window._aiSelectedImages.map((f, i) => ({ type: 'image', i, f }))
+    );
+    if (!items.length) { preview.style.display = 'none'; preview.innerHTML = ''; return; }
+    preview.style.display = 'flex';
+    preview.innerHTML = items.map(it => {
+      const icon = it.type === 'image' ? '🖼️' : '📎';
+      const label = `${icon} ${it.f.name} (${(it.f.size / 1024).toFixed(1)} KB)`;
+      return `<span class="unified-file-name" style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,.06);padding:.25rem .55rem;border-radius:8px;max-width:100%">${label}<button onclick="removeAIAttachment('${it.type}',${it.i})" class="unified-file-clear" style="margin:0"><i class="fas fa-times"></i></button></span>`;
+    }).join('');
+  }
+
+  window.removeAIAttachment = function(type, idx) {
+    if (type === 'image') window._aiSelectedImages.splice(idx, 1);
+    else window._aiSelectedFiles.splice(idx, 1);
+    renderAIAttachPreview();
+  };
+
+  window.handleAIFileSelect = function(input) {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    const room = AI_MAX_FILES - window._aiSelectedFiles.length;
+    if (room <= 0) { showToast('⚠️ الحد الأقصى 5 ملفات في المرة الواحدة'); input.value = ''; return; }
+    window._aiSelectedFiles.push(...files.slice(0, room));
+    if (files.length > room) showToast('⚠️ اتاخد أول ' + room + ' ملفات بس (الحد الأقصى 5)');
     input.value = '';
-    showToast('📎 تم اختيار الملف، اضغط إرسال');
+    renderAIAttachPreview();
+    showToast('📎 مرفق ' + window._aiSelectedFiles.length + ' ملف، اضغط إرسال');
+  };
+
+  window.handleAIImageSelect = function(input) {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    const room = AI_MAX_IMAGES - window._aiSelectedImages.length;
+    if (room <= 0) { showToast('⚠️ الحد الأقصى 5 صور في المرة الواحدة'); input.value = ''; return; }
+    const valid = files.filter(f => f.size <= AI_MAX_IMAGE_SIZE);
+    if (valid.length < files.length) showToast('⚠️ في صور اتشالت لأنها أكبر من 4 ميجا');
+    window._aiSelectedImages.push(...valid.slice(0, room));
+    if (valid.length > room) showToast('⚠️ اتاخد أول ' + room + ' صور بس (الحد الأقصى 5)');
+    input.value = '';
+    renderAIAttachPreview();
+    showToast('🖼️ مرفق ' + window._aiSelectedImages.length + ' صورة، اضغط إرسال');
   };
 
   window.clearAIFile = function() {
-    window._aiSelectedFile = null;
-    const p = document.getElementById('aiFilePreview');
-    if (p) p.style.display = 'none';
-  };
-
-  // File upload override — DISABLED (merged into unified sendAIMessage at end of file)
-  const _baseAI = window.sendAIMessage;
-  // window.sendAIMessage already handles files; skip this override
-  if (false) window.sendAIMessage = async function() {
-    if (window._aiSelectedFile) {
-      const file = window._aiSelectedFile;
-      window._aiSelectedFile = null;
-      const p = document.getElementById('aiFilePreview');
-      if (p) p.style.display = 'none';
-
-      const msgs = document.getElementById('aiChatMessages');
-      const inputEl = document.getElementById('aiChatInput');
-      const userText = inputEl ? inputEl.value.trim() : '';
-
-      if (file.type.startsWith('image/')) {
-        // Show image bubble
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-          if (msgs) {
-            const div = document.createElement('div');
-            div.className = 'message sent';
-            div.innerHTML = `<img src="${e.target.result}" style="max-width:180px;border-radius:10px;display:block;margin-bottom:.3rem"><div class="message-time">${new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</div>`;
-            msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
-          }
-          // Ask AI about image
-          if (inputEl) inputEl.value = userText ? userText : `صف هذه الصورة باللغة العربية: "${file.name}"`;
-          if (_baseAI) await _baseAI.call(window);
-          if (inputEl) inputEl.value = '';
-        };
-        reader.readAsDataURL(file);
-      } else {
-        // Text/PDF/DOC file
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-          const content = typeof e.target.result === 'string' ? e.target.result.substring(0, 3000) : '';
-          if (inputEl) inputEl.value = userText
-            ? `${userText}\n\n[محتوى الملف: "${file.name}"]\n${content}`
-            : `حلل هذا الملف وأخبرني بأهم نقاطه:\n\n[اسم الملف: "${file.name}"]\n${content}`;
-          if (_baseAI) await _baseAI.call(window);
-          if (inputEl) inputEl.value = '';
-        };
-        reader.readAsText(file, 'UTF-8');
-      }
-      return;
-    }
-    if (_baseAI) await _baseAI.call(window);
+    window._aiSelectedFiles = [];
+    window._aiSelectedImages = [];
+    renderAIAttachPreview();
   };
 })();
 
@@ -10659,6 +10652,10 @@ function slStopAllAnimations() {
   async function fetchNASAApod(){ try{ var r=await fetch('https://api.nasa.gov/planetary/apod?api_key='+NASA_KEY); return await r.json(); }catch(e){ return null; } }
   async function fetchSpaceNews(){ try{ var r=await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=3&ordering=-published_at'); var d=await r.json(); return d.results||[]; }catch(e){ return []; } }
 
+  // ── قراءة ملفات/صور متعددة كـ Promise ──
+  function readAIFileDataURL(file){ return new Promise(function(resolve,reject){ var r=new FileReader(); r.onload=function(){resolve(r.result);}; r.onerror=reject; r.readAsDataURL(file); }); }
+  function readAIFileText(file){ return new Promise(function(resolve,reject){ var r=new FileReader(); r.onload=function(){resolve(typeof r.result==='string'?r.result:'');}; r.onerror=reject; r.readAsText(file,'UTF-8'); }); }
+
   // ── Wait until all previous patches have settled, then replace once ──
   var attempts = 0;
   var iv = setInterval(async function(){
@@ -10673,145 +10670,160 @@ function slStopAllAnimations() {
       var inp  = document.getElementById('aiChatInput');
       var msgs = document.getElementById('aiChatMessages');
 
-      // ── Handle file upload if any ──
-      if (window._aiSelectedFile) {
-        var file = window._aiSelectedFile;
-        window._aiSelectedFile = null;
+      // ── Handle attachments if any (حتى 5 صور + 5 ملفات نصية معًا) ──
+      if ((window._aiSelectedImages && window._aiSelectedImages.length) || (window._aiSelectedFiles && window._aiSelectedFiles.length)) {
+        var imgs = (window._aiSelectedImages || []).slice(0, 5);
+        var docs = (window._aiSelectedFiles || []).slice(0, 5);
+        window._aiSelectedImages = [];
+        window._aiSelectedFiles = [];
         var preview = document.getElementById('aiFilePreview');
-        if (preview) preview.style.display = 'none';
+        if (preview) { preview.style.display = 'none'; preview.innerHTML = ''; }
         var extraText = inp ? inp.value.trim() : '';
         if (inp) { inp.value = ''; inp.style.height = 'auto'; }
 
-        if (file.type.startsWith('image/')) {
-          if (file.size > 4 * 1024 * 1024) { showToast('⚠️ الصورة كبيرة، الحد الأقصى 4 ميجا'); return; }
-          var reader = new FileReader();
-          reader.onload = async function(e) {
-            var dataUrl = e.target.result;
-            var _imgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
-            var _replyPayloadImg = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
+        var _binaryExt = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|exe|apk|mp3|mp4|mov|wav)$/i;
+        var validDocs = [];
+        for (var di = 0; di < docs.length; di++) {
+          if (_binaryExt.test(docs[di].name) || (docs[di].type && !docs[di].type.startsWith('text/') && docs[di].type !== 'application/json')) {
+            showToast('⚠️ الملف "'+docs[di].name+'" نوعه مش مدعوم للقراءة المباشرة، اتشال. جرّب ملف نصي (txt, csv, json...) أو صورة بدل كده.');
+            continue;
+          }
+          validDocs.push(docs[di]);
+        }
+
+        // ── قراءة محتوى الملفات النصية ──
+        var docContents = [];
+        for (var dj = 0; dj < validDocs.length; dj++) {
+          try {
+            var _txt = await readAIFileText(validDocs[dj]);
+            docContents.push('[ملف: "'+validDocs[dj].name+'"]\n' + _txt.substring(0, 3000));
+          } catch(eDoc) { docContents.push('[تعذّرت قراءة الملف: "'+validDocs[dj].name+'"]'); }
+        }
+        var docsBlock = docContents.length ? ('\n\n--- محتوى الملفات المرفقة ---\n' + docContents.join('\n\n') + '\n---') : '';
+
+        // ── لو مفيش صور، منطق نصي بحت عبر المسار العادي (Groq) ──
+        if (!imgs.length) {
+          var textOnlyPrompt = (extraText || 'حلل الملفات دي وقدّم لي ملخص احترافي منظم بأهم النقاط.') + docsBlock;
+          await window.sendAIMessage(textOnlyPrompt);
+          return;
+        }
+
+        // ── فيه صور: نقرأها كـ dataURL ونبعتها كلها مع أي ملفات نصية عبر Gemini Vision ──
+        var dataUrls = [];
+        for (var ii = 0; ii < imgs.length; ii++) {
+          try { dataUrls.push(await readAIFileDataURL(imgs[ii])); } catch(eImg) { dataUrls.push(null); }
+        }
+
+        var _replyPayloadImg = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
+        var _imgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+        if (msgs) {
+          var div = document.createElement('div');
+          div.className = 'message sent';
+          div.id = 'msg-'+_imgUid; div.dataset.msgId = _imgUid;
+          var _quotedImg = (_replyPayloadImg && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadImg) : '';
+          var _imgsHtml = dataUrls.filter(Boolean).map(function(u){ return '<img src="'+u+'" style="max-width:120px;max-height:120px;border-radius:10px;margin:2px;display:inline-block;object-fit:cover">'; }).join('');
+          var _docsHtml = validDocs.length ? ('<div style="font-size:.78rem;opacity:.8;margin-top:.3rem">📎 '+validDocs.map(function(f){return escapeHtml(f.name);}).join('، ')+'</div>') : '';
+          div.innerHTML = _quotedImg + (_imgsHtml ? '<div>'+_imgsHtml+'</div>' : '') + _docsHtml + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+        }
+        if (_replyPayloadImg && typeof cancelReply === 'function') cancelReply('ai');
+
+        var persona2 = (typeof window.getCurrentAIPersona === 'function' ? window.getCurrentAIPersona() : null) || { name:'Astronomy AI', emoji:'🔭' };
+        var typingEl2 = null;
+        if (msgs) {
+          typingEl2 = document.createElement('div');
+          typingEl2.className = 'message received';
+          typingEl2.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> '+persona2.name+' بيحلل المرفقات...</div>';
+          msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
+        }
+        try {
+          var geminiKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
+          if (!geminiKey) {
+            if (typingEl2) typingEl2.remove();
             if (msgs) {
-              var div = document.createElement('div');
-              div.className = 'message sent';
-              div.id = 'msg-'+_imgUid; div.dataset.msgId = _imgUid;
-              var _quotedImg = (_replyPayloadImg && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadImg) : '';
-              div.innerHTML = _quotedImg + '<img src="'+dataUrl+'" style="max-width:180px;border-radius:10px;display:block;margin-bottom:.3rem">' + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
-              msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+              var edNoKey = document.createElement('div');
+              edNoKey.className = 'message received';
+              edNoKey.innerHTML = '<div class="message-content" style="color:#f59e0b">⚠️ لسه مفيش مفتاح Gemini متسجل. من قائمة الإعدادات ⚙️ اختر "مفتاح تحليل الصور" وحط مفتاحك المجاني من aistudio.google.com/apikey</div>';
+              msgs.appendChild(edNoKey); msgs.scrollTop = msgs.scrollHeight;
             }
-            if (_replyPayloadImg && typeof cancelReply === 'function') cancelReply('ai');
-
-            var persona2 = (typeof window.getCurrentAIPersona === 'function' ? window.getCurrentAIPersona() : null) || { name:'Astronomy AI', emoji:'🔭' };
-            var typingEl2 = null;
-            if (msgs) {
-              typingEl2 = document.createElement('div');
-              typingEl2.className = 'message received';
-              typingEl2.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> '+persona2.name+' بيشوف الصورة...</div>';
-              msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
-            }
-            try {
-              var geminiKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
-              if (!geminiKey) {
-                if (typingEl2) typingEl2.remove();
-                if (msgs) {
-                  var edNoKey = document.createElement('div');
-                  edNoKey.className = 'message received';
-                  edNoKey.innerHTML = '<div class="message-content" style="color:#f59e0b">⚠️ لسه مفيش مفتاح Gemini متسجل. من قائمة الإعدادات ⚙️ اختر "مفتاح تحليل الصور" وحط مفتاحك المجاني من aistudio.google.com/apikey</div>';
-                  msgs.appendChild(edNoKey); msgs.scrollTop = msgs.scrollHeight;
-                }
-                return;
-              }
-              var promptText = extraText || 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.';
-              // فصل البيانات base64 عن الـ prefix (data:image/jpeg;base64,....)
-              var _commaIdx = dataUrl.indexOf(',');
-              var base64Data = _commaIdx > -1 ? dataUrl.slice(_commaIdx + 1) : dataUrl;
-              var mimeMatch = /^data:([^;]+);base64/.exec(dataUrl);
-              var mimeType = mimeMatch ? mimeMatch[1] : (file.type || 'image/jpeg');
-
-              var _visionBody = JSON.stringify({
-                contents: [{
-                  parts: [
-                    { text: promptText },
-                    { inline_data: { mime_type: mimeType, data: base64Data } }
-                  ]
-                }]
-              });
-              var visionRes, visionData;
-              var _maxRetries = 3;
-              for (var _attempt = 0; _attempt <= _maxRetries; _attempt++) {
-                visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-                  body: _visionBody
-                });
-
-                if (visionRes.status === 429) {
-                  throw Object.assign(new Error('rate-limited'), { _rateLimited: true });
-                }
-
-                if (visionRes.status === 503 && _attempt < _maxRetries) {
-                  if (typingEl2) {
-                    var _tEl = typingEl2.querySelector('.message-content');
-                    if (_tEl) _tEl.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> السيرفر مزدحم، بحاول تاني... (' + (_attempt + 1) + '/' + _maxRetries + ')';
-                  }
-                  await new Promise(function(r){ setTimeout(r, 1500 * (_attempt + 1)); });
-                  continue;
-                }
-                break;
-              }
-              visionData = await visionRes.json();
-              var visionAnswer = (visionData.candidates && visionData.candidates[0] && visionData.candidates[0].content &&
-                visionData.candidates[0].content.parts && visionData.candidates[0].content.parts[0] &&
-                visionData.candidates[0].content.parts[0].text) || null;
-              if (!visionAnswer && visionData.error) throw new Error(JSON.stringify(visionData.error));
-              if (!visionAnswer) visionAnswer = 'عذراً، مقدرتش أحلل الصورة.';
-              if (window.aiChatHistory) {
-                window.aiChatHistory.push({ role:'user', content: '[أرسل المستخدم صورة] ' + (extraText||'') });
-                window.aiChatHistory.push({ role:'assistant', content: visionAnswer });
-                if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
-              }
-              if (typingEl2) typingEl2.remove();
-              if (msgs) {
-                var aiImgDiv = document.createElement('div');
-                aiImgDiv.className = 'message received';
-                var _ansUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
-                aiImgDiv.id = 'msg-'+_ansUid; aiImgDiv.dataset.msgId = _ansUid;
-                aiImgDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona2.emoji+' '+persona2.name+'</div><div class="message-content">'+visionAnswer+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
-                msgs.appendChild(aiImgDiv); msgs.scrollTop = msgs.scrollHeight;
-                if (typeof window.addAIMuteButton === 'function') { var _t2 = aiImgDiv.querySelector('.message-content'); if (_t2) window.addAIMuteButton(aiImgDiv, _t2.textContent); }
-              }
-            } catch(errImg) {
-              if (typingEl2) typingEl2.remove();
-              if (msgs) {
-                var ed2 = document.createElement('div');
-                ed2.className = 'message received';
-                var _msg2;
-                if (errImg && errImg._rateLimited) {
-                  _msg2 = '⏳ في زحمة على الخدمة المجانية دلوقتي (تجاوزنا الحد المسموح للدقيقة). جرّب تاني بعد شوية.';
-                } else {
-                  var _detail = (errImg && errImg.message ? String(errImg.message) : '').slice(0, 200);
-                  _msg2 = '❌ مقدرتش أحلل الصورة. تأكد إن مفتاح Gemini صحيح ومفعّل.' + (_detail ? '<br><span style="font-size:.75rem;opacity:.7;direction:ltr;display:inline-block">' + escapeHtml(_detail) + '</span>' : '');
-                }
-                ed2.innerHTML = '<div class="message-content" style="color:#ef4444">'+_msg2+'</div>';
-                msgs.appendChild(ed2); msgs.scrollTop = msgs.scrollHeight;
-              }
-              console.error('AI vision error:', errImg);
-            }
-          };
-          reader.readAsDataURL(file);
-        } else {
-          var _binaryExt = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|exe|apk|mp3|mp4|mov|wav)$/i;
-          if (_binaryExt.test(file.name) || (file.type && !file.type.startsWith('text/') && file.type !== 'application/json')) {
-            showToast('⚠️ نوع الملف ده مش مدعوم للقراءة المباشرة دلوقتي. جرّب ملف نصي (txt, csv, json...) أو ابعت صورة/سكرين شوت من المحتوى بدل كده.');
             return;
           }
-          var reader2 = new FileReader();
-          reader2.onload = async function(e) {
-            var content = typeof e.target.result === 'string' ? e.target.result.substring(0,3000) : '';
-            var combined = extraText
-              ? (extraText + '\n\n[محتوى الملف: "'+file.name+'"]\n'+content)
-              : ('حلل هذا الملف وأخبرني بأهم نقاطه:\n\n[اسم الملف: "'+file.name+'"]\n'+content);
-            await window.sendAIMessage(combined);
-          };
-          reader2.readAsText(file, 'UTF-8');
+          var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock;
+          promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة.';
+
+          // فصل البيانات base64 عن الـ prefix (data:image/jpeg;base64,....) لكل صورة
+          var _parts = [{ text: promptText }];
+          for (var pk = 0; pk < dataUrls.length; pk++) {
+            var dataUrl = dataUrls[pk];
+            if (!dataUrl) continue;
+            var _commaIdx = dataUrl.indexOf(',');
+            var base64Data = _commaIdx > -1 ? dataUrl.slice(_commaIdx + 1) : dataUrl;
+            var mimeMatch = /^data:([^;]+);base64/.exec(dataUrl);
+            var mimeType = mimeMatch ? mimeMatch[1] : (imgs[pk].type || 'image/jpeg');
+            _parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+          }
+
+          var _visionBody = JSON.stringify({ contents: [{ parts: _parts }] });
+          var visionRes, visionData;
+          var _maxRetries = 3;
+          for (var _attempt = 0; _attempt <= _maxRetries; _attempt++) {
+            visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
+              body: _visionBody
+            });
+
+            if (visionRes.status === 429) {
+              throw Object.assign(new Error('rate-limited'), { _rateLimited: true });
+            }
+
+            if (visionRes.status === 503 && _attempt < _maxRetries) {
+              if (typingEl2) {
+                var _tEl = typingEl2.querySelector('.message-content');
+                if (_tEl) _tEl.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> السيرفر مزدحم، بحاول تاني... (' + (_attempt + 1) + '/' + _maxRetries + ')';
+              }
+              await new Promise(function(r){ setTimeout(r, 1500 * (_attempt + 1)); });
+              continue;
+            }
+            break;
+          }
+          visionData = await visionRes.json();
+          var visionAnswer = (visionData.candidates && visionData.candidates[0] && visionData.candidates[0].content &&
+            visionData.candidates[0].content.parts && visionData.candidates[0].content.parts[0] &&
+            visionData.candidates[0].content.parts[0].text) || null;
+          if (!visionAnswer && visionData.error) throw new Error(JSON.stringify(visionData.error));
+          if (!visionAnswer) visionAnswer = 'عذراً، مقدرتش أحلل المرفقات.';
+          if (window.aiChatHistory) {
+            window.aiChatHistory.push({ role:'user', content: '[أرسل المستخدم '+imgs.length+' صورة'+(validDocs.length ? (' و'+validDocs.length+' ملف') : '')+'] ' + (extraText||'') });
+            window.aiChatHistory.push({ role:'assistant', content: visionAnswer });
+            if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+          }
+          if (typingEl2) typingEl2.remove();
+          if (msgs) {
+            var aiImgDiv = document.createElement('div');
+            aiImgDiv.className = 'message received';
+            var _ansUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+            aiImgDiv.id = 'msg-'+_ansUid; aiImgDiv.dataset.msgId = _ansUid;
+            aiImgDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona2.emoji+' '+persona2.name+'</div><div class="message-content">'+visionAnswer+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+            msgs.appendChild(aiImgDiv); msgs.scrollTop = msgs.scrollHeight;
+            if (typeof window.addAIMuteButton === 'function') { var _t2 = aiImgDiv.querySelector('.message-content'); if (_t2) window.addAIMuteButton(aiImgDiv, _t2.textContent); }
+          }
+        } catch(errImg) {
+          if (typingEl2) typingEl2.remove();
+          if (msgs) {
+            var ed2 = document.createElement('div');
+            ed2.className = 'message received';
+            var _msg2;
+            if (errImg && errImg._rateLimited) {
+              _msg2 = '⏳ في زحمة على الخدمة المجانية دلوقتي (تجاوزنا الحد المسموح للدقيقة). جرّب تاني بعد شوية.';
+            } else {
+              var _detail = (errImg && errImg.message ? String(errImg.message) : '').slice(0, 200);
+              _msg2 = '❌ مقدرتش أحلل المرفقات. تأكد إن مفتاح Gemini صحيح ومفعّل.' + (_detail ? '<br><span style="font-size:.75rem;opacity:.7;direction:ltr;display:inline-block">' + escapeHtml(_detail) + '</span>' : '');
+            }
+            ed2.innerHTML = '<div class="message-content" style="color:#ef4444">'+_msg2+'</div>';
+            msgs.appendChild(ed2); msgs.scrollTop = msgs.scrollHeight;
+          }
+          console.error('AI attachment error:', errImg);
         }
         return;
       }
@@ -10882,12 +10894,15 @@ function slStopAllAnimations() {
       var histLimit = userMsg.length > 2000 ? 2 : userMsg.length > 800 ? 4 : 8;
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
 
+      var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.';
+
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
-          temperature: 0.4
+          temperature: 0.4,
+          reasoning_effort: 'high'
         };
       }
 
@@ -10902,11 +10917,23 @@ function slStopAllAnimations() {
       }
 
       try {
-        var result = await callGroq('openai/gpt-oss-120b', 1500, histMsgs);
+        var result = await callGroq('openai/gpt-oss-120b', 2200, histMsgs);
         // Retry with smaller model if context overflow
         if (!result.res.ok && (result.res.status===400||result.res.status===413||
             (result.data&&result.data.error&&/context|length|token/i.test(JSON.stringify(result.data.error))))) {
           result = await callGroq('openai/gpt-oss-20b', 4000, []);
+        }
+        // لو الموديل رفض معامل reasoning_effort لأي سبب، جرّب تاني من غيره
+        if (!result.res.ok && result.data && result.data.error && /reasoning_effort/i.test(JSON.stringify(result.data.error))) {
+          var _retryHist = histMsgs;
+          var _payloadNoReason = buildPayload('openai/gpt-oss-120b', 2200, _retryHist);
+          delete _payloadNoReason.reasoning_effort;
+          var _res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer '+apiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify(_payloadNoReason)
+          });
+          result = { res: _res2, data: await _res2.json() };
         }
         var answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
         if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));

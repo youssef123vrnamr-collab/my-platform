@@ -95,7 +95,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <link rel="stylesheet" href="style.css">
-  <script src="multi-file-upload.js" defer></script>
   <style>
     /* ===== إصلاح الفيديو ===== */
     .video-player-container {
@@ -545,13 +544,15 @@
 </div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><h3>Astronomy AI</h3><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="clearAIChat()" title="مسح المحادثة"><i class="fas fa-trash"></i></button><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area">
   <div class="reply-preview-bar" id="aiReplyPreview" style="display:none"><div class="reply-preview-line"></div><div class="reply-preview-body"><span class="reply-preview-sender" id="aiReplyPreviewSender"></span><span class="reply-preview-text" id="aiReplyPreviewText"></span></div><button class="reply-preview-close" onclick="cancelReply('ai')"><i class="fas fa-times"></i></button></div>
-  <div id="aiFilePreview" class="unified-file-preview" style="display:none"><span id="aiFilePreviewName" class="unified-file-name"></span><button onclick="clearAIFile()" class="unified-file-clear"><i class="fas fa-times"></i></button></div>
+  <div id="aiFilePreview" class="unified-file-preview" style="display:none;flex-wrap:wrap;gap:.4rem"></div>
   <div class="unified-input-wrapper" id="aiInputWrapper">
     <textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="unified-textarea" onkeypress="handleAIKeyPress(event)"></textarea>
     <div class="unified-bottom-row">
       <div class="unified-left-btns">
-        <button class="unified-tool-btn" onclick="document.getElementById('aiFileInput').click()" title="إرفاق صورة أو ملف"><i class="fas fa-paperclip"></i></button>
-        <input id="aiFileInput" type="file" style="display:none" accept="image/*,.txt,.csv,.json,.md,.js,.py,.html,.css,.log" onchange="handleAIFileSelect(this)">
+        <button class="unified-tool-btn" onclick="document.getElementById('aiFileInput').click()" title="إرفاق ملفات (حتى 5)"><i class="fas fa-paperclip"></i></button>
+        <input id="aiFileInput" type="file" style="display:none" accept=".txt,.csv,.json,.md,.js,.py,.html,.css,.log" multiple onchange="handleAIFileSelect(this)">
+        <button class="unified-tool-btn" onclick="document.getElementById('aiImageInput').click()" title="إرفاق صور (حتى 5)"><i class="fas fa-image"></i></button>
+        <input id="aiImageInput" type="file" style="display:none" accept="image/*" multiple onchange="handleAIImageSelect(this)">
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
         <button class="unified-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية"><i class="fas fa-headphones"></i></button>
       </div>

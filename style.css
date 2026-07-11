@@ -401,7 +401,7 @@ button, [onclick] {
     .message-delete-btn:hover { transform: scale(1.2); opacity: 1; }
     .message:hover .message-delete-btn { display: flex; }
     .message-delete-btn.admin { background: #dc2626; width: 26px; height: 26px; font-size: .8rem; top: -10px; left: -10px; }
-    .chat-input-area { padding: 1rem 1.5rem; background: rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.1); }
+    .chat-input-area { padding: 1.5rem; background: rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.1); }
     .chat-input-wrapper { background: rgba(255,255,255,.05); border-radius: 30px; padding: .5rem; border: 1px solid rgba(255,255,255,.1); display: flex; align-items: center; gap: .5rem; }
     .chat-input { background: 0 0; border: none; color: #fff; font-family: 'Cairo', sans-serif; font-size: .95rem; resize: none; padding: .5rem; outline: 0; flex: 1; }
     .chat-tool-btn { width: 40px; height: 40px; border: none; background: rgba(255,255,255,.1); color: #aaa; border-radius: 50%; cursor: pointer; transition: all .3s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -559,64 +559,8 @@ button, [onclick] {
     .feedback-actions { display: flex; gap: 0.8rem; margin-top: 0.5rem; }
     .reply-btn { background: linear-gradient(135deg, #06b6d4, #0891b2); border: none; color: white; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; }
     .delete-feedback-btn { background: rgba(239,68,68,0.2); border: none; color: #ef4444; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; }
-    .reply-status { font-size: 0.75rem; color: #10b981; margin-top: 0.5rem; }.debug-btn { display: none !important; }
-
-    /* ===== Multi-file upload chip previews ===== */
-    .file-preview-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 6px 16px;
-      background: rgba(0,0,0,.15);
-      border-top: 1px solid rgba(255,255,255,.06);
-      max-height: 100px;
-      overflow-y: auto;
-    }
-    .file-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 8px 3px 10px;
-      background: rgba(99,102,241,.15);
-      border: 1px solid rgba(99,102,241,.3);
-      border-radius: 8px;
-      font-size: .75rem;
-      color: #e0e7ff;
-      animation: fadeInUp .2s ease;
-      max-width: 200px;
-    }
-    .file-chip-name {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-weight: 600;
-      font-size: .7rem;
-      max-width: 100px;
-    }
-    .file-chip-size {
-      font-size: .6rem;
-      color: #888;
-    }
-    .file-chip-remove {
-      width: 16px;
-      height: 16px;
-      border: none;
-      background: rgba(239,68,68,.25);
-      color: #ef4444;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: .5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: all .2s;
-      padding: 0;
-    }
-    .file-chip-remove:hover {
-      background: rgba(239,68,68,.5);
-      transform: scale(1.15);
-    }
+    .reply-status { font-size: 0.75rem; color: #10b981; margin-top: 0.5rem; }
+    .debug-btn { display: none !important; }
 
     /* ===== تحسينات التحقق من المدخلات في الوقت الفعلي ===== */
     .field-hint {
