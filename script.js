@@ -285,7 +285,10 @@ async function isAdminUser(userId) {
     if (s.length <= 10) return s ? s[0] + "••••" : "(غير محدّد)";
     return s.slice(0, 5) + "•".repeat(Math.min(20, Math.max(6, s.length - 10))) + s.slice(-5);
   }
-  function getAiApiKey(){ return (_currentAiKey && String(_currentAiKey).trim()) || AI_KEY_DEFAULT; }
+  function getAiApiKey(){
+    if (window.GroqKeyPool && window.GroqKeyPool.count()) return window.GroqKeyPool.next();
+    return (_currentAiKey && String(_currentAiKey).trim()) || AI_KEY_DEFAULT;
+  }
   function listenAiKey(){
     try {
       if (_aiKeyUnsub) { _aiKeyUnsub(); _aiKeyUnsub = null; }
@@ -295,6 +298,10 @@ async function isAdminUser(userId) {
           _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
           _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
           _currentTavilyKey = (d.tavilyApiKey && String(d.tavilyApiKey).trim()) || "";
+          const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
+          const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
+          if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
+          if (window.GeminiKeyPool) window.GeminiKeyPool.setKeys(geminiArr);
           const disp = document.getElementById("currentAiKeyDisplay");
           if (disp) disp.textContent = _maskKey(_currentAiKey);
         },
@@ -309,6 +316,10 @@ async function isAdminUser(userId) {
       _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
       _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
       _currentTavilyKey = (d.tavilyApiKey && String(d.tavilyApiKey).trim()) || "";
+      const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
+      const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
+      if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
+      if (window.GeminiKeyPool) window.GeminiKeyPool.setKeys(geminiArr);
     } catch(e){ console.warn("loadAiKeyOnce failed", e); }
   }
   function openAiKeyModal(){
@@ -406,7 +417,10 @@ async function isAdminUser(userId) {
   // ====== مفتاح Gemini API (لتحليل الصور — مجاني وأكثر استقراراً من Groq للصور) ======
   // بيتحفظ على السيرفر (Firestore: system/ai_settings, field: geminiApiKey) بالظبط زي مفتاح Groq،
   // المشرف بس هو اللي يقدر يحطه/يغيّره، وكل المستخدمين بياخدوه تلقائياً من غير ما يعملوا حاجة.
-  function getGeminiApiKey(){ return (_currentGeminiKey && String(_currentGeminiKey).trim()) || ""; }
+  function getGeminiApiKey(){
+    if (window.GeminiKeyPool && window.GeminiKeyPool.count()) return window.GeminiKeyPool.next();
+    return (_currentGeminiKey && String(_currentGeminiKey).trim()) || "";
+  }
   function openGeminiKeyModal(){
     if (!isAdmin) { SoundEffects && SoundEffects.error && SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
     const v = window.prompt(
@@ -764,6 +778,7 @@ async function updateAdminUI() {
             addItem("geminiKeyMenuItem","fas fa-key","مفتاح تحليل الصور 🖼️", () => { menu.classList.remove("active"); openGeminiKeyModal(); });
             addItem("tavilyKeyMenuItem","fas fa-globe","مفتاح البحث في الإنترنت 🔎", () => { menu.classList.remove("active"); openTavilyKeyModal(); });
             addItem("issuesLogMenuItem","fas fa-triangle-exclamation","المشاكل 🛠️", () => { menu.classList.remove("active"); window.openIssuesModal(); });
+            addItem("multiKeyMenuItem","fas fa-layer-group","توزيع مفاتيح API 🔑", () => { menu.classList.remove("active"); window.openMultiKeyModal(); });
             addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); });
             addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); });
             addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); });
@@ -10908,7 +10923,89 @@ function slStopAllAnimations() {
     document.getElementById('issuesRefreshBtn').addEventListener('click', render);
     modal.addEventListener('click', function (e) { if (e.target === modal) modal.remove(); });
   };
-  // للمشرف: window.AIHealth.snapshot() في الـ console يوريه حالة كل مزوّد لحظياً
+  // ══════════════════════════════════════════════════════════════
+  // ── مجمّع مفاتيح API (ApiKeyPool): لو حطّيت أكتر من مفتاح Groq/Gemini،
+  // بيوزّع الطلبات بينهم (Round-Robin)، ولو مفتاح فشل مرتين على التوالي
+  // بيتجنّبه لمدة 5 دقايق وياخد بمفتاح تاني بدل ما يوقف النظام كله.
+  // ══════════════════════════════════════════════════════════════
+  window.ApiKeyPool = window.ApiKeyPool || {
+    create: function () {
+      var state = { keys: [], idx: 0, status: {} };
+      return {
+        setKeys: function (arr) {
+          var clean = (arr || []).map(function (k) { return (k || '').toString().trim(); }).filter(Boolean);
+          state.keys = clean;
+          if (state.idx >= state.keys.length) state.idx = 0;
+        },
+        count: function () { return state.keys.length; },
+        next: function () {
+          if (!state.keys.length) return null;
+          var n = state.keys.length;
+          for (var i = 0; i < n; i++) {
+            var k = state.keys[state.idx % n];
+            state.idx = (state.idx + 1) % n;
+            var s = state.status[k];
+            var degraded = s && s.consecFail >= 2 && (Date.now() - s.lastFailAt) < 300000;
+            if (!degraded) return k;
+          }
+          return state.keys[0]; // كل المفاتيح متعبة — نجرب أول واحد بره كل حال (أفضل من توقف كامل)
+        },
+        report: function (key, ok) {
+          if (!key) return;
+          var s = state.status[key] || (state.status[key] = { consecFail: 0, lastFailAt: 0 });
+          if (ok) s.consecFail = 0; else { s.consecFail++; s.lastFailAt = Date.now(); }
+        }
+      };
+    }
+  };
+  window.GroqKeyPool = window.GroqKeyPool || window.ApiKeyPool.create();
+  window.GeminiKeyPool = window.GeminiKeyPool || window.ApiKeyPool.create();
+
+  window.openMultiKeyModal = function () {
+    if (typeof isAdmin !== 'undefined' && !isAdmin) { if (typeof showToast === 'function') showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
+    var old = document.getElementById('multiKeyModal');
+    if (old) old.remove();
+    var modal = document.createElement('div');
+    modal.id = 'multiKeyModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10091;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(8px)';
+    var groqCount = window.GroqKeyPool ? window.GroqKeyPool.count() : 0;
+    var geminiCount = window.GeminiKeyPool ? window.GeminiKeyPool.count() : 0;
+    modal.innerHTML =
+      '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(6,182,212,.4);border-radius:22px;width:95%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;padding:1.3rem;box-shadow:0 30px 70px rgba(0,0,0,.7)">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">'
+      + '<h2 style="color:#67e8f9;font-size:1.05rem;font-weight:900;margin:0">🔑 توزيع مفاتيح API (Load Balancing)</h2>'
+      + '<button id="mkCloseBtn" style="background:rgba(255,255,255,.08);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">×</button>'
+      + '</div>'
+      + '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.9rem">حط أكتر من مفتاح، مفتاح في كل سطر. النظام هيوزّع الطلبات بينهم تلقائياً، ولو مفتاح وصل لحد الكوتا هيتجنّبه مؤقتاً ويستخدم اللي بعده.</p>'
+      + '<div style="overflow-y:auto;flex:1">'
+      + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح Groq (حالياً: ' + groqCount + ')</label>'
+      + '<textarea id="mkGroqTextarea" placeholder="gsk_...\ngsk_...\ngsk_..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:1rem;resize:vertical"></textarea>'
+      + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح Gemini (حالياً: ' + geminiCount + ')</label>'
+      + '<textarea id="mkGeminiTextarea" placeholder="AIza...\nAIza..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:.5rem;resize:vertical"></textarea>'
+      + '</div>'
+      + '<button id="mkSaveBtn" style="margin-top:.8rem;background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:14px;padding:.8rem;font-family:Cairo,inherit;font-weight:800;font-size:.9rem;cursor:pointer">💾 حفظ وتوزيع المفاتيح</button>'
+      + '</div>';
+    document.body.appendChild(modal);
+    document.getElementById('mkCloseBtn').addEventListener('click', function () { modal.remove(); });
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.remove(); });
+    document.getElementById('mkSaveBtn').addEventListener('click', async function () {
+      var groqLines = (document.getElementById('mkGroqTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+      var geminiLines = (document.getElementById('mkGeminiTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!groqLines.length && !geminiLines.length) { if (typeof showToast === 'function') showToast('⚠️ حط مفتاح واحد على الأقل'); return; }
+      try {
+        var payload = { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+        if (groqLines.length) { payload.groqApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, groqLines); }
+        if (geminiLines.length) { payload.geminiApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, geminiLines); }
+        await db.collection('system').doc('ai_settings').set(payload, { merge: true });
+        if (typeof loadAiKeyOnce === 'function') await loadAiKeyOnce();
+        if (typeof showToast === 'function') showToast('✅ اتضافوا المفاتيح ودلوقتي النظام بيوزّع بينهم');
+        modal.remove();
+      } catch (e) {
+        console.error('saveMultiKeys err', e);
+        if (typeof showToast === 'function') showToast('❌ فشل الحفظ — تأكد من صلاحيات Firestore');
+      }
+    });
+  };
 
   // ── Space context helpers ──
   var NASA_KEY = 'DEMO_KEY';
@@ -11073,8 +11170,15 @@ function slStopAllAnimations() {
             });
 
             if (visionRes.status === 429) {
+              if (window.GeminiKeyPool) window.GeminiKeyPool.report(geminiKey, false);
+              var _nextGKey = window.GeminiKeyPool ? window.GeminiKeyPool.next() : null;
+              if (_nextGKey && _nextGKey !== geminiKey && _attempt < _maxRetries) {
+                geminiKey = _nextGKey;
+                continue;
+              }
               throw Object.assign(new Error('rate-limited'), { _rateLimited: true });
             }
+            if (window.GeminiKeyPool) window.GeminiKeyPool.report(geminiKey, true);
 
             if (visionRes.status === 503 && _attempt < _maxRetries) {
               if (typingEl2) {
@@ -11390,12 +11494,20 @@ function slStopAllAnimations() {
       }
 
       async function callGroq(model, maxTok, hist) {
-        var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer '+apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildPayload(model, maxTok, hist))
-        });
-        var data = await res.json();
+        var pool = window.GroqKeyPool;
+        var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
+        var res, data, usedKey;
+        for (var i = 0; i < maxAttempts; i++) {
+          usedKey = (pool && pool.count()) ? pool.next() : apiKey;
+          res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify(buildPayload(model, maxTok, hist))
+          });
+          data = await res.json();
+          if (pool) pool.report(usedKey, res.ok || res.status !== 429);
+          if (res.ok || res.status !== 429) break; // نجح، أو فشل بسبب مش كوتا (زي محتوى مرفوض) فمفيش فايدة نبدّل مفتاح
+        }
         return { res: res, data: data };
       }
 
@@ -11403,32 +11515,39 @@ function slStopAllAnimations() {
       var _debugGroqDetail = '';
       var _debugGeminiDetail = '';
       async function callGeminiTextFallback() {
-        var gKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
-        if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
-        try {
-          var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock;
-          var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
-          _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
-          var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
-            body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: 2200 } })
-          });
-          var d = await r.json();
-          var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
-          if (!txt && d && d.error) { _debugGeminiDetail = 'HTTP ' + r.status + ' — ' + JSON.stringify(d.error).slice(0,150); console.warn('AI Router: Gemini fallback رجّع خطأ:', d.error); }
-          else if (!txt) { _debugGeminiDetail = 'HTTP ' + r.status + ' — رد غير متوقع: ' + JSON.stringify(d).slice(0,150); }
-          if (window.AIHealth) window.AIHealth.record('gemini', !!txt);
-          return txt || null;
-        } catch (eG) { _debugGeminiDetail = String(eG && eG.message || eG).slice(0,150); if (window.AIHealth) window.AIHealth.record('gemini', false); console.warn('AI Router: Gemini fallback فشل هو كمان:', eG); return null; }
+        var pool = window.GeminiKeyPool;
+        var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
+        for (var i = 0; i < maxAttempts; i++) {
+          var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
+          if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
+          try {
+            var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock;
+            var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
+            _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
+            var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
+              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: 2200 } })
+            });
+            var d = await r.json();
+            var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
+            if (pool) pool.report(gKey, r.status !== 429);
+            if (!txt && d && d.error) { _debugGeminiDetail = 'HTTP ' + r.status + ' — ' + JSON.stringify(d.error).slice(0,150); console.warn('AI Router: Gemini fallback رجّع خطأ:', d.error); }
+            else if (!txt) { _debugGeminiDetail = 'HTTP ' + r.status + ' — رد غير متوقع: ' + JSON.stringify(d).slice(0,150); }
+            if (window.AIHealth) window.AIHealth.record('gemini', !!txt);
+            if (txt) return txt;
+            if (r.status !== 429) return null; // فشل لسبب مش كوتا، مفيش فايدة نبدّل مفتاح
+          } catch (eG) { _debugGeminiDetail = String(eG && eG.message || eG).slice(0,150); if (window.AIHealth) window.AIHealth.record('gemini', false); console.warn('AI Router: Gemini fallback فشل هو كمان:', eG); return null; }
+        }
+        return null;
       }
 
       var answer = null;
       try {
         var result = await callGroq('openai/gpt-oss-120b', 2200, histMsgs);
-        // Retry with smaller model if context overflow
-        if (!result.res.ok && (result.res.status===400||result.res.status===413||
-            (result.data&&result.data.error&&/context|length|token/i.test(JSON.stringify(result.data.error))))) {
+        // Retry with smaller model if context overflow — لكن مش لو السبب rate limit (429)، عشان الموديل الصغير عنده كوتا يومية منفصلة ومحدودة برضو، ومفيش داعي نستهلكها في حاجة الحل الحقيقي ليها هو الانتقال لـ Gemini
+        if (!result.res.ok && result.res.status !== 429 && (result.res.status===400||result.res.status===413||
+            (result.data&&result.data.error&&/context|length/i.test(JSON.stringify(result.data.error))))) {
           result = await callGroq('openai/gpt-oss-20b', 4000, []);
         }
         // لو الموديل رفض معامل reasoning_effort لأي سبب، جرّب تاني من غيره
