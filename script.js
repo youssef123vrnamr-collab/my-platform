@@ -810,7 +810,7 @@ async function updateAdminUI() {
         });
         // كل الكورسات تظهر كبطاقات في المكتبة (مدفوعة ومجانية)
         if (ids.length) {
-          paidArr.push({ id: d.id, title: c.title || 'كورس بدون اسم', videoIds: ids, price: c.price || 0, imageUrl: c.imageUrl || "" });
+          paidArr.push({ id: d.id, title: c.title || 'كورس بدون اسم', description: c.description || '', videoIds: ids, price: c.price || 0, imageUrl: c.imageUrl || "" });
         }
       });
       paidCourseVideoIds = paidSet;
@@ -2417,6 +2417,19 @@ async function updateAdminUI() {
       displayAIMessage("عذراً، فشل الاتصال بالذكاء الاصطناعي.", "ai");
     }
   }
+  // ── مؤشر تفكير مخصص لمنصة "فلك" — نظام شمسي مصغّر بدل الدائرة الدوارة التقليدية ──
+  window.buildCosmosThinkingHTML = function(label) {
+    return '<div class="cosmos-thinking">'
+      + '<div class="cosmos-thinking-orbit">'
+        + '<div class="cosmos-thinking-ring r1"></div>'
+        + '<div class="cosmos-thinking-ring r2"></div>'
+        + '<div class="cosmos-thinking-planet p1"></div>'
+        + '<div class="cosmos-thinking-planet p2"></div>'
+        + '<div class="cosmos-thinking-core"></div>'
+      + '</div>'
+      + '<span class="cosmos-thinking-label">' + escapeHtml(label || 'بيفكر') + '<span class="cosmos-thinking-dot">.</span><span class="cosmos-thinking-dot">.</span><span class="cosmos-thinking-dot">.</span></span>'
+      + '</div>';
+  };
   function displayAIMessage(text, sender) { let cont = document.getElementById("aiChatMessages"); if (!cont) return; let msg = document.createElement("div"); msg.className = "message " + (sender === "user" ? "sent" : "received"); let time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }); let html = ""; if (sender === "received") html += '<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>'; html += '<div class="message-content">' + escapeHtml(text) + '</div><div class="message-time">' + time + '</div>'; msg.innerHTML = html; cont.appendChild(msg); cont.scrollTop = cont.scrollHeight; }
   function handleAIKeyPress(e) { /* زر Enter من الكيبورد بيعمل سطر جديد بس، الإرسال يبقى فقط بالضغط على زر الإرسال */ }
 
@@ -10182,7 +10195,7 @@ function slStopAllAnimations() {
           typingEl.className = 'message received';
           typingEl.id = 'aiTypingIndicator';
           var pName = (_persona || AI_PERSONAS[0]).name;
-          typingEl.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> ' + pName + ' يفكر...</div>';
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pName + ' يفكر') + '</div>';
           msgs.appendChild(typingEl);
           msgs.scrollTop = msgs.scrollHeight;
         }
@@ -10767,7 +10780,7 @@ function slStopAllAnimations() {
         if (msgs) {
           typingEl2 = document.createElement('div');
           typingEl2.className = 'message received';
-          typingEl2.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> '+persona2.name+' بيحلل المرفقات...</div>';
+          typingEl2.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(persona2.name + ' بيحلل المرفقات') + '</div>';
           msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
         }
         try {
@@ -10814,7 +10827,7 @@ function slStopAllAnimations() {
             if (visionRes.status === 503 && _attempt < _maxRetries) {
               if (typingEl2) {
                 var _tEl = typingEl2.querySelector('.message-content');
-                if (_tEl) _tEl.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> السيرفر مزدحم، بحاول تاني... (' + (_attempt + 1) + '/' + _maxRetries + ')';
+                if (_tEl) _tEl.innerHTML = window.buildCosmosThinkingHTML('السيرفر مزدحم، بحاول تاني (' + (_attempt + 1) + '/' + _maxRetries + ')');
               }
               await new Promise(function(r){ setTimeout(r, 1500 * (_attempt + 1)); });
               continue;
@@ -10916,7 +10929,7 @@ function slStopAllAnimations() {
         typingEl = document.createElement('div');
         typingEl.className = 'message received';
         var pNameT = (window.getCurrentAIPersona() || {name:'Astronomy AI'}).name;
-        typingEl.innerHTML = '<div class="message-content" style="color:#888"><i class="fas fa-circle-notch fa-spin"></i> '+pNameT+' يفكر...</div>';
+        typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' يفكر') + '</div>';
         msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
       }
 
@@ -10971,6 +10984,37 @@ function slStopAllAnimations() {
         }
       } catch(eExamCtx) { /* تجاهل أي خطأ في حساب الإحصائيات */ }
 
+      // ── سياق الكورسات — يخلي الذكاء الاصطناعي عارف كل كورس، وصفه، سعره، والفيديوهات اللي جواه ──
+      var _courseContextBlock = '';
+      try {
+        if (typeof paidCoursesData !== 'undefined' && paidCoursesData && paidCoursesData.length) {
+          var _cList = paidCoursesData.slice(0, 60).map(function(c, ci){
+            var _priceTxt = (c.price && c.price > 0) ? (c.price + ' جنيه') : 'مجاني';
+            var _descTxt = c.description ? (' — الوصف: ' + String(c.description).slice(0, 200)) : '';
+            var _vidTitles = (typeof videos !== 'undefined' && videos && c.videoIds && c.videoIds.length)
+              ? c.videoIds.map(function(vid){
+                  var _vv = videos.find(function(v){ return v.id === vid; });
+                  return _vv ? _vv.title : null;
+                }).filter(Boolean)
+              : [];
+            var _vidTxt = _vidTitles.length ? ('\n   الفيديوهات داخل الكورس (' + _vidTitles.length + '): ' + _vidTitles.map(function(t){ return '"' + t + '"'; }).join('، ')) : '';
+            return (ci + 1) + '. كورس "' + (c.title || 'بدون اسم') + '" — السعر: ' + _priceTxt + _descTxt + _vidTxt;
+          }).join('\n');
+          _courseContextBlock = '\n\n--- كورسات المنصة ---\nعدد الكورسات الكلي: ' + paidCoursesData.length + '\nقائمة الكورسات، وصفها، سعرها، والفيديوهات بداخل كل كورس:\n' + _cList + '\n---\nلو المستخدم سأل عن كورس معين (اسمه، محتواه، سعره، عدد فيديوهاته، هل هو مجاني أو مدفوع، أو أي تفصيل عنه)، استخدم القائمة دي في إجابتك بدقة. لو الكورس اللي سأل عنه مش موجود في القائمة، قوله بوضوح إنه مش لاقيه ومتخترعش معلومات.';
+        }
+      } catch(eCourseCtx) { /* تجاهل أي خطأ في تجميع بيانات الكورسات */ }
+
+      // ── سياق المعلومات اللي علّمها المشرف يدوياً للذكاء الاصطناعي (أسئلة وأجوبة مخصصة) ──
+      var _knowledgeContextBlock = '';
+      try {
+        if (typeof aiKnowledgeBase !== 'undefined' && aiKnowledgeBase && aiKnowledgeBase.length) {
+          var _kList = aiKnowledgeBase.slice(0, 50).map(function(k, ki){
+            return (ki + 1) + '. سؤال: "' + (k.question || '') + '" — الإجابة المعتمدة: "' + (k.answer || '') + '"';
+          }).join('\n');
+          _knowledgeContextBlock = '\n\n--- معلومات مخصصة علّمها مشرف المنصة للذكاء الاصطناعي ---\n' + _kList + '\n---\nلو سؤال المستخدم قريب من أحد الأسئلة دي، اعتمد على الإجابة المعتمدة هنا كمصدر موثوق أساسي.';
+        }
+      } catch(eKnowCtx) { /* تجاهل أي خطأ */ }
+
       // ── نبذة عن بنية المنصة التقنية (عشان يقدر يجاوب عن أسئلة عامة عن التصميم) ──
       var _archContextBlock = '\n\n--- نبذة عن بنية منصة فلك (استخدمها لو حد سأل عن التصميم التقني للمنصة، بدون كشف تفاصيل حساسة زي المفاتيح) ---\nالمنصة "فلك" تطبيق ويب تعليمي لعلم الفلك، مبني بـ HTML/CSS/JavaScript عادي (من غير فريمورك)، وبيستخدم Firebase/Firestore كقاعدة بيانات وخدمة مصادقة (تسجيل دخول Google)، Cloudinary لاستضافة الفيديوهات والصور، ونظام امتحانات تفاعلي لكل فيديو مع تصحيح تلقائي. فيه شات جماعي عام، شات خاص مع المشرف، وشات ذكاء اصطناعي (زيي أنا) بيستخدم Groq API للردود النصية و Gemini API لتحليل الصور والملفات. المنصة تدعم PWA (تتحمّل كتطبيق) وواجهتها بالكامل بالعربي RTL.\n---';
 
@@ -10979,7 +11023,7 @@ function slStopAllAnimations() {
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
           temperature: 0.4,
           reasoning_effort: 'high'
