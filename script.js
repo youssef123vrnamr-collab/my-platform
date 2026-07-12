@@ -11403,6 +11403,13 @@ function slStopAllAnimations() {
         _aiApiMsg = 'بالرد على رسالة سابقة ("'+_aiReplyPayload.text+'"):\n' + userMsg + _extraContextForAI;
       }
 
+      // ── لو الطلب واضح إنه طلب كتابة كود/صفحة/تطبيق/لعبة، نديله مساحة أكبر بكتير في الرد (توكنز أعلى)
+      // عشان يقدر يكتب كود كامل واحترافي من غير ما يتقطع أو يختصر بسبب حد التوكنز ──
+      var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
+      var _mainMaxTok     = _isCodeReq ? 8000 : 2200;
+      var _fallbackMaxTok = _isCodeReq ? 8000 : 4000;
+      var _geminiMaxTok   = _isCodeReq ? 8000 : 2200;
+
       // ── Show user bubble ──
       var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
       if (msgs) {
@@ -11515,7 +11522,7 @@ function slStopAllAnimations() {
 
       var _imageGenPolicyBlock = '\n\nقاعدة إلزامية بخصوص الصور: إنت شخصياً متقدرش تولّد أو ترفع صور — التوليد الفعلي بيحصل من نظام منفصل تلقائي. ممنوع تمامًا تكتب رابط صورة وهمي (زي https://... .png أو .jpg من عندك) أو تتظاهر إنك "ولّدت" أو "أرفقت" صورة، لأن ده هيبقى معلومة كاذبة. لو حسيت إن المستخدم طالب صورة ولسه مطلعتش، قوله بوضوح إنك هتولدها له الآن أو اطلب منه يعيد صياغة طلبه بوضوح (مثلاً "اعمل لي صورة كذا")، من غير ما تخترع أي رابط أو تفاصيل ملف.';
 
-      var _codeFormatPolicyBlock = '\n\nقاعدة إلزامية لما تكتب كود برمجي: لو المستخدم طلب منك تكتب كود (HTML/CSS/JS أو أي لغة)، اكتب الكود كامل وشغّال من غير اختصار أو حذف أجزاء ("...") إلا لو هو نفسه طلب مقتطف بسيط بس. حط كل كود جوه ثلاث علامات ``` مع كتابة اسم اللغة بعدها مباشرة (زي ```html أو ```css أو ```js) من غير مسافة، وسيب سطر فاضي قبل وبعد الكتلة. لو الكود عبارة عن أكتر من ملف (مثلاً صفحة HTML + تنسيق CSS + سكريبت JS)، اكتب كل ملف في كتلة ``` منفصلة بلغته الصحيحة بالترتيب: html أولاً ثم css ثم js، عشان الواجهة هتعرضهم تلقائياً كملفات منفصلة قابلة للنسخ والتنزيل. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كل كتلة كود تلقائياً لملف قابل للنسخ والتنزيل، إلا لو المستخدم قال صراحة إنه عايز الكود يتكتب بس من غير ما يتعمله ملف — في الحالة دي برضو اكتب الكود بنفس الطريقة بين ``` وهو هيتعرض كنص بس من غير زرار تنزيل.';
+      var _codeFormatPolicyBlock = '\n\nقاعدة إلزامية لما تكتب كود برمجي: لو المستخدم طلب منك تكتب كود (HTML/CSS/JS أو أي لغة)، اكتب الكود كامل وشغّال 100% من غير اختصار أو حذف أجزاء ("...") ومن غير تعليقات زي "أكمل باقي الكود هنا"، حتى لو الكود طويل جداً ومعقد (صفحة كاملة، لعبة، تطبيق) — مفيش حد أقصى لطول الكود، اكتب كل اللي المشروع محتاجه باحترافية زي مبرمج خبير، حتى لو ده معناه مئات الأسطر. حط كل كود جوه ثلاث علامات ``` مع كتابة اسم اللغة بعدها مباشرة (زي ```html أو ```css أو ```js) من غير مسافة، وسيب سطر فاضي قبل وبعد الكتلة. لو الكود عبارة عن أكتر من ملف (مثلاً صفحة HTML + تنسيق CSS + سكريبت JS)، اكتب كل ملف في كتلة ``` منفصلة بلغته الصحيحة بالترتيب: html أولاً ثم css ثم js، عشان الواجهة هتعرضهم تلقائياً كملفات منفصلة قابلة للنسخ والتنزيل والتشغيل المباشر في متصفح المستخدم. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كل كتلة كود تلقائياً لملف قابل للنسخ والتنزيل، إلا لو المستخدم قال صراحة إنه عايز الكود يتكتب بس من غير ما يتعمله ملف — في الحالة دي برضو اكتب الكود بنفس الطريقة بين ``` وهو هيتعرض كنص بس من غير زرار تنزيل.';
 
       function buildPayload(model, maxTok, hist) {
         return {
@@ -11561,7 +11568,7 @@ function slStopAllAnimations() {
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
-              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: 2200 } })
+              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } })
             });
             var d = await r.json();
             var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
@@ -11578,16 +11585,16 @@ function slStopAllAnimations() {
 
       var answer = null;
       try {
-        var result = await callGroq('openai/gpt-oss-120b', 2200, histMsgs);
+        var result = await callGroq('openai/gpt-oss-120b', _mainMaxTok, histMsgs);
         // Retry with smaller model if context overflow — لكن مش لو السبب rate limit (429)، عشان الموديل الصغير عنده كوتا يومية منفصلة ومحدودة برضو، ومفيش داعي نستهلكها في حاجة الحل الحقيقي ليها هو الانتقال لـ Gemini
         if (!result.res.ok && result.res.status !== 429 && (result.res.status===400||result.res.status===413||
             (result.data&&result.data.error&&/context|length/i.test(JSON.stringify(result.data.error))))) {
-          result = await callGroq('openai/gpt-oss-20b', 4000, []);
+          result = await callGroq('openai/gpt-oss-20b', _fallbackMaxTok, []);
         }
         // لو الموديل رفض معامل reasoning_effort لأي سبب، جرّب تاني من غيره
         if (!result.res.ok && result.data && result.data.error && /reasoning_effort/i.test(JSON.stringify(result.data.error))) {
           var _retryHist = histMsgs;
-          var _payloadNoReason = buildPayload('openai/gpt-oss-120b', 2200, _retryHist);
+          var _payloadNoReason = buildPayload('openai/gpt-oss-120b', _mainMaxTok, _retryHist);
           delete _payloadNoReason.reasoning_effort;
           var _res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -12748,7 +12755,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
                   + '<pre><code>'+_escHtmlAI(b.code)+'</code></pre></div>';
     });
 
+    var hasHtml = blocks.some(function(b){ return b.lang === 'html' || b.lang === 'htm' || /<!DOCTYPE|<html[\s>]/i.test(b.code); });
+    var runBtn = hasHtml
+      ? '<button type="button" class="ai-code-download-btn ai-code-run-btn" onclick="toggleAICodeRun(\''+gid+'\', this)"><i class="fas fa-play"></i> شغّل المعاينة</button>'
+      : '';
+
     var footer = '<div class="ai-code-file-footer">'
+      + runBtn
       + '<button type="button" class="ai-code-download-btn" onclick="downloadAICodeFile(\''+gid+'\', window.__aiCodeActiveIdx_'+gid+'||0)"><i class="fas fa-download"></i> تنزيل هذا الملف</button>'
       + (blocks.length > 1 ? '<button type="button" class="ai-code-download-btn ai-code-download-all" onclick="downloadAllAICodeFiles(\''+gid+'\')"><i class="fas fa-file-archive"></i> تنزيل كل الملفات ('+blocks.length+')</button>' : '')
       + '</div>';
@@ -12759,6 +12772,48 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
          + footer
          + '</div>';
   }
+
+  // ── دمج كتل html/css/js في مستند واحد قابل للتشغيل، وعرضه كمعاينة حية جوه فقاعة الشات ──
+  function _buildRunnableHTML(blocks){
+    var htmlBlock = blocks.find(function(b){ return b.lang === 'html' || b.lang === 'htm'; }) || blocks.find(function(b){ return /<!DOCTYPE|<html[\s>]/i.test(b.code); });
+    var cssCombined = blocks.filter(function(b){ return b.lang === 'css' || b.lang === 'scss'; }).map(function(b){ return b.code; }).join('\n');
+    var jsCombined  = blocks.filter(function(b){ return b.lang === 'js' || b.lang === 'javascript'; }).map(function(b){ return b.code; }).join('\n');
+    var doc = htmlBlock ? htmlBlock.code : '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body></body></html>';
+    if (cssCombined) {
+      if (/<\/head>/i.test(doc)) doc = doc.replace(/<\/head>/i, '<style>'+cssCombined+'</style></head>');
+      else if (/<head[^>]*>/i.test(doc)) doc = doc.replace(/(<head[^>]*>)/i, '$1<style>'+cssCombined+'</style>');
+      else doc = '<style>'+cssCombined+'</style>' + doc;
+    }
+    if (jsCombined) {
+      if (/<\/body>/i.test(doc)) doc = doc.replace(/<\/body>/i, '<script>'+jsCombined+'<\/script></body>');
+      else doc += '<script>'+jsCombined+'<\/script>';
+    }
+    return doc;
+  }
+
+  window.toggleAICodeRun = function(gid, btnEl){
+    var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
+    if (!card) return;
+    var existing = card.querySelector('.ai-code-run-frame-wrap');
+    if (existing) {
+      existing.remove();
+      if (btnEl) btnEl.innerHTML = '<i class="fas fa-play"></i> شغّل المعاينة';
+      return;
+    }
+    var group = window.__aiCodeGroups[gid];
+    if (!group) return;
+    var doc = _buildRunnableHTML(group);
+    var wrap = document.createElement('div');
+    wrap.className = 'ai-code-run-frame-wrap';
+    var iframe = document.createElement('iframe');
+    iframe.className = 'ai-code-run-frame';
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock');
+    iframe.srcdoc = doc;
+    wrap.appendChild(iframe);
+    card.appendChild(wrap);
+    if (btnEl) btnEl.innerHTML = '<i class="fas fa-stop"></i> إخفاء المعاينة';
+    setTimeout(function(){ wrap.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 80);
+  };
 
   window.switchAICodeTab = function(gid, idx){
     var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
