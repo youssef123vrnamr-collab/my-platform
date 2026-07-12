@@ -8126,3 +8126,189 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 #aiChatModal #aiChatMessages .message.sent .cosmos-legacy-hidden {
   display: none !important;
 }
+
+/* ============================================================
+   🩹 إصلاح: منع كتلة الكود من "الخروج" برة إطار الفقاعة/الشاشة
+   السبب: عناصر flex بيبقى عندها min-width تلقائي بيساوي حجم
+   المحتوى الداخلي (زي سطر كود طويل)، فبيدفع العنصر يكبر برة حدود
+   الشاشة. الحل: نجبر min-width:0 على كل حلقة الأباء، ونتأكد إن
+   الـ overflow-x متحكم فيه من جوه بس (مش من برة).
+   ============================================================ */
+#aiChatModal .chat-messages,
+#aiChatModal #aiChatMessages {
+  overflow-x: hidden !important;
+}
+#aiChatModal #aiChatMessages .message,
+#aiChatModal #aiChatMessages .message.received,
+#aiChatModal #aiChatMessages .message.sent,
+#aiChatModal #aiChatMessages .message-content {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+.ai-code-file-card {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+.ai-code-file-tabs,
+.ai-code-file-panels,
+.ai-code-panel,
+.ai-code-panel-bar {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+.ai-code-file-panels pre,
+.message-content pre {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+  white-space: pre !important;
+  overflow-wrap: normal !important;
+}
+.ai-code-file-panels code,
+.message-content code {
+  white-space: pre !important;
+}
+/* أي رابط أو نص طويل بلا فراغات جوه رسالة عادية (مش كود) لازم يلف بدل ما يطلع برة */
+#aiChatModal #aiChatMessages .message-content {
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+/* ============================================================
+   ⏹️ زرار الإرسال ↔ إيقاف — بيتحول لمربع/إيقاف احترافي وقت الرد
+   ============================================================ */
+.unified-send-btn.generating {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 3px 14px rgba(239,68,68,.45) !important;
+  animation: aiSendBtnPulse 1.6s ease-in-out infinite;
+}
+.unified-send-btn.generating i {
+  font-size: .85rem !important;
+}
+@keyframes aiSendBtnPulse {
+  0%, 100% { box-shadow: 0 3px 14px rgba(239,68,68,.45); }
+  50%      { box-shadow: 0 3px 20px rgba(239,68,68,.75); }
+}
+
+/* ============================================================
+   📎 مرفقات احترافية — قبل الإرسال (بريفيو) وبعد الإرسال (فقاعة)
+   ============================================================ */
+.ai-attach-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  padding: .5rem;
+}
+.ai-attach-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  padding: .4rem .5rem;
+  max-width: 190px;
+  animation: aiAttachPop .2s ease;
+}
+@keyframes aiAttachPop { from { opacity:0; transform:scale(.9); } to { opacity:1; transform:scale(1); } }
+.ai-attach-card.is-image {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  width: 84px;
+  max-width: 84px;
+  overflow: hidden;
+}
+.ai-attach-card.is-image .ai-attach-thumb {
+  width: 100%;
+  height: 84px;
+  object-fit: cover;
+  display: block;
+  background: rgba(0,0,0,.2);
+}
+.ai-attach-card.is-image .ai-attach-meta {
+  padding: .3rem .35rem;
+}
+.ai-attach-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .95rem;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+.ai-attach-icon.ft-pdf   { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.ai-attach-icon.ft-code  { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.ai-attach-icon.ft-doc   { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.ai-attach-icon.ft-sheet { background: linear-gradient(135deg, #16a34a, #15803d); }
+.ai-attach-icon.ft-zip   { background: linear-gradient(135deg, #d97706, #b45309); }
+.ai-attach-meta { min-width: 0; flex: 1; }
+.ai-attach-name {
+  font-size: .74rem;
+  color: #e5e7eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+.ai-attach-card.is-image .ai-attach-name { max-width: 100%; }
+.ai-attach-size {
+  font-size: .64rem;
+  color: rgba(255,255,255,.5);
+}
+.ai-attach-remove {
+  position: absolute;
+  top: -6px;
+  inset-inline-end: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #14101f;
+  background: #ef4444;
+  color: #fff;
+  font-size: .6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* بعد الإرسال — جوه فقاعة الرسالة */
+.ai-sent-attach-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  margin-bottom: .35rem;
+}
+.ai-sent-attach-images img {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+.ai-sent-attach-files {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  margin-bottom: .35rem;
+}
+.ai-sent-file-chip {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  background: rgba(255,255,255,.08);
+  border-radius: 10px;
+  padding: .35rem .55rem;
+}
+.ai-sent-file-chip .ai-attach-name { color: #fff; max-width: 160px; }

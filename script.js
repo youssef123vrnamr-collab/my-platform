@@ -7884,25 +7884,78 @@ window.updateActiveToolLabel = function(label) {
   window._aiSelectedFiles = window._aiSelectedFiles || [];
   window._aiSelectedImages = window._aiSelectedImages || [];
 
+  // ── أيقونة/لون بطاقة الملف حسب امتداده — لشكل احترافي منظم (متاحة عالمياً عشان تُستخدم برضو وقت عرض الرسالة بعد الإرسال) ──
+  window._aiFileIconInfo = function(name) {
+    const ext = (String(name || '').split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf') return { icon: 'fa-file-pdf', cls: 'ft-pdf' };
+    if (['doc', 'docx'].includes(ext)) return { icon: 'fa-file-word', cls: 'ft-doc' };
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return { icon: 'fa-file-excel', cls: 'ft-sheet' };
+    if (['zip', 'rar', '7z'].includes(ext)) return { icon: 'fa-file-archive', cls: 'ft-zip' };
+    if (['js', 'jsx', 'ts', 'tsx', 'html', 'htm', 'css', 'json', 'py', 'java', 'php', 'c', 'cpp', 'sql', 'sh'].includes(ext)) return { icon: 'fa-file-code', cls: 'ft-code' };
+    if (['txt', 'md', 'log'].includes(ext)) return { icon: 'fa-file-alt', cls: '' };
+    return { icon: 'fa-file', cls: '' };
+  };
+  window._aiFileSizeLabel = function(bytes) {
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / 1024).toFixed(1) + ' KB';
+  };
+  const _aiFileIconInfo = window._aiFileIconInfo;
+  const _aiFileSizeLabel = window._aiFileSizeLabel;
+
+  // ── كاش لروابط معاينة الصور (object URLs) عشان منعملش URL جديد كل مرة نرسم فيها البريفيو ──
+  window._aiAttachThumbCache = window._aiAttachThumbCache || new WeakMap();
+  function _aiThumbUrl(file) {
+    if (window._aiAttachThumbCache.has(file)) return window._aiAttachThumbCache.get(file);
+    const url = URL.createObjectURL(file);
+    window._aiAttachThumbCache.set(file, url);
+    return url;
+  }
+
   function renderAIAttachPreview() {
     const preview = document.getElementById('aiFilePreview');
     if (!preview) return;
     const items = [].concat(
-      window._aiSelectedFiles.map((f, i) => ({ type: 'file', i, f })),
-      window._aiSelectedImages.map((f, i) => ({ type: 'image', i, f }))
+      window._aiSelectedImages.map((f, i) => ({ type: 'image', i, f })),
+      window._aiSelectedFiles.map((f, i) => ({ type: 'file', i, f }))
     );
     if (!items.length) { preview.style.display = 'none'; preview.innerHTML = ''; return; }
     preview.style.display = 'flex';
+    preview.className = 'ai-attach-grid';
     preview.innerHTML = items.map(it => {
-      const icon = it.type === 'image' ? '🖼️' : '📎';
-      const label = `${icon} ${it.f.name} (${(it.f.size / 1024).toFixed(1)} KB)`;
-      return `<span class="unified-file-name" style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,.06);padding:.25rem .55rem;border-radius:8px;max-width:100%">${label}<button onclick="removeAIAttachment('${it.type}',${it.i})" class="unified-file-clear" style="margin:0"><i class="fas fa-times"></i></button></span>`;
+      const removeBtn = `<button type="button" class="ai-attach-remove" onclick="removeAIAttachment('${it.type}',${it.i})" title="إزالة"><i class="fas fa-times"></i></button>`;
+      if (it.type === 'image') {
+        return `<div class="ai-attach-card is-image">
+          ${removeBtn}
+          <img class="ai-attach-thumb" src="${_aiThumbUrl(it.f)}" alt="${escapeHtml(it.f.name)}">
+          <div class="ai-attach-meta">
+            <div class="ai-attach-name" title="${escapeHtml(it.f.name)}">${escapeHtml(it.f.name)}</div>
+            <div class="ai-attach-size">${_aiFileSizeLabel(it.f.size)}</div>
+          </div>
+        </div>`;
+      }
+      const info = _aiFileIconInfo(it.f.name);
+      return `<div class="ai-attach-card">
+        ${removeBtn}
+        <div class="ai-attach-icon ${info.cls}"><i class="fas ${info.icon}"></i></div>
+        <div class="ai-attach-meta">
+          <div class="ai-attach-name" title="${escapeHtml(it.f.name)}">${escapeHtml(it.f.name)}</div>
+          <div class="ai-attach-size">${_aiFileSizeLabel(it.f.size)}</div>
+        </div>
+      </div>`;
     }).join('');
   }
 
   window.removeAIAttachment = function(type, idx) {
-    if (type === 'image') window._aiSelectedImages.splice(idx, 1);
-    else window._aiSelectedFiles.splice(idx, 1);
+    if (type === 'image') {
+      var removed = window._aiSelectedImages[idx];
+      if (removed && window._aiAttachThumbCache.has(removed)) {
+        try { URL.revokeObjectURL(window._aiAttachThumbCache.get(removed)); } catch(e){}
+        window._aiAttachThumbCache.delete(removed);
+      }
+      window._aiSelectedImages.splice(idx, 1);
+    } else {
+      window._aiSelectedFiles.splice(idx, 1);
+    }
     renderAIAttachPreview();
   };
 
@@ -7936,6 +7989,51 @@ window.updateActiveToolLabel = function(label) {
     window._aiSelectedFiles = [];
     window._aiSelectedImages = [];
     renderAIAttachPreview();
+  };
+})();
+
+// ============================================================
+// ⏹️ زرار الإرسال ↔ إيقاف — بيتحول لشكل "إيقاف" احترافي وقت
+// ما الذكاء الاصطناعي بيرد، ولو ضغط المستخدم عليه بيوقف الرد فوراً
+// ============================================================
+(function() {
+  window._aiIsGenerating = false;
+  window._aiGenAbort = null;
+  window._aiCurrentTypingEl = null;
+
+  window.setAISendButtonState = function(isGenerating) {
+    window._aiIsGenerating = !!isGenerating;
+    var btn = document.getElementById('aiSendBtn');
+    if (!btn) return;
+    btn.classList.toggle('generating', !!isGenerating);
+    btn.innerHTML = isGenerating ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-paper-plane"></i>';
+    btn.title = isGenerating ? 'إيقاف الرد' : 'إرسال';
+  };
+
+  // ── وقف فوري: بيقفل الطلب الجاري (لو فيه Fetch لسه ماشي)، بيشيل فقاعة "بيفكر/بيحلل"،
+  // وبيكمّل أي تأثير كتابة حرفية شغالة على طول بدل ما يفضل ينتظر ──
+  window.stopAIGeneration = function() {
+    if (window._aiGenAbort) {
+      try { window._aiGenAbort.abort(); } catch(e) {}
+    }
+    window._aiGenAbort = null;
+    if (window._aiCurrentTypingEl && window._aiCurrentTypingEl.parentNode) {
+      window._aiCurrentTypingEl.remove();
+    }
+    window._aiCurrentTypingEl = null;
+    if (typeof window.__aiStopTypewriter === 'function') window.__aiStopTypewriter();
+    window.setAISendButtonState(false);
+    if (typeof showToast === 'function') showToast('⏹️ تم إيقاف الرد');
+  };
+
+  // ── زرار الإرسال بيستدعي الدالة دي: لو مفيش رد شغال يبعت رسالة عادي،
+  // ولو فيه رد شغال يوقفه بدل ما يبعت رسالة جديدة ──
+  window.handleAISendClick = function() {
+    if (window._aiIsGenerating) {
+      window.stopAIGeneration();
+    } else {
+      window.sendAIMessage();
+    }
   };
 })();
 
@@ -11058,8 +11156,8 @@ function slStopAllAnimations() {
     if (typeof window.getCurrentAIPersona !== 'function') return;
     clearInterval(iv);
 
-    // ── THE ONE CLEAN sendAIMessage ──
-    window.sendAIMessage = async function(injectedMsg) {
+    // ── THE ONE CLEAN sendAIMessage (الاسم القديم بقى تنفيذ داخلي — الغلاف بتاع الإيقاف تحت) ──
+    async function __sendAIMessageImpl(injectedMsg) {
       var inp  = document.getElementById('aiChatInput');
       var msgs = document.getElementById('aiChatMessages');
 
@@ -11148,8 +11246,11 @@ function slStopAllAnimations() {
           div.className = 'message sent';
           div.id = 'msg-'+_imgUid; div.dataset.msgId = _imgUid;
           var _quotedImg = (_replyPayloadImg && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadImg) : '';
-          var _imgsHtml = dataUrls.filter(Boolean).map(function(u){ return '<img src="'+u+'" style="max-width:120px;max-height:120px;border-radius:10px;margin:2px;display:inline-block;object-fit:cover">'; }).join('');
-          var _docsHtml = validDocs.length ? ('<div style="font-size:.78rem;opacity:.8;margin-top:.3rem">📎 '+validDocs.map(function(f){return escapeHtml(f.name);}).join('، ')+'</div>') : '';
+          var _imgsHtml = dataUrls.filter(Boolean).length ? ('<div class="ai-sent-attach-images">'+dataUrls.filter(Boolean).map(function(u){ return '<img src="'+u+'" alt="مرفق">'; }).join('')+'</div>') : '';
+          var _docsHtml = validDocs.length ? ('<div class="ai-sent-attach-files">'+validDocs.map(function(f){
+              var info = window._aiFileIconInfo(f.name);
+              return '<div class="ai-sent-file-chip"><div class="ai-attach-icon '+info.cls+'"><i class="fas '+info.icon+'"></i></div><div class="ai-attach-meta"><div class="ai-attach-name">'+escapeHtml(f.name)+'</div><div class="ai-attach-size">'+window._aiFileSizeLabel(f.size)+'</div></div></div>';
+            }).join('')+'</div>') : '';
           div.innerHTML = _quotedImg + (_imgsHtml ? '<div>'+_imgsHtml+'</div>' : '') + _docsHtml + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
         }
@@ -11162,8 +11263,10 @@ function slStopAllAnimations() {
           typingEl2.className = 'message received';
           typingEl2.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(persona2.name + ' بيحلل المرفقات') + '</div>';
           msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
+          window._aiCurrentTypingEl = typingEl2;
         }
         try {
+          if (window._aiGenAbort && window._aiGenAbort.signal.aborted) return;
           var geminiKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
           if (!geminiKey) {
             if (typingEl2) typingEl2.remove();
@@ -11197,7 +11300,8 @@ function slStopAllAnimations() {
             visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-              body: _visionBody
+              body: _visionBody,
+              signal: window._aiGenAbort ? window._aiGenAbort.signal : undefined
             });
 
             if (visionRes.status === 429) {
@@ -11221,6 +11325,7 @@ function slStopAllAnimations() {
             }
             break;
           }
+          if (window._aiGenAbort && window._aiGenAbort.signal.aborted) return;
           visionData = await visionRes.json();
           var visionAnswer = (visionData.candidates && visionData.candidates[0] && visionData.candidates[0].content &&
             visionData.candidates[0].content.parts && visionData.candidates[0].content.parts[0] &&
@@ -11258,7 +11363,9 @@ function slStopAllAnimations() {
             window.aiChatHistory.push({ role:'assistant', content: visionAnswer });
             if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
           }
+          if (window._aiGenAbort && window._aiGenAbort.signal.aborted) { if (typingEl2) typingEl2.remove(); return; }
           if (typingEl2) typingEl2.remove();
+          if (window._aiCurrentTypingEl === typingEl2) window._aiCurrentTypingEl = null;
           if (msgs) {
             window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(extraText||'');
             var aiImgDiv = document.createElement('div');
@@ -11270,6 +11377,7 @@ function slStopAllAnimations() {
             if (typeof window.addAIMuteButton === 'function') { var _t2 = aiImgDiv.querySelector('.message-content'); if (_t2) window.addAIMuteButton(aiImgDiv, _t2.textContent); }
           }
         } catch(errImg) {
+          if (errImg && errImg.name === 'AbortError') { if (typingEl2) typingEl2.remove(); return; }
           if (window.AIHealth) window.AIHealth.record('gemini', false);
           if (window.logPlatformIssue) window.logPlatformIssue('Gemini (تحليل صور/ملفات)', (errImg && errImg.message) ? String(errImg.message).slice(0,200) : (errImg && errImg._rateLimited ? 'rate-limited (429)' : 'خطأ غير معروف'));
           if (typingEl2) typingEl2.remove();
@@ -11431,6 +11539,7 @@ function slStopAllAnimations() {
         var pNameT = (window.getCurrentAIPersona() || {name:'Astronomy AI'}).name;
         typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' يفكر') + '</div>';
         msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+        window._aiCurrentTypingEl = typingEl;
       }
 
       // ── Persona & API key ──
@@ -11546,7 +11655,8 @@ function slStopAllAnimations() {
           res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(buildPayload(model, maxTok, hist))
+            body: JSON.stringify(buildPayload(model, maxTok, hist)),
+            signal: window._aiGenAbort ? window._aiGenAbort.signal : undefined
           });
           data = await res.json();
           if (pool) pool.report(usedKey, res.ok || res.status !== 429);
@@ -11571,7 +11681,8 @@ function slStopAllAnimations() {
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
-              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } })
+              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } }),
+              signal: window._aiGenAbort ? window._aiGenAbort.signal : undefined
             });
             var d = await r.json();
             var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
@@ -11602,7 +11713,8 @@ function slStopAllAnimations() {
           var _res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+apiKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(_payloadNoReason)
+            body: JSON.stringify(_payloadNoReason),
+            signal: window._aiGenAbort ? window._aiGenAbort.signal : undefined
           });
           result = { res: _res2, data: await _res2.json() };
         }
@@ -11613,10 +11725,14 @@ function slStopAllAnimations() {
         if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));
         if (window.AIHealth) window.AIHealth.record('groq', !!answer);
       } catch (errGroq) {
+        if (errGroq && errGroq.name === 'AbortError') { if (typingEl) typingEl.remove(); return; }
         if (!_debugGroqDetail) _debugGroqDetail = String(errGroq && errGroq.message || errGroq).slice(0,150);
         if (window.AIHealth) window.AIHealth.record('groq', false);
         console.warn('AI Router: Groq فشل، بنجرّب Gemini كخط دفاع ثاني...', errGroq);
       }
+
+      // ── لو المستخدم ضغط إيقاف أثناء محاولة Groq، منكملش على Gemini خالص ──
+      if (window._aiGenAbort && window._aiGenAbort.signal.aborted) { if (typingEl) typingEl.remove(); return; }
 
       // ── Fallback صامت: Groq فشل أو رجّع فاضي → نسيب Gemini يتولى الرد ──
       if (_debugGroqDetail && window.logPlatformIssue) window.logPlatformIssue('Groq (شات نصي)', _debugGroqDetail);
@@ -11624,6 +11740,8 @@ function slStopAllAnimations() {
         answer = await callGeminiTextFallback();
         if (!answer && _debugGeminiDetail && window.logPlatformIssue) window.logPlatformIssue('Gemini (خط الدفاع الثاني)', _debugGeminiDetail);
       }
+
+      if (window._aiGenAbort && window._aiGenAbort.signal.aborted) { if (typingEl) typingEl.remove(); return; }
 
       if (!answer) {
         // ── الاتنين فشلوا فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
@@ -11646,6 +11764,7 @@ function slStopAllAnimations() {
 
         // ── Show AI bubble ──
         if (typingEl) typingEl.remove();
+        if (window._aiCurrentTypingEl === typingEl) window._aiCurrentTypingEl = null;
         if (msgs) {
           // هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ملف/تنزيل؟ نحدد الفلاج قبل الفورمات مباشرة
           window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(userMsg);
@@ -11696,8 +11815,27 @@ function slStopAllAnimations() {
 
     // ── مرجع مباشر للدالة النظيفة (قبل أي wrapper لاحق) — يُستخدم للنداءات الداخلية
     // (زي إرسال محتوى الملفات المرفقة) عشان نتجنب دخول حارس التحقق تاني وهو بيشوف
-    // مربع الكتابة فاضي أو المحتوى طويل فيرفض الإرسال بصمت ──
-    window.__aiSendMessageCore = window.sendAIMessage;
+    // مربع الكتابة فاضي أو المحتوى طويل فيرفض الإرسال بصمت، وبرضو عشان الاستدعاء
+    // الداخلي ده منيجيش يفتح AbortController جديد يلخبط الرد الأصلي ──
+    window.__aiSendMessageCore = __sendAIMessageImpl;
+
+    // ── الغلاف العام: بيفتح AbortController، بيحوّل زرار الإرسال لشكل "إيقاف"،
+    // وبيضمن إنه يرجّع الزرار لشكله الطبيعي مهما حصل (نجاح/فشل/إيقاف يدوي) ──
+    window.sendAIMessage = async function(injectedMsg) {
+      var __ctrl = new AbortController();
+      window._aiGenAbort = __ctrl;
+      window.setAISendButtonState(true);
+      try {
+        await __sendAIMessageImpl(injectedMsg);
+      } catch (eSendWrap) {
+        if (!(eSendWrap && eSendWrap.name === 'AbortError')) {
+          console.error('sendAIMessage error:', eSendWrap);
+        }
+      } finally {
+        if (window._aiGenAbort === __ctrl) window._aiGenAbort = null;
+        window.setAISendButtonState(false);
+      }
+    };
 
     // ── Also patch clearAIChat to reset history ──
     var _origClear = window.clearAIChat;
@@ -13187,6 +13325,12 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   // ── يفكك الـ HTML لعمليات (حرف / فتح تاج / قفل تاج) وبيعيد بناءه تدريجياً ──
   // ملاحظة: بطاقات الكود (.ai-code-file-card) بتتحط دفعة واحدة جوه صندوقها من غير ما تتكتب حرف حرف،
   // عشان الكود يظهر في "الصندوق" بتاعه على طول بدل ما يتكتب زي رسالة عادية.
+  // ── سجل بكل تأثيرات الكتابة الشغالة دلوقتي، عشان زرار "إيقاف" يقدر يكمّلها فوراً ──
+  var _activeTypewriters = [];
+  window.__aiStopTypewriter = function(){
+    _activeTypewriters.slice().forEach(function(fn){ try { fn(); } catch(e){} });
+  };
+
   function typewriterReveal(container, html, onDone){
     var temp = document.createElement('div');
     temp.innerHTML = html;
@@ -13218,7 +13362,45 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 
     var stack = [container];
     var idx = 0;
+    var done = false;
+    var timer = null;
     var msgsBox = document.getElementById('aiChatMessages');
+
+    function processOp(op){
+      var top = stack[stack.length - 1];
+      if (op.type === 'char') {
+        if (top.lastChild && top.lastChild.nodeType === 3) top.lastChild.nodeValue += op.ch;
+        else top.insertBefore(document.createTextNode(op.ch), top === container ? caret : null);
+      } else if (op.type === 'open') {
+        var el = document.createElement(op.tag);
+        if (op.attrs) for (var a = 0; a < op.attrs.length; a++) el.setAttribute(op.attrs[a].name, op.attrs[a].value);
+        top.insertBefore(el, top === container ? caret : null);
+        stack.push(el);
+      } else if (op.type === 'block') {
+        top.insertBefore(op.node, top === container ? caret : null);
+      } else {
+        stack.pop();
+      }
+    }
+
+    function finish(){
+      if (done) return;
+      done = true;
+      if (timer) clearTimeout(timer);
+      var i = _activeTypewriters.indexOf(finishNow);
+      if (i > -1) _activeTypewriters.splice(i, 1);
+      if (caret.parentNode) caret.parentNode.removeChild(caret);
+      if (onDone) onDone();
+    }
+
+    // ── بيكمّل باقي الكتابة كلها دفعة واحدة (بيتنادى من زرار "إيقاف") ──
+    function finishNow(){
+      if (done) return;
+      while (idx < ops.length) processOp(ops[idx++]);
+      if (msgsBox) msgsBox.scrollTop = msgsBox.scrollHeight;
+      finish();
+    }
+    _activeTypewriters.push(finishNow);
 
     function tick(){
       // نتأكد المستخدم كان أصلاً في آخر الشات قبل ما نضيف أي حاجة جديدة —
@@ -13227,29 +13409,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       if (msgsBox) wasNearBottom = (msgsBox.scrollHeight - msgsBox.scrollTop - msgsBox.clientHeight) < 100;
 
       var n = 3;
-      while (n-- > 0 && idx < ops.length) {
-        var op = ops[idx++];
-        var top = stack[stack.length - 1];
-        if (op.type === 'char') {
-          if (top.lastChild && top.lastChild.nodeType === 3) top.lastChild.nodeValue += op.ch;
-          else top.insertBefore(document.createTextNode(op.ch), top === container ? caret : null);
-        } else if (op.type === 'open') {
-          var el = document.createElement(op.tag);
-          if (op.attrs) for (var a = 0; a < op.attrs.length; a++) el.setAttribute(op.attrs[a].name, op.attrs[a].value);
-          top.insertBefore(el, top === container ? caret : null);
-          stack.push(el);
-        } else if (op.type === 'block') {
-          top.insertBefore(op.node, top === container ? caret : null);
-        } else {
-          stack.pop();
-        }
-      }
+      while (n-- > 0 && idx < ops.length) processOp(ops[idx++]);
+
       if (msgsBox && wasNearBottom) msgsBox.scrollTop = msgsBox.scrollHeight;
       if (idx < ops.length) {
-        setTimeout(tick, 10);
+        timer = setTimeout(tick, 10);
       } else {
-        if (caret.parentNode) caret.parentNode.removeChild(caret);
-        if (onDone) onDone();
+        finish();
       }
     }
     tick();
