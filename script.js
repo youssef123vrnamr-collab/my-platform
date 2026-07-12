@@ -13148,6 +13148,8 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
 
   // ── يفكك الـ HTML لعمليات (حرف / فتح تاج / قفل تاج) وبيعيد بناءه تدريجياً ──
+  // ملاحظة: بطاقات الكود (.ai-code-file-card) بتتحط دفعة واحدة جوه صندوقها من غير ما تتكتب حرف حرف،
+  // عشان الكود يظهر في "الصندوق" بتاعه على طول بدل ما يتكتب زي رسالة عادية.
   function typewriterReveal(container, html, onDone){
     var temp = document.createElement('div');
     temp.innerHTML = html;
@@ -13160,9 +13162,14 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           var t = child.nodeValue;
           for (var c = 0; c < t.length; c++) ops.push({ type: 'char', ch: t[c] });
         } else if (child.nodeType === 1) {
-          ops.push({ type: 'open', tag: child.tagName.toLowerCase(), attrs: child.attributes });
-          walk(child);
-          ops.push({ type: 'close' });
+          if (child.classList && child.classList.contains('ai-code-file-card')) {
+            // بطاقة كود كاملة — بتتحط جوّه صندوقها دفعة واحدة، من غير أنيميشن الكتابة حرف حرف
+            ops.push({ type: 'block', node: child.cloneNode(true) });
+          } else {
+            ops.push({ type: 'open', tag: child.tagName.toLowerCase(), attrs: child.attributes });
+            walk(child);
+            ops.push({ type: 'close' });
+          }
         }
       }
     })(temp);
@@ -13177,6 +13184,11 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     var msgsBox = document.getElementById('aiChatMessages');
 
     function tick(){
+      // نتأكد المستخدم كان أصلاً في آخر الشات قبل ما نضيف أي حاجة جديدة —
+      // لو هو طالع يقرأ رسايل قديمة، منجبروش يرجع لتحت في كل تيك
+      var wasNearBottom = true;
+      if (msgsBox) wasNearBottom = (msgsBox.scrollHeight - msgsBox.scrollTop - msgsBox.clientHeight) < 100;
+
       var n = 3;
       while (n-- > 0 && idx < ops.length) {
         var op = ops[idx++];
@@ -13189,11 +13201,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           if (op.attrs) for (var a = 0; a < op.attrs.length; a++) el.setAttribute(op.attrs[a].name, op.attrs[a].value);
           top.insertBefore(el, top === container ? caret : null);
           stack.push(el);
+        } else if (op.type === 'block') {
+          top.insertBefore(op.node, top === container ? caret : null);
         } else {
           stack.pop();
         }
       }
-      if (msgsBox) msgsBox.scrollTop = msgsBox.scrollHeight;
+      if (msgsBox && wasNearBottom) msgsBox.scrollTop = msgsBox.scrollHeight;
       if (idx < ops.length) {
         setTimeout(tick, 10);
       } else {
