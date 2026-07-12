@@ -8126,3 +8126,14 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 #aiChatModal #aiChatMessages .message.sent .cosmos-legacy-hidden {
   display: none !important;
 }
+
+/* مؤشر الكتابة الحيّة (streaming) — كرسر متقطع بيلمع في آخر النص وهو بيتكتب لحظة بلحظة */
+.cosmos-stream-cursor {
+  display: inline-block;
+  margin-inline-start: 2px;
+  animation: cosmosStreamBlink 0.9s steps(1) infinite;
+  color: #6366f1;
+  font-weight: 700;
+}
+@keyframes cosmosStreamBlink { 0%, 45% { opacity: 1; } 46%, 100% { opacity: 0; } }
+.cosmos-live-stream { direction: rtl; unicode-bidi: plaintext; }

@@ -11119,14 +11119,23 @@ function slStopAllAnimations() {
             var _txt = await readAIFileText(f);
             var _flags = _aiScanMalicious(_txt);
             if (_flags.length) {
-              showToast('🚫 الملف "'+f.name+'" اتشال — فيه نمط كود مشبوه/خبيث: '+_flags[0]);
+              // مش بنرفض الملف تاني — بنبعته للـ AI مع تنبيه، لأن الفحص كان بيرفض ملفات شرعية
+              // (زي script.js بتاع المشروع نفسه) غلط لمجرد وجود كلمات زي eval/atob في الكود العادي.
+              showToast('⚠️ "'+f.name+'" فيه نمط كود لازم تراجعه: '+_flags[0]);
+              docContents.push('[ملف: "'+f.name+'" — ⚠️ تنبيه أمني (مش رفض): '+_flags.join('، ')+']\n' + _txt.substring(0, 8000));
               continue;
             }
-            docContents.push('[ملف: "'+f.name+'" — تم فحصه أمنياً ✅]\n' + _txt.substring(0, 3000));
+            docContents.push('[ملف: "'+f.name+'" — تم فحصه أمنياً ✅]\n' + _txt.substring(0, 8000));
           } catch(eDoc) { docContents.push('[تعذّرت قراءة الملف: "'+f.name+'"]'); }
         }
         if (rejectedNames.length) showToast('🚫 اتشال: ' + rejectedNames.join('، '));
         var docsBlock = docContents.length ? ('\n\n--- محتوى الملفات المرفقة (بعد الفحص الأمني) ---\n' + docContents.join('\n\n') + '\n---') : '';
+
+        // ── لو من ضمن الملفات المرفقة ملف كود حقيقي (مش txt/csv/json/log عادي)، ده معناه
+        // المستخدم غالباً عايز تعديل/صيانة على الملف مش شرح نصي — نفعّل "وضع التعديل الصامت":
+        // مفيش رد نصي في الشات، بس صندوق الملف الجاهز يظهر لما يخلص. ──
+        var _codeExtRe = /\.(js|jsx|ts|tsx|html|htm|css|scss|py|c|cpp|h|java|php|rb|go|rs|sql)$/i;
+        window.__cosmosSilentFileEdit = !imgs.length && validDocs.some(function(f){ return _codeExtRe.test(f.name); });
 
         // ── لو مفيش صور، منطق نصي بحت عبر المسار العادي (Groq) ──
         if (!imgs.length) {
@@ -11429,7 +11438,8 @@ function slStopAllAnimations() {
         typingEl = document.createElement('div');
         typingEl.className = 'message received';
         var pNameT = (window.getCurrentAIPersona() || {name:'Astronomy AI'}).name;
-        typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' يفكر') + '</div>';
+        var _thinkLabel = window.__cosmosSilentFileEdit ? (pNameT + ' بيعدّل الملف') : (pNameT + ' يفكر');
+        typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_thinkLabel) + '</div>';
         msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
       }
 
@@ -11527,28 +11537,77 @@ function slStopAllAnimations() {
       // ── هوية خبرة برمجية عالية — تخلي الردود التقنية بمستوى مهندس سينيور محترف بدل إجابات سطحية ──
       var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.';
 
-      function buildPayload(model, maxTok, hist) {
+      function buildPayload(model, maxTok, hist, lean) {
+        // lean=true: بنستخدمها في محاولة الطوارئ (الموديل الصغير) — بنشيل القوائم الثقيلة
+        // (فيديوهات/كورسات/معرفة/إحصائيات) لأنها ممكن لوحدها تتخطى حد الموديل الصغير،
+        // وبنقصّ رسالة المستخدم نفسها لو كانت ضخمة (زي ملف كود كبير مرفق).
+        var sys = lean
+          ? (persona.systemPrompt + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock)
+          : (persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock);
+        var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: sys }].concat(hist).concat([{ role:'user', content: userMsgFinal }]),
           max_tokens: maxTok,
           temperature: 0.4,
           reasoning_effort: 'high'
         };
       }
 
-      async function callGroq(model, maxTok, hist) {
+      // ── بيقرأ رد Groq كـ stream (SSE) ويبعت كل جزء نص جديد لـ onDelta أول ما يوصل،
+      // عشان الرد يظهر وهو بيتكتب لحظة بلحظة بدل ما يظهر كله مرة واحدة في الآخر ──
+      async function _readGroqStream(res, onDelta) {
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder('utf-8');
+        var buffer = '', full = '';
+        while (true) {
+          var chunk = await reader.read();
+          if (chunk.done) break;
+          buffer += decoder.decode(chunk.value, { stream: true });
+          var lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (var li = 0; li < lines.length; li++) {
+            var line = lines[li].trim();
+            if (!line || line.indexOf('data:') !== 0) continue;
+            var jsonStr = line.slice(5).trim();
+            if (jsonStr === '[DONE]') continue;
+            try {
+              var evt = JSON.parse(jsonStr);
+              var delta = evt.choices && evt.choices[0] && evt.choices[0].delta;
+              if (delta && delta.content) { full += delta.content; if (onDelta) onDelta(full); }
+            } catch (eParse) { /* جزء ناقص من الـ chunk، هيكمل مع اللي بعده */ }
+          }
+        }
+        return { choices: [{ message: { content: full } }] };
+      }
+
+      async function callGroq(model, maxTok, hist, lean, onDelta) {
         var pool = window.GroqKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
         var res, data, usedKey;
         for (var i = 0; i < maxAttempts; i++) {
           usedKey = (pool && pool.count()) ? pool.next() : apiKey;
+          var payload = buildPayload(model, maxTok, hist, lean);
+          if (onDelta) payload.stream = true;
           res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(buildPayload(model, maxTok, hist))
+            body: JSON.stringify(payload)
           });
-          data = await res.json();
+          if (onDelta && res.ok && res.body && res.body.getReader) {
+            try { data = await _readGroqStream(res, onDelta); }
+            catch (eStream) {
+              // فشل قراءة الـ stream (متصفح قديم أو انقطاع) — نرجع لنداء عادي من غير stream كشبكة أمان
+              console.warn('stream read failed, falling back to normal request', eStream);
+              var res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST', headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
+                body: JSON.stringify(buildPayload(model, maxTok, hist, lean))
+              });
+              res = res2; data = await res2.json();
+            }
+          } else {
+            data = await res.json();
+          }
           if (pool) pool.report(usedKey, res.ok || res.status !== 429);
           if (res.ok || res.status !== 429) break; // نجح، أو فشل بسبب مش كوتا (زي محتوى مرفوض) فمفيش فايدة نبدّل مفتاح
         }
@@ -11588,11 +11647,18 @@ function slStopAllAnimations() {
 
       var answer = null;
       try {
-        var result = await callGroq('openai/gpt-oss-120b', _mainMaxTok, histMsgs);
+        // ── وضع الكتابة الحيّة: النص بيظهر لحظة بلحظة وهو بيتكتب، إلا في وضع التعديل الصامت
+        // (هناك بنسيب الأنيميشن "بيعدّل الملف" زي ما هي لحد ما بطاقة الملف الجاهزة تظهر) ──
+        var _streamCb = (window.__cosmosSilentFileEdit || !typingEl) ? null : function(partial){
+          var _shown = partial.length > 6000 ? partial.slice(-6000) : partial;
+          typingEl.innerHTML = '<div class="message-content cosmos-live-stream" style="white-space:pre-wrap">' + escapeHtml(_shown) + '<span class="cosmos-stream-cursor">▍</span></div>';
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        };
+        var result = await callGroq('openai/gpt-oss-120b', _mainMaxTok, histMsgs, false, _streamCb);
         // Retry with smaller model if context overflow — لكن مش لو السبب rate limit (429)، عشان الموديل الصغير عنده كوتا يومية منفصلة ومحدودة برضو، ومفيش داعي نستهلكها في حاجة الحل الحقيقي ليها هو الانتقال لـ Gemini
         if (!result.res.ok && result.res.status !== 429 && (result.res.status===400||result.res.status===413||
             (result.data&&result.data.error&&/context|length/i.test(JSON.stringify(result.data.error))))) {
-          result = await callGroq('openai/gpt-oss-20b', _fallbackMaxTok, []);
+          result = await callGroq('openai/gpt-oss-20b', _fallbackMaxTok, [], true);
         }
         // لو الموديل رفض معامل reasoning_effort لأي سبب، جرّب تاني من غيره
         if (!result.res.ok && result.data && result.data.error && /reasoning_effort/i.test(JSON.stringify(result.data.error))) {
@@ -11649,12 +11715,25 @@ function slStopAllAnimations() {
         if (msgs) {
           // هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ملف/تنزيل؟ نحدد الفلاج قبل الفورمات مباشرة
           window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(userMsg);
+          var _silentEdit = window.__cosmosSilentFileEdit; window.__cosmosSilentFileEdit = false; // نستهلك الفلاج مرة واحدة
           var aiDiv = document.createElement('div');
           aiDiv.className = 'message received';
           var _aiAnswerUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
           aiDiv.id = 'msg-'+_aiAnswerUid;
           aiDiv.dataset.msgId = _aiAnswerUid;
-          aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          var _bodyHtml = null;
+          if (_silentEdit && typeof window.formatAIAnswer === 'function') {
+            var _codeOnlyHtml = window.formatAIAnswer(answer, true);
+            if (_codeOnlyHtml && _codeOnlyHtml.trim()) {
+              // وضع "الملف بس": من غير اسم/إيموجي الشخصية ومن غير أي شرح، بس بطاقة الملف الجاهزة
+              _bodyHtml = '<div class="message-content">'+_codeOnlyHtml+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+            }
+          }
+          if (_bodyHtml === null) {
+            // مفيش كود في الرد (سؤال عادي مش تعديل ملف) أو مش وضع صامت — نعرض الرد كامل زي العادة
+            _bodyHtml = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          }
+          aiDiv.innerHTML = _bodyHtml;
           if (window.__cosmosPendingSearchImages && window.__cosmosPendingSearchImages.length) {
             var _gal = document.createElement('div');
             _gal.className = 'cosmos-search-gallery';
@@ -12900,7 +12979,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     return '';
   }
 
-  window.formatAIAnswer = function(raw){
+  window.formatAIAnswer = function(raw, codeOnly){
     if (!raw) return '';
     var noFileMode = !!window.__cosmosNoFileRequested;
     window.__cosmosNoFileRequested = false; // نستهلك الفلاج مرة واحدة بس لكل رد
@@ -12969,6 +13048,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       // نص عادي بين كتلتين كود: لو فاضي أو مجرد فواصل أسطر وفيه مجموعة كود مفتوحة، نتجاهله عشان الكتل تفضل مجمّعة في بطاقة واحدة
       if (pendingGroup.length && /^(<br>\s*)*$/.test(part)) continue;
       flushGroup();
+      if (codeOnly) continue; // وضع "الملف بس": نتجاهل أي شرح/نص حوالين الكود تماماً
       htmlOut += part;
     }
     flushGroup();
