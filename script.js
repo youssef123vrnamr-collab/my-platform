@@ -11524,10 +11524,13 @@ function slStopAllAnimations() {
 
       var _codeFormatPolicyBlock = '\n\nقاعدة إلزامية لما تكتب كود برمجي: لو المستخدم طلب منك تكتب كود (HTML/CSS/JS أو أي لغة)، اكتب الكود كامل وشغّال 100% من غير اختصار أو حذف أجزاء ("...") ومن غير تعليقات زي "أكمل باقي الكود هنا"، حتى لو الكود طويل جداً ومعقد (صفحة كاملة، لعبة، تطبيق) — مفيش حد أقصى لطول الكود، اكتب كل اللي المشروع محتاجه باحترافية زي مبرمج خبير، حتى لو ده معناه مئات الأسطر. حط كل كود جوه ثلاث علامات ``` مع كتابة اسم اللغة بعدها مباشرة (زي ```html أو ```css أو ```js) من غير مسافة، وسيب سطر فاضي قبل وبعد الكتلة. لو الكود عبارة عن أكتر من ملف (مثلاً صفحة HTML + تنسيق CSS + سكريبت JS)، اكتب كل ملف في كتلة ``` منفصلة بلغته الصحيحة بالترتيب: html أولاً ثم css ثم js، عشان الواجهة هتعرضهم تلقائياً كملفات منفصلة قابلة للنسخ والتنزيل والتشغيل المباشر في متصفح المستخدم. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كل كتلة كود تلقائياً لملف قابل للنسخ والتنزيل، إلا لو المستخدم قال صراحة إنه عايز الكود يتكتب بس من غير ما يتعمله ملف — في الحالة دي برضو اكتب الكود بنفس الطريقة بين ``` وهو هيتعرض كنص بس من غير زرار تنزيل.';
 
+      // ── هوية خبرة برمجية عالية — تخلي الردود التقنية بمستوى مهندس سينيور محترف بدل إجابات سطحية ──
+      var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.';
+
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
           temperature: 0.4,
           reasoning_effort: 'high'
@@ -11562,7 +11565,7 @@ function slStopAllAnimations() {
           var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
           if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
           try {
-            var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock;
+            var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock;
             var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
             _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -12875,6 +12878,28 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     } catch(e) { console.error('download failed', e); if (typeof showToast === 'function') showToast('❌ فشل تنزيل الملف'); }
   }
 
+  // ── هل الفقرة دي كود مكتوب من غير ``` (شبكة أمان)؟ ──
+  function _looksLikeCodeParagraph(text){
+    var t = String(text||'').trim();
+    if (!t || /\u0000CB\d+\u0000/.test(t)) return false;
+    var score = 0;
+    if (/<!DOCTYPE/i.test(t) || /<\s*(html|head|body|div|script|style|meta|link|button|section|form|input|canvas|svg|ul|li|table|tr|td)[\s>]/i.test(t)) score += 2;
+    if (/[{};]/.test(t) && (t.match(/[{};]/g) || []).length >= 4) score++;
+    if (/function\s*\w*\s*\(|=>|const\s+\w+\s*=|let\s+\w+\s*=|var\s+\w+\s*=|import\s+.+from|class\s+\w+|def\s+\w+\(|console\.log|document\.\w|window\.\w|addEventListener|\.getElementById/i.test(t)) score++;
+    if ((t.match(/\n/g) || []).length >= 2 && t.length > 80) score++;
+    return score >= 2;
+  }
+
+  // ── تخمين لغة الكود لما نلقيه مكتوب من غير علامة لغة ──
+  function _guessLangFromCode(text){
+    var t = String(text||'');
+    if (/<!DOCTYPE/i.test(t) || /<html[\s>]/i.test(t)) return 'html';
+    if (/<\/?[a-z][^>]*>/i.test(t) && /<\/(div|span|body|head|button|section|form|ul|li|table)>/i.test(t)) return 'html';
+    if (/function\s*\(|=>|const\s+\w+|let\s+\w+|var\s+\w+|document\.\w|window\.\w|console\.log|addEventListener/i.test(t)) return 'js';
+    if (/^\s*[.#]?[\w-]+\s*\{[\s\S]*:[\s\S]*;[\s\S]*\}/.test(t) && !/function|=>|const |let |var /.test(t)) return 'css';
+    return '';
+  }
+
   window.formatAIAnswer = function(raw){
     if (!raw) return '';
     var noFileMode = !!window.__cosmosNoFileRequested;
@@ -12888,6 +12913,18 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       codeBlocks.push({ lang: (lang||'').toLowerCase().trim(), code: code.replace(/\n$/,'') });
       return '\u0000CB' + idx + '\u0000';
     });
+
+    // ── شبكة أمان: لو الموديل كتب كود من غير ما يحطه بين ``` (تجاهل التعليمات)، نكتشفه هنا برضو
+    // ونحوّله لصندوق كود زي ما هو، عشان أي كود المفروض يظهر جوه الصندوق فقط ومتقدرش يظهر كنص عادي أبداً ──
+    s = s.split(/\n\s*\n/).map(function(para){
+      if (/\u0000CB\d+\u0000/.test(para)) return para;
+      if (_looksLikeCodeParagraph(para)) {
+        var idx = codeBlocks.length;
+        codeBlocks.push({ lang: _guessLangFromCode(para), code: para.trim() });
+        return '\u0000CB' + idx + '\u0000';
+      }
+      return para;
+    }).join('\n\n');
 
     // ── تهريب باقي النص العادي (مش هيأثر على الـ placeholders لأنها مش فيها & < >) ──
     s = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
