@@ -7885,6 +7885,113 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 }
 .cosmos-thinking-dot:nth-child(2) { animation-delay: .2s; }
 .cosmos-thinking-dot:nth-child(3) { animation-delay: .4s; }
+
+/* ============================================================
+   💻 بطاقة ملفات الكود اللي الذكاء الاصطناعي بيكتبها في الشات
+   (تابات لكل ملف + نسخ + تنزيل) — مستوحاة من واجهة عرض الأكواد
+   ============================================================ */
+.ai-code-file-card {
+  margin: .5rem 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #14101f;
+  border: 1px solid rgba(255,255,255,.1);
+  direction: ltr;
+}
+.ai-code-file-tabs {
+  display: flex;
+  gap: .35rem;
+  padding: .5rem .5rem 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ai-code-file-tabs::-webkit-scrollbar { display: none; }
+.ai-code-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.65);
+  border-radius: 10px 10px 0 0;
+  padding: .4rem .7rem;
+  font-size: .75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.ai-code-tab.active {
+  background: rgba(99,102,241,.18);
+  border-color: rgba(99,102,241,.4);
+  color: #fff;
+}
+.ai-code-tab-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.ai-code-dot-html { background: #f97316; }
+.ai-code-dot-css  { background: #38bdf8; }
+.ai-code-dot-js   { background: #facc15; }
+.ai-code-dot-json { background: #a3e635; }
+.ai-code-dot-py   { background: #22d3ee; }
+.ai-code-dot-txt, .ai-code-dot-md, .ai-code-dot-sql, .ai-code-dot-sh { background: #94a3b8; }
+.ai-code-file-panels { background: rgba(255,255,255,.03); }
+.ai-code-panel { display: none; }
+.ai-code-panel.active { display: block; }
+.ai-code-panel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .45rem .75rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.ai-code-filename { font-size: .72rem; color: rgba(255,255,255,.5); }
+.ai-code-copy-btn {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #fff;
+  border-radius: 8px;
+  padding: .3rem .6rem;
+  font-size: .72rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+.ai-code-copy-btn:active { background: rgba(255,255,255,.16); }
+.ai-code-file-panels pre {
+  margin: 0;
+  padding: .7rem .8rem;
+  overflow-x: auto;
+  font-size: .8rem;
+  line-height: 1.5;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.ai-code-file-panels code { font-family: 'Consolas', 'Menlo', monospace; color: #e2e8f0; }
+.ai-code-file-footer {
+  display: flex;
+  gap: .5rem;
+  padding: .55rem .7rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.02);
+}
+.ai-code-download-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  padding: .5rem .6rem;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+}
+.ai-code-download-btn:active { filter: brightness(.9); }
+.ai-code-download-all { background: linear-gradient(135deg, #10b981, #06b6d4); }
+
 @keyframes cosmosDotBlink {
   0%, 100% { opacity: .25; }
   50%      { opacity: 1; }

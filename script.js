@@ -2524,7 +2524,23 @@ async function updateAdminUI() {
     "صوره من","صورة من","حط صوره","حط صورة"
   ];
 
+  // ── حماية: لو الرسالة أصلاً كود (HTML/CSS/JS/إلخ) ملصوق من المستخدم، منعتبرهاش "طلب صورة"
+  // حتى لو فيها كلمات زي "image" أو "create" أو "make" جوه الكود نفسه (مثلاً src="...image..." أو تعليق بيقول createImage) ──
+  function isLikelyCode(text) {
+    if (!text) return false;
+    const t = String(text);
+    if (/```/.test(t)) return true; // كتلة كود بين علامات ```
+    if (/<\s*(html|head|body|div|script|style|meta|link|span|button|section|form|input|canvas|svg)[\s>]/i.test(t)) return true;
+    if (/<!DOCTYPE/i.test(t)) return true;
+    let score = 0;
+    if (/[{};]/.test(t) && (t.match(/[{};]/g) || []).length >= 4) score++;
+    if (/function\s*\w*\s*\(|=>|const\s+\w+\s*=|let\s+\w+\s*=|var\s+\w+\s*=|import\s+.+from|class\s+\w+|def\s+\w+\(/i.test(t)) score++;
+    if (t.length > 150 && (t.match(/\n/g) || []).length >= 3) score++;
+    return score >= 2;
+  }
+
   function isImageRequest(text) {
+    if (isLikelyCode(text)) return false;
     const t = text.trim().toLowerCase();
     if (IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger))) return true;
     // احتياط: أي جملة فيها كلمة "صورة/صوره/رسمة/رسم" + فعل طلب واضح، حتى لو مش من القائمة أعلاه بالظبط
@@ -2532,6 +2548,21 @@ async function updateAdminUI() {
     const _hasRequestVerb = /اعمل|اعمللي|ارسم|ولد|انشئ|أنشئ|صمم|هات|هاتلي|جيب|جيبلي|اعطي|اديني|وري|وريني|عايز|عاوز|عمل|طلعلي|سوي|دير|صاور|اريد|ابغى|ابي|make|create|generate|draw|show me|want a/i.test(t);
     return _hasImageWord && _hasRequestVerb;
   }
+
+  // ── هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ما يتعمله ملف/تنزيل؟ ──
+  function wantsNoFileOutput(text) {
+    if (!text) return false;
+    const t = String(text).toLowerCase();
+    const patterns = [
+      'من غير ملف', 'بدون ملف', 'من غير ما تعمله ملف', 'من غير ما تعمل ملف',
+      'من غير ما يعمله ملف', 'من غير ما يعملهولي ملف', 'متعملش ملف', 'من غير تنزيل',
+      'بدون تنزيل', 'من غير تحميل', 'بدون تحميل', 'من غير ما تنزله', 'من غير انزال',
+      'من غير رفع ملف', 'عايز الكود بس', 'عاوز الكود بس', 'اكتب الكود بس', 'بس اكتب الكود',
+      'من غير ما تحمله', 'من غير ملفات', 'من غير ما تعملي ملف'
+    ];
+    return patterns.some(p => t.indexOf(p) !== -1);
+  }
+  window.wantsNoFileOutput = wantsNoFileOutput;
 
   function extractImagePrompt(text) {
     const t = text.trim();
@@ -11229,6 +11260,7 @@ function slStopAllAnimations() {
           }
           if (typingEl2) typingEl2.remove();
           if (msgs) {
+            window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(extraText||'');
             var aiImgDiv = document.createElement('div');
             aiImgDiv.className = 'message received';
             var _ansUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
@@ -11483,10 +11515,12 @@ function slStopAllAnimations() {
 
       var _imageGenPolicyBlock = '\n\nقاعدة إلزامية بخصوص الصور: إنت شخصياً متقدرش تولّد أو ترفع صور — التوليد الفعلي بيحصل من نظام منفصل تلقائي. ممنوع تمامًا تكتب رابط صورة وهمي (زي https://... .png أو .jpg من عندك) أو تتظاهر إنك "ولّدت" أو "أرفقت" صورة، لأن ده هيبقى معلومة كاذبة. لو حسيت إن المستخدم طالب صورة ولسه مطلعتش، قوله بوضوح إنك هتولدها له الآن أو اطلب منه يعيد صياغة طلبه بوضوح (مثلاً "اعمل لي صورة كذا")، من غير ما تخترع أي رابط أو تفاصيل ملف.';
 
+      var _codeFormatPolicyBlock = '\n\nقاعدة إلزامية لما تكتب كود برمجي: لو المستخدم طلب منك تكتب كود (HTML/CSS/JS أو أي لغة)، اكتب الكود كامل وشغّال من غير اختصار أو حذف أجزاء ("...") إلا لو هو نفسه طلب مقتطف بسيط بس. حط كل كود جوه ثلاث علامات ``` مع كتابة اسم اللغة بعدها مباشرة (زي ```html أو ```css أو ```js) من غير مسافة، وسيب سطر فاضي قبل وبعد الكتلة. لو الكود عبارة عن أكتر من ملف (مثلاً صفحة HTML + تنسيق CSS + سكريبت JS)، اكتب كل ملف في كتلة ``` منفصلة بلغته الصحيحة بالترتيب: html أولاً ثم css ثم js، عشان الواجهة هتعرضهم تلقائياً كملفات منفصلة قابلة للنسخ والتنزيل. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كل كتلة كود تلقائياً لملف قابل للنسخ والتنزيل، إلا لو المستخدم قال صراحة إنه عايز الكود يتكتب بس من غير ما يتعمله ملف — في الحالة دي برضو اكتب الكود بنفس الطريقة بين ``` وهو هيتعرض كنص بس من غير زرار تنزيل.';
+
       function buildPayload(model, maxTok, hist) {
         return {
           model: model,
-          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
+          messages: [{ role:'system', content: persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock }].concat(hist).concat([{ role:'user', content: _aiApiMsg }]),
           max_tokens: maxTok,
           temperature: 0.4,
           reasoning_effort: 'high'
@@ -11521,7 +11555,7 @@ function slStopAllAnimations() {
           var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
           if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
           try {
-            var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock;
+            var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock;
             var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
             _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -11603,6 +11637,8 @@ function slStopAllAnimations() {
         // ── Show AI bubble ──
         if (typingEl) typingEl.remove();
         if (msgs) {
+          // هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ملف/تنزيل؟ نحدد الفلاج قبل الفورمات مباشرة
+          window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(userMsg);
           var aiDiv = document.createElement('div');
           aiDiv.className = 'message received';
           var _aiAnswerUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
@@ -12672,17 +12708,139 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 // لشكل نضيف يتقرأ كويس جوه فقاعة الشات، بدل ما يظهر كرموز غريبة
 // ============================================================
 (function(){
+  // ── سجل عام لكتل الكود اللي بتتعرض في الشات — كل مجموعة (رسالة) ليها gid فريد،
+  // وكل كتلة كود جواها متسجلة هنا عشان زراير النسخ/التنزيل تلاقي المحتوى الأصلي من غير مشاكل escaping ──
+  window.__aiCodeGroups = window.__aiCodeGroups || {};
+  var _aiCodeGidCounter = 0;
+
+  var EXT_MAP   = { html:'html', htm:'html', xml:'xml', css:'css', scss:'scss', js:'js', javascript:'js', jsx:'jsx', ts:'ts', typescript:'ts', json:'json', py:'py', python:'py', sql:'sql', sh:'sh', bash:'sh', shell:'sh', c:'c', cpp:'cpp', java:'java', php:'php', rb:'rb', ruby:'rb', go:'go', yaml:'yaml', yml:'yaml', md:'md', markdown:'md' };
+  var LABEL_MAP = { html:'HTML', htm:'HTML', css:'CSS', scss:'SCSS', js:'JS', javascript:'JS', jsx:'JSX', ts:'TS', typescript:'TS', json:'JSON', py:'PY', python:'PY', sql:'SQL', sh:'SH', bash:'SH', shell:'SH', c:'C', cpp:'C++', java:'JAVA', php:'PHP', rb:'RUBY', ruby:'RUBY', go:'GO', yaml:'YAML', yml:'YAML', md:'MD', markdown:'MD' };
+  var NAME_MAP  = { html:'index', css:'style', js:'script', jsx:'app', ts:'app', json:'data', py:'main', sql:'query', sh:'script', c:'main', cpp:'main', java:'Main', php:'index', rb:'main', go:'main', md:'readme' };
+
+  function _escHtmlAI(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ── بناء بطاقة الملفات (تابات + نسخ + تنزيل) لمجموعة كتل كود ──
+  function _buildCodeFileCard(blocks, noFileMode){
+    var gid = 'g' + (++_aiCodeGidCounter) + '_' + Date.now();
+    window.__aiCodeGroups[gid] = blocks;
+
+    if (noFileMode) {
+      // وضع "من غير ملف": نص بسيط زي ما كان قبل كده، من غير تابات ولا زرار تنزيل
+      return blocks.map(function(b){
+        return '<pre style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.6rem;overflow-x:auto;direction:ltr;text-align:left;margin:.4rem 0;font-size:.82rem"><code>'+_escHtmlAI(b.code)+'</code></pre>';
+      }).join('');
+    }
+
+    var tabsHtml = '', panelsHtml = '', usedNames = {};
+    blocks.forEach(function(b, i){
+      var ext = EXT_MAP[b.lang] || 'txt';
+      var label = LABEL_MAP[b.lang] || (b.lang ? b.lang.toUpperCase() : 'TXT');
+      var baseName = NAME_MAP[b.lang] || 'file';
+      var filename = baseName + '.' + ext;
+      if (usedNames[filename]) { usedNames[filename]++; filename = baseName + usedNames[filename] + '.' + ext; }
+      else { usedNames[filename] = 1; }
+      b.filename = filename;
+      tabsHtml += '<button type="button" class="ai-code-tab'+(i===0?' active':'')+'" data-gid="'+gid+'" data-idx="'+i+'" onclick="switchAICodeTab(\''+gid+'\','+i+')">'
+                + '<span class="ai-code-tab-dot ai-code-dot-'+ext+'"></span>' + label + '</button>';
+      panelsHtml += '<div class="ai-code-panel'+(i===0?' active':'')+'" id="cfPanel_'+gid+'_'+i+'">'
+                  + '<div class="ai-code-panel-bar"><span class="ai-code-filename" dir="ltr">'+filename+'</span>'
+                  + '<button type="button" class="ai-code-copy-btn" onclick="copyAICodeBlock(\''+gid+'\','+i+',this)"><i class="fas fa-copy"></i> نسخ</button></div>'
+                  + '<pre><code>'+_escHtmlAI(b.code)+'</code></pre></div>';
+    });
+
+    var footer = '<div class="ai-code-file-footer">'
+      + '<button type="button" class="ai-code-download-btn" onclick="downloadAICodeFile(\''+gid+'\', window.__aiCodeActiveIdx_'+gid+'||0)"><i class="fas fa-download"></i> تنزيل هذا الملف</button>'
+      + (blocks.length > 1 ? '<button type="button" class="ai-code-download-btn ai-code-download-all" onclick="downloadAllAICodeFiles(\''+gid+'\')"><i class="fas fa-file-archive"></i> تنزيل كل الملفات ('+blocks.length+')</button>' : '')
+      + '</div>';
+
+    return '<div class="ai-code-file-card" data-gid="'+gid+'">'
+         + '<div class="ai-code-file-tabs">'+tabsHtml+'</div>'
+         + '<div class="ai-code-file-panels">'+panelsHtml+'</div>'
+         + footer
+         + '</div>';
+  }
+
+  window.switchAICodeTab = function(gid, idx){
+    var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
+    if (!card) return;
+    card.querySelectorAll('.ai-code-tab').forEach(function(t){ t.classList.toggle('active', +t.dataset.idx === idx); });
+    card.querySelectorAll('.ai-code-panel').forEach(function(p, i){ p.classList.toggle('active', i === idx); });
+    window['__aiCodeActiveIdx_' + gid] = idx;
+  };
+
+  window.copyAICodeBlock = function(gid, idx, btnEl){
+    var group = window.__aiCodeGroups[gid];
+    if (!group || !group[idx]) return;
+    var text = group[idx].code;
+    var _done = function(){
+      if (btnEl) { var _orig = btnEl.innerHTML; btnEl.innerHTML = '<i class="fas fa-check"></i> اتنسخ'; setTimeout(function(){ btnEl.innerHTML = _orig; }, 1400); }
+      if (typeof showToast === 'function') showToast('✅ اتنسخ الكود');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(_done).catch(function(){
+        _fallbackCopyAI(text); _done();
+      });
+    } else { _fallbackCopyAI(text); _done(); }
+  };
+  function _fallbackCopyAI(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  window.downloadAICodeFile = function(gid, idx){
+    var group = window.__aiCodeGroups[gid];
+    if (!group || !group[idx]) return;
+    var b = group[idx];
+    _triggerBlobDownload(b.filename || ('file.'+(EXT_MAP[b.lang]||'txt')), b.code);
+    if (typeof showToast === 'function') showToast('⬇️ جاري تنزيل ' + (b.filename||'الملف'));
+  };
+
+  window.downloadAllAICodeFiles = function(gid){
+    var group = window.__aiCodeGroups[gid];
+    if (!group || !group.length) return;
+    group.forEach(function(b, i){
+      setTimeout(function(){
+        _triggerBlobDownload(b.filename || ('file'+i+'.'+(EXT_MAP[b.lang]||'txt')), b.code);
+      }, i * 350); // تأخير بسيط بين كل تنزيل عشان المتصفح ميحجبش التنزيلات المتتالية
+    });
+    if (typeof showToast === 'function') showToast('⬇️ جاري تنزيل ' + group.length + ' ملفات');
+  };
+
+  function _triggerBlobDownload(filename, content){
+    try {
+      var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 300);
+    } catch(e) { console.error('download failed', e); if (typeof showToast === 'function') showToast('❌ فشل تنزيل الملف'); }
+  }
+
   window.formatAIAnswer = function(raw){
     if (!raw) return '';
+    var noFileMode = !!window.__cosmosNoFileRequested;
+    window.__cosmosNoFileRequested = false; // نستهلك الفلاج مرة واحدة بس لكل رد
+
     var s = String(raw);
-    s = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // ── نستخرج كل كتل الكود الأول من النص الخام (قبل الـ escaping) ونسيب مكانها placeholder ──
+    var codeBlocks = [];
     s = s.replace(/```([a-zA-Z0-9]*)\n?([\s\S]*?)```/g, function(m, lang, code){
-      return '<pre style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.6rem;overflow-x:auto;direction:ltr;text-align:left;margin:.4rem 0;font-size:.82rem"><code>'+code.replace(/\n$/,'')+'</code></pre>';
+      var idx = codeBlocks.length;
+      codeBlocks.push({ lang: (lang||'').toLowerCase().trim(), code: code.replace(/\n$/,'') });
+      return '\u0000CB' + idx + '\u0000';
     });
+
+    // ── تهريب باقي النص العادي (مش هيأثر على الـ placeholders لأنها مش فيها & < >) ──
+    s = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
     var lines = s.split('\n'), out = [];
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
-      if (/<pre[\s>]|<\/pre>|<code>/.test(line)) { out.push(line); continue; }
+      if (/\u0000CB\d+\u0000/.test(line)) { out.push(line); continue; }
       var t = line.trim();
       if (/^[-=_]{3,}$/.test(t)) continue; // خط أفقي فاصل
       if (/^\|?[\s:|-]{3,}\|?$/.test(t) && t.indexOf('-') > -1 && t.indexOf('|') > -1) continue; // صف فاصل جدول
@@ -12699,9 +12857,33 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
     s = s.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,.08);padding:.1rem .3rem;border-radius:4px;direction:ltr;display:inline-block">$1</code>');
     s = s.replace(/\n{3,}/g, '\n\n').replace(/\n/g, '<br>');
-    return s;
+
+    // ── لو مفيش كتل كود، رجّع النص عادي ──
+    if (!codeBlocks.length) return s;
+
+    // ── لو فيه كتل كود متجاورة (مفصولة بس بـ <br> أو مفيش حاجة بينها)، نجمعها في بطاقة ملفات واحدة ──
+    // بنلف على الأسطر تاني ونستبدل الـ placeholders، مع تجميع أي كتل متتالية في نفس البطاقة
+    var finalParts = s.split(/(\u0000CB\d+\u0000)/);
+    var htmlOut = '', pendingGroup = [];
+    function flushGroup(){
+      if (!pendingGroup.length) return;
+      htmlOut += _buildCodeFileCard(pendingGroup, noFileMode);
+      pendingGroup = [];
+    }
+    for (var p = 0; p < finalParts.length; p++) {
+      var part = finalParts[p];
+      var mm = part.match(/^\u0000CB(\d+)\u0000$/);
+      if (mm) { pendingGroup.push(codeBlocks[+mm[1]]); continue; }
+      // نص عادي بين كتلتين كود: لو فاضي أو مجرد فواصل أسطر وفيه مجموعة كود مفتوحة، نتجاهله عشان الكتل تفضل مجمّعة في بطاقة واحدة
+      if (pendingGroup.length && /^(<br>\s*)*$/.test(part)) continue;
+      flushGroup();
+      htmlOut += part;
+    }
+    flushGroup();
+    return htmlOut;
   };
 })();
+
 
 // ============================================================
 // 🗑️💬 حذف رسالتي في شات الذكاء الاصطناعي + تحويل رسالة للمشرف
