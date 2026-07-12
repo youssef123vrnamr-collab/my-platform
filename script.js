@@ -2539,14 +2539,22 @@ async function updateAdminUI() {
     return score >= 2;
   }
 
+  // ── جمل بتشاور على صورة موجودة/متبعتة أصلاً (مش طلب توليد صورة جديدة) — لو موجودة، منعتبرش الرسالة طلب صورة أبداً ──
+  const IMAGE_REFERENCE_GUARDS = [
+    'الصوره دي','الصورة دي','هذه الصوره','هذه الصورة','هذي الصوره','هذي الصورة',
+    'الصوره اللي','الصورة اللي','دي الصوره','دي الصورة','في الصوره','في الصورة',
+    'جوه الصوره','جوه الصورة','بالصوره','بالصورة','الصوره الاولى','الصورة الأولى',
+    'this image','this picture','this photo','in this photo','in the image',
+    'شوف الصوره','شوف الصورة','بص على الصوره','بص على الصورة'
+  ];
+
   function isImageRequest(text) {
     if (isLikelyCode(text)) return false;
     const t = text.trim().toLowerCase();
+    // لو الرسالة بتشاور على صورة موجودة (مرفقة أو اتبعتت قبل كده)، دي مش طلب توليد — منعتبرهاش صورة جديدة أبداً
+    if (IMAGE_REFERENCE_GUARDS.some(g => t.includes(g))) return false;
     if (IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger))) return true;
-    // احتياط: أي جملة فيها كلمة "صورة/صوره/رسمة/رسم" + فعل طلب واضح، حتى لو مش من القائمة أعلاه بالظبط
-    const _hasImageWord = /صور[ةه]|رسم[ةه]?|image|picture|photo|drawing/i.test(t);
-    const _hasRequestVerb = /اعمل|اعمللي|ارسم|ولد|انشئ|أنشئ|صمم|هات|هاتلي|جيب|جيبلي|اعطي|اديني|وري|وريني|عايز|عاوز|عمل|طلعلي|سوي|دير|صاور|اريد|ابغى|ابي|make|create|generate|draw|show me|want a/i.test(t);
-    return _hasImageWord && _hasRequestVerb;
+    return false;
   }
 
   // ── هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ما يتعمله ملف/تنزيل؟ ──
