@@ -7892,6 +7892,37 @@ window.updateActiveToolLabel = function(label) {
   window._aiSelectedFiles = window._aiSelectedFiles || [];
   window._aiSelectedImages = window._aiSelectedImages || [];
 
+  // ── أيقونة + لون احترافي حسب امتداد الملف (زي ChatGPT/Claude) ──
+  function _aiFileKind(name){
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    const map = {
+      pdf:  { icon:'fa-file-pdf',    color:'#f14f4f', label:'PDF'  },
+      doc:  { icon:'fa-file-word',   color:'#3b82f6', label:'DOC'  },
+      docx: { icon:'fa-file-word',   color:'#3b82f6', label:'DOCX' },
+      xls:  { icon:'fa-file-excel',  color:'#22c55e', label:'XLS'  },
+      xlsx: { icon:'fa-file-excel',  color:'#22c55e', label:'XLSX' },
+      csv:  { icon:'fa-file-csv',    color:'#22c55e', label:'CSV'  },
+      ppt:  { icon:'fa-file-powerpoint', color:'#f97316', label:'PPT' },
+      pptx: { icon:'fa-file-powerpoint', color:'#f97316', label:'PPTX' },
+      zip:  { icon:'fa-file-zipper', color:'#a855f7', label:'ZIP'  },
+      rar:  { icon:'fa-file-zipper', color:'#a855f7', label:'RAR'  },
+      js:   { icon:'fa-file-code',   color:'#facc15', label:'JS'   },
+      ts:   { icon:'fa-file-code',   color:'#3b82f6', label:'TS'   },
+      html: { icon:'fa-file-code',   color:'#f97316', label:'HTML' },
+      css:  { icon:'fa-file-code',   color:'#38bdf8', label:'CSS'  },
+      json: { icon:'fa-file-code',   color:'#eab308', label:'JSON' },
+      py:   { icon:'fa-file-code',   color:'#3b82f6', label:'PY'   },
+      txt:  { icon:'fa-file-lines',  color:'#94a3b8', label:'TXT'  },
+      md:   { icon:'fa-file-lines',  color:'#94a3b8', label:'MD'   }
+    };
+    return map[ext] || { icon:'fa-file', color:'#8b93a7', label: ext ? ext.toUpperCase() : 'FILE' };
+  }
+
+  function _aiFileSizeLabel(bytes){
+    if (bytes >= 1024*1024) return (bytes/(1024*1024)).toFixed(1) + ' MB';
+    return Math.max(1, Math.round(bytes/1024)) + ' KB';
+  }
+
   function renderAIAttachPreview() {
     const preview = document.getElementById('aiFilePreview');
     if (!preview) return;
@@ -7901,10 +7932,25 @@ window.updateActiveToolLabel = function(label) {
     );
     if (!items.length) { preview.style.display = 'none'; preview.innerHTML = ''; return; }
     preview.style.display = 'flex';
+    preview.classList.add('ai-attach-pro-row');
     preview.innerHTML = items.map(it => {
-      const icon = it.type === 'image' ? '🖼️' : '📎';
-      const label = `${icon} ${it.f.name} (${(it.f.size / 1024).toFixed(1)} KB)`;
-      return `<span class="unified-file-name" style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,.06);padding:.25rem .55rem;border-radius:8px;max-width:100%">${label}<button onclick="removeAIAttachment('${it.type}',${it.i})" class="unified-file-clear" style="margin:0"><i class="fas fa-times"></i></button></span>`;
+      if (it.type === 'image') {
+        const url = URL.createObjectURL(it.f);
+        return `<div class="ai-attach-card ai-attach-card-image" title="${it.f.name}">
+          <img src="${url}" alt="" class="ai-attach-thumb" onload="URL.revokeObjectURL(this.src)">
+          <button type="button" onclick="removeAIAttachment('image',${it.i})" class="ai-attach-remove"><i class="fas fa-xmark"></i></button>
+        </div>`;
+      }
+      const kind = _aiFileKind(it.f.name);
+      const shortName = it.f.name.length > 16 ? it.f.name.slice(0, 13) + '…' : it.f.name;
+      return `<div class="ai-attach-card" title="${it.f.name}">
+        <div class="ai-attach-icon" style="color:${kind.color}"><i class="fas ${kind.icon}"></i></div>
+        <div class="ai-attach-info">
+          <span class="ai-attach-name">${shortName}</span>
+          <span class="ai-attach-meta">${kind.label} · ${_aiFileSizeLabel(it.f.size)}</span>
+        </div>
+        <button type="button" onclick="removeAIAttachment('file',${it.i})" class="ai-attach-remove"><i class="fas fa-xmark"></i></button>
+      </div>`;
     }).join('');
   }
 
@@ -11374,6 +11420,17 @@ function slStopAllAnimations() {
           var _searchLbl = _mentionedDomains.length ? ('بيدور في ' + _mentionedDomains[0]) : 'بيبحث على الإنترنت';
           _searchStatusEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_searchLbl) + '</div>';
           msgs.appendChild(_searchStatusEl); msgs.scrollTop = msgs.scrollHeight;
+          // ── لو معروف اسم الموقع من الأول، نحط أيقونته فورًا وهو "بيفكر" — زي المتصفحات الاحترافية ──
+          if (_mentionedDomains.length) {
+            var _lblEl0 = _searchStatusEl.querySelector('.cosmos-thinking-label');
+            if (_lblEl0) {
+              var _fav0 = document.createElement('img');
+              _fav0.className = 'cosmos-browse-favicon';
+              _fav0.alt = '';
+              _fav0.src = 'https://www.google.com/s2/favicons?sz=32&domain=' + _mentionedDomains[0];
+              _lblEl0.insertBefore(_fav0, _lblEl0.firstChild);
+            }
+          }
         }
         try {
           var _searchRes = await window.performWebSearch(userMsg, _mentionedDomains);
@@ -12833,6 +12890,22 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   var EXT_MAP   = { html:'html', htm:'html', xml:'xml', css:'css', scss:'scss', js:'js', javascript:'js', jsx:'jsx', ts:'ts', typescript:'ts', json:'json', py:'py', python:'py', sql:'sql', sh:'sh', bash:'sh', shell:'sh', c:'c', cpp:'cpp', java:'java', php:'php', rb:'rb', ruby:'rb', go:'go', yaml:'yaml', yml:'yaml', md:'md', markdown:'md' };
   var LABEL_MAP = { html:'HTML', htm:'HTML', css:'CSS', scss:'SCSS', js:'JS', javascript:'JS', jsx:'JSX', ts:'TS', typescript:'TS', json:'JSON', py:'PY', python:'PY', sql:'SQL', sh:'SH', bash:'SH', shell:'SH', c:'C', cpp:'C++', java:'JAVA', php:'PHP', rb:'RUBY', ruby:'RUBY', go:'GO', yaml:'YAML', yml:'YAML', md:'MD', markdown:'MD' };
   var NAME_MAP  = { html:'index', css:'style', js:'script', jsx:'app', ts:'app', json:'data', py:'main', sql:'query', sh:'script', c:'main', cpp:'main', java:'Main', php:'index', rb:'main', go:'main', md:'readme' };
+  // ── خريطة تحويل أسماء اللغات لأسماء highlight.js عشان التلوين يبقى دقيق زي الأدوات الاحترافية ──
+  var HLJS_LANG_MAP = { html:'xml', htm:'xml', css:'css', scss:'scss', js:'javascript', javascript:'javascript', jsx:'javascript', ts:'typescript', typescript:'typescript', json:'json', py:'python', python:'python', sql:'sql', sh:'bash', bash:'bash', shell:'bash', c:'c', cpp:'cpp', java:'java', php:'php', rb:'ruby', ruby:'ruby', go:'go', yaml:'yaml', yml:'yaml', md:'markdown', markdown:'markdown' };
+  // ── يشغّل تلوين الكود الاحترافي (highlight.js) على أي عناصر <code> جوه العنصر المُعطى ──
+  function _highlightProCode(rootEl){
+    if (!rootEl || !window.hljs) return;
+    try {
+      var blocks = rootEl.querySelectorAll ? rootEl.querySelectorAll('pre code') : [];
+      for (var i = 0; i < blocks.length; i++) {
+        var el = blocks[i];
+        if (el.dataset && el.dataset.hljsDone) continue;
+        window.hljs.highlightElement(el);
+        if (el.dataset) el.dataset.hljsDone = '1';
+      }
+    } catch(eHl) {}
+  }
+  window.__cosmosHighlightProCode = _highlightProCode;
 
   function _escHtmlAI(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -12842,9 +12915,10 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     window.__aiCodeGroups[gid] = blocks;
 
     if (noFileMode) {
-      // وضع "من غير ملف": نص بسيط زي ما كان قبل كده، من غير تابات ولا زرار تنزيل
+      // وضع "من غير ملف": نص بسيط، لكن برضه بيتلوّن زي كود احترافي
       return blocks.map(function(b){
-        return '<pre style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.6rem;overflow-x:auto;direction:ltr;text-align:left;margin:.4rem 0;font-size:.82rem"><code>'+_escHtmlAI(b.code)+'</code></pre>';
+        var hljsLang = HLJS_LANG_MAP[b.lang] || b.lang || 'plaintext';
+        return '<pre class="ai-code-pro-pre"><code class="hljs language-'+hljsLang+'">'+_escHtmlAI(b.code)+'</code></pre>';
       }).join('');
     }
 
@@ -12859,10 +12933,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       b.filename = filename;
       tabsHtml += '<button type="button" class="ai-code-tab'+(i===0?' active':'')+'" data-gid="'+gid+'" data-idx="'+i+'" onclick="switchAICodeTab(\''+gid+'\','+i+')">'
                 + '<span class="ai-code-tab-dot ai-code-dot-'+ext+'"></span>' + label + '</button>';
+      var hljsLang = HLJS_LANG_MAP[b.lang] || b.lang || 'plaintext';
+      var lineCount = (b.code.match(/\n/g) || []).length + 1;
       panelsHtml += '<div class="ai-code-panel'+(i===0?' active':'')+'" id="cfPanel_'+gid+'_'+i+'">'
-                  + '<div class="ai-code-panel-bar"><span class="ai-code-filename" dir="ltr">'+filename+'</span>'
+                  + '<div class="ai-code-panel-bar"><span class="ai-code-filename" dir="ltr"><i class="fas fa-code"></i> '+filename+'</span>'
+                  + '<span class="ai-code-linecount">'+lineCount+' سطر</span>'
                   + '<button type="button" class="ai-code-copy-btn" onclick="copyAICodeBlock(\''+gid+'\','+i+',this)"><i class="fas fa-copy"></i> نسخ</button></div>'
-                  + '<pre><code>'+_escHtmlAI(b.code)+'</code></pre></div>';
+                  + '<pre class="ai-code-pro-pre"><code class="hljs language-'+hljsLang+'">'+_escHtmlAI(b.code)+'</code></pre></div>';
     });
 
     var hasHtml = blocks.some(function(b){ return b.lang === 'html' || b.lang === 'htm' || /<!DOCTYPE|<html[\s>]/i.test(b.code); });
@@ -13353,6 +13430,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           stack.push(el);
         } else if (op.type === 'block') {
           top.insertBefore(op.node, top === container ? caret : null);
+          _highlightProCode(op.node);
         } else {
           stack.pop();
         }
