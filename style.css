@@ -7897,6 +7897,9 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   background: #14101f;
   border: 1px solid rgba(255,255,255,.1);
   direction: ltr;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 .ai-code-file-tabs {
   display: flex;
@@ -7933,8 +7936,8 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 .ai-code-dot-json { background: #a3e635; }
 .ai-code-dot-py   { background: #22d3ee; }
 .ai-code-dot-txt, .ai-code-dot-md, .ai-code-dot-sql, .ai-code-dot-sh { background: #94a3b8; }
-.ai-code-file-panels { background: rgba(255,255,255,.03); }
-.ai-code-panel { display: none; }
+.ai-code-file-panels { background: rgba(255,255,255,.03); max-width: 100%; box-sizing: border-box; }
+.ai-code-panel { display: none; max-width: 100%; box-sizing: border-box; }
 .ai-code-panel.active { display: block; }
 .ai-code-panel-bar {
   display: flex;
@@ -7965,14 +7968,20 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   line-height: 1.5;
   max-height: 340px;
   overflow-y: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 .ai-code-file-panels code { font-family: 'Consolas', 'Menlo', monospace; color: #e2e8f0; }
 .ai-code-file-footer {
   display: flex;
+  flex-wrap: wrap;
   gap: .5rem;
   padding: .55rem .7rem;
   border-top: 1px solid rgba(255,255,255,.08);
   background: rgba(255,255,255,.02);
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .ai-code-download-btn {
   flex: 1;

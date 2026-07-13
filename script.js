@@ -12994,6 +12994,11 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     if (/[{};]/.test(t) && (t.match(/[{};]/g) || []).length >= 4) score++;
     if (/function\s*\w*\s*\(|=>|const\s+\w+\s*=|let\s+\w+\s*=|var\s+\w+\s*=|import\s+.+from|class\s+\w+|def\s+\w+\(|console\.log|document\.\w|window\.\w|addEventListener|\.getElementById/i.test(t)) score++;
     if ((t.match(/\n/g) || []).length >= 2 && t.length > 80) score++;
+    // ── شبكة أمان إضافية: كود CSS خالص (سيليكتورز + خصائص) من غير أي كلمات JS/HTML ──
+    // زي: .class { color:#fff; padding:1rem; } أو @media{...} — من غير كده كان بيفلت كنص عادي RTL
+    if (/(^|\n)\s*(@media|@keyframes|@font-face|:root)\b/i.test(t)) score += 2;
+    var cssSelectorRuleCount = (t.match(/[.#]?[\w-]+(\s*[,>+~]\s*[.#]?[\w-]+)*\s*\{[^{}]*:[^{}]*;[^{}]*\}/g) || []).length;
+    if (cssSelectorRuleCount >= 1 && !/function|=>|const\s|let\s|var\s|<[a-z]/i.test(t)) score += 2;
     return score >= 2;
   }
 
