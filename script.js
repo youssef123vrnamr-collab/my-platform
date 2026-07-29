@@ -41,6 +41,11 @@ async function isAdminUser(userId) {
   const onlineUsersRef = db.collection("online_users");
   let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null, apps = [];
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
+  // ===== 🧠 معمارية "غرف" الذكاء الاصطناعي (Cosmos) =====
+  // غرفة 3: الذاكرة الثابتة — دروس مستفادة من تقييمات المستخدمين السلبية (بتتحمّل من Firestore وتفضل موجودة دايمًا بين كل الجلسات)
+  let aiLessonsLearned = [], unsubscribeAILessons = null;
+  // غرفة 2: الذاكرة المؤقتة — ملخص جلسة المحادثة الحالية بس (بيتصفر لما الشات يتمسح أو المستخدم يخرج)
+  window.aiSessionDigest = window.aiSessionDigest || [];
   // ===== Paid courses access control =====
   let unsubscribeCoursesAccess = null, unsubscribeUserEnrollmentsAccess = null;
   let paidCourseVideoIds = new Set();   // videos that appear in any paid course (price > 0)
@@ -1013,7 +1018,19 @@ async function updateAdminUI() {
 
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
-  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); }
+  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); loadAILessonsFromFirebase(); }
+
+  // ===== غرفة 3: الذاكرة الثابتة — تحميل الدروس المستفادة من التقييمات السلبية (👎) لحظيًا =====
+  // بتشتغل مع نفس نداءات loadAIKnowledgeFromFirebase() الموجودة، فمحتاجة سطر واحد بس هنا.
+  // استعلام بسيط (orderBy واحد بدون where مركّب) عشان يشتغل من غير الحاجة لعمل composite index يدوي في Firestore.
+  function loadAILessonsFromFirebase() {
+    unsubscribeAILessons && unsubscribeAILessons();
+    unsubscribeAILessons = db.collection("ai_feedback").orderBy("createdAt", "desc").limit(40).onSnapshot(snap => {
+      const bad = [];
+      snap.forEach(d => { const f = d.data(); if (f && f.liked === false) bad.push(f); });
+      aiLessonsLearned = bad.slice(0, 8);
+    }, e => console.error("Error loading AI lessons:", e));
+  }
   function listenToMaintenance() { unsubscribeMaintenance && unsubscribeMaintenance(); unsubscribeMaintenance = db.collection("system").doc("maintenance").onSnapshot(doc => { if (doc.exists && doc.data().status === "maintenance") { maintenanceEndTime = doc.data().endTime ? doc.data().endTime.toDate() : null; showMaintenanceScreen(doc.data().message || "جاري تحديث المنصة...", maintenanceEndTime); } else hideMaintenanceScreen(); }, e => console.error("Error listening to maintenance:", e)); }
   function showMaintenanceScreen(msg, end) { const ov = document.getElementById("maintenanceOverlay"), msgEl = document.getElementById("maintenanceMessage"), cancelBtn = document.getElementById("cancelMaintenanceBtn"), endEl = document.getElementById("maintenanceEndTime"); document.body.style.overflow = "hidden"; document.documentElement.style.overflow = "hidden"; if (ov && !ov._scrollLocked) { ov._scrollLocked = true; ov.addEventListener('touchmove', function(e) { e.stopPropagation(); }, { passive: true }); } ov && msgEl && cancelBtn && (msgEl.textContent = msg, ov.classList.add("active"), cancelBtn.classList.toggle("active", isAdmin), maintenanceTimerInterval && clearInterval(maintenanceTimerInterval), end && (maintenanceTimerInterval = setInterval(() => { const now = Date.now(), diff = end.getTime() - now; if (diff <= 0) { clearInterval(maintenanceTimerInterval); autoEndMaintenance(); return; } updateTimerDisplay(diff); }, 1000)), tickInterval || (tickInterval = setInterval(() => SoundEffects.tick(), 1000)), endEl && (endEl.textContent = "ينتهي عند: " + end.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
   function hideMaintenanceScreen() { const ov = document.getElementById("maintenanceOverlay"); ov && ov.classList.remove("active"); document.body.style.overflow = ""; document.documentElement.style.overflow = ""; maintenanceTimerInterval && (clearInterval(maintenanceTimerInterval), maintenanceTimerInterval = null); tickInterval && (clearInterval(tickInterval), tickInterval = null); }
@@ -2760,7 +2777,7 @@ async function updateAdminUI() {
     } 
 }
   // loadUserDashboard() — يتعمل من داخل googleLogin بعد login ناجح فقط
-  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
+  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
@@ -3185,7 +3202,7 @@ async function updateAdminUI() {
 
   function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
 
-        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); try { window.aiChatHistory = []; window.__cosmosPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
+        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
@@ -11613,6 +11630,47 @@ function slStopAllAnimations() {
       // ── نبذة عن بنية المنصة التقنية (عشان يقدر يجاوب عن أسئلة عامة عن التصميم) ──
       var _archContextBlock = '\n\n--- نبذة عن بنية منصة فلك (استخدمها لو حد سأل عن التصميم التقني للمنصة، بدون كشف تفاصيل حساسة زي المفاتيح) ---\nالمنصة "فلك" تطبيق ويب تعليمي لعلم الفلك، مبني بـ HTML/CSS/JavaScript عادي (من غير فريمورك)، وبيستخدم Firebase/Firestore كقاعدة بيانات وخدمة مصادقة (تسجيل دخول Google)، Cloudinary لاستضافة الفيديوهات والصور، ونظام امتحانات تفاعلي لكل فيديو مع تصحيح تلقائي. فيه شات جماعي عام، شات خاص مع المشرف، وشات ذكاء اصطناعي (زيي أنا) بيستخدم Groq API للردود النصية و Gemini API لتحليل الصور والملفات. المنصة تدعم PWA (تتحمّل كتطبيق) وواجهتها بالكامل بالعربي RTL.\n---';
 
+      // ══════════════════════════════════════════════════════════════════
+      // 🧠 غرفة 1: التفكير — قواعد تفكير رياضي/منطقي صارمة قبل أي إجابة نهائية
+      // ══════════════════════════════════════════════════════════════════
+      var _reasoningRoomBlock = '\n\n--- غرفة التفكير الداخلية (إلزامية قبل كتابة أي رد نهائي) ---\n' +
+        '1. حلّل السؤال جوّا نفسك الأول: إيه المطلوب بالظبط؟ وإيه المعطيات المتاحة؟\n' +
+        '2. لو في أي حساب أو معادلة رياضية أو فيزيائية (حتى لو بسيطة)، اكتب خطوات الحل رقم برقم بالترتيب المنطقي، وتأكد من كل خطوة قبل ما تنتقل للي بعدها (لا تقفز لنتيجة من غير خطوات).\n' +
+        '3. بعد ما توصل لنتيجة، راجعها مرة تانية بطريقة مختلفة (تقدير تقريبي، أو تعويض عكسي) للتأكد إنها منطقية قبل ما تكتبها كنهائية.\n' +
+        '4. لو السؤال مركّب (فيه أكتر من جزء)، فكّك الأجزاء وجاوب كل جزء لوحده بترتيب واضح بدل ما تخلطهم في فقرة واحدة.\n' +
+        '5. لو مش متأكد 100% من معلومة أو نتيجة، قول ده بوضوح بدل ما تخترع رقم أو حقيقة.\n' +
+        'الخطوات دي كلها تفكير داخلي بس — متكتبش "الخطوة 1، الخطوة 2..." في الرد النهائي للمستخدم، اكتب بس الإجابة النهائية المرتبة والمختصرة اللي بنيت على أساس التفكير ده.\n---';
+
+      // ══════════════════════════════════════════════════════════════════
+      // 🧠 غرفة 3: الذاكرة الثابتة — دروس مستفادة من تقييمات المستخدمين السلبية (👎) عبر كل الجلسات
+      // ══════════════════════════════════════════════════════════════════
+      var _lessonsContextBlock = '';
+      try {
+        if (typeof aiLessonsLearned !== 'undefined' && aiLessonsLearned && aiLessonsLearned.length) {
+          var _lList = aiLessonsLearned.map(function(l, li){
+            return (li + 1) + '. سؤال اتقيّم رده قبل كده بإنه "مش مفيد": "' + String(l.question || '').slice(0,150) + '"';
+          }).join('\n');
+          _lessonsContextBlock = '\n\n--- دروس مستفادة من تقييمات سابقة (تعلّم منها ولا تكرر نفس القصور) ---\n' + _lList + '\n---\nلو جالك سؤال شبيه بأي واحد من دول، خد بالك وحاول تجاوب بشكل أعمق وأدق ووضح من المرة اللي فاتت.';
+        }
+      } catch(eLessonsCtx) { /* تجاهل أي خطأ */ }
+
+      // ══════════════════════════════════════════════════════════════════
+      // 🧠 غرفة 2: الذاكرة المؤقتة — ملخص جلسة المحادثة الحالية (أبعد من آخر 8 رسائل بترسل فعليًا للموديل)
+      // ══════════════════════════════════════════════════════════════════
+      var _tempMemoryDigestBlock = '';
+      try {
+        if (window.aiSessionDigest && window.aiSessionDigest.length > histLimit) {
+          var _digestList = window.aiSessionDigest.map(function(d, di){ return (di+1)+'. '+d; }).join('\n');
+          _tempMemoryDigestBlock = '\n\n--- ملخص مؤقت لسياق المحادثة الحالية (كل النقاط اللي اتكلم فيها المستخدم من بداية الجلسة) ---\n' + _digestList + '\n---\nاستخدم الملخص ده عشان تفهم السياق العام للمحادثة، حتى لو الرسائل القديمة مش ظاهرة كاملة قدامك دلوقتي.';
+        }
+      } catch(eDigestCtx) { /* تجاهل أي خطأ */ }
+
+      // ══════════════════════════════════════════════════════════════════
+      // 🧠 غرفة 4: تجميع المعلومات — دمج كل الغرف في كتلة سياق واحدة منظمة بالأولوية
+      // (معرفة المشرف أولاً، بعدها دروس التقييمات، بعدها الذاكرة المؤقتة، بعدها بيانات المنصة)
+      // ══════════════════════════════════════════════════════════════════
+      var _aggregatedContextBlock = _knowledgeContextBlock + _lessonsContextBlock + _tempMemoryDigestBlock;
+
       var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.\n- هوية إلزامية: إنت مساعد ذكاء اصطناعي اسمه "'+persona.name+'"، جزء من منصة "فلك" التعليمية. لو حد سألك "مين انت" أو "انت شغال على ايه" أو "انت اي موديل" أو "انت اي تطبيق" أو أي سؤال عن هويتك أو التقنية اللي بتشتغل بيها، جاوب إنك "'+persona.name+'" المساعد الذكي بتاع منصة فلك، ومتقولش أبداً اسم أي شركة أو موديل أو منصة تقنية تانية (زي OpenAI أو ChatGPT أو أي حد تاني) حتى لو حد ألحّ في السؤال.\n- تنسيق النص إلزامي: إنت بترد جوه فقاعة شات على الموبايل مش صفحة ويب. ممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة | أو عناوين Markdown، لأنها بتظهر كرموز غريبة للمستخدم. استخدم بس: **نص عريض** لو محتاج تمييز، سطور جديدة، إيموجي، وأرقام أو نقاط (1. 2. 3. أو •) للتعداد. لو محتاج تعرض كود، حطه بين ```لغة البرمجة``` عادي بس متستخدمش جداول أو عناوين markdown أبداً.';
 
       var _imageGenPolicyBlock = '\n\nقاعدة إلزامية بخصوص الصور: إنت شخصياً متقدرش تولّد أو ترفع صور — التوليد الفعلي بيحصل من نظام منفصل تلقائي. ممنوع تمامًا تكتب رابط صورة وهمي (زي https://... .png أو .jpg من عندك) أو تتظاهر إنك "ولّدت" أو "أرفقت" صورة، لأن ده هيبقى معلومة كاذبة. لو حسيت إن المستخدم طالب صورة ولسه مطلعتش، قوله بوضوح إنك هتولدها له الآن أو اطلب منه يعيد صياغة طلبه بوضوح (مثلاً "اعمل لي صورة كذا")، من غير ما تخترع أي رابط أو تفاصيل ملف.';
@@ -11626,9 +11684,10 @@ function slStopAllAnimations() {
         // lean=true: بنستخدمها في محاولة الطوارئ (الموديل الصغير) — بنشيل القوائم الثقيلة
         // (فيديوهات/كورسات/معرفة/إحصائيات) لأنها ممكن لوحدها تتخطى حد الموديل الصغير،
         // وبنقصّ رسالة المستخدم نفسها لو كانت ضخمة (زي ملف كود كبير مرفق).
+        // ملاحظة: _reasoningRoomBlock و_lessonsContextBlock بيفضلوا موجودين حتى في وضع lean لأنهم خفيفين وميقلبوش حد التوكنز.
         var sys = lean
-          ? (persona.systemPrompt + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock)
-          : (persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -11709,7 +11768,7 @@ function slStopAllAnimations() {
           var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
           if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
           try {
-            var _sysFull = persona.systemPrompt + _courseContextBlock + _knowledgeContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock;
+            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock;
             var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
             _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -11795,6 +11854,14 @@ function slStopAllAnimations() {
         window.aiChatHistory.push({ role:'assistant', content: answer });
         if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
 
+        // ── غرفة 2: الذاكرة المؤقتة — نضيف ملخص قصير لكل رسالة مستخدم عشان السياق العام يفضل موجود
+        // حتى لو الرسالة القديمة اتشالت من الـ history المرسل فعليًا للموديل (اللي بيبقى آخر 8 بس) ──
+        try {
+          window.aiSessionDigest = window.aiSessionDigest || [];
+          window.aiSessionDigest.push(String(userMsg).slice(0, 100));
+          if (window.aiSessionDigest.length > 12) window.aiSessionDigest.splice(0, window.aiSessionDigest.length - 12);
+        } catch(eDigestPush) { /* تجاهل أي خطأ */ }
+
         // ── Show AI bubble ──
         if (typingEl) typingEl.remove();
         if (msgs) {
@@ -11867,6 +11934,7 @@ function slStopAllAnimations() {
     var _origClear = window.clearAIChat;
     window.clearAIChat = function() {
       window.aiChatHistory = [];
+      window.aiSessionDigest = [];
       if (_origClear) _origClear.call(this);
     };
 
@@ -13330,6 +13398,39 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     }
   }
 
+  // ── يدوّر على أقرب رسالة "مُرسَلة" (سؤال المستخدم) قبل رسالة الرد دي في نفس الشات ──
+  function findPrecedingUserQuestion(msgEl){
+    var node = msgEl.previousElementSibling;
+    while (node) {
+      if (node.classList && node.classList.contains('message') && node.classList.contains('sent')) {
+        var c = node.querySelector('.message-content');
+        return c ? (c.textContent || '') : '';
+      }
+      node = node.previousElementSibling;
+    }
+    return '';
+  }
+
+  // ── تسجيل تقييم رد الذكاء الاصطناعي في Firestore — وده اللي بيغذي "غرفة الذاكرة الثابتة"
+  // بالدروس المستفادة (لما التقييم يبقى سلبي) عشان الردود الجاية تتحسّن وميتكررش نفس القصور ──
+  function submitAIFeedback(bar, liked, question, answer){
+    try {
+      var payload = {
+        userId: (typeof currentUserId !== 'undefined' ? currentUserId : null) || null,
+        userName: (typeof currentUser !== 'undefined' ? currentUser : null) || 'مستخدم',
+        question: String(question || '').slice(0, 500),
+        answer: String(answer || '').slice(0, 2000),
+        liked: !!liked,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (bar.dataset.feedbackDocId) {
+        db.collection('ai_feedback').doc(bar.dataset.feedbackDocId).set(payload, { merge: true }).catch(function(e){ console.error('feedback update err', e); });
+      } else {
+        db.collection('ai_feedback').add(payload).then(function(ref){ bar.dataset.feedbackDocId = ref.id; }).catch(function(e){ console.error('feedback add err', e); });
+      }
+    } catch(eFb) { console.error('submitAIFeedback err', eFb); }
+  }
+
   function buildActionBar(msgEl, plainText){
     if (msgEl.querySelector('.cosmos-action-bar')) return;
     var bar = document.createElement('div');
@@ -13358,12 +13459,22 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     bar.appendChild(mkBtn('fas fa-thumbs-down', 'مش مفيد', function(btn){
       var wasActive = btn.classList.contains('disliked');
       bar.querySelectorAll('.cosmos-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
-      if (!wasActive) { btn.classList.add('disliked'); if (typeof window.showToast === 'function') window.showToast('📝 شكراً لتقييمك'); }
+      if (!wasActive) {
+        btn.classList.add('disliked');
+        var q = findPrecedingUserQuestion(msgEl);
+        submitAIFeedback(bar, false, q, plainText);
+        if (typeof window.showToast === 'function') window.showToast('📝 تم تسجيل ملاحظتك، هتعلّم من الرد ده وميتكررش نفس القصور');
+      }
     }));
     bar.appendChild(mkBtn('fas fa-thumbs-up', 'مفيد', function(btn){
       var wasActive = btn.classList.contains('liked');
       bar.querySelectorAll('.cosmos-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
-      if (!wasActive) { btn.classList.add('liked'); if (typeof window.showToast === 'function') window.showToast('📝 شكراً لتقييمك'); }
+      if (!wasActive) {
+        btn.classList.add('liked');
+        var q = findPrecedingUserQuestion(msgEl);
+        submitAIFeedback(bar, true, q, plainText);
+        if (typeof window.showToast === 'function') window.showToast('🌟 تمام، يسعدني إني قدرت أساعدك');
+      }
     }));
     bar.appendChild(mkBtn('fas fa-copy', 'نسخ', function(){
       copyToClipboard(plainText, function(){
