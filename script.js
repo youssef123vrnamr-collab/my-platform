@@ -44,6 +44,8 @@ async function isAdminUser(userId) {
   // ===== 🧠 معمارية "غرف" الذكاء الاصطناعي (Cosmos) =====
   // غرفة 3: الذاكرة الثابتة — دروس مستفادة من تقييمات المستخدمين السلبية (بتتحمّل من Firestore وتفضل موجودة دايمًا بين كل الجلسات)
   let aiLessonsLearned = [], unsubscribeAILessons = null;
+  // غرفة 3 (امتداد): أمثلة كود عجبت المستخدمين قبل كده (👍 تحت الكود) — بتتحمّل من Firestore عشان نحافظ على نفس المستوى ونطوّر عليه
+  let aiGoodCodeExamples = [], unsubscribeAIGoodCode = null;
   // غرفة 2: الذاكرة المؤقتة — ملخص جلسة المحادثة الحالية بس (بيتصفر لما الشات يتمسح أو المستخدم يخرج)
   window.aiSessionDigest = window.aiSessionDigest || [];
   // ===== Paid courses access control =====
@@ -1018,7 +1020,7 @@ async function updateAdminUI() {
 
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
-  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); loadAILessonsFromFirebase(); }
+  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); loadAILessonsFromFirebase(); loadAIGoodCodeFromFirebase(); }
 
   // ===== غرفة 3: الذاكرة الثابتة — تحميل الدروس المستفادة من التقييمات السلبية (👎) لحظيًا =====
   // بتشتغل مع نفس نداءات loadAIKnowledgeFromFirebase() الموجودة، فمحتاجة سطر واحد بس هنا.
@@ -1030,6 +1032,16 @@ async function updateAdminUI() {
       snap.forEach(d => { const f = d.data(); if (f && f.liked === false) bad.push(f); });
       aiLessonsLearned = bad.slice(0, 8);
     }, e => console.error("Error loading AI lessons:", e));
+  }
+
+  // ===== غرفة 3 (امتداد): تحميل أمثلة الكود اللي عجبت المستخدمين (👍 تحت الكود) لحظيًا =====
+  function loadAIGoodCodeFromFirebase() {
+    unsubscribeAIGoodCode && unsubscribeAIGoodCode();
+    unsubscribeAIGoodCode = db.collection("ai_good_code").orderBy("createdAt", "desc").limit(8).onSnapshot(snap => {
+      const good = [];
+      snap.forEach(d => good.push(d.data()));
+      aiGoodCodeExamples = good;
+    }, e => console.error("Error loading good AI code examples:", e));
   }
   function listenToMaintenance() { unsubscribeMaintenance && unsubscribeMaintenance(); unsubscribeMaintenance = db.collection("system").doc("maintenance").onSnapshot(doc => { if (doc.exists && doc.data().status === "maintenance") { maintenanceEndTime = doc.data().endTime ? doc.data().endTime.toDate() : null; showMaintenanceScreen(doc.data().message || "جاري تحديث المنصة...", maintenanceEndTime); } else hideMaintenanceScreen(); }, e => console.error("Error listening to maintenance:", e)); }
   function showMaintenanceScreen(msg, end) { const ov = document.getElementById("maintenanceOverlay"), msgEl = document.getElementById("maintenanceMessage"), cancelBtn = document.getElementById("cancelMaintenanceBtn"), endEl = document.getElementById("maintenanceEndTime"); document.body.style.overflow = "hidden"; document.documentElement.style.overflow = "hidden"; if (ov && !ov._scrollLocked) { ov._scrollLocked = true; ov.addEventListener('touchmove', function(e) { e.stopPropagation(); }, { passive: true }); } ov && msgEl && cancelBtn && (msgEl.textContent = msg, ov.classList.add("active"), cancelBtn.classList.toggle("active", isAdmin), maintenanceTimerInterval && clearInterval(maintenanceTimerInterval), end && (maintenanceTimerInterval = setInterval(() => { const now = Date.now(), diff = end.getTime() - now; if (diff <= 0) { clearInterval(maintenanceTimerInterval); autoEndMaintenance(); return; } updateTimerDisplay(diff); }, 1000)), tickInterval || (tickInterval = setInterval(() => SoundEffects.tick(), 1000)), endEl && (endEl.textContent = "ينتهي عند: " + end.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
@@ -11682,14 +11694,25 @@ function slStopAllAnimations() {
       // ── هوية خبرة برمجية عالية — تخلي الردود التقنية بمستوى مهندس سينيور محترف بدل إجابات سطحية ──
       var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.';
 
+      // ── غرفة 3 (امتداد): أمثلة كود عجبت المستخدمين قبل كده (👍 تحت الكود) — بتدفعك ترفع المستوى وتبني عليه ──
+      var _goodCodeContextBlock = '';
+      try {
+        if (typeof aiGoodCodeExamples !== 'undefined' && aiGoodCodeExamples && aiGoodCodeExamples.length) {
+          var _gcList = aiGoodCodeExamples.map(function(g, gi){
+            return (gi + 1) + '. طلب "' + String(g.question || '').slice(0,120) + '" — الملفات: ' + (g.filenames || '—');
+          }).join('\n');
+          _goodCodeContextBlock = '\n\n--- أكواد سابقة عجبت المستخدمين وقيّموها 👍 (حافظ على نفس المستوى وطوّر عليه) ---\n' + _gcList + '\n---\nخد بالك من مستوى الجودة والتنظيم اللي عجب المستخدمين في الطلبات دي، وحاول تحافظ عليه أو تتخطاه في أي كود جديد تكتبه.';
+        }
+      } catch(eGoodCtx) { /* تجاهل أي خطأ */ }
+
       function buildPayload(model, maxTok, hist, lean) {
         // lean=true: بنستخدمها في محاولة الطوارئ (الموديل الصغير) — بنشيل القوائم الثقيلة
         // (فيديوهات/كورسات/معرفة/إحصائيات) لأنها ممكن لوحدها تتخطى حد الموديل الصغير،
         // وبنقصّ رسالة المستخدم نفسها لو كانت ضخمة (زي ملف كود كبير مرفق).
         // ملاحظة: _reasoningRoomBlock و_lessonsContextBlock بيفضلوا موجودين حتى في وضع lean لأنهم خفيفين وميقلبوش حد التوكنز.
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -11775,7 +11798,7 @@ function slStopAllAnimations() {
           var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
           if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
           try {
-            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock;
+            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock;
             var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
             _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -13054,6 +13077,11 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       + runBtn
       + '<button type="button" class="ai-code-download-btn" onclick="downloadAICodeFile(\''+gid+'\', window.__aiCodeActiveIdx_'+gid+'||0)"><i class="fas fa-download"></i> تنزيل هذا الملف</button>'
       + (blocks.length > 1 ? '<button type="button" class="ai-code-download-btn ai-code-download-all" onclick="downloadAllAICodeFiles(\''+gid+'\')"><i class="fas fa-file-archive"></i> تنزيل كل الملفات ('+blocks.length+')</button>' : '')
+      + '</div>'
+      + '<div class="ai-code-rate-bar" data-gid="'+gid+'">'
+      + '<span class="ai-code-rate-label">الكود ده عجبك؟</span>'
+      + '<button type="button" class="ai-code-rate-btn ai-code-rate-good" onclick="rateAICodeGood(\''+gid+'\', this)" title="عجبني — حافظ على المستوى ده"><i class="fas fa-thumbs-up"></i></button>'
+      + '<button type="button" class="ai-code-rate-btn ai-code-rate-bad" onclick="rateAICodeBad(\''+gid+'\', this)" title="مش عاجبني — امسحه"><i class="fas fa-thumbs-down"></i></button>'
       + '</div>';
 
     return '<div class="ai-code-file-card" data-gid="'+gid+'">'
@@ -13080,6 +13108,53 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     }
     return doc;
   }
+
+  // ── تقييم الكود نفسه (مش الرسالة كلها): لو عجب المستخدم بيتحفظ كمثال كويس نبني عليه في المرات
+  // الجاية، ولو معجبوش يتمسح فورًا من غير ما يتخزن أي حاجة عنه خالص في أي قاعدة بيانات ──
+  window.rateAICodeGood = function(gid, btnEl){
+    var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
+    if (!card) return;
+    var bar = card.querySelector('.ai-code-rate-bar');
+    if (bar) { bar.querySelectorAll('.ai-code-rate-btn').forEach(function(b){ b.classList.remove('active'); }); if (btnEl) btnEl.classList.add('active'); }
+    var blocks = (window.__aiCodeGroups && window.__aiCodeGroups[gid]) || [];
+    var filenames = blocks.map(function(b){ return b.filename || b.lang || ''; }).filter(Boolean).join('، ');
+    var snippet = (blocks[0] && blocks[0].code) ? String(blocks[0].code).slice(0, 400) : '';
+    var msgEl = card.closest('.message.received');
+    var question = '';
+    if (msgEl) {
+      var node = msgEl.previousElementSibling;
+      while (node) {
+        if (node.classList && node.classList.contains('message') && node.classList.contains('sent')) {
+          var c = node.querySelector('.message-content');
+          question = c ? (c.textContent || '') : '';
+          break;
+        }
+        node = node.previousElementSibling;
+      }
+    }
+    try {
+      db.collection('ai_good_code').add({
+        userId: (typeof currentUserId !== 'undefined' ? currentUserId : null) || null,
+        question: String(question || '').slice(0, 400),
+        filenames: filenames,
+        snippetPreview: snippet,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(function(e){ console.error('good code save err', e); });
+    } catch(eGood) { console.error(eGood); }
+    if (typeof window.showToast === 'function') window.showToast('🌟 تمام، هحافظ على نفس المستوى ده وأطوّر عليه في المرات الجاية');
+  };
+
+  window.rateAICodeBad = function(gid, btnEl){
+    var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
+    if (!card) return;
+    var msgEl = card.closest('.message.received');
+    // ── مفيش أي تخزين في أي قاعدة بيانات هنا خالص — الكود ده هيتمسح تمامًا وميتحفظش عنه أي أثر ──
+    if (window.__aiCodeGroups) delete window.__aiCodeGroups[gid];
+    if (msgEl && msgEl.parentNode) msgEl.remove();
+    else if (card.parentNode) card.remove();
+    if (typeof window.showToast === 'function') window.showToast('🗑️ تم حذف الكود نهائيًا من غير ما يتخزن أي حاجة عنه');
+  };
+
 
   window.toggleAICodeRun = function(gid, btnEl){
     var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
