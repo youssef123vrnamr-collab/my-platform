@@ -11633,13 +11633,15 @@ function slStopAllAnimations() {
       // ══════════════════════════════════════════════════════════════════
       // 🧠 غرفة 1: التفكير — قواعد تفكير رياضي/منطقي صارمة قبل أي إجابة نهائية
       // ══════════════════════════════════════════════════════════════════
-      var _reasoningRoomBlock = '\n\n--- غرفة التفكير الداخلية (إلزامية قبل كتابة أي رد نهائي) ---\n' +
+      var _reasoningRoomBlock = '\n\n--- غرفة التفكير العميق (Deep Thinking Room) — تفكيرك الداخلي الحقيقي، منفصل عن الرد النهائي ---\n' +
+        'ملاحظة مهمة: النظام بيفصل تفكيرك (reasoning) عن ردك النهائي (content) تلقائيًا ويعرض تفكيرك في صندوق منفصل قابل للفتح للمستخدم — يعني اكتب تفكيرك بحرية وبالتفصيل هنا، ومتقلقش إنه هيظهر في الرد النهائي لأنه مش هيظهر فيه.\n' +
         '1. حلّل السؤال جوّا نفسك الأول: إيه المطلوب بالظبط؟ وإيه المعطيات المتاحة؟\n' +
         '2. لو في أي حساب أو معادلة رياضية أو فيزيائية (حتى لو بسيطة)، اكتب خطوات الحل رقم برقم بالترتيب المنطقي، وتأكد من كل خطوة قبل ما تنتقل للي بعدها (لا تقفز لنتيجة من غير خطوات).\n' +
         '3. بعد ما توصل لنتيجة، راجعها مرة تانية بطريقة مختلفة (تقدير تقريبي، أو تعويض عكسي) للتأكد إنها منطقية قبل ما تكتبها كنهائية.\n' +
         '4. لو السؤال مركّب (فيه أكتر من جزء)، فكّك الأجزاء وجاوب كل جزء لوحده بترتيب واضح بدل ما تخلطهم في فقرة واحدة.\n' +
         '5. لو مش متأكد 100% من معلومة أو نتيجة، قول ده بوضوح بدل ما تخترع رقم أو حقيقة.\n' +
-        'الخطوات دي كلها تفكير داخلي بس — متكتبش "الخطوة 1، الخطوة 2..." في الرد النهائي للمستخدم، اكتب بس الإجابة النهائية المرتبة والمختصرة اللي بنيت على أساس التفكير ده.\n---';
+        '6. لو الطلب فيه كود أو تعديل على ملف أو صفحة موجودة: اكتب بصراحة في تفكيرك خطوات زي "هفكك الملف الأول وأشوف بنيته"، "الجزء اللي هعدّله هو كذا"، "هحتاج أتأكد من كذا قبل ما أكتب الكود"، واذكر اسم الملف/القسم اللي بتفكر فيه لو معروف. خطط للبنية الكاملة (الأقسام، الدوال، التفاعلات) قبل ما تقرر شكل الكود النهائي.\n' +
+        '7. الرد النهائي (content) لازم يفضل نضيف ومباشر ومن غير أي "تفكير بصوت عالي" أو خطوات تحليل جواه — كل التحليل والتخطيط والتردد يتكتب هنا في التفكير بس، والرد النهائي يبقى الخلاصة المرتبة أو الكود الجاهز مباشرة.\n---';
 
       // ══════════════════════════════════════════════════════════════════
       // 🧠 غرفة 3: الذاكرة الثابتة — دروس مستفادة من تقييمات المستخدمين السلبية (👎) عبر كل الجلسات
@@ -11694,16 +11696,19 @@ function slStopAllAnimations() {
           messages: [{ role:'system', content: sys }].concat(hist).concat([{ role:'user', content: userMsgFinal }]),
           max_tokens: maxTok,
           temperature: 0.4,
-          reasoning_effort: 'high'
+          reasoning_effort: 'high',
+          reasoning_format: 'parsed' // ── يخلي الموديل يرجّع تفكيره الحقيقي منفصل عن الرد النهائي — ده أساس "غرفة التفكير العميق" ──
         };
       }
 
       // ── بيقرأ رد Groq كـ stream (SSE) ويبعت كل جزء نص جديد لـ onDelta أول ما يوصل،
-      // عشان الرد يظهر وهو بيتكتب لحظة بلحظة بدل ما يظهر كله مرة واحدة في الآخر ──
-      async function _readGroqStream(res, onDelta) {
+      // عشان الرد يظهر وهو بيتكتب لحظة بلحظة بدل ما يظهر كله مرة واحدة في الآخر.
+      // مع reasoning_format:'parsed'، Groq بيبعت كمان delta.reasoning لوحده — ده تفكير الموديل الحقيقي،
+      // وبنمرره لـ onReasoningDelta عشان يتعرض في "غرفة التفكير العميق" لحظة بلحظة ──
+      async function _readGroqStream(res, onDelta, onReasoningDelta) {
         var reader = res.body.getReader();
         var decoder = new TextDecoder('utf-8');
-        var buffer = '', full = '';
+        var buffer = '', full = '', fullReasoning = '';
         while (true) {
           var chunk = await reader.read();
           if (chunk.done) break;
@@ -11718,14 +11723,16 @@ function slStopAllAnimations() {
             try {
               var evt = JSON.parse(jsonStr);
               var delta = evt.choices && evt.choices[0] && evt.choices[0].delta;
+              var reasoningPiece = delta && (delta.reasoning || delta.reasoning_content);
+              if (reasoningPiece) { fullReasoning += reasoningPiece; if (onReasoningDelta) onReasoningDelta(fullReasoning); }
               if (delta && delta.content) { full += delta.content; if (onDelta) onDelta(full); }
             } catch (eParse) { /* جزء ناقص من الـ chunk، هيكمل مع اللي بعده */ }
           }
         }
-        return { choices: [{ message: { content: full } }] };
+        return { choices: [{ message: { content: full, reasoning: fullReasoning } }] };
       }
 
-      async function callGroq(model, maxTok, hist, lean, onDelta) {
+      async function callGroq(model, maxTok, hist, lean, onDelta, onReasoningDelta) {
         var pool = window.GroqKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
         var res, data, usedKey;
@@ -11739,7 +11746,7 @@ function slStopAllAnimations() {
             body: JSON.stringify(payload)
           });
           if (onDelta && res.ok && res.body && res.body.getReader) {
-            try { data = await _readGroqStream(res, onDelta); }
+            try { data = await _readGroqStream(res, onDelta, onReasoningDelta); }
             catch (eStream) {
               // فشل قراءة الـ stream (متصفح قديم أو انقطاع) — نرجع لنداء عادي من غير stream كشبكة أمان
               console.warn('stream read failed, falling back to normal request', eStream);
@@ -11790,25 +11797,40 @@ function slStopAllAnimations() {
       }
 
       var answer = null;
+      var answerReasoning = '';
       try {
         // ── وضع الكتابة الحيّة: النص بيظهر لحظة بلحظة وهو بيتكتب، إلا في وضع التعديل الصامت
         // (هناك بنسيب الأنيميشن "بيعدّل الملف" زي ما هي لحد ما بطاقة الملف الجاهزة تظهر) ──
+        var _contentStarted = false;
         var _streamCb = (window.__cosmosSilentFileEdit || !typingEl) ? null : function(partial){
+          _contentStarted = true;
           var _shown = partial.length > 6000 ? partial.slice(-6000) : partial;
           typingEl.innerHTML = '<div class="message-content cosmos-live-stream" style="white-space:pre-wrap">' + escapeHtml(_shown) + '<span class="cosmos-stream-cursor">▍</span></div>';
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         };
-        var result = await callGroq('openai/gpt-oss-120b', _mainMaxTok, histMsgs, false, _streamCb);
+        // ── غرفة التفكير العميق — المرحلة الحيّة: بتعرض تفكير الموديل الحقيقي أول ما يوصل، لحظة بلحظة،
+        // وبتوقف تلقائيًا أول ما الرد النهائي يبدأ يوصل (عشان الرد يبان في مكانه الطبيعي) ──
+        var _reasoningStreamCb = (window.__cosmosSilentFileEdit || !typingEl) ? null : function(partialReasoning){
+          if (_contentStarted) return;
+          var _shownR = partialReasoning.length > 4000 ? partialReasoning.slice(-4000) : partialReasoning;
+          typingEl.innerHTML = '<div class="message-content cosmos-live-thinking">'
+            + '<div class="cosmos-deep-think-live-label"><i class="fas fa-brain"></i> غرفة التفكير العميق — بيفكر دلوقتي...</div>'
+            + '<div class="cosmos-deep-think-live-text" style="white-space:pre-wrap">' + escapeHtml(_shownR) + '<span class="cosmos-stream-cursor">▍</span></div>'
+            + '</div>';
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        };
+        var result = await callGroq('openai/gpt-oss-120b', _mainMaxTok, histMsgs, false, _streamCb, _reasoningStreamCb);
         // Retry with smaller model if context overflow — لكن مش لو السبب rate limit (429)، عشان الموديل الصغير عنده كوتا يومية منفصلة ومحدودة برضو، ومفيش داعي نستهلكها في حاجة الحل الحقيقي ليها هو الانتقال لـ Gemini
         if (!result.res.ok && result.res.status !== 429 && (result.res.status===400||result.res.status===413||
             (result.data&&result.data.error&&/context|length/i.test(JSON.stringify(result.data.error))))) {
           result = await callGroq('openai/gpt-oss-20b', _fallbackMaxTok, [], true);
         }
-        // لو الموديل رفض معامل reasoning_effort لأي سبب، جرّب تاني من غيره
-        if (!result.res.ok && result.data && result.data.error && /reasoning_effort/i.test(JSON.stringify(result.data.error))) {
+        // لو الموديل رفض معامل reasoning_effort أو reasoning_format لأي سبب، جرّب تاني من غيرهم
+        if (!result.res.ok && result.data && result.data.error && /reasoning_effort|reasoning_format/i.test(JSON.stringify(result.data.error))) {
           var _retryHist = histMsgs;
           var _payloadNoReason = buildPayload('openai/gpt-oss-120b', _mainMaxTok, _retryHist);
           delete _payloadNoReason.reasoning_effort;
+          delete _payloadNoReason.reasoning_format;
           var _res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+apiKey, 'Content-Type': 'application/json' },
@@ -11817,6 +11839,8 @@ function slStopAllAnimations() {
           result = { res: _res2, data: await _res2.json() };
         }
         answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
+        answerReasoning = (result.data.choices && result.data.choices[0] && result.data.choices[0].message &&
+          (result.data.choices[0].message.reasoning || result.data.choices[0].message.reasoning_content)) || '';
         if (!answer) {
           _debugGroqDetail = 'HTTP ' + result.res.status + ' — ' + (result.data && result.data.error ? JSON.stringify(result.data.error).slice(0,150) : JSON.stringify(result.data).slice(0,150));
         }
@@ -11874,6 +11898,17 @@ function slStopAllAnimations() {
           aiDiv.id = 'msg-'+_aiAnswerUid;
           aiDiv.dataset.msgId = _aiAnswerUid;
           var _bodyHtml = null;
+          // ── غرفة التفكير العميق (المرحلة النهائية): صندوق قابل للفتح فيه تفكير الموديل الحقيقي كامل ──
+          var _deepThinkHtml = '';
+          if (!_silentEdit && answerReasoning && String(answerReasoning).trim()) {
+            var _reasoningEsc = escapeHtml(String(answerReasoning).trim());
+            _deepThinkHtml = '<div class="cosmos-deep-think">'
+              + '<button type="button" class="cosmos-deep-think-toggle" onclick="this.parentElement.classList.toggle(\'open\')">'
+              + '<i class="fas fa-brain"></i><span>غرفة التفكير العميق</span><i class="fas fa-chevron-down cosmos-deep-think-chevron"></i>'
+              + '</button>'
+              + '<div class="cosmos-deep-think-body"><div class="cosmos-deep-think-inner" style="white-space:pre-wrap">' + _reasoningEsc + '</div></div>'
+              + '</div>';
+          }
           if (_silentEdit && typeof window.formatAIAnswer === 'function') {
             var _codeOnlyHtml = window.formatAIAnswer(answer, true);
             if (_codeOnlyHtml && _codeOnlyHtml.trim()) {
@@ -11883,7 +11918,7 @@ function slStopAllAnimations() {
           }
           if (_bodyHtml === null) {
             // مفيش كود في الرد (سؤال عادي مش تعديل ملف) أو مش وضع صامت — نعرض الرد كامل زي العادة
-            _bodyHtml = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+            _bodyHtml = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div>'+_deepThinkHtml+'<div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           }
           aiDiv.innerHTML = _bodyHtml;
           if (window.__cosmosPendingSearchImages && window.__cosmosPendingSearchImages.length) {

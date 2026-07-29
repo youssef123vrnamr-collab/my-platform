@@ -8169,6 +8169,77 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 .cosmos-live-stream { direction: rtl; unicode-bidi: plaintext; }
 
 /* ============================================================
+   🧠 غرفة التفكير العميق (Deep Thinking Room)
+   ============================================================ */
+/* المرحلة الحيّة: بتظهر بدل أنيميشن "بيفكر..." وقت ما تفكير الموديل الحقيقي بيوصل لحظة بلحظة */
+.cosmos-live-thinking {
+  background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(6,182,212,.06));
+  border: 1px solid rgba(99,102,241,.25);
+  border-radius: 12px;
+  padding: .7rem .85rem;
+}
+.cosmos-deep-think-live-label {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  color: #a5b4fc;
+  font-size: .82rem;
+  font-weight: 600;
+  margin-bottom: .35rem;
+}
+.cosmos-deep-think-live-label i { color: #818cf8; }
+.cosmos-deep-think-live-text {
+  direction: rtl;
+  unicode-bidi: plaintext;
+  color: #9ca3af;
+  font-size: .82rem;
+  line-height: 1.6;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* المرحلة النهائية: صندوق قابل للفتح والقفل تحت اسم المساعد وفوق الرد النهائي */
+.cosmos-deep-think {
+  margin: .3rem 0 .6rem;
+  border: 1px solid rgba(129,140,248,.25);
+  border-radius: 10px;
+  background: rgba(99,102,241,.05);
+  overflow: hidden;
+}
+.cosmos-deep-think-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  background: transparent;
+  border: none;
+  color: #a5b4fc;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: .55rem .75rem;
+  cursor: pointer;
+  text-align: right;
+}
+.cosmos-deep-think-toggle i.fa-brain { color: #818cf8; }
+.cosmos-deep-think-toggle span { flex: 1; }
+.cosmos-deep-think-chevron { transition: transform .2s ease; font-size: .7rem; }
+.cosmos-deep-think.open .cosmos-deep-think-chevron { transform: rotate(180deg); }
+.cosmos-deep-think-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .25s ease;
+}
+.cosmos-deep-think.open .cosmos-deep-think-body { max-height: 420px; overflow-y: auto; }
+.cosmos-deep-think-inner {
+  direction: rtl;
+  unicode-bidi: plaintext;
+  padding: 0 .8rem .75rem;
+  color: #8b93a1;
+  font-size: .8rem;
+  line-height: 1.7;
+}
+
+/* ============================================================
    ✨ COSMOS PRO — تحسينات احترافية: تلوين الأكواد + بطاقات المرفقات
    ============================================================ */
 
