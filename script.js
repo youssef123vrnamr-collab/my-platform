@@ -530,6 +530,49 @@ async function isAdminUser(userId) {
     } catch(e){ console.warn('performWebSearch failed', e); return null; }
   };
 
+  // ── مراجعة حقيقية للكود: استدعاء تاني منفصل بيراجع الرد اللي فيه كود مقابل طلب المستخدم الأصلي،
+  // ويصححه لو لقى نقص أو خطأ، قبل ما يوصل للمستخدم — مش مجرد تعليمة "راجع نفسك" جوه نفس الرد. ──
+  window.verifyCosmosCodeAnswer = async function(apiKey, originalUserMsg, rawAnswer) {
+    try {
+      var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-120b',
+          max_tokens: 8000,
+          temperature: 0.1,
+          messages: [
+            { role: 'system', content: 'أنت مراجع كود صارم جدًا. هتستلم طلب المستخدم الأصلي، ورد كامل اتكتب عليه (فيه كود). مهمتك بالترتيب: (1) قارن الكود بند بند مع كل جزئية طلبها المستخدم — هل كل حاجة اتنفذت فعلاً؟ (2) افحص الكود سطر سطر بحثًا عن أي خطأ syntax، متغير غير معرّف، دالة ناقصة، أو منطق غلط. (3) تأكد إن الكود كامل تمامًا من غير أي اختصار أو "..." أو جزء ناقص. لو لقيت أي مشكلة في أي بند من دول، اكتب الرد كامل من الأول بعد التصحيح، بنفس بالظبط تنسيق الرد الأصلي (نفس عدد كتل الكود ونوعها). لو الرد سليم 100% ومطابق تمامًا لطلب المستخدم من غير أي مشكلة، رجّعه حرفيًا زي ما هو من غير أي تعديل ولا أي كلمة زيادة. ممنوع تمامًا تضيف أي جملة تقول "راجعت" أو "صححت" أو أي تعليق عن عملية المراجعة نفسها — بس الرد النهائي (المصحح أو الأصلي زي ما هو).' },
+            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 3000) + '\n\n---\n\nالرد اللي اتكتب رداً عليه:\n' + String(rawAnswer || '').slice(0, 14000) }
+          ]
+        })
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var out = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+      return (out && out.trim()) ? out.trim() : null;
+    } catch (e) { console.warn('verifyCosmosCodeAnswer failed', e); return null; }
+  };
+
+  // ── وقت وتاريخ حقيقي دلوقتي، من جهاز المستخدم مباشرة (Intl API) — من غير ما نحتاج إذن GPS.
+  // بيتحسب من جديد كل رسالة عشان يفضل دقيق لحظة بلحظة، مش قيمة مخزّنة من الأول. ──
+  window.buildCosmosLiveTimeContext = function() {
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      var now = new Date();
+      var offsetMin = -now.getTimezoneOffset();
+      var offsetH = Math.trunc(offsetMin / 60), offsetM = Math.abs(offsetMin % 60);
+      var offsetStr = 'UTC' + (offsetMin >= 0 ? '+' : '-') + Math.abs(offsetH) + (offsetM ? ':' + String(offsetM).padStart(2, '0') : '');
+      var timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
+      var dateStr = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      return '\n\n--- الوقت والتاريخ الحقيقي دلوقتي (من جهاز المستخدم مباشرة، دقيق 100%) ---\n'
+        + 'المنطقة الزمنية المضبوطة على جهاز المستخدم: ' + tz + ' (' + offsetStr + ')\n'
+        + 'الوقت الفعلي عنده دلوقتي: ' + timeStr + '\n'
+        + 'التاريخ الحالي: ' + dateStr + '\n'
+        + 'لو سألك عن الساعة، اليوم، التاريخ، الشهر، أو الفصل، استخدم القيم الحقيقية دي حرفيًا (متخترعش وقت مختلف أو تقول "معنديش وصول للوقت الفعلي" — عندك). استنتج الدولة/المنطقة الأرجح من اسم المنطقة الزمنية دي، ولو حاسس إن الاسم مش كافي تحدد بيه الدولة بثقة كاملة، قول احتمالك بوضوح واطلب من المستخدم يأكدلك بدل ما تجزم غلط. لو سألك عن الفصل الحالي، استنتجه من الشهر مع مراعاة نصف الكرة الأرضية اللي الدولة المحتملة فيها (الفصول معكوسة بين الشمالي والجنوبي).\n---';
+    } catch (e) { return ''; }
+  };
+
   // ── مرحلة أولى سريعة: كلمات صريحة بتدل على طلب بحث (رد فوري من غير انتظار) ──
   var WEB_SEARCH_TRIGGERS = [
     'ابحث', 'دور لي', 'دور على', 'فتش', 'اخبار', 'أخبار', 'اخر اخبار', 'آخر أخبار',
@@ -11323,6 +11366,7 @@ function slStopAllAnimations() {
           // ── نفس أساس العبقرية وذاكرة المنصة (معرفة المشرف + دروس التقييمات) اللي بيستخدمها الشات النصي،
           // عشان تحليل الصور/الملفات ميبقاش مسار "من درجة تانية" منفصل عن باقي الغرف ──
           promptText += (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '');
+          promptText += (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
           promptText += (typeof window.buildCosmosKnowledgeSnapshot === 'function' ? window.buildCosmosKnowledgeSnapshot(15, 5) : '');
 
           // فصل البيانات base64 عن الـ prefix (data:image/jpeg;base64,....) لكل صورة
@@ -11800,9 +11844,10 @@ function slStopAllAnimations() {
         // وبنقصّ رسالة المستخدم نفسها لو كانت ضخمة (زي ملف كود كبير مرفق).
         // ملاحظة: _reasoningRoomBlock و_lessonsContextBlock بيفضلوا موجودين حتى في وضع lean لأنهم خفيفين وميقلبوش حد التوكنز.
         var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
+        var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -11888,7 +11933,7 @@ function slStopAllAnimations() {
           var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
           if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
           try {
-            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '');
+            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
             var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
             _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -11984,6 +12029,26 @@ function slStopAllAnimations() {
           msgs.appendChild(edBoth); msgs.scrollTop = msgs.scrollHeight;
         }
         return;
+      }
+
+      // ══════════════════════════════════════════════════════════════════
+      // 🔍 مراجعة حقيقية للكود (مش مجرد تعليمة في البرومبت) — قبل ما أي رد فيه كود يوصل للمستخدم،
+      // بنبعته لطلب تاني منفصل يراجعه كلمة كلمة مقابل طلب المستخدم الأصلي، ويصححه لو لقى مشكلة.
+      // ده استدعاء إضافي حقيقي (مش نفس الرد) — بياخد ثواني زيادة، بس ده اللي بيدّي ثقة فعلية إن الكود صح.
+      // ══════════════════════════════════════════════════════════════════
+      if (answer && /```/.test(answer) && apiKey) {
+        if (typingEl && typingEl.isConnected) {
+          if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+          var _wrapV = typingEl.querySelector('.message-content');
+          if (_wrapV) _wrapV.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيراجع الكود قبل ما يديهولك');
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        }
+        try {
+          var _verified = typeof window.verifyCosmosCodeAnswer === 'function'
+            ? await window.verifyCosmosCodeAnswer(apiKey, userMsg, answer)
+            : null;
+          if (_verified && _verified.length > 20) answer = _verified;
+        } catch(eVerify) { console.warn('code verification pass failed, keeping original answer', eVerify); }
       }
 
       {
