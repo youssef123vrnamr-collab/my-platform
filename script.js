@@ -44,6 +44,8 @@ async function isAdminUser(userId) {
   // ===== 🧠 معمارية "غرف" الذكاء الاصطناعي (Cosmos) =====
   // غرفة 3: الذاكرة الثابتة — دروس مستفادة من تقييمات المستخدمين السلبية (بتتحمّل من Firestore وتفضل موجودة دايمًا بين كل الجلسات)
   let aiLessonsLearned = [], unsubscribeAILessons = null;
+  // ===== غرفة 3 (امتداد ثاني): ردود عامة (مش كود) اتقيّمت 👍 من المستخدمين — كانت بتتخزن من غير ما حد يستخدمها =====
+  let aiGoodAnswers = [];
   // غرفة 3 (امتداد): أمثلة كود عجبت المستخدمين قبل كده (👍 تحت الكود) — بتتحمّل من Firestore عشان نحافظ على نفس المستوى ونطوّر عليه
   let aiGoodCodeExamples = [], unsubscribeAIGoodCode = null;
   // غرفة 2: الذاكرة المؤقتة — ملخص جلسة المحادثة الحالية بس (بيتصفر لما الشات يتمسح أو المستخدم يخرج)
@@ -511,10 +513,11 @@ async function isAdminUser(userId) {
       var body = {
         api_key: key,
         query: query,
-        search_depth: 'basic',
+        search_depth: 'advanced', // ── بحث أعمق (بيكلف نقطتين من كوتا Tavily بدل نقطة) — نتايج أدق وصور حقيقية بيتلاقوا بمعدل أعلى بكتير من basic ──
         max_results: 5,
         include_answer: false,
-        include_images: true
+        include_images: true,
+        include_image_descriptions: true // ── وصف نصي مختصر لكل صورة، يفيد الموديل لما يوصف أو يختار الصورة الأنسب ──
       };
       if (includeDomains && includeDomains.length) body.include_domains = includeDomains;
       var r = await fetch('https://api.tavily.com/search', {
@@ -1028,9 +1031,10 @@ async function updateAdminUI() {
   function loadAILessonsFromFirebase() {
     unsubscribeAILessons && unsubscribeAILessons();
     unsubscribeAILessons = db.collection("ai_feedback").orderBy("createdAt", "desc").limit(40).onSnapshot(snap => {
-      const bad = [];
-      snap.forEach(d => { const f = d.data(); if (f && f.liked === false) bad.push(f); });
+      const bad = [], good = [];
+      snap.forEach(d => { const f = d.data(); if (!f) return; if (f.liked === false) bad.push(f); else if (f.liked === true) good.push(f); });
       aiLessonsLearned = bad.slice(0, 8);
+      aiGoodAnswers = good.slice(0, 6); // نفس مبدأ أكواد الـ 👍 بس للردود العادية، عشان الأسلوب اللي عجب المستخدمين يتعزز مش يتضيع
     }, e => console.error("Error loading AI lessons:", e));
   }
 
@@ -10608,6 +10612,49 @@ function slStopAllAnimations() {
     patchVoiceChat();
   }
 
+  // ===== 🌟 أساس العبقرية الموحّد — نفس معيار الجودة لأي نموذج ولأي مسار (شات نصي، fallback، تحليل صور/ملفات) =====
+  // الهدف: أي رد بيطلع من أي شخصية (كوزموس/أوريون/نوفا/جالكسي) وأي نموذج (Groq الرئيسي، Groq الاحتياطي، Gemini)
+  // يتبنى نفس مستوى التفكير والدقة والاحترافية، بدل ما كل مسار يبقى بمعيار مختلف.
+  window.buildCosmosGeniusFoundation = function() {
+    return '\n\n--- أساس الأداء الإلزامي (ينطبق على أي رد، أيًا كان النموذج أو المسار اللي ولّده) ---\n'
+      + '1. التفكير قبل الرد: افهم القصد الحقيقي وراء السؤال، مش الكلمات حرفيًا بس. لو في أكتر من طريقة للحل، وازن بينهم داخليًا واختر الأنسب، بدل ما ترمي أول فكرة تيجي في بالك.\n'
+      + '2. الدقة قبل السرعة: ممنوع تخمين متنكر في شكل حقيقة مؤكدة. لو مش متأكد 100% من معلومة، قول ده بوضوح للمستخدم بدل ما تخترع رقم أو تفصيلة.\n'
+      + '3. عمق يناسب حجم السؤال: سؤال بسيط رد عليه بإيجاز مباشر، وسؤال مركّب فكّكه لأجزاء واضحة وغطّي كل جانب فيه من غير حشو أو تكرار.\n'
+      + '4. اتساق داخلي: راجع كلامك قبل ما تسلّمه — الرد لازم يكون متسق مع نفسه من الأول للآخر، من غير تناقض بين جملة وجملة.\n'
+      + '5. مستوى الكود: أي كود بتكتبه لازم يبقى بمستوى مهندس سينيور — كامل وشغال من غير اختصار أو "...", بنية نظيفة، تسمية واضحة، ومختبر منطقيًا قبل ما تكتبه.\n'
+      + '6. الإجراءات الداخلية والخارجية (بحث، تحليل ملف/صورة، توليد صورة، استدعاء أي أداة): لازم تتم بدقة وموثوقية، ولو حصل عطل حقيقي قول للمستخدم بوضوح إن الخطوة فشلت بدل ما تدّعي إنها نجحت أو تختلق نتيجة وهمية.\n'
+      + '7. المعيار العام: كل رد لازم يكون حل مدروس ومفيد فعليًا، مش مجرد كلام صحيح شكليًا — بحيث يعكس أعلى مستوى ممكن من الجودة والاحترافية في كل تفاعل.\n---';
+  };
+
+  // ===== 🌟 لقطة مكثّفة من معرفة المشرف + دروس التقييمات — مخصّصة للمسارات الخفيفة (زي تحليل الصور) =====
+  // نسخة مختصرة من نفس بيانات الغرفة الثالثة (الذاكرة الثابتة) وقاعدة معرفة المشرف،
+  // عشان أي مسار في المنصة يقدر يستفيد منها من غير ما يحمّل نفسه بالسياق الكامل الثقيل.
+  window.buildCosmosKnowledgeSnapshot = function(maxKnow, maxLessons) {
+    maxKnow = maxKnow || 20; maxLessons = maxLessons || 5;
+    var out = '';
+    try {
+      if (typeof aiKnowledgeBase !== 'undefined' && aiKnowledgeBase && aiKnowledgeBase.length) {
+        var kList = aiKnowledgeBase.slice(0, maxKnow).map(function(k, ki) {
+          return (ki + 1) + '. سؤال: "' + (k.question || '') + '" — الإجابة المعتمدة: "' + (k.answer || '') + '"';
+        }).join('\n');
+        out += '\n\n--- معلومات مخصصة علّمها مشرف المنصة للذكاء الاصطناعي ---\n' + kList + '\n---\nلو الطلب قريب من أحد الأسئلة دي، اعتمد على الإجابة المعتمدة هنا كمصدر موثوق أساسي.';
+      }
+      if (typeof aiLessonsLearned !== 'undefined' && aiLessonsLearned && aiLessonsLearned.length) {
+        var lList = aiLessonsLearned.slice(0, maxLessons).map(function(l, li) {
+          return (li + 1) + '. سؤال اتقيّم رده قبل كده بإنه "مش مفيد": "' + String(l.question || '').slice(0, 150) + '"';
+        }).join('\n');
+        out += '\n\n--- دروس مستفادة من تقييمات سابقة (تعلّم منها ولا تكرر نفس القصور) ---\n' + lList + '\n---';
+      }
+      if (typeof aiGoodAnswers !== 'undefined' && aiGoodAnswers && aiGoodAnswers.length) {
+        var gaList = aiGoodAnswers.slice(0, maxLessons).map(function(g, gi) {
+          return (gi + 1) + '. رد سابق عجب المستخدمين وقيّموه 👍: "' + String(g.answer || '').slice(0, 200) + '"';
+        }).join('\n');
+        out += '\n\n--- ردود سابقة عجبت المستخدمين (حافظ على نفس الأسلوب والمستوى) ---\n' + gaList + '\n---';
+      }
+    } catch (e) { /* تجاهل أي خطأ */ }
+    return out;
+  };
+
   window.AI_PERSONAS = AI_PERSONAS;
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 600); }); }
@@ -11219,6 +11266,10 @@ function slStopAllAnimations() {
         // مفيش رد نصي في الشات، بس صندوق الملف الجاهز يظهر لما يخلص. ──
         var _codeExtRe = /\.(js|jsx|ts|tsx|html|htm|css|scss|py|c|cpp|h|java|php|rb|go|rs|sql)$/i;
         window.__cosmosSilentFileEdit = !imgs.length && validDocs.some(function(f){ return _codeExtRe.test(f.name); });
+        // ── أسماء ملفات الكود المرفقة — عشان نقدر نعرض خطوات حقيقية (قراءة/تحليل/تعديل) بدل لابل ثابت واحد ──
+        window.__cosmosSilentFileEditNames = window.__cosmosSilentFileEdit
+          ? validDocs.filter(function(f){ return _codeExtRe.test(f.name); }).map(function(f){ return f.name; })
+          : [];
 
         // ── لو مفيش صور، منطق نصي بحت عبر المسار العادي (Groq) ──
         if (!imgs.length) {
@@ -11269,6 +11320,10 @@ function slStopAllAnimations() {
           }
           var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock;
           promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'كوزموس')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
+          // ── نفس أساس العبقرية وذاكرة المنصة (معرفة المشرف + دروس التقييمات) اللي بيستخدمها الشات النصي،
+          // عشان تحليل الصور/الملفات ميبقاش مسار "من درجة تانية" منفصل عن باقي الغرف ──
+          promptText += (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '');
+          promptText += (typeof window.buildCosmosKnowledgeSnapshot === 'function' ? window.buildCosmosKnowledgeSnapshot(15, 5) : '');
 
           // فصل البيانات base64 عن الـ prefix (data:image/jpeg;base64,....) لكل صورة
           var _parts = [{ text: promptText }];
@@ -11332,7 +11387,7 @@ function slStopAllAnimations() {
                 body: JSON.stringify({
                   model: 'openai/gpt-oss-120b',
                   messages: [
-                    { role: 'system', content: 'أنت محرر محتوى محترف. هتستلم تحليل خام لصورة/ملف من نموذج تاني، ومطلوب منك تعيد صياغته كرد نهائي احترافي ومنظم بالعربية للمستخدم — بنقاط أو عناوين فرعية عند الحاجة، من غير حشو، ومن غير ما تقول إنك "أعدت صياغة" حاجة أو تشير لأي نموذج تاني. ممنوع ماركداون خام زي ### أو --- أو جداول |؛ استخدم بس **نص عريض** وأرقام/نقاط للتعداد.' },
+                    { role: 'system', content: 'أنت محرر محتوى محترف. هتستلم تحليل خام لصورة/ملف من نموذج تاني، ومطلوب منك تعيد صياغته كرد نهائي احترافي ومنظم بالعربية للمستخدم — بنقاط أو عناوين فرعية عند الحاجة، من غير حشو، ومن غير ما تقول إنك "أعدت صياغة" حاجة أو تشير لأي نموذج تاني. ممنوع ماركداون خام زي ### أو --- أو جداول |؛ استخدم بس **نص عريض** وأرقام/نقاط للتعداد.' + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') },
                     { role: 'user', content: 'طلب المستخدم الأصلي: "' + (extraText || 'صف المرفقات') + '"\n\nالتحليل الخام:\n' + visionAnswer }
                   ],
                   max_tokens: 1800, temperature: 0.35
@@ -11500,16 +11555,19 @@ function slStopAllAnimations() {
             if (_searchStatusEl && _imgs.length) {
               var _thumbWrap = _searchStatusEl.querySelector('.cosmos-search-thumb-wrap') || document.createElement('div');
               _thumbWrap.className = 'cosmos-search-thumb-wrap';
-              var _thumb = document.createElement('img');
-              _thumb.className = 'cosmos-search-thumb';
-              _thumb.alt = '';
-              _thumb.src = _imgs[0];
               _thumbWrap.innerHTML = '';
-              _thumbWrap.appendChild(_thumb);
+              _imgs.slice(0, 2).forEach(function(_imgUrl){
+                var _thumb = document.createElement('img');
+                _thumb.className = 'cosmos-search-thumb';
+                _thumb.alt = '';
+                _thumb.loading = 'lazy';
+                _thumb.src = _imgUrl;
+                _thumbWrap.appendChild(_thumb);
+              });
               _searchStatusEl.querySelector('.message-content').appendChild(_thumbWrap);
               if (_sLabel) {
                 _sLabel.innerHTML = '';
-                _sLabel.appendChild(document.createTextNode('لقى صورة حقيقية، بيجهّز الإجابة'));
+                _sLabel.appendChild(document.createTextNode('لقى صور حقيقية، بيجهّز الإجابة'));
               }
               if (msgs) msgs.scrollTop = msgs.scrollHeight;
               await new Promise(function(r){ setTimeout(r, 1000); });
@@ -11552,9 +11610,27 @@ function slStopAllAnimations() {
         typingEl = document.createElement('div');
         typingEl.className = 'message received';
         var pNameT = (window.getCurrentAIPersona() || {name:'Astronomy AI'}).name;
-        var _thinkLabel = window.__cosmosSilentFileEdit ? (pNameT + ' بيعدّل الملف') : (pNameT + ' يفكر');
-        typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_thinkLabel) + '</div>';
-        msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+        if (window.__cosmosSilentFileEdit) {
+          // ── وضع تعديل الملف: نعرض خطوات حقيقية متتابعة بدل لابل ثابت واحد —
+          // بيتفق فعليًا مع اللي بيحصل: الملف اتقرا فعلاً قبل ما نوصل هنا، وبعدين بييجي التحليل والتعديل ──
+          var _editFiles = window.__cosmosSilentFileEditNames || [];
+          var _editFileTxt = _editFiles.length ? (': ' + _editFiles[0] + (_editFiles.length > 1 ? (' (+' + (_editFiles.length - 1) + ' كمان)') : '')) : '';
+          var _editStages = ['بيقرأ الملف' + _editFileTxt, 'بيحلل الكود الحالي', 'بيجهّز التعديلات المطلوبة'];
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' ' + _editStages[0]) + '</div>';
+          msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+          var _stageIdx = 0;
+          typingEl._cosmosStageTimer = setInterval(function(){
+            _stageIdx++;
+            if (!typingEl || !typingEl.isConnected || _stageIdx >= _editStages.length) { clearInterval(typingEl && typingEl._cosmosStageTimer); return; }
+            var _wrap = typingEl.querySelector('.message-content');
+            if (_wrap) _wrap.innerHTML = window.buildCosmosThinkingHTML(pNameT + ' ' + _editStages[_stageIdx]);
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          }, 1100);
+        } else {
+          var _thinkLabel = pNameT + ' يفكر';
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_thinkLabel) + '</div>';
+          msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+        }
       }
 
       // ── Persona & API key ──
@@ -11669,6 +11745,19 @@ function slStopAllAnimations() {
       } catch(eLessonsCtx) { /* تجاهل أي خطأ */ }
 
       // ══════════════════════════════════════════════════════════════════
+      // 🧠 غرفة 3 (امتداد ثاني): ردود عامة (مش كود) عجبت المستخدمين 👍 — نفس مبدأ أكواد الـ 👍 بس للأسلوب العام
+      // ══════════════════════════════════════════════════════════════════
+      var _goodAnswersContextBlock = '';
+      try {
+        if (typeof aiGoodAnswers !== 'undefined' && aiGoodAnswers && aiGoodAnswers.length) {
+          var _gaList = aiGoodAnswers.map(function(g, gi){
+            return (gi + 1) + '. سؤال: "' + String(g.question || '').slice(0,120) + '" — رد اتقيّم إنه "مفيد" قبل كده: "' + String(g.answer || '').slice(0,250) + '"';
+          }).join('\n');
+          _goodAnswersContextBlock = '\n\n--- ردود سابقة عجبت المستخدمين وقيّموها 👍 (حافظ على نفس أسلوبها ومستوى وضوحها) ---\n' + _gaList + '\n---\nخد بالك من الأسلوب والمستوى اللي عجب المستخدمين في الردود دي، وحاول تحافظ عليه أو تتخطاه.';
+        }
+      } catch(eGoodAnsCtx) { /* تجاهل أي خطأ */ }
+
+      // ══════════════════════════════════════════════════════════════════
       // 🧠 غرفة 2: الذاكرة المؤقتة — ملخص جلسة المحادثة الحالية (أبعد من آخر 8 رسائل بترسل فعليًا للموديل)
       // ══════════════════════════════════════════════════════════════════
       var _tempMemoryDigestBlock = '';
@@ -11683,7 +11772,7 @@ function slStopAllAnimations() {
       // 🧠 غرفة 4: تجميع المعلومات — دمج كل الغرف في كتلة سياق واحدة منظمة بالأولوية
       // (معرفة المشرف أولاً، بعدها دروس التقييمات، بعدها الذاكرة المؤقتة، بعدها بيانات المنصة)
       // ══════════════════════════════════════════════════════════════════
-      var _aggregatedContextBlock = _knowledgeContextBlock + _lessonsContextBlock + _tempMemoryDigestBlock;
+      var _aggregatedContextBlock = _knowledgeContextBlock + _lessonsContextBlock + _goodAnswersContextBlock + _tempMemoryDigestBlock;
 
       var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.\n- هوية إلزامية: إنت مساعد ذكاء اصطناعي اسمه "'+persona.name+'"، جزء من منصة "فلك" التعليمية. لو حد سألك "مين انت" أو "انت شغال على ايه" أو "انت اي موديل" أو "انت اي تطبيق" أو أي سؤال عن هويتك أو التقنية اللي بتشتغل بيها، جاوب إنك "'+persona.name+'" المساعد الذكي بتاع منصة فلك، ومتقولش أبداً اسم أي شركة أو موديل أو منصة تقنية تانية (زي OpenAI أو ChatGPT أو أي حد تاني) حتى لو حد ألحّ في السؤال.\n- تنسيق النص إلزامي: إنت بترد جوه فقاعة شات على الموبايل مش صفحة ويب. ممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة | أو عناوين Markdown، لأنها بتظهر كرموز غريبة للمستخدم. استخدم بس: **نص عريض** لو محتاج تمييز، سطور جديدة، إيموجي، وأرقام أو نقاط (1. 2. 3. أو •) للتعداد. لو محتاج تعرض كود، حطه بين ```لغة البرمجة``` عادي بس متستخدمش جداول أو عناوين markdown أبداً.';
 
@@ -11710,9 +11799,10 @@ function slStopAllAnimations() {
         // (فيديوهات/كورسات/معرفة/إحصائيات) لأنها ممكن لوحدها تتخطى حد الموديل الصغير،
         // وبنقصّ رسالة المستخدم نفسها لو كانت ضخمة (زي ملف كود كبير مرفق).
         // ملاحظة: _reasoningRoomBlock و_lessonsContextBlock بيفضلوا موجودين حتى في وضع lean لأنهم خفيفين وميقلبوش حد التوكنز.
+        var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -11798,7 +11888,7 @@ function slStopAllAnimations() {
           var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
           if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
           try {
-            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock;
+            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '');
             var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
             _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -11885,6 +11975,7 @@ function slStopAllAnimations() {
       if (!answer) {
         // ── الاتنين فشلوا فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
         if (window.logPlatformIssue) window.logPlatformIssue('Router (فشل شامل نص)', 'Groq: ' + (_debugGroqDetail||'—') + ' | Gemini: ' + (_debugGeminiDetail||'—'));
+        if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
         if (typingEl) typingEl.remove();
         if (msgs) {
           var edBoth = document.createElement('div');
@@ -11910,6 +12001,7 @@ function slStopAllAnimations() {
         } catch(eDigestPush) { /* تجاهل أي خطأ */ }
 
         // ── Show AI bubble ──
+        if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
         if (typingEl) typingEl.remove();
         if (msgs) {
           // هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ملف/تنزيل؟ نحدد الفلاج قبل الفورمات مباشرة

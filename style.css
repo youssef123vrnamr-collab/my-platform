@@ -8140,11 +8140,15 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 .cosmos-search-thumb-wrap {
   margin-top: .55rem;
   width: 100%;
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
 }
 .cosmos-search-thumb {
   display: block;
-  width: 100%;
-  max-width: 220px;
+  width: auto;
+  flex: 1 1 100px;
+  max-width: 160px;
   max-height: 130px;
   object-fit: cover;
   border-radius: 12px;
