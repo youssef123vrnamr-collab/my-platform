@@ -554,6 +554,74 @@ async function isAdminUser(userId) {
     } catch (e) { console.warn('verifyCosmosCodeAnswer failed', e); return null; }
   };
 
+  // ── استخراج أول كتلة كود HTML كاملة (فيها <html> أو <!DOCTYPE) من رد الذكاء الاصطناعي ──
+  window.extractCosmosHtmlBlock = function(raw) {
+    if (!raw) return null;
+    var m = String(raw).match(/```html\s*\n?([\s\S]*?)```/i);
+    if (m && m[1] && /<html[\s>]|<!DOCTYPE/i.test(m[1])) return m[1];
+    return null;
+  };
+
+  // ── تشغيل حقيقي للكود جوه iframe معزول (sandbox) مخفي عن المستخدم — مش "تخمين إنه هيشتغل"،
+  // ده تشغيل فعلي في متصفح حقيقي، وأي خطأ JS بيحصل وقت التحميل بنمسكه فورًا. ──
+  window.testCosmosHtmlCode = function(htmlCode) {
+    return new Promise(function(resolve) {
+      try {
+        var token = 'cosmosTest' + Date.now() + Math.floor(Math.random() * 10000);
+        var errors = [];
+        var done = false, frame = null;
+        function onMsg(ev) {
+          if (!ev.data || ev.data.__cosmosTestToken !== token) return;
+          if (ev.data.type === 'error' && errors.indexOf(ev.data.message) === -1) errors.push(ev.data.message);
+        }
+        function finish() {
+          if (done) return; done = true;
+          window.removeEventListener('message', onMsg);
+          if (frame && frame.parentNode) frame.parentNode.removeChild(frame);
+          resolve(errors);
+        }
+        window.addEventListener('message', onMsg);
+        var errorCatcher = '<script>(function(){'
+          + 'function report(msg){try{parent.postMessage({__cosmosTestToken:"' + token + '",type:"error",message:String(msg).slice(0,300)},"*");}catch(e){}}'
+          + 'window.addEventListener("error",function(e){report((e && e.message) || "خطأ غير معروف وقت التشغيل")});'
+          + 'window.addEventListener("unhandledrejection",function(e){report("Promise اتفض من غير معالجة: " + ((e && e.reason && e.reason.message) || e.reason))});'
+          + '})();<\/script>';
+        var doc = htmlCode;
+        if (/<head[^>]*>/i.test(doc)) doc = doc.replace(/<head[^>]*>/i, function(m) { return m + errorCatcher; });
+        else doc = errorCatcher + doc;
+        frame = document.createElement('iframe');
+        frame.setAttribute('sandbox', 'allow-scripts');
+        frame.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;opacity:0;pointer-events:none;';
+        frame.srcdoc = doc;
+        document.body.appendChild(frame);
+        setTimeout(finish, 1400); // ── وقت كافي لأي خطأ يظهر وقت التحميل والتشغيل الأولي ──
+      } catch (e) { resolve(['تعذّر تشغيل اختبار الكود: ' + String(e && e.message || e)]); }
+    });
+  };
+
+  // ── إصلاح موجّه بالأخطاء الحقيقية اللي رجّعها التشغيل الفعلي (مش تخمين) ──
+  window.fixCosmosHtmlAnswer = async function(apiKey, originalUserMsg, previousAnswer, errorList) {
+    try {
+      var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-120b',
+          max_tokens: 8000,
+          temperature: 0.1,
+          messages: [
+            { role: 'system', content: 'أنت مبرمج خبير. الكود اللي كتبته اتشغّل فعليًا جوه متصفح حقيقي، ورجّع الأخطاء دي وقت التشغيل الفعلي. مهمتك: افهم سبب كل خطأ منها بدقة، وأعد كتابة الرد كامل بعد إصلاح كل خطأ، بنفس تنسيق الرد الأصلي بالظبط (نفس عدد كتل الكود ونوعها). ركّز بس على إصلاح الأخطاء دي من غير ما تكسر أو تغيّر أي حاجة تانية كانت شغالة صح. اكتب الرد المصحح كامل من غير أي شرح أو تعليق عن إنك بتصلح حاجة.' },
+            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 3000) + '\n\nالرد اللي اتكتب:\n' + String(previousAnswer || '').slice(0, 14000) + '\n\nالأخطاء الحقيقية اللي حصلت وقت التشغيل الفعلي في المتصفح:\n- ' + errorList.join('\n- ') }
+          ]
+        })
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var out = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+      return (out && out.trim()) ? out.trim() : null;
+    } catch (e) { console.warn('fixCosmosHtmlAnswer failed', e); return null; }
+  };
+
   // ── وقت وتاريخ حقيقي دلوقتي، من جهاز المستخدم مباشرة (Intl API) — من غير ما نحتاج إذن GPS.
   // بيتحسب من جديد كل رسالة عشان يفضل دقيق لحظة بلحظة، مش قيمة مخزّنة من الأول. ──
   window.buildCosmosLiveTimeContext = function() {
@@ -12051,6 +12119,43 @@ function slStopAllAnimations() {
         } catch(eVerify) { console.warn('code verification pass failed, keeping original answer', eVerify); }
       }
 
+      // ══════════════════════════════════════════════════════════════════
+      // 🧪 تشغيل فعلي للكود (مش مجرد "مراجعة نصية") — لو الرد فيه صفحة HTML كاملة،
+      // بنشغّلها فعليًا جوه iframe معزول ونمسك أي خطأ JS حقيقي وقت التحميل، ونحاول نصلحه
+      // لحد مرتين بالاعتماد على نص الخطأ الحقيقي نفسه. لو فضل فاشل، بنقول للمستخدم صراحة
+      // إن فيه مشكلة معرفناش نحلها، بدل ما نسلّمه كود عطلان وكأنه شغال. ──
+      // ══════════════════════════════════════════════════════════════════
+      if (answer && apiKey && typeof window.extractCosmosHtmlBlock === 'function' && typeof window.testCosmosHtmlCode === 'function') {
+        var _htmlToTest = window.extractCosmosHtmlBlock(answer);
+        if (_htmlToTest) {
+          var _fixAttempts = 0, _maxFixAttempts = 2, _lastErrors = [];
+          while (_fixAttempts <= _maxFixAttempts) {
+            if (typingEl && typingEl.isConnected) {
+              var _wrapT = typingEl.querySelector('.message-content');
+              if (_wrapT) _wrapT.innerHTML = window.buildCosmosThinkingHTML(persona.name + (_fixAttempts === 0 ? ' بيجرب يشغّل الكود فعليًا' : ' بيصلح خطأ لقاه (محاولة ' + (_fixAttempts + 1) + ')'));
+              if (msgs) msgs.scrollTop = msgs.scrollHeight;
+            }
+            try { _lastErrors = await window.testCosmosHtmlCode(_htmlToTest); } catch(eTest) { _lastErrors = []; }
+            if (!_lastErrors.length) break; // شغال صح، خلاص
+            if (_fixAttempts >= _maxFixAttempts || typeof window.fixCosmosHtmlAnswer !== 'function') break;
+            try {
+              var _fixed = await window.fixCosmosHtmlAnswer(apiKey, userMsg, answer, _lastErrors);
+              if (_fixed && _fixed.length > 20) {
+                answer = _fixed;
+                var _reHtml = window.extractCosmosHtmlBlock(answer);
+                if (_reHtml) _htmlToTest = _reHtml; else break; // الشكل اتغيّر خالص، منكملش تلقيم أعمى
+              } else break;
+            } catch(eFix) { console.warn('fixCosmosHtmlAnswer failed', eFix); break; }
+            _fixAttempts++;
+          }
+          if (_lastErrors.length) {
+            // ── صدق بدل ما ندّعي إن الكود شغال — زي ما طلب المستخدم بالظبط.
+            // نص خام (من غير escaping يدوي) عشان formatAIAnswer هو اللي يتكفّل بالـ escaping وتحويل ** للبولد. ──
+            answer += '\n\n⚠️ **ملاحظة مهمة:** جرّبت أشغّل الكود ده فعليًا وحاولت أصلحه أكتر من مرة، بس لسه فيه مشكلة معرفتش أحلها: «' + _lastErrors[0] + '». راجع الكود بنفسك أو ابعتلي تفاصيل أكتر عن المشكلة اللي بتشوفها عشان أحاول تاني.';
+          }
+        }
+      }
+
       {
         // ── Save to history ──
         window.aiChatHistory.push({ role:'user', content: userMsg });
@@ -12072,6 +12177,8 @@ function slStopAllAnimations() {
           // هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ملف/تنزيل؟ نحدد الفلاج قبل الفورمات مباشرة
           window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(userMsg);
           var _silentEdit = window.__cosmosSilentFileEdit; window.__cosmosSilentFileEdit = false; // نستهلك الفلاج مرة واحدة
+          // ── لو فيه تحذير تشغيل حقيقي لسه قايم، نلغي وضع "الملف بس الصامت" عشان التحذير يبان للمستخدم بدل ما يتخفي ──
+          if (typeof _lastErrors !== 'undefined' && _lastErrors && _lastErrors.length) _silentEdit = false;
           var aiDiv = document.createElement('div');
           aiDiv.className = 'message received';
           var _aiAnswerUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
