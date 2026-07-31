@@ -667,7 +667,7 @@ async function isAdminUser(userId) {
           max_tokens: 3,
           temperature: 0,
           messages: [
-            { role: 'system', content: 'رد بكلمة واحدة بس: "نعم" لو الرسالة محتاجة معلومة حديثة/حقيقية أو حدث حالي أو حاجة لازم تتأكد منها من الإنترنت (زي أخبار، أسعار، تواريخ قريبة، أسماء أشخاص أو شركات أو منتجات حالية، نتائج، إحصائيات، حاجة بتتغيّر بمرور الوقت). أو رد "لا" لو مجرد كلام عادي، تحية، سؤال عن مفهوم علمي/تاريخي ثابت، أو طلب مساعدة عامة مش محتاجة تصفح إنترنت. رد بكلمة واحدة بس من غير أي شرح.' },
+            { role: 'system', content: 'رد بكلمة واحدة بس: "نعم" لو الرسالة محتاجة معلومة حديثة/حقيقية أو حدث حالي أو حاجة لازم تتأكد منها من الإنترنت (زي أخبار، أسعار، تواريخ قريبة، أسماء أشخاص أو شركات أو منتجات حالية، نتائج، إحصائيات، حاجة بتتغيّر بمرور الوقت). أو رد "لا" لو مجرد كلام عادي، تحية، سؤال عن مفهوم علمي/تاريخي ثابت، طلب مساعدة عامة مش محتاجة تصفح إنترنت، أو طلب برمجة/كود/لعبة/موقع/تطبيق (الطلبات دي بتتنفذ من معرفتك البرمجية مباشرة، ومحتاجتش بحث إنترنت أبدًا إلا لو المستخدم صراحة طلب بيانات حية معينة جوه الكود). رد بكلمة واحدة بس من غير أي شرح.' },
             { role: 'user', content: userMsg }
           ]
         })
@@ -11602,8 +11602,12 @@ function slStopAllAnimations() {
         _noTavilyEl.innerHTML = '<div class="message-content" style="color:#f59e0b">⚠️ البحث الحقيقي في الإنترنت مش مفعّل — لازم المشرف يحط مفتاح Tavily من القائمة (مفتاح البحث في الإنترنت 🔎) عشان يقدر يبحث فعلياً بدل ما يجاوب من معلوماته العامة.</div>';
         msgs.appendChild(_noTavilyEl); msgs.scrollTop = msgs.scrollHeight;
       }
+      // ── طلب بناء كود/لعبة/موقع/تطبيق مالوش أي علاقة ببحث الإنترنت غالبًا — البحث التخميني (classifyNeedsSearch)
+      // كان بيتفعّل غلط في الحالات دي ويجيب نتائج مالهاش علاقة (مواقع/مجتمعات عشوائية). نمنعه هنا تمامًا،
+      // ونسيب بس البحث الصريح (لو المستخدم فعلاً كتب كلمة زي "ابحث" أو "آخر أخبار") شغال زي ما هو. ──
+      var _looksLikeBuildRequest = /(كود|لعبة|لعبه|صفحة|صفحه|موقع|تطبيق|سكربت|سكريبت|أداة|اداة|برنامج|مكوّن|مكون|كومبوننت|component)/i.test(userMsg);
       var _needsSearch = _tavilyReady && _userAskedToSearch;
-      if (_tavilyReady && !_needsSearch && typeof window.classifyNeedsSearch === 'function') {
+      if (_tavilyReady && !_needsSearch && !_looksLikeBuildRequest && typeof window.classifyNeedsSearch === 'function') {
         _needsSearch = await window.classifyNeedsSearch(userMsg);
       }
       if (_needsSearch) {
@@ -11613,7 +11617,7 @@ function slStopAllAnimations() {
           _searchStatusEl = document.createElement('div');
           _searchStatusEl.className = 'message received';
           _searchStatusEl.dataset.cosmosSkip = '1'; // نتحكم فيه يدوياً، من غير ما الديكوريتر العام يلمسه
-          var _searchLbl = _mentionedDomains.length ? ('بيدور في ' + _mentionedDomains[0]) : 'بيبحث على الإنترنت';
+          var _searchLbl = _mentionedDomains.length ? ('بيراجع المعلومة في ' + _mentionedDomains[0]) : 'بيراجع المعلومة عبر الإنترنت';
           _searchStatusEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_searchLbl) + '</div>';
           msgs.appendChild(_searchStatusEl); msgs.scrollTop = msgs.scrollHeight;
           // ── لو معروف اسم الموقع من الأول، نحط أيقونته فورًا وهو "بيفكر" — زي المتصفحات الاحترافية ──
@@ -11656,7 +11660,7 @@ function slStopAllAnimations() {
                 _fav.alt = '';
                 _fav.src = 'https://www.google.com/s2/favicons?sz=32&domain=' + _foundDomains[0];
                 _sLabel.appendChild(_fav);
-                _sLabel.appendChild(document.createTextNode('لقى نتائج من: ' + _foundDomains.slice(0,3).join('، ')));
+                _sLabel.appendChild(document.createTextNode('لقى مصادر من: ' + _foundDomains.slice(0,3).join('، ') + ' — بيتأكد من المعلومة'));
                 if (msgs) msgs.scrollTop = msgs.scrollHeight;
                 await new Promise(function(r){ setTimeout(r, 900); });
               }
@@ -11738,6 +11742,20 @@ function slStopAllAnimations() {
             if (_wrap) _wrap.innerHTML = window.buildCosmosThinkingHTML(pNameT + ' ' + _editStages[_stageIdx]);
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
           }, 1100);
+        } else if (_looksLikeBuildRequest && !imgs) {
+          // ── طلب بناء كود/لعبة/موقع جديد (مش تعديل ملف مرفوع) — بنعرض خطوات التفكير الحقيقية
+          // (تفكير → مراجعة الخطة → إنشاء) بدل لابل "يفكر" ثابت، عشان يوضح إن فيه خطة قبل الكتابة ──
+          var _buildStages = ['بيفكر في الحل', 'بيراجع خطته قبل ما يكتب', 'بينشئ الكود'];
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' ' + _buildStages[0]) + '</div>';
+          msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+          var _bStageIdx = 0;
+          typingEl._cosmosStageTimer = setInterval(function(){
+            _bStageIdx++;
+            if (!typingEl || !typingEl.isConnected || _bStageIdx >= _buildStages.length) { clearInterval(typingEl && typingEl._cosmosStageTimer); return; }
+            var _wrapB = typingEl.querySelector('.message-content');
+            if (_wrapB) _wrapB.innerHTML = window.buildCosmosThinkingHTML(pNameT + ' ' + _buildStages[_bStageIdx]);
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          }, 1300);
         } else {
           var _thinkLabel = pNameT + ' يفكر';
           typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_thinkLabel) + '</div>';
