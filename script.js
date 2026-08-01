@@ -8190,6 +8190,16 @@ window.updateActiveToolLabel = function(label) {
     renderAIAttachPreview();
   };
 
+  // ── دالة الإرسال المربوطة بزر الإرسال (📤) في شات الذكاء الاصطناعي ──
+  // كانت غير معرّفة خالص، فزر الإرسال ما كانش بيعمل أي حاجة عند الضغط عليه
+  window.handleAISendBtnClick = function() {
+    if (typeof window.sendAIMessage === 'function') {
+      window.sendAIMessage();
+    } else {
+      console.warn('sendAIMessage غير معرّفة بعد');
+    }
+  };
+
   // ── دالة موحّدة: بتستقبل الصور والملفات مع بعض من نفس زر الإرفاق (📎) وتوزّعهم ──
   window.handleAIUnifiedSelect = function(input) {
     const files = Array.from(input.files || []);
