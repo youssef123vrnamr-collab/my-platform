@@ -2544,6 +2544,19 @@ body {
   box-shadow: 0 3px 12px rgba(99,102,241,0.4) !important;
 }
 
+/* زرار الإرسال وهو بيوقف — بيتحول لمربع أحمر بدل ورقة الطيران لحد ما الرد يخلص أو المستخدم يضغطه تاني عشان يوقف */
+.unified-send-btn.stopping {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 3px 12px rgba(239,68,68,0.45) !important;
+  border-radius: 10px !important;
+  animation: aiSendBtnStoppingPulse 1.4s ease-in-out infinite;
+}
+.unified-send-btn.stopping i { font-size: 0.95rem !important; }
+@keyframes aiSendBtnStoppingPulse {
+  0%, 100% { box-shadow: 0 3px 12px rgba(239,68,68,0.45); }
+  50% { box-shadow: 0 3px 18px rgba(239,68,68,0.75); }
+}
+
 /* File preview موحد */
 .unified-file-preview {
   display: flex;

@@ -2584,6 +2584,13 @@ async function updateAdminUI() {
     // استدعاء Vercel proxy بدل Pollinations مباشرة
     const _genSuccess = await _doGenerate(finalPrompt, uid, prompt, cont, seed, 1);
 
+    // ── نسجّل آخر صورة اتولدت (الوصف الأصلي + الوصف الإنجليزي المُثرى) عشان لو المستخدم رجع
+    // بعدها بطلب تعديل ("خليها زرقا"، "شيل العربية من الصورة") بدون كلمة "ارسم" صريحة، نقدر نفهم
+    // إنه بيقصد تعديل على نفس الصورة دي ونولّد نسخة جديدة مبنية على وصفها الأصلي + التعديل المطلوب ──
+    if (_genSuccess) {
+      window.__cosmosLastImageGen = { userPrompt: prompt, enPrompt: enPrompt, ts: Date.now() };
+    }
+
     // ── نسجّل طلب الصورة ونتيجتها في نفس ذاكرة المحادثة (aiChatHistory) اللي بيستخدمها الشات النصي ──
     // عشان لو المستخدم رجع كلّم النص بعدها (مثلاً "غيّر لونها" أو "دي كانت بتوصف ايه")، الموديل يكون عارف إن فيه صورة اتعملت وهي بتوصف ايه بالظبط.
     if (window.aiChatHistory) {
@@ -2754,6 +2761,36 @@ async function updateAdminUI() {
     if (IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger))) return true;
     return false;
   }
+  window.isImageRequest = isImageRequest;
+
+  // ══════════════════════════════════════════════════════════════════
+  // 🖌️ كشف طلب "تعديل" على آخر صورة اتولدت — من غير ما المستخدم يقول "ارسم" صراحة.
+  // مثال: بعد ما يطلب "ارسم لي مركبة فضاء"، لو قال بعدها "خليها زرقا" أو "شيل النجوم من الخلفية"
+  // من غير أي كلمة توليد صريحة، المفروض نفهم إنه بيقصد تعديل على الصورة اللي فاتت.
+  // بما إن مفيش تقنية تعديل صور حقيقية (pixel-level) متاحة هنا، الحل العملي هو: نولّد صورة جديدة
+  // بوصف = (وصف الصورة الأصلية + التعديل المطلوب) عشان تطلع أقرب ما يمكن لنفس الصورة بس بالتغيير المطلوب.
+  // ══════════════════════════════════════════════════════════════════
+  const IMAGE_EDIT_TRIGGERS = [
+    'غير','غيّر','غيّرها','غيرها','غيره','بدل','بدّل','خلي','خليها','خليه',
+    'كبر','كبرها','كبره','صغر','صغرها','صغره','زود','زوّد','قلل','قلّل',
+    'شيل','شيلها','شيله','احذف','امسح','ضيف','أضف','ضيفلها','ضيفله',
+    'لون تاني','لون تانى','خلفية تانية','خلفية تانيه','عدلها','عدله','عدّلها','عدّله',
+    'وضحها','فتحها شوية','غمقها شوية','خليها اوضح','change it','make it','edit this image','edit the image'
+  ];
+
+  function isImageEditRequest(text) {
+    if (!text || !window.__cosmosLastImageGen) return false;
+    // لو عدى وقت طويل (أكتر من 20 دقيقة) من آخر صورة، منعتبرش الرسالة القصيرة تعديل تلقائي عليها
+    if (Date.now() - (window.__cosmosLastImageGen.ts || 0) > 20 * 60 * 1000) return false;
+    if (isLikelyCode(text)) return false;
+    const t = text.trim().toLowerCase();
+    const hasEditVerb = IMAGE_EDIT_TRIGGERS.some(k => t.includes(k));
+    if (!hasEditVerb) return false;
+    const mentionsImage = IMAGE_REFERENCE_GUARDS.some(g => t.includes(g)) || /الصور[ةه]/.test(t);
+    // فعل تعديل + إشارة صريحة للصورة = تعديل مؤكد. فعل تعديل لوحده في رسالة قصيرة (استكمال مباشر) = تعديل محتمل.
+    return mentionsImage || t.split(/\s+/).length <= 8;
+  }
+  window.isImageEditRequest = isImageEditRequest;
 
   // ── هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ما يتعمله ملف/تنزيل؟ ──
   function wantsNoFileOutput(text) {
@@ -8184,6 +8221,43 @@ window.updateActiveToolLabel = function(label) {
     showToast('🖼️ مرفق ' + window._aiSelectedImages.length + ' صورة، اضغط إرسال');
   };
 
+  // ── زرار رفع واحد موحّد: بيفرّق تلقائيًا بين الصور والملفات حسب نوع كل ملف، ويوزّعها
+  // على نفس المصفوفتين الموجودتين (_aiSelectedImages / _aiSelectedFiles) عشان باقي منطق
+  // الإرسال والمعاينة يفضل شغال زي ما هو من غير أي تغيير تاني ──
+  window.handleAIUnifiedSelect = function(input) {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    const imgFiles = files.filter(f => f.type && f.type.startsWith('image/'));
+    const docFiles = files.filter(f => !(f.type && f.type.startsWith('image/')));
+
+    if (imgFiles.length) {
+      const roomImg = AI_MAX_IMAGES - window._aiSelectedImages.length;
+      if (roomImg > 0) {
+        const validImg = imgFiles.filter(f => f.size <= AI_MAX_IMAGE_SIZE);
+        if (validImg.length < imgFiles.length) showToast('⚠️ في صور اتشالت لأنها أكبر من 4 ميجا');
+        window._aiSelectedImages.push(...validImg.slice(0, roomImg));
+        if (validImg.length > roomImg) showToast('⚠️ اتاخد أول ' + roomImg + ' صور بس (الحد الأقصى 5)');
+      } else {
+        showToast('⚠️ الحد الأقصى 5 صور في المرة الواحدة');
+      }
+    }
+
+    if (docFiles.length) {
+      const roomDoc = AI_MAX_FILES - window._aiSelectedFiles.length;
+      if (roomDoc > 0) {
+        window._aiSelectedFiles.push(...docFiles.slice(0, roomDoc));
+        if (docFiles.length > roomDoc) showToast('⚠️ اتاخد أول ' + roomDoc + ' ملفات بس (الحد الأقصى 5)');
+      } else {
+        showToast('⚠️ الحد الأقصى 5 ملفات في المرة الواحدة');
+      }
+    }
+
+    input.value = '';
+    renderAIAttachPreview();
+    const totalCount = window._aiSelectedImages.length + window._aiSelectedFiles.length;
+    if (totalCount) showToast('📎 مرفق ' + totalCount + ' — اضغط إرسال');
+  };
+
   window.clearAIFile = function() {
     window._aiSelectedFiles = [];
     window._aiSelectedImages = [];
@@ -11511,7 +11585,8 @@ function slStopAllAnimations() {
             visionRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-              body: _visionBody
+              body: _visionBody,
+              signal: window.__aiAbortController ? window.__aiAbortController.signal : undefined
             });
 
             if (visionRes.status === 429) {
@@ -11558,7 +11633,8 @@ function slStopAllAnimations() {
                     { role: 'user', content: 'طلب المستخدم الأصلي: "' + (extraText || 'صف المرفقات') + '"\n\nالتحليل الخام:\n' + visionAnswer }
                   ],
                   max_tokens: 1800, temperature: 0.35
-                })
+                }),
+                signal: window.__aiAbortController ? window.__aiAbortController.signal : undefined
               });
               var _polishData = await _polishRes.json();
               var _polished = _polishData && _polishData.choices && _polishData.choices[0] && _polishData.choices[0].message && _polishData.choices[0].message.content;
@@ -11611,9 +11687,16 @@ function slStopAllAnimations() {
       if (!userMsg) return;
       if (inp && injectedMsg === undefined) { inp.value = ''; inp.style.height = 'auto'; }
 
-      // ── Image generation check ──
-      if (typeof isImageRequest === 'function' && isImageRequest(userMsg)) {
-        var imgPrompt = typeof extractImagePrompt === 'function' ? extractImagePrompt(userMsg) : userMsg;
+      // ── Image generation check (توليد جديد صراحة، أو تعديل ضمني على آخر صورة) ──
+      var _isImgEditReq = typeof isImageEditRequest === 'function' && isImageEditRequest(userMsg);
+      if ((typeof isImageRequest === 'function' && isImageRequest(userMsg)) || _isImgEditReq) {
+        var imgPrompt;
+        if (_isImgEditReq) {
+          // بنبني وصف جديد = وصف الصورة الأصلية + التعديل المطلوب، عشان الصورة الجديدة تفضل قريبة من الأصلية بس بالتغيير ده
+          imgPrompt = (window.__cosmosLastImageGen.userPrompt || '') + '، بس مع التعديل ده: ' + userMsg;
+        } else {
+          imgPrompt = typeof extractImagePrompt === 'function' ? extractImagePrompt(userMsg) : userMsg;
+        }
         // نعرض فقاعة رسالة المستخدم زي أي رسالة عادية، عشان المحادثة تفضل متسلسلة ومفهومة بدل ما تقفز على طول لرسالة "بيولّد"
         var _imgReqReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
         if (msgs) {
@@ -12044,16 +12127,19 @@ function slStopAllAnimations() {
           res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: window.__aiAbortController ? window.__aiAbortController.signal : undefined
           });
           if (onDelta && res.ok && res.body && res.body.getReader) {
             try { data = await _readGroqStream(res, onDelta, onReasoningDelta); }
             catch (eStream) {
+              if (eStream && eStream.name === 'AbortError') throw eStream; // إيقاف بأمر المستخدم — مفيش داعي لمحاولة بديلة
               // فشل قراءة الـ stream (متصفح قديم أو انقطاع) — نرجع لنداء عادي من غير stream كشبكة أمان
               console.warn('stream read failed, falling back to normal request', eStream);
               var res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST', headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
-                body: JSON.stringify(buildPayload(model, maxTok, hist, lean))
+                body: JSON.stringify(buildPayload(model, maxTok, hist, lean)),
+                signal: window.__aiAbortController ? window.__aiAbortController.signal : undefined
               });
               res = res2; data = await res2.json();
             }
@@ -12082,7 +12168,8 @@ function slStopAllAnimations() {
             var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
-              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } })
+              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } }),
+              signal: window.__aiAbortController ? window.__aiAbortController.signal : undefined
             });
             var d = await r.json();
             var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
@@ -12135,7 +12222,8 @@ function slStopAllAnimations() {
           var _res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+apiKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(_payloadNoReason)
+            body: JSON.stringify(_payloadNoReason),
+            signal: window.__aiAbortController ? window.__aiAbortController.signal : undefined
           });
           result = { res: _res2, data: await _res2.json() };
         }
@@ -12364,6 +12452,55 @@ function slStopAllAnimations() {
     // (زي إرسال محتوى الملفات المرفقة) عشان نتجنب دخول حارس التحقق تاني وهو بيشوف
     // مربع الكتابة فاضي أو المحتوى طويل فيرفض الإرسال بصمت ──
     window.__aiSendMessageCore = window.sendAIMessage;
+
+    // ══════════════════════════════════════════════════════════════════
+    // ⏹ زرار الإرسال/الإيقاف: بمجرد ما الإرسال يبدأ، الزرار يتحول لمربع إيقاف.
+    // لو المستخدم ضغط عليه تاني وهو شغال، الطلب بيتوقف فورًا (AbortController)
+    // ويرجع شكل ورقة الإرسال تاني. لو خلص عادي أو حصل أي خطأ، برضه بيرجع لشكله الأصلي.
+    // ══════════════════════════════════════════════════════════════════
+    window.sendAIMessage = async function(injectedMsgOuter) {
+      if (window.__aiIsGenerating) return; // في طلب شغال بالفعل — الضغط أثناء الشغل بيتعامل معاه زرار الإيقاف نفسه
+      window.__aiIsGenerating = true;
+      window.__aiAbortController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      if (typeof window.__aiSetSendBtnState === 'function') window.__aiSetSendBtnState('stop');
+      try {
+        await window.__aiSendMessageCore(injectedMsgOuter);
+      } catch (eSendOuter) {
+        if (eSendOuter && eSendOuter.name === 'AbortError') {
+          // اتوقف بأمر المستخدم — من غير رسالة خطأ، بنسيب اللي اتكتب لحد لحظة الإيقاف زي ما هو
+        } else {
+          console.error('sendAIMessage error:', eSendOuter);
+        }
+      } finally {
+        window.__aiIsGenerating = false;
+        window.__aiAbortController = null;
+        if (typeof window.__aiSetSendBtnState === 'function') window.__aiSetSendBtnState('send');
+      }
+    };
+
+    // ── تبديل شكل زرار الإرسال بين "إرسال" (ورقة طيران) و"إيقاف" (مربع) ──
+    window.__aiSetSendBtnState = function(state) {
+      var btn = document.getElementById('aiSendBtn');
+      if (!btn) return;
+      if (state === 'stop') {
+        btn.classList.add('stopping');
+        btn.innerHTML = '<i class="fas fa-stop"></i>';
+        btn.title = 'إيقاف';
+      } else {
+        btn.classList.remove('stopping');
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        btn.title = 'إرسال';
+      }
+    };
+
+    // ── هاندلر واحد لزرار الإرسال: لو مفيش طلب شغال يبعت، لو فيه طلب شغال يوقفه ──
+    window.handleAISendBtnClick = function() {
+      if (window.__aiIsGenerating) {
+        if (window.__aiAbortController) window.__aiAbortController.abort();
+        return;
+      }
+      window.sendAIMessage();
+    };
 
     // ── Also patch clearAIChat to reset history ──
     var _origClear = window.clearAIChat;
