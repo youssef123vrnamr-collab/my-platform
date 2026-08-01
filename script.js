@@ -8189,6 +8189,41 @@ window.updateActiveToolLabel = function(label) {
     window._aiSelectedImages = [];
     renderAIAttachPreview();
   };
+
+  // ── دالة موحّدة: بتستقبل الصور والملفات مع بعض من نفس زر الإرفاق (📎) وتوزّعهم ──
+  window.handleAIUnifiedSelect = function(input) {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    const images = files.filter(f => f.type && f.type.startsWith('image/'));
+    const docs = files.filter(f => !(f.type && f.type.startsWith('image/')));
+
+    if (images.length) {
+      const room = AI_MAX_IMAGES - window._aiSelectedImages.length;
+      if (room > 0) {
+        const valid = images.filter(f => f.size <= AI_MAX_IMAGE_SIZE);
+        if (valid.length < images.length) showToast('⚠️ في صور اتشالت لأنها أكبر من 4 ميجا');
+        window._aiSelectedImages.push(...valid.slice(0, room));
+        if (valid.length > room) showToast('⚠️ اتاخد أول ' + room + ' صور بس (الحد الأقصى 5)');
+      } else {
+        showToast('⚠️ الحد الأقصى 5 صور في المرة الواحدة');
+      }
+    }
+
+    if (docs.length) {
+      const room = AI_MAX_FILES - window._aiSelectedFiles.length;
+      if (room > 0) {
+        window._aiSelectedFiles.push(...docs.slice(0, room));
+        if (docs.length > room) showToast('⚠️ اتاخد أول ' + room + ' ملفات بس (الحد الأقصى 5)');
+      } else {
+        showToast('⚠️ الحد الأقصى 5 ملفات في المرة الواحدة');
+      }
+    }
+
+    input.value = '';
+    renderAIAttachPreview();
+    const total = window._aiSelectedImages.length + window._aiSelectedFiles.length;
+    if (total > 0) showToast('📎 مرفق ' + total + ' عنصر، اضغط إرسال');
+  };
 })();
 
 console.log('✅ جميع الميزات الجديدة تم تحميلها بنجاح');
