@@ -8086,7 +8086,7 @@ window.updateActiveToolLabel = function(label) {
   };
 
   // ── دعم إرفاق حتى 5 ملفات نصية + 5 صور معًا في شات الذكاء الاصطناعي ──
-  const AI_MAX_FILES = 5, AI_MAX_IMAGES = 5, AI_MAX_IMAGE_SIZE = 4 * 1024 * 1024;
+  const AI_MAX_FILES = 5, AI_MAX_IMAGES = 5, AI_MAX_IMAGE_SIZE = 10 * 1024 * 1024;
   window._aiSelectedFiles = window._aiSelectedFiles || [];
   window._aiSelectedImages = window._aiSelectedImages || [];
 
@@ -8176,7 +8176,7 @@ window.updateActiveToolLabel = function(label) {
     const room = AI_MAX_IMAGES - window._aiSelectedImages.length;
     if (room <= 0) { showToast('⚠️ الحد الأقصى 5 صور في المرة الواحدة'); input.value = ''; return; }
     const valid = files.filter(f => f.size <= AI_MAX_IMAGE_SIZE);
-    if (valid.length < files.length) showToast('⚠️ في صور اتشالت لأنها أكبر من 4 ميجا');
+    if (valid.length < files.length) showToast('⚠️ في صور اتشالت لأنها أكبر من 10 ميجا');
     window._aiSelectedImages.push(...valid.slice(0, room));
     if (valid.length > room) showToast('⚠️ اتاخد أول ' + room + ' صور بس (الحد الأقصى 5)');
     input.value = '';
@@ -8211,7 +8211,7 @@ window.updateActiveToolLabel = function(label) {
       const room = AI_MAX_IMAGES - window._aiSelectedImages.length;
       if (room > 0) {
         const valid = images.filter(f => f.size <= AI_MAX_IMAGE_SIZE);
-        if (valid.length < images.length) showToast('⚠️ في صور اتشالت لأنها أكبر من 4 ميجا');
+        if (valid.length < images.length) showToast('⚠️ في صور اتشالت لأنها أكبر من 10 ميجا');
         window._aiSelectedImages.push(...valid.slice(0, room));
         if (valid.length > room) showToast('⚠️ اتاخد أول ' + room + ' صور بس (الحد الأقصى 5)');
       } else {
@@ -11656,21 +11656,24 @@ function slStopAllAnimations() {
       if (!userMsg) return;
       if (inp && injectedMsg === undefined) { inp.value = ''; inp.style.height = 'auto'; }
 
+      // ── Show user bubble فورًا — قبل أي طلب شبكة (NASA/تصنيف بحث/Tavily) —
+      // عشان المستخدم يشوف رسالته على طول، مش بعد ما كل الطلبات دي تخلص أو تتعلّق ──
+      var _aiReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
+      var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+      if (msgs) {
+        var ud = document.createElement('div');
+        ud.className = 'message sent';
+        ud.id = 'msg-'+_aiMsgUid;
+        ud.dataset.msgId = _aiMsgUid;
+        var _quoted = (_aiReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_aiReplyPayload) : '';
+        ud.innerHTML = _quoted + '<div class="message-content">'+escapeHtml(userMsg)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+        msgs.appendChild(ud); msgs.scrollTop = msgs.scrollHeight;
+      }
+      if (_aiReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
+
       // ── Image generation check ──
       if (typeof isImageRequest === 'function' && isImageRequest(userMsg)) {
         var imgPrompt = typeof extractImagePrompt === 'function' ? extractImagePrompt(userMsg) : userMsg;
-        // نعرض فقاعة رسالة المستخدم زي أي رسالة عادية، عشان المحادثة تفضل متسلسلة ومفهومة بدل ما تقفز على طول لرسالة "بيولّد"
-        var _imgReqReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
-        if (msgs) {
-          var _imgReqDiv = document.createElement('div');
-          _imgReqDiv.className = 'message sent';
-          var _imgReqUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
-          _imgReqDiv.id = 'msg-'+_imgReqUid; _imgReqDiv.dataset.msgId = _imgReqUid;
-          var _quotedImgReq = (_imgReqReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_imgReqReplyPayload) : '';
-          _imgReqDiv.innerHTML = _quotedImgReq + '<div class="message-content">'+escapeHtml(userMsg)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
-          msgs.appendChild(_imgReqDiv); msgs.scrollTop = msgs.scrollHeight;
-        }
-        if (_imgReqReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
         await generateAndDisplayImage(imgPrompt);
         return;
       }
@@ -11794,8 +11797,7 @@ function slStopAllAnimations() {
         if (_searchStatusEl && _searchStatusEl.parentNode) _searchStatusEl.parentNode.removeChild(_searchStatusEl);
       }
 
-      // ── الرد على رسالة سابقة (لو مفعّل) ──
-      var _aiReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
+      // ── الرد على رسالة سابقة (لو مفعّل) — بنستخدم نفس المتغير اللي اتجهز فوق قبل عرض الفقاعة ──
       var _aiApiMsg = userMsg + _extraContextForAI;
       if (_aiReplyPayload && injectedMsg === undefined) {
         _aiApiMsg = 'بالرد على رسالة سابقة ("'+_aiReplyPayload.text+'"):\n' + userMsg + _extraContextForAI;
@@ -11807,19 +11809,6 @@ function slStopAllAnimations() {
       var _mainMaxTok     = _isCodeReq ? 8000 : 2200;
       var _fallbackMaxTok = _isCodeReq ? 8000 : 4000;
       var _geminiMaxTok   = _isCodeReq ? 8000 : 2200;
-
-      // ── Show user bubble ──
-      var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
-      if (msgs) {
-        var ud = document.createElement('div');
-        ud.className = 'message sent';
-        ud.id = 'msg-'+_aiMsgUid;
-        ud.dataset.msgId = _aiMsgUid;
-        var _quoted = (_aiReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_aiReplyPayload) : '';
-        ud.innerHTML = _quoted + '<div class="message-content">'+userMsg+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
-        msgs.appendChild(ud); msgs.scrollTop = msgs.scrollHeight;
-      }
-      if (_aiReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
 
       // ── Typing indicator ──
       var typingEl = null;
