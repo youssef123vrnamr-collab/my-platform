@@ -2530,7 +2530,8 @@ body {
   cursor: pointer !important;
   font-size: 1.1rem !important;
   flex-shrink: 0 !important;
-  transition: opacity 0.2s, transform 0.15s !important;
+  position: relative !important;
+  transition: opacity 0.2s, transform 0.15s, background 0.25s, border-radius 0.25s !important;
 }
 .unified-send-btn:active { transform: scale(0.94) !important; }
 
@@ -2544,17 +2545,25 @@ body {
   box-shadow: 0 3px 12px rgba(99,102,241,0.4) !important;
 }
 
-/* زرار الإرسال وهو بيوقف — بيتحول لمربع أحمر بدل ورقة الطيران لحد ما الرد يخلص أو المستخدم يضغطه تاني عشان يوقف */
-.unified-send-btn.stopping {
-  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-  box-shadow: 0 3px 12px rgba(239,68,68,0.45) !important;
-  border-radius: 10px !important;
-  animation: aiSendBtnStoppingPulse 1.4s ease-in-out infinite;
+/* ── أيقونتين ثابتتين جوه الزرار دايمًا، وبيتلاشى بينهم بسلاسة (بدل استبدال innerHTML اللي بيقطع) ──
+   الوضع العادي: أيقونة الإرسال ظاهرة والإيقاف مختفية ومصغّرة. وقت التوليد: العكس بالظبط. */
+.unified-send-btn .ai-send-icon {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  opacity: 1;
 }
-.unified-send-btn.stopping i { font-size: 0.95rem !important; }
-@keyframes aiSendBtnStoppingPulse {
-  0%, 100% { box-shadow: 0 3px 12px rgba(239,68,68,0.45); }
-  50% { box-shadow: 0 3px 18px rgba(239,68,68,0.75); }
+.unified-send-btn .ai-icon-stop { opacity: 0; transform: translate(-50%, -50%) scale(0.5); font-size: 0.85em; }
+.unified-send-btn.stopping .ai-icon-send { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+.unified-send-btn.stopping .ai-icon-stop { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+/* زرار الإرسال وهو بيوقف — تدرّج رمادي داكن هادي (زي أزرار الإيقاف الاحترافية) بدل ما يبقى أحمر تحذيري،
+   لأن ده مش خطأ ولا تحذير، ده مجرد حالة عادية إن فيه رد شغال دلوقتي */
+.unified-send-btn.stopping {
+  background: linear-gradient(135deg, #475569, #334155) !important;
+  box-shadow: 0 3px 12px rgba(51,65,85,0.5) !important;
+  border-radius: 14px !important;
 }
 
 /* File preview موحد */

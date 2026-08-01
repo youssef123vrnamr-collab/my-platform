@@ -11884,7 +11884,7 @@ function slStopAllAnimations() {
         } else if (_looksLikeBuildRequest && !imgs) {
           // ── طلب بناء كود/لعبة/موقع جديد (مش تعديل ملف مرفوع) — بنعرض خطوات التفكير الحقيقية
           // (تفكير → مراجعة الخطة → إنشاء) بدل لابل "يفكر" ثابت، عشان يوضح إن فيه خطة قبل الكتابة ──
-          var _buildStages = ['بيفكر في الحل', 'بيراجع خطته قبل ما يكتب', 'بينشئ الكود'];
+          var _buildStages = ['بيجمع المعلومات اللي محتاجها', 'بيفكر في الحل جوه غرفة التفكير', 'بيراجع خطته قبل ما يكتب', 'بينشئ المشروع دلوقتي'];
           typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' ' + _buildStages[0]) + '</div>';
           msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
           var _bStageIdx = 0;
@@ -11896,9 +11896,17 @@ function slStopAllAnimations() {
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
           }, 1300);
         } else {
-          var _thinkLabel = pNameT + ' يفكر';
-          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_thinkLabel) + '</div>';
+          var _plainStages = [pNameT + ' بيفكر جوه غرفة التفكير', pNameT + ' بيراجع بيانات المنصة'];
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_plainStages[0]) + '</div>';
           msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+          var _pStageIdx = 0;
+          typingEl._cosmosStageTimer = setInterval(function(){
+            _pStageIdx++;
+            if (!typingEl || !typingEl.isConnected || _pStageIdx >= _plainStages.length) { clearInterval(typingEl && typingEl._cosmosStageTimer); return; }
+            var _wrapP = typingEl.querySelector('.message-content');
+            if (_wrapP) _wrapP.innerHTML = window.buildCosmosThinkingHTML(_plainStages[_pStageIdx]);
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          }, 1300);
         }
       }
 
@@ -12425,6 +12433,22 @@ function slStopAllAnimations() {
             window.__cosmosPendingSearchImages = null;
           }
           msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
+          // ── لو الكود جرّبنا نصلحه أكتر من مرة وفضل فيه مشكلة، نديله فرصة "يعيد من الأول" كامل
+          // (مش مجرد تصليح على نفس الأساس، لكن إعادة تفكير وكتابة من الصفر) بدل ما يفضل عالق ──
+          if (typeof _lastErrors !== 'undefined' && _lastErrors && _lastErrors.length) {
+            var _restartBtn = document.createElement('button');
+            _restartBtn.type = 'button';
+            _restartBtn.innerHTML = '<i class="fas fa-rotate-right"></i> يعيد المحاولة من الأول';
+            _restartBtn.style.cssText = 'margin-top:8px;background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:20px;padding:6px 16px;cursor:pointer;font-family:inherit;font-size:.85rem;display:inline-flex;align-items:center;gap:6px;';
+            var _restartMsg = userMsg;
+            _restartBtn.onclick = function(){
+              _restartBtn.disabled = true;
+              _restartBtn.style.opacity = '0.6';
+              window.sendAIMessage(_restartMsg);
+            };
+            var _timeElR = aiDiv.querySelector('.message-time');
+            if (_timeElR) aiDiv.insertBefore(_restartBtn, _timeElR); else aiDiv.appendChild(_restartBtn);
+          }
           if (typeof window.addAIMuteButton === 'function') {
             var txtEl = aiDiv.querySelector('.message-content');
             if (txtEl) window.addAIMuteButton(aiDiv, txtEl.textContent);
@@ -12463,6 +12487,13 @@ function slStopAllAnimations() {
       window.__aiIsGenerating = true;
       window.__aiAbortController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       if (typeof window.__aiSetSendBtnState === 'function') window.__aiSetSendBtnState('stop');
+      // ── صمام أمان: لو لأي سبب الطلب فضل معلّق أكتر من 90 ثانية (مشكلة شبكة غير متوقعة، تعليق مؤقت...)
+      // نرجّع الزرار لشكله الطبيعي تلقائيًا عشان يفضل قابل للاستخدام ومايتقفلش على المستخدم للأبد ──
+      var _safetyTimer = setTimeout(function(){
+        window.__aiIsGenerating = false;
+        window.__aiAbortController = null;
+        if (typeof window.__aiSetSendBtnState === 'function') window.__aiSetSendBtnState('send');
+      }, 90000);
       try {
         await window.__aiSendMessageCore(injectedMsgOuter);
       } catch (eSendOuter) {
@@ -12472,6 +12503,7 @@ function slStopAllAnimations() {
           console.error('sendAIMessage error:', eSendOuter);
         }
       } finally {
+        clearTimeout(_safetyTimer);
         window.__aiIsGenerating = false;
         window.__aiAbortController = null;
         if (typeof window.__aiSetSendBtnState === 'function') window.__aiSetSendBtnState('send');
@@ -12484,11 +12516,9 @@ function slStopAllAnimations() {
       if (!btn) return;
       if (state === 'stop') {
         btn.classList.add('stopping');
-        btn.innerHTML = '<i class="fas fa-stop"></i>';
         btn.title = 'إيقاف';
       } else {
         btn.classList.remove('stopping');
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
         btn.title = 'إرسال';
       }
     };
