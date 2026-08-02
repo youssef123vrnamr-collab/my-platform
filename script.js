@@ -1733,44 +1733,61 @@ async function updateAdminUI() {
     setupProgressTracking(id);
   }
 
-  // 🔒 فرض شكل صندوق الفيديو مباشرة عبر JS (بديل عن أي تعارض CSS قديم)
-  // بيضمن إن الفيديو يبان كامل بدون قص مهما كانت نسبة أبعاده، ومهما كان
-  // فيه قواعد CSS متضاربة في style.css أو داخل index.html
+  // 🔒 فرض حجم صندوق فيديو Cloudinary (بس) عبر JS — حجم مضغوط ثابت زي يوتيوب
+  // + توسيع لوحة الرسم تاخد باقي المساحة
+  // اليوتيوب/درايف نسيبهم زي ما هما، متظبطين أصلاً
   (function forceVideoBoxLayout() {
     const cont = document.getElementById("videoPlayerContainer");
     if (!cont) return;
+    const videoEl = cont.querySelector("video");
+    if (!videoEl) return; // مش فيديو Cloudinary (يوتيوب/درايف) — سيبه زي ما هو
+
     cont.style.setProperty("position", "relative", "important");
     cont.style.setProperty("width", "100%", "important");
-    cont.style.setProperty("height", "0", "important");
-    cont.style.setProperty("padding-top", "56.25%", "important");
+    cont.style.setProperty("padding-top", "0", "important");
     cont.style.setProperty("min-height", "unset", "important");
-    cont.style.setProperty("max-height", "unset", "important");
     cont.style.setProperty("overflow", "hidden", "important");
     cont.style.setProperty("background", "#000", "important");
+    cont.style.setProperty("flex", "0 0 auto", "important");
+    cont.style.setProperty("margin", "0", "important");
 
-    const media = cont.querySelector("video, .yt-wrapper");
-    if (!media) return;
-    media.style.setProperty("position", "absolute", "important");
-    media.style.setProperty("top", "0", "important");
-    media.style.setProperty("left", "0", "important");
-    media.style.setProperty("width", "100%", "important");
-    media.style.setProperty("height", "100%", "important");
-    media.style.setProperty("object-fit", "contain", "important");
-    media.style.setProperty("background", "#000", "important");
+    videoEl.style.setProperty("position", "absolute", "important");
+    videoEl.style.setProperty("top", "0", "important");
+    videoEl.style.setProperty("left", "0", "important");
+    videoEl.style.setProperty("width", "100%", "important");
+    videoEl.style.setProperty("height", "100%", "important");
+    videoEl.style.setProperty("object-fit", "contain", "important");
+    videoEl.style.setProperty("background", "#000", "important");
+    videoEl.style.setProperty("max-height", "none", "important");
+    videoEl.style.setProperty("aspect-ratio", "unset", "important");
 
-    const iframeEl = media.tagName === "IFRAME" ? media : media.querySelector("iframe");
-    if (iframeEl) {
-      iframeEl.style.setProperty("position", "absolute", "important");
-      iframeEl.style.setProperty("top", "0", "important");
-      iframeEl.style.setProperty("left", "0", "important");
-      iframeEl.style.setProperty("width", "100%", "important");
-      iframeEl.style.setProperty("height", "100%", "important");
-      iframeEl.style.setProperty("border", "none", "important");
+    const board = document.getElementById("drawingBoard");
+
+    function applySize() {
+      // صندوق مضغوط: نسبة 16:9 من عرض الحاوية، بحد أقصى 26% من ارتفاع الشاشة
+      // (نفس فكرة حجم فيديو يوتيوب المعتاد، مش صندوق يبلع الشاشة)
+      const w = cont.clientWidth || cont.getBoundingClientRect().width || window.innerWidth;
+      let h = Math.round(w * 0.5625);
+      const cap = Math.round(window.innerHeight * 0.26);
+      if (h > cap) h = cap;
+      if (h < 160) h = 160; // حد أدنى منطقي عشان الفيديو يفضل واضح
+      cont.style.setProperty("height", h + "px", "important");
+      cont.style.setProperty("max-height", h + "px", "important");
+
+      // لوحة الرسم تاخد الباقي كله وتبقى كبيرة
+      if (board) {
+        board.style.setProperty("flex", "1 1 auto", "important");
+        board.style.setProperty("height", "auto", "important");
+        board.style.setProperty("min-height", "380px", "important");
+      }
     }
+    applySize();
+    window.addEventListener("resize", applySize);
   })();
 
   document.getElementById("videoModal").classList.add("active");
   setTimeout(() => { try { initDrawingBoard(); } catch(e) { console.warn("drawing init failed", e); } }, 100);
+
 
   let quizContainer = document.getElementById("videoQuizContainer");
   if (exams.some(e => e.videoId === id)) {
