@@ -3602,6 +3602,73 @@ body {
   font-size: clamp(1.6rem, 5vw, 2.2rem);
   text-shadow: 0 0 40px rgba(99,102,241,.4) !important;
 }
+
+/* ══════════════════════════════════════════
+   🔄 AUTH LOADING SCREEN — Return-login splash
+   Shown while Firebase resolves the session, instead
+   of flashing the login form for already-signed-in users.
+══════════════════════════════════════════ */
+.auth-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse 150% 100% at 50% 0%, rgba(99,102,241,.2) 0%, transparent 55%),
+              radial-gradient(ellipse 120% 80% at 50% 100%, rgba(236,72,153,.12) 0%, transparent 55%),
+              linear-gradient(180deg, #050308 0%, #0a0618 50%, #050308 100%);
+  transition: opacity .25s ease;
+}
+.auth-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+}
+.auth-loading-ring {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-loading-ring::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 3px solid rgba(99,102,241,.15);
+  border-top-color: #6366f1;
+  border-right-color: #ec4899;
+  animation: spin .9s linear infinite;
+}
+.auth-loading-logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 24%;
+  overflow: hidden;
+  box-shadow: 0 0 0 4px rgba(99,102,241,.15), 0 8px 40px rgba(99,102,241,.5), 0 0 60px rgba(139,92,246,.2);
+  animation: glow 3s infinite;
+}
+.auth-loading-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.auth-loading-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f3f4f6;
+  letter-spacing: .3px;
+  text-shadow: 0 0 30px rgba(99,102,241,.4);
+}
+@media (max-width: 768px) {
+  .auth-loading-ring { width: 84px; height: 84px; }
+  .auth-loading-logo { width: 70px; height: 70px; }
+}
 .google-btn {
   border-radius: 16px;
   font-weight: 700;
