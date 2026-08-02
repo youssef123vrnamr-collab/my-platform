@@ -8565,3 +8565,75 @@ body[data-theme="light"] .star-field { opacity: .3; }
 @media (max-width: 768px) {
   .brand-logo { width: 42px !important; height: 42px !important; min-width: 42px !important; }
 }
+
+/* ══════════════════════════════════════════
+   🌌 شاشة "جاري التحقق من الحساب" — خلفية احترافية
+   (نفس روح خلفية شاشة تسجيل الدخول: سديم + نجوم)
+══════════════════════════════════════════ */
+.auth-splash {
+  background: #020109 !important;
+  overflow: hidden !important;
+}
+.auth-splash::before,
+.auth-splash::after {
+  content: "" !important;
+  position: absolute !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  filter: blur(90px) !important;
+  animation: nebulaOrbit 18s ease-in-out infinite !important;
+}
+.auth-splash::before {
+  width: 700px !important; height: 700px !important;
+  top: -200px !important; right: -200px !important;
+  background: radial-gradient(circle, rgba(99,102,241,.22) 0%, rgba(139,92,246,.12) 40%, transparent 70%) !important;
+}
+.auth-splash::after {
+  width: 600px !important; height: 600px !important;
+  bottom: -200px !important; left: -200px !important;
+  background: radial-gradient(circle, rgba(236,72,153,.18) 0%, rgba(99,102,241,.1) 45%, transparent 70%) !important;
+  animation-delay: -9s !important;
+}
+.auth-splash-ring, .auth-splash-inner, .auth-splash-text {
+  position: relative !important;
+  z-index: 2 !important;
+}
+.auth-splash-bg-stars {
+  position: absolute !important; inset: 0 !important;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 55%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 10%, rgba(255,255,255,.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 40%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 90% 70%, rgba(255,255,255,.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(2px 2px at 25% 35%, rgba(167,139,250,.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 82% 20%, rgba(244,114,182,.8) 0%, transparent 100%) !important;
+  animation: starTwinkle 6s ease-in-out infinite alternate !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+/* ══════════════════════════════════════════
+   🧭 أزرار الناف بار الثلاثة (☰ / 🌙 / ⚙) — تفضل جنب بعض
+══════════════════════════════════════════ */
+.brand-text {
+  flex-wrap: nowrap !important;
+  min-width: 0 !important;
+}
+.brand-text h1 {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 40vw !important;
+}
+.sections-dropdown, .settings-dropdown {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  flex-shrink: 0 !important;
+}
+.sections-dropdown { margin-left: 0.2rem !important; }
+@media (max-width: 480px) {
+  .brand-text h1 { max-width: 28vw !important; }
+}
