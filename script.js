@@ -11704,11 +11704,13 @@ function slStopAllAnimations() {
       }
 
       // ── لو الطلب واضح إنه طلب كتابة كود/صفحة/تطبيق/لعبة، نديله مساحة أكبر بكتير في الرد (توكنز أعلى)
-      // عشان يقدر يكتب كود كامل واحترافي من غير ما يتقطع أو يختصر بسبب حد التوكنز ──
+      // عشان يقدر يكتب كود كامل واحترافي من غير ما يتقطع أو يختصر بسبب حد التوكنز —
+      // 8000 كانت بتتقطع فعليًا مع صفحات فيها CSS تفصيلي + JS كامل للعبة (زي السلم والتعبان)،
+      // فرفعناها لمساحة أكبر بكتير (الموديل بيدعم لحد ~32-65 ألف توكن إخراج). ──
       var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
-      var _mainMaxTok     = _isCodeReq ? 8000 : 2200;
-      var _fallbackMaxTok = _isCodeReq ? 8000 : 4000;
-      var _geminiMaxTok   = _isCodeReq ? 8000 : 2200;
+      var _mainMaxTok     = _isCodeReq ? 20000 : 2200;
+      var _fallbackMaxTok = _isCodeReq ? 20000 : 4000;
+      var _geminiMaxTok   = _isCodeReq ? 20000 : 2200;
 
       // ── Show user bubble ──
       var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
@@ -11943,7 +11945,9 @@ function slStopAllAnimations() {
           messages: [{ role:'system', content: sys }].concat(hist).concat([{ role:'user', content: userMsgFinal }]),
           max_tokens: maxTok,
           temperature: 0.4,
-          reasoning_effort: 'high',
+          // ── طلبات الكود: تفكير 'high' كان بياكل من نفس ميزانية التوكنز اللي محتاجها الكود نفسه،
+          // فده كان سبب إضافي للتقطيع مع صفحات كبيرة. 'medium' كافي جدًا للتخطيط، وبيسيب مساحة أكبر للكود الفعلي. ──
+          reasoning_effort: (typeof _isCodeReq !== 'undefined' && _isCodeReq) ? 'medium' : 'high',
           reasoning_format: 'parsed' // ── يخلي الموديل يرجّع تفكيره الحقيقي منفصل عن الرد النهائي — ده أساس "غرفة التفكير العميق" ──
         };
       }
@@ -12088,6 +12092,33 @@ function slStopAllAnimations() {
         answer = (result.data.choices&&result.data.choices[0]&&result.data.choices[0].message&&result.data.choices[0].message.content) || null;
         answerReasoning = (result.data.choices && result.data.choices[0] && result.data.choices[0].message &&
           (result.data.choices[0].message.reasoning || result.data.choices[0].message.reasoning_content)) || '';
+        // ══════════════════════════════════════════════════════════════════
+        // ✂️ الرد اتقطع لأنه وصل لحد التوكنز (finish_reason === 'length') — ده كان بيحصل مع صفحات/ألعاب
+        // كبيرة (كود+CSS طويل) وبيسيب سكريبت ناقص من غير ما حد يلاحظ. بدل ما نسلّم كود مقطوع،
+        // بنطلب من الموديل يكمّل بالظبط من حيث وقف، لحد 3 مرات، ونلزّق النتايج ببعض. ──
+        // ══════════════════════════════════════════════════════════════════
+        var _truncFinishReason = result.data && result.data.choices && result.data.choices[0] && result.data.choices[0].finish_reason;
+        var _contTries = 0;
+        while (answer && _truncFinishReason === 'length' && _contTries < 3) {
+          _contTries++;
+          if (typingEl && typingEl.isConnected) {
+            if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+            var _wrapC = typingEl.querySelector('.message-content');
+            if (_wrapC) _wrapC.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' الرد طويل، بيكمّله (جزء ' + (_contTries + 1) + ')');
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          }
+          try {
+            var _contHist = histMsgs.concat([
+              { role: 'assistant', content: answer },
+              { role: 'user', content: 'كمّل بالظبط من حيث وقفت (من غير ما تعيد أي جزء اتكتب قبل كده، ومن غير أي مقدمة زي "تمام" أو "هكمل")، وخلّص باقي الكود/الرد.' }
+            ]);
+            var _contResult = await callGroq('openai/gpt-oss-120b', _mainMaxTok, _contHist, false);
+            var _contPiece = (_contResult && _contResult.data && _contResult.data.choices && _contResult.data.choices[0] && _contResult.data.choices[0].message && _contResult.data.choices[0].message.content) || '';
+            if (!_contPiece) break;
+            answer += _contPiece;
+            _truncFinishReason = _contResult.data.choices[0].finish_reason;
+          } catch (eCont) { console.warn('continuation pass failed', eCont); break; }
+        }
         if (!answer) {
           _debugGroqDetail = 'HTTP ' + result.res.status + ' — ' + (result.data && result.data.error ? JSON.stringify(result.data.error).slice(0,150) : JSON.stringify(result.data).slice(0,150));
         }
