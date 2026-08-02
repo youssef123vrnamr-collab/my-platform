@@ -3070,16 +3070,71 @@ async function updateAdminUI() {
   });
 }
   async function toggleRecording() { if (isRecording) stopRecording(); else await startRecording(); }
-  async function startRecording() { if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; } try { let stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = e => e.data.size && audioChunks.push(e.data); mediaRecorder.onstop = () => { uploadVoice(new Blob(audioChunks, { type: "audio/webm" })); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; document.getElementById("recordBtn").classList.add("recording"); document.getElementById("recordingIndicator").classList.add("active"); SoundEffects.recordStart(); let sec = 0; recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000); } catch (e) { showToast("❌ لا يمكن الوصول للميكروفون"); } }
-  function stopRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); clearInterval(recordingTimer); isRecording = false; document.getElementById("recordBtn").classList.remove("recording"); document.getElementById("recordingIndicator").classList.remove("active"); document.getElementById("recordingTime").textContent = "0:00"; } }
+  function getSupportedVoiceMimeType() { const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac", "audio/mpeg", "audio/ogg;codecs=opus"]; for (const t of types) { if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t; } return ""; }
+  function setVoiceRecordingUI(active) {
+    const recBtn = document.getElementById("recordBtn");
+    const sendBtn = document.querySelector("#groupInputWrapper .unified-send-btn");
+    if (recBtn) { recBtn.classList.toggle("recording", active); recBtn.innerHTML = active ? '<i class="fas fa-trash"></i>' : '<i class="fas fa-microphone"></i>'; recBtn.title = active ? "إلغاء التسجيل" : "تسجيل صوتي"; }
+    if (sendBtn) {
+      sendBtn.classList.toggle("recording-stop", active);
+      sendBtn.innerHTML = active ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-paper-plane"></i>';
+      sendBtn.onclick = active ? stopRecording : sendMessage;
+    }
+  }
+  async function startRecording() {
+    if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; }
+    if (isRecording) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast("❌ المتصفح ده مش بيدعم تسجيل الصوت"); return; }
+    try {
+      let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = getSupportedVoiceMimeType();
+      try { mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream); }
+      catch (mrErr) { mediaRecorder = new MediaRecorder(stream); }
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) audioChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const finalType = mediaRecorder.mimeType || "audio/webm";
+        const blob = new Blob(audioChunks, { type: finalType });
+        if (!blob.size || blob.size < 800) { showToast("⚠️ التسجيل قصير أو فاضي، جرب تاني وقرّب السماعة"); return; }
+        uploadVoice(blob);
+      };
+      mediaRecorder.onerror = (ev) => { console.error("MediaRecorder error:", ev.error); showToast("❌ حصل خطأ أثناء التسجيل"); stopRecording(); };
+      mediaRecorder.start();
+      isRecording = true;
+      setVoiceRecordingUI(true);
+      document.getElementById("recordingIndicator").classList.add("active");
+      SoundEffects.recordStart();
+      let sec = 0;
+      recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000);
+    } catch (e) {
+      console.error("getUserMedia error:", e);
+      if (e && e.name === "NotAllowedError") showToast("❌ محتاج تسمح للموقع بالوصول للميكروفون من إعدادات المتصفح");
+      else if (e && e.name === "NotFoundError") showToast("❌ مفيش ميكروفون متاح على الجهاز");
+      else showToast("❌ لا يمكن الوصول للميكروفون");
+    }
+  }
+  function stopRecording() {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      clearInterval(recordingTimer);
+      isRecording = false;
+      setVoiceRecordingUI(false);
+      document.getElementById("recordingIndicator").classList.remove("active");
+      document.getElementById("recordingTime").textContent = "0:00";
+    }
+  }
   async function uploadVoice(blob) {
-  if (!googleUser) {
+  const senderName = (googleUser && googleUser.displayName) || currentUser;
+  const senderPhone = (googleUser && googleUser.phoneNumber) || currentUserPhone || "";
+  if (!senderName) {
     showToast("❌ يجب تسجيل الدخول أولاً");
     return;
   }
   showToast("📤 جاري رفع الرسالة الصوتية...");
   let fd = new FormData();
-  fd.append("file", blob, "voice.webm");
+  const ext = blob.type.includes("mp4") ? "mp4" : blob.type.includes("ogg") ? "ogg" : blob.type.includes("mpeg") ? "mp3" : blob.type.includes("aac") ? "aac" : "webm";
+  fd.append("file", blob, "voice." + ext);
   fd.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
   fd.append("cloud_name", CLOUDINARY_CONFIG.cloudName);
   try {
@@ -3093,8 +3148,8 @@ async function updateAdminUI() {
     await db.collection("messages").add({
       type: "voice",
       audioUrl: data.secure_url,
-      sender: googleUser.displayName,
-      senderPhone: googleUser.phoneNumber || "",
+      sender: senderName,
+      senderPhone: senderPhone,
       userId: currentUserId,
       senderId: currentUserId,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()

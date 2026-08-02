@@ -2516,6 +2516,11 @@ body {
   color: #ef4444 !important;
   animation: pulse 1s infinite !important;
 }
+.unified-send-btn.recording-stop {
+  background: #ef4444 !important;
+  border-radius: 8px !important;
+  animation: pulse 1s infinite !important;
+}
 
 /* زرار الإرسال */
 .unified-send-btn {
