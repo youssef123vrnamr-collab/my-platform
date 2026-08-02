@@ -562,6 +562,46 @@ async function isAdminUser(userId) {
     return null;
   };
 
+  // ── استخراج كل كتل الكود (```لغة ... ```) من رد الذكاء الاصطناعي، بلغتها ──
+  window.extractCosmosAllCodeBlocks = function(raw) {
+    if (!raw) return [];
+    var blocks = [];
+    var re = /```([a-zA-Z0-9_+-]*)\s*\n?([\s\S]*?)```/g;
+    var m;
+    while ((m = re.exec(String(raw))) !== null) {
+      var lang = (m[1] || '').toLowerCase().trim();
+      var code = m[2] || '';
+      if (code.trim()) blocks.push({ lang: lang, code: code });
+    }
+    return blocks;
+  };
+
+  // ── بناء مستند HTML واحد قابل للتشغيل الفعلي من رد قد يكون ملف واحد مدموج أو 3 ملفات منفصلة
+  // (html/css/js) — بيدمجهم مؤقتًا بس لغرض الاختبار الحقيقي جوه iframe، من غير ما يغيّر شكل
+  // الرد نفسه اللي بيوصل للمستخدم. لو مفيش كتلة HTML أصلاً، بيرجع null (مفيش حاجة تتشغل). ──
+  window.buildCosmosTestableDoc = function(raw) {
+    var blocks = window.extractCosmosAllCodeBlocks(raw);
+    if (!blocks.length) return null;
+    var htmlBlock = blocks.find(function(b){ return b.lang === 'html' || b.lang === 'htm'; })
+                 || blocks.find(function(b){ return /<!DOCTYPE|<html[\s>]/i.test(b.code); });
+    if (!htmlBlock) return null;
+    var cssCombined = blocks.filter(function(b){ return b.lang === 'css' || b.lang === 'scss'; }).map(function(b){ return b.code; }).join('\n');
+    var jsCombined  = blocks.filter(function(b){ return b.lang === 'js' || b.lang === 'javascript'; }).map(function(b){ return b.code; }).join('\n');
+    var doc = htmlBlock.code;
+    // ── لو الملف بيربط style.css/script.js بروابط خارجية (وضع الملفات المنفصلة)، ده مش هيلاقيهم
+    // جوه iframe معزول (مفيش file system حقيقي)، فبندمجهم يدويًا هنا بس لغرض التشغيل الاختباري ──
+    if (cssCombined) {
+      if (/<\/head>/i.test(doc)) doc = doc.replace(/<\/head>/i, '<style>'+cssCombined+'</style></head>');
+      else if (/<head[^>]*>/i.test(doc)) doc = doc.replace(/(<head[^>]*>)/i, '$1<style>'+cssCombined+'</style>');
+      else doc = '<style>'+cssCombined+'</style>' + doc;
+    }
+    if (jsCombined) {
+      if (/<\/body>/i.test(doc)) doc = doc.replace(/<\/body>/i, '<script>'+jsCombined+'<\/script></body>');
+      else doc += '<script>'+jsCombined+'<\/script>';
+    }
+    return doc;
+  };
+
   // ── تشغيل حقيقي للكود جوه iframe معزول (sandbox) مخفي عن المستخدم — مش "تخمين إنه هيشتغل"،
   // ده تشغيل فعلي في متصفح حقيقي، وأي خطأ JS بيحصل وقت التحميل بنمسكه فورًا. ──
   window.testCosmosHtmlCode = function(htmlCode) {
@@ -7298,7 +7338,54 @@ window.updateActiveToolLabel = function(label) {
     aiVoiceRecognition.start();
   };
 
-  // Open/close AI voice chat modal
+  // ══════════════════════════════════════════════════════════════════
+  // 🎙️ رسالة صوتية حقيقية: تسجيل → تفريغ صوتي (نفس ما بيحصل في "دردشة صوتية") → إرسال
+  // تلقائي كأنها رسالة نصية عادية، فبتاخد نفس المعاملة الكاملة (الشخصية، مراجعة الكود،
+  // التشغيل الفعلي والاختبار، قائمة الانتظار لو كان مشغول) — مش خط أنابيب مبسّط منفصل. ──
+  // ══════════════════════════════════════════════════════════════════
+  let aiVoiceNoteRecognition = null;
+  window.toggleAIVoiceNote = function() {
+    const btn = document.getElementById('aiVoiceNoteBtn');
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      showToast('⚠️ التعرف على الصوت غير مدعوم على المتصفح ده');
+      return;
+    }
+    if (aiVoiceNoteRecognition) {
+      try { aiVoiceNoteRecognition.stop(); } catch(e) {}
+      aiVoiceNoteRecognition = null;
+      if (btn) { btn.classList.remove('recording'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    aiVoiceNoteRecognition = new SR();
+    aiVoiceNoteRecognition.lang = 'ar-SA';
+    aiVoiceNoteRecognition.continuous = false;
+    aiVoiceNoteRecognition.interimResults = false;
+    aiVoiceNoteRecognition.onstart = () => {
+      if (btn) { btn.classList.add('recording'); btn.innerHTML = '<i class="fas fa-stop"></i>'; }
+      showToast('🎙️ بيسمعك دلوقتي… اتكلم براحتك');
+    };
+    aiVoiceNoteRecognition.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      if (btn) { btn.classList.remove('recording'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
+      if (!text || !text.trim()) return;
+      // ── نبعتها زي أي رسالة عادية بالظبط: نفس الشخصية، نفس مراجعة/اختبار الكود، ونفس
+      // نظام قائمة الانتظار لو المساعد كان مشغول برد سابق ──
+      window.sendAIMessage(text.trim());
+    };
+    aiVoiceNoteRecognition.onend = () => {
+      aiVoiceNoteRecognition = null;
+      if (btn) { btn.classList.remove('recording'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
+    };
+    aiVoiceNoteRecognition.onerror = (e) => {
+      aiVoiceNoteRecognition = null;
+      if (btn) { btn.classList.remove('recording'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
+      if (e && e.error === 'no-speech') showToast('🤔 ما سمعتش أي كلام، جرّب تاني');
+      else if (e && e.error === 'not-allowed') showToast('❌ محتاج إذن الميكروفون الأول');
+      else showToast('❌ حصلت مشكلة في التسجيل الصوتي، جرّب تاني');
+    };
+    try { aiVoiceNoteRecognition.start(); } catch(eStart) { aiVoiceNoteRecognition = null; }
+  };
   window.openAIVoiceChat = function() {
     const m = document.getElementById('aiVoiceChatModal');
     if (m) m.classList.add('active');
@@ -11965,7 +12052,12 @@ function slStopAllAnimations() {
 
       var _imageGenPolicyBlock = '\n\nقاعدة إلزامية بخصوص الصور: إنت شخصياً متقدرش تولّد أو ترفع صور — التوليد الفعلي بيحصل من نظام منفصل تلقائي. ممنوع تمامًا تكتب رابط صورة وهمي (زي https://... .png أو .jpg من عندك) أو تتظاهر إنك "ولّدت" أو "أرفقت" صورة، لأن ده هيبقى معلومة كاذبة. لو حسيت إن المستخدم طالب صورة ولسه مطلعتش، قوله بوضوح إنك هتولدها له الآن أو اطلب منه يعيد صياغة طلبه بوضوح (مثلاً "اعمل لي صورة كذا")، من غير ما تخترع أي رابط أو تفاصيل ملف.';
 
-      var _codeFormatPolicyBlock = '\n\nقاعدة إلزامية لما تكتب كود برمجي (ويب): لو المستخدم طلب منك صفحة أو موقع أو أداة أو أي حاجة فيها HTML/CSS/JS، ممنوع تمامًا تكتب 3 كتل كود منفصلة (واحدة html وواحدة css وواحدة js). لازم تدمج كل حاجة في ملف HTML واحد بس: الـ CSS جوه <style> في الـ <head>، والـ JS جوه <script> قبل </body> مباشرة، وكله بين ثلاث علامات ```html وسطر فاضي قبل وبعد الكتلة. ده معمول عشان الناتج يبقى ملف واحد جاهز يتفتح ويشتغل فورًا من غير ما المستخدم يحتاج يربط ملفات ببعضها. لو المستخدم طلب كود بلغة تانية غير الويب (بايثون مثلاً) يفضل كتلة واحدة بلغتها.\nاكتب الكود كامل وشغّال 100% من غير اختصار أو حذف أجزاء ("...") ومن غير تعليقات زي "أكمل باقي الكود هنا"، حتى لو طويل ومعقد (صفحة كاملة، لعبة، تطبيق) — مفيش حد أقصى لطول الكود.\nاكتب باحترافية زي مبرمج خبير: أسماء متغيرات ودوال واضحة، تنسيق (indentation) منظم ومتسق، تعليقات قصيرة عند النقاط المهمة بس، وترتيب منطقي للأقسام (بنية HTML، ثم الأنماط، ثم المنطق). خلّي التصميم نفسه احترافي بصريًا: تباعد متسق، ألوان متناسقة، خطوط واضحة، وتأثيرات/انتقالات (transitions/animations) لطيفة وسلسة مش مبالغ فيها، مش مجرد كود وظيفي بس.\nاكتب الكود دفعة واحدة نظيف من الأول من غير ما "تفكر بصوت عالي" جوه كتلة الكود أو تكتب نسخة أولية وتصلحها بعدين جوه نفس الرد — فكّر في الحل قبل ما تبدأ تكتب، والكتلة نفسها تبقى النسخة النهائية المرتبة. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كتلة الكود تلقائيًا لملف قابل للنسخ والتنزيل والتشغيل المباشر في المتصفح، إلا لو المستخدم قال صراحة إنه عايز الكود نص بس من غير ما يتعمله ملف.';
+      // ── هل المستخدم طلب صراحةً إن كل ملف يبقى لوحده (منفصل) بدل الدمج في ملف واحد؟ ──
+      var _wantsSeparateFiles = /كل\s*ملف\s*(ل?وحد|لوحده|منفصل)|ملفات?\s*منفصل|افصل(و|ي)?\s*ال?ملف|فصل\s*ال?ملف|3\s*ملفات|ثلاث(ة)?\s*ملفات|كل\s*حاجة\s*ف[يى]\s*ملف|separate\s*files?|split\s*(the\s*)?files?|multiple\s*files?/i.test(userMsg);
+
+      var _codeFormatPolicyBlock = _wantsSeparateFiles
+        ? '\n\nقاعدة إلزامية لما تكتب كود برمجي (ويب): المستخدم طلب صراحةً إن كل ملف يبقى لوحده، فلازم تكتب 3 كتل كود منفصلة بالترتيب: كتلة ```html``` (تحتوي على index.html) وكتلة ```css``` (تحتوي على style.css) وكتلة ```js``` (تحتوي على script.js). لازم ملف الـ HTML يربط الملفين التانيين فعليًا جوه الكود: حط <link rel="stylesheet" href="style.css"> جوه <head>، وحط <script src="script.js"></script> قبل </body> مباشرة — وممنوع تمامًا تكرر نفس الأكواد دي جوه <style> أو <script> داخلي كمان، الملفات الثلاثة لازم تكون مستقلة عن بعض ومفيش أي تكرار بينها. سطر فاضي قبل وبعد كل كتلة. لو المستخدم طلب كود بلغة تانية غير الويب (بايثون مثلاً) يفضل كتلة واحدة بلغتها حتى لو طلب "ملفات منفصلة".\nاكتب الكود كامل وشغّال 100% من غير اختصار أو حذف أجزاء ("...") ومن غير تعليقات زي "أكمل باقي الكود هنا"، حتى لو طويل ومعقد (صفحة كاملة، لعبة، تطبيق) — مفيش حد أقصى لطول الكود.\nاكتب باحترافية زي مبرمج خبير: أسماء متغيرات ودوال واضحة، تنسيق (indentation) منظم ومتسق، تعليقات قصيرة عند النقاط المهمة بس، وترتيب منطقي للأقسام. خلّي التصميم نفسه احترافي بصريًا: تباعد متسق، ألوان متناسقة، خطوط واضحة، وتأثيرات/انتقالات (transitions/animations) لطيفة وسلسة مش مبالغ فيها، مش مجرد كود وظيفي بس.\nاكتب الكود دفعة واحدة نظيف من الأول من غير ما "تفكر بصوت عالي" جوه كتلة الكود أو تكتب نسخة أولية وتصلحها بعدين جوه نفس الرد — فكّر في الحل قبل ما تبدأ تكتب، والكتلة نفسها تبقى النسخة النهائية المرتبة. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كل كتلة كود لتاب/ملف منفصل قابل للنسخ والتنزيل، وبيجمعهم في معاينة حية واحدة تلقائيًا عشان تشتغل صح جوه المتصفح.'
+        : '\n\nقاعدة إلزامية لما تكتب كود برمجي (ويب): لو المستخدم طلب منك صفحة أو موقع أو أداة أو أي حاجة فيها HTML/CSS/JS، ممنوع تمامًا تكتب 3 كتل كود منفصلة (واحدة html وواحدة css وواحدة js). لازم تدمج كل حاجة في ملف HTML واحد بس: الـ CSS جوه <style> في الـ <head>، والـ JS جوه <script> قبل </body> مباشرة، وكله بين ثلاث علامات ```html وسطر فاضي قبل وبعد الكتلة. ده معمول عشان الناتج يبقى ملف واحد جاهز يتفتح ويشتغل فورًا من غير ما المستخدم يحتاج يربط ملفات ببعضها. لو المستخدم طلب كود بلغة تانية غير الويب (بايثون مثلاً) يفضل كتلة واحدة بلغتها.\nاكتب الكود كامل وشغّال 100% من غير اختصار أو حذف أجزاء ("...") ومن غير تعليقات زي "أكمل باقي الكود هنا"، حتى لو طويل ومعقد (صفحة كاملة، لعبة، تطبيق) — مفيش حد أقصى لطول الكود.\nاكتب باحترافية زي مبرمج خبير: أسماء متغيرات ودوال واضحة، تنسيق (indentation) منظم ومتسق، تعليقات قصيرة عند النقاط المهمة بس، وترتيب منطقي للأقسام (بنية HTML، ثم الأنماط، ثم المنطق). خلّي التصميم نفسه احترافي بصريًا: تباعد متسق، ألوان متناسقة، خطوط واضحة، وتأثيرات/انتقالات (transitions/animations) لطيفة وسلسة مش مبالغ فيها، مش مجرد كود وظيفي بس.\nاكتب الكود دفعة واحدة نظيف من الأول من غير ما "تفكر بصوت عالي" جوه كتلة الكود أو تكتب نسخة أولية وتصلحها بعدين جوه نفس الرد — فكّر في الحل قبل ما تبدأ تكتب، والكتلة نفسها تبقى النسخة النهائية المرتبة. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كتلة الكود تلقائيًا لملف قابل للنسخ والتنزيل والتشغيل المباشر في المتصفح، إلا لو المستخدم قال صراحة إنه عايز الكود نص بس من غير ما يتعمله ملف.';
 
       // ── هوية خبرة برمجية عالية — تخلي الردود التقنية بمستوى مهندس سينيور محترف بدل إجابات سطحية ──
       var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.\nأولوية حرجة عند بناء لعبة/تطبيق كامل: خلاص المنطق الوظيفي (JavaScript اللي بيخلي الحاجة فعلاً تشتغل: قواعد اللعبة، حركة اللاعب، كشف الفوز، التفاعل مع الأزرار) له أولوية مطلقة أعلى من أي زخرفة بصرية إضافية (تدرجات ألوان نيون كتيرة، أنيميشن نجوم متحركة، تأثيرات توهج زيادة عن اللزوم، نرد ثلاثي الأبعاد). اكتب CSS كافي وأنيق بس مش متضخم — لو حسّيت إن التصميم بيبقى أطول من اللازم، اختصر فيه (ألوان أقل، تأثيرات أبسط) وحوّل المساحة دي لضمان إن كل سطر JS مطلوب للعبة يتكتب كامل. لعبة بسيطة شكلها عادي بس شغالة 100% أفضل بكتير من لعبة شكلها خرافي وناقصة أو مش شغالة.';
@@ -12078,26 +12170,59 @@ function slStopAllAnimations() {
       async function callGeminiTextFallback() {
         var pool = window.GeminiKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
+        // ── ينادي Gemini مرة واحدة بأي سياق محادثة مُعطى، ويرجّع النص + سبب التوقف (finishReason) ──
+        async function _geminiOnce(gKey, convContents) {
+          var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
+            body: JSON.stringify({ contents: convContents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } })
+          });
+          var d = await r.json();
+          var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
+          var finishReason = d && d.candidates && d.candidates[0] && d.candidates[0].finishReason;
+          if (pool) pool.report(gKey, r.status !== 429);
+          if (!txt && d && d.error) { _debugGeminiDetail = 'HTTP ' + r.status + ' — ' + JSON.stringify(d.error).slice(0,150); console.warn('AI Router: Gemini fallback رجّع خطأ:', d.error); }
+          else if (!txt) { _debugGeminiDetail = 'HTTP ' + r.status + ' — رد غير متوقع: ' + JSON.stringify(d).slice(0,150); }
+          if (window.AIHealth) window.AIHealth.record('gemini', !!txt);
+          return { txt: txt || null, finishReason: finishReason, status: r.status };
+        }
         for (var i = 0; i < maxAttempts; i++) {
           var gKey = (pool && pool.count()) ? pool.next() : (typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '');
           if (!gKey) { _debugGeminiDetail = 'مفيش مفتاح Gemini متسجل أصلاً'; return null; }
           try {
-            var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
             var _contents = histMsgs.map(function (h) { return { role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] }; });
             _contents.push({ role: 'user', parts: [{ text: _aiApiMsg }] });
-            var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
-              body: JSON.stringify({ contents: _contents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } })
-            });
-            var d = await r.json();
-            var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
-            if (pool) pool.report(gKey, r.status !== 429);
-            if (!txt && d && d.error) { _debugGeminiDetail = 'HTTP ' + r.status + ' — ' + JSON.stringify(d.error).slice(0,150); console.warn('AI Router: Gemini fallback رجّع خطأ:', d.error); }
-            else if (!txt) { _debugGeminiDetail = 'HTTP ' + r.status + ' — رد غير متوقع: ' + JSON.stringify(d).slice(0,150); }
-            if (window.AIHealth) window.AIHealth.record('gemini', !!txt);
-            if (txt) return txt;
-            if (r.status !== 429) return null; // فشل لسبب مش كوتا، مفيش فايدة نبدّل مفتاح
+            var _first = await _geminiOnce(gKey, _contents);
+            if (!_first.txt) { if (_first.status !== 429) return null; continue; }
+            var _fullTxt = _first.txt;
+            // ══════════════════════════════════════════════════════════════════
+            // ✂️ نفس منطق إكمال الكود المقطوع بتاع Groq، بس هنا لمسار Gemini الاحتياطي —
+            // لو الرد اتقطع (finishReason === 'MAX_TOKENS')، بنطلب نكمّل بالظبط من حيث وقف
+            // لحد 6 مرات، ونلزّق النتايج ببعض قبل ما نرجّع الرد للمستخدم. ──
+            // ══════════════════════════════════════════════════════════════════
+            var _gContTries = 0;
+            var _gFinish = _first.finishReason;
+            while (_gFinish === 'MAX_TOKENS' && _gContTries < 6) {
+              _gContTries++;
+              if (typingEl && typingEl.isConnected) {
+                if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+                var _wrapGC = typingEl.querySelector('.message-content');
+                if (_wrapGC) _wrapGC.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' الرد طويل، بيكمّله (جزء ' + (_gContTries + 1) + ')');
+                if (msgs) msgs.scrollTop = msgs.scrollHeight;
+              }
+              try {
+                var _gContContents = _contents.concat([
+                  { role: 'model', parts: [{ text: _fullTxt }] },
+                  { role: 'user', parts: [{ text: 'كمّل بالظبط من حيث وقفت (من غير ما تعيد أي جزء اتكتب قبل كده، ومن غير أي مقدمة زي "تمام" أو "هكمل")، وخلّص باقي الكود/الرد.' }] }
+                ]);
+                var _gCont = await _geminiOnce(gKey, _gContContents);
+                if (!_gCont.txt) break;
+                _fullTxt += _gCont.txt;
+                _gFinish = _gCont.finishReason;
+              } catch (eGCont) { console.warn('Gemini continuation pass failed', eGCont); break; }
+            }
+            return _fullTxt;
           } catch (eG) { _debugGeminiDetail = String(eG && eG.message || eG).slice(0,150); if (window.AIHealth) window.AIHealth.record('gemini', false); console.warn('AI Router: Gemini fallback فشل هو كمان:', eG); return null; }
         }
         return null;
@@ -12233,8 +12358,8 @@ function slStopAllAnimations() {
       // لحد مرتين بالاعتماد على نص الخطأ الحقيقي نفسه. لو فضل فاشل، بنقول للمستخدم صراحة
       // إن فيه مشكلة معرفناش نحلها، بدل ما نسلّمه كود عطلان وكأنه شغال. ──
       // ══════════════════════════════════════════════════════════════════
-      if (answer && apiKey && typeof window.extractCosmosHtmlBlock === 'function' && typeof window.testCosmosHtmlCode === 'function') {
-        var _htmlToTest = window.extractCosmosHtmlBlock(answer);
+      if (answer && apiKey && typeof window.buildCosmosTestableDoc === 'function' && typeof window.testCosmosHtmlCode === 'function') {
+        var _htmlToTest = window.buildCosmosTestableDoc(answer);
         if (_htmlToTest) {
           var _fixAttempts = 0, _maxFixAttempts = 2, _lastErrors = [];
           while (_fixAttempts <= _maxFixAttempts) {
@@ -12250,7 +12375,7 @@ function slStopAllAnimations() {
               var _fixed = await window.fixCosmosHtmlAnswer(apiKey, userMsg, answer, _lastErrors);
               if (_fixed && _fixed.length > 20) {
                 answer = _fixed;
-                var _reHtml = window.extractCosmosHtmlBlock(answer);
+                var _reHtml = window.buildCosmosTestableDoc(answer);
                 if (_reHtml) _htmlToTest = _reHtml; else break; // الشكل اتغيّر خالص، منكملش تلقيم أعمى
               } else break;
             } catch(eFix) { console.warn('fixCosmosHtmlAnswer failed', eFix); break; }
@@ -12359,6 +12484,75 @@ function slStopAllAnimations() {
     // (زي إرسال محتوى الملفات المرفقة) عشان نتجنب دخول حارس التحقق تاني وهو بيشوف
     // مربع الكتابة فاضي أو المحتوى طويل فيرفض الإرسال بصمت ──
     window.__aiSendMessageCore = window.sendAIMessage;
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🟦 زرار الإرسال ↔ زرار انتظار: وقت ما المساعد بيفكر، الزرار بيتحول لشكل مربع.
+    // الضغط عليه وهو مربع مش بيوقف التفكير خالص — بيضيف أي رسالة كتبها المستخدم لقائمة
+    // انتظار، وهتتبعت تلقائيًا فور ما يخلص من الرد الحالي، من غير ما يحتاج يضغط تاني. ──
+    // ══════════════════════════════════════════════════════════════════
+    (function(){
+      window.__cosmosBusy = window.__cosmosBusy || false;
+      window.__cosmosQueue = window.__cosmosQueue || [];
+      var _coreSend = window.__aiSendMessageCore;
+
+      function _aiSendBtnEl(){
+        var modal = document.getElementById('aiChatModal');
+        return modal ? modal.querySelector('.unified-send-btn.ai-color') : null;
+      }
+
+      window.__updateAISendBtnUI = function(){
+        var btn = _aiSendBtnEl();
+        if (!btn) return;
+        var icon = btn.querySelector('i');
+        var badge = btn.querySelector('.ai-queue-badge');
+        if (window.__cosmosBusy) {
+          btn.classList.add('ai-busy');
+          btn.title = window.__cosmosQueue.length ? ('في قائمة الانتظار: ' + window.__cosmosQueue.length) : 'بيفكر... اضغط تاني عشان تضيف رسالة كمان من غير ما توقفه';
+          if (icon) icon.className = 'fas fa-stop';
+          if (window.__cosmosQueue.length) {
+            if (!badge) { badge = document.createElement('span'); badge.className = 'ai-queue-badge'; btn.appendChild(badge); }
+            badge.textContent = window.__cosmosQueue.length;
+          } else if (badge) { badge.remove(); }
+        } else {
+          btn.classList.remove('ai-busy');
+          btn.title = '';
+          if (icon) icon.className = 'fas fa-paper-plane';
+          if (badge) badge.remove();
+        }
+      };
+
+      window.sendAIMessage = async function(injectedMsg, _fromQueueDrain){
+        var inp = document.getElementById('aiChatInput');
+
+        if (!_fromQueueDrain && window.__cosmosBusy) {
+          // المساعد لسه بيفكر في رسالة سابقة — منوقفوش تفكيره خالص، بس نحفظ الرسالة دي
+          // (سواء متكتوبة أو جاية من رسالة صوتية اتفهمت) في قائمة انتظار، وهتتبعت تلقائيًا
+          // أول ما يخلص، بالظبط زي ما المستخدم طلب، من غير ما نبدأ توليد تاني بيتصارع مع الحالي.
+          var queuedText = (injectedMsg !== undefined) ? String(injectedMsg) : (inp ? inp.value.trim() : '');
+          if (!queuedText) return;
+          window.__cosmosQueue.push(queuedText);
+          if (injectedMsg === undefined && inp) { inp.value = ''; inp.style.height = 'auto'; }
+          window.__updateAISendBtnUI();
+          if (typeof showToast === 'function') showToast('📥 هتتبعت تلقائيًا أول ما يخلص من الرد الحالي (' + window.__cosmosQueue.length + ' في الانتظار)');
+          return;
+        }
+
+        window.__cosmosBusy = true;
+        window.__updateAISendBtnUI();
+        try {
+          await _coreSend(injectedMsg);
+        } finally {
+          if (window.__cosmosQueue.length) {
+            var _next = window.__cosmosQueue.shift();
+            window.__updateAISendBtnUI();
+            window.sendAIMessage(_next, true); // ── نكمّل تلقائيًا مع أول رسالة في الانتظار من غير ما ننتظر ضغطة تانية (fromQueueDrain=true بيتخطى فحص الانشغال لأننا فاضيين فعلاً دلوقتي) ──
+          } else {
+            window.__cosmosBusy = false;
+            window.__updateAISendBtnUI();
+          }
+        }
+      };
+    })();
 
     // ── Also patch clearAIChat to reset history ──
     var _origClear = window.clearAIChat;

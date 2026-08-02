@@ -2544,6 +2544,35 @@ body {
   box-shadow: 0 3px 12px rgba(99,102,241,0.4) !important;
 }
 
+/* ── حالة "بيفكر": الزرار بيتحول لمربع بدل السهم، من غير ما يتقفل أو يمنع الضغط ──
+   الضغط عليه في الحالة دي بيضيف رسالة لقائمة انتظار، مش بيوقف التفكير الحالي. */
+.unified-send-btn.ai-busy {
+  border-radius: 8px !important;
+  position: relative;
+}
+.unified-send-btn.ai-busy i {
+  animation: none !important;
+  font-size: 0.95rem !important;
+}
+.ai-queue-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #1a1025;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 0 0 2px rgba(15,10,26,0.9);
+}
+
 /* File preview موحد */
 .unified-file-preview {
   display: flex;
