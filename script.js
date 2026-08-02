@@ -727,52 +727,6 @@ async function isAdminUser(userId) {
   // ========== User Data Management ==========
   async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
   async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
-
-  // ========== حفظ/استرجاع ذاكرة شات Cosmos من Firestore (تحل مشكلة نسيان السياق بعد أي هنج/ريفريش) ==========
-  let _aiChatSaveTimer = null;
-  function saveAIChatToFirebase() {
-    if (!currentUserId) return;
-    if (_aiChatSaveTimer) clearTimeout(_aiChatSaveTimer);
-    _aiChatSaveTimer = setTimeout(function () {
-      try {
-        db.collection("ai_chat_sessions").doc(currentUserId).set({
-          history: (window.aiChatHistory || []).slice(-30),
-          digest: (window.aiSessionDigest || []).slice(-12),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(function (e) { console.error("saveAIChatToFirebase err", e); });
-      } catch (e) { console.error("saveAIChatToFirebase err", e); }
-    }, 500);
-  }
-  async function loadAIChatFromFirebase(userId) {
-    if (!userId) return false;
-    try {
-      const doc = await db.collection("ai_chat_sessions").doc(userId).get();
-      if (doc.exists) {
-        const data = doc.data();
-        window.aiChatHistory = Array.isArray(data.history) ? data.history : [];
-        window.aiSessionDigest = Array.isArray(data.digest) ? data.digest : [];
-        return window.aiChatHistory.length > 0;
-      }
-    } catch (e) { console.error("loadAIChatFromFirebase err", e); }
-    return false;
-  }
-  async function deleteAIChatFromFirebase(userId) {
-    if (!userId) return;
-    try { await db.collection("ai_chat_sessions").doc(userId).delete(); } catch (e) { console.error("deleteAIChatFromFirebase err", e); }
-  }
-  function renderLoadedAIHistory() {
-    var cont = document.getElementById("aiChatMessages");
-    if (!cont || !window.aiChatHistory || window.aiChatHistory.length === 0) return;
-    cont.innerHTML = "";
-    window.aiChatHistory.forEach(function (m) {
-      if (!m || !m.content) return;
-      displayAIMessage(String(m.content), m.role === "user" ? "user" : "ai");
-    });
-    var note = document.createElement("div");
-    note.style.cssText = "text-align:center;color:#888;font-size:.75rem;padding:.4rem;";
-    note.innerText = "↑ تم استرجاع المحادثة السابقة تلقائيًا";
-    cont.appendChild(note);
-  }
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
   // ====== تسجيل مشاهدة فيديو (موحّد لكل أنواع الفيديوهات) ======
@@ -2414,14 +2368,7 @@ async function updateAdminUI() {
     modal.classList.add("active");
     document.body.style.overflow = "hidden";
     var msgs = document.getElementById("aiChatMessages");
-    if (msgs.children.length === 0) {
-      if (window.aiChatHistory && window.aiChatHistory.length > 0) {
-        // في محادثة سابقة اتحملت من Firestore (بعد ريفريش/هنج) — نعرضها بدل رسالة الترحيب
-        renderLoadedAIHistory();
-      } else {
-        displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai");
-      }
-    }
+    if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai");
     setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; setupChatKeyboard("aiChatModal"); }, 150);
   }
   function closeAIChat() {
@@ -2595,7 +2542,6 @@ async function updateAdminUI() {
           : 'حاولت أولّد صورة للمستخدم بناءً على طلبه لكن العملية فشلت تقنياً.'
       });
       if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
-      saveAIChatToFirebase();
     }
   }
 
@@ -2958,7 +2904,7 @@ async function updateAdminUI() {
     } 
 }
   // loadUserDashboard() — يتعمل من داخل googleLogin بعد login ناجح فقط
-  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} var _logoutUidForAI = currentUserId; auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); if (_logoutUidForAI) deleteAIChatFromFirebase(_logoutUidForAI); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
+  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
@@ -3381,9 +3327,9 @@ async function updateAdminUI() {
   // تحقق من الحالة عند التحميل
   window.addEventListener("load", function() { setTimeout(updateInstallMenuVisibility, 1000); });
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } try { await loadAIChatFromFirebase(currentUserId); } catch(_){} if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
 
-        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); var _authClearUidForAI = currentUserId; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; if (_authClearUidForAI) deleteAIChatFromFirebase(_authClearUidForAI); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
+        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
@@ -10727,7 +10673,6 @@ function slStopAllAnimations() {
             aiChatHistory.push({ role: 'user', content: userMsg });
             aiChatHistory.push({ role: 'assistant', content: answer });
             if (aiChatHistory.length > 30) aiChatHistory.splice(0, 2);
-            saveAIChatToFirebase();
           }
 
           if (typingEl) typingEl.remove();
@@ -11571,7 +11516,6 @@ function slStopAllAnimations() {
             window.aiChatHistory.push({ role:'user', content: '[أرسل المستخدم '+imgs.length+' صورة'+(validDocs.length ? (' و'+validDocs.length+' ملف') : '')+'] ' + (extraText||'') });
             window.aiChatHistory.push({ role:'assistant', content: visionAnswer });
             if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
-            saveAIChatToFirebase();
           }
           if (typingEl2) typingEl2.remove();
           if (msgs) {
@@ -12008,7 +11952,7 @@ function slStopAllAnimations() {
       async function _readGroqStream(res, onDelta, onReasoningDelta) {
         var reader = res.body.getReader();
         var decoder = new TextDecoder('utf-8');
-        var buffer = '', full = '', fullReasoning = '', finishReason = null;
+        var buffer = '', full = '', fullReasoning = '';
         while (true) {
           var chunk = await reader.read();
           if (chunk.done) break;
@@ -12023,14 +11967,13 @@ function slStopAllAnimations() {
             try {
               var evt = JSON.parse(jsonStr);
               var delta = evt.choices && evt.choices[0] && evt.choices[0].delta;
-              if (evt.choices && evt.choices[0] && evt.choices[0].finish_reason) finishReason = evt.choices[0].finish_reason;
               var reasoningPiece = delta && (delta.reasoning || delta.reasoning_content);
               if (reasoningPiece) { fullReasoning += reasoningPiece; if (onReasoningDelta) onReasoningDelta(fullReasoning); }
               if (delta && delta.content) { full += delta.content; if (onDelta) onDelta(full); }
             } catch (eParse) { /* جزء ناقص من الـ chunk، هيكمل مع اللي بعده */ }
           }
         }
-        return { choices: [{ message: { content: full, reasoning: fullReasoning }, finish_reason: finishReason }] };
+        return { choices: [{ message: { content: full, reasoning: fullReasoning } }] };
       }
 
       async function callGroq(model, maxTok, hist, lean, onDelta, onReasoningDelta) {
@@ -12153,43 +12096,6 @@ function slStopAllAnimations() {
         console.warn('AI Router: Groq فشل، بنجرّب Gemini كخط دفاع ثاني...', errGroq);
       }
 
-      // ══════════════════════════════════════════════════════════════════
-      // ✂️ الرد اتقطع لأنه وصل لحد التوكنز (finish_reason === 'length') — بيحصل غالبًا في أكواد كبيرة
-      // زي لعبة 3D كاملة. بدل ما المستخدم ياخد كود ناقص/متكسّر (فيه ``` مفتوحة من غير ما تتقفل، وبيتفتّت
-      // لعشرات "الملفات" الوهمية)، بنطلب من الموديل يكمّل بالظبط من حيث وقف ونلزّق الأجزاء في بعض
-      // قبل أي معالجة تانية — لحد 3 مكملات إضافية (يعني ممكن يوصل لأربعة أضعاف حد التوكنز الأساسي). ──
-      // ══════════════════════════════════════════════════════════════════
-      if (answer && _isCodeReq) {
-        var _contFinish = result && result.data && result.data.choices && result.data.choices[0] && result.data.choices[0].finish_reason;
-        var _contRounds = 0;
-        while (_contFinish === 'length' && _contRounds < 3) {
-          _contRounds++;
-          if (typingEl && typingEl.isConnected) {
-            var _wrapC = typingEl.querySelector('.message-content');
-            if (_wrapC) _wrapC.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' لسه بيكتب (الكود طويل، بيكمّل — جزء ' + (_contRounds+1) + ')');
-            if (msgs) msgs.scrollTop = msgs.scrollHeight;
-          }
-          var _contHist = histMsgs.concat([
-            { role: 'assistant', content: answer },
-            { role: 'user', content: 'كمّل من حيث وقفت بالظبط، حرف واحد ماتعيدوش مما كتبته قبل كده، من غير أي مقدمة أو شرح أو اعتذار، كمّل الكود مباشرة من نفس النقطة.' }
-          ]);
-          var _priorAnswer = answer;
-          var _contCb = (window.__cosmosSilentFileEdit || !typingEl) ? null : function(partial){
-            var _shownFull = _priorAnswer + partial;
-            var _shown = _shownFull.length > 6000 ? _shownFull.slice(-6000) : _shownFull;
-            typingEl.innerHTML = '<div class="message-content cosmos-live-stream" style="white-space:pre-wrap">' + escapeHtml(_shown) + '<span class="cosmos-stream-cursor">▍</span></div>';
-            if (msgs) msgs.scrollTop = msgs.scrollHeight;
-          };
-          try {
-            var _contResult = await callGroq('openai/gpt-oss-120b', _mainMaxTok, _contHist, false, _contCb, null);
-            var _contPiece = (_contResult.data && _contResult.data.choices && _contResult.data.choices[0] && _contResult.data.choices[0].message && _contResult.data.choices[0].message.content) || '';
-            if (!_contPiece) break;
-            answer = answer + _contPiece;
-            _contFinish = _contResult.data.choices[0].finish_reason;
-          } catch (eCont) { console.warn('continuation call failed', eCont); break; }
-        }
-      }
-
       // ── Fallback صامت: Groq فشل أو رجّع فاضي → نسيب Gemini يتولى الرد ──
       if (_debugGroqDetail && window.logPlatformIssue) window.logPlatformIssue('Groq (شات نصي)', _debugGroqDetail);
       if (!answer) {
@@ -12273,7 +12179,6 @@ function slStopAllAnimations() {
         window.aiChatHistory.push({ role:'user', content: userMsg });
         window.aiChatHistory.push({ role:'assistant', content: answer });
         if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
-        saveAIChatToFirebase();
 
         // ── غرفة 2: الذاكرة المؤقتة — نضيف ملخص قصير لكل رسالة مستخدم عشان السياق العام يفضل موجود
         // حتى لو الرسالة القديمة اتشالت من الـ history المرسل فعليًا للموديل (اللي بيبقى آخر 8 بس) ──
@@ -12370,7 +12275,6 @@ function slStopAllAnimations() {
     window.clearAIChat = function() {
       window.aiChatHistory = [];
       window.aiSessionDigest = [];
-      if (currentUserId) deleteAIChatFromFirebase(currentUserId);
       if (_origClear) _origClear.call(this);
     };
 
@@ -13658,15 +13562,6 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       codeBlocks.push({ lang: (lang||'').toLowerCase().trim(), code: code.replace(/\n$/,'') });
       return '\u0000CB' + idx + '\u0000';
     });
-
-    // ── لو فضلت علامة ``` مفتوحة من غير ما تتقفل (الرد اتقطع مثلاً)، ناخد كل اللي بعدها كملف واحد
-    // بس، بدل ما نسيب "شبكة الأمان" اللي بعد كده تقسّمه لفقرات وتحوّله لعشرات الملفات الوهمية ──
-    var _looseFence = s.match(/```([a-zA-Z0-9]*)\n?([\s\S]*)$/);
-    if (_looseFence) {
-      var _looseIdx = codeBlocks.length;
-      codeBlocks.push({ lang: (_looseFence[1]||'').toLowerCase().trim(), code: _looseFence[2].trim() });
-      s = s.slice(0, _looseFence.index) + '\u0000CB' + _looseIdx + '\u0000';
-    }
 
     // ── شبكة أمان: لو الموديل كتب كود من غير ما يحطه بين ``` (تجاهل التعليمات)، نكتشفه هنا برضو
     // ونحوّله لصندوق كود زي ما هو، عشان أي كود المفروض يظهر جوه الصندوق فقط ومتقدرش يظهر كنص عادي أبداً ──
