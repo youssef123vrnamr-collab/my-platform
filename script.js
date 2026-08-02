@@ -1733,6 +1733,42 @@ async function updateAdminUI() {
     setupProgressTracking(id);
   }
 
+  // 🔒 فرض شكل صندوق الفيديو مباشرة عبر JS (بديل عن أي تعارض CSS قديم)
+  // بيضمن إن الفيديو يبان كامل بدون قص مهما كانت نسبة أبعاده، ومهما كان
+  // فيه قواعد CSS متضاربة في style.css أو داخل index.html
+  (function forceVideoBoxLayout() {
+    const cont = document.getElementById("videoPlayerContainer");
+    if (!cont) return;
+    cont.style.setProperty("position", "relative", "important");
+    cont.style.setProperty("width", "100%", "important");
+    cont.style.setProperty("height", "0", "important");
+    cont.style.setProperty("padding-top", "56.25%", "important");
+    cont.style.setProperty("min-height", "unset", "important");
+    cont.style.setProperty("max-height", "unset", "important");
+    cont.style.setProperty("overflow", "hidden", "important");
+    cont.style.setProperty("background", "#000", "important");
+
+    const media = cont.querySelector("video, .yt-wrapper");
+    if (!media) return;
+    media.style.setProperty("position", "absolute", "important");
+    media.style.setProperty("top", "0", "important");
+    media.style.setProperty("left", "0", "important");
+    media.style.setProperty("width", "100%", "important");
+    media.style.setProperty("height", "100%", "important");
+    media.style.setProperty("object-fit", "contain", "important");
+    media.style.setProperty("background", "#000", "important");
+
+    const iframeEl = media.tagName === "IFRAME" ? media : media.querySelector("iframe");
+    if (iframeEl) {
+      iframeEl.style.setProperty("position", "absolute", "important");
+      iframeEl.style.setProperty("top", "0", "important");
+      iframeEl.style.setProperty("left", "0", "important");
+      iframeEl.style.setProperty("width", "100%", "important");
+      iframeEl.style.setProperty("height", "100%", "important");
+      iframeEl.style.setProperty("border", "none", "important");
+    }
+  })();
+
   document.getElementById("videoModal").classList.add("active");
   setTimeout(() => { try { initDrawingBoard(); } catch(e) { console.warn("drawing init failed", e); } }, 100);
 
