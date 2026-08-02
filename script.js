@@ -11708,9 +11708,9 @@ function slStopAllAnimations() {
       // 8000 كانت بتتقطع فعليًا مع صفحات فيها CSS تفصيلي + JS كامل للعبة (زي السلم والتعبان)،
       // فرفعناها لمساحة أكبر بكتير (الموديل بيدعم لحد ~32-65 ألف توكن إخراج). ──
       var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
-      var _mainMaxTok     = _isCodeReq ? 20000 : 2200;
-      var _fallbackMaxTok = _isCodeReq ? 20000 : 4000;
-      var _geminiMaxTok   = _isCodeReq ? 20000 : 2200;
+      var _mainMaxTok     = _isCodeReq ? 28000 : 2200;
+      var _fallbackMaxTok = _isCodeReq ? 28000 : 4000;
+      var _geminiMaxTok   = _isCodeReq ? 28000 : 2200;
 
       // ── Show user bubble ──
       var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
@@ -11947,7 +11947,7 @@ function slStopAllAnimations() {
           temperature: 0.4,
           // ── طلبات الكود: تفكير 'high' كان بياكل من نفس ميزانية التوكنز اللي محتاجها الكود نفسه،
           // فده كان سبب إضافي للتقطيع مع صفحات كبيرة. 'medium' كافي جدًا للتخطيط، وبيسيب مساحة أكبر للكود الفعلي. ──
-          reasoning_effort: (typeof _isCodeReq !== 'undefined' && _isCodeReq) ? 'medium' : 'high',
+          reasoning_effort: (typeof _isCodeReq !== 'undefined' && _isCodeReq) ? 'low' : 'high',
           reasoning_format: 'parsed' // ── يخلي الموديل يرجّع تفكيره الحقيقي منفصل عن الرد النهائي — ده أساس "غرفة التفكير العميق" ──
         };
       }
@@ -11959,7 +11959,7 @@ function slStopAllAnimations() {
       async function _readGroqStream(res, onDelta, onReasoningDelta) {
         var reader = res.body.getReader();
         var decoder = new TextDecoder('utf-8');
-        var buffer = '', full = '', fullReasoning = '';
+        var buffer = '', full = '', fullReasoning = '', _finishReason = null;
         while (true) {
           var chunk = await reader.read();
           if (chunk.done) break;
@@ -11977,10 +11977,14 @@ function slStopAllAnimations() {
               var reasoningPiece = delta && (delta.reasoning || delta.reasoning_content);
               if (reasoningPiece) { fullReasoning += reasoningPiece; if (onReasoningDelta) onReasoningDelta(fullReasoning); }
               if (delta && delta.content) { full += delta.content; if (onDelta) onDelta(full); }
+              // ── ده كان ناقص تمامًا: بدونه، اكتشاف "الرد اتقطع بسبب حد التوكنز" ماكانش بيشتغل خالص
+              // مع أي رد بيتكتب حيّة (يعني كل الردود العادية عمليًا) ──
+              var _fr = evt.choices && evt.choices[0] && evt.choices[0].finish_reason;
+              if (_fr) _finishReason = _fr;
             } catch (eParse) { /* جزء ناقص من الـ chunk، هيكمل مع اللي بعده */ }
           }
         }
-        return { choices: [{ message: { content: full, reasoning: fullReasoning } }] };
+        return { choices: [{ message: { content: full, reasoning: fullReasoning }, finish_reason: _finishReason }] };
       }
 
       async function callGroq(model, maxTok, hist, lean, onDelta, onReasoningDelta) {
@@ -12099,7 +12103,7 @@ function slStopAllAnimations() {
         // ══════════════════════════════════════════════════════════════════
         var _truncFinishReason = result.data && result.data.choices && result.data.choices[0] && result.data.choices[0].finish_reason;
         var _contTries = 0;
-        while (answer && _truncFinishReason === 'length' && _contTries < 3) {
+        while (answer && _truncFinishReason === 'length' && _contTries < 6) {
           _contTries++;
           if (typingEl && typingEl.isConnected) {
             if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
