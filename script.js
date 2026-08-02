@@ -11974,13 +11974,26 @@ function slStopAllAnimations() {
 
       // ── سياق مكتبة الفيديوهات — يخلي الذكاء الاصطناعي عارف عدد الفيديوهات وأسماءها ومحتواها ──
       var _videoContextBlock = '';
-      if (typeof videos !== 'undefined' && videos && videos.length) {
-        var _vList = videos.slice(0, 80).map(function(v, vi){
+      var _videosForContext = (typeof videos !== 'undefined' && videos && videos.length) ? videos : null;
+      if (!_videosForContext) {
+        // ── الكاش المحلي (videos[]) لسه فاضي — غالبًا الـ listener لسه ماوصلش، مش إن مفيش فيديوهات فعلاً.
+        // بدل ما نسيب السياق فاضي ويقول الذكاء الاصطناعي "معنديش وصول لقاعدة البيانات"، نجيب نسخة سريعة
+        // مرة واحدة (one-time fetch) مباشرة من Firestore عشان نضمن رقم حقيقي دايمًا ──
+        try {
+          var _oneTimeSnap = await db.collection("videos").get();
+          if (_oneTimeSnap && !_oneTimeSnap.empty) {
+            _videosForContext = [];
+            _oneTimeSnap.forEach(function(d){ var vd = d.data(); vd.id = d.id; _videosForContext.push(vd); });
+          }
+        } catch (eVidFallback) { console.warn('video fallback fetch failed', eVidFallback); }
+      }
+      if (_videosForContext && _videosForContext.length) {
+        var _vList = _videosForContext.slice(0, 80).map(function(v, vi){
           var _t = (v.title || 'بدون عنوان');
           var _d = v.description ? (' — ' + String(v.description).slice(0, 150)) : '';
           return (vi + 1) + '. "' + _t + '"' + _d;
         }).join('\n');
-        _videoContextBlock = '\n\n--- مكتبة فيديوهات المنصة ---\nعدد الفيديوهات الكلي: ' + videos.length + '\nقائمة الفيديوهات وأسماءها ووصفها:\n' + _vList + '\n---\nلو المستخدم سأل عن عدد الفيديوهات أو أسمائها أو محتواها، استخدم القائمة دي في إجابتك.';
+        _videoContextBlock = '\n\n--- مكتبة فيديوهات المنصة ---\nعدد الفيديوهات الكلي: ' + _videosForContext.length + '\nقائمة الفيديوهات وأسماءها ووصفها:\n' + _vList + '\n---\nلو المستخدم سأل عن عدد الفيديوهات أو أسمائها أو محتواها، استخدم القائمة دي في إجابتك، ودي بيانات حقيقية من قاعدة البيانات مش تخمين.';
       }
 
       // ── سياق أخطاء الامتحانات — أكتر الأسئلة اللي الطلاب بيغلطوا فيها ──
