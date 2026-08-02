@@ -8433,3 +8433,90 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   padding: .4rem .75rem;
   border-radius: 999px;
 }
+
+/* ══════════════════════════════════════════════════
+   شاشة التحقق من تسجيل الدخول (بديل الفلاش)
+   ══════════════════════════════════════════════════ */
+.auth-splash {
+  position: fixed; inset: 0; z-index: 99999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1.2rem;
+  background: linear-gradient(135deg, #050308 0, #0f0a1a 50%, #1a1a3e 100%);
+  transition: opacity .4s ease;
+}
+.auth-splash.hidden { opacity: 0; pointer-events: none; }
+.auth-splash-ring {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 4px solid rgba(99,102,241,.2);
+  border-top-color: #8b5cf6;
+  animation: authSplashSpin .8s linear infinite;
+  position: relative;
+}
+.auth-splash-inner {
+  position: absolute; inset: 8px;
+  border-radius: 50%;
+  border: 3px solid rgba(236,72,153,.15);
+  border-top-color: #ec4899;
+  animation: authSplashSpin 1.2s linear infinite reverse;
+}
+@keyframes authSplashSpin { to { transform: rotate(360deg); } }
+.auth-splash-text { color: #c4b5fd; font-family: Cairo, sans-serif; font-size: .9rem; }
+
+/* ══════════════════════════════════════════════════
+   حلقة التحميل حول شعار صفحة الدخول
+   ══════════════════════════════════════════════════ */
+.landing-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.landing-ring-svg { position: absolute; top: -8px; left: -8px; width: calc(100% + 16px); height: calc(100% + 16px); transform: rotate(-90deg); pointer-events: none; }
+.landing-ring-bg { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 3; }
+.landing-ring-progress {
+  fill: none; stroke: url(#none); stroke: #8b5cf6; stroke-width: 3; stroke-linecap: round;
+  stroke-dasharray: 340; stroke-dashoffset: 340;
+  animation: landingRingFill 1.4s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes landingRingFill { to { stroke-dashoffset: 0; } }
+
+/* ══════════════════════════════════════════════════
+   زرار الوضع الليلي/النهاري
+   ══════════════════════════════════════════════════ */
+.theme-toggle-btn { margin-right: 6px; }
+
+/* ══════════════════════════════════════════════════
+   الوضع النهاري (Light Theme)
+   ══════════════════════════════════════════════════ */
+body[data-theme="light"] { background: #f4f5fb !important; color: #1a1a2e !important; }
+body[data-theme="light"] .bg-animation { background: linear-gradient(135deg, #eef0fb 0, #e7e9f7 50%, #dfe2f5 100%) !important; }
+body[data-theme="light"] .app-wrapper { background: transparent !important; }
+body[data-theme="light"] .navbar { background: rgba(255,255,255,.85) !important; border-bottom: 1px solid rgba(0,0,0,.08) !important; backdrop-filter: blur(10px); }
+body[data-theme="light"] .navbar, body[data-theme="light"] .navbar * { color: #1a1a2e; }
+body[data-theme="light"] .brand-text h1 { color: #1a1a2e !important; }
+body[data-theme="light"] .container, body[data-theme="light"] .hero, body[data-theme="light"] .video-card,
+body[data-theme="light"] .modal-content, body[data-theme="light"] .chat-container,
+body[data-theme="light"] .settings-menu, body[data-theme="light"] .form-group,
+body[data-theme="light"] .upload-zone, body[data-theme="light"] .course-actions-toolbar {
+  color: #1a1a2e !important;
+}
+body[data-theme="light"] .video-card, body[data-theme="light"] .modal-content, body[data-theme="light"] .settings-menu,
+body[data-theme="light"] .upload-zone, body[data-theme="light"] .chat-container, body[data-theme="light"] .storage-bar-container {
+  background: rgba(255,255,255,.9) !important;
+  border: 1px solid rgba(0,0,0,.08) !important;
+}
+body[data-theme="light"] .settings-menu-item { color: #1a1a2e !important; }
+body[data-theme="light"] .settings-menu-item:hover { background: rgba(99,102,241,.08) !important; }
+body[data-theme="light"] p, body[data-theme="light"] span, body[data-theme="light"] label,
+body[data-theme="light"] h1, body[data-theme="light"] h2, body[data-theme="light"] h3,
+body[data-theme="light"] h4, body[data-theme="light"] li, body[data-theme="light"] div {
+  color: inherit;
+}
+body[data-theme="light"] input, body[data-theme="light"] textarea, body[data-theme="light"] select {
+  background: rgba(0,0,0,.04) !important;
+  color: #1a1a2e !important;
+  border: 1px solid rgba(0,0,0,.15) !important;
+}
+body[data-theme="light"] input::placeholder, body[data-theme="light"] textarea::placeholder { color: #6b6b80 !important; }
+body[data-theme="light"] .settings-icon-btn { background: rgba(0,0,0,.06) !important; }
+body[data-theme="light"] .settings-icon-btn svg { stroke: #1a1a2e !important; }
+body[data-theme="light"] .settings-icon-btn span { background: #1a1a2e !important; }
+body[data-theme="light"] .hero p, body[data-theme="light"] .hero h2 { color: #1a1a2e !important; }
+body[data-theme="light"] .landing-page { background: #f4f5fb !important; }
+body[data-theme="light"] .star-field { opacity: .3; }
