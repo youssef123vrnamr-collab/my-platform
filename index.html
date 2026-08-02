@@ -552,12 +552,14 @@
     <textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="unified-textarea" onkeypress="handleAIKeyPress(event)"></textarea>
     <div class="unified-bottom-row">
       <div class="unified-left-btns">
-        <button class="unified-tool-btn" onclick="document.getElementById('aiUnifiedInput').click()" title="إرفاق صور أو ملفات (حتى 5)"><i class="fas fa-paperclip"></i></button>
-        <input id="aiUnifiedInput" type="file" style="display:none" multiple onchange="handleAIUnifiedSelect(this)">
+        <button class="unified-tool-btn" onclick="document.getElementById('aiFileInput').click()" title="إرفاق أي ملف (حتى 5) — بيتفحص أمنياً قبل الرفع"><i class="fas fa-paperclip"></i></button>
+        <input id="aiFileInput" type="file" style="display:none" multiple onchange="handleAIFileSelect(this)">
+        <button class="unified-tool-btn" onclick="document.getElementById('aiImageInput').click()" title="إرفاق صور (حتى 5)"><i class="fas fa-image"></i></button>
+        <input id="aiImageInput" type="file" style="display:none" accept="image/*" multiple onchange="handleAIImageSelect(this)">
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
         <button class="unified-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية"><i class="fas fa-headphones"></i></button>
       </div>
-      <button class="unified-send-btn ai-color" id="aiSendBtn" title="إرسال" onclick="handleAISendBtnClick()"><i class="fas fa-paper-plane"></i></button>
+      <button class="unified-send-btn ai-color" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
 </div></div></div>
