@@ -283,16 +283,6 @@
   </style>
 </head>
 <body>
-<script>
-  // تطبيق الوضع الليلي/النهاري فورًا قبل أي رسم للصفحة لمنع أي وميض
-  (function(){
-    try {
-      if (localStorage.getItem('falak_theme') === 'light') {
-        document.body.classList.add('light-mode');
-      }
-    } catch(e) {}
-  })();
-</script>
 
 <div class="landing-page" id="landingPage">
   <div class="star-field"></div>
@@ -304,31 +294,6 @@
     <button class="google-btn" id="googleLogoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
   </div>
 </div>
-
-<!-- شاشة "مرحبًا بك مجددًا" — تظهر فقط للمستخدمين اللي سجلوا دخول قبل كده، لحد ما نتأكد من حالة تسجيل الدخول، بدل ما تظهر شاشة اللوجين وتختفي -->
-<div class="auth-splash" id="authSplash">
-  <div class="auth-splash-ring-wrap">
-    <div class="auth-splash-ring"></div>
-    <div class="auth-splash-logo"><img id="authSplashLogo" src="" alt="Astronomy Logo"></div>
-  </div>
-  <div class="auth-splash-text">مرحبًا بك مجددًا 🌌</div>
-</div>
-<script>
-  // لو المستخدم دخل قبل كده على الجهاز ده، أظهر شاشة تحميل بدل شاشة تسجيل الدخول لحد ما نتأكد إنه لسه مسجل
-  (function(){
-    try {
-      if (localStorage.getItem('falak_returning_user') === '1') {
-        var lp = document.getElementById('landingPage');
-        var as = document.getElementById('authSplash');
-        var landingImg = document.querySelector('.landing-icon img');
-        var splashImg = document.getElementById('authSplashLogo');
-        if (landingImg && splashImg) splashImg.src = landingImg.src;
-        if (lp) lp.style.display = 'none';
-        if (as) as.style.display = 'flex';
-      }
-    } catch(e) {}
-  })();
-</script>
 
 <div class="app-wrapper" id="appWrapper" style="display: none;">
   <canvas id="spaceCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;"></canvas>
@@ -347,9 +312,6 @@
               <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px"></span>
               <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px"></span>
             </span>
-          </button>
-          <button class="settings-icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="position:relative;">
-            <i class="fas fa-moon" id="themeToggleIcon"></i>
           </button>
           <div class="settings-menu" id="sectionsMenu" style="min-width:190px;max-height:70vh;overflow-y:auto;">
             <div class="settings-menu-item" onclick="scrollToSectionAndOpen('news');closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#a855f7);margin-left:6px;font-size:.8rem"><i class="fas fa-newspaper" style="color:#fbcfe8"></i></span> أخبار الكون</div>
