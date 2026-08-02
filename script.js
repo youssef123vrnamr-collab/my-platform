@@ -622,6 +622,34 @@ async function isAdminUser(userId) {
     } catch (e) { console.warn('fixCosmosHtmlAnswer failed', e); return null; }
   };
 
+  // ── فحص سريع وخفيف قبل بناء أي كود/لعبة: هل الطلب واضح، ولا فيه غموض حقيقي ممكن يخلي
+  // الموديل يبني حاجة مختلفة تمامًا عن قصد المستخدم (خصوصًا مع كتابة صوتية فيها أخطاء)؟ ──
+  window.checkBuildRequestClarity = async function(apiKey, userMsg) {
+    try {
+      var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-120b',
+          max_tokens: 150,
+          temperature: 0.2,
+          messages: [
+            { role: 'system', content: 'المستخدم هيكتب طلب بناء كود/لعبة/تطبيق، غالبًا بالعامية المصرية وأحيانًا بأخطاء كتابة صوتية (voice-to-text) زي كلمة ناقصة أو حرف مبدّل. مهمتك: قرر هل الطلب واضح كفاية عشان تبدأ تبني الكود على أساسه مباشرة، ولا فيه غموض حقيقي ممكن يخليك تبني حاجة مختلفة تمامًا عن قصد المستخدم. مثال مهم لازم تاخده بالك منه: "السلم والتعبان" أو "سلم وتعبان" هي لعبة اللوح الكلاسيكية (لوحة 100 خانة، نرد، سلالم وثعابين تنقل اللاعب لقدام أو لورا) — دي مختلفة تمامًا عن لعبة "الثعبان" الأركيد العادية (ثعبان بياكل طعام ويكبر ويتصادم بنفسه)، حتى لو الاسمين فيهم كلمة "ثعبان" مشتركة. رد بصيغة JSON بس من غير أي نص زيادة قبله أو بعده: {"clear": true} لو الطلب واضح، أو {"clear": false, "question": "سؤال قصير جدًا بالعامية المصرية"} لو محتاج توضيح. السؤال (لو موجود) لازم يكون سطر واحد بس، مباشر، ويقترح فهمك المحتمل ويسأل يأكده أو يصححه — من غير أي مقدمات أو اعتذار.' },
+            { role: 'user', content: userMsg }
+          ]
+        })
+      });
+      if (!r.ok) return { clear: true };
+      var d = await r.json();
+      var out = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+      if (!out) return { clear: true };
+      var cleaned = out.replace(/```json|```/g, '').trim();
+      var parsed = JSON.parse(cleaned);
+      if (parsed && parsed.clear === false && parsed.question) return { clear: false, question: String(parsed.question).slice(0, 300) };
+      return { clear: true };
+    } catch (e) { return { clear: true }; } // ── أي خطأ هنا (شبكة/تحليل)، منمنعش المستخدم — نكمل عادي من غير توضيح ──
+  };
+
   // ── وقت وتاريخ حقيقي دلوقتي، من جهاز المستخدم مباشرة (Intl API) — من غير ما نحتاج إذن GPS.
   // بيتحسب من جديد كل رسالة عشان يفضل دقيق لحظة بلحظة، مش قيمة مخزّنة من الأول. ──
   window.buildCosmosLiveTimeContext = function() {
@@ -11772,6 +11800,30 @@ function slStopAllAnimations() {
       var persona  = window.getCurrentAIPersona() || { name:'Astronomy AI', emoji:'🔭', systemPrompt:'أنت مساعد متخصص في الفلك والفضاء. أجب بالعربية بدقة ووضوح.' };
       var apiKey   = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
 
+      // ══════════════════════════════════════════════════════════════════
+      // 🤔 قبل ما نبدأ نبني أي كود/لعبة/تطبيق: نتأكد إن الطلب واضح ومفهوم صح، بدل ما نخمّن ونبني
+      // حاجة تانية خالص (زي ما حصل لما "السلم والتعبان" اتفهمت غلط وبقت لعبة "الثعبان" الأركيد العادية).
+      // ده استدعاء صغير وسريع بيحصل قبل أي شغل تقيل، ولو الطلب واضح بيكمل عادي من غير أي تأخير محسوس. ──
+      // ══════════════════════════════════════════════════════════════════
+      if (_isCodeReq && apiKey && typeof window.checkBuildRequestClarity === 'function') {
+        try {
+          var _clarityCheck = await window.checkBuildRequestClarity(apiKey, userMsg);
+          if (_clarityCheck && _clarityCheck.clear === false && _clarityCheck.question) {
+            if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+            if (typingEl) typingEl.remove();
+            if (msgs) {
+              var _clarifyEl = document.createElement('div');
+              _clarifyEl.className = 'message received';
+              _clarifyEl.innerHTML = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div><div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(_clarityCheck.question):_clarityCheck.question)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+              msgs.appendChild(_clarifyEl); msgs.scrollTop = msgs.scrollHeight;
+            }
+            window.aiChatHistory.push({ role:'user', content: userMsg });
+            window.aiChatHistory.push({ role:'assistant', content: _clarityCheck.question });
+            return; // ── نوقف هنا، من غير ما نبني أي كود، لحد ما المستخدم يوضح قصده ──
+          }
+        } catch (eClarity) { /* أي خطأ هنا، نكمل عادي من غير توضيح — الأولوية إن الطلب ميتوقفش */ }
+      }
+
       // ── History slice (adaptive) ──
       var histLimit = userMsg.length > 2000 ? 2 : userMsg.length > 800 ? 4 : 8;
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
@@ -11916,7 +11968,7 @@ function slStopAllAnimations() {
       var _codeFormatPolicyBlock = '\n\nقاعدة إلزامية لما تكتب كود برمجي (ويب): لو المستخدم طلب منك صفحة أو موقع أو أداة أو أي حاجة فيها HTML/CSS/JS، ممنوع تمامًا تكتب 3 كتل كود منفصلة (واحدة html وواحدة css وواحدة js). لازم تدمج كل حاجة في ملف HTML واحد بس: الـ CSS جوه <style> في الـ <head>، والـ JS جوه <script> قبل </body> مباشرة، وكله بين ثلاث علامات ```html وسطر فاضي قبل وبعد الكتلة. ده معمول عشان الناتج يبقى ملف واحد جاهز يتفتح ويشتغل فورًا من غير ما المستخدم يحتاج يربط ملفات ببعضها. لو المستخدم طلب كود بلغة تانية غير الويب (بايثون مثلاً) يفضل كتلة واحدة بلغتها.\nاكتب الكود كامل وشغّال 100% من غير اختصار أو حذف أجزاء ("...") ومن غير تعليقات زي "أكمل باقي الكود هنا"، حتى لو طويل ومعقد (صفحة كاملة، لعبة، تطبيق) — مفيش حد أقصى لطول الكود.\nاكتب باحترافية زي مبرمج خبير: أسماء متغيرات ودوال واضحة، تنسيق (indentation) منظم ومتسق، تعليقات قصيرة عند النقاط المهمة بس، وترتيب منطقي للأقسام (بنية HTML، ثم الأنماط، ثم المنطق). خلّي التصميم نفسه احترافي بصريًا: تباعد متسق، ألوان متناسقة، خطوط واضحة، وتأثيرات/انتقالات (transitions/animations) لطيفة وسلسة مش مبالغ فيها، مش مجرد كود وظيفي بس.\nاكتب الكود دفعة واحدة نظيف من الأول من غير ما "تفكر بصوت عالي" جوه كتلة الكود أو تكتب نسخة أولية وتصلحها بعدين جوه نفس الرد — فكّر في الحل قبل ما تبدأ تكتب، والكتلة نفسها تبقى النسخة النهائية المرتبة. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كتلة الكود تلقائيًا لملف قابل للنسخ والتنزيل والتشغيل المباشر في المتصفح، إلا لو المستخدم قال صراحة إنه عايز الكود نص بس من غير ما يتعمله ملف.';
 
       // ── هوية خبرة برمجية عالية — تخلي الردود التقنية بمستوى مهندس سينيور محترف بدل إجابات سطحية ──
-      var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.';
+      var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.\nأولوية حرجة عند بناء لعبة/تطبيق كامل: خلاص المنطق الوظيفي (JavaScript اللي بيخلي الحاجة فعلاً تشتغل: قواعد اللعبة، حركة اللاعب، كشف الفوز، التفاعل مع الأزرار) له أولوية مطلقة أعلى من أي زخرفة بصرية إضافية (تدرجات ألوان نيون كتيرة، أنيميشن نجوم متحركة، تأثيرات توهج زيادة عن اللزوم، نرد ثلاثي الأبعاد). اكتب CSS كافي وأنيق بس مش متضخم — لو حسّيت إن التصميم بيبقى أطول من اللازم، اختصر فيه (ألوان أقل، تأثيرات أبسط) وحوّل المساحة دي لضمان إن كل سطر JS مطلوب للعبة يتكتب كامل. لعبة بسيطة شكلها عادي بس شغالة 100% أفضل بكتير من لعبة شكلها خرافي وناقصة أو مش شغالة.';
 
       // ── غرفة 3 (امتداد): أمثلة كود عجبت المستخدمين قبل كده (👍 تحت الكود) — بتدفعك ترفع المستوى وتبني عليه ──
       var _goodCodeContextBlock = '';
