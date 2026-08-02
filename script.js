@@ -11778,7 +11778,9 @@ function slStopAllAnimations() {
       // ── طلب بناء كود/لعبة/موقع/تطبيق مالوش أي علاقة ببحث الإنترنت غالبًا — البحث التخميني (classifyNeedsSearch)
       // كان بيتفعّل غلط في الحالات دي ويجيب نتائج مالهاش علاقة (مواقع/مجتمعات عشوائية). نمنعه هنا تمامًا،
       // ونسيب بس البحث الصريح (لو المستخدم فعلاً كتب كلمة زي "ابحث" أو "آخر أخبار") شغال زي ما هو. ──
-      var _looksLikeBuildRequest = /(كود|لعبة|لعبه|صفحة|صفحه|موقع|تطبيق|سكربت|سكريبت|أداة|اداة|برنامج|مكوّن|مكون|كومبوننت|component)/i.test(userMsg);
+      var _pageBuildVerbs = /(اعمل|أعمل|اعملي|صمم|أصمم|اصمم|ابني|ابنيلي|انشئ|أنشئ|اكتب|اكتبلي|صمملي|design|create|build)/i;
+      var _looksLikeBuildRequest = /(كود|لعبة|لعبه|موقع|تطبيق|سكربت|سكريبت|أداة|اداة|برنامج|مكوّن|مكون|كومبوننت|component)/i.test(userMsg)
+        || (/(صفحة|صفحه)/i.test(userMsg) && _pageBuildVerbs.test(userMsg)); // ── "صفحة" لوحدها (بدون فعل بناء) مش كفاية — عشان أسئلة التنقل زي "ازاي اروح صفحة البروفايل" متتلخبطش مع طلب بناء صفحة جديدة ──
       var _needsSearch = _tavilyReady && _userAskedToSearch;
       if (_tavilyReady && !_needsSearch && !_looksLikeBuildRequest && typeof window.classifyNeedsSearch === 'function') {
         _needsSearch = await window.classifyNeedsSearch(userMsg);
