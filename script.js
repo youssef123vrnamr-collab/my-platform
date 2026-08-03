@@ -71,7 +71,7 @@ async function isAdminUser(userId) {
   let paidCoursesData = []; // [{id, title, videoIds, price}] for grouping in library view
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
   let progressInterval = null, metadataListener = null, lastWatchedData = null, currentUser = null, currentUserPhone = null, currentUserId = null, chatUnsubscribe = null;
-  let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false, recordingCancelled = false;
+  let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false, recordingCancelled = false, recordingStarting = false, cancelRequestedWhileStarting = false;
   let currentAudio = null, currentAudioBtn = null, userPresenceRef = null, onlineUnsubscribe = null, presenceInterval = null, maintenanceTimerInterval = null, tickInterval = null;
   let maintenanceEndTime = null, uploadStartTime = 0, lastUploadedBytes = 0, lastTime = 0;
   let voiceSettings = { voiceURI: null, rate: 1, pitch: 1 };
@@ -3185,7 +3185,7 @@ async function updateAdminUI() {
     showToast("فشل الرفع");
   });
 }
-  async function toggleRecording() { if (isRecording) cancelRecording(); else await startRecording(); }
+  async function toggleRecording() { if (isRecording || recordingStarting) cancelRecording(); else await startRecording(); }
   function getSupportedVoiceMimeType() { const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac", "audio/mpeg", "audio/ogg;codecs=opus"]; for (const t of types) { if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t; } return ""; }
   function setVoiceRecordingUI(active) {
     const recBtn = document.getElementById("recordBtn");
@@ -3204,10 +3204,21 @@ async function updateAdminUI() {
   }
   async function startRecording() {
     if (!currentUser) { showToast("❌ سجل دخولك أولاً"); return; }
-    if (isRecording) return;
+    if (isRecording || recordingStarting) return;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast("❌ المتصفح ده مش بيدعم تسجيل الصوت"); return; }
+    recordingStarting = true;
+    cancelRequestedWhileStarting = false;
     try {
       let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // ── لو المستخدم ضغط "إلغاء" وهو لسه مستني إذن الميكروفون، نقفل الاستريم فورًا ونخرج ──
+      if (cancelRequestedWhileStarting) {
+        recordingStarting = false;
+        cancelRequestedWhileStarting = false;
+        stream.getTracks().forEach(t => t.stop());
+        setVoiceRecordingUI(false);
+        document.getElementById("recordingIndicator").classList.remove("active");
+        return;
+      }
       const mimeType = getSupportedVoiceMimeType();
       try { mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream); }
       catch (mrErr) { mediaRecorder = new MediaRecorder(stream); }
@@ -3223,6 +3234,7 @@ async function updateAdminUI() {
       };
       mediaRecorder.onerror = (ev) => { console.error("MediaRecorder error:", ev.error); showToast("❌ حصل خطأ أثناء التسجيل"); stopRecording(); };
       mediaRecorder.start();
+      recordingStarting = false;
       isRecording = true;
       setVoiceRecordingUI(true);
       document.getElementById("recordingIndicator").classList.add("active");
@@ -3230,6 +3242,8 @@ async function updateAdminUI() {
       let sec = 0;
       recordingTimer = setInterval(() => { sec++; let el = document.getElementById("recordingTime"); el && (el.textContent = Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0")); if (sec >= 60) stopRecording(); }, 1000);
     } catch (e) {
+      recordingStarting = false;
+      cancelRequestedWhileStarting = false;
       console.error("getUserMedia error:", e);
       if (e && e.name === "NotAllowedError") showToast("❌ محتاج تسمح للموقع بالوصول للميكروفون من إعدادات المتصفح");
       else if (e && e.name === "NotFoundError") showToast("❌ مفيش ميكروفون متاح على الجهاز");
@@ -3247,6 +3261,15 @@ async function updateAdminUI() {
     }
   }
   function cancelRecording() {
+    // ── لو لسه بيستنى إذن الميكروفون (مفيش mediaRecorder اتعمل لسه) نسجل طلب الإلغاء
+    // عشان يتنفذ أول ما الاستريم يوصل، بدل ما الضغطة تتجاهل تمامًا ──
+    if (recordingStarting && !isRecording) {
+      cancelRequestedWhileStarting = true;
+      setVoiceRecordingUI(false);
+      document.getElementById("recordingIndicator").classList.remove("active");
+      showToast("🗑️ تم إلغاء التسجيل");
+      return;
+    }
     if (mediaRecorder && isRecording) {
       recordingCancelled = true;
       mediaRecorder.stop();
