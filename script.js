@@ -7424,6 +7424,9 @@ window.updateActiveToolLabel = function(label) {
       isDrawing = false;
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
+      // ── لو "المتابعة الحية" مفعّلة، نبلّغ الذكاء الاصطناعي إن ضغطة رسم خلصت
+      // عشان يحاول يحلل اللي اترسم لحد دلوقتي (مع مهلة زمنية بين كل نداء وتاني) ──
+      if (typeof window.__dbNotifyStrokeEnd === 'function') window.__dbNotifyStrokeEnd();
     }
 
     function updateSelectBox() {
@@ -7469,6 +7472,111 @@ window.updateActiveToolLabel = function(label) {
       });
     }).observe(vm, { attributes: true, attributeFilter: ['class'] });
   }
+})();
+
+// ============================
+// 🔭 السبورة الذكية + الذكاء الاصطناعي: زرار "إرسال هذه الصورة للذكاء الاصطناعي"
+// + وضع "متابعة حية" اختياري بيخلي الـ AI يحاول يحلل اللي بترسمه أول ما تاخد استراحة قصيرة
+// ============================
+(function(){
+  var _dbAiLastCallAt = 0;
+  var _dbAiMinGapMs = 9000; // أقل فاصل بين نداءين تلقائيين في وضع المتابعة الحية — عشان منستهلكش الكوتا بسرعة
+  var _dbAiLiveOn = false;
+  var _dbAiLiveTimer = null;
+  var _dbAiBusy = false;
+
+  function _esc(s){ return typeof escapeHtml === 'function' ? escapeHtml(String(s)) : String(s); }
+
+  function _dbAiCaptionEl(){
+    var wrap = document.getElementById('drawingCanvasWrap');
+    if (!wrap) return null;
+    var el = document.getElementById('dbAiCaption');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'dbAiCaption';
+      el.style.cssText = 'position:absolute;bottom:8px;right:8px;left:8px;background:rgba(10,5,18,.88);border:1px solid rgba(99,102,241,.4);border-radius:12px;padding:.55rem .75rem;font-size:.78rem;color:#e5e7eb;line-height:1.65;max-height:120px;overflow-y:auto;z-index:5;display:none;backdrop-filter:blur(6px)';
+      if (getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
+      wrap.appendChild(el);
+    }
+    return el;
+  }
+
+  async function _analyzeDrawing(live){
+    if (_dbAiBusy) return;
+    var canvas = document.getElementById('drawingCanvas');
+    if (!canvas) return;
+    var geminiKey = typeof window.getGeminiApiKey === 'function' ? window.getGeminiApiKey() : '';
+    if (!geminiKey) {
+      if (!live && typeof showToast === 'function') showToast('⚠️ لازم مفتاح Gemini الأول — من قائمة الإعدادات ⚙️ اختر "مفتاح تحليل الصور"');
+      return;
+    }
+    _dbAiBusy = true;
+    var cap = _dbAiCaptionEl();
+    if (cap) { cap.style.display = 'block'; cap.innerHTML = '<i class="fas fa-spinner fa-spin"></i> الذكاء الاصطناعي بيحلل رسمتك الآن...'; }
+    if (!live && typeof showToast === 'function') showToast('🔭 جاري إرسال الرسمة للذكاء الاصطناعي...');
+    try {
+      var dataUrl = canvas.toDataURL('image/png');
+      var base64Data = dataUrl.split(',')[1];
+      var promptText = live
+        ? 'المستخدم لسه بيرسم دلوقتي على سبورة تفاعلية جوه منصة فلكية تعليمية اسمها "فلك"، ودي لقطة حية للرسمة وهو لسه بيكملها. قول بإيجاز شديد (سطر أو سطرين بس، من غير مقدمات) إيه اللي شايفه لحد دلوقتي، وهل ده شكل فلكي (مدار، كوكب، نظام شمسي، معادلة فيزيائية...)؛ ولو الرسمة لسه ناقصة أو مش واضحة قول كده بصراحة من غير ما تخمّن كتير أو تفتري تفاصيل مش موجودة.'
+        : 'حلل هذه الرسمة اللي عملها المستخدم على سبورة فلكية تفاعلية جوه منصة "فلك" التعليمية. لو شكل هندسي أو مخطط فلكي (مدار، نظام شمسي، رسم بياني، مسار كوكب)، فسّره بدقة علمية. لو معادلة رياضية أو فيزيائية، تأكد من صحتها ووضّح معناها وصحح أي خطأ لو موجود. جاوب بإيجاز واحترافية، بنقاط عند الحاجة، من غير ماركداون خام زي ### أو |.';
+      var body = JSON.stringify({ contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: 'image/png', data: base64Data } }] }] });
+      var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
+        body: body
+      });
+      var data = await res.json();
+      var answer = (data.candidates && data.candidates[0] && data.candidates[0].content &&
+        data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+        data.candidates[0].content.parts[0].text) || null;
+      if (!answer) { if (cap) cap.innerHTML = '<i class="fas fa-triangle-exclamation" style="color:#f59e0b"></i> معرفتش أحلل الرسمة دلوقتي، جرّب تاني.'; return; }
+      if (window.AIHealth) window.AIHealth.record('gemini', true);
+      if (cap) cap.innerHTML = '<i class="fas fa-robot" style="color:#06b6d4"></i> ' + _esc(answer);
+      // ── وعي المحادثة: نسجّل الطلب والرد في تاريخ الشات نفسه عشان لو المستخدم كمّل كلام
+      // مع الـ AI بعد كده، يبقى عارف إنه شاف الرسمة دي بالظبط ──
+      try {
+        window.aiChatHistory = window.aiChatHistory || [];
+        window.aiChatHistory.push({ role:'user', content: live ? '[لقطة حية من السبورة الذكية أثناء الرسم]' : '[أرسل المستخدم رسمة من السبورة الذكية للتحليل]' });
+        window.aiChatHistory.push({ role:'assistant', content: answer });
+      } catch(eHist){ /* تجاهل */ }
+      if (!live) SoundEffects && SoundEffects.success && SoundEffects.success();
+    } catch(e){
+      console.error('drawing AI analyze err', e);
+      if (window.AIHealth) window.AIHealth.record('gemini', false);
+      if (cap) cap.innerHTML = '<i class="fas fa-triangle-exclamation" style="color:#f59e0b"></i> تعذّر التحليل الآن، جرّب تاني.';
+    } finally {
+      _dbAiBusy = false;
+    }
+  }
+
+  // ── زرار يدوي: "إرسال هذه الصورة للذكاء الاصطناعي" ──
+  window.sendDrawingToAI = function(){ _analyzeDrawing(false); };
+
+  // ── تبديل وضع "المتابعة الحية" — لما يبقى شغّال، الذكاء الاصطناعي بيحاول يحلل
+  // أول ما تاخد استراحة قصيرة (~1.2 ثانية) بعد آخر ضغطة رسم، بحد أقصى نداء كل 9 ثواني ──
+  window.toggleDrawingLiveAI = function(btnEl){
+    _dbAiLiveOn = !_dbAiLiveOn;
+    if (btnEl) btnEl.classList.toggle('active', _dbAiLiveOn);
+    if (typeof showToast === 'function') showToast(_dbAiLiveOn ? '👁️ المتابعة الحية اتفعّلت — الذكاء الاصطناعي هيحاول يشوف رسمتك أول ما تاخد استراحة قصيرة' : '👁️ المتابعة الحية اتوقفت');
+    if (!_dbAiLiveOn) {
+      var cap = document.getElementById('dbAiCaption');
+      if (cap) cap.style.display = 'none';
+      if (_dbAiLiveTimer) { clearTimeout(_dbAiLiveTimer); _dbAiLiveTimer = null; }
+    }
+  };
+
+  // ── بتتنادى من كود الرسم نفسه (endDraw) كل ما المستخدم يخلّص ضغطة رسم ──
+  window.__dbNotifyStrokeEnd = function(){
+    if (!_dbAiLiveOn) return;
+    if (_dbAiLiveTimer) clearTimeout(_dbAiLiveTimer);
+    _dbAiLiveTimer = setTimeout(function(){
+      var now = Date.now();
+      if (now - _dbAiLastCallAt < _dbAiMinGapMs) return;
+      _dbAiLastCallAt = now;
+      _analyzeDrawing(true);
+    }, 1200);
+  };
 })();
 
 // ============================
@@ -11928,6 +12036,8 @@ function slStopAllAnimations() {
             return;
           }
           var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock;
+          // ── هوية إلزامية إضافية: لو الصورة فلكية (نجوم، كواكب، مجرات، تلسكوبات، معدات رصد)، حلّلها بعمق كخبير فلك ──
+          promptText += '\n\nلو الصورة فيها محتوى فلكي (نجم، كوكب، مجرة، سديم، مذنب، أو أي جرم سماوي)، حدد نوعه واسمه لو ممكن تتعرف عليه، واذكر معلومات علمية مختصرة عنه (المسافة، الحجم، خصائصه). لو الصورة فيها تلسكوب أو معدات رصد، حاول تتعرف على نوعه (انكساري/انعكاسي/كاتادايوبتري) ومواصفاته التقريبية (الفتحة، البعد البؤري) لو واضحة من الشكل، وإديه نصيحة عملية عن استخدامه أو أفضل الأجرام اللي يصلح لرصدها بيه. لو مش متأكد من هوية الجرم أو الجهاز بدقة، قول كده بوضوح بدل ما تخمّن وتقول معلومة غير مؤكدة كأنها مؤكدة.';
           promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'كوزموس')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
           // ── نفس أساس العبقرية وذاكرة المنصة (معرفة المشرف + دروس التقييمات) اللي بيستخدمها الشات النصي،
           // عشان تحليل الصور/الملفات ميبقاش مسار "من درجة تانية" منفصل عن باقي الغرف ──

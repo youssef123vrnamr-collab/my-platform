@@ -7209,6 +7209,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   gap: 0.3rem !important;
 }
 .db-small-btn:hover { background: rgba(99,102,241,0.25) !important; color: #fff !important; }
+.db-small-btn.active { background: linear-gradient(135deg,#6366f1,#06b6d4) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 2px 10px rgba(99,102,241,0.5) !important; }
 
 /* select box */
 #dbSelectBox {

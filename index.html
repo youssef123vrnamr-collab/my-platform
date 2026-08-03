@@ -675,6 +675,11 @@
         <button class="db-small-btn" onclick="saveDrawingAsImage()"><i class="fas fa-download"></i> حفظ</button>
         <button class="db-small-btn" onclick="copyDrawingToClipboard()"><i class="fas fa-copy"></i> نسخ</button>
       </div>
+      <div class="db-settings-row" style="gap:0.5rem;flex-wrap:wrap">
+        <button class="db-small-btn" onclick="sendDrawingToAI()" style="background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;border:none"><i class="fas fa-robot"></i> إرسال هذه الصورة للذكاء الاصطناعي</button>
+        <button class="db-small-btn" id="dbLiveAiBtn" onclick="toggleDrawingLiveAI(this)" title="الذكاء الاصطناعي يراقب رسمتك تلقائيًا وأنت بترسم"><i class="fas fa-eye"></i> متابعة حية</button>
+      </div>
+
     </div>
   </div>
 
