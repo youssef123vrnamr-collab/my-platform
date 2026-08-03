@@ -8545,3 +8545,53 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   padding: .4rem .75rem;
   border-radius: 999px;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ✅ FIX: صفحة الرسم (الفيديو + الرسم) على الموبايل كانت بتسيب فراغ فاضي
+   تحت لوحة الرسم بدل ما تكمل لآخر الصفحة، بسبب تراكم قواعد flex قديمة
+   متعددة عبر الملف مش كلها متوافقة. القاعدة دي آخر حاجة بتتقرا فبتكسب
+   الأولوية، وبتتأكد إن كل مستوى في السلسلة (modal-content ← modal-body
+   ← video-with-board ← drawing-board ← drawing-canvas-wrap) عامل flex
+   واستحوذ فعليًا على أي مساحة فاضية بدل ما يسيبها بيضة. ──
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #videoModal .modal-content {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #videoModal .modal-body {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+  #videoModal .video-with-board {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+  #videoModal .video-player-container {
+    flex: 0 0 auto !important;
+  }
+  #videoModal .drawing-board {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+  #videoModal .drawing-toolbar {
+    flex: 0 0 auto !important;
+  }
+  #videoModal .drawing-canvas-wrap {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+  #videoModal .drawing-canvas-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}

@@ -7487,9 +7487,15 @@ window.updateActiveToolLabel = function(label) {
       const text = e.results[0][0].transcript;
       if (btn) { btn.classList.remove('recording'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; }
       if (!text || !text.trim()) return;
-      // ── نبعتها زي أي رسالة عادية بالظبط: نفس الشخصية، نفس مراجعة/اختبار الكود، ونفس
-      // نظام قائمة الانتظار لو المساعد كان مشغول برد سابق ──
-      window.sendAIMessage(text.trim());
+      // ── نحط النص في خانة الكتابة عشان تتأكد منه/تعدّله قبل ما يترسل — زي أي تطبيق شات ──
+      const inp = document.getElementById('aiChatInput');
+      if (inp) {
+        inp.value = text.trim();
+        inp.style.height = 'auto';
+        inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+        inp.focus();
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     };
     aiVoiceNoteRecognition.onend = () => {
       aiVoiceNoteRecognition = null;
@@ -7630,7 +7636,16 @@ window.updateActiveToolLabel = function(label) {
         (window._aiSelectedFiles && window._aiSelectedFiles.length > 0) ||
         (window._aiSelectedImages && window._aiSelectedImages.length > 0)
       );
-      if (inputEl && !hasAttachedFile) {
+      // ── لو الرسالة جاية كـ argument مباشر (رسالة صوتية، إعادة إرسال...) نتحقق من النص ده
+      // نفسه، مش من خانة الكتابة اللي ممكن تكون فاضية فعلاً بينما الرسالة الحقيقية في الـ argument ──
+      const hasDirectArg = args.length > 0 && typeof args[0] === 'string' && args[0].trim().length > 0;
+      if (hasDirectArg) {
+        const v = window.secureValidateMessage(args[0]);
+        if (!v.valid) {
+          if (typeof showToast === 'function') showToast(v.error);
+          return;
+        }
+      } else if (inputEl && !hasAttachedFile) {
         const v = window.secureValidateMessage(inputEl.value);
         if (!v.valid) {
           if (typeof showToast === 'function') showToast(v.error);
@@ -12693,9 +12708,8 @@ function slStopAllAnimations() {
     window.__aiSendMessageCore = window.sendAIMessage;
 
     // ══════════════════════════════════════════════════════════════════
-    // 🟦 زرار الإرسال ↔ زرار انتظار: وقت ما المساعد بيفكر، الزرار بيتحول لشكل مربع.
-    // الضغط عليه وهو مربع مش بيوقف التفكير خالص — بيضيف أي رسالة كتبها المستخدم لقائمة
-    // انتظار، وهتتبعت تلقائيًا فور ما يخلص من الرد الحالي، من غير ما يحتاج يضغط تاني. ──
+    // 🟦 زرار الإرسال ↔ زرار إيقاف: وقت ما المساعد بيفكر، الزرار بيتحول لمربع أحمر (fa-stop).
+    // الضغط عليه وهو مربع بيوقف التوليد فورًا (AbortController) — مش بيضيف لقائمة انتظار. ──
     // ══════════════════════════════════════════════════════════════════
     (function(){
       window.__cosmosBusy = window.__cosmosBusy || false;
@@ -12727,13 +12741,11 @@ function slStopAllAnimations() {
           btn.title = 'بيفكر... اضغط لإيقاف التفكير';
           if (icon) icon.className = 'fas fa-stop';
           if (badge) badge.remove();
-          btn.onclick = window.__stopCosmosGeneration;
         } else {
           btn.classList.remove('ai-busy');
           btn.title = '';
           if (icon) icon.className = 'fas fa-paper-plane';
           if (badge) badge.remove();
-          btn.onclick = function(){ window.sendAIMessage(); };
         }
       };
 
@@ -12757,6 +12769,16 @@ function slStopAllAnimations() {
           window.__updateAISendBtnUI();
         }
       };
+
+      // ── ديسباتشر ثابت على زرار الإرسال: بيقرر هو نفسه وقت الضغط لو المفروض يبعت أو يوقف،
+      // بدل ما يعتمد بس على onclick بيتبدّل ديناميكيًا (أكثر أمانًا ضد أي تضارب توقيت) ──
+      window.__aiSendOrStop = function(){
+        if (window.__cosmosBusy) { window.__stopCosmosGeneration(); return; }
+        window.sendAIMessage();
+      };
+      var _initBtn = _aiSendBtnEl();
+      if (_initBtn) { _initBtn.setAttribute('onclick', 'window.__aiSendOrStop()'); }
+      window.__updateAISendBtnUI();
     })();
 
     // ── Also patch clearAIChat to reset history ──
