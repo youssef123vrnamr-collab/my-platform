@@ -7209,7 +7209,6 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   gap: 0.3rem !important;
 }
 .db-small-btn:hover { background: rgba(99,102,241,0.25) !important; color: #fff !important; }
-.db-small-btn.active { background: linear-gradient(135deg,#6366f1,#06b6d4) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 2px 10px rgba(99,102,241,0.5) !important; }
 
 /* select box */
 #dbSelectBox {
@@ -8791,57 +8790,3 @@ html body button:not([class]):not([style*="background"]) {
   box-shadow: 0 6px 18px rgba(99,102,241,.35);
 }
 
-
-/* ── مكتبة معرفة السبورة الذكية (عامة لكل المستخدمين) ── */
-.wb-knowledge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
-.wb-knowledge-item {
-  position: relative;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(99,102,241,.25);
-  border-radius: 14px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.wb-knowledge-item img {
-  width: 100%;
-  height: 130px;
-  object-fit: cover;
-  background: #0a0512;
-  display: block;
-}
-.wb-knowledge-body {
-  padding: .6rem .75rem .75rem;
-}
-.wb-knowledge-desc {
-  font-size: .8rem;
-  line-height: 1.6;
-  color: #e5e7eb;
-  max-height: 4.8em;
-  overflow-y: auto;
-}
-.wb-knowledge-meta {
-  margin-top: .4rem;
-  font-size: .7rem;
-  color: #9ca3af;
-  display: flex;
-  align-items: center;
-  gap: .3rem;
-}
-.wb-knowledge-delete {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  background: rgba(239,68,68,.85);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  width: 26px;
-  height: 26px;
-  cursor: pointer;
-  font-size: .75rem;
-}
