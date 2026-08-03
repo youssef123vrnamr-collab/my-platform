@@ -2522,32 +2522,28 @@ body {
   animation: pulse 1s infinite !important;
 }
 
-/* زرار اختيار النموذج (بجانب زرار الرسالة الصوتية) */
+/* زرار اختيار النموذج (بجانب زرار الرسالة الصوتية) — بنفس ستايل شات كلود */
 .ai-model-switch-btn {
   display: flex !important;
   align-items: center !important;
-  gap: 0.35rem !important;
-  height: 34px !important;
-  max-width: 140px !important;
-  padding: 0 0.6rem !important;
-  border: 1px solid rgba(6,182,212,0.35) !important;
-  background: rgba(6,182,212,0.1) !important;
-  color: #67e8f9 !important;
+  gap: 0.3rem !important;
+  height: 30px !important;
+  max-width: 150px !important;
+  padding: 0 0.75rem !important;
+  border: none !important;
+  background: rgba(255,255,255,0.92) !important;
+  color: #24292f !important;
   border-radius: 999px !important;
   cursor: pointer !important;
   font-family: 'Cairo', sans-serif !important;
   font-size: 0.72rem !important;
-  font-weight: 700 !important;
-  transition: background 0.2s, color 0.2s !important;
+  font-weight: 600 !important;
+  transition: background 0.2s !important;
   flex-shrink: 0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15) !important;
 }
 .ai-model-switch-btn:hover {
-  background: rgba(6,182,212,0.2) !important;
-  color: #fff !important;
-}
-.ai-model-switch-btn i {
-  font-size: 0.8rem !important;
-  flex-shrink: 0 !important;
+  background: #fff !important;
 }
 .ai-model-switch-btn span {
   overflow: hidden !important;
@@ -3326,114 +3322,110 @@ body {
 /* ===== Modal اختيار الشخصية ===== */
 #aiPersonaModal {
   position: fixed; inset: 0; z-index: 99999;
-  background: linear-gradient(145deg,#12091e,#1a0f2e);
-  display: none; align-items: stretch; justify-content: stretch;
+  background: transparent;
+  display: none; align-items: flex-end; justify-content: center;
   padding: 0;
 }
 #aiPersonaModal.active { display: flex; }
-.persona-modal-box {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 1.5rem 1.25rem 1.75rem;
-  max-width: 100%; width: 100%;
-  box-shadow: none;
-  max-height: 100vh; height: 100vh; overflow-y: auto;
-  flex: 1;
-  position: relative;
-  animation: personaFadeIn .2s ease;
+.persona-sheet-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(10,6,16,.55);
+  opacity: 0;
+  transition: opacity .22s ease;
+  z-index: 1;
 }
-.persona-close-btn {
-  position: absolute;
-  top: 1rem; left: 1rem;
-  width: 40px; height: 40px;
-  background: rgba(239,68,68,.2);
+#aiPersonaModal.active .persona-sheet-backdrop { opacity: 1; }
+.persona-modal-box {
+  position: relative;
+  z-index: 2;
+  background: #fff;
   border: none;
-  border-radius: 10px;
-  color: #ef4444;
-  font-size: 1.1rem;
+  border-radius: 20px 20px 0 0;
+  padding: .6rem 0 1.25rem;
+  max-width: 480px; width: 100%;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.35);
+  max-height: 78vh; overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform .28s cubic-bezier(.2,.8,.2,1);
+}
+#aiPersonaModal.active .persona-modal-box {
+  transform: translateY(0);
+}
+.persona-sheet-handle {
+  width: 36px; height: 4px;
+  background: #d1d5db;
+  border-radius: 99px;
+  margin: 0 auto .75rem;
+}
+#aiPersonaModal .persona-close-btn {
+  position: absolute !important;
+  top: .1rem !important; right: 1.1rem !important;
+  width: 32px !important; height: 32px !important;
+  min-width: 32px !important; min-height: 32px !important;
+  max-width: 32px !important; max-height: 32px !important;
+  background: #f3f4f6 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  color: #6b7280 !important;
+  font-size: .95rem !important;
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  display: flex !important; align-items: center !important; justify-content: center !important;
   transition: background .2s;
   z-index: 10;
 }
-.persona-close-btn:hover { background: rgba(239,68,68,.4); }
-@keyframes personaFadeIn {
-  from { opacity:0; transform: translateY(24px) scale(.97); }
-  to   { opacity:1; transform: translateY(0) scale(1); }
-}
+#aiPersonaModal .persona-close-btn:hover { background: #e5e7eb !important; }
 .persona-modal-title {
-  text-align: center; margin-bottom: 1.5rem;
+  text-align: center; position: relative;
+  padding: 0 1.1rem .75rem;
 }
 .persona-modal-title h2 {
-  font-size: 1.45rem; font-weight: 800;
-  background: linear-gradient(135deg,#a5b4fc,#ec4899);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  margin-bottom: .3rem;
+  font-size: 1.05rem; font-weight: 800;
+  color: #111827;
+  margin: 0;
 }
-.persona-modal-title p { color: #888; font-size: .88rem; }
 .persona-grid {
-  display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: .85rem;
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
 }
-@media(max-width:420px) { .persona-grid { grid-template-columns: 1fr; } }
 .persona-card {
-  background: rgba(255,255,255,.04);
-  border: 2px solid rgba(99,102,241,.22);
-  border-radius: 16px;
-  padding: 1rem .85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: .55rem;
+  padding: .85rem 1.1rem;
+  border-bottom: 1px solid #eef0f2;
   cursor: pointer;
-  transition: all .25s;
-  text-align: center;
-  position: relative;
+  transition: background .15s;
   user-select: none;
   -webkit-user-select: none;
 }
+.persona-card:last-child { border-bottom: none; }
 .persona-card:hover, .persona-card:active {
-  border-color: #6366f1;
-  background: rgba(99,102,241,.13);
-  transform: translateY(-3px);
+  background: #f7f7f8;
 }
-.persona-card.selected {
-  border-color: #ec4899;
-  background: linear-gradient(135deg,rgba(99,102,241,.18),rgba(236,72,153,.14));
-  box-shadow: 0 0 0 3px rgba(236,72,153,.25);
+.persona-card-check {
+  width: 16px; flex-shrink: 0; padding-top: .2rem;
+  color: #2563eb; font-size: .8rem;
+  opacity: 0; visibility: hidden;
 }
-.persona-card.selected::after {
-  content: "✓";
-  position: absolute; top: 8px; left: 10px;
-  color: #ec4899; font-weight: 800; font-size: .95rem;
+.persona-card.selected .persona-card-check { opacity: 1; visibility: visible; }
+.persona-card-text { flex: 1; text-align: right; min-width: 0; }
+.persona-card-toprow {
+  display: flex; align-items: center; justify-content: flex-end; gap: .4rem;
 }
-.persona-emoji { font-size: 2.2rem; margin-bottom: .45rem; display: block; }
-.persona-name {
-  font-size: .92rem; font-weight: 700; color: #e2e8f0;
-  margin-bottom: .2rem;
+.persona-card-name {
+  font-size: .92rem; font-weight: 700; color: #111827;
 }
-.persona-desc { font-size: .75rem; color: #888; line-height: 1.4; }
+.persona-card.selected .persona-card-name { color: #2563eb; }
+.persona-card-desc { font-size: .76rem; color: #8a8f98; line-height: 1.4; margin-top: .15rem; }
 .persona-lang-badge {
   display: inline-block;
-  background: rgba(16,185,129,.15);
-  border: 1px solid rgba(16,185,129,.3);
-  color: #10b981;
-  font-size: .65rem;
-  padding: .18rem .5rem;
+  background: #eef1f5;
+  color: #6b7280;
+  font-size: .62rem;
+  padding: .12rem .45rem;
   border-radius: 99px;
-  margin-top: .35rem;
-  font-weight: 600;
+  font-weight: 700;
 }
-.persona-confirm-btn {
-  width: 100%; padding: .85rem;
-  background: linear-gradient(135deg,#6366f1,#ec4899);
-  border: none; border-radius: 14px;
-  color: #fff; font-family: 'Cairo',sans-serif;
-  font-size: 1rem; font-weight: 700;
-  cursor: pointer; transition: all .3s;
-  box-shadow: 0 8px 24px rgba(99,102,241,.4);
-}
-.persona-confirm-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(99,102,241,.55); }
-.persona-confirm-btn:active { transform: translateY(0); }
 .ai-persona-change-btn {
   background: rgba(99,102,241,.18);
   border: 1px solid rgba(99,102,241,.4);
@@ -5049,20 +5041,19 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border-radius: 0 !important;
 }
 
-/* صفحة الشخصية — full screen بدون كيرف */
+/* صفحة اختيار النموذج — bottom sheet زي كلود حتى على الموبايل */
 #aiPersonaModal {
   padding: 0 !important;
-  align-items: stretch !important;
-  justify-content: stretch !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
 }
 .persona-modal-box {
-  border-radius: 0 !important;
-  border: none !important;
-  max-width: 100% !important;
+  border-radius: 20px 20px 0 0 !important;
+  max-width: 480px !important;
   width: 100% !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  flex: 1 !important;
+  max-height: 78vh !important;
+  height: auto !important;
+  flex: none !important;
 }
 
 

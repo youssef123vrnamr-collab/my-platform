@@ -563,7 +563,7 @@
         </div>
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
         <button class="unified-tool-btn" onclick="toggleAIVoiceNote()" id="aiVoiceNoteBtn" title="رسالة صوتية — سجّل وهيتفهم ويترد عليها زي أي رسالة"><i class="fas fa-microphone"></i></button>
-        <button class="ai-model-switch-btn" onclick="openPersonaModal()" id="aiModelSwitchBtn" title="اختيار النموذج"><i class="fas fa-microchip"></i><span id="aiModelSwitchLabel">AlalaGyGyAgha V1.6</span></button>
+        <button class="ai-model-switch-btn" onclick="openPersonaModal()" id="aiModelSwitchBtn" title="اختيار النموذج"><span id="aiModelSwitchLabel">AlalaGyGyAgha V1.6</span></button>
       </div>
       <button class="unified-send-btn ai-color" onclick="sendAIMessage()"><i class="fas fa-paper-plane"></i></button>
     </div>
@@ -1583,23 +1583,21 @@
 ======================================================== -->
 
 
-<!-- Modal اختيار الشخصية -->
+<!-- Modal اختيار النموذج -->
 <div id="aiPersonaModal">
+  <div class="persona-sheet-backdrop" onclick="document.getElementById('aiPersonaModal').classList.remove('active');document.body.style.overflow='';document.documentElement.style.overflow='';"></div>
   <div class="persona-modal-box">
-    <button class="persona-close-btn" onclick="document.getElementById('aiPersonaModal').classList.remove('active');document.body.style.overflow='';document.documentElement.style.overflow='';" aria-label="إغلاق" style="display:flex!important;">
-      <i class="fas fa-times"></i>
-    </button>
+    <div class="persona-sheet-handle"></div>
     <div class="persona-modal-title">
-      <div style="font-size:2.5rem;margin-bottom:.5rem"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8.5" width="16" height="11" rx="3"/><path d="M12 8.5V5M9 3.5h6"/><circle cx="9" cy="14" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17.5h6"/><path d="M2 12v3M22 12v3"/></svg></span></div>
-      <h2>اختر شخصية مساعدك الذكي</h2>
-      <p>الشخصية اللي هتختارها هتفضل معاك دايماً — تقدر تغيرها في أي وقت</p>
+      <h2>اختر النموذج</h2>
+      <button class="persona-close-btn" onclick="document.getElementById('aiPersonaModal').classList.remove('active');document.body.style.overflow='';document.documentElement.style.overflow='';" aria-label="إغلاق">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
     <div class="persona-grid" id="personaGrid"></div>
-    <button class="persona-confirm-btn" onclick="confirmPersonaSelection()">
-      <i class="fas fa-rocket"></i> ابدأ مع مساعدك!
-    </button>
   </div>
 </div>
+
 
 
 

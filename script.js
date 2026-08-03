@@ -10908,11 +10908,13 @@ function slStopAllAnimations() {
     if (!grid) return;
     var savedId = getSavedId();
     grid.innerHTML = AI_PERSONAS.map(function(p) {
-      return '<div class="persona-card ' + (p.id === (savedId||'cosmos') ? 'selected' : '') + '" id="pcard_' + p.id + '" onclick="selectPersonaCard(\'' + p.id + '\')" ontouchend="event.preventDefault();selectPersonaCard(\'' + p.id + '\')">'
-        + '<span class="persona-emoji">' + p.emoji + '</span>'
-        + '<div class="persona-name">' + p.name + '</div>'
-        + '<div class="persona-desc">' + p.desc + '</div>'
-        + '<span class="persona-lang-badge">🌍 ' + p.badge + '</span>'
+      var isSel = p.id === (savedId||'cosmos');
+      return '<div class="persona-card ' + (isSel ? 'selected' : '') + '" id="pcard_' + p.id + '" onclick="selectPersonaCard(\'' + p.id + '\')" ontouchend="event.preventDefault();selectPersonaCard(\'' + p.id + '\')">'
+        + '<span class="persona-card-check"><i class="fas fa-check"></i></span>'
+        + '<span class="persona-card-text">'
+        + '<span class="persona-card-toprow"><span class="persona-lang-badge">' + p.badge + '</span><span class="persona-card-name">' + p.emoji + ' ' + p.name + '</span></span>'
+        + '<span class="persona-card-desc">' + p.desc + '</span>'
+        + '</span>'
         + '</div>';
     }).join('');
     _modalSel = savedId || 'cosmos';
@@ -10923,6 +10925,7 @@ function slStopAllAnimations() {
     document.querySelectorAll('.persona-card').forEach(function(c){ c.classList.remove('selected'); });
     var card = document.getElementById('pcard_' + id);
     if (card) card.classList.add('selected');
+    setTimeout(function(){ window.confirmPersonaSelection(); }, 150);
   };
 
   window.confirmPersonaSelection = function() {
