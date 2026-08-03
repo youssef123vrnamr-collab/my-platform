@@ -3190,7 +3190,12 @@ async function updateAdminUI() {
   function setVoiceRecordingUI(active) {
     const recBtn = document.getElementById("recordBtn");
     const sendBtn = document.querySelector("#groupInputWrapper .unified-send-btn");
-    if (recBtn) { recBtn.classList.toggle("recording", active); recBtn.innerHTML = active ? '<i class="fas fa-trash"></i>' : '<i class="fas fa-microphone"></i>'; recBtn.title = active ? "إلغاء التسجيل" : "تسجيل صوتي"; }
+    if (recBtn) {
+      recBtn.classList.toggle("recording", active);
+      recBtn.innerHTML = active ? '<i class="fas fa-trash"></i>' : '<i class="fas fa-microphone"></i>';
+      recBtn.title = active ? "إلغاء التسجيل" : "تسجيل صوتي";
+      recBtn.onclick = active ? cancelRecording : startRecording;
+    }
     if (sendBtn) {
       sendBtn.classList.toggle("recording-stop", active);
       sendBtn.innerHTML = active ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-paper-plane"></i>';

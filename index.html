@@ -552,13 +552,6 @@
     <textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="unified-textarea" onkeypress="handleAIKeyPress(event)"></textarea>
     <div class="unified-bottom-row">
       <div class="unified-left-btns">
-        <div class="ai-attach-wrap" id="aiAttachWrap">
-          <button class="unified-tool-btn ai-attach-btn" onclick="toggleAIAttachMenu(event)" id="aiAttachBtn" title="إرفاق ملف أو صورة"><i class="fas fa-plus"></i></button>
-          <div class="ai-attach-menu" id="aiAttachMenu">
-            <button class="ai-attach-menu-item" onclick="document.getElementById('aiFileInput').click(); closeAIAttachMenu();"><i class="fas fa-paperclip"></i><span>ملف</span></button>
-          </div>
-          <input id="aiFileInput" type="file" style="display:none" multiple onchange="handleAIFileSelect(this)">
-        </div>
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
         <button class="unified-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية"><i class="fas fa-headphones"></i></button>
         <button class="unified-tool-btn" onclick="toggleAIVoiceNote()" id="aiVoiceNoteBtn" title="رسالة صوتية — سجّل وهيتفهم ويترد عليها زي أي رسالة"><i class="fas fa-microphone"></i></button>
