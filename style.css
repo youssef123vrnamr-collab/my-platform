@@ -298,6 +298,9 @@ button, [onclick] {
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1025; border: 1px solid #6366f1; padding: 1rem 2rem; border-radius: 15px; display: none; z-index: 10001; max-width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: slideUp .3s; }
     @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
     .toast.show { display: block; }
+.toast.show.toast-has-icon { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.toast-svg-icon { display: inline-flex; flex-shrink: 0; color: inherit; }
+.toast-svg-icon svg { display: block; }
     .delete-btn, .edit-title-btn, .private-toggle-btn { position: absolute; top: 10px; background: #ef4444; color: #fff; border: none; padding: .5rem 1rem; border-radius: 20px; font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem; opacity: 0; transition: opacity .3s; z-index: 10; }
     .delete-btn { right: 10px; background: #ef4444; }
     .edit-title-btn { right: 80px; background: #f59e0b; }
@@ -2549,11 +2552,13 @@ body {
   box-shadow: 0 3px 12px rgba(99,102,241,0.4) !important;
 }
 
-/* ── حالة "بيفكر": الزرار بيتحول لمربع بدل السهم، من غير ما يتقفل أو يمنع الضغط ──
-   الضغط عليه في الحالة دي بيضيف رسالة لقائمة انتظار، مش بيوقف التفكير الحالي. */
+/* ── حالة "بيفكر": الزرار بيتحول لمربع إيقاف حقيقي (زي ChatGPT) ──
+   الضغط عليه في الحالة دي بيوقف التفكير/التوليد فورًا. */
 .unified-send-btn.ai-busy {
   border-radius: 8px !important;
   position: relative;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 3px 12px rgba(239,68,68,0.4) !important;
 }
 .unified-send-btn.ai-busy i {
   animation: none !important;
@@ -2577,6 +2582,113 @@ body {
   line-height: 1;
   box-shadow: 0 0 0 2px rgba(15,10,26,0.9);
 }
+
+/* ── زرار المرفقات الموحّد (+) وقائمته المنبثقة ── */
+.ai-attach-wrap { position: relative; display: flex; }
+.ai-attach-btn i { transition: transform 0.2s !important; }
+.ai-attach-btn.open i { transform: rotate(45deg); }
+.ai-attach-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  min-width: 140px;
+  background: rgba(20,16,35,0.98);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 40;
+}
+.ai-attach-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.ai-attach-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  color: #e5e7eb;
+  font-family: Cairo, inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: right;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
+}
+.ai-attach-menu-item i { width: 16px; text-align: center; color: #06b6d4; font-size: 0.9rem; }
+.ai-attach-menu-item:hover { background: rgba(6,182,212,0.15); color: #fff; }
+
+/* ── بطاقات الملفات المرفقة داخل فقاعة الشات (شكل احترافي بدل نص خام) ── */
+.ai-file-cards-wrap { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.15rem 0; }
+.ai-file-cards-compact { margin-bottom: 0.3rem; }
+.ai-file-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  min-width: 180px;
+  max-width: 260px;
+}
+.ai-file-card-icon {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, rgba(6,182,212,0.25), rgba(8,145,178,0.25));
+  display: flex; align-items: center; justify-content: center;
+  color: #06b6d4;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.ai-file-card-meta { min-width: 0; }
+.ai-file-card-name {
+  font-size: 0.82rem; color: #fff; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ai-file-card-sub { font-size: 0.7rem; color: rgba(255,255,255,0.55); margin-top: 0.1rem; }
+
+/* ── معرض الصور المرسلة في شات الذكاء الاصطناعي ── */
+.ai-img-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 0.35rem;
+  margin: 0.15rem 0;
+  max-width: 280px;
+}
+.ai-img-gallery-item {
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.ai-img-gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ── أيقونات SVG بدل الإيموجي في الواجهة — بتورّث حجم ولون النص اللي حواليها ── */
+.cosmos-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.14em;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+}
+.cosmos-icon svg { width: 100%; height: 100%; display: block; }
 
 /* File preview موحد */
 .unified-file-preview {

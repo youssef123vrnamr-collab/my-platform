@@ -775,7 +775,47 @@ async function isAdminUser(userId) {
   const STORAGE_KEY = "falak_last_watched";
 
   // ========== Helper Functions ==========
-  function showToast(msg) { const t = document.getElementById("toast"); t && (t.textContent = msg, t.classList.add("show"), setTimeout(() => t.classList.remove("show"), 4000)); }
+  // ── أيقونات SVG بدل الإيموجي في التوست — نفس المعنى بصريًا لكن أيقونة متجهة ثابتة عبر كل الأجهزة ──
+  var TOAST_SVG_ICONS = {
+    '❌':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M9 9l6 6M15 9l-6 6"/></svg>',
+    '⚠️':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2 20h20L12 3.5Z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"/></svg>',
+    '✅':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
+    '🗑️':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6 7l1 12.5A2 2 0 0 0 9 21.5h6a2 2 0 0 0 2-1.9L18 7"/><path d="M10 11v6M14 11v6"/></svg>',
+    '🔒':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg>',
+    '🔓':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 7.5-2"/></svg>',
+    '🎉':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l5-13 9 9-13 4Z"/><path d="M14 4l1.5 1.5M18 6l1.5 1.5M11 3l1 2"/></svg>',
+    '👋':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12V6a1.5 1.5 0 0 1 3 0v5"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14 11V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M17 13V8.5a1.5 1.5 0 0 1 3 0V15c0 3.9-2.7 7-6.5 7-2.2 0-3.7-.9-5-2.5L5 15.5c-.6-.8-.4-1.9.4-2.4.7-.5 1.7-.3 2.3.4L9 15"/></svg>',
+    '🔇':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>',
+    '🔊':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
+    '🎙️':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5M9 21.5h6"/></svg>',
+    '🚫':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M6 6l12 12"/></svg>',
+    '🌟':'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg>',
+    '⬇️':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13"/><path d="M6 12l6 6 6-6"/></svg>',
+    '⚫':'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="6.5"/></svg>',
+    '🔗':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M14 5.5l1.5-1.5a3.5 3.5 0 0 1 5 5L19 10.5"/><path d="M10 13.5 8.5 15a3.5 3.5 0 0 1-5-5L5 8.5"/></svg>',
+    '📤':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>',
+    '📋':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4.5" width="12" height="16" rx="2"/><path d="M9 4.5V3.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/></svg>',
+    '🤔':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.8 1c0 1.7-2.3 1.8-2.3 3.5"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg>',
+    '🖥️':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8 20.5h8M12 16.5v4"/></svg>',
+    '🎨':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a4 4 0 0 0 4-4c0-4-3.6-7.2-8-7.2Z"/><circle cx="7.5" cy="11.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="8" r="1" fill="currentColor" stroke="none"/></svg>',
+    '📴':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M4 4l16 16"/></svg>',
+    '📎':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.2 12 20.7a5 5 0 0 1-7-7l8-8a3.3 3.3 0 0 1 4.7 4.7l-8 8a1.7 1.7 0 0 1-2.4-2.4l7-7"/></svg>',
+    '🖼️':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-5-9 8"/></svg>',
+    '🔔':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10.5a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14.5 6 10.5Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></svg>',
+    '⚙️':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.6a7 7 0 0 0-2-1.2L14 2.5h-4l-.5 2.7a7 7 0 0 0-2 1.2l-2.4-.6-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.6a7 7 0 0 0 2 1.2l.5 2.7h4l.5-2.7a7 7 0 0 0 2-1.2l2.4.6 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>',
+    '📝':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.5l5 5-11 11-5.6 1 1-5.6 10.6-10.4Z"/></svg>'
+  };
+  var TOAST_LEAD_RE = /^([\u{2190}-\u{21FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F300}-\u{1FAFF}]\uFE0F?)\s*/u;
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    if (!t) return;
+    const m = TOAST_LEAD_RE.exec(msg);
+    const svg = m && TOAST_SVG_ICONS[m[1]];
+    if (svg) { t.innerHTML = '<span class="toast-svg-icon">' + svg + '</span><span>' + escapeHtml(msg.slice(m[0].length)) + '</span>'; t.classList.add('toast-has-icon'); }
+    else { t.textContent = msg; t.classList.remove('toast-has-icon'); }
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 4000);
+  }
   function formatDuration(sec) { if (!sec && sec !== 0) return "0:00"; const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ":" + (s < 10 ? "0" : "") + s; }
   function formatSize(b) { return b ? b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB" : "0 B"; }
   function escapeHtml(unsafe) { const div = document.createElement("div"); div.textContent = unsafe; return div.innerHTML; }
@@ -7398,6 +7438,29 @@ window.updateActiveToolLabel = function(label) {
   // تلقائي كأنها رسالة نصية عادية، فبتاخد نفس المعاملة الكاملة (الشخصية، مراجعة الكود،
   // التشغيل الفعلي والاختبار، قائمة الانتظار لو كان مشغول) — مش خط أنابيب مبسّط منفصل. ──
   // ══════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
+  // ➕ زرار المرفقات الموحّد: زرار واحد بدل زرارين (ملف/صورة) بيفتح قايمة صغيرة تختار منها
+  // ══════════════════════════════════════════════════════════════════
+  window.toggleAIAttachMenu = function(ev) {
+    if (ev) ev.stopPropagation();
+    const menu = document.getElementById('aiAttachMenu');
+    const btn = document.getElementById('aiAttachBtn');
+    if (!menu) return;
+    const willOpen = !menu.classList.contains('open');
+    menu.classList.toggle('open', willOpen);
+    if (btn) btn.classList.toggle('open', willOpen);
+  };
+  window.closeAIAttachMenu = function() {
+    const menu = document.getElementById('aiAttachMenu');
+    const btn = document.getElementById('aiAttachBtn');
+    if (menu) menu.classList.remove('open');
+    if (btn) btn.classList.remove('open');
+  };
+  document.addEventListener('click', (ev) => {
+    const wrap = document.getElementById('aiAttachWrap');
+    if (wrap && !wrap.contains(ev.target)) window.closeAIAttachMenu();
+  });
+
   let aiVoiceNoteRecognition = null;
   window.toggleAIVoiceNote = function() {
     const btn = document.getElementById('aiVoiceNoteBtn');
@@ -10063,7 +10126,9 @@ function slShowFeedback(correct, explanation) {
   const t = slT();
   fb.style.display = 'flex';
   fb.className = 'sl-feedback ' + (correct ? 'correct-fb' : 'wrong-fb');
-  document.getElementById('slFbIcon').textContent = correct ? '✅' : '❌';
+  document.getElementById('slFbIcon').innerHTML = correct
+    ? '<span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M7.5 12.5l3 3 6-6.5"/></svg></span>'
+    : '<span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>';
   document.getElementById('slFbTitle').textContent = correct
     ? (SL.streak >= 3 ? t.streakMsg(SL.streak) : t.correct)
     : t.wrong;
@@ -10164,18 +10229,29 @@ function slShowProgressBadge(accuracy, totalXP, level) {
 
   const tier = t.badgeTiers[tierIdx];
   const emoji = tier.match(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu)?.[0] || '⭐';
+  const tierNameOnly = tier.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+  const _badgeIconSvgs = {
+    '🌙':'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>',
+    '🌱':'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V11"/><path d="M12 11C12 7 9 5 5 5c0 4 3 6 7 6Z"/><path d="M12 13c0-3.5 2.5-5.5 6-5.5 0 3.5-2.5 5.5-6 5.5Z"/></svg>',
+    '⭐':'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg>',
+    '🚀':'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 2 4.5 5.5 4.5 9.5 0 2.3-1 4.7-2.3 6.3l-2.2 2.2-2.2-2.2C8.5 16.7 7.5 14.3 7.5 12c0-4 1.5-7.5 4.5-9.5Z"/><circle cx="12" cy="10.5" r="1.7"/></svg>',
+    '🏆':'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4a3 3 0 0 0 3 4.5M17 5.5h3a3 3 0 0 1-3 4.5"/><path d="M12 14v3.5M9 21.5h6M9.5 17.5h5l.7 4h-6.4l.7-4Z"/></svg>'
+  };
   const desc = t.badgeDescs[tierIdx];
 
   badge.style.background = bg;
   badge.style.border = `1px solid ${color}40`;
-  badgeEmoji.textContent = emoji;
-  badgeTitle.textContent = tier;
+  badgeEmoji.innerHTML = '<span class="cosmos-icon" aria-hidden="true">' + (_badgeIconSvgs[emoji] || _badgeIconSvgs['⭐']) + '</span>';
+  badgeTitle.textContent = tierNameOnly;
   badgeTitle.style.color = color;
   badgeDesc.textContent = desc;
 
   // Update stage screen mini badge too
   const stageBadgeTitle = document.getElementById('slStageBadgeTitle');
-  if (stageBadgeTitle) { stageBadgeTitle.textContent = tier; stageBadgeTitle.style.color = color; }
+  if (stageBadgeTitle) {
+    stageBadgeTitle.innerHTML = '<span class="cosmos-icon" aria-hidden="true">' + (_badgeIconSvgs[emoji] || _badgeIconSvgs['⭐']) + '</span> ' + tierNameOnly;
+    stageBadgeTitle.style.color = color;
+  }
   // Legendary sound for top tier badge
   if (tierIdx === 4) setTimeout(() => SLSound.legendary(), 300);
 }
@@ -10195,7 +10271,7 @@ function slShowGameOver() {
   const total = SL.currentQ;
   const accuracy = total > 0 ? Math.round((SL.correctCount / total) * 100) : 0;
   const t = slT();
-  document.getElementById('slResultMascot').textContent = '💔';
+  document.getElementById('slResultMascot').innerHTML = '<span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/><path d="M13 4.5 10 11l3 2-2 6.5"/></svg></span>';
   document.getElementById('slResultTitle').textContent = t.gameOverTitle;
   document.getElementById('slResultSub').textContent = t.gameOverSub(SL.stage);
   document.getElementById('slResCorrect').textContent = SL.correctCount + '/' + total;
@@ -10209,9 +10285,13 @@ function slShowGameOver() {
 }
 
 // ---- Stats Update ----
+var SL_HEART_FULL = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>';
+var SL_HEART_EMPTY = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" opacity="0.4"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg>';
 function slUpdateStats() {
   const h = Math.max(0, SL.hearts);
-  document.getElementById('slHeartsIcons').textContent = '❤️'.repeat(h) + '🖤'.repeat(Math.max(0, 5 - h));
+  document.getElementById('slHeartsIcons').innerHTML =
+    ('<span class="cosmos-icon" aria-hidden="true">'+SL_HEART_FULL+'</span>').repeat(h) +
+    ('<span class="cosmos-icon" aria-hidden="true">'+SL_HEART_EMPTY+'</span>').repeat(Math.max(0, 5 - h));
   document.getElementById('slXpVal').textContent = SL.xp;
   document.getElementById('slStreakVal').textContent = SL.streak;
 }
@@ -11095,13 +11175,13 @@ function slStopAllAnimations() {
       // ── XP يييجي دايماً من Firebase (مش localStorage) — أمان كامل ──
       var uid = (typeof currentUserId !== 'undefined') ? currentUserId : null;
       if (uid && typeof db !== 'undefined') {
-        xpEl.textContent = '... ⭐ XP';
+        xpEl.innerHTML = '... <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
         db.collection('user_points').doc(uid).get().then(function(doc){
           var pts = doc.exists ? (doc.data().points || 0) : 0;
-          xpEl.textContent = pts + ' ⭐ XP';
-        }).catch(function(){ xpEl.textContent = '0 ⭐ XP'; });
+          xpEl.innerHTML = pts + ' <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
+        }).catch(function(){ xpEl.innerHTML = '0 <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP'; });
       } else {
-        xpEl.textContent = '0 ⭐ XP';
+        xpEl.innerHTML = '0 <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
       }
     }
     if (strEl) strEl.textContent = d.streak || 0;
@@ -11558,6 +11638,45 @@ function slStopAllAnimations() {
         // ── لو مفيش صور، منطق نصي بحت عبر المسار العادي (Groq) ──
         if (!imgs.length) {
           var textOnlyPrompt = (extraText || 'حلل الملفات دي وقدّم لي ملخص احترافي منظم بأهم النقاط.') + docsBlock;
+          // ── نعرض بطاقة مرفقات احترافية (اسم + امتداد + حجم) بدل ما نطبع محتوى الملف الخام
+          // في فقاعة الشات — الملف الكامل لسه بيتبعت للذكاء الاصطناعي زي ما هو، بس شكله في
+          // الشات بقى نضيف ومرتب زي أي تطبيق شات محترف. ──
+          if (validDocs.length && msgs) {
+            var _replyPayloadDocs = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
+            var _docsUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+            var _extIcon = function(name){
+              var ext = (name.split('.').pop()||'').toLowerCase();
+              if (/^(js|jsx|ts|tsx)$/.test(ext)) return 'fa-brands fa-js';
+              if (/^(html|htm)$/.test(ext)) return 'fa-brands fa-html5';
+              if (/^(css|scss)$/.test(ext)) return 'fa-brands fa-css3-alt';
+              if (/^(py)$/.test(ext)) return 'fa-brands fa-python';
+              if (/^(json|xml|yml|yaml)$/.test(ext)) return 'fa-solid fa-code';
+              if (/^(csv|xls|xlsx)$/.test(ext)) return 'fa-solid fa-table';
+              if (/^(pdf)$/.test(ext)) return 'fa-solid fa-file-pdf';
+              if (/^(zip|rar|7z)$/.test(ext)) return 'fa-solid fa-file-zipper';
+              return 'fa-solid fa-file-lines';
+            };
+            var _docsCardsHtml = validDocs.map(function(f){
+              var ext = (f.name.split('.').pop()||'').toUpperCase();
+              var kb = (f.size/1024);
+              var sizeStr = kb > 1024 ? (kb/1024).toFixed(1)+' MB' : kb.toFixed(0)+' KB';
+              return '<div class="ai-file-card">'
+                + '<div class="ai-file-card-icon"><i class="'+_extIcon(f.name)+'"></i></div>'
+                + '<div class="ai-file-card-meta"><div class="ai-file-card-name">'+escapeHtml(f.name)+'</div>'
+                + '<div class="ai-file-card-sub">'+ext+' · '+sizeStr+'</div></div>'
+                + '</div>';
+            }).join('');
+            var divDocs = document.createElement('div');
+            divDocs.className = 'message sent';
+            divDocs.id = 'msg-'+_docsUid; divDocs.dataset.msgId = _docsUid;
+            var _quotedDocs = (_replyPayloadDocs && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadDocs) : '';
+            divDocs.innerHTML = _quotedDocs + '<div class="ai-file-cards-wrap">'+_docsCardsHtml+'</div>'
+              + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '')
+              + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+            msgs.appendChild(divDocs); msgs.scrollTop = msgs.scrollHeight;
+            if (_replyPayloadDocs && typeof cancelReply === 'function') cancelReply('ai');
+            window.__cosmosSkipNextBubble = true;
+          }
           await (window.__aiSendMessageCore || window.sendAIMessage)(textOnlyPrompt);
           return;
         }
@@ -11575,9 +11694,9 @@ function slStopAllAnimations() {
           div.className = 'message sent';
           div.id = 'msg-'+_imgUid; div.dataset.msgId = _imgUid;
           var _quotedImg = (_replyPayloadImg && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadImg) : '';
-          var _imgsHtml = dataUrls.filter(Boolean).map(function(u){ return '<img src="'+u+'" style="max-width:120px;max-height:120px;border-radius:10px;margin:2px;display:inline-block;object-fit:cover">'; }).join('');
-          var _docsHtml = validDocs.length ? ('<div style="font-size:.78rem;opacity:.8;margin-top:.3rem">📎 '+validDocs.map(function(f){return escapeHtml(f.name);}).join('، ')+'</div>') : '';
-          div.innerHTML = _quotedImg + (_imgsHtml ? '<div>'+_imgsHtml+'</div>' : '') + _docsHtml + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          var _imgsHtml = dataUrls.filter(Boolean).map(function(u){ return '<div class="ai-img-gallery-item"><img src="'+u+'" loading="lazy"></div>'; }).join('');
+          var _docsHtml = validDocs.length ? ('<div class="ai-file-cards-wrap ai-file-cards-compact"><div class="ai-file-card"><div class="ai-file-card-icon"><i class="fas fa-paperclip"></i></div><div class="ai-file-card-meta"><div class="ai-file-card-name">'+validDocs.map(function(f){return escapeHtml(f.name);}).join('، ')+'</div></div></div></div>') : '';
+          div.innerHTML = _quotedImg + (_imgsHtml ? '<div class="ai-img-gallery">'+_imgsHtml+'</div>' : '') + _docsHtml + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
         }
         if (_replyPayloadImg && typeof cancelReply === 'function') cancelReply('ai');
@@ -11884,17 +12003,18 @@ function slStopAllAnimations() {
       var _fallbackMaxTok = _isCodeReq ? 28000 : 4000;
       var _geminiMaxTok   = _isCodeReq ? 28000 : 2200;
 
-      // ── Show user bubble ──
+      // ── Show user bubble ── (لو صندوق مرفقات احترافي اتعرض فعلاً قبل كده، منعرضش نسخة تانية بالنص الخام)
       var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
-      if (msgs) {
+      if (msgs && !window.__cosmosSkipNextBubble) {
         var ud = document.createElement('div');
         ud.className = 'message sent';
         ud.id = 'msg-'+_aiMsgUid;
         ud.dataset.msgId = _aiMsgUid;
         var _quoted = (_aiReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_aiReplyPayload) : '';
-        ud.innerHTML = _quoted + '<div class="message-content">'+userMsg+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+        ud.innerHTML = _quoted + '<div class="message-content">'+escapeHtml(userMsg)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
         msgs.appendChild(ud); msgs.scrollTop = msgs.scrollHeight;
       }
+      window.__cosmosSkipNextBubble = false;
       if (_aiReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
 
       // ── Typing indicator ──
@@ -12212,11 +12332,14 @@ function slStopAllAnimations() {
           res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: window.__cosmosAbortController ? window.__cosmosAbortController.signal : undefined
           });
           if (onDelta && res.ok && res.body && res.body.getReader) {
             try { data = await _readGroqStream(res, onDelta, onReasoningDelta); }
             catch (eStream) {
+              // المستخدم ضغط إيقاف بنفسه أثناء الـ stream — منكملش لأي محاولة تانية، نطلع الخطأ زي ما هو
+              if (eStream && eStream.name === 'AbortError') throw eStream;
               // فشل قراءة الـ stream (متصفح قديم أو انقطاع) — نرجع لنداء عادي من غير stream كشبكة أمان
               console.warn('stream read failed, falling back to normal request', eStream);
               var res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -12246,7 +12369,8 @@ function slStopAllAnimations() {
           var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
-            body: JSON.stringify({ contents: convContents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } })
+            body: JSON.stringify({ contents: convContents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } }),
+            signal: window.__cosmosAbortController ? window.__cosmosAbortController.signal : undefined
           });
           var d = await r.json();
           var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
@@ -12376,6 +12500,19 @@ function slStopAllAnimations() {
         if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));
         if (window.AIHealth) window.AIHealth.record('groq', !!answer);
       } catch (errGroq) {
+        if (errGroq && errGroq.name === 'AbortError') {
+          // ── المستخدم ضغط زرار الإيقاف بنفسه — ده مش فشل، فمنعملش fallback لـ Gemini
+          // ولا نوريه رسالة خطأ؛ بس نقفل صندوق التفكير بهدوء ونعرض إشارة إيقاف واضحة. ──
+          if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+          if (typingEl) typingEl.remove();
+          if (msgs) {
+            var edStopped = document.createElement('div');
+            edStopped.className = 'message received';
+            edStopped.innerHTML = '<div class="message-content" style="opacity:.7;font-style:italic">⏹️ تم إيقاف التفكير بواسطتك.</div>';
+            msgs.appendChild(edStopped); msgs.scrollTop = msgs.scrollHeight;
+          }
+          return;
+        }
         if (!_debugGroqDetail) _debugGroqDetail = String(errGroq && errGroq.message || errGroq).slice(0,150);
         if (window.AIHealth) window.AIHealth.record('groq', false);
         console.warn('AI Router: Groq فشل، بنجرّب Gemini كخط دفاع ثاني...', errGroq);
@@ -12563,12 +12700,22 @@ function slStopAllAnimations() {
     (function(){
       window.__cosmosBusy = window.__cosmosBusy || false;
       window.__cosmosQueue = window.__cosmosQueue || [];
+      window.__cosmosAbortController = window.__cosmosAbortController || null;
       var _coreSend = window.__aiSendMessageCore;
 
       function _aiSendBtnEl(){
         var modal = document.getElementById('aiChatModal');
         return modal ? modal.querySelector('.unified-send-btn.ai-color') : null;
       }
+
+      // ══════════════════════════════════════════════════════════════════
+      // ⏹️ زرار إيقاف حقيقي: لما المساعد بيفكر، الزرار بيبقى مربع (fa-stop) وبالضغط عليه
+      // بيوقف التوليد فورًا (زي أي برنامج ذكاء اصطناعي حقيقي) — مش بيضيف لقائمة انتظار. ──
+      // ══════════════════════════════════════════════════════════════════
+      window.__stopCosmosGeneration = function(){
+        if (window.__cosmosAbortController) { try { window.__cosmosAbortController.abort(); } catch(e){} }
+        window.__cosmosQueue = [];
+      };
 
       window.__updateAISendBtnUI = function(){
         var btn = _aiSendBtnEl();
@@ -12577,17 +12724,16 @@ function slStopAllAnimations() {
         var badge = btn.querySelector('.ai-queue-badge');
         if (window.__cosmosBusy) {
           btn.classList.add('ai-busy');
-          btn.title = window.__cosmosQueue.length ? ('في قائمة الانتظار: ' + window.__cosmosQueue.length) : 'بيفكر... اضغط تاني عشان تضيف رسالة كمان من غير ما توقفه';
+          btn.title = 'بيفكر... اضغط لإيقاف التفكير';
           if (icon) icon.className = 'fas fa-stop';
-          if (window.__cosmosQueue.length) {
-            if (!badge) { badge = document.createElement('span'); badge.className = 'ai-queue-badge'; btn.appendChild(badge); }
-            badge.textContent = window.__cosmosQueue.length;
-          } else if (badge) { badge.remove(); }
+          if (badge) badge.remove();
+          btn.onclick = window.__stopCosmosGeneration;
         } else {
           btn.classList.remove('ai-busy');
           btn.title = '';
           if (icon) icon.className = 'fas fa-paper-plane';
           if (badge) badge.remove();
+          btn.onclick = function(){ window.sendAIMessage(); };
         }
       };
 
@@ -12595,31 +12741,20 @@ function slStopAllAnimations() {
         var inp = document.getElementById('aiChatInput');
 
         if (!_fromQueueDrain && window.__cosmosBusy) {
-          // المساعد لسه بيفكر في رسالة سابقة — منوقفوش تفكيره خالص، بس نحفظ الرسالة دي
-          // (سواء متكتوبة أو جاية من رسالة صوتية اتفهمت) في قائمة انتظار، وهتتبعت تلقائيًا
-          // أول ما يخلص، بالظبط زي ما المستخدم طلب، من غير ما نبدأ توليد تاني بيتصارع مع الحالي.
-          var queuedText = (injectedMsg !== undefined) ? String(injectedMsg) : (inp ? inp.value.trim() : '');
-          if (!queuedText) return;
-          window.__cosmosQueue.push(queuedText);
-          if (injectedMsg === undefined && inp) { inp.value = ''; inp.style.height = 'auto'; }
-          window.__updateAISendBtnUI();
-          if (typeof showToast === 'function') showToast('📥 هتتبعت تلقائيًا أول ما يخلص من الرد الحالي (' + window.__cosmosQueue.length + ' في الانتظار)');
+          // المساعد لسه بيفكر — الزرار نفسه بقى زرار إيقاف (شوف __stopCosmosGeneration)،
+          // فمفيش داعي لقائمة انتظار هنا؛ لو حصل استدعاء برمجي تاني بره الزرار بنتجاهله بهدوء.
           return;
         }
 
         window.__cosmosBusy = true;
+        window.__cosmosAbortController = new AbortController();
         window.__updateAISendBtnUI();
         try {
           await _coreSend(injectedMsg);
         } finally {
-          if (window.__cosmosQueue.length) {
-            var _next = window.__cosmosQueue.shift();
-            window.__updateAISendBtnUI();
-            window.sendAIMessage(_next, true); // ── نكمّل تلقائيًا مع أول رسالة في الانتظار من غير ما ننتظر ضغطة تانية (fromQueueDrain=true بيتخطى فحص الانشغال لأننا فاضيين فعلاً دلوقتي) ──
-          } else {
-            window.__cosmosBusy = false;
-            window.__updateAISendBtnUI();
-          }
+          window.__cosmosBusy = false;
+          window.__cosmosAbortController = null;
+          window.__updateAISendBtnUI();
         }
       };
     })();

@@ -297,7 +297,7 @@
 
 <div class="app-wrapper" id="appWrapper" style="display: none;">
   <canvas id="spaceCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;"></canvas>
-  <div class="loader" id="loader"><div class="loader-ring"></div><div class="loader-text">مرحباً بك في عالم الفلك 🌌</div></div>
+  <div class="loader" id="loader"><div class="loader-ring"></div><div class="loader-text">مرحباً بك في عالم الفلك <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="12" rx="9.5" ry="4"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></span></div></div>
 
   <nav class="navbar">
     <div class="brand">
@@ -321,8 +321,8 @@
             <div class="settings-menu-item" onclick="openPrivateAdminChat();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#10b981);margin-left:6px;font-size:.8rem"><i class="fas fa-user-shield" style="color:#bbf7d0"></i></span> تواصل مع المشرفين</div>
             <div class="settings-menu-item" onclick="openFriendChatMenu();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#a855f7);margin-left:6px;font-size:.8rem"><i class="fas fa-user-friends" style="color:#fce7f3"></i></span> تحدث مع صديقك <span id="friendChatBadge" style="display:none;margin-right:auto;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">0</span></div>
             <div class="settings-menu-item sl-menu-item" onclick="openSelfLearning();closeSectionsMenu()" style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08));border-bottom:1px solid rgba(16,185,129,.25)!important;position:relative;overflow:hidden"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);margin-left:6px;font-size:.8rem;box-shadow:0 0 10px rgba(16,185,129,.5);animation:slMenuGlow 2s infinite"><i class="fas fa-brain" style="color:#fff"></i></span> <span style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800">التعلم الذاتي</span><span style="margin-right:auto;background:linear-gradient(135deg,#10b981,#06b6d4);color:#fff;font-size:.6rem;padding:.15rem .45rem;border-radius:99px;font-weight:800;margin-left:4px">جديد</span></div>
-            <div class="settings-menu-item" onclick="openDQ();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f97316,#fb923c);margin-left:6px;font-size:.8rem"><i class="fas fa-bullseye" style="color:#ffedd5"></i></span> مهامي اليومية 🎯</div>
-            <div class="settings-menu-item" onclick="openLB();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#eab308,#ca8a04);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fef08a"></i></span> لوحة المتصدرين 🏆</div>
+            <div class="settings-menu-item" onclick="openDQ();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f97316,#fb923c);margin-left:6px;font-size:.8rem"><i class="fas fa-bullseye" style="color:#ffedd5"></i></span> مهامي اليومية <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span></div>
+            <div class="settings-menu-item" onclick="openLB();closeSectionsMenu()"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#eab308,#ca8a04);margin-left:6px;font-size:.8rem"><i class="fas fa-trophy" style="color:#fef08a"></i></span> لوحة المتصدرين <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4a3 3 0 0 0 3 4.5M17 5.5h3a3 3 0 0 1-3 4.5"/><path d="M12 14v3.5M9 21.5h6M9.5 17.5h5l.7 4h-6.4l.7-4Z"/></svg></span></div>
           </div>
         </div>
         <div class="settings-dropdown" id="settingsDropdown">
@@ -376,7 +376,7 @@
       <p style="position:relative;z-index:2;">منصة متكاملة لتعليم علم الفلك بشكل مجاني</p>
 
       <!-- Astronaut floating -->
-      <div class="astronaut-float" style="position:relative;z-index:2;margin-top:1.5rem;font-size:4rem;animation:astronautFloat 6s ease-in-out infinite;">🚀</div>
+      <div class="astronaut-float" style="position:relative;z-index:2;margin-top:1.5rem;font-size:4rem;animation:astronautFloat 6s ease-in-out infinite;"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 2 4.5 5.5 4.5 9.5 0 2.3-1 4.7-2.3 6.3l-2.2 2.2-2.2-2.2C8.5 16.7 7.5 14.3 7.5 12c0-4 1.5-7.5 4.5-9.5Z"/><circle cx="12" cy="10.5" r="1.7"/><path d="M8.5 16.5 6 17.5l.5-3M15.5 16.5l2.5 1 -.5-3"/><path d="M9.5 20.5s.7 1 2.5 1 2.5-1 2.5-1"/></svg></span></div>
 
 
     </div>
@@ -423,7 +423,7 @@
           <div class="black-core"></div>
         </div>
       </div>
-      <h3>⚫ الثقب الأسود ابتلع البيانات!</h3>
+      <h3><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg></span> الثقب الأسود ابتلع البيانات!</h3>
       <p>تعذر الاتصال بالخادم أو لا توجد فيديوهات حالياً. حاول تحديث الصفحة أو تأكد من اتصالك بالإنترنت.</p>
       <button class="retry-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> محاولة السحب من الثقب مرة أخرى</button>
     </div>
@@ -552,10 +552,15 @@
     <textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="unified-textarea" onkeypress="handleAIKeyPress(event)"></textarea>
     <div class="unified-bottom-row">
       <div class="unified-left-btns">
-        <button class="unified-tool-btn" onclick="document.getElementById('aiFileInput').click()" title="إرفاق أي ملف (حتى 5) — بيتفحص أمنياً قبل الرفع"><i class="fas fa-paperclip"></i></button>
-        <input id="aiFileInput" type="file" style="display:none" multiple onchange="handleAIFileSelect(this)">
-        <button class="unified-tool-btn" onclick="document.getElementById('aiImageInput').click()" title="إرفاق صور (حتى 5)"><i class="fas fa-image"></i></button>
-        <input id="aiImageInput" type="file" style="display:none" accept="image/*" multiple onchange="handleAIImageSelect(this)">
+        <div class="ai-attach-wrap" id="aiAttachWrap">
+          <button class="unified-tool-btn ai-attach-btn" onclick="toggleAIAttachMenu(event)" id="aiAttachBtn" title="إرفاق ملف أو صورة"><i class="fas fa-plus"></i></button>
+          <div class="ai-attach-menu" id="aiAttachMenu">
+            <button class="ai-attach-menu-item" onclick="document.getElementById('aiFileInput').click(); closeAIAttachMenu();"><i class="fas fa-paperclip"></i><span>ملف</span></button>
+            <button class="ai-attach-menu-item" onclick="document.getElementById('aiImageInput').click(); closeAIAttachMenu();"><i class="fas fa-image"></i><span>صورة</span></button>
+          </div>
+          <input id="aiFileInput" type="file" style="display:none" multiple onchange="handleAIFileSelect(this)">
+          <input id="aiImageInput" type="file" style="display:none" accept="image/*" multiple onchange="handleAIImageSelect(this)">
+        </div>
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
         <button class="unified-tool-btn" onclick="openAIVoiceChat()" title="دردشة صوتية"><i class="fas fa-headphones"></i></button>
         <button class="unified-tool-btn" onclick="toggleAIVoiceNote()" id="aiVoiceNoteBtn" title="رسالة صوتية — سجّل وهيتفهم ويترد عليها زي أي رسالة"><i class="fas fa-microphone"></i></button>
@@ -606,10 +611,10 @@
   <div class="db-tools-panel" id="dbToolsPanel">
     <!-- الـ tabs -->
     <div class="db-tabs">
-      <button class="db-tab active" onclick="switchDrawTab('draw',this)">✏️ رسم</button>
-      <button class="db-tab" onclick="switchDrawTab('shapes',this)">🔷 أشكال</button>
-      <button class="db-tab" onclick="switchDrawTab('text',this)">🔤 نص</button>
-      <button class="db-tab" onclick="switchDrawTab('settings',this)">⚙️ إعدادات</button>
+      <button class="db-tab active" onclick="switchDrawTab('draw',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.5l5 5-11 11-5.6 1 1-5.6 10.6-10.4Z"/></svg></span> رسم</button>
+      <button class="db-tab" onclick="switchDrawTab('shapes',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2 22 12 12 22 2 12Z"/></svg></span> أشكال</button>
+      <button class="db-tab" onclick="switchDrawTab('text',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h13"/></svg></span> نص</button>
+      <button class="db-tab" onclick="switchDrawTab('settings',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.6a7 7 0 0 0-2-1.2L14 2.5h-4l-.5 2.7a7 7 0 0 0-2 1.2l-2.4-.6-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.6a7 7 0 0 0 2 1.2l.5 2.7h4l.5-2.7a7 7 0 0 0 2-1.2l2.4.6 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg></span> إعدادات</button>
     </div>
 
     <!-- TAB: رسم -->
@@ -635,7 +640,7 @@
         <button type="button" data-tool="star" class="db-btn" onclick="setDrawTool('star');updateActiveToolLabel('نجمة')"><i class="fas fa-star"></i><span>نجمة</span></button>
         <button type="button" data-tool="heart" class="db-btn" onclick="setDrawTool('heart');updateActiveToolLabel('قلب')"><i class="fas fa-heart"></i><span>قلب</span></button>
         <button type="button" data-tool="diamond" class="db-btn" onclick="setDrawTool('diamond');updateActiveToolLabel('معين')">◇<span>معين</span></button>
-        <button type="button" data-tool="pentagon" class="db-btn" onclick="setDrawTool('pentagon');updateActiveToolLabel('خماسي')">⬠<span>خماسي</span></button>
+        <button type="button" data-tool="pentagon" class="db-btn" onclick="setDrawTool('pentagon');updateActiveToolLabel('خماسي')"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2 22 9.3l-3.8 11.9H5.8L2 9.3Z"/></svg></span><span>خماسي</span></button>
       </div>
       <!-- لون التعبئة -->
       <div class="db-fill-row">
@@ -828,9 +833,9 @@
       </div>
       <div class="modal-body">
         <div class="chat-bg-tabs">
-          <div class="chat-bg-tab active" onclick="switchBgTab('ai',this)">🤖 AI</div>
-          <div class="chat-bg-tab" onclick="switchBgTab('public',this)">👥 العامة</div>
-          <div class="chat-bg-tab" onclick="switchBgTab('private',this)">💬 الدردشة الخاصة</div>
+          <div class="chat-bg-tab active" onclick="switchBgTab('ai',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8.5" width="16" height="11" rx="3"/><path d="M12 8.5V5M9 3.5h6"/><circle cx="9" cy="14" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17.5h6"/><path d="M2 12v3M22 12v3"/></svg></span> AI</div>
+          <div class="chat-bg-tab" onclick="switchBgTab('public',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.6"/><path d="M15.5 14.3c2.9.4 5 2.4 5 5.7"/></svg></span> العامة</div>
+          <div class="chat-bg-tab" onclick="switchBgTab('private',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4Z"/></svg></span> الدردشة الخاصة</div>
         </div>
         <div class="chat-bg-grid" id="chatBgGrid"></div>
         <button class="chat-bg-reset" onclick="resetChatBg()"><i class="fas fa-undo"></i> إعادة الخلفية الافتراضية</button>
@@ -933,23 +938,23 @@
 </div>
 <button class="btn btn-primary" onclick="submitFeedback()" style="width:100%"><i class="fas fa-paper-plane"></i> إرسال التقييم</button>
 </div></div></div>
-  <div class="modal" id="howToUseModal"><div class="modal-content" style="max-width: 720px; max-height: 88vh; overflow:hidden; display:flex; flex-direction:column;"><div class="modal-header"><h3><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</h3><button class="modal-close" onclick="closeHowToUseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body" style="overflow-y:auto; padding-bottom:1.5rem;"><div class="howto-intro" style="background:linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.12)); border:1px solid rgba(139,92,246,.35); border-radius:14px; padding:1rem 1.2rem; margin-bottom:1.25rem; line-height:1.8; font-size:.95rem; color:#e0e7ff;"><i class="fas fa-rocket" style="color:#a78bfa; margin-left:.4rem;"></i> أهلاً بك في منصة <strong>فلك العالمي</strong> 🌌 إليك دليل سريع لاستخدام كل المميزات المتاحة لك كطالب.</div><div class="howto-steps" style="display:flex; flex-direction:column; gap:1rem;">
+  <div class="modal" id="howToUseModal"><div class="modal-content" style="max-width: 720px; max-height: 88vh; overflow:hidden; display:flex; flex-direction:column;"><div class="modal-header"><h3><i class="fas fa-circle-question"></i> كيفية استخدام المنصة</h3><button class="modal-close" onclick="closeHowToUseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body" style="overflow-y:auto; padding-bottom:1.5rem;"><div class="howto-intro" style="background:linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.12)); border:1px solid rgba(139,92,246,.35); border-radius:14px; padding:1rem 1.2rem; margin-bottom:1.25rem; line-height:1.8; font-size:.95rem; color:#e0e7ff;"><i class="fas fa-rocket" style="color:#a78bfa; margin-left:.4rem;"></i> أهلاً بك في منصة <strong>فلك العالمي</strong> <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="12" rx="9.5" ry="4"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></span> إليك دليل سريع لاستخدام كل المميزات المتاحة لك كطالب.</div><div class="howto-steps" style="display:flex; flex-direction:column; gap:1rem;">
 
 <div class="howto-step" style="background:rgba(15,10,26,.55); border:1px solid rgba(99,102,241,.3); border-radius:12px; padding:.95rem 1.1rem;"><h4 style="color:#a78bfa; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-photo-film"></i> 1. مكتبة الفيديوهات</h4><p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">الفيديوهات مقسّمة إلى قسمين: <strong>فيديوهات عامة</strong> متاحة للجميع، و<strong>فيديوهات الكورسات</strong> تظهر تلقائياً بعد اشتراكك. اضغط على أي فيديو لتشغيله مباشرة.</p></div>
 
-<div class="howto-step" style="background:rgba(15,10,26,.55); border:1px solid rgba(245,158,11,.3); border-radius:12px; padding:.95rem 1.1rem;"><h4 style="color:#fbbf24; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-graduation-cap"></i> 2. الاشتراك في الكورسات ⭐ جديد</h4><p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">في المكتبة ستجد بطاقات الكورسات المتاحة. اضغط على بطاقة الكورس الذي تريده ← اضغط <strong>اشترك الآن</strong> وأكمل الدفع ← بمجرد تأكيد الاشتراك <strong>تفتح فيديوهات الكورس فوراً</strong> من نفس المكان بدون أي خطوات إضافية. لو اشتركت بالفعل تضغط على البطاقة وتشاهد مباشرة.</p></div>
+<div class="howto-step" style="background:rgba(15,10,26,.55); border:1px solid rgba(245,158,11,.3); border-radius:12px; padding:.95rem 1.1rem;"><h4 style="color:#fbbf24; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-graduation-cap"></i> 2. الاشتراك في الكورسات <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> جديد</h4><p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">في المكتبة ستجد بطاقات الكورسات المتاحة. اضغط على بطاقة الكورس الذي تريده <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M9 6l-6 6 6 6"/></svg></span> اضغط <strong>اشترك الآن</strong> وأكمل الدفع <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M9 6l-6 6 6 6"/></svg></span> بمجرد تأكيد الاشتراك <strong>تفتح فيديوهات الكورس فوراً</strong> من نفس المكان بدون أي خطوات إضافية. لو اشتركت بالفعل تضغط على البطاقة وتشاهد مباشرة.</p></div>
 
 <div class="howto-step" style="background:rgba(15,10,26,.55); border:2px solid rgba(245,158,11,.5); border-radius:12px; padding:.95rem 1.1rem; position:relative; overflow:hidden;">
 <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#d97706,#f59e0b);background-size:200%;animation:shimmerBar 2s infinite"></div>
-<h4 style="color:#fbbf24; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-certificate"></i> 3. شهادة إتمام الكورس 🏆 جديد</h4>
+<h4 style="color:#fbbf24; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-certificate"></i> 3. شهادة إتمام الكورس <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4a3 3 0 0 0 3 4.5M17 5.5h3a3 3 0 0 1-3 4.5"/><path d="M12 14v3.5M9 21.5h6M9.5 17.5h5l.7 4h-6.4l.7-4Z"/></svg></span> جديد</h4>
 <p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">
 بعد ما تشاهد <strong>كل فيديوهات الكورس</strong> كاملاً، يظهر لك زرار ذهبي
-<strong>🏆 استلام شهادتك</strong> في بطاقة الكورس.
+<strong><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4a3 3 0 0 0 3 4.5M17 5.5h3a3 3 0 0 1-3 4.5"/><path d="M12 14v3.5M9 21.5h6M9.5 17.5h5l.7 4h-6.4l.7-4Z"/></svg></span> استلام شهادتك</strong> في بطاقة الكورس.
 اضغط عليه لتحميل <strong>شهادة PDF</strong> باسمك تثبت إتمامك للكورس بنجاح.
 </p>
 </div>
 
-<div class="howto-step" style="background:rgba(15,10,26,.55); border:1px solid rgba(239,68,68,.3); border-radius:12px; padding:.95rem 1.1rem;"><h4 style="color:#fca5a5; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-file-pdf"></i> 4. ملفات PDF ⭐ جديد</h4><p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">يمكنك الآن الوصول لملفات PDF المرفوعة من المشرف مثل الملخصات والمراجع والمذكرات. من قائمة <strong>الإعدادات</strong> اختر <strong>ملفات PDF</strong> لتصفح الملفات ومعاينتها مباشرة.</p></div>
+<div class="howto-step" style="background:rgba(15,10,26,.55); border:1px solid rgba(239,68,68,.3); border-radius:12px; padding:.95rem 1.1rem;"><h4 style="color:#fca5a5; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-file-pdf"></i> 4. ملفات PDF <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> جديد</h4><p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">يمكنك الآن الوصول لملفات PDF المرفوعة من المشرف مثل الملخصات والمراجع والمذكرات. من قائمة <strong>الإعدادات</strong> اختر <strong>ملفات PDF</strong> لتصفح الملفات ومعاينتها مباشرة.</p></div>
 
 <div class="howto-step" style="background:rgba(15,10,26,.55); border:1px solid rgba(16,185,129,.3); border-radius:12px; padding:.95rem 1.1rem;"><h4 style="color:#6ee7b7; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem;"><i class="fas fa-clipboard-check"></i> 5. الامتحانات</h4><p style="margin:0; line-height:1.85; color:#e5e7eb; font-size:.92rem;">بعض الفيديوهات لها امتحان. اضغط زر <strong>دخول الامتحان</strong> أسفل الفيديو، أجب على الأسئلة في الوقت المحدد، وستظهر نتيجتك فوراً وتُحفظ في سجلك.</p></div>
 
@@ -1169,7 +1174,7 @@
 
 
 
-<div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label><i class="fab fa-google-drive" style="color:#34a853"></i> رابط صورة الكورس <span style="color:#888;font-size:.82rem">(اختياري — Google Drive أو أي رابط صورة مباشر)</span></label><input id="courseImageUrl" type="url" placeholder="https://drive.google.com/uc?export=view&id=..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:.95rem" oninput="previewCourseImage(this.value)"><p style="font-size:.8rem;color:#94a3b8;margin-top:.4rem;line-height:1.6"><i class="fas fa-info-circle"></i> لرابط Google Drive: افتح الصورة ← مشاركة ← «أي شخص لديه الرابط» ← انسخ الرابط وضعه هنا</p><div id="courseImagePreview" style="display:none;margin-top:.75rem;border-radius:14px;overflow:hidden;border:2px solid rgba(99,102,241,.4);max-height:180px;"><img id="courseImagePreviewImg" src="" alt="معاينة صورة الكورس" style="width:100%;height:180px;object-fit:cover;display:block;"></div></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
+<div class="modal" id="courseModal"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3><i class="fas fa-graduation-cap"></i> <span id="courseModalTitle">إنشاء كورس جديد</span></h3><button class="modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="form-group"><label>اسم الكورس</label><input id="courseName" placeholder="مثال: أساسيات الفلك"></div><div class="form-group"><label>الوصف</label><textarea id="courseDesc" rows="3"></textarea></div><div class="form-group"><label><i class="fab fa-google-drive" style="color:#34a853"></i> رابط صورة الكورس <span style="color:#888;font-size:.82rem">(اختياري — Google Drive أو أي رابط صورة مباشر)</span></label><input id="courseImageUrl" type="url" placeholder="https://drive.google.com/uc?export=view&id=..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:.95rem" oninput="previewCourseImage(this.value)"><p style="font-size:.8rem;color:#94a3b8;margin-top:.4rem;line-height:1.6"><i class="fas fa-info-circle"></i> لرابط Google Drive: افتح الصورة <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M9 6l-6 6 6 6"/></svg></span> مشاركة <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M9 6l-6 6 6 6"/></svg></span> «أي شخص لديه الرابط» <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M9 6l-6 6 6 6"/></svg></span> انسخ الرابط وضعه هنا</p><div id="courseImagePreview" style="display:none;margin-top:.75rem;border-radius:14px;overflow:hidden;border:2px solid rgba(99,102,241,.4);max-height:180px;"><img id="courseImagePreviewImg" src="" alt="معاينة صورة الكورس" style="width:100%;height:180px;object-fit:cover;display:block;"></div></div><div class="form-group"><label>اختر الفيديوهات التابعة للكورس</label><div id="courseVideosChecklist"></div></div><div class="form-group"><label>سعر الاشتراك (0 = مجاني)</label><input id="coursePrice" type="number" value="0" step="1"></div><div class="form-group"><label>رابط صفحة الدفع الآمنة <span style="color:#888;font-size:.85rem">(Stripe / Tap / Paymob — للكورس المدفوع)</span></label><input id="coursePaymentLink" type="url" placeholder="https://buy.stripe.com/..." style="width:100%;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:Cairo;font-size:1rem"></div><p style="font-size:.85rem;color:#94a3b8;margin-bottom:1rem;line-height:1.6">لا تُدخل أرقام بطاقات هنا. أنشئ رابط دفع من مزوّد معتمد؛ عند «اشترك الآن» يُفتح الرابط في صفحة آمنة.</p><button class="btn btn-success" onclick="saveCourse()">حفظ الكورس</button></div></div></div>
 
 <!-- ===== مودال ملفات PDF للطلاب ===== -->
 <div class="modal" id="pdfFilesModal" style="z-index:9998">
@@ -1285,7 +1290,7 @@
           width:42px;height:42px;border-radius:12px;
           background:linear-gradient(135deg,#6366f1,#ec4899);
           display:flex;align-items:center;justify-content:center;font-size:1.3rem;
-        ">📲</div>
+        "><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/><path d="M18.5 6a5 5 0 0 1 0 6M21 4a8 8 0 0 1 0 10"/></svg></span></div>
         <div>
           <div style="font-size:1.1rem;font-weight:700;color:#fff;">تثبيت التطبيق</div>
           <div style="font-size:0.78rem;color:#aaa;">أضف المنصة لشاشتك الرئيسية</div>
@@ -1295,7 +1300,7 @@
         background:rgba(239,68,68,0.2);border:none;color:#ef4444;
         width:36px;height:36px;border-radius:10px;cursor:pointer;
         font-size:1.1rem;display:flex;align-items:center;justify-content:center;
-      ">✕</button>
+      "><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5 5 19"/></svg></span></button>
     </div>
 
     <!-- Body -->
@@ -1307,7 +1312,7 @@
         padding:1rem;border:1px solid rgba(99,102,241,0.2);
       ">
         <div style="font-size:0.82rem;color:#aaa;margin-bottom:0.75rem;">
-          📱 هكذا يظهر التطبيق على شاشتك الرئيسية
+          <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></span> هكذا يظهر التطبيق على شاشتك الرئيسية
         </div>
         <img
           src="1000093591.jpg"
@@ -1329,7 +1334,7 @@
         <!-- Android Chrome -->
         <div id="pwaAndroidSteps">
           <div style="font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-size:1.1rem;">🤖</span> خطوات التثبيت على Android
+            <span style="font-size:1.1rem;"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8.5" width="16" height="11" rx="3"/><path d="M12 8.5V5M9 3.5h6"/><circle cx="9" cy="14" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17.5h6"/><path d="M2 12v3M22 12v3"/></svg></span></span> خطوات التثبيت على Android
           </div>
           <div style="display:flex;flex-direction:column;gap:0.6rem;">
             <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
@@ -1342,7 +1347,7 @@
             </div>
             <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
               <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">3</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستجد الأيقونة على شاشتك مباشرة! 🎉</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستجد الأيقونة على شاشتك مباشرة! <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l5-13 9 9-13 4Z"/><path d="M14 4l1.5 1.5M18 6l1.5 1.5M11 3l1 2"/></svg></span></span>
             </div>
           </div>
         </div>
@@ -1350,12 +1355,12 @@
         <!-- iOS Safari -->
         <div id="pwaIOSSteps" style="display:none;">
           <div style="font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-size:1.1rem;">🍎</span> خطوات التثبيت على iPhone/iPad
+            <span style="font-size:1.1rem;"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 8.5c-3.3 0-5.5 2.6-5.5 6 0 3.7 2.4 7 4.4 7 1 0 1.3-.5 2.1-.5s1.1.5 2.1.5c1.7 0 4.4-3 4.4-6.6 0-3.6-2.3-5.8-4.9-6-1.1-.1-1.7.6-2.6.6Z" opacity="0"/><path d="M12 9c-3.2 0-5.4 2.6-5.4 5.9 0 3.6 2.4 6.9 4.3 6.9.9 0 1.3-.5 2.1-.5s1.1.5 2 .5c1.7 0 4.3-2.9 4.3-6.5 0-3.5-2.2-5.7-4.8-5.9-1-.1-1.6.6-2.5.6Z"/><path d="M12.3 9c-.2-1.6.6-2.9 2-3.5"/></svg></span></span> خطوات التثبيت على iPhone/iPad
           </div>
           <div style="display:flex;flex-direction:column;gap:0.6rem;">
             <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
               <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">1</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">افتح الصفحة في <strong style="color:#c4b5fd;">Safari</strong> واضغط زر <strong style="color:#10b981;">المشاركة 📤</strong> في الأسفل</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">افتح الصفحة في <strong style="color:#c4b5fd;">Safari</strong> واضغط زر <strong style="color:#10b981;">المشاركة <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></span></strong> في الأسفل</span>
             </div>
             <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
               <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">2</span>
@@ -1363,7 +1368,7 @@
             </div>
             <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.7rem;">
               <span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">3</span>
-              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستظهر الأيقونة على شاشتك! 🎉</span>
+              <span style="font-size:0.85rem;color:#e5e7eb;line-height:1.6;">اضغط <strong style="color:#10b981;">"إضافة"</strong> وستظهر الأيقونة على شاشتك! <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l5-13 9 9-13 4Z"/><path d="M14 4l1.5 1.5M18 6l1.5 1.5M11 3l1 2"/></svg></span></span>
             </div>
           </div>
         </div>
@@ -1401,7 +1406,7 @@
     <!-- Header -->
     <div class="sl-header">
       <div class="sl-header-left">
-        <span style="font-size:1.4rem">🧠</span>
+        <span style="font-size:1.4rem"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5a2.5 2.5 0 0 0-2.5 2.5c0 .3 0 .5.1.8A3 3 0 0 0 5 10.5c0 1 .5 1.9 1.3 2.4A2.8 2.8 0 0 0 6 14.2 3 3 0 0 0 9 17.2v1.3a2 2 0 0 0 4 0V7a2.5 2.5 0 0 0-4-2.5Z"/><path d="M15 4.5a2.5 2.5 0 0 1 2.5 2.5c0 .3 0 .5-.1.8a3 3 0 0 1 1.6 2.7c0 1-.5 1.9-1.3 2.4.2.3.3.6.3 1a3 3 0 0 1-3 3v1.3a2 2 0 0 1-4 0V7a2.5 2.5 0 0 1 4-2.5Z"/></svg></span></span>
         <div>
           <div style="font-weight:900;font-size:1rem;background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">التعلم الذاتي</div>
           <div style="font-size:.72rem;color:#8b8aa0;" id="slHeaderSub">نظام تكيفي ذكي في الفلك</div>
@@ -1413,16 +1418,16 @@
     <!-- Stats Bar (hidden on welcome screen) -->
     <div class="sl-stats-bar" id="slStatsBar" style="display:none;">
       <div class="sl-stat sl-hearts" id="slHeartsDisplay">
-        <span class="sl-stat-icon" id="slHeartsIcons">❤️❤️❤️❤️❤️</span>
+        <span class="sl-stat-icon" id="slHeartsIcons"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/></svg></span></span>
       </div>
       <div class="sl-progress-wrap" id="slProgressWrap">
         <div class="sl-progress-fill" id="slProgressFill" style="width:0%"></div>
       </div>
       <div class="sl-stat sl-xp" id="slXpDisplay">
-        <span class="sl-stat-icon">⭐</span><span id="slXpVal">0</span> XP
+        <span class="sl-stat-icon"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span></span><span id="slXpVal">0</span> XP
       </div>
       <div class="sl-stat sl-streak" id="slStreakDisplay">
-        <span class="sl-stat-icon sl-streak-icon">🔥</span><span id="slStreakVal">0</span>
+        <span class="sl-stat-icon sl-streak-icon"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5s5 4 5 9.5a5 5 0 0 1-10 0c0-1.3.4-2.3 1-3.2.2 1 .8 1.7 1.5 1.7-.3-3 1-5.4 2.5-8Z"/></svg></span></span><span id="slStreakVal">0</span>
       </div>
     </div>
 
@@ -1431,34 +1436,34 @@
 
       <!-- SCREEN 1: Welcome / Level Select -->
       <div class="sl-screen active" id="slWelcomeScreen">
-        <div class="sl-welcome-mascot">🔭</div>
+        <div class="sl-welcome-mascot"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15.5 14 9l1.5 2.6L4.5 18Z"/><path d="M14 9l6-3.5 1.7 3-6.2 3.6"/><path d="M9 20.5 6 15"/><path d="M17.5 4 21 6"/></svg></span></div>
         <div class="sl-welcome-title">أهلاً بك في<br>التعلم الذاتي!</div>
         <div class="sl-welcome-sub">نظام ذكي يضع أسئلة على قد مستواك في الفلك ويطور معلوماتك خطوة بخطوة</div>
-        <div style="font-weight:800;color:#f1f0f7;font-size:1rem;align-self:flex-start;max-width:480px;width:100%;">🎯 اختر مستواك أولاً:</div>
+        <div style="font-weight:800;color:#f1f0f7;font-size:1rem;align-self:flex-start;max-width:480px;width:100%;"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span> اختر مستواك أولاً:</div>
         <div class="sl-level-grid">
           <div class="sl-level-card" data-level="beginner" onclick="startSelfLearning('beginner')">
-            <span class="sl-level-emoji">🌱</span>
+            <span class="sl-level-emoji"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V11"/><path d="M12 11C12 7 9 5 5 5c0 4 3 6 7 6Z"/><path d="M12 13c0-3.5 2.5-5.5 6-5.5 0 3.5-2.5 5.5-6 5.5Z"/></svg></span></span>
             <div class="sl-level-name">مبتدئ</div>
             <div class="sl-level-desc">بدأت رحلتي في عالم الفلك</div>
-            <div class="sl-level-stars">⭐</div>
+            <div class="sl-level-stars"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span></div>
           </div>
           <div class="sl-level-card" data-level="intermediate" onclick="startSelfLearning('intermediate')">
-            <span class="sl-level-emoji">🚀</span>
+            <span class="sl-level-emoji"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 2 4.5 5.5 4.5 9.5 0 2.3-1 4.7-2.3 6.3l-2.2 2.2-2.2-2.2C8.5 16.7 7.5 14.3 7.5 12c0-4 1.5-7.5 4.5-9.5Z"/><circle cx="12" cy="10.5" r="1.7"/><path d="M8.5 16.5 6 17.5l.5-3M15.5 16.5l2.5 1 -.5-3"/><path d="M9.5 20.5s.7 1 2.5 1 2.5-1 2.5-1"/></svg></span></span>
             <div class="sl-level-name">متوسط</div>
             <div class="sl-level-desc">أعرف أساسيات النجوم والكواكب</div>
-            <div class="sl-level-stars">⭐⭐</div>
+            <div class="sl-level-stars"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span></div>
           </div>
           <div class="sl-level-card" data-level="advanced" onclick="startSelfLearning('advanced')">
-            <span class="sl-level-emoji">🌌</span>
+            <span class="sl-level-emoji"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="12" rx="9.5" ry="4"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></span></span>
             <div class="sl-level-name">متقدم</div>
             <div class="sl-level-desc">أفهم الفيزياء الفلكية والكون</div>
-            <div class="sl-level-stars">⭐⭐⭐</div>
+            <div class="sl-level-stars"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span></div>
           </div>
           <div class="sl-level-card" data-level="expert" onclick="startSelfLearning('expert')">
-            <span class="sl-level-emoji">🌠</span>
+            <span class="sl-level-emoji"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 17 12 8"/><path d="M12 8l3 .8M12 8l.8-3"/><path d="M15 17l3 1.2L19.2 15"/></svg></span></span>
             <div class="sl-level-name">محترف</div>
             <div class="sl-level-desc">أدرس الفلك بعمق علمي</div>
-            <div class="sl-level-stars">⭐⭐⭐⭐</div>
+            <div class="sl-level-stars"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span></div>
           </div>
         </div>
         <!-- Stats from previous sessions -->
@@ -1476,7 +1481,7 @@
       <div class="sl-screen" id="slQuestionScreen">
         <div class="sl-q-screen" style="width:100%">
           <div class="sl-q-num" id="slQNum">السؤال 1 من 10</div>
-          <span class="sl-q-icon" id="slQIcon">⭐</span>
+          <span class="sl-q-icon" id="slQIcon"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span></span>
           <div class="sl-q-text" id="slQText">...</div>
           <div class="sl-options" id="slOptions"></div>
           <div class="sl-feedback" id="slFeedback">
@@ -1486,7 +1491,7 @@
               <div class="sl-feedback-sub" id="slFbSub"></div>
             </div>
           </div>
-          <button class="sl-next-btn" id="slNextBtn" onclick="slNextQuestion()">التالي ←</button>
+          <button class="sl-next-btn" id="slNextBtn" onclick="slNextQuestion()">التالي <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"/><path d="M9 6l-6 6 6 6"/></svg></span></button>
         </div>
       </div>
 
@@ -1530,43 +1535,43 @@
       <!-- SCREEN 3: Result Screen -->
       <div class="sl-screen" id="slResultScreen">
         <div class="sl-result-screen" style="width:100%;max-width:500px;margin:0 auto">
-          <span class="sl-result-mascot" id="slResultMascot">🎉</span>
+          <span class="sl-result-mascot" id="slResultMascot"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l5-13 9 9-13 4Z"/><path d="M14 4l1.5 1.5M18 6l1.5 1.5M11 3l1 2"/></svg></span></span>
           <div class="sl-result-title" id="slResultTitle" style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">أحسنت!</div>
           <div class="sl-result-subtitle" id="slResultSub">انهيت الجلسة بنجاح</div>
 
           <!-- ===== Progress Level Badge ===== -->
           <div id="slProgressBadge" style="margin:1rem auto 1.5rem;max-width:320px;border-radius:20px;padding:1rem 1.5rem;text-align:center;animation:slFadeIn .5s .2s both;">
             <div style="font-size:.75rem;font-weight:700;letter-spacing:1.5px;margin-bottom:.4rem;opacity:.75" id="slProgressBadgeLabel">مستوى تقدمك</div>
-            <div style="font-size:2rem;margin-bottom:.3rem" id="slProgressBadgeEmoji">📊</div>
+            <div style="font-size:2rem;margin-bottom:.3rem" id="slProgressBadgeEmoji"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span></div>
             <div style="font-size:1.35rem;font-weight:900" id="slProgressBadgeTitle">متوسط</div>
             <div style="font-size:.82rem;margin-top:.3rem;line-height:1.5;opacity:.85" id="slProgressBadgeDesc">استمر في التعلم لترقية مستواك!</div>
           </div>
 
           <div class="sl-result-stats">
             <div class="sl-result-stat">
-              <div class="sl-result-stat-icon">✅</div>
+              <div class="sl-result-stat-icon"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M7.5 12.5l3 3 6-6.5"/></svg></span></div>
               <div class="sl-result-stat-num" id="slResCorrect">0</div>
               <div class="sl-result-stat-label">إجابة صحيحة</div>
             </div>
             <div class="sl-result-stat">
-              <div class="sl-result-stat-icon">⭐</div>
+              <div class="sl-result-stat-icon"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span></div>
               <div class="sl-result-stat-num" id="slResXP">0</div>
               <div class="sl-result-stat-label">XP مكتسب</div>
             </div>
             <div class="sl-result-stat">
-              <div class="sl-result-stat-icon">🎯</div>
+              <div class="sl-result-stat-icon"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span></div>
               <div class="sl-result-stat-num" id="slResAccuracy">0%</div>
               <div class="sl-result-stat-label">دقة الإجابة</div>
             </div>
           </div>
           <!-- Level up message -->
           <div id="slLevelUpMsg" style="display:none;background:linear-gradient(135deg,rgba(253,224,71,.15),rgba(245,158,11,.1));border:1px solid rgba(253,224,71,.4);border-radius:16px;padding:1rem;margin-bottom:1.5rem;animation:slFadeIn .5s .3s both;">
-            <div style="font-size:1.8rem;margin-bottom:.25rem">🏆</div>
+            <div style="font-size:1.8rem;margin-bottom:.25rem"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4a3 3 0 0 0 3 4.5M17 5.5h3a3 3 0 0 1-3 4.5"/><path d="M12 14v3.5M9 21.5h6M9.5 17.5h5l.7 4h-6.4l.7-4Z"/></svg></span></div>
             <div style="font-weight:800;color:#fde047;font-size:1rem" id="slLevelUpText">ترقيت للمستوى التالي!</div>
           </div>
           <div class="sl-result-btns">
-            <button class="sl-btn-again" onclick="slPlayAgain()">🔄 جلسة جديدة</button>
-            <button class="sl-btn-change" onclick="slChangeLevel()">🎯 غيّر المستوى</button>
+            <button class="sl-btn-again" onclick="slPlayAgain()"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5"/><path d="M18 3v4.5H13.5"/><path d="M20 12a8 8 0 0 1-14 5"/><path d="M6 21v-4.5H10.5"/></svg></span> جلسة جديدة</button>
+            <button class="sl-btn-change" onclick="slChangeLevel()"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span> غيّر المستوى</button>
           </div>
         </div>
       </div>
@@ -1574,7 +1579,7 @@
       <!-- SCREEN 4: Stage Complete -->
       <div class="sl-screen" id="slStageScreen">
         <div style="text-align:center;padding:2rem 1.5rem;width:100%;max-width:500px;margin:0 auto">
-          <div id="slStageEmoji" style="font-size:5rem;display:block;margin-bottom:1rem;animation:slMascotBounce 1s cubic-bezier(.34,1.56,.64,1)">🎯</div>
+          <div id="slStageEmoji" style="font-size:5rem;display:block;margin-bottom:1rem;animation:slMascotBounce 1s cubic-bezier(.34,1.56,.64,1)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span></div>
           <div style="font-size:1.7rem;font-weight:900;background:linear-gradient(135deg,#fde047,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.4rem" id="slStageTitle">المرحلة 1 اكتملت!</div>
           <div style="color:#8b8aa0;font-size:.95rem;margin-bottom:1.5rem" id="slStageSub">استعد للمرحلة القادمة</div>
           <div style="display:flex;justify-content:center;gap:2rem;margin-bottom:2rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:16px;border:1px solid rgba(255,255,255,.07)">
@@ -1586,10 +1591,10 @@
           <!-- Mini progress badge on stage screen -->
           <div id="slStageBadge" style="margin:.75rem auto 1.25rem;max-width:300px;border-radius:14px;padding:.75rem 1rem;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">
             <span style="font-size:.72rem;color:#8b8aa0;font-weight:700;letter-spacing:1px">مستوى تقدمك</span>
-            <div style="font-size:1.1rem;font-weight:900;margin-top:.2rem" id="slStageBadgeTitle" style="color:#a78bfa">⭐ متوسط</div>
+            <div style="font-size:1.1rem;font-weight:900;margin-top:.2rem" id="slStageBadgeTitle" style="color:#a78bfa"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> متوسط</div>
           </div>
           <button class="sl-btn-again" id="slNextStageBtn" onclick="slContinueToNextStage()" style="width:100%;font-size:1.05rem;padding:.9rem">المرحلة التالية <i class="fas fa-arrow-left"></i></button>
-          <button class="sl-btn-change" onclick="slChangeLevel()" style="width:100%;margin-top:.75rem">🎯 تغيير المستوى</button>
+          <button class="sl-btn-change" onclick="slChangeLevel()" style="width:100%;margin-top:.75rem"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span> تغيير المستوى</button>
         </div>
       </div>
 
@@ -1620,7 +1625,7 @@
       <i class="fas fa-times"></i>
     </button>
     <div class="persona-modal-title">
-      <div style="font-size:2.5rem;margin-bottom:.5rem">🤖</div>
+      <div style="font-size:2.5rem;margin-bottom:.5rem"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8.5" width="16" height="11" rx="3"/><path d="M12 8.5V5M9 3.5h6"/><circle cx="9" cy="14" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1.2" fill="currentColor" stroke="none"/><path d="M9 17.5h6"/><path d="M2 12v3M22 12v3"/></svg></span></div>
       <h2>اختر شخصية مساعدك الذكي</h2>
       <p>الشخصية اللي هتختارها هتفضل معاك دايماً — تقدر تغيرها في أي وقت</p>
     </div>
@@ -1642,15 +1647,15 @@
 <div class="dq-modal" id="dqModal">
   <div class="dq-sheet">
     <div class="dq-header">
-      <span class="dq-title">🎯 مهامك اليومية</span>
+      <span class="dq-title"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg></span> مهامك اليومية</span>
       <button class="dq-close" onclick="closeDQ()"><i class="fas fa-times"></i></button>
     </div>
     <div class="dq-xp-summary">
       <div>
         <div style="font-size:.75rem;color:#94a3b8;margin-bottom:.25rem">إجمالي نقاطك</div>
-        <div class="dq-xp-total" id="dqTotalXP">0 ⭐ XP</div>
+        <div class="dq-xp-total" id="dqTotalXP">0 <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP</div>
       </div>
-      <div class="dq-streak">🔥 <span id="dqStreak">0</span> يوم متواصل</div>
+      <div class="dq-streak"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5s5 4 5 9.5a5 5 0 0 1-10 0c0-1.3.4-2.3 1-3.2.2 1 .8 1.7 1.5 1.7-.3-3 1-5.4 2.5-8Z"/></svg></span> <span id="dqStreak">0</span> يوم متواصل</div>
     </div>
     <div class="dq-quest-list" id="dqQuestList"></div>
     <div class="dq-badge-section">
@@ -1674,12 +1679,12 @@
 <div class="lb-modal" id="lbModal">
   <div class="lb-card">
     <div class="lb-head">
-      <div class="lb-head-title">🏆 لوحة المتصدرين</div>
+      <div class="lb-head-title"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4a3 3 0 0 0 3 4.5M17 5.5h3a3 3 0 0 1-3 4.5"/><path d="M12 14v3.5M9 21.5h6M9.5 17.5h5l.7 4h-6.4l.7-4Z"/></svg></span> لوحة المتصدرين</div>
       <button class="lb-close" onclick="closeLB()"><i class="fas fa-times"></i></button>
     </div>
     <div class="lb-tabs">
-      <button class="lb-tab active" onclick="lbTab('week',this)">🗓️ هذا الأسبوع</button>
-      <button class="lb-tab" onclick="lbTab('all',this)">🌟 كل الوقت</button>
+      <button class="lb-tab active" onclick="lbTab('week',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></span> هذا الأسبوع</button>
+      <button class="lb-tab" onclick="lbTab('all',this)"><span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z" opacity="0.55"/><path d="M12 5.5l1.5 3.6 3.9.3-3 2.5 1 3.8L12 13.6l-3.4 2.1 1-3.8-3-2.5 3.9-.3L12 5.5Z"/></svg></span> كل الوقت</button>
     </div>
     <div class="lb-list" id="lbList"></div>
   </div>
