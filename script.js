@@ -301,6 +301,7 @@ async function isAdminUser(userId) {
   let _currentAiKey = AI_KEY_DEFAULT;
   let _currentGeminiKey = "";
   let _currentTavilyKey = "";
+  let _currentGlobalAiInstructions = "";
   let _aiKeyUnsub = null;
   function _maskKey(k){
     const s = (k || "").toString();
@@ -320,6 +321,7 @@ async function isAdminUser(userId) {
           _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
           _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
           _currentTavilyKey = (d.tavilyApiKey && String(d.tavilyApiKey).trim()) || "";
+          _currentGlobalAiInstructions = (d.globalAiInstructions && String(d.globalAiInstructions).trim()) || "";
           const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
           const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
           if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
@@ -338,6 +340,7 @@ async function isAdminUser(userId) {
       _currentAiKey = (d.groqApiKey && String(d.groqApiKey).trim()) || AI_KEY_DEFAULT;
       _currentGeminiKey = (d.geminiApiKey && String(d.geminiApiKey).trim()) || "";
       _currentTavilyKey = (d.tavilyApiKey && String(d.tavilyApiKey).trim()) || "";
+      _currentGlobalAiInstructions = (d.globalAiInstructions && String(d.globalAiInstructions).trim()) || "";
       const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
       const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
       if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
@@ -512,6 +515,55 @@ async function isAdminUser(userId) {
   window.getTavilyApiKey = getTavilyApiKey;
   window.openTavilyKeyModal = openTavilyKeyModal;
   window.setTavilyApiKey = openTavilyKeyModal;
+
+  // ====== تعليمات عامة للذكاء الاصطناعي (يحفظها المشرف مرة واحدة وتطبّق فورًا على كل المستخدمين) ======
+  // نفس باترن Tavily بالظبط: بتتحفظ في نفس مستند Firestore: system/ai_settings, field: globalAiInstructions
+  function getGlobalAiInstructions(){ return (_currentGlobalAiInstructions && String(_currentGlobalAiInstructions).trim()) || ""; }
+  function openGlobalAiInstructionsModal(){
+    if (!isAdmin) { SoundEffects && SoundEffects.error && SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
+    var existing = document.getElementById("globalAiInstructionsModal");
+    if (existing) existing.remove();
+    var modal = document.createElement("div");
+    modal.className = "modal active";
+    modal.id = "globalAiInstructionsModal";
+    modal.innerHTML =
+      '<div class="modal-content" style="max-width:520px">'
+      + '<div class="modal-header"><h3><i class="fas fa-clipboard-list"></i> تعليمات عامة للذكاء الاصطناعي</h3>'
+      + '<button class="modal-close" onclick="this.closest(\'.modal\').remove()"><i class="fas fa-times"></i></button></div>'
+      + '<div class="modal-body">'
+      + '<p style="color:#aaa;font-size:.85rem;margin-bottom:.8rem;line-height:1.7">اكتب أي قاعدة تحكم في رد الذكاء الاصطناعي — هتتطبّق فورًا على كل المستخدمين من غير ما تلمس الكود. مثال: "متحطش روابط تحت نتائج البحث" أو "متحطش صور في الردود" أو "خلي أسلوب الكلام أرقى وأقصر".</p>'
+      + '<textarea id="globalAiInstructionsInput" rows="7" style="width:100%;padding:.8rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-family:inherit;resize:vertical" placeholder="اكتب التعليمات هنا، سطر لكل قاعدة..."></textarea>'
+      + '<button class="quiz-btn" style="width:100%;margin-top:1rem" onclick="saveGlobalAiInstructions(document.getElementById(\'globalAiInstructionsInput\').value)"><i class="fas fa-save"></i> حفظ لكل المستخدمين</button>'
+      + '</div></div>';
+    document.body.appendChild(modal);
+    var ta = document.getElementById("globalAiInstructionsInput");
+    if (ta) ta.value = _currentGlobalAiInstructions || "";
+  }
+  async function saveGlobalAiInstructions(v){
+    if (!isAdmin) { SoundEffects && SoundEffects.error && SoundEffects.error(); showToast("❌ هذه الصلاحية للمشرف فقط"); return; }
+    var trimmed = (v || "").trim();
+    try {
+      await db.collection("system").doc("ai_settings").set({
+        globalAiInstructions: trimmed,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: _normEmail(auth.currentUser && auth.currentUser.email) || "unknown"
+      }, { merge: true });
+      _currentGlobalAiInstructions = trimmed;
+      SoundEffects && SoundEffects.success && SoundEffects.success();
+      showToast(trimmed ? "✅ اتحفظت التعليمات وهتشتغل فورًا لكل المستخدمين" : "✅ اتمسحت التعليمات العامة");
+      var m = document.getElementById("globalAiInstructionsModal");
+      if (m) m.remove();
+    } catch(e){
+      console.error("saveGlobalAiInstructions err", e);
+      let msg = "❌ فشل الحفظ";
+      const code = (e && (e.code || e.message)) || "";
+      if (/permission|denied|insufficient/i.test(code)) msg = "❌ صلاحيات Firestore لا تسمح بالكتابة في system/ai_settings";
+      showToast(msg);
+    }
+  }
+  window.getGlobalAiInstructions = getGlobalAiInstructions;
+  window.openGlobalAiInstructionsModal = openGlobalAiInstructionsModal;
+  window.saveGlobalAiInstructions = saveGlobalAiInstructions;
 
   // ====== دالة البحث الحقيقي في الإنترنت عبر Tavily ======
   // بترجع نتائج بحث حقيقية (عناوين + روابط + مقتطفات) من الإنترنت كله —
@@ -1085,6 +1137,7 @@ async function updateAdminUI() {
             addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); }, null, ["#f59e0b","#fbbf24"]);
             addItem("geminiKeyMenuItem","fas fa-key","مفتاح تحليل الصور 🖼️", () => { menu.classList.remove("active"); openGeminiKeyModal(); }, null, ["#ec4899","#f472b6"]);
             addItem("tavilyKeyMenuItem","fas fa-globe","مفتاح البحث في الإنترنت 🔎", () => { menu.classList.remove("active"); openTavilyKeyModal(); }, null, ["#06b6d4","#22d3ee"]);
+            addItem("globalAiInstructionsMenuItem","fas fa-clipboard-list","تعليمات عامة للذكاء الاصطناعي 📋", () => { menu.classList.remove("active"); openGlobalAiInstructionsModal(); }, null, ["#f59e0b","#fbbf24"]);
             addItem("issuesLogMenuItem","fas fa-triangle-exclamation","المشاكل 🛠️", () => { menu.classList.remove("active"); window.openIssuesModal(); }, null, ["#ef4444","#f87171"]);
             addItem("multiKeyMenuItem","fas fa-layer-group","توزيع مفاتيح API 🔑", () => { menu.classList.remove("active"); window.openMultiKeyModal(); }, null, ["#6366f1","#818cf8"]);
             addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); }, null, ["#14b8a6","#2dd4bf"]);
@@ -11034,7 +11087,7 @@ function slStopAllAnimations() {
           return {
             model: model,
             messages: [
-              { role: 'system', content: persona.systemPrompt },
+              { role: 'system', content: persona.systemPrompt + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية:\n' + window.getGlobalAiInstructions()) : '') },
               ...hist,
               { role: 'user', content: userMsg }
             ],
@@ -12459,6 +12512,13 @@ function slStopAllAnimations() {
 
       var _imageGenPolicyBlock = '\n\nقاعدة إلزامية بخصوص الصور: إنت شخصياً متقدرش تولّد أو ترفع صور — التوليد الفعلي بيحصل من نظام منفصل تلقائي. ممنوع تمامًا تكتب رابط صورة وهمي (زي https://... .png أو .jpg من عندك) أو تتظاهر إنك "ولّدت" أو "أرفقت" صورة، لأن ده هيبقى معلومة كاذبة. لو حسيت إن المستخدم طالب صورة ولسه مطلعتش، قوله بوضوح إنك هتولدها له الآن أو اطلب منه يعيد صياغة طلبه بوضوح (مثلاً "اعمل لي صورة كذا")، من غير ما تخترع أي رابط أو تفاصيل ملف.';
 
+      // ── تعليمات المشرف العامة: قواعد يحطها المشرف من القائمة (📋) وتتطبّق فورًا على كل المستخدمين
+      // من غير أي تعديل في الكود. بتتحط بأولوية عالية عشان توزن على أي قاعدة تانية لو فيه تعارض. ──
+      var _globalAdminInstructions = (typeof window.getGlobalAiInstructions === 'function') ? window.getGlobalAiInstructions() : '';
+      var _globalInstructionsBlock = _globalAdminInstructions
+        ? '\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + _globalAdminInstructions
+        : '';
+
       // ── هل المستخدم طلب صراحةً إن كل ملف يبقى لوحده (منفصل) بدل الدمج في ملف واحد؟ ──
       var _wantsSeparateFiles = /كل\s*ملف\s*(ل?وحد|لوحده|منفصل)|ملفات?\s*منفصل|افصل(و|ي)?\s*ال?ملف|فصل\s*ال?ملف|3\s*ملفات|ثلاث(ة)?\s*ملفات|كل\s*حاجة\s*ف[يى]\s*ملف|separate\s*files?|split\s*(the\s*)?files?|multiple\s*files?/i.test(userMsg);
 
@@ -12488,8 +12548,8 @@ function slStopAllAnimations() {
         var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
         var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -12580,7 +12640,7 @@ function slStopAllAnimations() {
       async function callGeminiTextFallback() {
         var pool = window.GeminiKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         // ── ينادي Gemini مرة واحدة بأي سياق محادثة مُعطى، ويرجّع النص + سبب التوقف (finishReason) ──
         async function _geminiOnce(gKey, convContents) {
           var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -14136,6 +14196,14 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).catch(function(e){ console.error('good code save err', e); });
     } catch(eGood) { console.error(eGood); }
+    // ── وعي لحظي بالمحادثة: نضيف ملاحظة التقييم لتاريخ المحادثة نفسه (مش بس قاعدة بيانات خارجية)
+    // عشان الرد الجاي فورًا من الـ AI في نفس الجلسة يبقى عارف إنك عجبك الكود ده بالظبط ──
+    try {
+      window.aiChatHistory = window.aiChatHistory || [];
+      window.aiChatHistory.push({ role:'user', content: '[تقييم فوري 👍]: الكود اللي كتبته للتو عجبني، حافظ على نفس المستوى والأسلوب ده في أي كود جاي.' });
+      window.aiSessionDigest = window.aiSessionDigest || [];
+      window.aiSessionDigest.push('قيّمت كود سابق (الملفات: ' + (filenames || '—') + ') بـ 👍 — الأسلوب ده عجبني.');
+    } catch(eGoodHist) { /* تجاهل أي خطأ */ }
     if (typeof window.showToast === 'function') window.showToast('🌟 تمام، هحافظ على نفس المستوى ده وأطوّر عليه في المرات الجاية');
   };
 
@@ -14143,11 +14211,21 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
     if (!card) return;
     var msgEl = card.closest('.message.received');
-    // ── مفيش أي تخزين في أي قاعدة بيانات هنا خالص — الكود ده هيتمسح تمامًا وميتحفظش عنه أي أثر ──
+    var _blocksBad = (window.__aiCodeGroups && window.__aiCodeGroups[gid]) || [];
+    var _filenamesBad = _blocksBad.map(function(b){ return b.filename || b.lang || ''; }).filter(Boolean).join('، ');
+    // ── مفيش أي تخزين في أي قاعدة بيانات هنا خالص — الكود ده هيتمسح تمامًا وميتحفظش عنه أي أثر دائم ──
     if (window.__aiCodeGroups) delete window.__aiCodeGroups[gid];
     if (msgEl && msgEl.parentNode) msgEl.remove();
     else if (card.parentNode) card.remove();
-    if (typeof window.showToast === 'function') window.showToast('🗑️ تم حذف الكود نهائيًا من غير ما يتخزن أي حاجة عنه');
+    // ── وعي لحظي بالمحادثة (في الذاكرة المؤقتة بس، مش قاعدة بيانات): عشان الرد الجاي فورًا
+    // في نفس الجلسة يبقى عارف إنك مش عاجبك الكود اللي فات، ويحاول ميكررش نفس الغلطة ──
+    try {
+      window.aiChatHistory = window.aiChatHistory || [];
+      window.aiChatHistory.push({ role:'user', content: '[تقييم فوري 👎]: الكود اللي كتبته للتو ملقاش إعجابي وحذفته. حاول تفهم ليه ممكن يكون كان ناقص أو مش مظبوط، وميتكررش نفس الأسلوب لو طلبت حاجة شبهها تاني في المحادثة دي.' });
+      window.aiSessionDigest = window.aiSessionDigest || [];
+      window.aiSessionDigest.push('قيّمت كود سابق (الملفات: ' + (_filenamesBad || '—') + ') بـ 👎 وحذفته — الأسلوب ده مش عاجبني.');
+    } catch(eBadHist) { /* تجاهل أي خطأ */ }
+    if (typeof window.showToast === 'function') window.showToast('🗑️ تم حذف الكود نهائيًا من غير ما يتخزن أي حاجة عنه في أي قاعدة بيانات');
   };
 
 
