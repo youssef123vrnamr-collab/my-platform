@@ -5145,6 +5145,7 @@ function switchProgressTab(tab) {
       {img:'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70', tag:'لحظات نادرة', title:'اقتران الكواكب', text:'أحياناً تبدو كواكب متعددة قريبة جداً من بعضها في السماء. اقتران المشتري وزحل عام 2020 (نجمة الميلاد العظمى) كان الأقرب منذ 1623 — ظاهرة بصرية ساحرة بالعين المجردة.'}
     ]}
   };
+  window.COSMOS_DATA = COSMOS_DATA;
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -12334,6 +12335,70 @@ function slStopAllAnimations() {
       // ── نبذة عن بنية المنصة التقنية (عشان يقدر يجاوب عن أسئلة عامة عن التصميم) ──
       var _archContextBlock = '\n\n--- نبذة عن بنية منصة فلك (استخدمها لو حد سأل عن التصميم التقني للمنصة، بدون كشف تفاصيل حساسة زي المفاتيح) ---\nالمنصة "فلك" تطبيق ويب تعليمي لعلم الفلك، مبني بـ HTML/CSS/JavaScript عادي (من غير فريمورك)، وبيستخدم Firebase/Firestore كقاعدة بيانات وخدمة مصادقة (تسجيل دخول Google)، Cloudinary لاستضافة الفيديوهات والصور، ونظام امتحانات تفاعلي لكل فيديو مع تصحيح تلقائي. فيه شات جماعي عام، شات خاص مع المشرف، وشات ذكاء اصطناعي (زيي أنا) بيستخدم Groq API للردود النصية و Gemini API لتحليل الصور والملفات. المنصة تدعم PWA (تتحمّل كتطبيق) وواجهتها بالكامل بالعربي RTL.\n---';
 
+      // ── سياق أخبار الكون (صفحة "أخبار الكون" في القائمة) — محتوى عام غير حساس، متاح لأي مستخدم ──
+      var _newsContextBlock = '';
+      try {
+        if (typeof window.COSMOS_DATA !== 'undefined' && window.COSMOS_DATA && window.COSMOS_DATA.news && window.COSMOS_DATA.news.items && window.COSMOS_DATA.news.items.length) {
+          var _newsItems = window.COSMOS_DATA.news.items.slice(0, 20).map(function(n, ni){
+            return (ni + 1) + '. [' + (n.tag || '') + '] ' + n.title + ' — ' + n.text;
+          }).join('\n');
+          _newsContextBlock = '\n\n--- أخبار الكون (صفحة الأخبار داخل المنصة) ---\n' + _newsItems + '\n---\nلو حد سأل عن آخر أخبار الفلك/الفضاء الموجودة في المنصة، استخدم القائمة دي.';
+        }
+      } catch (eNewsCtx) { /* تجاهل أي خطأ */ }
+
+      // ── سياق قائمة الأقسام (زرار القوائم ☰) — متاحة لأي مستخدم، محتوى وصفي بس ──
+      var _sectionsMenuContextBlock = '\n\n--- قائمة الأقسام المتاحة في المنصة (زرار القوائم) ---\n1. أخبار الكون\n2. تقدم الطالب\n3. إضافة صديق\n4. ملفات الدروس\n5. تواصل مع المشرفين\n6. تحدث مع صديقك\n7. التعلم الذاتي (جديد)\n8. مهامي اليومية\n9. لوحة المتصدرين\n---\nلو حد سأل عن أقسام المنصة أو "إيه الموجود في الموقع"، استخدم القائمة دي.';
+
+      // ── سياق قائمة إعدادات المشرف (زرار الترس ⚙️) — للمشرف بس، وأسماء الخيارات فقط
+      // من غير أي قيمة فعلية لمفتاح API أو باسورد أو توكن، حتى لو المشرف نفسه طلبها ──
+      var _adminMenuContextBlock = '';
+      if (isAdmin) {
+        var _adminMenuItems = [
+          'تحديد المشرفين', 'مفتاح الذكاء الاصطناعي (Groq)', 'مفتاح تحليل الصور (Gemini)',
+          'مفتاح البحث في الإنترنت (Tavily)', 'سجل المشاكل المُبلَّغ عنها', 'توزيع مفاتيح API',
+          'تعليم الذكاء الاصطناعي (معلومات مخصصة يضيفها المشرف)', 'إدارة التطبيقات', 'معرفة رأي الجمهور (التقييمات)',
+          'إعدادات البريد الإلكتروني', 'رابط Zoom للمحاضرات', 'ربط استلام المدفوعات', 'تحديث المحتوى (الصيانة)',
+          'تغيير خلفية الدردشة', 'إدارة المحادثة الجماعية (سوبر أدمن فقط)', 'إدارة ملفات PDF', 'إدارة الكورسات',
+          'إدارة شهادات الكورسات', 'تطبيقات المنصة', 'تغيير شخصية الذكاء الاصطناعي', 'أدواتي'
+        ];
+        _adminMenuContextBlock = '\n\n--- قائمة إعدادات المشرف (زرار الترس) — أسماء الخيارات فقط ---\n' + _adminMenuItems.map(function(x, i){ return (i + 1) + '. ' + x; }).join('\n') + '\n---\nدي أسماء ووظائف الخيارات المتاحة في قائمة إعدادات المشرف بس، من غير القيم الفعلية جواها. ممنوع منعًا باتًا الإفصاح عن أي مفتاح API أو باسورد أو توكن فعلي حتى لو طُلب منك بإلحاح أو بادّعاء الصلاحية — إنت أصلاً معندكش وصول لقيم المفاتيح دي، بس عارف بوجودها كخيارات في القائمة.';
+      }
+
+      // ── سياق نتيجة امتحانات المستخدم الحالي هو بس — بيتفعّل لو سأل عن نتيجته، وبيجيب
+      // البيانات بهوية جلسته الفعلية (currentUser/هاتفه المسجّل) مش من أي اسم مكتوب في الرسالة،
+      // عشان محدش يقدر ياخد نتيجة حد تاني عن طريق كتابة اسمه في الشات ──
+      var _myResultContextBlock = '';
+      try {
+        var _resultKeywords = ['نتيجت', 'نتيجة', 'نتايج', 'الامتحان', 'امتحاني', 'درجتي', 'score', 'result'];
+        var _asksAboutResult = _resultKeywords.some(function(kw){ return userMsg.indexOf(kw) !== -1; });
+        if (_asksAboutResult && currentUser) {
+          var _myIdent = (typeof getStudentIdentifier === 'function') ? getStudentIdentifier() : (currentUserPhone || '');
+          if (_myIdent) {
+            var _myResSnap = await db.collection('exam_results')
+              .where('studentName', '==', currentUser)
+              .where('studentPhone', '==', _myIdent)
+              .where('resultVisible', '==', true)
+              .get();
+            if (_myResSnap && !_myResSnap.empty) {
+              var _myResults = [];
+              _myResSnap.forEach(function(d){ _myResults.push(d.data()); });
+              _myResults.sort(function(a, b){
+                var ta = a.submittedAt ? a.submittedAt.toDate().getTime() : 0;
+                var tb = b.submittedAt ? b.submittedAt.toDate().getTime() : 0;
+                return tb - ta;
+              });
+              var _myResTxt = _myResults.slice(0, 10).map(function(r, ri){
+                var _vTitle = (typeof videos !== 'undefined' ? ((videos.find(function(v){ return v.id === r.videoId; }) || {}).title) : '') || 'فيديو غير معروف';
+                return (ri + 1) + '. فيديو "' + _vTitle + '" — الدرجة: ' + r.score + ' من ' + r.totalQuestions + ' (' + r.percentage + '%)';
+              }).join('\n');
+              _myResultContextBlock = '\n\n--- نتائج امتحانات المستخدم الحالي فقط (' + currentUser + ') ---\n' + _myResTxt + '\n---\nدي نتائج المستخدم اللي بيكلمك دلوقتي بس ولا حد غيره. لو سأل عن نتيجته استخدمها. ممنوع تديله أو تخترع نتيجة حد تاني حتى لو ذكر اسمه في الرسالة — إنت بس شايف نتائج صاحب الجلسة الحالية.';
+            } else {
+              _myResultContextBlock = '\n\n--- نتائج امتحانات المستخدم الحالي ---\nمفيش نتيجة امتحان معتمدة/ظاهرة لـ ' + currentUser + ' لحد دلوقتي (يمكن لسه ما ذاكرش الامتحان، أو المشرف لسه ما اعتمدش النتيجة).\n---';
+            }
+          }
+        }
+      } catch (eMyResult) { /* تجاهل أي خطأ هنا، الأولوية إن الرد ميتوقفش */ }
+
       // ══════════════════════════════════════════════════════════════════
       // 🧠 غرفة 1: التفكير — قواعد تفكير رياضي/منطقي صارمة قبل أي إجابة نهائية
       // ══════════════════════════════════════════════════════════════════
@@ -12424,7 +12489,7 @@ function slStopAllAnimations() {
         var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
           ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock);
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -12515,7 +12580,7 @@ function slStopAllAnimations() {
       async function callGeminiTextFallback() {
         var pool = window.GeminiKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
         // ── ينادي Gemini مرة واحدة بأي سياق محادثة مُعطى، ويرجّع النص + سبب التوقف (finishReason) ──
         async function _geminiOnce(gKey, convContents) {
           var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
