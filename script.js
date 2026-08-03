@@ -71,7 +71,7 @@ async function isAdminUser(userId) {
   let paidCoursesData = []; // [{id, title, videoIds, price}] for grouping in library view
   let pendingVideoInfo = null, currentEditVideoId = null, currentExam = null, currentVideoIdForExam = null, currentExamAnswers = {}, examTimer = null, examTimeRemaining = 0;
   let progressInterval = null, metadataListener = null, lastWatchedData = null, currentUser = null, currentUserPhone = null, currentUserId = null, chatUnsubscribe = null;
-  let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false;
+  let mediaRecorder = null, audioChunks = [], recordingTimer = null, localStream = null, callTimer = null, callSeconds = 0, unreadMessages = 0, isRecording = false, recordingCancelled = false;
   let currentAudio = null, currentAudioBtn = null, userPresenceRef = null, onlineUnsubscribe = null, presenceInterval = null, maintenanceTimerInterval = null, tickInterval = null;
   let maintenanceEndTime = null, uploadStartTime = 0, lastUploadedBytes = 0, lastTime = 0;
   let voiceSettings = { voiceURI: null, rate: 1, pitch: 1 };
@@ -1060,14 +1060,15 @@ async function updateAdminUI() {
           "fas fa-lock":                ["#6366f1","#7c3aed"]
         };
 
-        function addItem(id, icon, label, onclick, extraClass) {
+        function addItem(id, icon, label, onclick, extraClass, colorOverride) {
             const d = document.createElement("div");
             d.className = "settings-menu-item" + (extraClass ? " " + extraClass : "");
             d.id = id;
             const path = MENU_SVG_ICONS[icon];
-            const [c1, c2] = MENU_SVG_COLORS[icon] || ["#6366f1","#8b5cf6"];
+            const [c1, c2] = colorOverride || MENU_SVG_COLORS[icon] || ["#6366f1","#8b5cf6"];
+            d.style.borderInlineStart = `3px solid ${c1}`;
             const iconHtml = path
-              ? `<span class="mmi-bubble" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});margin-left:8px;box-shadow:0 2px 8px ${c1}55"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg></span>`
+              ? `<span class="mmi-bubble" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});margin-left:8px;box-shadow:0 2px 8px ${c1}55"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg></span>`
               : `<i class="${icon}"></i>`;
             d.innerHTML = `${iconHtml}<span class="mmi-label">${label}</span><span class="mmi-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg></span>`;
             if (onclick) d.addEventListener("click", onclick);
@@ -1079,29 +1080,29 @@ async function updateAdminUI() {
             if (!isPWAInstalled()) {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
-            if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
-            addItem("setAdminsMenuItem","fas fa-users-cog","تحديد المشرفين", () => { menu.classList.remove("active"); openSetAdminsModal(); });
-            addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); });
-            addItem("geminiKeyMenuItem","fas fa-key","مفتاح تحليل الصور 🖼️", () => { menu.classList.remove("active"); openGeminiKeyModal(); });
-            addItem("tavilyKeyMenuItem","fas fa-globe","مفتاح البحث في الإنترنت 🔎", () => { menu.classList.remove("active"); openTavilyKeyModal(); });
-            addItem("issuesLogMenuItem","fas fa-triangle-exclamation","المشاكل 🛠️", () => { menu.classList.remove("active"); window.openIssuesModal(); });
-            addItem("multiKeyMenuItem","fas fa-layer-group","توزيع مفاتيح API 🔑", () => { menu.classList.remove("active"); window.openMultiKeyModal(); });
-            addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); });
-            addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); });
-            addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); });
-            addItem("emailSettingsMenuItem","fas fa-envelope","إعدادات البريد الإلكتروني", () => { menu.classList.remove("active"); openEmailSettingsModal(); });
-            addItem("zoomLinkMenuItem","fas fa-video","رابط Zoom للمحاضرات", () => { menu.classList.remove("active"); openZoomLinkSettings(); });
-            addItem("supervisorPayoutMenuItem","fas fa-credit-card","ربط استلام المدفوعات (مشرف)", () => { menu.classList.remove("active"); openSupervisorPayoutModal(); });
-            addItem("logoutMenuItem","fas fa-sign-out-alt","خروج المشرف", () => { menu.classList.remove("active"); logout(); });
-            addItem("maintenanceMenuItem","fas fa-tools","تحديث المحتوى", () => { menu.classList.remove("active"); openMaintenanceModal(); });
-            addItem("chatBgMenuItem","fas fa-palette","تغيير خلفية الدردشة", () => { menu.classList.remove("active"); openChatBgModal(); });
-            if (isSuperAdmin) addItem("groupAdminMenuItem","fas fa-users-cog","إدارة المحادثة الجماعية", () => { menu.classList.remove("active"); openGroupChatAdminPanel(); });
-            addItem("pdfFilesMenuItem","fas fa-file-pdf","إدارة ملفات PDF", () => { menu.classList.remove("active"); openPdfManagerModal(); });
-            addItem("manageCoursesMenuItem","fas fa-graduation-cap","إدارة الكورسات", () => { menu.classList.remove("active"); showCoursesList(); });
-            addItem("manageCertificatesMenuItem","fas fa-certificate","إدارة شهادات الكورسات", () => { menu.classList.remove("active"); openCertificatesManager(); });
-            addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
-            addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); });
-            addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); });
+            if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); }, null, ["#0ea5e9","#38bdf8"]);
+            addItem("setAdminsMenuItem","fas fa-users-cog","تحديد المشرفين", () => { menu.classList.remove("active"); openSetAdminsModal(); }, null, ["#7c3aed","#a78bfa"]);
+            addItem("aiKeyMenuItem","fas fa-key","مفتاح الذكاء الاصطناعي", () => { menu.classList.remove("active"); openAiKeyModal(); }, null, ["#f59e0b","#fbbf24"]);
+            addItem("geminiKeyMenuItem","fas fa-key","مفتاح تحليل الصور 🖼️", () => { menu.classList.remove("active"); openGeminiKeyModal(); }, null, ["#ec4899","#f472b6"]);
+            addItem("tavilyKeyMenuItem","fas fa-globe","مفتاح البحث في الإنترنت 🔎", () => { menu.classList.remove("active"); openTavilyKeyModal(); }, null, ["#06b6d4","#22d3ee"]);
+            addItem("issuesLogMenuItem","fas fa-triangle-exclamation","المشاكل 🛠️", () => { menu.classList.remove("active"); window.openIssuesModal(); }, null, ["#ef4444","#f87171"]);
+            addItem("multiKeyMenuItem","fas fa-layer-group","توزيع مفاتيح API 🔑", () => { menu.classList.remove("active"); window.openMultiKeyModal(); }, null, ["#6366f1","#818cf8"]);
+            addItem("teachAIMenuItem","fas fa-robot","تعليم الذكاء الاصطناعي", () => { menu.classList.remove("active"); openTeachAICircleModal(); }, null, ["#14b8a6","#2dd4bf"]);
+            addItem("manageAppsMenuItem","fas fa-th-large","إدارة التطبيقات", () => { menu.classList.remove("active"); openManageAppsModal(); }, null, ["#a855f7","#c084fc"]);
+            addItem("viewFeedbacksMenuItem","fas fa-chart-simple","معرفة رأي الجمهور", () => { menu.classList.remove("active"); openViewFeedbacksModal(); }, null, ["#059669","#34d399"]);
+            addItem("emailSettingsMenuItem","fas fa-envelope","إعدادات البريد الإلكتروني", () => { menu.classList.remove("active"); openEmailSettingsModal(); }, null, ["#0284c7","#38bdf8"]);
+            addItem("zoomLinkMenuItem","fas fa-video","رابط Zoom للمحاضرات", () => { menu.classList.remove("active"); openZoomLinkSettings(); }, null, ["#f97316","#fb923c"]);
+            addItem("supervisorPayoutMenuItem","fas fa-credit-card","ربط استلام المدفوعات (مشرف)", () => { menu.classList.remove("active"); openSupervisorPayoutModal(); }, null, ["#16a34a","#4ade80"]);
+            addItem("logoutMenuItem","fas fa-sign-out-alt","خروج المشرف", () => { menu.classList.remove("active"); logout(); }, null, ["#e11d48","#fb7185"]);
+            addItem("maintenanceMenuItem","fas fa-tools","تحديث المحتوى", () => { menu.classList.remove("active"); openMaintenanceModal(); }, null, ["#ea580c","#fdba74"]);
+            addItem("chatBgMenuItem","fas fa-palette","تغيير خلفية الدردشة", () => { menu.classList.remove("active"); openChatBgModal(); }, null, ["#d946ef","#f0abfc"]);
+            if (isSuperAdmin) addItem("groupAdminMenuItem","fas fa-users-cog","إدارة المحادثة الجماعية", () => { menu.classList.remove("active"); openGroupChatAdminPanel(); }, null, ["#4338ca","#818cf8"]);
+            addItem("pdfFilesMenuItem","fas fa-file-pdf","إدارة ملفات PDF", () => { menu.classList.remove("active"); openPdfManagerModal(); }, null, ["#0f766e","#2dd4bf"]);
+            addItem("manageCoursesMenuItem","fas fa-graduation-cap","إدارة الكورسات", () => { menu.classList.remove("active"); showCoursesList(); }, null, ["#4f46e5","#818cf8"]);
+            addItem("manageCertificatesMenuItem","fas fa-certificate","إدارة شهادات الكورسات", () => { menu.classList.remove("active"); openCertificatesManager(); }, null, ["#ca8a04","#facc15"]);
+            addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); }, null, ["#9333ea","#c084fc"]);
+            addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); }, null, ["#3b82f6","#93c5fd"]);
+            addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); }, null, ["#f97316","#fdba74"]);
 
             if (uploadZone) uploadZone.classList.add("active");
             if (storageBar) storageBar.style.display = "block";
@@ -1114,15 +1115,15 @@ async function updateAdminUI() {
             if (!isPWAInstalled()) {
                 addItem("installAppMenuItem","fas fa-download","تثبيت التطبيق", () => { menu.classList.remove("active"); installApp(); });
             }
-            addItem("smartLearnMenuItem","fas fa-brain","التعلم الذكي 🧠", () => { menu.classList.remove("active"); openSelfLearning(); }, "sl-menu-item");
-            addItem("chatBgMenuItem","fas fa-palette","تغيير خلفية الدردشة", () => { menu.classList.remove("active"); openChatBgModal(); });
-            addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); });
-            addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); });
-            addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); });
-            addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); });
-            addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); });
-            if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); });
-            addItem("adminLoginMenuItem","fas fa-lock","دخول المشرف", () => { menu.classList.remove("active"); showLogin(); });
+            addItem("smartLearnMenuItem","fas fa-brain","التعلم الذكي 🧠", () => { menu.classList.remove("active"); openSelfLearning(); }, "sl-menu-item", ["#10b981","#06b6d4"]);
+            addItem("chatBgMenuItem","fas fa-palette","تغيير خلفية الدردشة", () => { menu.classList.remove("active"); openChatBgModal(); }, null, ["#d946ef","#f0abfc"]);
+            addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); }, null, ["#9333ea","#c084fc"]);
+            addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); }, null, ["#3b82f6","#93c5fd"]);
+            addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); }, null, ["#f97316","#fdba74"]);
+            addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); }, null, ["#eab308","#fde047"]);
+            addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); }, null, ["#0284c7","#38bdf8"]);
+            if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); }, null, ["#0ea5e9","#38bdf8"]);
+            addItem("adminLoginMenuItem","fas fa-lock","دخول المشرف", () => { menu.classList.remove("active"); showLogin(); }, null, ["#6366f1","#818cf8"]);
 
             if (uploadZone) uploadZone.classList.remove("active");
             if (storageBar) storageBar.style.display = "none";
@@ -3184,7 +3185,7 @@ async function updateAdminUI() {
     showToast("فشل الرفع");
   });
 }
-  async function toggleRecording() { if (isRecording) stopRecording(); else await startRecording(); }
+  async function toggleRecording() { if (isRecording) cancelRecording(); else await startRecording(); }
   function getSupportedVoiceMimeType() { const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac", "audio/mpeg", "audio/ogg;codecs=opus"]; for (const t of types) { if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t; } return ""; }
   function setVoiceRecordingUI(active) {
     const recBtn = document.getElementById("recordBtn");
@@ -3209,6 +3210,7 @@ async function updateAdminUI() {
       mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) audioChunks.push(e.data); };
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
+        if (recordingCancelled) { recordingCancelled = false; audioChunks = []; return; }
         const finalType = mediaRecorder.mimeType || "audio/webm";
         const blob = new Blob(audioChunks, { type: finalType });
         if (!blob.size || blob.size < 800) { showToast("⚠️ التسجيل قصير أو فاضي، جرب تاني وقرّب السماعة"); return; }
@@ -3237,6 +3239,18 @@ async function updateAdminUI() {
       setVoiceRecordingUI(false);
       document.getElementById("recordingIndicator").classList.remove("active");
       document.getElementById("recordingTime").textContent = "0:00";
+    }
+  }
+  function cancelRecording() {
+    if (mediaRecorder && isRecording) {
+      recordingCancelled = true;
+      mediaRecorder.stop();
+      clearInterval(recordingTimer);
+      isRecording = false;
+      setVoiceRecordingUI(false);
+      document.getElementById("recordingIndicator").classList.remove("active");
+      document.getElementById("recordingTime").textContent = "0:00";
+      showToast("🗑️ تم إلغاء التسجيل");
     }
   }
   async function uploadVoice(blob) {
