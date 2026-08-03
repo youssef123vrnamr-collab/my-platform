@@ -7052,13 +7052,33 @@ window.updateActiveToolLabel = function(label) {
       if (!wrap) return;
       const rect = wrap.getBoundingClientRect();
       if (rect.width < 2 || rect.height < 2) return;
-      // حفظ المحتوى الحالي
-      let saved = null;
-      if (c.width > 0 && c.height > 0) {
-        try { saved = ctx.getImageData(0, 0, c.width, c.height); } catch(_) {}
+      const newW = Math.floor(rect.width);
+      const newH = Math.floor(rect.height);
+
+      // أول مرة (canvas لسه من غير مقاس) — نظبطه عادي
+      if (!c.width || !c.height) {
+        c.width = newW;
+        c.height = newH;
+        ctx.fillStyle = '#fdfdfd';
+        ctx.fillRect(0, 0, c.width, c.height);
+        return;
       }
-      c.width = Math.floor(rect.width);
-      c.height = Math.floor(rect.height);
+
+      // ── لو المساحة اتصغّرت (بيحصل ده لما فتحت قائمة الأدوات وهي بتاخد
+      // مساحة من الشاشة) ما نصغرش سطح الرسم الحقيقي؛ الـ CSS (width/height:100%)
+      // هيتكفل يعرضه بالحجم الجديد بصريًا من غير ما نفقد أي بيكسل من الرسمة.
+      // لو صغّرنا هنا فعليًا (زي ما كان بيحصل قبل كده) كنا بنمسح الجزء اللي
+      // برّه الحجم الجديد نهائيًا، وده اللي كان بيسبب مسح نص الشكل المرسوم. ──
+      if (newW <= c.width && newH <= c.height) return;
+
+      // المساحة اتكبّرت (مثلاً فيديو جديد أو رجوع لحجمها الطبيعي) — نكبّر
+      // سطح الرسم مع الحفاظ على المحتوى القديم كامل من غير قص.
+      const targetW = Math.max(newW, c.width);
+      const targetH = Math.max(newH, c.height);
+      let saved = null;
+      try { saved = ctx.getImageData(0, 0, c.width, c.height); } catch(_) {}
+      c.width = targetW;
+      c.height = targetH;
       ctx.fillStyle = '#fdfdfd';
       ctx.fillRect(0, 0, c.width, c.height);
       if (saved) { try { ctx.putImageData(saved, 0, 0); } catch(_) {} }
