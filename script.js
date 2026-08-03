@@ -1,4 +1,17 @@
 
+  // ===== ضبط ارتفاع حقيقي للفيوبورت (--app-vh) — حل احتياطي أقوى من 100dvh
+  //       في نسخ WebView القديمة (بيستخدمه صفحة الرسم في المودال) =====
+  (function setupAppViewportHeight() {
+    function setAppVH() {
+      const h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+      document.documentElement.style.setProperty('--app-vh', (h * 0.01) + 'px');
+    }
+    setAppVH();
+    window.addEventListener('resize', setAppVH);
+    window.addEventListener('orientationchange', setAppVH);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', setAppVH);
+  })();
+
   // ========== Firebase Config ==========
   const firebaseConfig = {
     apiKey: "AIzaSyCAgFi4D9hwtuK391fLsbnDuh5AtTDIHKU",
@@ -990,11 +1003,73 @@ async function updateAdminUI() {
     if (menu) {
         menu.innerHTML = "";
 
+        // ===== مكتبة أيقونات SVG احترافية (Lucide-style) لعناصر المنيو =====
+        const MENU_SVG_ICONS = {
+          "fas fa-download":            '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+          "fab fa-google":              '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+          "fas fa-users-cog":           '<circle cx="9" cy="7" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 4.2 1.7"/><circle cx="18" cy="16" r="3"/><path d="M18 12.5v0M18 19.5v0M15.4 14.2v0M20.6 17.8v0M15.4 17.8v0M20.6 14.2v0"/>',
+          "fas fa-key":                 '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+          "fas fa-globe":               '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 3.5 9A14 14 0 0 1 12 21a14 14 0 0 1-3.5-9A14 14 0 0 1 12 3Z"/>',
+          "fas fa-triangle-exclamation":'<path d="M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.9a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9.5" x2="12" y2="13.5"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+          "fas fa-layer-group":         '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+          "fas fa-robot":               '<rect x="3" y="10" width="18" height="11" rx="2.5"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="10"/><line x1="8" y1="15.5" x2="8" y2="15.5"/><line x1="16" y1="15.5" x2="16" y2="15.5"/><line x1="1" y1="14" x2="3" y2="14"/><line x1="21" y1="14" x2="23" y2="14"/>',
+          "fas fa-th-large":            '<rect x="3" y="3" width="7.5" height="7.5" rx="1.2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.2"/>',
+          "fas fa-chart-simple":        '<line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="12" width="3.2" height="8"/><rect x="10.4" y="7" width="3.2" height="13"/><rect x="15.8" y="3" width="3.2" height="17"/>',
+          "fas fa-envelope":            '<rect x="2" y="4.5" width="20" height="15" rx="2"/><path d="m2 6.5 10 7 10-7"/>',
+          "fas fa-video":               '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 6-4v12l-6-4"/>',
+          "fas fa-credit-card":         '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>',
+          "fas fa-sign-out-alt":        '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+          "fas fa-tools":               '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2-2 2.8-2.8Z"/>',
+          "fas fa-palette":             '<circle cx="13.5" cy="6.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor"/><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A4.6 4.6 0 0 0 22 11a9 9 0 0 0-10-9Z"/>',
+          "fas fa-file-pdf":            '<path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
+          "fas fa-graduation-cap":      '<path d="m22 10-10-5L2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/>',
+          "fas fa-certificate":         '<circle cx="12" cy="8" r="6"/><path d="M9 13.5 7 22l5-3 5 3-2-8.5"/>',
+          "fas fa-user-astronaut":      '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/>',
+          "fas fa-toolbox":             '<rect x="2" y="8" width="20" height="12" rx="2"/><path d="M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/><line x1="2" y1="13" x2="22" y2="13"/>',
+          "fas fa-brain":               '<path d="M9.5 2A2.5 2.5 0 0 0 7 4.5a2.5 2.5 0 0 0-2.5 2.5A2.5 2.5 0 0 0 2 9.5 2.5 2.5 0 0 0 4.5 12 2.5 2.5 0 0 0 2 14.5 2.5 2.5 0 0 0 4.5 17 2.5 2.5 0 0 0 7 19.5 2.5 2.5 0 0 0 9.5 22a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"/><path d="M14.5 2A2.5 2.5 0 0 1 17 4.5a2.5 2.5 0 0 1 2.5 2.5A2.5 2.5 0 0 1 22 9.5 2.5 2.5 0 0 1 19.5 12 2.5 2.5 0 0 1 22 14.5 2.5 2.5 0 0 1 19.5 17 2.5 2.5 0 0 1 17 19.5 2.5 2.5 0 0 1 14.5 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/>',
+          "fas fa-star":                '<polygon points="12 2 15.1 8.6 22.2 9.6 17.1 14.6 18.3 21.7 12 18.3 5.7 21.7 6.9 14.6 1.8 9.6 8.9 8.6"/>',
+          "fas fa-circle-question":     '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.5v.5"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+          "fas fa-lock":                '<rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>'
+        };
+        // ألوان الفقاعة لكل أيقونة — نفس هوية المنصة اللونية
+        const MENU_SVG_COLORS = {
+          "fas fa-download":            ["#10b981","#14b8a6"],
+          "fab fa-google":              ["#0ea5e9","#38bdf8"],
+          "fas fa-users-cog":           ["#7c3aed","#8b5cf6"],
+          "fas fa-key":                 ["#f59e0b","#eab308"],
+          "fas fa-globe":               ["#06b6d4","#0ea5e9"],
+          "fas fa-triangle-exclamation":["#ef4444","#f43f5e"],
+          "fas fa-layer-group":         ["#6366f1","#8b5cf6"],
+          "fas fa-robot":               ["#14b8a6","#06b6d4"],
+          "fas fa-th-large":            ["#8b5cf6","#ec4899"],
+          "fas fa-chart-simple":        ["#10b981","#14b8a6"],
+          "fas fa-envelope":            ["#38bdf8","#0ea5e9"],
+          "fas fa-video":               ["#0ea5e9","#6366f1"],
+          "fas fa-credit-card":         ["#22c55e","#10b981"],
+          "fas fa-sign-out-alt":        ["#ef4444","#dc2626"],
+          "fas fa-tools":               ["#f97316","#f59e0b"],
+          "fas fa-palette":             ["#ec4899","#a855f7"],
+          "fas fa-file-pdf":            ["#dc2626","#9f1239"],
+          "fas fa-graduation-cap":      ["#6366f1","#7c3aed"],
+          "fas fa-certificate":         ["#eab308","#ca8a04"],
+          "fas fa-user-astronaut":      ["#8b5cf6","#6366f1"],
+          "fas fa-toolbox":             ["#f97316","#fb923c"],
+          "fas fa-brain":               ["#10b981","#06b6d4"],
+          "fas fa-star":                ["#fde047","#f59e0b"],
+          "fas fa-circle-question":     ["#38bdf8","#06b6d4"],
+          "fas fa-lock":                ["#6366f1","#7c3aed"]
+        };
+
         function addItem(id, icon, label, onclick, extraClass) {
             const d = document.createElement("div");
             d.className = "settings-menu-item" + (extraClass ? " " + extraClass : "");
             d.id = id;
-            d.innerHTML = `<i class="${icon}"></i> ${label}`;
+            const path = MENU_SVG_ICONS[icon];
+            const [c1, c2] = MENU_SVG_COLORS[icon] || ["#6366f1","#8b5cf6"];
+            const iconHtml = path
+              ? `<span class="mmi-bubble" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,${c1},${c2});margin-left:8px;box-shadow:0 2px 8px ${c1}55"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg></span>`
+              : `<i class="${icon}"></i>`;
+            d.innerHTML = `${iconHtml}<span class="mmi-label">${label}</span><span class="mmi-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg></span>`;
             if (onclick) d.addEventListener("click", onclick);
             menu.appendChild(d);
         }

@@ -8612,8 +8612,12 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 html body #videoModal .modal-content {
   display: flex !important;
   flex-direction: column !important;
+  height: 100vh !important;
   height: 100dvh !important;
+  height: calc(var(--app-vh, 1vh) * 100) !important;
+  max-height: 100vh !important;
   max-height: 100dvh !important;
+  max-height: calc(var(--app-vh, 1vh) * 100) !important;
   overflow: hidden !important;
 }
 html body #videoModal .modal-body {
@@ -8734,6 +8738,42 @@ html body [class*="-btn"]:focus-visible,
 html body [class$="btn"]:focus-visible {
   outline: 2px solid rgba(139,92,246,.85) !important;
   outline-offset: 2px !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ✅ تصميم احترافي موحّد لصفوف قوائم المنيو (settings-menu-item)
+   بيشمل: فقاعة أيقونة SVG، سهم دخول، تباعد بطاقات، وحالة ضغط واضحة
+   للموبايل (touch) بدل ما تعتمد بس على hover اللي مش شغال صح باللمس.
+   ══════════════════════════════════════════════════════════════════════ */
+html body .settings-menu-item {
+  border-radius: 12px !important;
+  margin: 2px 6px !important;
+  width: auto !important;
+}
+html body .settings-menu-item .mmi-label {
+  flex: 1 !important;
+  text-align: right !important;
+}
+html body .settings-menu-item .mmi-arrow {
+  flex-shrink: 0 !important;
+  color: rgba(255,255,255,.28) !important;
+  display: inline-flex !important;
+  transition: transform .15s ease, color .15s ease !important;
+}
+html body .settings-menu-item:hover .mmi-arrow,
+html body .settings-menu-item:active .mmi-arrow {
+  color: rgba(255,255,255,.7) !important;
+  transform: translateX(-2px) !important;
+}
+html body .settings-menu-item:active {
+  background: rgba(124,58,237,.32) !important;
+  transform: scale(.98) !important;
+}
+html body .settings-menu-item .mmi-bubble {
+  transition: transform .15s ease !important;
+}
+html body .settings-menu-item:active .mmi-bubble {
+  transform: scale(1.08) !important;
 }
 
 /* أزرار من غير كلاس خاص ولا ستايل لون — نديها هوية بصرية احترافية بسيطة */
