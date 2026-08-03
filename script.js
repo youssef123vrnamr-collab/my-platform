@@ -52,7 +52,7 @@ async function isAdminUser(userId) {
 
   // ========== Global Variables ==========
   const onlineUsersRef = db.collection("online_users");
-  let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], uploadWidget = null, apps = [];
+  let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], whiteboardKnowledgeBase = [], uploadWidget = null, apps = [];
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
   // ===== 🧠 معمارية "غرف" الذكاء الاصطناعي (Cosmos) =====
   // غرفة 3: الذاكرة الثابتة — دروس مستفادة من تقييمات المستخدمين السلبية (بتتحمّل من Firestore وتفضل موجودة دايمًا بين كل الجلسات)
@@ -1374,7 +1374,72 @@ async function updateAdminUI() {
 
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
-  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); loadAILessonsFromFirebase(); loadAIGoodCodeFromFirebase(); }
+  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); loadAILessonsFromFirebase(); loadAIGoodCodeFromFirebase(); loadWhiteboardKnowledgeFromFirebase(); }
+
+  // ── مكتبة المعرفة العامة اللي الذكاء الاصطناعي "بيتعلمها" من رسومات السبورة الذكية —
+  // متاحة لكل المستخدمين (مش الأدمن بس)، وبتتحدّث لحظيًا لأي حد فاتح المنصة ──
+  let unsubscribeWhiteboardKnowledge = null;
+  function loadWhiteboardKnowledgeFromFirebase() {
+    unsubscribeWhiteboardKnowledge && unsubscribeWhiteboardKnowledge();
+    unsubscribeWhiteboardKnowledge = db.collection("whiteboard_knowledge").orderBy("createdAt", "desc").limit(80)
+      .onSnapshot(snap => {
+        whiteboardKnowledgeBase = [];
+        snap.forEach(d => whiteboardKnowledgeBase.push({ id: d.id, ...d.data() }));
+        if (document.getElementById("whiteboardKnowledgeModal")?.classList.contains("active")) renderWhiteboardKnowledgeList();
+      }, e => console.error("Error loading whiteboard knowledge:", e));
+  }
+
+  // ── حفظ رسمة + تحليل الذكاء الاصطناعي ليها في المكتبة العامة، عشان تبقى مرجع لأي حد فاتح المنصة بعد كده ──
+  function saveWhiteboardKnowledge(imageDataUrl, description) {
+    try {
+      db.collection("whiteboard_knowledge").add({
+        imageData: imageDataUrl,
+        description: description,
+        createdBy: currentUser || "زائر",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(e => console.error("Error saving whiteboard knowledge:", e));
+    } catch (e) { console.error("saveWhiteboardKnowledge error:", e); }
+  }
+  window.saveWhiteboardKnowledge = saveWhiteboardKnowledge;
+
+  function deleteWhiteboardKnowledge(id) {
+    if (!confirm("هل أنت متأكد من حذف هذا العنصر من مكتبة المعرفة؟")) return;
+    db.collection("whiteboard_knowledge").doc(id).delete()
+      .then(() => { SoundEffects && SoundEffects.delete && SoundEffects.delete(); showToast && showToast("🗑️ تم الحذف"); })
+      .catch(e => { console.error(e); showToast && showToast("❌ فشل الحذف"); });
+  }
+  window.deleteWhiteboardKnowledge = deleteWhiteboardKnowledge;
+
+  function renderWhiteboardKnowledgeList() {
+    const list = document.getElementById("whiteboardKnowledgeList");
+    if (!list) return;
+    if (!whiteboardKnowledgeBase.length) {
+      list.innerHTML = '<p style="text-align:center;color:#888;padding:2rem;">لسه مفيش رسومات اتعلّمها الذكاء الاصطناعي — ابعت رسمة من السبورة الذكية عشان تضيفها للمكتبة!</p>';
+      return;
+    }
+    list.innerHTML = whiteboardKnowledgeBase.map(k => {
+      const canDelete = isAdmin || (currentUser && k.createdBy === currentUser);
+      return `<div class="wb-knowledge-item">
+        <img src="${k.imageData || ''}" alt="رسمة" loading="lazy">
+        <div class="wb-knowledge-body">
+          <div class="wb-knowledge-desc">${escapeHtml(k.description || '')}</div>
+          <div class="wb-knowledge-meta"><i class="fas fa-user"></i> ${escapeHtml(k.createdBy || 'زائر')}</div>
+        </div>
+        ${canDelete ? `<button class="wb-knowledge-delete" onclick="deleteWhiteboardKnowledge('${k.id}')" title="حذف"><i class="fas fa-trash"></i></button>` : ''}
+      </div>`;
+    }).join("");
+  }
+  window.renderWhiteboardKnowledgeList = renderWhiteboardKnowledgeList;
+
+  window.openWhiteboardKnowledgeModal = function () {
+    const modal = document.getElementById("whiteboardKnowledgeModal");
+    if (!modal) return;
+    modal.classList.add("active");
+    renderWhiteboardKnowledgeList();
+  };
+  window.closeWhiteboardKnowledgeModal = function () {
+    document.getElementById("whiteboardKnowledgeModal")?.classList.remove("active");
+  };
 
   // ===== غرفة 3: الذاكرة الثابتة — تحميل الدروس المستفادة من التقييمات السلبية (👎) لحظيًا =====
   // بتشتغل مع نفس نداءات loadAIKnowledgeFromFirebase() الموجودة، فمحتاجة سطر واحد بس هنا.
@@ -2932,13 +2997,32 @@ async function updateAdminUI() {
     'شوف الصوره','شوف الصورة','بص على الصوره','بص على الصورة'
   ];
 
+  // ── جمل بتسأل هل الذكاء الاصطناعي "بيشوف"/"بيحلل" صور موجودة أصلاً (مش طلب توليد صورة جديدة) ──
+  const IMAGE_CAPABILITY_QUESTION_GUARDS = [
+    'بتشوف الصور','بيشوف الصور','تقدر تشوف الصور','بتشوف صور','بتقدر تشوف',
+    'بتحلل الصور','بيحلل الصور','تقدر تحلل الصور','بتعرف تشوف','عارف تشوف',
+    'شايف الصور','بتشوف اللي','بيشوف اللي'
+  ];
+
   function isImageRequest(text) {
     if (isLikelyCode(text)) return false;
     const t = text.trim().toLowerCase();
-    // لو الرسالة بتشاور على صورة موجودة (مرفقة أو اتبعتت قبل كده)، دي مش طلب توليد — منعتبرهاش صورة جديدة أبداً
+    // لو الرسالة بتشاور على صورة موجودة (مرفقة أو اتبعتت قبل كده) أو بتسأل عن قدرة الرؤية، دي مش طلب توليد
     if (IMAGE_REFERENCE_GUARDS.some(g => t.includes(g))) return false;
-    if (IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger))) return true;
-    return false;
+    if (IMAGE_CAPABILITY_QUESTION_GUARDS.some(g => t.includes(g))) return false;
+    return IMAGE_GEN_TRIGGERS.some(trigger => {
+      const idx = t.indexOf(trigger);
+      if (idx === -1) return false;
+      // ── كلمات مفتاحية قصيرة/عامة (زي "رسم"، "رسمة") لازم تيجي كلمة مستقلة، مش مدمجة جوه كلمة تانية
+      // (عشان "برسمها" أو "هرسمله" ميتفهموش غلط إنهم طلب توليد صورة) ──
+      if (trigger.length <= 5) {
+        const boundary = /[\s.,!؟?\-:؛"'()]/;
+        const before = idx === 0 ? ' ' : t[idx - 1];
+        const after = (idx + trigger.length >= t.length) ? ' ' : t[idx + trigger.length];
+        if (!boundary.test(before) || !boundary.test(after)) return false;
+      }
+      return true;
+    });
   }
 
   // ── هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ما يتعمله ملف/تنزيل؟ ──
@@ -7501,6 +7585,33 @@ window.updateActiveToolLabel = function(label) {
     return el;
   }
 
+  // ── نصّص صورة مصغّرة (أقصى بعد ~360px) قبل ما نخزّنها في مكتبة المعرفة العامة، عشان نوفّر مساحة Firestore ──
+  function _downscaleForStorage(canvas, maxDim){
+    try {
+      var w = canvas.width, h = canvas.height;
+      if (!w || !h) return canvas.toDataURL('image/png');
+      var scale = Math.min(1, maxDim / Math.max(w, h));
+      var tw = Math.max(1, Math.round(w * scale)), th = Math.max(1, Math.round(h * scale));
+      var off = document.createElement('canvas');
+      off.width = tw; off.height = th;
+      var octx = off.getContext('2d');
+      octx.fillStyle = '#0a0512'; octx.fillRect(0, 0, tw, th);
+      octx.drawImage(canvas, 0, 0, tw, th);
+      return off.toDataURL('image/jpeg', 0.72);
+    } catch(e){ return canvas.toDataURL('image/png'); }
+  }
+
+  // ── بناء سياق مرجعي من رسومات سبق تحليلها (من أي مستخدم) عشان الذكاء الاصطناعي "يستفيد" منها في التحليل الجديد ──
+  function _whiteboardKnowledgeReferenceBlock(){
+    try {
+      if (!window.whiteboardKnowledgeBase || !whiteboardKnowledgeBase.length) return '';
+      var items = whiteboardKnowledgeBase.slice(0, 12).map(function(k, i){
+        return (i + 1) + '. ' + String(k.description || '').replace(/\s+/g, ' ').slice(0, 200);
+      }).join('\n');
+      return '\n\nملاحظة: دي خلاصة تحليلات سابقة لرسومات شبيهة اتبعتت من مستخدمين تانيين على نفس السبورة قبل كده (مكتبة معرفة تراكمية)، استخدمها كمرجع لو مفيدة، بس من غير ما تفترض إن رسمة المستخدم الحالي مطابقة لها إلا لو فعلاً شبهها:\n' + items;
+    } catch(e){ return ''; }
+  }
+
   async function _analyzeDrawing(live){
     if (_dbAiBusy) return;
     var canvas = document.getElementById('drawingCanvas');
@@ -7520,6 +7631,7 @@ window.updateActiveToolLabel = function(label) {
       var promptText = live
         ? 'المستخدم لسه بيرسم دلوقتي على سبورة تفاعلية جوه منصة فلكية تعليمية اسمها "فلك"، ودي لقطة حية للرسمة وهو لسه بيكملها. قول بإيجاز شديد (سطر أو سطرين بس، من غير مقدمات) إيه اللي شايفه لحد دلوقتي، وهل ده شكل فلكي (مدار، كوكب، نظام شمسي، معادلة فيزيائية...)؛ ولو الرسمة لسه ناقصة أو مش واضحة قول كده بصراحة من غير ما تخمّن كتير أو تفتري تفاصيل مش موجودة.'
         : 'حلل هذه الرسمة اللي عملها المستخدم على سبورة فلكية تفاعلية جوه منصة "فلك" التعليمية. لو شكل هندسي أو مخطط فلكي (مدار، نظام شمسي، رسم بياني، مسار كوكب)، فسّره بدقة علمية. لو معادلة رياضية أو فيزيائية، تأكد من صحتها ووضّح معناها وصحح أي خطأ لو موجود. جاوب بإيجاز واحترافية، بنقاط عند الحاجة، من غير ماركداون خام زي ### أو |.';
+      if (!live) promptText += _whiteboardKnowledgeReferenceBlock();
       var body = JSON.stringify({ contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: 'image/png', data: base64Data } }] }] });
       var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
         method: 'POST',
@@ -7540,6 +7652,10 @@ window.updateActiveToolLabel = function(label) {
         window.aiChatHistory.push({ role:'user', content: live ? '[لقطة حية من السبورة الذكية أثناء الرسم]' : '[أرسل المستخدم رسمة من السبورة الذكية للتحليل]' });
         window.aiChatHistory.push({ role:'assistant', content: answer });
       } catch(eHist){ /* تجاهل */ }
+      // ── نحفظ الرسمة وتحليلها في مكتبة المعرفة العامة (مش في وضع المتابعة الحية، عشان منزودش الحفظ بكل لقطة) ──
+      if (!live && typeof window.saveWhiteboardKnowledge === 'function') {
+        try { window.saveWhiteboardKnowledge(_downscaleForStorage(canvas, 360), answer); } catch(eSaveK){ /* تجاهل */ }
+      }
       if (!live) SoundEffects && SoundEffects.success && SoundEffects.success();
     } catch(e){
       console.error('drawing AI analyze err', e);
@@ -12495,6 +12611,18 @@ function slStopAllAnimations() {
         }
       } catch(eKnowCtx) { /* تجاهل أي خطأ */ }
 
+      // ── مكتبة المعرفة التراكمية اللي اتبنت من رسومات السبورة الذكية اللي بعتها مستخدمين مختلفين وتحليل الذكاء
+      // الاصطناعي ليها — متاحة كسياق لأي مستخدم يفتح شات الذكاء الاصطناعي، مش بس في السبورة نفسها ──
+      var _whiteboardKnowledgeContextBlock = '';
+      try {
+        if (typeof whiteboardKnowledgeBase !== 'undefined' && whiteboardKnowledgeBase && whiteboardKnowledgeBase.length) {
+          var _wkList = whiteboardKnowledgeBase.slice(0, 25).map(function(k, wi){
+            return (wi + 1) + '. ' + String(k.description || '').replace(/\s+/g, ' ').slice(0, 220);
+          }).join('\n');
+          _whiteboardKnowledgeContextBlock = '\n\n--- مكتبة معرفة تراكمية من رسومات السبورة الذكية (اتجمعت من تحليلات لرسومات بعتها مستخدمون مختلفون عبر الوقت) ---\n' + _wkList + '\n---\nلو المستخدم سأل عن حاجة قريبة من محتوى الرسومات دي، استخدمها كسياق إضافي مفيد، من غير ما تدّعي إنها رسمته هو تحديدًا إلا لو قال كده صراحة.';
+        }
+      } catch(eWkCtx) { /* تجاهل أي خطأ */ }
+
       // ── نبذة عن بنية المنصة التقنية (عشان يقدر يجاوب عن أسئلة عامة عن التصميم) ──
       var _archContextBlock = '\n\n--- نبذة عن بنية منصة فلك (استخدمها لو حد سأل عن التصميم التقني للمنصة، بدون كشف تفاصيل حساسة زي المفاتيح) ---\nالمنصة "فلك" تطبيق ويب تعليمي لعلم الفلك، مبني بـ HTML/CSS/JavaScript عادي (من غير فريمورك)، وبيستخدم Firebase/Firestore كقاعدة بيانات وخدمة مصادقة (تسجيل دخول Google)، Cloudinary لاستضافة الفيديوهات والصور، ونظام امتحانات تفاعلي لكل فيديو مع تصحيح تلقائي. فيه شات جماعي عام، شات خاص مع المشرف، وشات ذكاء اصطناعي (زيي أنا) بيستخدم Groq API للردود النصية و Gemini API لتحليل الصور والملفات. المنصة تدعم PWA (تتحمّل كتطبيق) وواجهتها بالكامل بالعربي RTL.\n---';
 
@@ -12616,7 +12744,7 @@ function slStopAllAnimations() {
       // 🧠 غرفة 4: تجميع المعلومات — دمج كل الغرف في كتلة سياق واحدة منظمة بالأولوية
       // (معرفة المشرف أولاً، بعدها دروس التقييمات، بعدها الذاكرة المؤقتة، بعدها بيانات المنصة)
       // ══════════════════════════════════════════════════════════════════
-      var _aggregatedContextBlock = _knowledgeContextBlock + _lessonsContextBlock + _goodAnswersContextBlock + _tempMemoryDigestBlock;
+      var _aggregatedContextBlock = _knowledgeContextBlock + _whiteboardKnowledgeContextBlock + _lessonsContextBlock + _goodAnswersContextBlock + _tempMemoryDigestBlock;
 
       var _proSystemSuffix = '\n\nتعليمات إلزامية للرد:\n- جاوب بأسلوب احترافي، مرتب، وواضح.\n- فكّر خطوة بخطوة في المعلومات المتاحة قبل ما تكتب الإجابة النهائية، وابنِ الرد على أساس تفكير منطقي متكامل.\n- استخدم نقاط أو عناوين فرعية عند الحاجة بدل الفقرات الطويلة المتلاحقة.\n- كن دقيقًا علميًا، وإذا لم تكن متأكدًا من معلومة فاذكر ذلك بوضوح بدل التخمين.\n- تجنب الحشو والتكرار، واجعل الإجابة مركّزة ومفيدة.\n- هوية إلزامية: إنت مساعد ذكاء اصطناعي اسمه "'+persona.name+'"، جزء من منصة "فلك" التعليمية. لو حد سألك "مين انت" أو "انت شغال على ايه" أو "انت اي موديل" أو "انت اي تطبيق" أو أي سؤال عن هويتك أو التقنية اللي بتشتغل بيها، جاوب إنك "'+persona.name+'" المساعد الذكي بتاع منصة فلك، ومتقولش أبداً اسم أي شركة أو موديل أو منصة تقنية تانية (زي OpenAI أو ChatGPT أو أي حد تاني) حتى لو حد ألحّ في السؤال.\n- تنسيق النص إلزامي: إنت بترد جوه فقاعة شات على الموبايل مش صفحة ويب. ممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة | أو عناوين Markdown، لأنها بتظهر كرموز غريبة للمستخدم. استخدم بس: **نص عريض** لو محتاج تمييز، سطور جديدة، إيموجي، وأرقام أو نقاط (1. 2. 3. أو •) للتعداد. لو محتاج تعرض كود، حطه بين ```لغة البرمجة``` عادي بس متستخدمش جداول أو عناوين markdown أبداً.';
 
