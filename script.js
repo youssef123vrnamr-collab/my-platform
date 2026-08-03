@@ -7701,91 +7701,6 @@ window.updateActiveToolLabel = function(label) {
     };
     try { aiVoiceNoteRecognition.start(); } catch(eStart) { aiVoiceNoteRecognition = null; }
   };
-  window.openAIVoiceChat = function() {
-    const m = document.getElementById('aiVoiceChatModal');
-    if (m) m.classList.add('active');
-  };
-  window.closeAIVoiceChat = function() {
-    const m = document.getElementById('aiVoiceChatModal');
-    if (m) m.classList.remove('active');
-    if (aiVoiceRecognition) { try { aiVoiceRecognition.stop(); } catch(e){} aiVoiceRecognition = null; }
-  };
-
-  // AI Voice Chat Modal - record and send to AI
-  let aiVoiceActive = false;
-  window.toggleAIVoiceRecord = function() {
-    aiVoiceActive = !aiVoiceActive;
-    const btn = document.getElementById('aiVoiceRecordBtn');
-    const icon = document.getElementById('aiVoiceRecordIcon');
-    const status = document.getElementById('aiVoiceStatus');
-    const listening = document.getElementById('aiVoiceListening');
-    const avatar = document.getElementById('aiVoiceAvatar');
-    const transcript = document.getElementById('aiVoiceTranscript');
-
-    if (aiVoiceActive) {
-      if (btn) { btn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)'; btn.style.boxShadow = '0 0 30px rgba(239,68,68,.6)'; }
-      if (icon) icon.className = 'fas fa-stop';
-      if (status) status.textContent = 'جاري الاستماع...';
-      if (listening) listening.style.display = 'block';
-      if (avatar) avatar.style.animation = 'pulse 0.5s infinite';
-
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        showToast('⚠️ غير مدعوم'); aiVoiceActive = false; return;
-      }
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      aiVoiceRecognition = new SR();
-      aiVoiceRecognition.lang = 'ar-SA';
-      aiVoiceRecognition.continuous = false;
-      aiVoiceRecognition.onresult = async (ev) => {
-        const text = ev.results[0][0].transcript;
-        if (transcript) transcript.innerHTML += `<p style="color:#e2e8f0;margin-bottom:.4rem;text-align:right">🧑 ${text}</p>`;
-        if (status) status.textContent = 'الذكاء الاصطناعي يفكر...';
-        // أوقف الاستماع أثناء رد الـ AI
-        aiVoiceActive = false;
-        try { aiVoiceRecognition.stop(); } catch(e){}
-        try {
-          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + (typeof getAiApiKey==='function'?getAiApiKey():''), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: 'openai/gpt-oss-120b', messages: [{ role:'system', content:'أنت مساعد فلكي. أجب بالعربية بشكل مختصر وواضح.' }, { role:'user', content:text }], max_tokens: 400, temperature: 0.3 })
-          });
-          const data = await res.json();
-          const answer = (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'عذراً، حدث خطأ.';
-          if (transcript) { transcript.innerHTML += `<p style="color:#06b6d4;margin-bottom:.4rem;text-align:right">🤖 ${answer}</p>`; transcript.scrollTop = transcript.scrollHeight; }
-          if (!aiIsMuted && window.speechSynthesis) {
-            const u = new SpeechSynthesisUtterance(answer);
-            u.lang='ar-SA'; u.rate=0.9;
-            // ابدأ الاستماع تاني بس لما يخلص الكلام
-            u.onend = () => {
-              if (status) status.textContent = 'اضغط للتحدث';
-              aiVoiceActive = true;
-              try { aiVoiceRecognition.start(); } catch(e){}
-            };
-            window.speechSynthesis.speak(u);
-          } else {
-            if (status) status.textContent = 'اضغط للتحدث';
-            aiVoiceActive = true;
-            try { aiVoiceRecognition.start(); } catch(e){}
-          }
-        } catch(err) {
-          if (transcript) transcript.innerHTML += `<p style="color:#ef4444;margin-bottom:.4rem">❌ فشل الاتصال</p>`;
-          if (status) status.textContent = 'فشل - حاول مرة أخرى';
-          aiVoiceActive = true;
-          try { aiVoiceRecognition.start(); } catch(e){}
-        }
-      };
-      aiVoiceRecognition.onend = () => { /* لا تعيد التشغيل تلقائياً — بيتحكم فيه onresult */ };
-      aiVoiceRecognition.onerror = (e) => { if (e.error !== 'aborted') { if (status) status.textContent = 'خطأ: ' + e.error; } };
-      aiVoiceRecognition.start();
-    } else {
-      if (btn) { btn.style.background = 'linear-gradient(135deg,#06b6d4,#0891b2)'; btn.style.boxShadow = '0 8px 25px rgba(6,182,212,.4)'; }
-      if (icon) icon.className = 'fas fa-microphone';
-      if (status) status.textContent = 'اضغط على الميكروفون للتحدث';
-      if (listening) listening.style.display = 'none';
-      if (avatar) avatar.style.animation = 'glow 3s infinite';
-      if (aiVoiceRecognition) { try { aiVoiceRecognition.stop(); } catch(e){} aiVoiceRecognition = null; }
-    }
-  };
 })();
 
 // ============================
@@ -10656,10 +10571,10 @@ function slStopAllAnimations() {
   const AI_PERSONAS = [
     {
       id: 'cosmos',
-      name: 'كوزموس',
+      name: 'AlalaGyGyAgha V1.6',
       emoji: '🚀',
       desc: 'مساعد فلكي محترف — يجيبك بعلم وإثارة',
-      systemPrompt: 'أنت كوزموس، مساعد فلكي خبير ومتحمس. تجيب بدقة علمية وبشكل مشوّق. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
+      systemPrompt: 'أنت AlalaGyGyAgha V1.6، مساعد فلكي خبير ومتحمس. تجيب بدقة علمية وبشكل مشوّق. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
       voiceStyle: { rate: 0.92, pitch: 0.85 },
       groqVoice: 'Fritz-PlayAI',   // صوت رجالي عميق وجدي
       badge: 'كل اللغات'
@@ -11033,8 +10948,8 @@ function slStopAllAnimations() {
     var p = _persona; if (!p) return;
     var avatar = document.querySelector('.ai-chat-container .chat-avatar, #aiChatModal .chat-avatar');
     if (avatar) avatar.innerHTML = p.emoji;
-    var nameEl = document.querySelector('#aiChatModal .chat-header-text h3');
-    if (nameEl) nameEl.textContent = p.name + ' ' + p.emoji;
+    var labelEl = document.getElementById('aiModelSwitchLabel');
+    if (labelEl) labelEl.textContent = p.name;
   }
 
   // ===== 9. Patch sendAIMessage — DISABLED (replaced by unified fix at end of file) =====
@@ -11928,7 +11843,7 @@ function slStopAllAnimations() {
             return;
           }
           var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock;
-          promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'كوزموس')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
+          promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'AlalaGyGyAgha V1.6')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
           // ── نفس أساس العبقرية وذاكرة المنصة (معرفة المشرف + دروس التقييمات) اللي بيستخدمها الشات النصي،
           // عشان تحليل الصور/الملفات ميبقاش مسار "من درجة تانية" منفصل عن باقي الغرف ──
           promptText += (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '');
