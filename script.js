@@ -54,7 +54,7 @@ async function isAdminUser(userId) {
   const onlineUsersRef = db.collection("online_users");
   let isAdmin = false, isSuperAdmin = false, videos = [], exams = [], examResults = [], aiKnowledgeBase = [], whiteboardKnowledgeBase = [], uploadWidget = null, apps = [];
   let unsubscribeVideos = null, unsubscribeExams = null, unsubscribeExamResults = null, unsubscribeAIKnowledge = null, unsubscribeMaintenance = null, unsubscribeApps = null;
-  // ===== 🧠 معمارية "غرف" الذكاء الاصطناعي (AlalaGyGyAgha) =====
+  // ===== 🧠 معمارية "غرف" الذكاء الاصطناعي (Cosmos) =====
   // غرفة 3: الذاكرة الثابتة — دروس مستفادة من تقييمات المستخدمين السلبية (بتتحمّل من Firestore وتفضل موجودة دايمًا بين كل الجلسات)
   let aiLessonsLearned = [], unsubscribeAILessons = null;
   // ===== غرفة 3 (امتداد ثاني): ردود عامة (مش كود) اتقيّمت 👍 من المستخدمين — كانت بتتخزن من غير ما حد يستخدمها =====
@@ -597,7 +597,7 @@ async function isAdminUser(userId) {
 
   // ── مراجعة حقيقية للكود: استدعاء تاني منفصل بيراجع الرد اللي فيه كود مقابل طلب المستخدم الأصلي،
   // ويصححه لو لقى نقص أو خطأ، قبل ما يوصل للمستخدم — مش مجرد تعليمة "راجع نفسك" جوه نفس الرد. ──
-  window.verifyAlalaGyGyAghaCodeAnswer = async function(apiKey, originalUserMsg, rawAnswer) {
+  window.verifyCosmosCodeAnswer = async function(apiKey, originalUserMsg, rawAnswer) {
     try {
       var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -616,11 +616,11 @@ async function isAdminUser(userId) {
       var d = await r.json();
       var out = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
       return (out && out.trim()) ? out.trim() : null;
-    } catch (e) { console.warn('verifyAlalaGyGyAghaCodeAnswer failed', e); return null; }
+    } catch (e) { console.warn('verifyCosmosCodeAnswer failed', e); return null; }
   };
 
   // ── استخراج أول كتلة كود HTML كاملة (فيها <html> أو <!DOCTYPE) من رد الذكاء الاصطناعي ──
-  window.extractAlalaGyGyAghaHtmlBlock = function(raw) {
+  window.extractCosmosHtmlBlock = function(raw) {
     if (!raw) return null;
     var m = String(raw).match(/```html\s*\n?([\s\S]*?)```/i);
     if (m && m[1] && /<html[\s>]|<!DOCTYPE/i.test(m[1])) return m[1];
@@ -628,7 +628,7 @@ async function isAdminUser(userId) {
   };
 
   // ── استخراج كل كتل الكود (```لغة ... ```) من رد الذكاء الاصطناعي، بلغتها ──
-  window.extractAlalaGyGyAghaAllCodeBlocks = function(raw) {
+  window.extractCosmosAllCodeBlocks = function(raw) {
     if (!raw) return [];
     var blocks = [];
     var re = /```([a-zA-Z0-9_+-]*)\s*\n?([\s\S]*?)```/g;
@@ -644,8 +644,8 @@ async function isAdminUser(userId) {
   // ── بناء مستند HTML واحد قابل للتشغيل الفعلي من رد قد يكون ملف واحد مدموج أو 3 ملفات منفصلة
   // (html/css/js) — بيدمجهم مؤقتًا بس لغرض الاختبار الحقيقي جوه iframe، من غير ما يغيّر شكل
   // الرد نفسه اللي بيوصل للمستخدم. لو مفيش كتلة HTML أصلاً، بيرجع null (مفيش حاجة تتشغل). ──
-  window.buildAlalaGyGyAghaTestableDoc = function(raw) {
-    var blocks = window.extractAlalaGyGyAghaAllCodeBlocks(raw);
+  window.buildCosmosTestableDoc = function(raw) {
+    var blocks = window.extractCosmosAllCodeBlocks(raw);
     if (!blocks.length) return null;
     var htmlBlock = blocks.find(function(b){ return b.lang === 'html' || b.lang === 'htm'; })
                  || blocks.find(function(b){ return /<!DOCTYPE|<html[\s>]/i.test(b.code); });
@@ -669,14 +669,14 @@ async function isAdminUser(userId) {
 
   // ── تشغيل حقيقي للكود جوه iframe معزول (sandbox) مخفي عن المستخدم — مش "تخمين إنه هيشتغل"،
   // ده تشغيل فعلي في متصفح حقيقي، وأي خطأ JS بيحصل وقت التحميل بنمسكه فورًا. ──
-  window.testAlalaGyGyAghaHtmlCode = function(htmlCode) {
+  window.testCosmosHtmlCode = function(htmlCode) {
     return new Promise(function(resolve) {
       try {
-        var token = 'alalaGyGyAghaTest' + Date.now() + Math.floor(Math.random() * 10000);
+        var token = 'cosmosTest' + Date.now() + Math.floor(Math.random() * 10000);
         var errors = [];
         var done = false, frame = null;
         function onMsg(ev) {
-          if (!ev.data || ev.data.__alalaGyGyAghaTestToken !== token) return;
+          if (!ev.data || ev.data.__cosmosTestToken !== token) return;
           if (ev.data.type === 'error' && errors.indexOf(ev.data.message) === -1) errors.push(ev.data.message);
         }
         function finish() {
@@ -687,7 +687,7 @@ async function isAdminUser(userId) {
         }
         window.addEventListener('message', onMsg);
         var errorCatcher = '<script>(function(){'
-          + 'function report(msg){try{parent.postMessage({__alalaGyGyAghaTestToken:"' + token + '",type:"error",message:String(msg).slice(0,300)},"*");}catch(e){}}'
+          + 'function report(msg){try{parent.postMessage({__cosmosTestToken:"' + token + '",type:"error",message:String(msg).slice(0,300)},"*");}catch(e){}}'
           + 'window.addEventListener("error",function(e){report((e && e.message) || "خطأ غير معروف وقت التشغيل")});'
           + 'window.addEventListener("unhandledrejection",function(e){report("Promise اتفض من غير معالجة: " + ((e && e.reason && e.reason.message) || e.reason))});'
           + '})();<\/script>';
@@ -705,7 +705,7 @@ async function isAdminUser(userId) {
   };
 
   // ── إصلاح موجّه بالأخطاء الحقيقية اللي رجّعها التشغيل الفعلي (مش تخمين) ──
-  window.fixAlalaGyGyAghaHtmlAnswer = async function(apiKey, originalUserMsg, previousAnswer, errorList) {
+  window.fixCosmosHtmlAnswer = async function(apiKey, originalUserMsg, previousAnswer, errorList) {
     try {
       var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -724,7 +724,7 @@ async function isAdminUser(userId) {
       var d = await r.json();
       var out = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
       return (out && out.trim()) ? out.trim() : null;
-    } catch (e) { console.warn('fixAlalaGyGyAghaHtmlAnswer failed', e); return null; }
+    } catch (e) { console.warn('fixCosmosHtmlAnswer failed', e); return null; }
   };
 
   // ── فحص سريع وخفيف قبل بناء أي كود/لعبة: هل الطلب واضح، ولا فيه غموض حقيقي ممكن يخلي
@@ -757,7 +757,7 @@ async function isAdminUser(userId) {
 
   // ── وقت وتاريخ حقيقي دلوقتي، من جهاز المستخدم مباشرة (Intl API) — من غير ما نحتاج إذن GPS.
   // بيتحسب من جديد كل رسالة عشان يفضل دقيق لحظة بلحظة، مش قيمة مخزّنة من الأول. ──
-  window.buildAlalaGyGyAghaLiveTimeContext = function() {
+  window.buildCosmosLiveTimeContext = function() {
     try {
       var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
       var now = new Date();
@@ -3097,16 +3097,16 @@ async function updateAdminUI() {
     }
   }
   // ── مؤشر تفكير مخصص لمنصة "فلك" — نظام شمسي مصغّر بدل الدائرة الدوارة التقليدية ──
-  window.buildAlalaGyGyAghaThinkingHTML = function(label) {
-    return '<div class="alalaGyGyAgha-thinking">'
-      + '<div class="alalaGyGyAgha-thinking-orbit">'
-        + '<div class="alalaGyGyAgha-thinking-ring r1"></div>'
-        + '<div class="alalaGyGyAgha-thinking-ring r2"></div>'
-        + '<div class="alalaGyGyAgha-thinking-planet p1"></div>'
-        + '<div class="alalaGyGyAgha-thinking-planet p2"></div>'
-        + '<div class="alalaGyGyAgha-thinking-core"></div>'
+  window.buildCosmosThinkingHTML = function(label) {
+    return '<div class="cosmos-thinking">'
+      + '<div class="cosmos-thinking-orbit">'
+        + '<div class="cosmos-thinking-ring r1"></div>'
+        + '<div class="cosmos-thinking-ring r2"></div>'
+        + '<div class="cosmos-thinking-planet p1"></div>'
+        + '<div class="cosmos-thinking-planet p2"></div>'
+        + '<div class="cosmos-thinking-core"></div>'
       + '</div>'
-      + '<span class="alalaGyGyAgha-thinking-label">' + escapeHtml(label || 'بيفكر') + '<span class="alalaGyGyAgha-thinking-dot">.</span><span class="alalaGyGyAgha-thinking-dot">.</span><span class="alalaGyGyAgha-thinking-dot">.</span></span>'
+      + '<span class="cosmos-thinking-label">' + escapeHtml(label || 'بيفكر') + '<span class="cosmos-thinking-dot">.</span><span class="cosmos-thinking-dot">.</span><span class="cosmos-thinking-dot">.</span></span>'
       + '</div>';
   };
   function displayAIMessage(text, sender) { let cont = document.getElementById("aiChatMessages"); if (!cont) return; let msg = document.createElement("div"); msg.className = "message " + (sender === "user" ? "sent" : "received"); let time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }); let html = ""; if (sender === "received") html += '<div class="message-sender" style="color:#06b6d4;"><i class="fas fa-robot"></i> مساعد Astronomy</div>'; html += '<div class="message-content">' + escapeHtml(text) + '</div><div class="message-time">' + time + '</div>'; msg.innerHTML = html; cont.appendChild(msg); cont.scrollTop = cont.scrollHeight; }
@@ -3228,7 +3228,7 @@ async function updateAdminUI() {
     } 
 }
   // loadUserDashboard() — يتعمل من داخل googleLogin بعد login ناجح فقط
-  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__alalaGyGyAghaPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
+  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
@@ -3749,7 +3749,7 @@ async function updateAdminUI() {
 
   function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
 
-        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__alalaGyGyAghaPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
+        } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
   function refreshPage() { SoundEffects.success(); const refreshBtn = document.querySelector('.refresh-btn i'); if (refreshBtn) { refreshBtn.style.transform = 'rotate(360deg)'; setTimeout(() => { if(refreshBtn) refreshBtn.style.transform = ''; }, 500); } location.reload(); }
   function hideLoader() { document.getElementById("loader")?.classList.add("hidden"); }
@@ -5203,7 +5203,7 @@ function switchProgressTab(tab) {
 
 
 (function(){
-  const ALALAGYGYAGHA_DATA = {
+  const COSMOS_DATA = {
     stars: { title:'النجوم', icon:'fa-star', color:'#fbbf24', intro:'النجوم كرات هائلة من البلازما تتوهج بفعل الاندماج النووي في نواتها. يقدّر العلماء عدد النجوم في الكون المرئي بأكثر من 200 سكستيليون نجم — رقم يفوق حبات الرمل على كل شواطئ الأرض.', items:[
       {img:'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=900&q=70', tag:'نجمنا الأم', title:'الشمس', text:'نجم قزم أصفر عمره ≈ 4.6 مليار سنة، تبلغ حرارة سطحه 5,500°م ونواته 15 مليون درجة. تنتج طاقتها بدمج 600 مليون طن هيدروجين كل ثانية، وتمدّ كل أشكال الحياة على الأرض بالطاقة.'},
       {img:'https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=900&q=70', tag:'العملاق الأحمر', title:'منكب الجوزاء (Betelgeuse)', text:'عملاق أحمر في كوكبة الجبار، أكبر من شمسنا بـ 700 مرة. لو وُضع مكان الشمس لابتلع المريخ! يُتوقّع أن ينفجر كمستعر أعظم خلال 100,000 سنة قادمة، وسيكون أسطع من القمر في سمائنا.'},
@@ -5282,7 +5282,7 @@ function switchProgressTab(tab) {
       {img:'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70', tag:'لحظات نادرة', title:'اقتران الكواكب', text:'أحياناً تبدو كواكب متعددة قريبة جداً من بعضها في السماء. اقتران المشتري وزحل عام 2020 (نجمة الميلاد العظمى) كان الأقرب منذ 1623 — ظاهرة بصرية ساحرة بالعين المجردة.'}
     ]}
   };
-  window.ALALAGYGYAGHA_DATA = ALALAGYGYAGHA_DATA;
+  window.COSMOS_DATA = COSMOS_DATA;
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -5308,7 +5308,7 @@ function switchProgressTab(tab) {
     news:       'اكتب 6 بطاقات أخبار فلكية وفضائية مثيرة ومتنوعة كأنها أخبار حديثة 2025. كل بطاقة: title، text (2-3 جمل خبر علمي مشوق)، tag (سنة أو وصف). JSON فقط: [{"title":"...","text":"...","tag":"..."}]'
   };
 
-  const ALALAGYGYAGHA_IMG_POOL = [
+  const COSMOS_IMG_POOL = [
     'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70',
     'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=70',
     'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
@@ -5334,7 +5334,7 @@ function switchProgressTab(tab) {
   ];
 
   function getShuffledImgs(count) {
-    const pool = [...ALALAGYGYAGHA_IMG_POOL];
+    const pool = [...COSMOS_IMG_POOL];
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -5365,7 +5365,7 @@ function switchProgressTab(tab) {
       const items = JSON.parse(clean);
       if (!Array.isArray(items) || !items.length) return null;
       const imgs = getShuffledImgs(items.length);
-      const enriched = items.map((it, i) => ({ ...it, img: imgs[i] || ALALAGYGYAGHA_IMG_POOL[i % ALALAGYGYAGHA_IMG_POOL.length] }));
+      const enriched = items.map((it, i) => ({ ...it, img: imgs[i] || COSMOS_IMG_POOL[i % COSMOS_IMG_POOL.length] }));
       _aiContentCache[key] = { data: enriched, time: Date.now() };
       return enriched;
     } catch(e) {
@@ -5378,19 +5378,19 @@ function switchProgressTab(tab) {
     if (!items || !items.length) return '';
     const now = new Date().toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit' });
     return `
-      <div class="alalaGyGyAgha-cards" id="aiCards_${key}">
+      <div class="cosmos-cards" id="aiCards_${key}">
         ${items.map((it, i) => `
-          <article class="alalaGyGyAgha-card ai-generated-card" style="animation-delay:${i * 0.08}s">
-            <div class="alalaGyGyAgha-card-img" style="background-image:url('${encodeURI(it.img)}')">
-              <span class="alalaGyGyAgha-card-tag floating" style="background:rgba(99,102,241,.85);border-color:rgba(167,139,250,.6)">
+          <article class="cosmos-card ai-generated-card" style="animation-delay:${i * 0.08}s">
+            <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')">
+              <span class="cosmos-card-tag floating" style="background:rgba(99,102,241,.85);border-color:rgba(167,139,250,.6)">
                 <i class="fas fa-robot" style="color:#a78bfa"></i> ${escapeHtml(it.tag || 'ذكاء اصطناعي')}
               </span>
-              <span class="alalaGyGyAgha-card-time"><i class="fas fa-clock-rotate-left"></i> ${now}</span>
+              <span class="cosmos-card-time"><i class="fas fa-clock-rotate-left"></i> ${now}</span>
             </div>
-            <div class="alalaGyGyAgha-card-body">
+            <div class="cosmos-card-body">
               <h4 style="color:#e2e8f0">${escapeHtml(it.title)}</h4>
               <p>${escapeHtml(it.text)}</p>
-              <span class="alalaGyGyAgha-read-more" style="color:#a78bfa;font-size:.78rem">
+              <span class="cosmos-read-more" style="color:#a78bfa;font-size:.78rem">
                 <i class="fas fa-brain"></i> محتوى مولّد بالذكاء الاصطناعي
               </span>
             </div>
@@ -5419,17 +5419,17 @@ function switchProgressTab(tab) {
     return indices.slice(0, 6).map(i => all[i]);
   }
 
-  function renderStaticAlalaGyGyAgha(cat) {
+  function renderStaticCosmos(cat) {
     const items = getRotatedStaticItems(cat);
     return `
-      <div class="alalaGyGyAgha-modal-intro"><i class="fas fa-info-circle" style="color:${cat.color};margin-left:.5rem"></i>${escapeHtml(cat.intro)}</div>
-      <div class="alalaGyGyAgha-cards" id="staticCards_${cat.title}">
+      <div class="cosmos-modal-intro"><i class="fas fa-info-circle" style="color:${cat.color};margin-left:.5rem"></i>${escapeHtml(cat.intro)}</div>
+      <div class="cosmos-cards" id="staticCards_${cat.title}">
         ${items.map(it=>`
-          <article class="alalaGyGyAgha-card">
-            <div class="alalaGyGyAgha-card-img" style="background-image:url('${encodeURI(it.img)}')">
-              ${it.tag?`<span class="alalaGyGyAgha-card-tag floating"><i class="fas fa-tag"></i> ${escapeHtml(it.tag)}</span>`:''}
+          <article class="cosmos-card">
+            <div class="cosmos-card-img" style="background-image:url('${encodeURI(it.img)}')">
+              ${it.tag?`<span class="cosmos-card-tag floating"><i class="fas fa-tag"></i> ${escapeHtml(it.tag)}</span>`:''}
             </div>
-            <div class="alalaGyGyAgha-card-body">
+            <div class="cosmos-card-body">
               <h4>${escapeHtml(it.title)}</h4>
               <p>${escapeHtml(it.text)}</p>
             </div>
@@ -5465,7 +5465,7 @@ function switchProgressTab(tab) {
       container.style.transition = 'opacity 0.5s';
       requestAnimationFrame(() => { container.style.opacity = '1'; });
     } else {
-      container.innerHTML = '<div class="alalaGyGyAgha-empty"><i class="fas fa-satellite"></i><p>تعذّر توليد المحتوى الآن، جرّب التحديث.</p></div>';
+      container.innerHTML = '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>تعذّر توليد المحتوى الآن، جرّب التحديث.</p></div>';
     }
   };
 
@@ -5637,7 +5637,7 @@ function switchProgressTab(tab) {
       btn.style.color = '#f9a8d4';
     }
     const filtered = filterNewsBySource(_newsCache || [], source);
-    const c = document.getElementById('alalaGyGyAghaNewsContainer');
+    const c = document.getElementById('cosmosNewsContainer');
     if (c) c.innerHTML = renderNewsCards(filtered.length ? filtered : (_newsCache || []));
   };
 
@@ -5817,7 +5817,7 @@ function switchProgressTab(tab) {
       'https://images.unsplash.com/photo-1532798442725-41036acc7489?w=900&q=70',
       'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=900&q=70'
     ];
-    return `<div class="alalaGyGyAgha-cards">${items.map((p,i)=>{
+    return `<div class="cosmos-cards">${items.map((p,i)=>{
       const d = p.data;
       // الأولوية: صورة حقيقية من مكتبة صور ناسا مطابقة للموضوع بالظبط، بعدها الخريطة الثابتة، وأخيراً صورة عامة
       const img = p.img || WIKI_IMAGE_MAP[p.title] || WIKI_IMAGE_MAP[d.title] || fallbacks[i % fallbacks.length];
@@ -5825,14 +5825,14 @@ function switchProgressTab(tab) {
       const displayTitle = (d.titles && d.titles.normalized) || p.title;
       const url = (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || `https://ar.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
       return `
-      <article class="alalaGyGyAgha-card" onclick="window.open('${encodeURI(url)}','_blank','noopener')" style="cursor:pointer">
-        <div class="alalaGyGyAgha-card-img" style="background-image:url('${encodeURI(img)}')">
-          <span class="alalaGyGyAgha-card-tag floating"><i class="fas fa-satellite-dish"></i> ${p.img ? 'NASA' : 'محدّث'}</span>
+      <article class="cosmos-card" onclick="window.open('${encodeURI(url)}','_blank','noopener')" style="cursor:pointer">
+        <div class="cosmos-card-img" style="background-image:url('${encodeURI(img)}')">
+          <span class="cosmos-card-tag floating"><i class="fas fa-satellite-dish"></i> ${p.img ? 'NASA' : 'محدّث'}</span>
         </div>
-        <div class="alalaGyGyAgha-card-body">
+        <div class="cosmos-card-body">
           <h4><i class="fas fa-bookmark" style="color:${color}"></i> ${escapeHtml(displayTitle)}</h4>
           <p>${escapeHtml(extract.slice(0,260))}${extract.length>260?'…':''}</p>
-          <span class="alalaGyGyAgha-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ المزيد على ويكيبيديا</span>
+          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> اقرأ المزيد على ويكيبيديا</span>
         </div>
       </article>`;
     }).join('')}</div>
@@ -5853,13 +5853,13 @@ function switchProgressTab(tab) {
   function renderAPODCard(a){
     if (!a) return '';
     const isImg = (a.media_type === 'image');
-    return `<article class="alalaGyGyAgha-card" style="grid-column:1/-1;max-width:900px;margin:0 auto 1.25rem">
-      <div class="alalaGyGyAgha-card-img" style="height:340px;${isImg?`background-image:url('${encodeURI(a.hdurl||a.url||'')}')`:''}">
-        <span class="alalaGyGyAgha-card-tag floating"><i class="fas fa-camera"></i> صورة اليوم — ناسا</span>
-        <span class="alalaGyGyAgha-card-time"><i class="far fa-calendar"></i> ${escapeHtml(a.date||'')}</span>
+    return `<article class="cosmos-card" style="grid-column:1/-1;max-width:900px;margin:0 auto 1.25rem">
+      <div class="cosmos-card-img" style="height:340px;${isImg?`background-image:url('${encodeURI(a.hdurl||a.url||'')}')`:''}">
+        <span class="cosmos-card-tag floating"><i class="fas fa-camera"></i> صورة اليوم — ناسا</span>
+        <span class="cosmos-card-time"><i class="far fa-calendar"></i> ${escapeHtml(a.date||'')}</span>
         ${!isImg && a.url ? `<iframe src="${encodeURI(a.url)}" style="width:100%;height:100%;border:none" allowfullscreen></iframe>` : ''}
       </div>
-      <div class="alalaGyGyAgha-card-body">
+      <div class="cosmos-card-body">
         <h4>${escapeHtml(a.title||'')}</h4>
         <p>${escapeHtml((a.explanation||'').slice(0,420))}${(a.explanation||'').length>420?'…':''}</p>
         <p style="font-size:.75rem;color:#9ca3af;margin-top:.5rem"><i class="fas fa-circle-info"></i> المصدر: NASA Astronomy Picture of the Day (APOD)</p>
@@ -5881,15 +5881,15 @@ function switchProgressTab(tab) {
 
   function renderLaunchCards(launches){
     if (!launches || !launches.length) return '';
-    return `<div class="alalaGyGyAgha-cards">${launches.map(l=>{
+    return `<div class="cosmos-cards">${launches.map(l=>{
       const dt = l.net ? new Date(l.net) : null;
       const when = dt && !isNaN(dt) ? dt.toLocaleString('ar-EG', {dateStyle:'medium', timeStyle:'short'}) : '';
-      return `<article class="alalaGyGyAgha-card">
-        <div class="alalaGyGyAgha-card-img" style="background-image:url('${encodeURI((l.image)||'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70')}')">
-          <span class="alalaGyGyAgha-card-tag floating"><i class="fas fa-rocket"></i> إطلاق قادم</span>
-          <span class="alalaGyGyAgha-card-time"><i class="far fa-clock"></i> ${escapeHtml(when)}</span>
+      return `<article class="cosmos-card">
+        <div class="cosmos-card-img" style="background-image:url('${encodeURI((l.image)||'https://images.unsplash.com/photo-1517976547714-720226b864c1?w=900&q=70')}')">
+          <span class="cosmos-card-tag floating"><i class="fas fa-rocket"></i> إطلاق قادم</span>
+          <span class="cosmos-card-time"><i class="far fa-clock"></i> ${escapeHtml(when)}</span>
         </div>
-        <div class="alalaGyGyAgha-card-body">
+        <div class="cosmos-card-body">
           <h4>${escapeHtml(l.name||'')}</h4>
           <p><strong>الوكالة:</strong> ${escapeHtml((l.launch_service_provider && l.launch_service_provider.name)||'—')}</p>
           <p><strong>الحالة:</strong> ${escapeHtml((l.status && l.status.name)||'—')}</p>
@@ -5916,12 +5916,12 @@ function switchProgressTab(tab) {
 
   function renderNewsCards(articles){
     if (!articles || !articles.length) {
-      return '<div class="alalaGyGyAgha-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب التحديث أو تأكد من الاتصال.</p></div>';
+      return '<div class="cosmos-empty"><i class="fas fa-satellite"></i><p>لا توجد أخبار متاحة حالياً، جرّب التحديث أو تأكد من الاتصال.</p></div>';
     }
     const fallback = 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=900&q=70';
     const sourceColors = { nasa: '#fc3d21', esa: '#003087', spaceflight: '#ec4899', default: '#6366f1' };
     const sourceIcons  = { nasa: 'fa-meteor', esa: 'fa-satellite', default: 'fa-rss' };
-    return `<div class="alalaGyGyAgha-cards alalaGyGyAgha-news-grid">${articles.map(a=>{
+    return `<div class="cosmos-cards cosmos-news-grid">${articles.map(a=>{
       const url     = safeNewsUrl(a);
       const isWall  = isBehindWall(a.url || '');
       const img     = a.image_url || fallback;
@@ -5931,37 +5931,37 @@ function switchProgressTab(tab) {
       const srcIcon = sourceIcons[src]  || sourceIcons.default;
       const ago     = escapeHtml(timeAgo(a.published_at));
       return `
-      <a class="alalaGyGyAgha-card alalaGyGyAgha-news-card" href="${url}" target="_blank" rel="noopener noreferrer">
-        <div class="alalaGyGyAgha-card-img" style="background-image:url('${encodeURI(img)}')" onerror="this.style.backgroundImage='url(${fallback})'">
-          <span class="alalaGyGyAgha-card-tag floating" style="background:${srcColor}"><i class="fas ${srcIcon}"></i> ${escapeHtml(srcName)}</span>
-          <span class="alalaGyGyAgha-card-time"><i class="far fa-clock"></i> ${ago}</span>
-          ${isWall ? '<span class="alalaGyGyAgha-wall-badge"><i class="fas fa-search"></i> بحث Google</span>' : ''}
+      <a class="cosmos-card cosmos-news-card" href="${url}" target="_blank" rel="noopener noreferrer">
+        <div class="cosmos-card-img" style="background-image:url('${encodeURI(img)}')" onerror="this.style.backgroundImage='url(${fallback})'">
+          <span class="cosmos-card-tag floating" style="background:${srcColor}"><i class="fas ${srcIcon}"></i> ${escapeHtml(srcName)}</span>
+          <span class="cosmos-card-time"><i class="far fa-clock"></i> ${ago}</span>
+          ${isWall ? '<span class="cosmos-wall-badge"><i class="fas fa-search"></i> بحث Google</span>' : ''}
         </div>
-        <div class="alalaGyGyAgha-card-body">
-          <h4 class="alalaGyGyAgha-news-title">${escapeHtml(a.title||'')}</h4>
-          <p class="alalaGyGyAgha-news-summary">${escapeHtml((a.summary||'').slice(0, 200))}${(a.summary||'').length>200?'…':''}</p>
-          <span class="alalaGyGyAgha-read-more"><i class="fas fa-up-right-from-square"></i> ${isWall ? 'بحث عن الخبر' : 'اقرأ من المصدر'}</span>
+        <div class="cosmos-card-body">
+          <h4 class="cosmos-news-title">${escapeHtml(a.title||'')}</h4>
+          <p class="cosmos-news-summary">${escapeHtml((a.summary||'').slice(0, 200))}${(a.summary||'').length>200?'…':''}</p>
+          <span class="cosmos-read-more"><i class="fas fa-up-right-from-square"></i> ${isWall ? 'بحث عن الخبر' : 'اقرأ من المصدر'}</span>
         </div>
       </a>`;
     }).join('')}</div>
-    <p class="alalaGyGyAgha-news-footer"><i class="fas fa-circle-info"></i> Spaceflight News · NASA · ESA — تتجدد تلقائياً عند كل دخول</p>`;
+    <p class="cosmos-news-footer"><i class="fas fa-circle-info"></i> Spaceflight News · NASA · ESA — تتجدد تلقائياً عند كل دخول</p>`;
   }
 
-  window.openAlalaGyGyAghaCategory = async function(key){
-    const titleEl = document.getElementById('alalaGyGyAghaModalTitle');
-    const body = document.getElementById('alalaGyGyAghaModalBody');
-    const m = document.getElementById('alalaGyGyAghaModal');
+  window.openCosmosCategory = async function(key){
+    const titleEl = document.getElementById('cosmosModalTitle');
+    const body = document.getElementById('cosmosModalBody');
+    const m = document.getElementById('cosmosModal');
 
     if (key === 'news') {
       titleEl.innerHTML = `<i class="fas fa-newspaper" style="color:#ec4899"></i> أخبار الكون — مباشرة`;
       body.innerHTML = `
-        <div class="alalaGyGyAgha-modal-intro" style="background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.35);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
+        <div class="cosmos-modal-intro" style="background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.35);display:flex;align-items:center;flex-wrap:wrap;gap:.75rem">
           <span style="display:flex;align-items:center;gap:.5rem;flex:1">
             <i class="fas fa-satellite-dish" style="color:#ec4899;font-size:1.1rem"></i>
             <strong style="color:#e2e8f0">أخبار الفضاء والفلك — مصادر عالمية موثوقة</strong>
           </span>
           <span style="font-size:.78rem;color:#9ca3af">NASA · SpaceX · ESA · Sky&amp;Tel · Universe Today</span>
-          <button class="alalaGyGyAgha-refresh-btn" onclick="refreshLiveNews(event)"><i class="fas fa-rotate"></i> تحديث الآن</button>
+          <button class="cosmos-refresh-btn" onclick="refreshLiveNews(event)"><i class="fas fa-rotate"></i> تحديث الآن</button>
           <span id="newsCountdown" style="margin-right:.5rem;font-size:.78rem;color:#a78bfa;display:inline-flex;align-items:center;gap:.3rem"><i class="far fa-clock"></i> آخر تحديث: <strong id="newsCountdownSec">—</strong></span>
         </div>
         <div id="newsReadingBar" style="margin-bottom:.75rem;background:rgba(255,255,255,.07);border-radius:12px;padding:.55rem .85rem;display:flex;align-items:center;gap:.75rem;border:1px solid rgba(236,72,153,.25)">
@@ -5977,13 +5977,13 @@ function switchProgressTab(tab) {
           </div>
         </div>
         <div id="newsSourceTabs" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
-          <button class="alalaGyGyAgha-refresh-btn news-tab-btn active-tab" style="background:rgba(236,72,153,.25);border-color:rgba(236,72,153,.6);color:#f9a8d4" onclick="switchNewsTab('all',this)"><i class="fas fa-globe"></i> الكل</button>
-          <button class="alalaGyGyAgha-refresh-btn news-tab-btn" onclick="switchNewsTab('spaceflight',this)"><i class="fas fa-rss"></i> Spaceflight News</button>
-          <button class="alalaGyGyAgha-refresh-btn news-tab-btn" onclick="switchNewsTab('nasa',this)"><i class="fas fa-meteor"></i> NASA</button>
-          <button class="alalaGyGyAgha-refresh-btn news-tab-btn" onclick="switchNewsTab('esa',this)"><i class="fas fa-satellite"></i> ESA</button>
+          <button class="cosmos-refresh-btn news-tab-btn active-tab" style="background:rgba(236,72,153,.25);border-color:rgba(236,72,153,.6);color:#f9a8d4" onclick="switchNewsTab('all',this)"><i class="fas fa-globe"></i> الكل</button>
+          <button class="cosmos-refresh-btn news-tab-btn" onclick="switchNewsTab('spaceflight',this)"><i class="fas fa-rss"></i> Spaceflight News</button>
+          <button class="cosmos-refresh-btn news-tab-btn" onclick="switchNewsTab('nasa',this)"><i class="fas fa-meteor"></i> NASA</button>
+          <button class="cosmos-refresh-btn news-tab-btn" onclick="switchNewsTab('esa',this)"><i class="fas fa-satellite"></i> ESA</button>
         </div>
-        <div id="alalaGyGyAghaNewsContainer">
-          <div class="alalaGyGyAgha-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب آخر الأخبار من مصادرها الرسمية...</p></div>
+        <div id="cosmosNewsContainer">
+          <div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب آخر الأخبار من مصادرها الرسمية...</p></div>
         </div>`;
       m.classList.add('active');
       document.body.style.overflow = 'hidden';
@@ -6033,22 +6033,22 @@ function switchProgressTab(tab) {
       }, _newsReadTotal * 1000);
       try {
         const articles = await fetchLiveNews();
-        document.getElementById('alalaGyGyAghaNewsContainer').innerHTML = renderNewsCards(articles);
+        document.getElementById('cosmosNewsContainer').innerHTML = renderNewsCards(articles);
         const ts = document.getElementById('newsCountdownSec');
         if (ts && _newsTime) ts.textContent = new Date(_newsTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
       } catch(e){
         console.error(e);
-        document.getElementById('alalaGyGyAghaNewsContainer').innerHTML = '<div class="alalaGyGyAgha-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب الأخبار الآن. تحقق من الاتصال وحاول مرة أخرى.</p></div>';
+        document.getElementById('cosmosNewsContainer').innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر جلب الأخبار الآن. تحقق من الاتصال وحاول مرة أخرى.</p></div>';
       }
       return;
     }
 
-    const cat = ALALAGYGYAGHA_DATA[key]; if(!cat) return;
+    const cat = COSMOS_DATA[key]; if(!cat) return;
 
     // ── Header: اسم القسم + أيقونة + زرار تحديث
     titleEl.innerHTML = `<i class="fas ${cat.icon}" style="color:${cat.color}"></i> ${escapeHtml(cat.title)}`;
 
-    const liveContainerId = `alalaGyGyAghaLive_${key}`;
+    const liveContainerId = `cosmosLive_${key}`;
 
     // ── Skeleton placeholders — تظهر فوراً قبل ما تيجي الأخبار
     const skeletonCards = [1,2,3,4,5,6].map(() => `
@@ -6078,7 +6078,7 @@ function switchProgressTab(tab) {
         </div>
       </div>
       <div id="${liveContainerId}" class="cat-live-container">
-        <div class="alalaGyGyAgha-news-grid">${skeletonCards}</div>
+        <div class="cosmos-news-grid">${skeletonCards}</div>
       </div>`;
 
     window._openCategoryKey = key;
@@ -6165,10 +6165,10 @@ function switchProgressTab(tab) {
   }
 
   async function loadLiveCategoryData(key, color){
-    const container = document.getElementById(`alalaGyGyAghaLive_${key}`);
+    const container = document.getElementById(`cosmosLive_${key}`);
     if (!container) return;
     try {
-      const cat = ALALAGYGYAGHA_DATA[key];
+      const cat = COSMOS_DATA[key];
       const parts = [];
 
       // ── 1: أخبار مخصصة للقسم — دايماً تتجدد
@@ -6207,7 +6207,7 @@ function switchProgressTab(tab) {
         });
       } else {
         container.innerHTML = `
-          <div class="alalaGyGyAgha-empty">
+          <div class="cosmos-empty">
             <i class="fas fa-satellite-dish" style="font-size:3rem;color:#6366f1;margin-bottom:1rem;display:block"></i>
             <p>لا توجد أخبار متاحة الآن لهذا القسم</p>
             <p style="font-size:.82rem;color:#666;margin-top:.5rem">تأكد من الاتصال بالإنترنت وحاول التحديث</p>
@@ -6215,9 +6215,9 @@ function switchProgressTab(tab) {
       }
     } catch (e) {
       console.error('live category fetch failed', e);
-      const container2 = document.getElementById(`alalaGyGyAghaLive_${key}`);
+      const container2 = document.getElementById(`cosmosLive_${key}`);
       if (container2) container2.innerHTML = `
-        <div class="alalaGyGyAgha-empty">
+        <div class="cosmos-empty">
           <i class="fas fa-triangle-exclamation" style="font-size:2.5rem;color:#f59e0b;margin-bottom:1rem;display:block"></i>
           <p>تعذّر جلب الأخبار — تأكد من الاتصال</p>
           <button class="cat-refresh-btn" style="margin-top:1rem" onclick="refreshLiveCategory('${key}',event)"><i class="fas fa-rotate"></i> إعادة المحاولة</button>
@@ -6232,9 +6232,9 @@ function switchProgressTab(tab) {
     else if (key === 'missions') { _launchesCache = null; }
     // مسح cache الأخبار الخاص بالقسم
     if (typeof _catNewsCache !== 'undefined') delete _catNewsCache[key];
-    const c = document.getElementById(`alalaGyGyAghaLive_${key}`);
-    if (c) c.innerHTML = '<div class="alalaGyGyAgha-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
-    const cat = ALALAGYGYAGHA_DATA[key];
+    const c = document.getElementById(`cosmosLive_${key}`);
+    if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:60px;height:60px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري التحديث...</p></div>';
+    const cat = COSMOS_DATA[key];
     await loadLiveCategoryData(key, cat ? cat.color : '#3b82f6');
   };
 
@@ -6242,8 +6242,8 @@ function switchProgressTab(tab) {
     if (ev) ev.stopPropagation();
     _newsCache = null;
     _newsTime = 0;
-    const c = document.getElementById('alalaGyGyAghaNewsContainer');
-    if (c) c.innerHTML = '<div class="alalaGyGyAgha-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب أحدث الأخبار من المصادر الرسمية...</p></div>';
+    const c = document.getElementById('cosmosNewsContainer');
+    if (c) c.innerHTML = '<div class="cosmos-loading"><div class="black-hole" style="width:80px;height:80px;margin:0 auto 1rem"><div class="accretion-disk"></div><div class="gravitational-lens"></div><div class="black-core"></div></div><p style="color:#aaa">جاري جلب أحدث الأخبار من المصادر الرسمية...</p></div>';
     try {
       const articles = await fetchLiveNews(true);
       const tab = window._currentNewsTab || 'all';
@@ -6252,7 +6252,7 @@ function switchProgressTab(tab) {
       const ts = document.getElementById('newsCountdownSec');
       if (ts && _newsTime) ts.textContent = new Date(_newsTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
     } catch(e){
-      if (c) c.innerHTML = '<div class="alalaGyGyAgha-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر التحديث الآن. تأكد من الاتصال.</p></div>';
+      if (c) c.innerHTML = '<div class="cosmos-empty"><i class="fas fa-triangle-exclamation"></i><p>تعذّر التحديث الآن. تأكد من الاتصال.</p></div>';
     }
   };
 
@@ -6273,11 +6273,11 @@ function switchProgressTab(tab) {
     }
   };
 
-  window.closeAlalaGyGyAghaModal = function(){
+  window.closeCosmosModal = function(){
     window._openCategoryKey = null;
     clearTimeout(window._newsQuestTimer);
     clearInterval(window._newsReadInterval);
-    const cm = document.getElementById('alalaGyGyAghaModal');
+    const cm = document.getElementById('cosmosModal');
     if (!cm) return;
     // إغلاق فوري بدون تأخير
     cm.style.transition = 'opacity .15s ease';
@@ -6290,16 +6290,16 @@ function switchProgressTab(tab) {
     });
   };
 
-  window.scrollAlalaGyGyAghaCarousel = function(dir){
-    const el = document.getElementById('alalaGyGyAghaCarousel'); if(!el) return;
+  window.scrollCosmosCarousel = function(dir){
+    const el = document.getElementById('cosmosCarousel'); if(!el) return;
     const amount = 320 * dir;
     el.scrollBy({left: amount, behavior: 'smooth'});
   };
 
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') {
-      const m = document.getElementById('alalaGyGyAghaModal');
-      if (m && m.classList.contains('active')) window.closeAlalaGyGyAghaModal();
+      const m = document.getElementById('cosmosModal');
+      if (m && m.classList.contains('active')) window.closeCosmosModal();
     }
   });
 })();
@@ -6773,11 +6773,11 @@ document.addEventListener('click', function(e) {
   }
 });
 function scrollToSectionAndOpen(cat) {
-  // scroll to alalaGyGyAgha section then open category
-  const sec = document.getElementById('alalaGyGyAghaCarouselSection');
+  // scroll to cosmos section then open category
+  const sec = document.getElementById('cosmosCarouselSection');
   if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
   setTimeout(() => {
-    if (typeof openAlalaGyGyAghaCategory === 'function') openAlalaGyGyAghaCategory(cat);
+    if (typeof openCosmosCategory === 'function') openCosmosCategory(cat);
   }, 300);
 }
 window.addAdminByUid = window.addAdminByUid || (typeof addAdminByUid !== 'undefined' ? addAdminByUid : function(){});
@@ -8343,8 +8343,8 @@ window.updateActiveToolLabel = function(label) {
       if (typeof fetchLiveNews !== 'function') return;
       await fetchLiveNews(true);
       // لو الموداال مفتوح على الأخبار، حدّث العرض
-      const modal = document.getElementById('alalaGyGyAghaModal');
-      const container = document.getElementById('alalaGyGyAghaNewsContainer');
+      const modal = document.getElementById('cosmosModal');
+      const container = document.getElementById('cosmosNewsContainer');
       if (modal && modal.classList.contains('active') && container && window._openCategoryKey === 'news') {
         const tab = window._currentNewsTab || 'all';
         const all = (typeof _newsCache !== 'undefined' && _newsCache) ? _newsCache : [];
@@ -8360,11 +8360,11 @@ window.updateActiveToolLabel = function(label) {
     try {
       const key = window._openCategoryKey;
       if (!key || key === 'news') return;
-      const modal = document.getElementById('alalaGyGyAghaModal');
+      const modal = document.getElementById('cosmosModal');
       if (!modal || !modal.classList.contains('active')) return;
       if (typeof _catNewsCache !== 'undefined') delete _catNewsCache[key];
       if (typeof _wikiCache !== 'undefined') delete _wikiCache[key];
-      const color = (typeof ALALAGYGYAGHA_DATA !== 'undefined' && ALALAGYGYAGHA_DATA[key]) ? ALALAGYGYAGHA_DATA[key].color : '#6366f1';
+      const color = (typeof COSMOS_DATA !== 'undefined' && COSMOS_DATA[key]) ? COSMOS_DATA[key].color : '#6366f1';
       if (typeof loadLiveCategoryData === 'function') await loadLiveCategoryData(key, color);
     } catch(e) {}
   }, HOUR);
@@ -10557,8 +10557,8 @@ function slShowFeedback(correct, explanation) {
   fb.style.display = 'flex';
   fb.className = 'sl-feedback ' + (correct ? 'correct-fb' : 'wrong-fb');
   document.getElementById('slFbIcon').innerHTML = correct
-    ? '<span class="alalaGyGyAgha-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M7.5 12.5l3 3 6-6.5"/></svg></span>'
-    : '<span class="alalaGyGyAgha-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>';
+    ? '<span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M7.5 12.5l3 3 6-6.5"/></svg></span>'
+    : '<span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>';
   document.getElementById('slFbTitle').textContent = correct
     ? (SL.streak >= 3 ? t.streakMsg(SL.streak) : t.correct)
     : t.wrong;
@@ -10671,7 +10671,7 @@ function slShowProgressBadge(accuracy, totalXP, level) {
 
   badge.style.background = bg;
   badge.style.border = `1px solid ${color}40`;
-  badgeEmoji.innerHTML = '<span class="alalaGyGyAgha-icon" aria-hidden="true">' + (_badgeIconSvgs[emoji] || _badgeIconSvgs['⭐']) + '</span>';
+  badgeEmoji.innerHTML = '<span class="cosmos-icon" aria-hidden="true">' + (_badgeIconSvgs[emoji] || _badgeIconSvgs['⭐']) + '</span>';
   badgeTitle.textContent = tierNameOnly;
   badgeTitle.style.color = color;
   badgeDesc.textContent = desc;
@@ -10679,7 +10679,7 @@ function slShowProgressBadge(accuracy, totalXP, level) {
   // Update stage screen mini badge too
   const stageBadgeTitle = document.getElementById('slStageBadgeTitle');
   if (stageBadgeTitle) {
-    stageBadgeTitle.innerHTML = '<span class="alalaGyGyAgha-icon" aria-hidden="true">' + (_badgeIconSvgs[emoji] || _badgeIconSvgs['⭐']) + '</span> ' + tierNameOnly;
+    stageBadgeTitle.innerHTML = '<span class="cosmos-icon" aria-hidden="true">' + (_badgeIconSvgs[emoji] || _badgeIconSvgs['⭐']) + '</span> ' + tierNameOnly;
     stageBadgeTitle.style.color = color;
   }
   // Legendary sound for top tier badge
@@ -10701,7 +10701,7 @@ function slShowGameOver() {
   const total = SL.currentQ;
   const accuracy = total > 0 ? Math.round((SL.correctCount / total) * 100) : 0;
   const t = slT();
-  document.getElementById('slResultMascot').innerHTML = '<span class="alalaGyGyAgha-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/><path d="M13 4.5 10 11l3 2-2 6.5"/></svg></span>';
+  document.getElementById('slResultMascot').innerHTML = '<span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2.2-.3 4 .8 6.5 3.2C14.5 4.8 16.3 3.7 18.5 4c3.5.5 5 4 3.5 7.2-2.5 4.7-10 9.3-10 9.3Z"/><path d="M13 4.5 10 11l3 2-2 6.5"/></svg></span>';
   document.getElementById('slResultTitle').textContent = t.gameOverTitle;
   document.getElementById('slResultSub').textContent = t.gameOverSub(SL.stage);
   document.getElementById('slResCorrect').textContent = SL.correctCount + '/' + total;
@@ -10720,8 +10720,8 @@ var SL_HEART_EMPTY = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="no
 function slUpdateStats() {
   const h = Math.max(0, SL.hearts);
   document.getElementById('slHeartsIcons').innerHTML =
-    ('<span class="alalaGyGyAgha-icon" aria-hidden="true">'+SL_HEART_FULL+'</span>').repeat(h) +
-    ('<span class="alalaGyGyAgha-icon" aria-hidden="true">'+SL_HEART_EMPTY+'</span>').repeat(Math.max(0, 5 - h));
+    ('<span class="cosmos-icon" aria-hidden="true">'+SL_HEART_FULL+'</span>').repeat(h) +
+    ('<span class="cosmos-icon" aria-hidden="true">'+SL_HEART_EMPTY+'</span>').repeat(Math.max(0, 5 - h));
   document.getElementById('slXpVal').textContent = SL.xp;
   document.getElementById('slStreakVal').textContent = SL.streak;
 }
@@ -10879,11 +10879,11 @@ function slStopAllAnimations() {
   // ===== 1. تعريف الشخصيات =====
   const AI_PERSONAS = [
     {
-      id: 'alalaGyGyAgha',
-      name: 'AlalaGyGyAgha V1.6',
+      id: 'cosmos',
+      name: 'كوزموس',
       emoji: '🚀',
       desc: 'مساعد فلكي محترف — يجيبك بعلم وإثارة',
-      systemPrompt: 'أنت AlalaGyGyAgha، مساعد فلكي خبير ومتحمس. تجيب بدقة علمية وبشكل مشوّق. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
+      systemPrompt: 'أنت كوزموس، مساعد فلكي خبير ومتحمس. تجيب بدقة علمية وبشكل مشوّق. تتكلم بأي لغة يستخدمها المستخدم. أكمل ردك دائماً حتى النهاية ولا تتوقف في المنتصف.',
       voiceStyle: { rate: 0.92, pitch: 0.85 },
       groqVoice: 'Fritz-PlayAI',   // صوت رجالي عميق وجدي
       badge: 'كل اللغات'
@@ -11064,12 +11064,12 @@ function slStopAllAnimations() {
     if (isArabic) {
       // موديل عربي سعودي — 4 أصوات متاحة
       model = 'canopylabs/orpheus-arabic-saudi';
-      var arabicVoices = { alalaGyGyAgha: 'abdullah', orion: 'sultan', nova: 'noura', galaxy: 'lulwa' };
+      var arabicVoices = { cosmos: 'abdullah', orion: 'sultan', nova: 'noura', galaxy: 'lulwa' };
       voice = arabicVoices[p.id] || 'abdullah';
     } else {
       // موديل إنجليزي — 6 أصوات
       model = 'canopylabs/orpheus-v1-english';
-      var englishVoices = { alalaGyGyAgha: 'tara', orion: 'leo', nova: 'mia', galaxy: 'dan' };
+      var englishVoices = { cosmos: 'tara', orion: 'leo', nova: 'mia', galaxy: 'dan' };
       voice = englishVoices[p.id] || 'tara';
     }
 
@@ -11133,7 +11133,7 @@ function slStopAllAnimations() {
   var ELEVENLABS_KEY = 'sk_fb9731db4191c0001f2b6609b4c0982d7fc9e5ca7c4a9455';
   // أصوات ElevenLabs — صوت مختلف لكل شخصية (multilingual يدعم العربي)
   var EL_VOICES = {
-    alalaGyGyAgha:  'pNInz6obpgDQGcFmaJgB', // Adam  — رجالي عميق (AlalaGyGyAgha)
+    cosmos:  'pNInz6obpgDQGcFmaJgB', // Adam  — رجالي عميق (كوزموس)
     orion:   'VR6AewLTigWG4xSOukaG', // Arnold — رجالي هادئ (أوريون)
     nova:    'EXAVITQu4vr4xnSDxMaL', // Sarah  — أنثوي (نوفا)
     galaxy:  'onwK4e9ZLuTAKqWW03F9'  // Daniel — رجالي حكّاء (جالكسي)
@@ -11143,7 +11143,7 @@ function slStopAllAnimations() {
     if (!_ttsActive) return;
     try {
       var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
-      var voiceId = EL_VOICES[p.id] || EL_VOICES.alalaGyGyAgha;
+      var voiceId = EL_VOICES[p.id] || EL_VOICES.cosmos;
 
       var resp = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
         method: 'POST',
@@ -11217,14 +11217,14 @@ function slStopAllAnimations() {
     if (!grid) return;
     var savedId = getSavedId();
     grid.innerHTML = AI_PERSONAS.map(function(p) {
-      return '<div class="persona-card ' + (p.id === (savedId||'alalaGyGyAgha') ? 'selected' : '') + '" id="pcard_' + p.id + '" onclick="selectPersonaCard(\'' + p.id + '\')" ontouchend="event.preventDefault();selectPersonaCard(\'' + p.id + '\')">'
+      return '<div class="persona-card ' + (p.id === (savedId||'cosmos') ? 'selected' : '') + '" id="pcard_' + p.id + '" onclick="selectPersonaCard(\'' + p.id + '\')" ontouchend="event.preventDefault();selectPersonaCard(\'' + p.id + '\')">'
         + '<span class="persona-emoji">' + p.emoji + '</span>'
         + '<div class="persona-name">' + p.name + '</div>'
         + '<div class="persona-desc">' + p.desc + '</div>'
         + '<span class="persona-lang-badge">🌍 ' + p.badge + '</span>'
         + '</div>';
     }).join('');
-    _modalSel = savedId || 'alalaGyGyAgha';
+    _modalSel = savedId || 'cosmos';
   }
 
   window.selectPersonaCard = function(id) {
@@ -11289,7 +11289,7 @@ function slStopAllAnimations() {
           typingEl.className = 'message received';
           typingEl.id = 'aiTypingIndicator';
           var pName = (_persona || AI_PERSONAS[0]).name;
-          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildAlalaGyGyAghaThinkingHTML(pName + ' يفكر') + '</div>';
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pName + ' يفكر') + '</div>';
           msgs.appendChild(typingEl);
           msgs.scrollTop = msgs.scrollHeight;
         }
@@ -11407,9 +11407,9 @@ function slStopAllAnimations() {
   }
 
   // ===== 🌟 أساس العبقرية الموحّد — نفس معيار الجودة لأي نموذج ولأي مسار (شات نصي، fallback، تحليل صور/ملفات) =====
-  // الهدف: أي رد بيطلع من أي شخصية (AlalaGyGyAgha/أوريون/نوفا/جالكسي) وأي نموذج (Groq الرئيسي، Groq الاحتياطي، Gemini)
+  // الهدف: أي رد بيطلع من أي شخصية (كوزموس/أوريون/نوفا/جالكسي) وأي نموذج (Groq الرئيسي، Groq الاحتياطي، Gemini)
   // يتبنى نفس مستوى التفكير والدقة والاحترافية، بدل ما كل مسار يبقى بمعيار مختلف.
-  window.buildAlalaGyGyAghaGeniusFoundation = function() {
+  window.buildCosmosGeniusFoundation = function() {
     return '\n\n--- أساس الأداء الإلزامي (ينطبق على أي رد، أيًا كان النموذج أو المسار اللي ولّده) ---\n'
       + '1. التفكير قبل الرد: افهم القصد الحقيقي وراء السؤال، مش الكلمات حرفيًا بس. لو في أكتر من طريقة للحل، وازن بينهم داخليًا واختر الأنسب، بدل ما ترمي أول فكرة تيجي في بالك.\n'
       + '2. الدقة قبل السرعة: ممنوع تخمين متنكر في شكل حقيقة مؤكدة. لو مش متأكد 100% من معلومة، قول ده بوضوح للمستخدم بدل ما تخترع رقم أو تفصيلة.\n'
@@ -11423,7 +11423,7 @@ function slStopAllAnimations() {
   // ===== 🌟 لقطة مكثّفة من معرفة المشرف + دروس التقييمات — مخصّصة للمسارات الخفيفة (زي تحليل الصور) =====
   // نسخة مختصرة من نفس بيانات الغرفة الثالثة (الذاكرة الثابتة) وقاعدة معرفة المشرف،
   // عشان أي مسار في المنصة يقدر يستفيد منها من غير ما يحمّل نفسه بالسياق الكامل الثقيل.
-  window.buildAlalaGyGyAghaKnowledgeSnapshot = function(maxKnow, maxLessons) {
+  window.buildCosmosKnowledgeSnapshot = function(maxKnow, maxLessons) {
     maxKnow = maxKnow || 20; maxLessons = maxLessons || 5;
     var out = '';
     try {
@@ -11605,13 +11605,13 @@ function slStopAllAnimations() {
       // ── XP يييجي دايماً من Firebase (مش localStorage) — أمان كامل ──
       var uid = (typeof currentUserId !== 'undefined') ? currentUserId : null;
       if (uid && typeof db !== 'undefined') {
-        xpEl.innerHTML = '... <span class="alalaGyGyAgha-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
+        xpEl.innerHTML = '... <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
         db.collection('user_points').doc(uid).get().then(function(doc){
           var pts = doc.exists ? (doc.data().points || 0) : 0;
-          xpEl.innerHTML = pts + ' <span class="alalaGyGyAgha-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
-        }).catch(function(){ xpEl.innerHTML = '0 <span class="alalaGyGyAgha-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP'; });
+          xpEl.innerHTML = pts + ' <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
+        }).catch(function(){ xpEl.innerHTML = '0 <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP'; });
       } else {
-        xpEl.innerHTML = '0 <span class="alalaGyGyAgha-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
+        xpEl.innerHTML = '0 <span class="cosmos-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M12 2.5l2.6 6.3 6.8.5-5.2 4.4 1.7 6.6L12 16.8 6.1 20.3l1.7-6.6-5.2-4.4 6.8-.5L12 2.5Z"/></svg></span> XP';
       }
     }
     if (strEl) strEl.textContent = d.streak || 0;
@@ -12059,9 +12059,9 @@ function slStopAllAnimations() {
         // المستخدم غالباً عايز تعديل/صيانة على الملف مش شرح نصي — نفعّل "وضع التعديل الصامت":
         // مفيش رد نصي في الشات، بس صندوق الملف الجاهز يظهر لما يخلص. ──
         var _codeExtRe = /\.(js|jsx|ts|tsx|html|htm|css|scss|py|c|cpp|h|java|php|rb|go|rs|sql)$/i;
-        window.__alalaGyGyAghaSilentFileEdit = !imgs.length && validDocs.some(function(f){ return _codeExtRe.test(f.name); });
+        window.__cosmosSilentFileEdit = !imgs.length && validDocs.some(function(f){ return _codeExtRe.test(f.name); });
         // ── أسماء ملفات الكود المرفقة — عشان نقدر نعرض خطوات حقيقية (قراءة/تحليل/تعديل) بدل لابل ثابت واحد ──
-        window.__alalaGyGyAghaSilentFileEditNames = window.__alalaGyGyAghaSilentFileEdit
+        window.__cosmosSilentFileEditNames = window.__cosmosSilentFileEdit
           ? validDocs.filter(function(f){ return _codeExtRe.test(f.name); }).map(function(f){ return f.name; })
           : [];
 
@@ -12105,7 +12105,7 @@ function slStopAllAnimations() {
               + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
             msgs.appendChild(divDocs); msgs.scrollTop = msgs.scrollHeight;
             if (_replyPayloadDocs && typeof cancelReply === 'function') cancelReply('ai');
-            window.__alalaGyGyAghaSkipNextBubble = true;
+            window.__cosmosSkipNextBubble = true;
           }
           await (window.__aiSendMessageCore || window.sendAIMessage)(textOnlyPrompt);
           return;
@@ -12136,7 +12136,7 @@ function slStopAllAnimations() {
         if (msgs) {
           typingEl2 = document.createElement('div');
           typingEl2.className = 'message received';
-          typingEl2.innerHTML = '<div class="message-content" style="color:#888">' + window.buildAlalaGyGyAghaThinkingHTML(persona2.name + ' بيحلل المرفقات') + '</div>';
+          typingEl2.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(persona2.name + ' بيحلل المرفقات') + '</div>';
           msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
         }
         try {
@@ -12154,12 +12154,12 @@ function slStopAllAnimations() {
           var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock;
           // ── هوية إلزامية إضافية: لو الصورة فلكية (نجوم، كواكب، مجرات، تلسكوبات، معدات رصد)، حلّلها بعمق كخبير فلك ──
           promptText += '\n\nلو الصورة فيها محتوى فلكي (نجم، كوكب، مجرة، سديم، مذنب، أو أي جرم سماوي)، حدد نوعه واسمه لو ممكن تتعرف عليه، واذكر معلومات علمية مختصرة عنه (المسافة، الحجم، خصائصه). لو الصورة فيها تلسكوب أو معدات رصد، حاول تتعرف على نوعه (انكساري/انعكاسي/كاتادايوبتري) ومواصفاته التقريبية (الفتحة، البعد البؤري) لو واضحة من الشكل، وإديه نصيحة عملية عن استخدامه أو أفضل الأجرام اللي يصلح لرصدها بيه. لو مش متأكد من هوية الجرم أو الجهاز بدقة، قول كده بوضوح بدل ما تخمّن وتقول معلومة غير مؤكدة كأنها مؤكدة.';
-          promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'AlalaGyGyAgha')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
+          promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'كوزموس')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
           // ── نفس أساس العبقرية وذاكرة المنصة (معرفة المشرف + دروس التقييمات) اللي بيستخدمها الشات النصي،
           // عشان تحليل الصور/الملفات ميبقاش مسار "من درجة تانية" منفصل عن باقي الغرف ──
-          promptText += (typeof window.buildAlalaGyGyAghaGeniusFoundation === 'function' ? window.buildAlalaGyGyAghaGeniusFoundation() : '');
-          promptText += (typeof window.buildAlalaGyGyAghaLiveTimeContext === 'function' ? window.buildAlalaGyGyAghaLiveTimeContext() : '');
-          promptText += (typeof window.buildAlalaGyGyAghaKnowledgeSnapshot === 'function' ? window.buildAlalaGyGyAghaKnowledgeSnapshot(15, 5) : '');
+          promptText += (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '');
+          promptText += (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '');
+          promptText += (typeof window.buildCosmosKnowledgeSnapshot === 'function' ? window.buildCosmosKnowledgeSnapshot(15, 5) : '');
 
           // فصل البيانات base64 عن الـ prefix (data:image/jpeg;base64,....) لكل صورة
           var _parts = [{ text: promptText }];
@@ -12197,7 +12197,7 @@ function slStopAllAnimations() {
             if (visionRes.status === 503 && _attempt < _maxRetries) {
               if (typingEl2) {
                 var _tEl = typingEl2.querySelector('.message-content');
-                if (_tEl) _tEl.innerHTML = window.buildAlalaGyGyAghaThinkingHTML('السيرفر مزدحم، بحاول تاني (' + (_attempt + 1) + '/' + _maxRetries + ')');
+                if (_tEl) _tEl.innerHTML = window.buildCosmosThinkingHTML('السيرفر مزدحم، بحاول تاني (' + (_attempt + 1) + '/' + _maxRetries + ')');
               }
               await new Promise(function(r){ setTimeout(r, 1500 * (_attempt + 1)); });
               continue;
@@ -12223,7 +12223,7 @@ function slStopAllAnimations() {
                 body: JSON.stringify({
                   model: 'openai/gpt-oss-120b',
                   messages: [
-                    { role: 'system', content: 'أنت محرر محتوى محترف. هتستلم تحليل خام لصورة/ملف من نموذج تاني، ومطلوب منك تعيد صياغته كرد نهائي احترافي ومنظم بالعربية للمستخدم — بنقاط أو عناوين فرعية عند الحاجة، من غير حشو، ومن غير ما تقول إنك "أعدت صياغة" حاجة أو تشير لأي نموذج تاني. ممنوع ماركداون خام زي ### أو --- أو جداول |؛ استخدم بس **نص عريض** وأرقام/نقاط للتعداد.' + (typeof window.buildAlalaGyGyAghaGeniusFoundation === 'function' ? window.buildAlalaGyGyAghaGeniusFoundation() : '') },
+                    { role: 'system', content: 'أنت محرر محتوى محترف. هتستلم تحليل خام لصورة/ملف من نموذج تاني، ومطلوب منك تعيد صياغته كرد نهائي احترافي ومنظم بالعربية للمستخدم — بنقاط أو عناوين فرعية عند الحاجة، من غير حشو، ومن غير ما تقول إنك "أعدت صياغة" حاجة أو تشير لأي نموذج تاني. ممنوع ماركداون خام زي ### أو --- أو جداول |؛ استخدم بس **نص عريض** وأرقام/نقاط للتعداد.' + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') },
                     { role: 'user', content: 'طلب المستخدم الأصلي: "' + (extraText || 'صف المرفقات') + '"\n\nالتحليل الخام:\n' + visionAnswer }
                   ],
                   max_tokens: 1800, temperature: 0.35
@@ -12243,7 +12243,7 @@ function slStopAllAnimations() {
           }
           if (typingEl2) typingEl2.remove();
           if (msgs) {
-            window.__alalaGyGyAghaNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(extraText||'');
+            window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(extraText||'');
             var aiImgDiv = document.createElement('div');
             aiImgDiv.className = 'message received';
             var _ansUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
@@ -12342,16 +12342,16 @@ function slStopAllAnimations() {
         if (msgs) {
           _searchStatusEl = document.createElement('div');
           _searchStatusEl.className = 'message received';
-          _searchStatusEl.dataset.alalaGyGyAghaSkip = '1'; // نتحكم فيه يدوياً، من غير ما الديكوريتر العام يلمسه
+          _searchStatusEl.dataset.cosmosSkip = '1'; // نتحكم فيه يدوياً، من غير ما الديكوريتر العام يلمسه
           var _searchLbl = _mentionedDomains.length ? ('بيراجع المعلومة في ' + _mentionedDomains[0]) : 'بيراجع المعلومة عبر الإنترنت';
-          _searchStatusEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildAlalaGyGyAghaThinkingHTML(_searchLbl) + '</div>';
+          _searchStatusEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_searchLbl) + '</div>';
           msgs.appendChild(_searchStatusEl); msgs.scrollTop = msgs.scrollHeight;
           // ── لو معروف اسم الموقع من الأول، نحط أيقونته فورًا وهو "بيفكر" — زي المتصفحات الاحترافية ──
           if (_mentionedDomains.length) {
-            var _lblEl0 = _searchStatusEl.querySelector('.alalaGyGyAgha-thinking-label');
+            var _lblEl0 = _searchStatusEl.querySelector('.cosmos-thinking-label');
             if (_lblEl0) {
               var _fav0 = document.createElement('img');
-              _fav0.className = 'alalaGyGyAgha-browse-favicon';
+              _fav0.className = 'cosmos-browse-favicon';
               _fav0.alt = '';
               _fav0.src = 'https://www.google.com/s2/favicons?sz=32&domain=' + _mentionedDomains[0];
               _lblEl0.insertBefore(_fav0, _lblEl0.firstChild);
@@ -12375,14 +12375,14 @@ function slStopAllAnimations() {
 
             // صور حقيقية من نتائج البحث (لو موجودة) — هتتعرض فعلياً تحت رد الذكاء الاصطناعي
             var _imgs = (_searchRes.images || []).map(function(im){ return typeof im === 'string' ? im : (im && im.url); }).filter(Boolean).slice(0, 4);
-            if (_imgs.length) window.__alalaGyGyAghaPendingSearchImages = _imgs;
+            if (_imgs.length) window.__cosmosPendingSearchImages = _imgs;
 
             if (_searchStatusEl && _foundDomains.length) {
-              var _sLabel = _searchStatusEl.querySelector('.alalaGyGyAgha-thinking-label');
+              var _sLabel = _searchStatusEl.querySelector('.cosmos-thinking-label');
               if (_sLabel) {
                 _sLabel.innerHTML = '';
                 var _fav = document.createElement('img');
-                _fav.className = 'alalaGyGyAgha-browse-favicon';
+                _fav.className = 'cosmos-browse-favicon';
                 _fav.alt = '';
                 _fav.src = 'https://www.google.com/s2/favicons?sz=32&domain=' + _foundDomains[0];
                 _sLabel.appendChild(_fav);
@@ -12395,12 +12395,12 @@ function slStopAllAnimations() {
             // ── قبل ما يبدأ يكتب الرد، نوريه لمحة من الصورة الحقيقية اللي لقاها ──
             // (مش صورة مولّدة — دي نفس الصور اللي هتتعرض تحت الرد لاحقاً، بس بنوريها بدري كجزء من مرحلة "بيدور")
             if (_searchStatusEl && _imgs.length) {
-              var _thumbWrap = _searchStatusEl.querySelector('.alalaGyGyAgha-search-thumb-wrap') || document.createElement('div');
-              _thumbWrap.className = 'alalaGyGyAgha-search-thumb-wrap';
+              var _thumbWrap = _searchStatusEl.querySelector('.cosmos-search-thumb-wrap') || document.createElement('div');
+              _thumbWrap.className = 'cosmos-search-thumb-wrap';
               _thumbWrap.innerHTML = '';
               _imgs.slice(0, 2).forEach(function(_imgUrl){
                 var _thumb = document.createElement('img');
-                _thumb.className = 'alalaGyGyAgha-search-thumb';
+                _thumb.className = 'cosmos-search-thumb';
                 _thumb.alt = '';
                 _thumb.loading = 'lazy';
                 _thumb.src = _imgUrl;
@@ -12437,7 +12437,7 @@ function slStopAllAnimations() {
 
       // ── Show user bubble ── (لو صندوق مرفقات احترافي اتعرض فعلاً قبل كده، منعرضش نسخة تانية بالنص الخام)
       var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
-      if (msgs && !window.__alalaGyGyAghaSkipNextBubble) {
+      if (msgs && !window.__cosmosSkipNextBubble) {
         var ud = document.createElement('div');
         ud.className = 'message sent';
         ud.id = 'msg-'+_aiMsgUid;
@@ -12446,7 +12446,7 @@ function slStopAllAnimations() {
         ud.innerHTML = _quoted + '<div class="message-content">'+escapeHtml(userMsg)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
         msgs.appendChild(ud); msgs.scrollTop = msgs.scrollHeight;
       }
-      window.__alalaGyGyAghaSkipNextBubble = false;
+      window.__cosmosSkipNextBubble = false;
       if (_aiReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
 
       // ── Typing indicator ──
@@ -12455,39 +12455,39 @@ function slStopAllAnimations() {
         typingEl = document.createElement('div');
         typingEl.className = 'message received';
         var pNameT = (window.getCurrentAIPersona() || {name:'Astronomy AI'}).name;
-        if (window.__alalaGyGyAghaSilentFileEdit) {
+        if (window.__cosmosSilentFileEdit) {
           // ── وضع تعديل الملف: نعرض خطوات حقيقية متتابعة بدل لابل ثابت واحد —
           // بيتفق فعليًا مع اللي بيحصل: الملف اتقرا فعلاً قبل ما نوصل هنا، وبعدين بييجي التحليل والتعديل ──
-          var _editFiles = window.__alalaGyGyAghaSilentFileEditNames || [];
+          var _editFiles = window.__cosmosSilentFileEditNames || [];
           var _editFileTxt = _editFiles.length ? (': ' + _editFiles[0] + (_editFiles.length > 1 ? (' (+' + (_editFiles.length - 1) + ' كمان)') : '')) : '';
           var _editStages = ['بيقرأ الملف' + _editFileTxt, 'بيحلل الكود الحالي', 'بيجهّز التعديلات المطلوبة'];
-          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildAlalaGyGyAghaThinkingHTML(pNameT + ' ' + _editStages[0]) + '</div>';
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' ' + _editStages[0]) + '</div>';
           msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
           var _stageIdx = 0;
-          typingEl._alalaGyGyAghaStageTimer = setInterval(function(){
+          typingEl._cosmosStageTimer = setInterval(function(){
             _stageIdx++;
-            if (!typingEl || !typingEl.isConnected || _stageIdx >= _editStages.length) { clearInterval(typingEl && typingEl._alalaGyGyAghaStageTimer); return; }
+            if (!typingEl || !typingEl.isConnected || _stageIdx >= _editStages.length) { clearInterval(typingEl && typingEl._cosmosStageTimer); return; }
             var _wrap = typingEl.querySelector('.message-content');
-            if (_wrap) _wrap.innerHTML = window.buildAlalaGyGyAghaThinkingHTML(pNameT + ' ' + _editStages[_stageIdx]);
+            if (_wrap) _wrap.innerHTML = window.buildCosmosThinkingHTML(pNameT + ' ' + _editStages[_stageIdx]);
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
           }, 1100);
         } else if (_looksLikeBuildRequest && !imgs) {
           // ── طلب بناء كود/لعبة/موقع جديد (مش تعديل ملف مرفوع) — بنعرض خطوات التفكير الحقيقية
           // (تفكير → مراجعة الخطة → إنشاء) بدل لابل "يفكر" ثابت، عشان يوضح إن فيه خطة قبل الكتابة ──
           var _buildStages = ['بيفكر في الحل', 'بيراجع خطته قبل ما يكتب', 'بينشئ الكود'];
-          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildAlalaGyGyAghaThinkingHTML(pNameT + ' ' + _buildStages[0]) + '</div>';
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' ' + _buildStages[0]) + '</div>';
           msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
           var _bStageIdx = 0;
-          typingEl._alalaGyGyAghaStageTimer = setInterval(function(){
+          typingEl._cosmosStageTimer = setInterval(function(){
             _bStageIdx++;
-            if (!typingEl || !typingEl.isConnected || _bStageIdx >= _buildStages.length) { clearInterval(typingEl && typingEl._alalaGyGyAghaStageTimer); return; }
+            if (!typingEl || !typingEl.isConnected || _bStageIdx >= _buildStages.length) { clearInterval(typingEl && typingEl._cosmosStageTimer); return; }
             var _wrapB = typingEl.querySelector('.message-content');
-            if (_wrapB) _wrapB.innerHTML = window.buildAlalaGyGyAghaThinkingHTML(pNameT + ' ' + _buildStages[_bStageIdx]);
+            if (_wrapB) _wrapB.innerHTML = window.buildCosmosThinkingHTML(pNameT + ' ' + _buildStages[_bStageIdx]);
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
           }, 1300);
         } else {
           var _thinkLabel = pNameT + ' يفكر';
-          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildAlalaGyGyAghaThinkingHTML(_thinkLabel) + '</div>';
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_thinkLabel) + '</div>';
           msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
         }
       }
@@ -12505,7 +12505,7 @@ function slStopAllAnimations() {
         try {
           var _clarityCheck = await window.checkBuildRequestClarity(apiKey, userMsg);
           if (_clarityCheck && _clarityCheck.clear === false && _clarityCheck.question) {
-            if (typingEl && typingEl._alalaGyGyAghaStageTimer) clearInterval(typingEl._alalaGyGyAghaStageTimer);
+            if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
             if (typingEl) typingEl.remove();
             if (msgs) {
               var _clarifyEl = document.createElement('div');
@@ -12629,8 +12629,8 @@ function slStopAllAnimations() {
       // ── سياق أخبار الكون (صفحة "أخبار الكون" في القائمة) — محتوى عام غير حساس، متاح لأي مستخدم ──
       var _newsContextBlock = '';
       try {
-        if (typeof window.ALALAGYGYAGHA_DATA !== 'undefined' && window.ALALAGYGYAGHA_DATA && window.ALALAGYGYAGHA_DATA.news && window.ALALAGYGYAGHA_DATA.news.items && window.ALALAGYGYAGHA_DATA.news.items.length) {
-          var _newsItems = window.ALALAGYGYAGHA_DATA.news.items.slice(0, 20).map(function(n, ni){
+        if (typeof window.COSMOS_DATA !== 'undefined' && window.COSMOS_DATA && window.COSMOS_DATA.news && window.COSMOS_DATA.news.items && window.COSMOS_DATA.news.items.length) {
+          var _newsItems = window.COSMOS_DATA.news.items.slice(0, 20).map(function(n, ni){
             return (ni + 1) + '. [' + (n.tag || '') + '] ' + n.title + ' — ' + n.text;
           }).join('\n');
           _newsContextBlock = '\n\n--- أخبار الكون (صفحة الأخبار داخل المنصة) ---\n' + _newsItems + '\n---\nلو حد سأل عن آخر أخبار الفلك/الفضاء الموجودة في المنصة، استخدم القائمة دي.';
@@ -12783,8 +12783,8 @@ function slStopAllAnimations() {
         // (فيديوهات/كورسات/معرفة/إحصائيات) لأنها ممكن لوحدها تتخطى حد الموديل الصغير،
         // وبنقصّ رسالة المستخدم نفسها لو كانت ضخمة (زي ملف كود كبير مرفق).
         // ملاحظة: _reasoningRoomBlock و_lessonsContextBlock بيفضلوا موجودين حتى في وضع lean لأنهم خفيفين وميقلبوش حد التوكنز.
-        var _geniusBlock = typeof window.buildAlalaGyGyAghaGeniusFoundation === 'function' ? window.buildAlalaGyGyAghaGeniusFoundation() : '';
-        var _liveTimeBlock = typeof window.buildAlalaGyGyAghaLiveTimeContext === 'function' ? window.buildAlalaGyGyAghaLiveTimeContext() : '';
+        var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
+        var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
           ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock)
           : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock);
@@ -12848,7 +12848,7 @@ function slStopAllAnimations() {
             method: 'POST',
             headers: { 'Authorization': 'Bearer '+usedKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            signal: window.__alalaGyGyAghaAbortController ? window.__alalaGyGyAghaAbortController.signal : undefined
+            signal: window.__cosmosAbortController ? window.__cosmosAbortController.signal : undefined
           });
           if (onDelta && res.ok && res.body && res.body.getReader) {
             try { data = await _readGroqStream(res, onDelta, onReasoningDelta); }
@@ -12878,14 +12878,14 @@ function slStopAllAnimations() {
       async function callGeminiTextFallback() {
         var pool = window.GeminiKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildAlalaGyGyAghaGeniusFoundation === 'function' ? window.buildAlalaGyGyAghaGeniusFoundation() : '') + (typeof window.buildAlalaGyGyAghaLiveTimeContext === 'function' ? window.buildAlalaGyGyAghaLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         // ── ينادي Gemini مرة واحدة بأي سياق محادثة مُعطى، ويرجّع النص + سبب التوقف (finishReason) ──
         async function _geminiOnce(gKey, convContents) {
           var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gKey },
             body: JSON.stringify({ contents: convContents, systemInstruction: { parts: [{ text: _sysFull }] }, generationConfig: { temperature: 0.4, maxOutputTokens: _geminiMaxTok } }),
-            signal: window.__alalaGyGyAghaAbortController ? window.__alalaGyGyAghaAbortController.signal : undefined
+            signal: window.__cosmosAbortController ? window.__cosmosAbortController.signal : undefined
           });
           var d = await r.json();
           var txt = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts[0] && d.candidates[0].content.parts[0].text;
@@ -12915,9 +12915,9 @@ function slStopAllAnimations() {
             while (_gFinish === 'MAX_TOKENS' && _gContTries < 6) {
               _gContTries++;
               if (typingEl && typingEl.isConnected) {
-                if (typingEl._alalaGyGyAghaStageTimer) clearInterval(typingEl._alalaGyGyAghaStageTimer);
+                if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
                 var _wrapGC = typingEl.querySelector('.message-content');
-                if (_wrapGC) _wrapGC.innerHTML = window.buildAlalaGyGyAghaThinkingHTML(persona.name + ' الرد طويل، بيكمّله (جزء ' + (_gContTries + 1) + ')');
+                if (_wrapGC) _wrapGC.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' الرد طويل، بيكمّله (جزء ' + (_gContTries + 1) + ')');
                 if (msgs) msgs.scrollTop = msgs.scrollHeight;
               }
               try {
@@ -12943,20 +12943,20 @@ function slStopAllAnimations() {
         // ── وضع الكتابة الحيّة: النص بيظهر لحظة بلحظة وهو بيتكتب، إلا في وضع التعديل الصامت
         // (هناك بنسيب الأنيميشن "بيعدّل الملف" زي ما هي لحد ما بطاقة الملف الجاهزة تظهر) ──
         var _contentStarted = false;
-        var _streamCb = (window.__alalaGyGyAghaSilentFileEdit || !typingEl) ? null : function(partial){
+        var _streamCb = (window.__cosmosSilentFileEdit || !typingEl) ? null : function(partial){
           _contentStarted = true;
           var _shown = partial.length > 6000 ? partial.slice(-6000) : partial;
-          typingEl.innerHTML = '<div class="message-content alalaGyGyAgha-live-stream" style="white-space:pre-wrap">' + escapeHtml(_shown) + '<span class="alalaGyGyAgha-stream-cursor">▍</span></div>';
+          typingEl.innerHTML = '<div class="message-content cosmos-live-stream" style="white-space:pre-wrap">' + escapeHtml(_shown) + '<span class="cosmos-stream-cursor">▍</span></div>';
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         };
         // ── غرفة التفكير العميق — المرحلة الحيّة: بتعرض تفكير الموديل الحقيقي أول ما يوصل، لحظة بلحظة،
         // وبتوقف تلقائيًا أول ما الرد النهائي يبدأ يوصل (عشان الرد يبان في مكانه الطبيعي) ──
-        var _reasoningStreamCb = (window.__alalaGyGyAghaSilentFileEdit || !typingEl) ? null : function(partialReasoning){
+        var _reasoningStreamCb = (window.__cosmosSilentFileEdit || !typingEl) ? null : function(partialReasoning){
           if (_contentStarted) return;
           var _shownR = partialReasoning.length > 4000 ? partialReasoning.slice(-4000) : partialReasoning;
-          typingEl.innerHTML = '<div class="message-content alalaGyGyAgha-live-thinking">'
-            + '<div class="alalaGyGyAgha-deep-think-live-label"><i class="fas fa-brain"></i> غرفة التفكير العميق — بيفكر دلوقتي...</div>'
-            + '<div class="alalaGyGyAgha-deep-think-live-text" style="white-space:pre-wrap">' + escapeHtml(_shownR) + '<span class="alalaGyGyAgha-stream-cursor">▍</span></div>'
+          typingEl.innerHTML = '<div class="message-content cosmos-live-thinking">'
+            + '<div class="cosmos-deep-think-live-label"><i class="fas fa-brain"></i> غرفة التفكير العميق — بيفكر دلوقتي...</div>'
+            + '<div class="cosmos-deep-think-live-text" style="white-space:pre-wrap">' + escapeHtml(_shownR) + '<span class="cosmos-stream-cursor">▍</span></div>'
             + '</div>';
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         };
@@ -12992,9 +12992,9 @@ function slStopAllAnimations() {
         while (answer && _truncFinishReason === 'length' && _contTries < 6) {
           _contTries++;
           if (typingEl && typingEl.isConnected) {
-            if (typingEl._alalaGyGyAghaStageTimer) clearInterval(typingEl._alalaGyGyAghaStageTimer);
+            if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
             var _wrapC = typingEl.querySelector('.message-content');
-            if (_wrapC) _wrapC.innerHTML = window.buildAlalaGyGyAghaThinkingHTML(persona.name + ' الرد طويل، بيكمّله (جزء ' + (_contTries + 1) + ')');
+            if (_wrapC) _wrapC.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' الرد طويل، بيكمّله (جزء ' + (_contTries + 1) + ')');
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
           }
           try {
@@ -13018,7 +13018,7 @@ function slStopAllAnimations() {
         if (errGroq && errGroq.name === 'AbortError') {
           // ── المستخدم ضغط زرار الإيقاف بنفسه — ده مش فشل، فمنعملش fallback لـ Gemini
           // ولا نوريه رسالة خطأ؛ بس نقفل صندوق التفكير بهدوء ونعرض إشارة إيقاف واضحة. ──
-          if (typingEl && typingEl._alalaGyGyAghaStageTimer) clearInterval(typingEl._alalaGyGyAghaStageTimer);
+          if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
           if (typingEl) typingEl.remove();
           if (msgs) {
             var edStopped = document.createElement('div');
@@ -13043,7 +13043,7 @@ function slStopAllAnimations() {
       if (!answer) {
         // ── الاتنين فشلوا فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
         if (window.logPlatformIssue) window.logPlatformIssue('Router (فشل شامل نص)', 'Groq: ' + (_debugGroqDetail||'—') + ' | Gemini: ' + (_debugGeminiDetail||'—'));
-        if (typingEl && typingEl._alalaGyGyAghaStageTimer) clearInterval(typingEl._alalaGyGyAghaStageTimer);
+        if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
         if (typingEl) typingEl.remove();
         if (msgs) {
           var edBoth = document.createElement('div');
@@ -13061,14 +13061,14 @@ function slStopAllAnimations() {
       // ══════════════════════════════════════════════════════════════════
       if (answer && /```/.test(answer) && apiKey) {
         if (typingEl && typingEl.isConnected) {
-          if (typingEl._alalaGyGyAghaStageTimer) clearInterval(typingEl._alalaGyGyAghaStageTimer);
+          if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
           var _wrapV = typingEl.querySelector('.message-content');
-          if (_wrapV) _wrapV.innerHTML = window.buildAlalaGyGyAghaThinkingHTML(persona.name + ' بيراجع الكود قبل ما يديهولك');
+          if (_wrapV) _wrapV.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيراجع الكود قبل ما يديهولك');
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
         try {
-          var _verified = typeof window.verifyAlalaGyGyAghaCodeAnswer === 'function'
-            ? await window.verifyAlalaGyGyAghaCodeAnswer(apiKey, userMsg, answer)
+          var _verified = typeof window.verifyCosmosCodeAnswer === 'function'
+            ? await window.verifyCosmosCodeAnswer(apiKey, userMsg, answer)
             : null;
           if (_verified && _verified.length > 20) answer = _verified;
         } catch(eVerify) { console.warn('code verification pass failed, keeping original answer', eVerify); }
@@ -13080,27 +13080,27 @@ function slStopAllAnimations() {
       // لحد مرتين بالاعتماد على نص الخطأ الحقيقي نفسه. لو فضل فاشل، بنقول للمستخدم صراحة
       // إن فيه مشكلة معرفناش نحلها، بدل ما نسلّمه كود عطلان وكأنه شغال. ──
       // ══════════════════════════════════════════════════════════════════
-      if (answer && apiKey && typeof window.buildAlalaGyGyAghaTestableDoc === 'function' && typeof window.testAlalaGyGyAghaHtmlCode === 'function') {
-        var _htmlToTest = window.buildAlalaGyGyAghaTestableDoc(answer);
+      if (answer && apiKey && typeof window.buildCosmosTestableDoc === 'function' && typeof window.testCosmosHtmlCode === 'function') {
+        var _htmlToTest = window.buildCosmosTestableDoc(answer);
         if (_htmlToTest) {
           var _fixAttempts = 0, _maxFixAttempts = 2, _lastErrors = [];
           while (_fixAttempts <= _maxFixAttempts) {
             if (typingEl && typingEl.isConnected) {
               var _wrapT = typingEl.querySelector('.message-content');
-              if (_wrapT) _wrapT.innerHTML = window.buildAlalaGyGyAghaThinkingHTML(persona.name + (_fixAttempts === 0 ? ' بيجرب يشغّل الكود فعليًا' : ' بيصلح خطأ لقاه (محاولة ' + (_fixAttempts + 1) + ')'));
+              if (_wrapT) _wrapT.innerHTML = window.buildCosmosThinkingHTML(persona.name + (_fixAttempts === 0 ? ' بيجرب يشغّل الكود فعليًا' : ' بيصلح خطأ لقاه (محاولة ' + (_fixAttempts + 1) + ')'));
               if (msgs) msgs.scrollTop = msgs.scrollHeight;
             }
-            try { _lastErrors = await window.testAlalaGyGyAghaHtmlCode(_htmlToTest); } catch(eTest) { _lastErrors = []; }
+            try { _lastErrors = await window.testCosmosHtmlCode(_htmlToTest); } catch(eTest) { _lastErrors = []; }
             if (!_lastErrors.length) break; // شغال صح، خلاص
-            if (_fixAttempts >= _maxFixAttempts || typeof window.fixAlalaGyGyAghaHtmlAnswer !== 'function') break;
+            if (_fixAttempts >= _maxFixAttempts || typeof window.fixCosmosHtmlAnswer !== 'function') break;
             try {
-              var _fixed = await window.fixAlalaGyGyAghaHtmlAnswer(apiKey, userMsg, answer, _lastErrors);
+              var _fixed = await window.fixCosmosHtmlAnswer(apiKey, userMsg, answer, _lastErrors);
               if (_fixed && _fixed.length > 20) {
                 answer = _fixed;
-                var _reHtml = window.buildAlalaGyGyAghaTestableDoc(answer);
+                var _reHtml = window.buildCosmosTestableDoc(answer);
                 if (_reHtml) _htmlToTest = _reHtml; else break; // الشكل اتغيّر خالص، منكملش تلقيم أعمى
               } else break;
-            } catch(eFix) { console.warn('fixAlalaGyGyAghaHtmlAnswer failed', eFix); break; }
+            } catch(eFix) { console.warn('fixCosmosHtmlAnswer failed', eFix); break; }
             _fixAttempts++;
           }
           if (_lastErrors.length) {
@@ -13126,12 +13126,12 @@ function slStopAllAnimations() {
         } catch(eDigestPush) { /* تجاهل أي خطأ */ }
 
         // ── Show AI bubble ──
-        if (typingEl && typingEl._alalaGyGyAghaStageTimer) clearInterval(typingEl._alalaGyGyAghaStageTimer);
+        if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
         if (typingEl) typingEl.remove();
         if (msgs) {
           // هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ملف/تنزيل؟ نحدد الفلاج قبل الفورمات مباشرة
-          window.__alalaGyGyAghaNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(userMsg);
-          var _silentEdit = window.__alalaGyGyAghaSilentFileEdit; window.__alalaGyGyAghaSilentFileEdit = false; // نستهلك الفلاج مرة واحدة
+          window.__cosmosNoFileRequested = (typeof wantsNoFileOutput === 'function') && wantsNoFileOutput(userMsg);
+          var _silentEdit = window.__cosmosSilentFileEdit; window.__cosmosSilentFileEdit = false; // نستهلك الفلاج مرة واحدة
           // ── لو فيه تحذير تشغيل حقيقي لسه قايم، نلغي وضع "الملف بس الصامت" عشان التحذير يبان للمستخدم بدل ما يتخفي ──
           if (typeof _lastErrors !== 'undefined' && _lastErrors && _lastErrors.length) _silentEdit = false;
           var aiDiv = document.createElement('div');
@@ -13144,11 +13144,11 @@ function slStopAllAnimations() {
           var _deepThinkHtml = '';
           if (!_silentEdit && answerReasoning && String(answerReasoning).trim()) {
             var _reasoningEsc = escapeHtml(String(answerReasoning).trim());
-            _deepThinkHtml = '<div class="alalaGyGyAgha-deep-think">'
-              + '<button type="button" class="alalaGyGyAgha-deep-think-toggle" onclick="this.parentElement.classList.toggle(\'open\')">'
-              + '<i class="fas fa-brain"></i><span>غرفة التفكير العميق</span><i class="fas fa-chevron-down alalaGyGyAgha-deep-think-chevron"></i>'
+            _deepThinkHtml = '<div class="cosmos-deep-think">'
+              + '<button type="button" class="cosmos-deep-think-toggle" onclick="this.parentElement.classList.toggle(\'open\')">'
+              + '<i class="fas fa-brain"></i><span>غرفة التفكير العميق</span><i class="fas fa-chevron-down cosmos-deep-think-chevron"></i>'
               + '</button>'
-              + '<div class="alalaGyGyAgha-deep-think-body"><div class="alalaGyGyAgha-deep-think-inner" style="white-space:pre-wrap">' + _reasoningEsc + '</div></div>'
+              + '<div class="cosmos-deep-think-body"><div class="cosmos-deep-think-inner" style="white-space:pre-wrap">' + _reasoningEsc + '</div></div>'
               + '</div>';
           }
           if (_silentEdit && typeof window.formatAIAnswer === 'function') {
@@ -13163,10 +13163,10 @@ function slStopAllAnimations() {
             _bodyHtml = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div>'+_deepThinkHtml+'<div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           }
           aiDiv.innerHTML = _bodyHtml;
-          if (window.__alalaGyGyAghaPendingSearchImages && window.__alalaGyGyAghaPendingSearchImages.length) {
+          if (window.__cosmosPendingSearchImages && window.__cosmosPendingSearchImages.length) {
             var _gal = document.createElement('div');
-            _gal.className = 'alalaGyGyAgha-search-gallery';
-            window.__alalaGyGyAghaPendingSearchImages.forEach(function(_imgUrl){
+            _gal.className = 'cosmos-search-gallery';
+            window.__cosmosPendingSearchImages.forEach(function(_imgUrl){
               var _a = document.createElement('a');
               _a.href = _imgUrl; _a.target = '_blank'; _a.rel = 'noopener noreferrer';
               var _im = document.createElement('img');
@@ -13176,7 +13176,7 @@ function slStopAllAnimations() {
             });
             var _timeEl = aiDiv.querySelector('.message-time');
             if (_timeEl) aiDiv.insertBefore(_gal, _timeEl); else aiDiv.appendChild(_gal);
-            window.__alalaGyGyAghaPendingSearchImages = null;
+            window.__cosmosPendingSearchImages = null;
           }
           msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
           if (typeof window.addAIMuteButton === 'function') {
@@ -13212,9 +13212,9 @@ function slStopAllAnimations() {
     // الضغط عليه وهو مربع بيوقف التوليد فورًا (AbortController) — مش بيضيف لقائمة انتظار. ──
     // ══════════════════════════════════════════════════════════════════
     (function(){
-      window.__alalaGyGyAghaBusy = window.__alalaGyGyAghaBusy || false;
-      window.__alalaGyGyAghaQueue = window.__alalaGyGyAghaQueue || [];
-      window.__alalaGyGyAghaAbortController = window.__alalaGyGyAghaAbortController || null;
+      window.__cosmosBusy = window.__cosmosBusy || false;
+      window.__cosmosQueue = window.__cosmosQueue || [];
+      window.__cosmosAbortController = window.__cosmosAbortController || null;
       var _coreSend = window.__aiSendMessageCore;
 
       function _aiSendBtnEl(){
@@ -13226,9 +13226,9 @@ function slStopAllAnimations() {
       // ⏹️ زرار إيقاف حقيقي: لما المساعد بيفكر، الزرار بيبقى مربع (fa-stop) وبالضغط عليه
       // بيوقف التوليد فورًا (زي أي برنامج ذكاء اصطناعي حقيقي) — مش بيضيف لقائمة انتظار. ──
       // ══════════════════════════════════════════════════════════════════
-      window.__stopAlalaGyGyAghaGeneration = function(){
-        if (window.__alalaGyGyAghaAbortController) { try { window.__alalaGyGyAghaAbortController.abort(); } catch(e){} }
-        window.__alalaGyGyAghaQueue = [];
+      window.__stopCosmosGeneration = function(){
+        if (window.__cosmosAbortController) { try { window.__cosmosAbortController.abort(); } catch(e){} }
+        window.__cosmosQueue = [];
       };
 
       window.__updateAISendBtnUI = function(){
@@ -13236,7 +13236,7 @@ function slStopAllAnimations() {
         if (!btn) return;
         var icon = btn.querySelector('i');
         var badge = btn.querySelector('.ai-queue-badge');
-        if (window.__alalaGyGyAghaBusy) {
+        if (window.__cosmosBusy) {
           btn.classList.add('ai-busy');
           btn.title = 'بيفكر... اضغط لإيقاف التفكير';
           if (icon) icon.className = 'fas fa-stop';
@@ -13252,20 +13252,20 @@ function slStopAllAnimations() {
       window.sendAIMessage = async function(injectedMsg, _fromQueueDrain){
         var inp = document.getElementById('aiChatInput');
 
-        if (!_fromQueueDrain && window.__alalaGyGyAghaBusy) {
-          // المساعد لسه بيفكر — الزرار نفسه بقى زرار إيقاف (شوف __stopAlalaGyGyAghaGeneration)،
+        if (!_fromQueueDrain && window.__cosmosBusy) {
+          // المساعد لسه بيفكر — الزرار نفسه بقى زرار إيقاف (شوف __stopCosmosGeneration)،
           // فمفيش داعي لقائمة انتظار هنا؛ لو حصل استدعاء برمجي تاني بره الزرار بنتجاهله بهدوء.
           return;
         }
 
-        window.__alalaGyGyAghaBusy = true;
-        window.__alalaGyGyAghaAbortController = new AbortController();
+        window.__cosmosBusy = true;
+        window.__cosmosAbortController = new AbortController();
         window.__updateAISendBtnUI();
         try {
           await _coreSend(injectedMsg);
         } finally {
-          window.__alalaGyGyAghaBusy = false;
-          window.__alalaGyGyAghaAbortController = null;
+          window.__cosmosBusy = false;
+          window.__cosmosAbortController = null;
           window.__updateAISendBtnUI();
         }
       };
@@ -13273,7 +13273,7 @@ function slStopAllAnimations() {
       // ── ديسباتشر ثابت على زرار الإرسال: بيقرر هو نفسه وقت الضغط لو المفروض يبعت أو يوقف،
       // بدل ما يعتمد بس على onclick بيتبدّل ديناميكيًا (أكثر أمانًا ضد أي تضارب توقيت) ──
       window.__aiSendOrStop = function(){
-        if (window.__alalaGyGyAghaBusy) { window.__stopAlalaGyGyAghaGeneration(); return; }
+        if (window.__cosmosBusy) { window.__stopCosmosGeneration(); return; }
         window.sendAIMessage();
       };
       var _initBtn = _aiSendBtnEl();
@@ -14280,7 +14280,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     cont.addEventListener('click', function(e){ if (longPressed) { e.stopPropagation(); e.preventDefault(); longPressed = false; } }, true);
   }
 
-  function initAllReply(){ attachLongPress('public'); attachLongPress('pac'); /* تم إلغاء الرد بالضغط المطول في شات AlalaGyGyAgha بناءً على طلب المستخدم */ }
+  function initAllReply(){ attachLongPress('public'); attachLongPress('pac'); /* تم إلغاء الرد بالضغط المطول في شات كوزموس بناءً على طلب المستخدم */ }
   let _replyTries = 0;
   const _replyIv = setInterval(function(){ _replyTries++; initAllReply(); if (_replyTries > 60) clearInterval(_replyIv); }, 500);
   document.addEventListener('DOMContentLoaded', initAllReply);
@@ -14324,7 +14324,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       }
     } catch(eHl) {}
   }
-  window.__alalaGyGyAghaHighlightProCode = _highlightProCode;
+  window.__cosmosHighlightProCode = _highlightProCode;
 
   function _escHtmlAI(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -14580,8 +14580,8 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 
   window.formatAIAnswer = function(raw, codeOnly){
     if (!raw) return '';
-    var noFileMode = !!window.__alalaGyGyAghaNoFileRequested;
-    window.__alalaGyGyAghaNoFileRequested = false; // نستهلك الفلاج مرة واحدة بس لكل رد
+    var noFileMode = !!window.__cosmosNoFileRequested;
+    window.__cosmosNoFileRequested = false; // نستهلك الفلاج مرة واحدة بس لكل رد
 
     var s = String(raw);
     // ── نستخرج كل كتل الكود الأول من النص الخام (قبل الـ escaping) ونسيب مكانها placeholder ──
@@ -14752,7 +14752,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 })();
 
 // ============================================================
-// 🤖 ALALAGYGYAGHA AI — ChatGPT-style overhaul:
+// 🤖 COSMOS AI — ChatGPT-style overhaul:
 //   1) رد الذكاء الاصطناعي بيتكتب حرف حرف (typewriter) بدل ما يظهر مرة واحدة
 //   2) شريط أزرار موحّد في آخر كل رد (⋮ / مشاركة / سماعة / 👎 / 👍 / نسخ) وبس
 //   3) مؤشر "بيفكر" بيتنقّل بين كذا جملة (بيفكر / بيبحث / بيراجع البيانات...)
@@ -14769,20 +14769,20 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   ];
 
   function isThinkingNode(contentEl){
-    return !!contentEl.querySelector('.alalaGyGyAgha-thinking');
+    return !!contentEl.querySelector('.cosmos-thinking');
   }
 
   function cycleThinkingLabel(labelEl){
     var i = -1;
     var tries = 0;
     function render(){
-      var dots = labelEl.querySelectorAll('.alalaGyGyAgha-thinking-dot');
+      var dots = labelEl.querySelectorAll('.cosmos-thinking-dot');
       i = (i + 1) % BROWSE_STEPS.length;
       var step = BROWSE_STEPS[i];
       labelEl.innerHTML = '';
       if (step.domain) {
         var favicon = document.createElement('img');
-        favicon.className = 'alalaGyGyAgha-browse-favicon';
+        favicon.className = 'cosmos-browse-favicon';
         favicon.alt = '';
         favicon.src = 'https://www.google.com/s2/favicons?sz=32&domain=' + step.domain;
         labelEl.appendChild(favicon);
@@ -14792,7 +14792,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       if (!dots.length) {
         ['.', '.', '.'].forEach(function(ch){
           var s = document.createElement('span');
-          s.className = 'alalaGyGyAgha-thinking-dot';
+          s.className = 'cosmos-thinking-dot';
           s.textContent = ch;
           labelEl.appendChild(s);
         });
@@ -14853,13 +14853,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
 
   function buildActionBar(msgEl, plainText){
-    if (msgEl.querySelector('.alalaGyGyAgha-action-bar')) return;
+    if (msgEl.querySelector('.cosmos-action-bar')) return;
     var bar = document.createElement('div');
-    bar.className = 'alalaGyGyAgha-action-bar';
+    bar.className = 'cosmos-action-bar';
 
     function mkBtn(icon, title, handler){
       var b = document.createElement('button');
-      b.className = 'alalaGyGyAgha-action-btn';
+      b.className = 'cosmos-action-btn';
       b.type = 'button';
       b.title = title;
       b.innerHTML = '<i class="' + icon + '"></i>';
@@ -14879,7 +14879,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     }));
     bar.appendChild(mkBtn('fas fa-thumbs-down', 'مش مفيد', function(btn){
       var wasActive = btn.classList.contains('disliked');
-      bar.querySelectorAll('.alalaGyGyAgha-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
+      bar.querySelectorAll('.cosmos-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
       if (!wasActive) {
         btn.classList.add('disliked');
         var q = findPrecedingUserQuestion(msgEl);
@@ -14889,7 +14889,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     }));
     bar.appendChild(mkBtn('fas fa-thumbs-up', 'مفيد', function(btn){
       var wasActive = btn.classList.contains('liked');
-      bar.querySelectorAll('.alalaGyGyAgha-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
+      bar.querySelectorAll('.cosmos-action-btn').forEach(function(x){ x.classList.remove('liked','disliked'); });
       if (!wasActive) {
         btn.classList.add('liked');
         var q = findPrecedingUserQuestion(msgEl);
@@ -14935,7 +14935,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 
     container.innerHTML = '';
     var caret = document.createElement('span');
-    caret.className = 'alalaGyGyAgha-typing-caret';
+    caret.className = 'cosmos-typing-caret';
     container.appendChild(caret);
 
     var stack = [container];
@@ -14994,18 +14994,18 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   function handleNewMessage(m){
     if (!m.classList) return;
     if (m.classList.contains('sent')) {
-      if (!m.dataset.alalaGyGyAghaSentHandled) { m.dataset.alalaGyGyAghaSentHandled = '1'; hideLegacyBar(m); }
+      if (!m.dataset.cosmosSentHandled) { m.dataset.cosmosSentHandled = '1'; hideLegacyBar(m); }
       return;
     }
-    if (!m.classList.contains('received') || m.dataset.alalaGyGyAghaHandled || m.dataset.alalaGyGyAghaSkip) return;
+    if (!m.classList.contains('received') || m.dataset.cosmosHandled || m.dataset.cosmosSkip) return;
     var contentEl = m.querySelector('.message-content');
     if (!contentEl) return;
-    m.dataset.alalaGyGyAghaHandled = '1';
+    m.dataset.cosmosHandled = '1';
 
     hideLegacyBar(m);
 
     if (isThinkingNode(contentEl)) {
-      var label = contentEl.querySelector('.alalaGyGyAgha-thinking-label');
+      var label = contentEl.querySelector('.cosmos-thinking-label');
       if (label) cycleThinkingLabel(label);
       return;
     }
@@ -15040,5 +15040,5 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
   attachObserver();
 
-  console.log('✅ AlalaGyGyAgha AI ChatGPT-style UI جاهزة — typewriter + action bar + thinking phrases');
+  console.log('✅ Cosmos AI ChatGPT-style UI جاهزة — typewriter + action bar + thinking phrases');
 })();
