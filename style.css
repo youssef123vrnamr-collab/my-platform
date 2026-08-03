@@ -3344,7 +3344,7 @@ body {
   padding: .6rem 0 1.25rem;
   max-width: 480px; width: 100%;
   box-shadow: 0 -8px 40px rgba(0,0,0,.35);
-  max-height: 78vh; overflow-y: auto;
+  max-height: 88vh; overflow-y: auto;
   transform: translateY(100%);
   transition: transform .28s cubic-bezier(.2,.8,.2,1);
 }
@@ -3352,22 +3352,22 @@ body {
   transform: translateY(0);
 }
 .persona-sheet-handle {
-  width: 36px; height: 4px;
+  width: 40px; height: 5px;
   background: #d1d5db;
   border-radius: 99px;
-  margin: 0 auto .75rem;
+  margin: 0 auto .9rem;
 }
 #aiPersonaModal .persona-close-btn {
   position: absolute !important;
-  top: .1rem !important; right: 1.1rem !important;
-  width: 32px !important; height: 32px !important;
-  min-width: 32px !important; min-height: 32px !important;
-  max-width: 32px !important; max-height: 32px !important;
+  top: .1rem !important; right: 1.2rem !important;
+  width: 34px !important; height: 34px !important;
+  min-width: 34px !important; min-height: 34px !important;
+  max-width: 34px !important; max-height: 34px !important;
   background: #f3f4f6 !important;
   border: none !important;
   border-radius: 50% !important;
   color: #6b7280 !important;
-  font-size: .95rem !important;
+  font-size: 1rem !important;
   cursor: pointer;
   display: flex !important; align-items: center !important; justify-content: center !important;
   transition: background .2s;
@@ -3376,10 +3376,10 @@ body {
 #aiPersonaModal .persona-close-btn:hover { background: #e5e7eb !important; }
 .persona-modal-title {
   text-align: center; position: relative;
-  padding: 0 1.1rem .75rem;
+  padding: 0 1.2rem 1rem;
 }
 .persona-modal-title h2 {
-  font-size: 1.05rem; font-weight: 800;
+  font-size: 1.2rem; font-weight: 800;
   color: #111827;
   margin: 0;
 }
@@ -3390,8 +3390,8 @@ body {
 .persona-card {
   display: flex;
   align-items: flex-start;
-  gap: .55rem;
-  padding: .85rem 1.1rem;
+  gap: .6rem;
+  padding: 1.05rem 1.2rem;
   border-bottom: 1px solid #eef0f2;
   cursor: pointer;
   transition: background .15s;
@@ -3403,26 +3403,26 @@ body {
   background: #f7f7f8;
 }
 .persona-card-check {
-  width: 16px; flex-shrink: 0; padding-top: .2rem;
-  color: #2563eb; font-size: .8rem;
+  width: 18px; flex-shrink: 0; padding-top: .25rem;
+  color: #2563eb; font-size: .9rem;
   opacity: 0; visibility: hidden;
 }
 .persona-card.selected .persona-card-check { opacity: 1; visibility: visible; }
 .persona-card-text { flex: 1; text-align: right; min-width: 0; }
 .persona-card-toprow {
-  display: flex; align-items: center; justify-content: flex-end; gap: .4rem;
+  display: flex; align-items: center; justify-content: flex-end; gap: .45rem;
 }
 .persona-card-name {
-  font-size: .92rem; font-weight: 700; color: #111827;
+  font-size: 1.02rem; font-weight: 700; color: #111827;
 }
 .persona-card.selected .persona-card-name { color: #2563eb; }
-.persona-card-desc { font-size: .76rem; color: #8a8f98; line-height: 1.4; margin-top: .15rem; }
+.persona-card-desc { font-size: .84rem; color: #8a8f98; line-height: 1.45; margin-top: .2rem; }
 .persona-lang-badge {
   display: inline-block;
   background: #eef1f5;
   color: #6b7280;
-  font-size: .62rem;
-  padding: .12rem .45rem;
+  font-size: .68rem;
+  padding: .15rem .5rem;
   border-radius: 99px;
   font-weight: 700;
 }
@@ -5051,7 +5051,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border-radius: 20px 20px 0 0 !important;
   max-width: 480px !important;
   width: 100% !important;
-  max-height: 78vh !important;
+  max-height: 88vh !important;
   height: auto !important;
   flex: none !important;
 }
