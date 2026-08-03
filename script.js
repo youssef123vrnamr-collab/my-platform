@@ -2736,8 +2736,8 @@ async function updateAdminUI() {
     // كشف نية الأسلوب من كلام المستخدم نفسه (عربي) قبل الترجمة
     const _wantsCartoon = /كرتون|انمي|أنمي|anime|cartoon|رسمة اطفال|رسمة أطفال|كاريكاتير/i.test(prompt);
     const _styleForTranslator = _wantsCartoon
-      ? "Reply ONLY with a vivid, detailed English description for an AI image generator, max 35 words, describing a colorful cartoon/anime-style illustration. No quotes, no explanation."
-      : "Reply ONLY with a vivid, detailed English description for an AI image generator, max 35 words. Describe realistic textures, materials, lighting direction and color, and camera framing as if describing a real photograph — not a drawing. No quotes, no explanation.";
+      ? "Translate and expand the user's request into a vivid English description for an AI image generator, max 45 words. You MUST preserve every specific detail the user mentioned (subject, count, colors, objects, pose, background, composition) — never drop or generalize them. Describe a colorful cartoon/anime-style illustration. Reply ONLY with the description, no quotes, no explanation."
+      : "Translate and expand the user's request into a vivid English description for an AI image generator, max 45 words. You MUST preserve every specific detail the user mentioned (subject, count, colors, objects, pose, background, composition) — never drop or generalize them. Describe realistic textures, materials, lighting direction and color, and camera framing as if describing a real photograph — not a drawing. Reply ONLY with the description, no quotes, no explanation.";
 
     // ترجمة + إثراء الوصف (12 ثانية timeout)
     let enPrompt = "";
@@ -2932,13 +2932,25 @@ async function updateAdminUI() {
     'شوف الصوره','شوف الصورة','بص على الصوره','بص على الصورة'
   ];
 
+  // ── تتأكد إن الكلمة/الجملة اتلاقت كـ"كلمة كاملة" جوه النص، مش جزء من كلمة تانية
+  // (مثلاً "رسم" متجيش تتطابق جوه "الرسمي" أو "مرسوم") ──
+  function _isWholeWordMatch(text, trigger) {
+    const idx = text.indexOf(trigger);
+    if (idx === -1) return false;
+    const isArabicOrLatinLetter = ch => /[\u0600-\u06FFa-z0-9]/i.test(ch || '');
+    const before = idx > 0 ? text[idx - 1] : '';
+    const after  = idx + trigger.length < text.length ? text[idx + trigger.length] : '';
+    if (isArabicOrLatinLetter(before) || isArabicOrLatinLetter(after)) return false;
+    return true;
+  }
+
   function isImageRequest(text) {
     if (isLikelyCode(text)) return false;
     const t = text.trim().toLowerCase();
     // لو الرسالة بتشاور على صورة موجودة (مرفقة أو اتبعتت قبل كده)، دي مش طلب توليد — منعتبرهاش صورة جديدة أبداً
     if (IMAGE_REFERENCE_GUARDS.some(g => t.includes(g))) return false;
-    if (IMAGE_GEN_TRIGGERS.some(trigger => t.startsWith(trigger) || t.includes(trigger))) return true;
-    return false;
+    // لازم تطابق "كلمة كاملة" مش مجرد substring، عشان كلمات زي "رسم" منجيش نطابقها جوه "الرسمي" أو "مرسوم"
+    return IMAGE_GEN_TRIGGERS.some(trigger => _isWholeWordMatch(t, trigger));
   }
 
   // ── هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ما يتعمله ملف/تنزيل؟ ──
@@ -2958,12 +2970,21 @@ async function updateAdminUI() {
 
   function extractImagePrompt(text) {
     const t = text.trim();
+    const tl = t.toLowerCase();
+    // بنلاقي أقرب كلمة تشغيل (trigger) ظهرت فعلاً كـ"كلمة كاملة" في النص (مش أول واحدة في الـ array)
+    let bestIdx = -1, bestTrigger = null;
     for (const trigger of IMAGE_GEN_TRIGGERS) {
-      const idx = t.toLowerCase().indexOf(trigger);
-      if (idx !== -1) {
-        const after = t.slice(idx + trigger.length).trim().replace(/^[:\-,\s]+/, '');
-        if (after) return after;
-      }
+      if (!_isWholeWordMatch(tl, trigger)) continue;
+      const idx = tl.indexOf(trigger);
+      if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) { bestIdx = idx; bestTrigger = trigger; }
+    }
+    if (bestTrigger !== null) {
+      // بنجمع الجزء اللي قبل كلمة التشغيل والجزء اللي بعدها — عشان التفاصيل (اللون، الموضوع، الأسلوب)
+      // ممكن تكون اتقالت قبل الفعل نفسه في الجملة العربية (مثلاً "صورة واقعية لكوكب المريخ اعمللي")
+      const before = t.slice(0, bestIdx).trim();
+      const after  = t.slice(bestIdx + bestTrigger.length).trim().replace(/^[:\-,\s]+/, '');
+      const combined = [before, after].filter(Boolean).join(' ').trim();
+      if (combined) return combined;
     }
     return t;
   }
