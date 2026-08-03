@@ -8595,3 +8595,156 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
     height: 100% !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ✅ FIX v2: صفحة الرسم (فيديو + لوحة رسم) — موبايل + ديسكتوب مع بعض
+   المشكلة: تراكم عشرات القواعد القديمة المتضاربة لـ #videoModal على طول
+   الملف خلّى السلسلة (modal-content ← modal-body ← video-with-board ←
+   drawing-board ← drawing-canvas-wrap) بتسيب فراغ فاضي بدل ما تكمل لآخر
+   الشاشة. القواعد دي بتستخدم بادئة "html body" عشان تكسب أي تعارض في
+   specificity حتى مع الـ <style> الموجود جوه index.html نفسه، وهي كمان
+   آخر حاجة في الملف فبتكسب في ترتيب القراءة. الكانفاس نفسه بيتحجم تلقائي
+   عن طريق ResizeObserver في script.js فمش محتاج نلمسه — يكفي إن الحاويات
+   تاخد المساحة الفعلية صح.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── الأساس المشترك (كل المقاسات) ── */
+html body #videoModal .modal-content {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+html body #videoModal .modal-body {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+}
+html body #videoModal .video-with-board {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+html body #videoModal .drawing-board {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+html body #videoModal .drawing-toolbar,
+html body #videoModal .db-toolbar,
+html body #videoModal .db-tools-panel {
+  flex: 0 0 auto !important;
+}
+html body #videoModal .drawing-canvas-wrap {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+html body #videoModal .drawing-canvas-wrap canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── موبايل: فيديو فوق، رسم تحت — عمودي بيتقاسم المساحة كاملة ── */
+@media (max-width: 768px) {
+  html body #videoModal .video-with-board {
+    flex-direction: column !important;
+  }
+  html body #videoModal .video-player-container {
+    flex: 0 0 auto !important;
+  }
+  html body #videoModal .drawing-board {
+    flex: 1 1 auto !important;
+  }
+}
+
+/* ── ديسكتوب: فيديو فوق (58%)، رسم تحت (الباقي) — عمودي برضه ── */
+@media (min-width: 769px) {
+  html body #videoModal .video-with-board {
+    flex-direction: column !important;
+  }
+  html body #videoModal .video-player-container {
+    flex: 0 0 58% !important;
+    height: 58% !important;
+    max-height: none !important;
+  }
+  html body #videoModal .drawing-board {
+    flex: 1 1 auto !important;
+    height: auto !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ✅ نظام أزرار احترافي موحّد — لكل زراير المنصة
+   بيضيف لمسة "لمعة" واحساس فيزيائي حقيقي (رفعة عند الهوفر، ضغطة عند
+   الكليك، توهج عند الفوكس للوصولية) من غير ما يلمس ألوان أو تصميم أي
+   زرار موجود أصلاً — بس بيرفع مستوى الاحتراف والحركة.
+   ══════════════════════════════════════════════════════════════════════ */
+html body button,
+html body .btn,
+html body [class*="-btn"],
+html body [class$="btn"],
+html body [onclick] {
+  cursor: pointer;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1),
+              box-shadow .18s cubic-bezier(.2,.8,.2,1),
+              filter .18s ease,
+              opacity .18s ease !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html body button:not(:disabled):hover,
+html body .btn:not(:disabled):hover,
+html body [class*="-btn"]:not(:disabled):hover,
+html body [class$="btn"]:not(:disabled):hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+html body button:not(:disabled):active,
+html body .btn:not(:disabled):active,
+html body [class*="-btn"]:not(:disabled):active,
+html body [class$="btn"]:not(:disabled):active {
+  transform: translateY(0) scale(.96) !important;
+  filter: brightness(.94);
+}
+
+html body button:disabled,
+html body .btn:disabled,
+html body [class*="-btn"]:disabled,
+html body [class$="btn"]:disabled {
+  opacity: .5 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(.3);
+  transform: none !important;
+}
+
+/* توهج فوكس واضح لأصحاب الكيبورد/الوصولية — بديل شكل مستطيل المتصفح الافتراضي */
+html body button:focus-visible,
+html body .btn:focus-visible,
+html body [class*="-btn"]:focus-visible,
+html body [class$="btn"]:focus-visible {
+  outline: 2px solid rgba(139,92,246,.85) !important;
+  outline-offset: 2px !important;
+}
+
+/* أزرار من غير كلاس خاص ولا ستايل لون — نديها هوية بصرية احترافية بسيطة */
+html body button:not([class]):not([style*="background"]) {
+  background: linear-gradient(135deg, rgba(99,102,241,.9), rgba(139,92,246,.9));
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: .55rem 1.1rem;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(99,102,241,.35);
+}
+
