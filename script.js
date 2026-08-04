@@ -597,6 +597,16 @@ async function isAdminUser(userId) {
 
   // ── مراجعة حقيقية للكود: استدعاء تاني منفصل بيراجع الرد اللي فيه كود مقابل طلب المستخدم الأصلي،
   // ويصححه لو لقى نقص أو خطأ، قبل ما يوصل للمستخدم — مش مجرد تعليمة "راجع نفسك" جوه نفس الرد. ──
+  // ── حد التوكنز والقص هنا لازم يتحسب من حجم الرد الأصلي نفسه، مش رقم ثابت — لو الرد الأصلي
+  // كبير (تطبيق/لعبة كاملة، ~28000 توكن ممكن)، وأي مرحلة تصحيح لاحقة بتطلب من الموديل "اكتب الرد
+  // كامل من الأول" بس بسقف توكنز أصغر من حجم الرد الأصلي، النتيجة هتبقى نسخة مقتطعة (Truncation)
+  // بدل رد مصحح كامل — وده كان باج حقيقي قبل التعديل ده. ──
+  function _cosmosCorrectionTokenBudget(sourceText) {
+    var len = String(sourceText || '').length;
+    // ── تقدير تقريبي متساهل: ~3 حروف/توكن + هامش أمان 3000 توكن للإضافات وقت التصحيح ──
+    var approxTokens = Math.ceil(len / 3) + 3000;
+    return Math.max(8000, Math.min(30000, approxTokens));
+  }
   window.verifyCosmosCodeAnswer = async function(apiKey, originalUserMsg, rawAnswer) {
     try {
       var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -604,11 +614,11 @@ async function isAdminUser(userId) {
         headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'openai/gpt-oss-120b',
-          max_tokens: 8000,
+          max_tokens: _cosmosCorrectionTokenBudget(rawAnswer),
           temperature: 0.1,
           messages: [
             { role: 'system', content: 'أنت مراجع كود صارم جدًا. هتستلم طلب المستخدم الأصلي، ورد كامل اتكتب عليه (فيه كود). مهمتك بالترتيب: (1) قارن الكود بند بند مع كل جزئية طلبها المستخدم — هل كل حاجة اتنفذت فعلاً؟ (2) افحص الكود سطر سطر بحثًا عن أي خطأ syntax، متغير غير معرّف، دالة ناقصة، أو منطق غلط. (3) تأكد إن الكود كامل تمامًا من غير أي اختصار أو "..." أو جزء ناقص. لو لقيت أي مشكلة في أي بند من دول، اكتب الرد كامل من الأول بعد التصحيح، بنفس بالظبط تنسيق الرد الأصلي (نفس عدد كتل الكود ونوعها). لو الرد سليم 100% ومطابق تمامًا لطلب المستخدم من غير أي مشكلة، رجّعه حرفيًا زي ما هو من غير أي تعديل ولا أي كلمة زيادة. ممنوع تمامًا تضيف أي جملة تقول "راجعت" أو "صححت" أو أي تعليق عن عملية المراجعة نفسها — بس الرد النهائي (المصحح أو الأصلي زي ما هو).' },
-            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 3000) + '\n\n---\n\nالرد اللي اتكتب رداً عليه:\n' + String(rawAnswer || '').slice(0, 14000) }
+            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 3000) + '\n\n---\n\nالرد اللي اتكتب رداً عليه:\n' + String(rawAnswer || '').slice(0, 60000) }
           ]
         })
       });
@@ -634,11 +644,11 @@ async function isAdminUser(userId) {
         headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'openai/gpt-oss-120b',
-          max_tokens: 12000,
+          max_tokens: _cosmosCorrectionTokenBudget(previousAnswer),
           temperature: 0.25,
           messages: [
             { role: 'system', content: 'إنت مبرمج JavaScript سينيور متخصص بس في المنطق الوظيفي (Logic Engineer) — مش شغلك التصميم أو الشكل. هتستلم رد كامل فيه كود (HTML/CSS/JS) وقائمة "قواعد منطق وظيفي" لازم تكون شغالة 100%. مهمتك: افحص كود الـ JS بس، وتأكد إن كل نقطة من القواعد دي متنفذة فعليًا وبشكل صحيح منطقيًا (زي: كشف الفوز/الخسارة يشتغل صح، حركة اللاعب متسقة، الأزرار بتنادي على الدوال الصح). لو لقيت نقطة ناقصة أو منطقها غلط، أصلحها أو أكملها. ممنوع تمامًا تلمس أو تغيّر HTML أو CSS إلا لو فعلاً محتاج عنصر جديد ضروري للمنطق (زي عداد نقاط ناقص). رجّع الرد كامل من الأول لحد الآخر، بنفس تنسيق الرد الأصلي بالظبط (نفس عدد كتل الكود ونوعها)، من غير أي شرح أو تعليق عن التعديل نفسه.' },
-            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 2000) + '\n\nقواعد المنطق الوظيفي اللي لازم تكون شغالة 100%:\n- ' + coreLogicList.join('\n- ') + '\n\nالرد الحالي (فيه الكود):\n' + String(previousAnswer || '').slice(0, 16000) }
+            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 2000) + '\n\nقواعد المنطق الوظيفي اللي لازم تكون شغالة 100%:\n- ' + coreLogicList.join('\n- ') + '\n\nالرد الحالي (فيه الكود):\n' + String(previousAnswer || '').slice(0, 60000) }
           ]
         })
       });
@@ -792,11 +802,11 @@ async function isAdminUser(userId) {
         headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'openai/gpt-oss-120b',
-          max_tokens: 8000,
+          max_tokens: _cosmosCorrectionTokenBudget(previousAnswer),
           temperature: 0.1,
           messages: [
             { role: 'system', content: 'أنت مبرمج خبير. الكود اللي كتبته اتشغّل فعليًا جوه متصفح حقيقي، ورجّع الأخطاء دي وقت التشغيل الفعلي. مهمتك: افهم سبب كل خطأ منها بدقة، وأعد كتابة الرد كامل بعد إصلاح كل خطأ، بنفس تنسيق الرد الأصلي بالظبط (نفس عدد كتل الكود ونوعها). ركّز بس على إصلاح الأخطاء دي من غير ما تكسر أو تغيّر أي حاجة تانية كانت شغالة صح. اكتب الرد المصحح كامل من غير أي شرح أو تعليق عن إنك بتصلح حاجة.' },
-            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 3000) + '\n\nالرد اللي اتكتب:\n' + String(previousAnswer || '').slice(0, 14000) + '\n\nالأخطاء الحقيقية اللي حصلت وقت التشغيل الفعلي في المتصفح:\n- ' + errorList.join('\n- ') }
+            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 3000) + '\n\nالرد اللي اتكتب:\n' + String(previousAnswer || '').slice(0, 60000) + '\n\nالأخطاء الحقيقية اللي حصلت وقت التشغيل الفعلي في المتصفح:\n- ' + errorList.join('\n- ') }
           ]
         })
       });
@@ -12905,8 +12915,12 @@ function slStopAllAnimations() {
       // 🔍 مراجعة حقيقية للكود (مش مجرد تعليمة في البرومبت) — قبل ما أي رد فيه كود يوصل للمستخدم،
       // بنبعته لطلب تاني منفصل يراجعه كلمة كلمة مقابل طلب المستخدم الأصلي، ويصححه لو لقى مشكلة.
       // ده استدعاء إضافي حقيقي (مش نفس الرد) — بياخد ثواني زيادة، بس ده اللي بيدّي ثقة فعلية إن الكود صح.
+      // ── مبنسيبهاش تشتغل على أي كتلة ``` (حتى لو دالة صغيرة أو رد بسيط) — ده كان بيطوّل السلسلة
+      // من غير داعي فعلي. وبنسيبها كمان لو فيه مرحلة "تعميق منطق" جاية بعدها لنفس الرد، عشان
+      // منراجعش نفس الكود مرتين بنداءين متتاليين (دمج المرحلتين لواحدة بدل اتنين للبنايات الكبيرة). ──
       // ══════════════════════════════════════════════════════════════════
-      if (answer && /```/.test(answer) && apiKey) {
+      var _hasLogicPassComing = !!(_architectPlan && _architectPlan.core_logic && _architectPlan.core_logic.length);
+      if (answer && /```/.test(answer) && apiKey && !_hasLogicPassComing && (_looksLikeBuildRequest || answer.length > 1200)) {
         if (typingEl && typingEl.isConnected) {
           if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
           var _wrapV = typingEl.querySelector('.message-content');
@@ -12924,9 +12938,11 @@ function slStopAllAnimations() {
       // ══════════════════════════════════════════════════════════════════
       // 🧩 نداء "المكوّد الموديلار" — بس للأكواد الكبيرة اللي كان ليها خطة معمارية فيها
       // core_logic (قواعد منطق وظيفي محددة سلفًا). نداء إضافي منفصل مخصص للمنطق بس،
-      // بعد ما الشكل خلص، عشان نضمن كل نقطة وظيفية مطلوبة اتنفذت فعلاً بدقة. ──
+      // بعد ما الشكل خلص، عشان نضمن كل نقطة وظيفية مطلوبة اتنفذت فعلاً بدقة.
+      // ── دي بقت "المراجعة الوحيدة" للبنايات الكبيرة بدل ما تتضاف فوق مراجعة عامة كمان
+      // (شوف الشرط فوق: بيتخطى المراجعة العامة لو المرحلة دي هتشتغل، بدل الاتنين مع بعض). ──
       // ══════════════════════════════════════════════════════════════════
-      if (answer && /```/.test(answer) && apiKey && _architectPlan && _architectPlan.core_logic && _architectPlan.core_logic.length) {
+      if (answer && /```/.test(answer) && apiKey && _hasLogicPassComing) {
         if (typingEl && typingEl.isConnected) {
           if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
           var _wrapL = typingEl.querySelector('.message-content');
