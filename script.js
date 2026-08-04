@@ -714,6 +714,46 @@ async function isAdminUser(userId) {
     return errors;
   };
 
+  // ══════════════════════════════════════════════════════════════════
+  // 🔗 فحص "ربط" خفيف (AST-lite) بين HTML والـ JS — من غير محلل نحوي كامل (AST حقيقي محتاج
+  // مكتبة خارجية ومفيش نت داخل بيئة التشغيل)، بس بنطلع بالـ Regex كل الدوال اللي الـ HTML
+  // بينادي عليها (onclick="..."، onchange="..."، إلخ) ونتأكد إنها فعلاً متعرّفة جوه الـ JS.
+  // ده بيمسك أشهر خطأ حقيقي بيحصل: زرار مربوط بدالة اسمها غلط أو اتنسيت، والـ iframe test
+  // ممكن ميكتشفهوش لو الزرار مالوش focus/click تلقائي وقت التحميل. ──
+  // ══════════════════════════════════════════════════════════════════
+  window.checkCosmosCodeLinks = function(htmlCode, jsCode) {
+    var errors = [];
+    try {
+      if (!htmlCode || !jsCode) return errors;
+      var calledFns = {};
+      // ── أي on* handler جوه الـ HTML (onclick, onchange, onsubmit, onkeyup...) بيستدعي دالة باسم(...) ──
+      var attrRe = /\son[a-z]+\s*=\s*["']([^"']*)["']/gi;
+      var am;
+      while ((am = attrRe.exec(htmlCode)) !== null) {
+        var body = am[1] || '';
+        var callRe = /([A-Za-z_$][\w$]*)\s*\(/g;
+        var cm;
+        while ((cm = callRe.exec(body)) !== null) {
+          var fname = cm[1];
+          // ── نتجاهل كلمات JS الأساسية اللي مش دوال المستخدم ──
+          if (/^(if|for|while|switch|return|new|typeof|function|this|window|document)$/.test(fname)) continue;
+          calledFns[fname] = true;
+        }
+      }
+      var missing = [];
+      Object.keys(calledFns).forEach(function(fname){
+        // ── لو الدالة متعرّفة بأي شكل شائع (function decl / تعيين عادي / method جوه object) نعتبرها موجودة.
+        // فحص بسيط ومتساهل عمدًا عشان نتجنب false positives كتير (زي دوال جوه objects متداخلة) ──
+        var re = new RegExp('function\\s+' + fname + '\\s*\\(|(?:window\\.)?' + fname + '\\s*=\\s*(?:function|\\([^)]*\\)\\s*=>|async)|["\']' + fname + '["\']\\s*:\\s*function|\\b' + fname + '\\s*:\\s*(?:function|\\([^)]*\\)\\s*=>)');
+        if (!re.test(jsCode)) missing.push(fname);
+      });
+      missing.slice(0, 3).forEach(function(fname){
+        errors.push('الزرار/العنصر في الـ HTML بينادي على دالة اسمها "' + fname + '()" بس مش متعرّفة (أو اسمها مختلف) جوه كود الـ JS.');
+      });
+    } catch (e) { /* فحص متساهل — أي خطأ فيه نتجاهله ومنوقفش المستخدم بسببه ── */ }
+    return errors;
+  };
+
   // ── إصلاح موجّه بالأخطاء الحقيقية اللي رجّعها التشغيل الفعلي (مش تخمين) ──
   window.fixCosmosHtmlAnswer = async function(apiKey, originalUserMsg, previousAnswer, errorList) {
     try {
@@ -12868,12 +12908,19 @@ function slStopAllAnimations() {
             // ── فحص تركيبي فوري للـ JS جوه الرد الأول (قبل حتى ننتظر iframe) — بيمسك أخطاء
             // الـ syntax الواضحة فورًا من غير انتظار، ويوفّر وقت لو الخطأ واضح من الأول ──
             var _syntaxErrs = [];
+            var _linkErrs = [];
             try {
-              var _jsBlocksNow = window.extractCosmosAllCodeBlocks(answer).filter(function(b){ return b.lang === 'js' || b.lang === 'javascript'; });
+              var _blocksNow = window.extractCosmosAllCodeBlocks(answer);
+              var _jsBlocksNow = _blocksNow.filter(function(b){ return b.lang === 'js' || b.lang === 'javascript'; });
               _jsBlocksNow.forEach(function(b){ _syntaxErrs = _syntaxErrs.concat(window.testCosmosJsSyntax(b.code)); });
+              // ── فحص الربط (AST-lite): كل الدوال اللي HTML بينادي عليها لازم تكون متعرّفة فعلاً جوه JS ──
+              if (typeof window.checkCosmosCodeLinks === 'function') {
+                var _jsCombinedNow = _jsBlocksNow.map(function(b){ return b.code; }).join('\n');
+                _linkErrs = window.checkCosmosCodeLinks(_htmlToTest, _jsCombinedNow);
+              }
             } catch (eSyn) { /* تجاهل */ }
             try { _lastErrors = await window.testCosmosHtmlCode(_htmlToTest); } catch(eTest) { _lastErrors = []; }
-            _lastErrors = _syntaxErrs.concat(_lastErrors);
+            _lastErrors = _syntaxErrs.concat(_linkErrs).concat(_lastErrors);
             if (!_lastErrors.length) break; // شغال صح، خلاص
             if (_fixAttempts >= _maxFixAttempts || typeof window.fixCosmosHtmlAnswer !== 'function') break;
             try {
