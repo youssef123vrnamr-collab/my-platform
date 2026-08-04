@@ -704,6 +704,16 @@ async function isAdminUser(userId) {
     });
   };
 
+  // ── فحص تركيبي (syntax) سريع لكتل JS لوحدها من غير HTML (مثلاً رد فيه كتلة ```js``` بس) —
+  // قبل كده الكود ده مكانش بيتفحص خالص لو مفيش <html> في الرد. new Function بيمسك أخطاء
+  // التركيب (زي قوس ناقص أو فاصلة منقوطة غلط) فورًا من غير ما نحتاج نشغّل iframe كامل. ──
+  window.testCosmosJsSyntax = function(jsCode) {
+    var errors = [];
+    try { new Function(jsCode); }
+    catch (e) { errors.push('خطأ تركيبي في الكود (JS Syntax Error): ' + String(e && e.message || e)); }
+    return errors;
+  };
+
   // ── إصلاح موجّه بالأخطاء الحقيقية اللي رجّعها التشغيل الفعلي (مش تخمين) ──
   window.fixCosmosHtmlAnswer = async function(apiKey, originalUserMsg, previousAnswer, errorList) {
     try {
@@ -753,6 +763,43 @@ async function isAdminUser(userId) {
       if (parsed && parsed.clear === false && parsed.question) return { clear: false, question: String(parsed.question).slice(0, 300) };
       return { clear: true };
     } catch (e) { return { clear: true }; } // ── أي خطأ هنا (شبكة/تحليل)، منمنعش المستخدم — نكمل عادي من غير توضيح ──
+  };
+
+  // ══════════════════════════════════════════════════════════════════
+  // 🏗️ "المهندس المعماري" المبسّط: قبل ما نبني كود كبير (لعبة/تطبيق/موقع متكامل)،
+  // بنسأل الموديل نفسه أول حاجة "لو هتبني الطلب ده، هتقسمه إزاي؟" ويرجّع خطة قصيرة
+  // (أقسام/ملفات منطقية + أهم الوظائف المطلوبة) — من غير استدعاء تاني منفصل تمامًا
+  // زي مخطط الـ Multi-Agent الكامل، لكن كفاية إنه "يفكر في الهيكل قبل ما يكتب سطر"
+  // بدل ما يبدأ يكتب كود على طول من غير تخطيط. ده استدعاء خفيف وسريع (توكنز قليلة). ──
+  // ══════════════════════════════════════════════════════════════════
+  window.planCosmosFileArchitecture = async function(apiKey, userMsg) {
+    try {
+      var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-120b',
+          max_tokens: 500,
+          temperature: 0.2,
+          messages: [
+            { role: 'system', content: 'إنت مهندس معماري سينيور (Software Architect). المستخدم هيوصفلك كود/لعبة/تطبيق/موقع عايز تبنيه. مهمتك بس: ارسم خطة هيكلية قصيرة قبل ما حد يكتب أي كود. رد بصيغة JSON فقط من غير أي نص زيادة قبله أو بعده، بالشكل ده: {"sections": ["اسم قسم أو وظيفة رئيسية 1", "اسم قسم أو وظيفة رئيسية 2", ...], "core_logic": ["أهم قاعدة/آلية وظيفية لازم تتبني صح عشان الحاجة تشتغل فعلاً 1", "..."], "risk": "أصعب جزء تقني متوقع يسبب مشاكل (سطر واحد بس)"}. خلي "sections" من 3 إلى 6 عناصر قصيرة (زي "واجهة اللوحة"، "منطق الحركة"، "كشف الفوز/الخسارة"، "التحكم باللمس"). خلي "core_logic" من 2 إلى 4 عناصر قصيرة تركز على الوظيفة الفعلية مش الشكل. لو الطلب بسيط جدًا (تعديل صغير أو سؤال، مش بناء حاجة من الصفر)، رجّع {"sections": [], "core_logic": [], "risk": ""}.' },
+            { role: 'user', content: String(userMsg || '').slice(0, 2000) }
+          ]
+        })
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var out = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+      if (!out) return null;
+      var cleaned = out.replace(/```json|```/g, '').trim();
+      var parsed = JSON.parse(cleaned);
+      if (!parsed || (!parsed.sections || !parsed.sections.length)) return null;
+      return {
+        sections: (parsed.sections || []).slice(0, 6).map(function(s){ return String(s).slice(0, 80); }),
+        core_logic: (parsed.core_logic || []).slice(0, 4).map(function(s){ return String(s).slice(0, 100); }),
+        risk: parsed.risk ? String(parsed.risk).slice(0, 150) : ''
+      };
+    } catch (e) { console.warn('planCosmosFileArchitecture failed', e); return null; } // ── أي خطأ هنا، منوقفش المستخدم — نكمل من غير خطة ──
   };
 
   // ── وقت وتاريخ حقيقي دلوقتي، من جهاز المستخدم مباشرة (Intl API) — من غير ما نحتاج إذن GPS.
@@ -12233,6 +12280,29 @@ function slStopAllAnimations() {
         } catch (eClarity) { /* أي خطأ هنا، نكمل عادي من غير توضيح — الأولوية إن الطلب ميتوقفش */ }
       }
 
+      // ══════════════════════════════════════════════════════════════════
+      // 🏗️ خطوة "المهندس المعماري" المبسّطة: لطلبات بناء كود كبيرة (لعبة/تطبيق/موقع من الصفر)
+      // بس — مش لأي تعديل بسيط أو سؤال — بنجيب خطة هيكلية قصيرة ونحقنها في سياق النموذج
+      // قبل ما يكتب أي كود، عشان يفكر في البنية كلها الأول بدل ما يرتجل سطر سطر. ──
+      // ══════════════════════════════════════════════════════════════════
+      var _architectPlan = null;
+      var _architectPlanBlock = '';
+      if (_isCodeReq && _looksLikeBuildRequest && !window.__cosmosSilentFileEdit && apiKey && typeof window.planCosmosFileArchitecture === 'function') {
+        if (typingEl && typingEl.isConnected) {
+          var _wrapArch = typingEl.querySelector('.message-content');
+          if (_wrapArch) _wrapArch.innerHTML = window.buildCosmosThinkingHTML((window.getCurrentAIPersona() || {name:'Astronomy AI'}).name + ' بيخطط هيكل المشروع');
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        }
+        try { _architectPlan = await window.planCosmosFileArchitecture(apiKey, userMsg); } catch (eArch) { _architectPlan = null; }
+        if (_architectPlan && _architectPlan.sections && _architectPlan.sections.length) {
+          _architectPlanBlock = '\n\n--- خطة هيكلية سريعة اتبنت قبل الكتابة (فكّر عليها الأول، ابني الكود عشان يغطيها كلها) ---\n'
+            + 'الأقسام/الوظائف الرئيسية المطلوبة: ' + _architectPlan.sections.join('، ') + '\n'
+            + (_architectPlan.core_logic && _architectPlan.core_logic.length ? ('أهم قواعد المنطق الوظيفي اللي لازم تشتغل صح 100%: ' + _architectPlan.core_logic.join('؛ ') + '\n') : '')
+            + (_architectPlan.risk ? ('أصعب جزء تقني متوقع (خد باله زيادة): ' + _architectPlan.risk + '\n') : '')
+            + '---\nاتأكد إن كل قسم من الأقسام دي معمول فعليًا في الكود النهائي قبل ما تسلّم الرد، وركّز في المنطق الوظيفي المذكور قبل أي زخرفة بصرية إضافية.';
+        }
+      }
+
       // ── History slice (adaptive) ──
       var histLimit = userMsg.length > 2000 ? 2 : userMsg.length > 800 ? 4 : 8;
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
@@ -12487,8 +12557,8 @@ function slStopAllAnimations() {
         var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
         var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -12579,7 +12649,7 @@ function slStopAllAnimations() {
       async function callGeminiTextFallback() {
         var pool = window.GeminiKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         // ── ينادي Gemini مرة واحدة بأي سياق محادثة مُعطى، ويرجّع النص + سبب التوقف (finishReason) ──
         async function _geminiOnce(gKey, convContents) {
           var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -12783,15 +12853,27 @@ function slStopAllAnimations() {
       // ══════════════════════════════════════════════════════════════════
       if (answer && apiKey && typeof window.buildCosmosTestableDoc === 'function' && typeof window.testCosmosHtmlCode === 'function') {
         var _htmlToTest = window.buildCosmosTestableDoc(answer);
+        // ── كود كبير (لعبة/تطبيق كامل) بيستاهل محاولات تصحيح أكتر من رد صغير، لأن احتمال وجود
+        // أكتر من خطأ منفصل أعلى — بس من غير ما نبالغ ونعلّق المستخدم كتير في انتظار ──
+        var _codeSize = (answer || '').length;
+        var _maxFixAttempts = _codeSize > 9000 ? 3 : 2;
         if (_htmlToTest) {
-          var _fixAttempts = 0, _maxFixAttempts = 2, _lastErrors = [];
+          var _fixAttempts = 0, _lastErrors = [];
           while (_fixAttempts <= _maxFixAttempts) {
             if (typingEl && typingEl.isConnected) {
               var _wrapT = typingEl.querySelector('.message-content');
               if (_wrapT) _wrapT.innerHTML = window.buildCosmosThinkingHTML(persona.name + (_fixAttempts === 0 ? ' بيجرب يشغّل الكود فعليًا' : ' بيصلح خطأ لقاه (محاولة ' + (_fixAttempts + 1) + ')'));
               if (msgs) msgs.scrollTop = msgs.scrollHeight;
             }
+            // ── فحص تركيبي فوري للـ JS جوه الرد الأول (قبل حتى ننتظر iframe) — بيمسك أخطاء
+            // الـ syntax الواضحة فورًا من غير انتظار، ويوفّر وقت لو الخطأ واضح من الأول ──
+            var _syntaxErrs = [];
+            try {
+              var _jsBlocksNow = window.extractCosmosAllCodeBlocks(answer).filter(function(b){ return b.lang === 'js' || b.lang === 'javascript'; });
+              _jsBlocksNow.forEach(function(b){ _syntaxErrs = _syntaxErrs.concat(window.testCosmosJsSyntax(b.code)); });
+            } catch (eSyn) { /* تجاهل */ }
             try { _lastErrors = await window.testCosmosHtmlCode(_htmlToTest); } catch(eTest) { _lastErrors = []; }
+            _lastErrors = _syntaxErrs.concat(_lastErrors);
             if (!_lastErrors.length) break; // شغال صح، خلاص
             if (_fixAttempts >= _maxFixAttempts || typeof window.fixCosmosHtmlAnswer !== 'function') break;
             try {
@@ -12809,6 +12891,25 @@ function slStopAllAnimations() {
             // نص خام (من غير escaping يدوي) عشان formatAIAnswer هو اللي يتكفّل بالـ escaping وتحويل ** للبولد. ──
             answer += '\n\n⚠️ **ملاحظة مهمة:** جرّبت أشغّل الكود ده فعليًا وحاولت أصلحه أكتر من مرة، بس لسه فيه مشكلة معرفتش أحلها: «' + _lastErrors[0] + '». راجع الكود بنفسك أو ابعتلي تفاصيل أكتر عن المشكلة اللي بتشوفها عشان أحاول تاني.';
           }
+        } else {
+          // ── مفيش كتلة HTML أصلاً (رد فيه JS بس مثلاً) — لسه نقدر نفحص الـ JS تركيبيًا
+          // على الأقل، حتى لو معندناش iframe كامل نشغّله جوه (محتاج DOM حقيقي) ──
+          try {
+            var _jsOnlyBlocks = window.extractCosmosAllCodeBlocks(answer).filter(function(b){ return b.lang === 'js' || b.lang === 'javascript'; });
+            var _jsOnlyErrs = [];
+            _jsOnlyBlocks.forEach(function(b){ _jsOnlyErrs = _jsOnlyErrs.concat(window.testCosmosJsSyntax(b.code)); });
+            if (_jsOnlyErrs.length && typeof window.fixCosmosHtmlAnswer === 'function') {
+              if (typingEl && typingEl.isConnected) {
+                var _wrapJ = typingEl.querySelector('.message-content');
+                if (_wrapJ) _wrapJ.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيصلح خطأ لقاه في الكود');
+                if (msgs) msgs.scrollTop = msgs.scrollHeight;
+              }
+              try {
+                var _fixedJs = await window.fixCosmosHtmlAnswer(apiKey, userMsg, answer, _jsOnlyErrs);
+                if (_fixedJs && _fixedJs.length > 20) answer = _fixedJs;
+              } catch (eFixJs) { console.warn('fixCosmosHtmlAnswer (js-only) failed', eFixJs); }
+            }
+          } catch (eJsOnly) { /* تجاهل */ }
         }
       }
 
