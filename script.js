@@ -619,6 +619,36 @@ async function isAdminUser(userId) {
     } catch (e) { console.warn('verifyCosmosCodeAnswer failed', e); return null; }
   };
 
+  // ══════════════════════════════════════════════════════════════════
+  // 🧩 "المكوّد الموديلار" المبسّط: نداء إضافي منفصل، مخصص للمنطق الوظيفي (JS) بس —
+  // بعد ما الشكل والهيكل (HTML/CSS) خلصوا، بنبعت نداء تاني للموديل يركّز حصريًا على إن
+  // كل نقطة من "core_logic" اللي اتحددت في خطة المهندس المعماري بالفعل شغالة صح جوه الكود،
+  // من غير ما يلمس أي حاجة تانية. ده أقرب حاجة لفكرة "Modular Coder منفصل" من غير ما نعيد
+  // بناء كل الـ pipeline (streaming/fallback/تكملة) اللي أصلاً معقدة ومظبوطة كويس. ──
+  // ══════════════════════════════════════════════════════════════════
+  window.deepenCosmosJsLogic = async function(apiKey, originalUserMsg, previousAnswer, coreLogicList) {
+    try {
+      if (!coreLogicList || !coreLogicList.length) return null;
+      var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-120b',
+          max_tokens: 12000,
+          temperature: 0.25,
+          messages: [
+            { role: 'system', content: 'إنت مبرمج JavaScript سينيور متخصص بس في المنطق الوظيفي (Logic Engineer) — مش شغلك التصميم أو الشكل. هتستلم رد كامل فيه كود (HTML/CSS/JS) وقائمة "قواعد منطق وظيفي" لازم تكون شغالة 100%. مهمتك: افحص كود الـ JS بس، وتأكد إن كل نقطة من القواعد دي متنفذة فعليًا وبشكل صحيح منطقيًا (زي: كشف الفوز/الخسارة يشتغل صح، حركة اللاعب متسقة، الأزرار بتنادي على الدوال الصح). لو لقيت نقطة ناقصة أو منطقها غلط، أصلحها أو أكملها. ممنوع تمامًا تلمس أو تغيّر HTML أو CSS إلا لو فعلاً محتاج عنصر جديد ضروري للمنطق (زي عداد نقاط ناقص). رجّع الرد كامل من الأول لحد الآخر، بنفس تنسيق الرد الأصلي بالظبط (نفس عدد كتل الكود ونوعها)، من غير أي شرح أو تعليق عن التعديل نفسه.' },
+            { role: 'user', content: 'طلب المستخدم الأصلي:\n' + String(originalUserMsg || '').slice(0, 2000) + '\n\nقواعد المنطق الوظيفي اللي لازم تكون شغالة 100%:\n- ' + coreLogicList.join('\n- ') + '\n\nالرد الحالي (فيه الكود):\n' + String(previousAnswer || '').slice(0, 16000) }
+          ]
+        })
+      });
+      if (!r.ok) return null;
+      var d = await r.json();
+      var out = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+      return (out && out.trim() && /```/.test(out)) ? out.trim() : null; // ── لازم يفضل فيه كتل كود، وإلا نتجاهله (شكل اتغيّر) ──
+    } catch (e) { console.warn('deepenCosmosJsLogic failed', e); return null; }
+  };
+
   // ── استخراج أول كتلة كود HTML كاملة (فيها <html> أو <!DOCTYPE) من رد الذكاء الاصطناعي ──
   window.extractCosmosHtmlBlock = function(raw) {
     if (!raw) return null;
@@ -12583,9 +12613,15 @@ function slStopAllAnimations() {
       try {
         if (typeof aiGoodCodeExamples !== 'undefined' && aiGoodCodeExamples && aiGoodCodeExamples.length) {
           var _gcList = aiGoodCodeExamples.map(function(g, gi){
-            return (gi + 1) + '. طلب "' + String(g.question || '').slice(0,120) + '" — الملفات: ' + (g.filenames || '—');
+            // ── لو الطلب ده كانت ليه خطة معمارية أدت لكود عدّى الفحوصات ونجح، نوريها كمان —
+            // مش بس "الطلب ده عجب"، لكن "الهيكلة دي بالذات هي اللي نجحت" ──
+            var _planTxt = '';
+            if (g.architectPlan && g.architectPlan.sections && g.architectPlan.sections.length) {
+              _planTxt = ' — الهيكلة اللي نجحت: ' + g.architectPlan.sections.join('، ');
+            }
+            return (gi + 1) + '. طلب "' + String(g.question || '').slice(0,120) + '" — الملفات: ' + (g.filenames || '—') + _planTxt;
           }).join('\n');
-          _goodCodeContextBlock = '\n\n--- أكواد سابقة عجبت المستخدمين وقيّموها 👍 (حافظ على نفس المستوى وطوّر عليه) ---\n' + _gcList + '\n---\nخد بالك من مستوى الجودة والتنظيم اللي عجب المستخدمين في الطلبات دي، وحاول تحافظ عليه أو تتخطاه في أي كود جديد تكتبه.';
+          _goodCodeContextBlock = '\n\n--- أكواد سابقة عجبت المستخدمين وقيّموها 👍 (حافظ على نفس المستوى وطوّر عليه) ---\n' + _gcList + '\n---\nخد بالك من مستوى الجودة والتنظيم اللي عجب المستخدمين في الطلبات دي، وحاول تحافظ عليه أو تتخطاه في أي كود جديد تكتبه. لو فيه هيكلة نجحت قبل كده في طلب شبيه، اتأمل فيها كمرجع فعلي مش بس كوصف عام.';
         }
       } catch(eGoodCtx) { /* تجاهل أي خطأ */ }
 
@@ -12886,6 +12922,26 @@ function slStopAllAnimations() {
       }
 
       // ══════════════════════════════════════════════════════════════════
+      // 🧩 نداء "المكوّد الموديلار" — بس للأكواد الكبيرة اللي كان ليها خطة معمارية فيها
+      // core_logic (قواعد منطق وظيفي محددة سلفًا). نداء إضافي منفصل مخصص للمنطق بس،
+      // بعد ما الشكل خلص، عشان نضمن كل نقطة وظيفية مطلوبة اتنفذت فعلاً بدقة. ──
+      // ══════════════════════════════════════════════════════════════════
+      if (answer && /```/.test(answer) && apiKey && _architectPlan && _architectPlan.core_logic && _architectPlan.core_logic.length) {
+        if (typingEl && typingEl.isConnected) {
+          if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+          var _wrapL = typingEl.querySelector('.message-content');
+          if (_wrapL) _wrapL.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيتأكد إن المنطق الوظيفي كامل');
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        }
+        try {
+          var _deepened = typeof window.deepenCosmosJsLogic === 'function'
+            ? await window.deepenCosmosJsLogic(apiKey, userMsg, answer, _architectPlan.core_logic)
+            : null;
+          if (_deepened && _deepened.length > 20) answer = _deepened;
+        } catch(eDeepen) { console.warn('deepenCosmosJsLogic pass failed, keeping previous answer', eDeepen); }
+      }
+
+      // ══════════════════════════════════════════════════════════════════
       // 🧪 تشغيل فعلي للكود (مش مجرد "مراجعة نصية") — لو الرد فيه صفحة HTML كاملة،
       // بنشغّلها فعليًا جوه iframe معزول ونمسك أي خطأ JS حقيقي وقت التحميل، ونحاول نصلحه
       // لحد مرتين بالاعتماد على نص الخطأ الحقيقي نفسه. لو فضل فاشل، بنقول للمستخدم صراحة
@@ -12989,6 +13045,10 @@ function slStopAllAnimations() {
           aiDiv.id = 'msg-'+_aiAnswerUid;
           aiDiv.dataset.msgId = _aiAnswerUid;
           var _bodyHtml = null;
+          // ── نسيب نسخة من خطة المهندس المعماري (لو كانت اتعملت للرد ده) متاحة وقت بناء بطاقة
+          // الكود، عشان لو المستخدم عجبه ويقيّمه 👍 نقدر نحفظ الخطة اللي أدت لكود ناجح، مش بس
+          // وصف عام للطلب — كده المرات الجايه بنبني على أمثلة حقيقية نجحت فعلاً ──
+          window.__cosmosLastArchitectPlan = (typeof _architectPlan !== 'undefined' && _architectPlan) ? _architectPlan : null;
           // ── غرفة التفكير العميق (المرحلة النهائية): صندوق قابل للفتح فيه تفكير الموديل الحقيقي كامل ──
           var _deepThinkHtml = '';
           if (!_silentEdit && answerReasoning && String(answerReasoning).trim()) {
@@ -14181,6 +14241,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   function _buildCodeFileCard(blocks, noFileMode){
     var gid = 'g' + (++_aiCodeGidCounter) + '_' + Date.now();
     window.__aiCodeGroups[gid] = blocks;
+    // ── لو الرد ده كان ليه خطة معمارية (Architect plan) قبل الكتابة، نربطها بالـ gid بتاع
+    // الكود ده — استهلاك مرة واحدة (بنمسحها فورًا) عشان مكرتش تتلزّق غلط بكود تاني بعده ──
+    if (window.__cosmosLastArchitectPlan) {
+      window.__aiCodeArchPlans = window.__aiCodeArchPlans || {};
+      window.__aiCodeArchPlans[gid] = window.__cosmosLastArchitectPlan;
+      window.__cosmosLastArchitectPlan = null;
+    }
 
     if (noFileMode) {
       // وضع "من غير ملف": نص بسيط، لكن برضه بيتلوّن زي كود احترافي
@@ -14275,13 +14342,18 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       }
     }
     try {
-      db.collection('ai_good_code').add({
+      var _archPlanForSave = (window.__aiCodeArchPlans && window.__aiCodeArchPlans[gid]) || null;
+      var _saveDoc = {
         userId: (typeof currentUserId !== 'undefined' ? currentUserId : null) || null,
         question: String(question || '').slice(0, 400),
         filenames: filenames,
         snippetPreview: snippet,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(function(e){ console.error('good code save err', e); });
+      };
+      // ── لو الكود ده كان مبني على خطة معمارية (Architect plan)، نحفظها كمان — عشان تبقى
+      // "ذاكرة أنماط ناجحة": مش بس وصف الطلب، لكن الهيكلة اللي فعلاً أدت لكود عدّى كل الفحوصات ──
+      if (_archPlanForSave) _saveDoc.architectPlan = _archPlanForSave;
+      db.collection('ai_good_code').add(_saveDoc).catch(function(e){ console.error('good code save err', e); });
     } catch(eGood) { console.error(eGood); }
     // ── وعي لحظي بالمحادثة: نضيف ملاحظة التقييم لتاريخ المحادثة نفسه (مش بس قاعدة بيانات خارجية)
     // عشان الرد الجاي فورًا من الـ AI في نفس الجلسة يبقى عارف إنك عجبك الكود ده بالظبط ──
