@@ -11881,15 +11881,17 @@ function slStopAllAnimations() {
           return flags;
         }
 
-        // ── تحميل مكتبة فك الضغط السريعة (JSZip، لملفات .zip بس — أخف وأسرع) ──
-        function _ensureJSZipLib(){
+        // ── تحميل مكتبة zip.js — بتقرا الأرشيف بـ "قراءة جزئية" (Blob.slice) بدل ما تحمّل الملف كله
+        // في الذاكرة. ده معناه تقدر تتعامل مع أرشيف حجمه جيجابايتات، لأننا بنوصل لجدول الفهرس
+        // (central directory) وبعدين نستخرج بس الملفات النصية الصغيرة اللي محتاجينها، من غير ما
+        // نلمس الملفات الـ binary الضخمة (صوت/رسوميات/أصول اللعبة) خالص ──
+        function _ensureZipJsLib(){
           return new Promise(function(resolve, reject){
-            if (window.JSZip) { resolve(window.JSZip); return; }
-            var s = document.createElement('script');
-            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-            s.onload = function(){ resolve(window.JSZip); };
-            s.onerror = function(){ reject(new Error('JSZip load failed')); };
-            document.head.appendChild(s);
+            if (window.zip && window.zip.ZipReader) { resolve(window.zip); return; }
+            import('https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.7.34/index.js').then(function(mod){
+              window.zip = mod;
+              resolve(mod);
+            }).catch(reject);
           });
         }
 
@@ -11926,7 +11928,26 @@ function slStopAllAnimations() {
 
         // ── لو من ضمن الملفات المرفقة أرشيف مضغوط (zip/rar/7z/tar/gz/bz2 ...)، نفك ضغطه فعليًا ونقرا
         // الملفات النصية/الكود اللي جواه — ونعرض "غرفة" واضحة بتقول "جاري فك الضغط عن الملفات" قبل أي خطوة تانية ──
-        var _archiveFiles = validDocs.filter(function(f){ return _archiveExtRe.test(f.name) || f.type === 'application/zip' || f.type === 'application/x-zip-compressed'; });
+        // ── حد الحجم بيتفرق حسب الصيغة: .zip بيتقرا بقراءة جزئية (مش محتاج يتحمّل كامل في الرام)
+        // فمعاه أي حجم مقبول تقريبًا. أما rar/7z/tar فبيستخدموا ضغط "solid" مبيسمحش بقراءة جزء
+        // لوحده، فلازم يتحمّلوا كاملين في الذاكرة — فحدهم لازم يفضل صغير نسبيًا ──
+        var _maxZipBytes    = 8  * 1024 * 1024 * 1024; // 8 جيجا — سقف أمان بس (zip.js نفسه ممكن يستحمل أكتر)
+        var _maxOtherBytes  = 300 * 1024 * 1024;        // 300 ميجا — للصيغ اللي لازم تتحمّل كاملة (rar/7z/tar...)
+        var _archiveFilesRaw = validDocs.filter(function(f){ return _archiveExtRe.test(f.name) || f.type === 'application/zip' || f.type === 'application/x-zip-compressed'; });
+        var _archiveFiles = [];
+        _archiveFilesRaw.forEach(function(f){
+          var _isPlainZip = _plainZipRe.test(f.name);
+          var _limit = _isPlainZip ? _maxZipBytes : _maxOtherBytes;
+          if (f.size > _limit) {
+            var _why = _isPlainZip
+              ? 'أرشيف .zip بالحجم ده هياخد وقت طويل جدًا ومحتاج المتصفح يفضل مفتوح لحد ما يخلص.'
+              : 'صيغة "'+f.name.split('.').pop()+'" بتستخدم ضغط "solid" لازم يتحمّل كامل في الذاكرة، فمش عملي لملف بالحجم ده. لو تقدر حوّله لـ .zip عادي هيشتغل مع أحجام أكبر بكتير.';
+            docContents.push('[الأرشيف "'+f.name+'" حجمه '+formatSize(f.size)+' — أكبر من الحد المسموح ('+formatSize(_limit)+'). '+_why+']');
+            validDocs.splice(validDocs.indexOf(f), 1);
+          } else {
+            _archiveFiles.push(f);
+          }
+        });
         if (_archiveFiles.length) {
           var _zipStatusEl = null;
           if (msgs) {
@@ -11941,17 +11962,19 @@ function slStopAllAnimations() {
           for (var zf = 0; zf < _archiveFiles.length; zf++) {
             var _zf = _archiveFiles[zf];
             var _entries = []; // { path, file }
+            var _zipReaderForClose = null;
             try {
               if (_plainZipRe.test(_zf.name)) {
-                // ── مسار سريع للـ .zip العادي عبر JSZip (أخف وأسرع من WASM) ──
-                var _JSZip = await _ensureJSZipLib();
-                var _buf = await _zf.arrayBuffer();
-                var _zip = await _JSZip.loadAsync(_buf);
-                var _entryNames = Object.keys(_zip.files);
-                for (var ze = 0; ze < _entryNames.length; ze++) {
-                  var _ent = _zip.files[_entryNames[ze]];
-                  if (_ent.dir) continue;
-                  _entries.push({ path: _ent.name, _jszipEntry: _ent });
+                // ── .zip: بنستخدم zip.js اللي بيقرا جدول الفهرس (central directory) بس أول حاجة —
+                // ده بيتم من غير ما نحمّل بايت واحد من محتوى الملفات نفسها، فمش مهم حجم الأرشيف الكلي ──
+                var _zipjs = await _ensureZipJsLib();
+                var _zipReader = new _zipjs.ZipReader(new _zipjs.BlobReader(_zf));
+                _zipReaderForClose = _zipReader;
+                var _zipEntries = await _zipReader.getEntries();
+                for (var ze = 0; ze < _zipEntries.length; ze++) {
+                  var _ent = _zipEntries[ze];
+                  if (_ent.directory) continue;
+                  _entries.push({ path: _ent.filename, _zipjsEntry: _ent, size: _ent.uncompressedSize });
                 }
               } else {
                 // ── أي صيغة تانية (rar/7z/tar/gz/bz2...) عبر libarchive.js (WASM شامل) ──
@@ -11961,20 +11984,29 @@ function slStopAllAnimations() {
                 _flattenArchiveTree(_tree, '', _entries);
               }
             } catch (eArchOpen) {
-              docContents.push('[تعذّر فك ضغط الأرشيف: "'+_zf.name+'" — '+String(eArchOpen && eArchOpen.message || eArchOpen)+']');
+              console.error('[فك ضغط الأرشيف فشل]', _zf.name, eArchOpen);
+              var _archErrMsg = String(eArchOpen && eArchOpen.message || eArchOpen || 'سبب غير معروف');
+              docContents.push('[تعذّر فك ضغط الأرشيف: "'+_zf.name+'" — السبب الفعلي: '+_archErrMsg+' (شوف الـ console لتفاصيل أكتر)]');
               continue;
             }
+            var _maxEntryBytes = 2 * 1024 * 1024; // ── ملف نصي واحد جوه الأرشيف أكبر من 2 ميجا بنتجاهله (نادر يكون كود مفيد بالحجم ده) ──
             for (var ei = 0; ei < _entries.length; ei++) {
               if (_extractedCount >= _maxExtractedFiles) { docContents.push('[أرشيف "'+_zf.name+'" فيه ملفات أكتر من الحد المسموح بعرضه ('+_maxExtractedFiles+') — اتقرا أول '+_maxExtractedFiles+' ملف بس.]'); break; }
               var _e = _entries[ei];
               var _entryPath = _zf.name + '/' + _e.path;
               if (!_looksTextualRe.test(_e.path)) {
+                // ── مش بنستخرج الملفات الـ binary خالص (صوت/رسوميات/أصول) — ده اللي بيخلي الحجم الكلي للأرشيف مش مهم ──
                 docContents.push('[ملف داخل الأرشيف "'+_entryPath+'" — نوعه ثنائي، اتقبل كموجود في الأرشيف لكن معايا مش قادر أستخرج نصه.]');
                 _extractedCount++;
                 continue;
               }
+              if (_e.size && _e.size > _maxEntryBytes) {
+                docContents.push('[ملف داخل الأرشيف "'+_entryPath+'" — حجمه '+formatSize(_e.size)+'، أكبر من الحد المسموح بقراءته ('+formatSize(_maxEntryBytes)+').]');
+                _extractedCount++;
+                continue;
+              }
               try {
-                var _entryTxt = _e._jszipEntry ? await _e._jszipEntry.async('string') : await _e.file.text();
+                var _entryTxt = _e._zipjsEntry ? await _e._zipjsEntry.getData(new _zipjs.TextWriter()) : await _e.file.text();
                 var _entryFlags = _aiScanMalicious(_entryTxt);
                 if (_codeExtRe.test(_e.path)) _zipHadCodeFiles = true;
                 if (_entryFlags.length) {
@@ -11985,6 +12017,7 @@ function slStopAllAnimations() {
               } catch (eEntryRead) { docContents.push('[تعذّرت قراءة الملف داخل الأرشيف: "'+_entryPath+'"]'); }
               _extractedCount++;
             }
+            if (_zipReaderForClose) { try { await _zipReaderForClose.close(); } catch(eClose) {} }
           }
           if (_zipStatusEl && _zipStatusEl.parentNode) _zipStatusEl.parentNode.removeChild(_zipStatusEl);
         }
