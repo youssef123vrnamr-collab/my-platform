@@ -11912,10 +11912,17 @@ function slStopAllAnimations() {
         // المستخدم غالباً عايز تعديل/صيانة على الملف مش شرح نصي — نفعّل "وضع التعديل الصامت":
         // مفيش رد نصي في الشات، بس صندوق الملف الجاهز يظهر لما يخلص. ──
         var _codeExtRe = /\.(js|jsx|ts|tsx|html|htm|css|scss|py|c|cpp|h|java|php|rb|go|rs|sql)$/i;
-        window.__cosmosSilentFileEdit = !imgs.length && validDocs.some(function(f){ return _codeExtRe.test(f.name); });
+        window.__cosmosSilentFileEdit = !imgs.length && !!extraText && validDocs.some(function(f){ return _codeExtRe.test(f.name); });
         // ── أسماء ملفات الكود المرفقة — عشان نقدر نعرض خطوات حقيقية (قراءة/تحليل/تعديل) بدل لابل ثابت واحد ──
         window.__cosmosSilentFileEditNames = window.__cosmosSilentFileEdit
           ? validDocs.filter(function(f){ return _codeExtRe.test(f.name); }).map(function(f){ return f.name; })
+          : [];
+
+        // ── ملف (أو أكتر) اتبعت من غير أي كلام مكتوب معاه — يبقى المستخدم عايز "تحليل" بس، مش تعديل.
+        // بنفعّل هنا فلاج بيخلي مؤشر التفكير يعرض مراحل تحليل حقيقية ومتتالية بدل لابل واحد ثابت ──
+        window.__cosmosFileOnlyAnalysis = !imgs.length && validDocs.length > 0 && !extraText;
+        window.__cosmosFileOnlyAnalysisNames = window.__cosmosFileOnlyAnalysis
+          ? validDocs.map(function(f){ return f.name; })
           : [];
 
         // ── لو مفيش صور، منطق نصي بحت عبر المسار العادي (Groq) ──
@@ -12306,7 +12313,30 @@ function slStopAllAnimations() {
         typingEl = document.createElement('div');
         typingEl.className = 'message received';
         var pNameT = (window.getCurrentAIPersona() || {name:'Astronomy AI'}).name;
-        if (window.__cosmosSilentFileEdit) {
+        if (window.__cosmosFileOnlyAnalysis) {
+          // ── ملف اتبعت من غير أي كلام: نعرض رحلة تحليل حقيقية بمراحلها —
+          // فهم الكود، تفكير عميق، بحث في الإنترنت، تأكد من المعلومات، رجوع لغرفة التفكير، ثم التأكد إن الكود شغال ──
+          var _faFiles = window.__cosmosFileOnlyAnalysisNames || [];
+          var _faFileTxt = _faFiles.length ? (': ' + _faFiles[0] + (_faFiles.length > 1 ? (' (+' + (_faFiles.length - 1) + ' كمان)') : '')) : '';
+          var _fileAnalysisStages = [
+            'بيفهم الكود' + _faFileTxt,
+            'بيفكر فيه — غرفة التفكير العميق',
+            'بيبحث عبر الإنترنت',
+            'بيتأكد من البيانات والمعلومات',
+            'برجع أتأكد من غرفة التفكير العميق تاني',
+            'بيتأكد إن الكود شغال ولا لأ'
+          ];
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' ' + _fileAnalysisStages[0]) + '</div>';
+          msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+          var _faStageIdx = 0;
+          typingEl._cosmosStageTimer = setInterval(function(){
+            _faStageIdx++;
+            if (!typingEl || !typingEl.isConnected || _faStageIdx >= _fileAnalysisStages.length) { clearInterval(typingEl && typingEl._cosmosStageTimer); return; }
+            var _wrapFa = typingEl.querySelector('.message-content');
+            if (_wrapFa) _wrapFa.innerHTML = window.buildCosmosThinkingHTML(pNameT + ' ' + _fileAnalysisStages[_faStageIdx]);
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          }, 1200);
+        } else if (window.__cosmosSilentFileEdit) {
           // ── وضع تعديل الملف: نعرض خطوات حقيقية متتابعة بدل لابل ثابت واحد —
           // بيتفق فعليًا مع اللي بيحصل: الملف اتقرا فعلاً قبل ما نوصل هنا، وبعدين بييجي التحليل والتعديل ──
           var _editFiles = window.__cosmosSilentFileEditNames || [];
@@ -12337,9 +12367,19 @@ function slStopAllAnimations() {
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
           }, 1300);
         } else {
-          var _thinkLabel = pNameT + ' يفكر';
-          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(_thinkLabel) + '</div>';
+          // ── رسائل عادية (سؤال/كلام مباشر، مش ملف ولا طلب بناء): مؤشر التفكير بيتنقّل بين مرحلتين بس —
+          // غرفة التفكير العميق، وبعدها البحث عبر الإنترنت — من غير أي جملة تانية غريبة ──
+          var _normalStages = ['بيفكر — غرفة التفكير العميق', 'بيبحث عبر الإنترنت'];
+          typingEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(pNameT + ' ' + _normalStages[0]) + '</div>';
           msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+          var _nStageIdx = 0;
+          typingEl._cosmosStageTimer = setInterval(function(){
+            _nStageIdx++;
+            if (!typingEl || !typingEl.isConnected || _nStageIdx >= _normalStages.length) { clearInterval(typingEl && typingEl._cosmosStageTimer); return; }
+            var _wrapN = typingEl.querySelector('.message-content');
+            if (_wrapN) _wrapN.innerHTML = window.buildCosmosThinkingHTML(pNameT + ' ' + _normalStages[_nStageIdx]);
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          }, 1300);
         }
       }
 
