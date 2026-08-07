@@ -11996,8 +11996,14 @@ function slStopAllAnimations() {
         if (msgs) {
           typingEl2 = document.createElement('div');
           typingEl2.className = 'message received';
-          typingEl2.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(persona2.name + ' بيحلل المرفقات') + '</div>';
+          typingEl2.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML(persona2.name + ' بيفهم الصورة') + '</div>';
           msgs.appendChild(typingEl2); msgs.scrollTop = msgs.scrollHeight;
+        }
+        function _setImgStage(txt){
+          if (!typingEl2 || !typingEl2.isConnected) return;
+          var _wrapImg = typingEl2.querySelector('.message-content');
+          if (_wrapImg) _wrapImg.innerHTML = window.buildCosmosThinkingHTML(persona2.name + ' ' + txt);
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
         try {
           var geminiKey = typeof getGeminiApiKey === 'function' ? getGeminiApiKey() : '';
@@ -12011,7 +12017,57 @@ function slStopAllAnimations() {
             }
             return;
           }
-          var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock;
+
+          // ── مرحلة "غرفة التفكير العميق": مرور سريع على الصورة عشان نطلع منه موضوع مختصر
+          // نقدر نبحث بيه فعليًا في الإنترنت (مش تخمين — استخدام حقيقي لنفس نموذج الرؤية) ──
+          _setImgStage('بيفكر فيها — غرفة التفكير العميق');
+          var _imgSearchQuery = '';
+          try {
+            var _idParts = [{ text: 'في أقصى حاجة 6 كلمات، من غير أي شرح أو علامات ترقيم أو جمل، اكتب أهم موضوع/عنصر/جسم ظاهر في الصورة دي (بالاسم العلمي أو الشائع لو معروف) عشان يتبحث عنه في الإنترنت.' }];
+            for (var pi0 = 0; pi0 < dataUrls.length; pi0++) {
+              var _du0 = dataUrls[pi0];
+              if (!_du0) continue;
+              var _ci0 = _du0.indexOf(',');
+              var _b64_0 = _ci0 > -1 ? _du0.slice(_ci0 + 1) : _du0;
+              var _mm0 = /^data:([^;]+);base64/.exec(_du0);
+              var _mt0 = _mm0 ? _mm0[1] : (imgs[pi0].type || 'image/jpeg');
+              _idParts.push({ inline_data: { mime_type: _mt0, data: _b64_0 } });
+              break; // صورة واحدة كفاية لتحديد موضوع البحث بسرعة
+            }
+            var _idRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
+              body: JSON.stringify({ contents: [{ parts: _idParts }], generationConfig: { maxOutputTokens: 20, temperature: 0.1 } })
+            });
+            var _idData = await _idRes.json();
+            var _idText = (_idData.candidates && _idData.candidates[0] && _idData.candidates[0].content &&
+              _idData.candidates[0].content.parts && _idData.candidates[0].content.parts[0] &&
+              _idData.candidates[0].content.parts[0].text) || '';
+            _imgSearchQuery = _idText.replace(/[\n"'.]/g, ' ').trim().slice(0, 80);
+          } catch (eIdent) { console.warn('image search-query identify step failed', eIdent); }
+
+          // ── بحث حقيقي في الإنترنت (Tavily) عن موضوع الصورة، ونحقن النتائج في برومبت التحليل النهائي ──
+          var _imgWebCtx = '';
+          var _tavilyReadyImg = typeof window.getTavilyApiKey === 'function' && window.getTavilyApiKey() && typeof window.performWebSearch === 'function';
+          if (_imgSearchQuery && _tavilyReadyImg) {
+            _setImgStage('بيبحث عبر الإنترنت عن "' + _imgSearchQuery + '"');
+            try {
+              var _imgSearchRes = await window.performWebSearch(_imgSearchQuery, []);
+              if (window.AIHealth) window.AIHealth.record('tavily', !!(_imgSearchRes && _imgSearchRes.results && _imgSearchRes.results.length));
+              if (_imgSearchRes && _imgSearchRes.results && _imgSearchRes.results.length) {
+                _setImgStage('بيتأكد من البيانات والمعلومات');
+                _imgWebCtx = '\n\n--- نتائج بحث حقيقية من الإنترنت الآن عن موضوع الصورة ---\n';
+                _imgSearchRes.results.slice(0, 5).forEach(function(r, ri){
+                  _imgWebCtx += (ri+1) + '. ' + (r.title||'') + ' — الرابط: ' + (r.url||'') + '\n' + (r.content||'').slice(0,300) + '\n';
+                });
+                _imgWebCtx += '---\nاستخدم النتائج الحقيقية دي عشان تتأكد من أي معلومة أو تفاصيل حديثة تخص اللي في الصورة، ولو مناسب اذكر مصدر حقيقي من الروابط دي في ردك. متخترعش أي رابط مش موجود فوق.';
+                await new Promise(function(r){ setTimeout(r, 600); });
+              }
+            } catch (eImgSearch) { if (window.AIHealth) window.AIHealth.record('tavily', false); console.warn('image web search step failed', eImgSearch); }
+          }
+
+          _setImgStage('بيحلل الصورة بالتفصيل');
+          var promptText = (extraText || (imgs.length > 1 ? 'صف هذه الصور بالتفصيل باللغة العربية، وقارن بينها لو مفيد، واذكر أي معلومات فلكية أو علمية مرتبطة إن وُجدت.' : 'صف هذه الصورة بالتفصيل باللغة العربية، واذكر أي معلومات فلكية أو علمية مرتبطة بها إن وُجدت.')) + docsBlock + _imgWebCtx;
           promptText += '\n\nمهم جداً: جاوب بأسلوب احترافي، منظم بنقاط أو عناوين فرعية عند الحاجة، دقيق علمياً، وفكّر جيدًا في كل عناصر المرفقات قبل الإجابة. إنت مساعد اسمه "'+((typeof persona2!=='undefined'&&persona2)?persona2.name:'AlalaGyGyAgha V1.6')+'" جزء من منصة "فلك" التعليمية — لو حد سألك مين انت أو انت شغال على ايه متقولش اسم أي شركة أو موديل تاني. إنت بترد جوه فقاعة شات على الموبايل، فممنوع تستخدم علامات ماركداون خام زي ### أو --- أو جداول بعلامة |؛ استخدم بس **نص عريض**، سطور جديدة، إيموجي، وأرقام أو نقاط للتعداد.';
           // ── نفس أساس العبقرية وذاكرة المنصة (معرفة المشرف + دروس التقييمات) اللي بيستخدمها الشات النصي،
           // عشان تحليل الصور/الملفات ميبقاش مسار "من درجة تانية" منفصل عن باقي الغرف ──
