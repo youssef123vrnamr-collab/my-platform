@@ -11881,14 +11881,83 @@ function slStopAllAnimations() {
           return flags;
         }
 
+        // ── تحميل مكتبة فك الضغط (JSZip) مرة واحدة بس، لو مش محمّلة أصلاً ──
+        function _ensureJSZipLib(){
+          return new Promise(function(resolve, reject){
+            if (window.JSZip) { resolve(window.JSZip); return; }
+            var s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+            s.onload = function(){ resolve(window.JSZip); };
+            s.onerror = function(){ reject(new Error('JSZip load failed')); };
+            document.head.appendChild(s);
+          });
+        }
+
         // ── قراءة محتوى الملفات (نصية/كود) وفحصها أمنياً ──
         var docContents = [];
-        for (var dj = 0; dj < validDocs.length; dj++) {
-          var f = validDocs[dj];
-          var looksTextual = /^text\//.test(f.type) || f.type === 'application/json' || f.type === '' ||
-            /\.(txt|csv|json|md|js|jsx|ts|tsx|py|html|htm|css|log|xml|yml|yaml|sql|c|cpp|h|java|php|rb|go|rs|sh|ini|env|conf|svg)$/i.test(f.name);
+        var _zipHadCodeFiles = false;
+        var _looksTextualRe = /\.(txt|csv|json|md|js|jsx|ts|tsx|py|html|htm|css|log|xml|yml|yaml|sql|c|cpp|h|java|php|rb|go|rs|sh|ini|env|conf|svg)$/i;
+        var _codeExtRe = /\.(js|jsx|ts|tsx|html|htm|css|scss|py|c|cpp|h|java|php|rb|go|rs|sql)$/i;
+
+        // ── لو من ضمن الملفات المرفقة أرشيف مضغوط (.zip)، نفك ضغطه فعليًا ونقرا الملفات النصية/الكود اللي جواه —
+        // ونعرض "غرفة" واضحة بتقول "جاري فك الضغط عن الملفات" قبل أي خطوة تانية ──
+        var _zipFiles = validDocs.filter(function(f){ return /\.zip$/i.test(f.name) || f.type === 'application/zip' || f.type === 'application/x-zip-compressed'; });
+        if (_zipFiles.length) {
+          var _zipStatusEl = null;
+          if (msgs) {
+            _zipStatusEl = document.createElement('div');
+            _zipStatusEl.className = 'message received';
+            _zipStatusEl.dataset.cosmosSkip = '1';
+            _zipStatusEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML('جاري فك الضغط عن الملفات') + '</div>';
+            msgs.appendChild(_zipStatusEl); msgs.scrollTop = msgs.scrollHeight;
+          }
+          try {
+            var _JSZip = await _ensureJSZipLib();
+            var _extractedCount = 0;
+            var _maxExtractedFiles = 40;
+            for (var zf = 0; zf < _zipFiles.length; zf++) {
+              var _zf = _zipFiles[zf];
+              try {
+                var _buf = await _zf.arrayBuffer();
+                var _zip = await _JSZip.loadAsync(_buf);
+                var _entryNames = Object.keys(_zip.files);
+                for (var ze = 0; ze < _entryNames.length; ze++) {
+                  if (_extractedCount >= _maxExtractedFiles) { docContents.push('[أرشيف "'+_zf.name+'" فيه ملفات أكتر من الحد المسموح بعرضه ('+_maxExtractedFiles+') — اتقرا أول '+_maxExtractedFiles+' ملف بس.]'); break; }
+                  var _entry = _zip.files[_entryNames[ze]];
+                  if (_entry.dir) continue;
+                  var _entryPath = _zf.name + '/' + _entry.name;
+                  if (_looksTextualRe.test(_entry.name)) {
+                    try {
+                      var _entryTxt = await _entry.async('string');
+                      var _entryFlags = _aiScanMalicious(_entryTxt);
+                      if (_codeExtRe.test(_entry.name)) _zipHadCodeFiles = true;
+                      if (_entryFlags.length) {
+                        docContents.push('[ملف داخل الأرشيف: "'+_entryPath+'" — ⚠️ تنبيه أمني (مش رفض): '+_entryFlags.join('، ')+']\n' + _entryTxt.substring(0, 6000));
+                      } else {
+                        docContents.push('[ملف داخل الأرشيف: "'+_entryPath+'" — تم فحصه أمنياً ✅]\n' + _entryTxt.substring(0, 6000));
+                      }
+                    } catch (eEntryRead) { docContents.push('[تعذّرت قراءة الملف داخل الأرشيف: "'+_entryPath+'"]'); }
+                  } else {
+                    docContents.push('[ملف داخل الأرشيف "'+_entryPath+'" — نوعه ثنائي، اتقبل كموجود في الأرشيف لكن معايا مش قادر أستخرج نصه.]');
+                  }
+                  _extractedCount++;
+                }
+              } catch (eZipRead) { docContents.push('[تعذّر فك ضغط الأرشيف: "'+_zf.name+'" — '+String(eZipRead && eZipRead.message || eZipRead)+']'); }
+            }
+          } catch (eJsZipLoad) {
+            docContents.push('[مقدرتش أحمّل مكتبة فك الضغط دلوقتي، فمش قادر أفتح الأرشيف "'+_zipFiles.map(function(f){return f.name;}).join('، ')+'" — جرب تاني بعد شوية.]');
+            console.warn('JSZip load failed', eJsZipLoad);
+          }
+          if (_zipStatusEl && _zipStatusEl.parentNode) _zipStatusEl.parentNode.removeChild(_zipStatusEl);
+        }
+
+        // ── باقي الملفات (اللي مش أرشيف) بتتقرا عادي زي ما كانت ──
+        var _nonZipDocs = validDocs.filter(function(f){ return _zipFiles.indexOf(f) === -1; });
+        for (var dj = 0; dj < _nonZipDocs.length; dj++) {
+          var f = _nonZipDocs[dj];
+          var looksTextual = /^text\//.test(f.type) || f.type === 'application/json' || f.type === '' || _looksTextualRe.test(f.name);
           if (!looksTextual) {
-            // ملف ثنائي (pdf/docx/xlsx/zip/mp3...) — بيتقبل كمرفق لكن من غير استخراج نص (يحتاج مكتبة إضافية)
+            // ملف ثنائي (pdf/docx/xlsx/mp3...) — بيتقبل كمرفق لكن من غير استخراج نص (يحتاج مكتبة إضافية)
             docContents.push('[ملف "'+f.name+'" — نوعه ثنائي ('+(f.type||'غير معروف')+', '+(f.size/1024).toFixed(1)+' KB)، اتقبل كمرفق لكن معايا مش قادر أستخرج نصه مباشرة دلوقتي.]');
             continue;
           }
@@ -11908,11 +11977,10 @@ function slStopAllAnimations() {
         if (rejectedNames.length) showToast('🚫 اتشال: ' + rejectedNames.join('، '));
         var docsBlock = docContents.length ? ('\n\n--- محتوى الملفات المرفقة (بعد الفحص الأمني) ---\n' + docContents.join('\n\n') + '\n---') : '';
 
-        // ── لو من ضمن الملفات المرفقة ملف كود حقيقي (مش txt/csv/json/log عادي)، ده معناه
-        // المستخدم غالباً عايز تعديل/صيانة على الملف مش شرح نصي — نفعّل "وضع التعديل الصامت":
+        // ── لو من ضمن الملفات المرفقة ملف كود حقيقي (مش txt/csv/json/log عادي) — سواء مباشر أو جوه أرشيف —
+        // ده معناه المستخدم غالباً عايز تعديل/صيانة على الملف مش شرح نصي — نفعّل "وضع التعديل الصامت":
         // مفيش رد نصي في الشات، بس صندوق الملف الجاهز يظهر لما يخلص. ──
-        var _codeExtRe = /\.(js|jsx|ts|tsx|html|htm|css|scss|py|c|cpp|h|java|php|rb|go|rs|sql)$/i;
-        window.__cosmosSilentFileEdit = !imgs.length && !!extraText && validDocs.some(function(f){ return _codeExtRe.test(f.name); });
+        window.__cosmosSilentFileEdit = !imgs.length && !!extraText && (_zipHadCodeFiles || validDocs.some(function(f){ return _codeExtRe.test(f.name); }));
         // ── أسماء ملفات الكود المرفقة — عشان نقدر نعرض خطوات حقيقية (قراءة/تحليل/تعديل) بدل لابل ثابت واحد ──
         window.__cosmosSilentFileEditNames = window.__cosmosSilentFileEdit
           ? validDocs.filter(function(f){ return _codeExtRe.test(f.name); }).map(function(f){ return f.name; })
