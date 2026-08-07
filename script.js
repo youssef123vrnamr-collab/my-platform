@@ -11881,7 +11881,7 @@ function slStopAllAnimations() {
           return flags;
         }
 
-        // ── تحميل مكتبة فك الضغط (JSZip) مرة واحدة بس، لو مش محمّلة أصلاً ──
+        // ── تحميل مكتبة فك الضغط السريعة (JSZip، لملفات .zip بس — أخف وأسرع) ──
         function _ensureJSZipLib(){
           return new Promise(function(resolve, reject){
             if (window.JSZip) { resolve(window.JSZip); return; }
@@ -11893,16 +11893,41 @@ function slStopAllAnimations() {
           });
         }
 
+        // ── تحميل مكتبة فك الضغط الشاملة (libarchive.js — بتدعم zip/rar/7z/tar/gzip/bzip2/lzma كلها) —
+        // بتتحمّل مرة واحدة بس، وبتشتغل عبر WebWorker + WASM ──
+        function _ensureLibArchiveLib(){
+          return new Promise(function(resolve, reject){
+            if (window.__cosmosLibArchive) { resolve(window.__cosmosLibArchive); return; }
+            import('https://cdn.jsdelivr.net/npm/libarchive.js@2.0.2/main.js').then(function(mod){
+              mod.Archive.init({ workerUrl: 'https://cdn.jsdelivr.net/npm/libarchive.js@2.0.2/dist/worker-bundle.js' });
+              window.__cosmosLibArchive = mod.Archive;
+              resolve(mod.Archive);
+            }).catch(reject);
+          });
+        }
+
+        // ── تحويل الشجرة المتداخلة اللي بترجعها libarchive.js (مجلدات/ملفات) لقائمة مسطّحة {path, file} ──
+        function _flattenArchiveTree(node, prefix, out){
+          Object.keys(node).forEach(function(key){
+            var val = node[key];
+            var path = prefix ? (prefix + '/' + key) : key;
+            if (val instanceof File || val instanceof Blob) out.push({ path: path, file: val });
+            else if (val && typeof val === 'object') _flattenArchiveTree(val, path, out);
+          });
+        }
+
         // ── قراءة محتوى الملفات (نصية/كود) وفحصها أمنياً ──
         var docContents = [];
         var _zipHadCodeFiles = false;
         var _looksTextualRe = /\.(txt|csv|json|md|js|jsx|ts|tsx|py|html|htm|css|log|xml|yml|yaml|sql|c|cpp|h|java|php|rb|go|rs|sh|ini|env|conf|svg)$/i;
         var _codeExtRe = /\.(js|jsx|ts|tsx|html|htm|css|scss|py|c|cpp|h|java|php|rb|go|rs|sql)$/i;
+        var _plainZipRe = /\.zip$/i;
+        var _archiveExtRe = /\.(zip|rar|7z|tar|tgz|tar\.gz|tar\.bz2|gz|bz2|xz|cab|iso)$/i;
 
-        // ── لو من ضمن الملفات المرفقة أرشيف مضغوط (.zip)، نفك ضغطه فعليًا ونقرا الملفات النصية/الكود اللي جواه —
-        // ونعرض "غرفة" واضحة بتقول "جاري فك الضغط عن الملفات" قبل أي خطوة تانية ──
-        var _zipFiles = validDocs.filter(function(f){ return /\.zip$/i.test(f.name) || f.type === 'application/zip' || f.type === 'application/x-zip-compressed'; });
-        if (_zipFiles.length) {
+        // ── لو من ضمن الملفات المرفقة أرشيف مضغوط (zip/rar/7z/tar/gz/bz2 ...)، نفك ضغطه فعليًا ونقرا
+        // الملفات النصية/الكود اللي جواه — ونعرض "غرفة" واضحة بتقول "جاري فك الضغط عن الملفات" قبل أي خطوة تانية ──
+        var _archiveFiles = validDocs.filter(function(f){ return _archiveExtRe.test(f.name) || f.type === 'application/zip' || f.type === 'application/x-zip-compressed'; });
+        if (_archiveFiles.length) {
           var _zipStatusEl = null;
           if (msgs) {
             _zipStatusEl = document.createElement('div');
@@ -11911,48 +11936,61 @@ function slStopAllAnimations() {
             _zipStatusEl.innerHTML = '<div class="message-content" style="color:#888">' + window.buildCosmosThinkingHTML('جاري فك الضغط عن الملفات') + '</div>';
             msgs.appendChild(_zipStatusEl); msgs.scrollTop = msgs.scrollHeight;
           }
-          try {
-            var _JSZip = await _ensureJSZipLib();
-            var _extractedCount = 0;
-            var _maxExtractedFiles = 40;
-            for (var zf = 0; zf < _zipFiles.length; zf++) {
-              var _zf = _zipFiles[zf];
-              try {
+          var _extractedCount = 0;
+          var _maxExtractedFiles = 40;
+          for (var zf = 0; zf < _archiveFiles.length; zf++) {
+            var _zf = _archiveFiles[zf];
+            var _entries = []; // { path, file }
+            try {
+              if (_plainZipRe.test(_zf.name)) {
+                // ── مسار سريع للـ .zip العادي عبر JSZip (أخف وأسرع من WASM) ──
+                var _JSZip = await _ensureJSZipLib();
                 var _buf = await _zf.arrayBuffer();
                 var _zip = await _JSZip.loadAsync(_buf);
                 var _entryNames = Object.keys(_zip.files);
                 for (var ze = 0; ze < _entryNames.length; ze++) {
-                  if (_extractedCount >= _maxExtractedFiles) { docContents.push('[أرشيف "'+_zf.name+'" فيه ملفات أكتر من الحد المسموح بعرضه ('+_maxExtractedFiles+') — اتقرا أول '+_maxExtractedFiles+' ملف بس.]'); break; }
-                  var _entry = _zip.files[_entryNames[ze]];
-                  if (_entry.dir) continue;
-                  var _entryPath = _zf.name + '/' + _entry.name;
-                  if (_looksTextualRe.test(_entry.name)) {
-                    try {
-                      var _entryTxt = await _entry.async('string');
-                      var _entryFlags = _aiScanMalicious(_entryTxt);
-                      if (_codeExtRe.test(_entry.name)) _zipHadCodeFiles = true;
-                      if (_entryFlags.length) {
-                        docContents.push('[ملف داخل الأرشيف: "'+_entryPath+'" — ⚠️ تنبيه أمني (مش رفض): '+_entryFlags.join('، ')+']\n' + _entryTxt.substring(0, 6000));
-                      } else {
-                        docContents.push('[ملف داخل الأرشيف: "'+_entryPath+'" — تم فحصه أمنياً ✅]\n' + _entryTxt.substring(0, 6000));
-                      }
-                    } catch (eEntryRead) { docContents.push('[تعذّرت قراءة الملف داخل الأرشيف: "'+_entryPath+'"]'); }
-                  } else {
-                    docContents.push('[ملف داخل الأرشيف "'+_entryPath+'" — نوعه ثنائي، اتقبل كموجود في الأرشيف لكن معايا مش قادر أستخرج نصه.]');
-                  }
-                  _extractedCount++;
+                  var _ent = _zip.files[_entryNames[ze]];
+                  if (_ent.dir) continue;
+                  _entries.push({ path: _ent.name, _jszipEntry: _ent });
                 }
-              } catch (eZipRead) { docContents.push('[تعذّر فك ضغط الأرشيف: "'+_zf.name+'" — '+String(eZipRead && eZipRead.message || eZipRead)+']'); }
+              } else {
+                // ── أي صيغة تانية (rar/7z/tar/gz/bz2...) عبر libarchive.js (WASM شامل) ──
+                var _LibArchive = await _ensureLibArchiveLib();
+                var _archive = await _LibArchive.open(_zf);
+                var _tree = await _archive.extractFiles();
+                _flattenArchiveTree(_tree, '', _entries);
+              }
+            } catch (eArchOpen) {
+              docContents.push('[تعذّر فك ضغط الأرشيف: "'+_zf.name+'" — '+String(eArchOpen && eArchOpen.message || eArchOpen)+']');
+              continue;
             }
-          } catch (eJsZipLoad) {
-            docContents.push('[مقدرتش أحمّل مكتبة فك الضغط دلوقتي، فمش قادر أفتح الأرشيف "'+_zipFiles.map(function(f){return f.name;}).join('، ')+'" — جرب تاني بعد شوية.]');
-            console.warn('JSZip load failed', eJsZipLoad);
+            for (var ei = 0; ei < _entries.length; ei++) {
+              if (_extractedCount >= _maxExtractedFiles) { docContents.push('[أرشيف "'+_zf.name+'" فيه ملفات أكتر من الحد المسموح بعرضه ('+_maxExtractedFiles+') — اتقرا أول '+_maxExtractedFiles+' ملف بس.]'); break; }
+              var _e = _entries[ei];
+              var _entryPath = _zf.name + '/' + _e.path;
+              if (!_looksTextualRe.test(_e.path)) {
+                docContents.push('[ملف داخل الأرشيف "'+_entryPath+'" — نوعه ثنائي، اتقبل كموجود في الأرشيف لكن معايا مش قادر أستخرج نصه.]');
+                _extractedCount++;
+                continue;
+              }
+              try {
+                var _entryTxt = _e._jszipEntry ? await _e._jszipEntry.async('string') : await _e.file.text();
+                var _entryFlags = _aiScanMalicious(_entryTxt);
+                if (_codeExtRe.test(_e.path)) _zipHadCodeFiles = true;
+                if (_entryFlags.length) {
+                  docContents.push('[ملف داخل الأرشيف: "'+_entryPath+'" — ⚠️ تنبيه أمني (مش رفض): '+_entryFlags.join('، ')+']\n' + _entryTxt.substring(0, 6000));
+                } else {
+                  docContents.push('[ملف داخل الأرشيف: "'+_entryPath+'" — تم فحصه أمنياً ✅]\n' + _entryTxt.substring(0, 6000));
+                }
+              } catch (eEntryRead) { docContents.push('[تعذّرت قراءة الملف داخل الأرشيف: "'+_entryPath+'"]'); }
+              _extractedCount++;
+            }
           }
           if (_zipStatusEl && _zipStatusEl.parentNode) _zipStatusEl.parentNode.removeChild(_zipStatusEl);
         }
 
         // ── باقي الملفات (اللي مش أرشيف) بتتقرا عادي زي ما كانت ──
-        var _nonZipDocs = validDocs.filter(function(f){ return _zipFiles.indexOf(f) === -1; });
+        var _nonZipDocs = validDocs.filter(function(f){ return _archiveFiles.indexOf(f) === -1; });
         for (var dj = 0; dj < _nonZipDocs.length; dj++) {
           var f = _nonZipDocs[dj];
           var looksTextual = /^text\//.test(f.type) || f.type === 'application/json' || f.type === '' || _looksTextualRe.test(f.name);
