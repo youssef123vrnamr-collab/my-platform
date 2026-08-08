@@ -607,11 +607,9 @@ async function isAdminUser(userId) {
   // بدل رد مصحح كامل — وده كان باج حقيقي قبل التعديل ده. ──
   function _cosmosCorrectionTokenBudget(sourceText) {
     var len = String(sourceText || '').length;
-    // ── تقدير تقريبي متساهل: ~3 حروف/توكن + هامش أمان 3000 توكن للإضافات وقت التصحيح —
-    // السقف الأقصى بقى 32000 (قريب من أقصى حد فعلي للموديل) بدل 30000، عشان أي رد كبير
-    // ما يتقصش وهو بيتصحح ──
+    // ── تقدير تقريبي متساهل: ~3 حروف/توكن + هامش أمان 3000 توكن للإضافات وقت التصحيح ──
     var approxTokens = Math.ceil(len / 3) + 3000;
-    return Math.max(8000, Math.min(32000, approxTokens));
+    return Math.max(8000, Math.min(30000, approxTokens));
   }
   // ══════════════════════════════════════════════════════════════════
   // 🔁 دالة موحّدة للتكملة التلقائية: أي نداء API (مراجعة/تعميق منطق) ممكن يترجع
@@ -625,9 +623,7 @@ async function isAdminUser(userId) {
     ];
     var full = '';
     var tries = 0;
-    // ── مفيش سقف صغير لعدد مرات "الإكمال" — لو الرد الأصلي فعلاً ضخم ولسه بيتقطع، نكمّل
-    // لحد 20 مرة (عمليًا كافي لأي حجم كود واقعي) بدل ما نوقف بدري ونسيب الرد ناقص ──
-    while (tries < 20) {
+    while (tries < 4) {
       tries++;
       var r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -11698,6 +11694,19 @@ function slStopAllAnimations() {
   function markWebLLMUsedNow() {
     try { localStorage.setItem('falak_webllm_last_used', String(Date.now())); } catch (e) {}
   }
+  // ── بنطلب من المتصفح إن مساحة تخزين النموذج المحلي (كاش + IndexedDB) تبقى "دائمة" (Persistent) —
+  // من غير الطلب ده، المتصفح (خصوصاً جوه تطبيقات WebView أو الأجهزة اللي مساحتها قليلة) بيعتبرها
+  // مساحة "قابلة للمسح وقت الحاجة" وبيمسحها من نفسه لو الجهاز محتاج مساحة، حتى قبل الـ 14 يوم
+  // بتوع التنظيف التلقائي بتاعنا تحت. ده اللي كان بيخلي النموذج (كام مية ميجا) يتنزل من الأول
+  // كذا مرة في نفس اليوم، بدل ما يفضل محفوظ ويشتغل بسرعة من الكاش زي ما المفروض. بنطلبها بدري
+  // (من أول ما الصفحة تفتح) عشان يبقى فيه وقت كافي للمتصفح يوافق قبل أول استخدام فعلي. ──
+  async function requestPersistentWebLLMStorage() {
+    try {
+      if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.persist) return;
+      var _already = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+      if (!_already) await navigator.storage.persist();
+    } catch (ePersist) { /* بعض المتصفحات (أو WebView) مش بتدعم الـ API ده — تجاهل بهدوء */ }
+  }
   async function purgeWebLLMCacheIfStale() {
     try {
       var lastUsedRaw = localStorage.getItem('falak_webllm_last_used');
@@ -11725,8 +11734,10 @@ function slStopAllAnimations() {
       console.log('🧹 تم تنظيف كاش النموذج المحلي (WebLLM) تلقائياً بعد ' + Math.round(daysSince) + ' يوم من عدم الاستخدام');
     } catch (ePurge) { console.warn('WebLLM purge failed', ePurge); }
   }
-  document.addEventListener('DOMContentLoaded', function () { setTimeout(purgeWebLLMCacheIfStale, 4000); });
-  // ══════════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(purgeWebLLMCacheIfStale, 4000);
+    requestPersistentWebLLMStorage();
+  });
   // ── سجل مشاكل المنصة (للمشرف) — بيسجّل أي فشل حقيقي (Groq/Gemini/Tavily/TTS)
   // بتفاصيله عشان المشرف يقدر يشوفه من جوّه التطبيق نفسه (من غير Console)، خصوصاً من الموبايل.
   // ══════════════════════════════════════════════════════════════
@@ -12543,8 +12554,8 @@ function slStopAllAnimations() {
       // 8000 كانت بتتقطع فعليًا مع صفحات فيها CSS تفصيلي + JS كامل للعبة (زي السلم والتعبان)،
       // فرفعناها لمساحة أكبر بكتير (الموديل بيدعم لحد ~32-65 ألف توكن إخراج). ──
       var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
-      var _mainMaxTok     = _isCodeReq ? 32000 : 4500;
-      var _fallbackMaxTok = _isCodeReq ? 32000 : 4000;
+      var _mainMaxTok     = _isCodeReq ? 28000 : 4500;
+      var _fallbackMaxTok = _isCodeReq ? 28000 : 4000;
       var _geminiMaxTok   = _isCodeReq ? 28000 : 4500;
 
       // ── Show user bubble ── (لو صندوق مرفقات احترافي اتعرض فعلاً قبل كده، منعرضش نسخة تانية بالنص الخام)
@@ -12956,7 +12967,7 @@ function slStopAllAnimations() {
         : '\n\nقاعدة إلزامية لما تكتب كود برمجي (ويب): لو المستخدم طلب منك صفحة أو موقع أو أداة أو أي حاجة فيها HTML/CSS/JS، ممنوع تمامًا تكتب 3 كتل كود منفصلة (واحدة html وواحدة css وواحدة js). لازم تدمج كل حاجة في ملف HTML واحد بس: الـ CSS جوه <style> في الـ <head>، والـ JS جوه <script> قبل </body> مباشرة، وكله بين ثلاث علامات ```html وسطر فاضي قبل وبعد الكتلة. ده معمول عشان الناتج يبقى ملف واحد جاهز يتفتح ويشتغل فورًا من غير ما المستخدم يحتاج يربط ملفات ببعضها. لو المستخدم طلب كود بلغة تانية غير الويب (بايثون مثلاً) يفضل كتلة واحدة بلغتها.\nاكتب الكود كامل وشغّال 100% من غير اختصار أو حذف أجزاء ("...") ومن غير تعليقات زي "أكمل باقي الكود هنا"، حتى لو طويل ومعقد (صفحة كاملة، لعبة، تطبيق) — مفيش حد أقصى لطول الكود.\nاكتب باحترافية زي مبرمج خبير: أسماء متغيرات ودوال واضحة، تنسيق (indentation) منظم ومتسق، تعليقات قصيرة عند النقاط المهمة بس، وترتيب منطقي للأقسام (بنية HTML، ثم الأنماط، ثم المنطق). خلّي التصميم نفسه احترافي بصريًا: تباعد متسق، ألوان متناسقة، خطوط واضحة، وتأثيرات/انتقالات (transitions/animations) لطيفة وسلسة مش مبالغ فيها، مش مجرد كود وظيفي بس.\nاكتب الكود دفعة واحدة نظيف من الأول من غير ما "تفكر بصوت عالي" جوه كتلة الكود أو تكتب نسخة أولية وتصلحها بعدين جوه نفس الرد — فكّر في الحل قبل ما تبدأ تكتب، والكتلة نفسها تبقى النسخة النهائية المرتبة. متكتبش أي شرح أو نص جوه كتلة الكود نفسها. ملاحظة: نظام العرض بيحول كتلة الكود تلقائيًا لملف قابل للنسخ والتنزيل والتشغيل المباشر في المتصفح، إلا لو المستخدم قال صراحة إنه عايز الكود نص بس من غير ما يتعمله ملف.');
 
       // ── هوية خبرة برمجية عالية — تخلي الردود التقنية بمستوى مهندس سينيور محترف بدل إجابات سطحية ──
-      var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.\nأولوية حرجة عند بناء لعبة/تطبيق كامل: خلاص المنطق الوظيفي (JavaScript اللي بيخلي الحاجة فعلاً تشتغل: قواعد اللعبة، حركة اللاعب، كشف الفوز، التفاعل مع الأزرار) له أولوية مطلقة، ولازم يتكتب كامل بكل التفاصيل من غير أي اختصار أو نقص، أيًا كان طول الكود المطلوب لكده — مفيش حد أقصى لعدد الأسطر أو حجم أي قسم من الكود، اكتب كل حاجة محتاجها الطلب فعليًا بالكامل. التصميم (CSS) برضو يتكتب كامل واحترافي زي ما الطلب يستاهل، من غير ما تبخل فيه أو تختصره، بس دايمًا خلّي أولوية أول جزء بيتكتب وآخر جزء بيتراجع هو المنطق الوظيفي، عشان لو حصل قطع (طول جدًا) يبقى الجزء اللي اتكتب فعلاً هو الأهم وظيفيًا. لعبة شكلها احترافي وكامل التفاصيل وشغالة 100% هي الهدف — مش تقليل الكود، لكن ضمان إن كل حاجة مطلوبة (شكل ومنطق) اتكتبت كاملة وصح.';
+      var _expertEngineerPolicyBlock = '\n\nهوية إضافية إلزامية لما الكلام يبقى عن برمجة أو كود: إنت مش مجرد شات بوت بيرد على الأسئلة — إنت مهندس برمجيات سينيور خبير، بخبرة عملية عميقة في: تطوير الواجهات (HTML5 الدلالي، CSS3 الحديث زي Flexbox/Grid/Animations/Responsive design، JavaScript ES6+ نضيف ومنظم من غير كود متكرر)، هياكل المشاريع الكبيرة (تقسيم منطقي لملفات، تسمية واضحة، فصل الشكل عن المنطق)، إمكانية الوصول (ARIA، semantic tags، تباين ألوان مناسب)، والأداء (lazy loading، تقليل إعادة الرسم، كود مش مكرر). لما حد يطلب موقع أو تطبيق أو صفحة كبيرة، فكّر الأول في البنية الكاملة (الصفحات، الأقسام، التفاعلات) قبل ما تكتب سطر واحد، وابني الكود على أساس ده بطريقة منظمة وقابلة للتوسيع، مش مجرد حل سريع. عندك كمان خبرة عملية بتقنيات الصوت في المتصفح: Web Speech API (SpeechSynthesisUtterance للنطق، SpeechRecognition/webkitSpeechRecognition للتفريغ الصوتي)، MediaRecorder API لتسجيل الصوت، Web Audio API للتأثيرات الصوتية، وربط الصوت بعناصر تفاعلية (زرار تسجيل، تشغيل، إيقاف). لو حد طلب ميزة فيها صوت (تسجيل، نطق نص، أوامر صوتية، مؤثرات صوتية)، اكتب الكود الفعلي الشغّال باستخدام الـ APIs دي مباشرة من غير ما تقول "الصوت معقد" أو تتهرب من التفاصيل. اكتب كود نضيف، معلّق بإيجاز على الأجزاء المهمة، ومختبر منطقياً قبل ما تسلمه — يعني فكّر هل فعلاً هيشتغل من أول تجربة قبل ما تكتبه.\nأولوية حرجة عند بناء لعبة/تطبيق كامل: خلاص المنطق الوظيفي (JavaScript اللي بيخلي الحاجة فعلاً تشتغل: قواعد اللعبة، حركة اللاعب، كشف الفوز، التفاعل مع الأزرار) له أولوية مطلقة أعلى من أي زخرفة بصرية إضافية (تدرجات ألوان نيون كتيرة، أنيميشن نجوم متحركة، تأثيرات توهج زيادة عن اللزوم، نرد ثلاثي الأبعاد). اكتب CSS كافي وأنيق بس مش متضخم، ومفيش حد أقصى لعدد أسطر أي جزء من الكود (HTML/CSS/JS) — اكتب كل حاجة الطلب فعلاً محتاجها كاملة من غير اختصار، بس خلّي الأولوية دايمًا للمنطق الوظيفي الشغّال لو حصل تعارض في المساحة. لعبة بسيطة شكلها عادي بس شغالة 100% أفضل بكتير من لعبة شكلها خرافي وناقصة أو مش شغالة.';
 
       // ── غرفة 3 (امتداد): أمثلة كود عجبت المستخدمين قبل كده (👍 تحت الكود) — بتدفعك ترفع المستوى وتبني عليه ──
       var _goodCodeContextBlock = '';
@@ -13208,6 +13219,7 @@ function slStopAllAnimations() {
         if (!_webllmGpuCheck.ok) { _debugWebLLMDetail = _webllmGpuCheck.reason; return null; }
         try {
           if (!window.__cosmosWebLLMEngine) {
+            await requestPersistentWebLLMStorage();
             if (typingEl && typingEl.isConnected) {
               if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
               var _wrapW0 = typingEl.querySelector('.message-content');
@@ -13233,13 +13245,22 @@ function slStopAllAnimations() {
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
           }
           // ── النموذج المحلي خفيف جداً (1B) وذاكرته محدودة — بنديله سياق مختصر بس (شخصية كوزموس +
-          // آخر رسائل قليلة) بدل كل الـ blocks الثقيلة اللي بتتحط للنماذج السحابية الكبيرة ──
+          // آخر رسائل قليلة) بدل كل الـ blocks الثقيلة اللي بتتحط للنماذج السحابية الكبيرة.
+          // ── النموذج ده أصلاً متدرب بالإنجليزي في الغالب، فلو ديّناه شخصية طويلة بالعربي كسياق
+          // (persona.systemPrompt) بيتلخبط ويرد برد فاضي أو حرف واحد غريب (زي "ض") بدل رد حقيقي.
+          // فبنديله تعليمة قصيرة وواضحة بالعربي "رد بالعربي وباختصار" بدل الشخصية الكاملة الطويلة ──
+          var _localSys = 'أنت مساعد ذكاء اصطناعي بسيط. رد على المستخدم بالعربية الفصحى البسيطة، بجملة أو جملتين واضحتين ومباشرتين، من غير حروف أو رموز غريبة.';
           var _localHist = histMsgs.slice(-6);
-          var _localMsgs = [{ role: 'system', content: persona.systemPrompt }].concat(_localHist).concat([{ role: 'user', content: String(_aiApiMsg).slice(0, 4000) }]);
+          var _localMsgs = [{ role: 'system', content: _localSys }].concat(_localHist).concat([{ role: 'user', content: String(_aiApiMsg).slice(0, 4000) }]);
           var _reply = await window.__cosmosWebLLMEngine.chat.completions.create({ messages: _localMsgs, temperature: 0.5, max_tokens: 800 });
           var _txt = _reply && _reply.choices && _reply.choices[0] && _reply.choices[0].message && _reply.choices[0].message.content;
-          if (_txt) { if (window.AIHealth) window.AIHealth.record('webllm', true); markWebLLMUsedNow(); _logCosmosStep('default', 'كل الخدمات السحابية كانت مشغولة — رد من نموذج محلي شغال على جهازك (أوفلاين)'); return _txt; }
-          _debugWebLLMDetail = 'النموذج المحلي رجّع رد فاضي';
+          // ── فحص جودة الرد قبل ما نسلّمه للمستخدم: النموذج الصغير أحيانًا بيرجّع رد تالف —
+          // حرف واحد بس، أو نفس الحرف متكرر، أو نص فاضي فعليًا بعد المسافات. ده مش رد حقيقي،
+          // فلازم نرفضه هنا بدل ما نعرضه للمستخدم وكأنه إجابة صحيحة ──
+          var _txtClean = (_txt || '').trim();
+          var _looksBroken = !_txtClean || _txtClean.length < 3 || /^(.)\1*$/.test(_txtClean);
+          if (_txtClean && !_looksBroken) { if (window.AIHealth) window.AIHealth.record('webllm', true); markWebLLMUsedNow(); _logCosmosStep('default', 'كل الخدمات السحابية كانت مشغولة — رد من نموذج محلي شغال على جهازك (أوفلاين)'); return _txtClean; }
+          _debugWebLLMDetail = _txtClean ? 'النموذج المحلي رجّع رد تالف/غير مفهوم' : 'النموذج المحلي رجّع رد فاضي';
           return null;
         } catch (eW) {
           _debugWebLLMDetail = String(eW && eW.message || eW).slice(0,150);
@@ -13344,9 +13365,7 @@ function slStopAllAnimations() {
         // ══════════════════════════════════════════════════════════════════
         var _truncFinishReason = result.data && result.data.choices && result.data.choices[0] && result.data.choices[0].finish_reason;
         var _contTries = 0;
-        // ── مفيش سقف صغير لعدد مرات إكمال الكود الطويل — لو فعلاً الكود ضخم (تطبيق/لعبة كبيرة)
-        // ولسه بيتقطع، يكمّل لحد 20 مرة بدل 6، عشان طول الكود يتحدد حسب الطلب نفسه مش حسب رقم ثابت ──
-        while (answer && _truncFinishReason === 'length' && _contTries < 20) {
+        while (answer && _truncFinishReason === 'length' && _contTries < 6) {
           _contTries++;
           if (typingEl && typingEl.isConnected) {
             if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
