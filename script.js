@@ -2927,6 +2927,133 @@ async function updateAdminUI() {
     }
   }
 
+  // ── نسخة مخصّصة للرسائل المركّبة (نص + صورة في نفس الطلب): بترجع عنصر DOM جاهز بدل ما تعمل
+  // فقاعة رسالة مستقلة زي generateAndDisplayImage. الهدف: مفيش تكرار/دبلجة للطلب — بنعالج نفس
+  // الرسالة مرة واحدة، والصورة بترتبط في الآخر بنفس فقاعة الرد النصي بدل ما تظهر كرد منفصل. ──
+  // ── fullContextText (اختياري): الرسالة الأصلية الكاملة قبل ما نقتصّ منها جملة الصورة —
+  // بتتبعت للموديل بس عشان "يفكّ" أي ضمير غامض في جملة الصورة (زي "مدارها"، "لونها"، "شكله")
+  // ويرجّعه للفاعل الحقيقي المذكور قبل كده في الرسالة (زي "الثقب الأسود")، عشان الوصف يبقى دقيق
+  // ومش مشهد عام عشوائي ──
+  async function generateCompoundImageElement(prompt, fullContextText) {
+    const seed = Math.floor(Math.random() * 9999999);
+    const wrap = document.createElement("div");
+    wrap.className = "cosmos-compound-image";
+    wrap.style.cssText = "margin-top:10px;";
+    const statusEl = document.createElement("div");
+    statusEl.style.cssText = "display:flex;align-items:center;gap:8px;font-size:.85rem;color:#06b6d4;margin-bottom:6px;";
+    statusEl.innerHTML = `<span style="width:9px;height:9px;border-radius:50%;background:#06b6d4;flex-shrink:0;animation:pulse 1s infinite"></span><span>✨ جاري توليد الصورة...</span>`;
+    const box = document.createElement("div");
+    box.style.cssText = "min-height:40px;";
+    wrap.appendChild(statusEl);
+    wrap.appendChild(box);
+
+    const _hasUsefulContext = fullContextText && fullContextText.trim() && fullContextText.trim() !== prompt.trim();
+    const _wantsCartoon = /كرتون|انمي|أنمي|anime|cartoon|رسمة اطفال|رسمة أطفال|كاريكاتير/i.test(prompt);
+    const _pronounNote = " If the request contains a pronoun or vague reference (e.g. English \"it/its/this/that\", or Arabic attached pronouns like \"ها/له/عنه/منه\") whose real subject was already mentioned earlier in the provided context, you MUST resolve it and describe that explicit subject — never fall back to a generic or unrelated scene just because the clause itself is short or ambiguous.";
+    const _styleForTranslator = (_wantsCartoon
+      ? "Translate and expand the user's request into a vivid English description for an AI image generator, max 45 words. You MUST preserve every specific detail the user mentioned (subject, count, colors, objects, pose, background, composition) — never drop or generalize them. Describe a colorful cartoon/anime-style illustration."
+      : "Translate and expand the user's request into a vivid English description for an AI image generator, max 45 words. You MUST preserve every specific detail the user mentioned (subject, count, colors, objects, pose, background, composition) — never drop or generalize them. Describe realistic textures, materials, lighting direction and color, and camera framing as if describing a real photograph — not a drawing.")
+      + _pronounNote + " Reply ONLY with the final description, no quotes, no explanation, no mention of the context or the original message.";
+
+    // ── الرسالة المرسلة للموديل: جملة الصورة نفسها هي "الطلب الأساسي"، وباقي الرسالة الأصلية بتتبعت
+    // كـ"سياق للفهم بس" — بنوضح للموديل الفرق عشان مايوصفش حاجة زيادة من السياق مش مطلوبة في الصورة ──
+    const _userContent = _hasUsefulContext
+      ? `Image request (describe THIS): "${prompt}"\n\nFull original message, for pronoun/reference resolution ONLY — do not describe parts of it that aren't the image's subject: "${fullContextText.trim()}"`
+      : prompt;
+
+    let enPrompt = "";
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST", signal: ctrl.signal,
+        headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages: [
+            { role: "system", content: _styleForTranslator },
+            { role: "user", content: _userContent }
+          ],
+          max_tokens: 110, temperature: 0.4
+        })
+      });
+      const d = await r.json();
+      enPrompt = (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content || "").trim();
+    } catch (e) {}
+    // ── فشل الاتصال بالموديل؟ الـ fallback بيفضّل السياق الكامل (لو موجود) على جملة الصورة المجردة،
+    // عشان حتى لو فشلت الترجمة الذكية، منرجعش لمشهد عام من غير أي سياق أصلاً ──
+    if (!enPrompt) enPrompt = (_hasUsefulContext ? fullContextText.trim() : prompt).substring(0, 160);
+
+    const finalPrompt = _wantsCartoon
+      ? `${enPrompt}, vibrant digital illustration, clean bold linework, rich colors, detailed concept art, trending on artstation`
+      : `${enPrompt}, photorealistic, hyper-detailed, physically-based rendering, natural lighting, sharp focus, professional astrophotography, shot on full-frame camera, 8k UHD, award-winning`;
+
+    let ok = false;
+    for (let attempt = 1; attempt <= 3 && !ok; attempt++) {
+      const _txSpan = statusEl.querySelector("span:last-child");
+      if (_txSpan) _txSpan.textContent = attempt === 1 ? "🎨 جاري توليد الصورة..." : `🔄 محاولة ${attempt}/3...`;
+      const pollinationsModels = ["flux", "sana", "flux"];
+      const chosenModel = pollinationsModels[attempt - 1] || "flux";
+      const encodedPrompt = encodeURIComponent(finalPrompt);
+      const imgSeed = seed + attempt;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${chosenModel}&seed=${imgSeed}&width=1024&height=1024&nologo=true&enhance=true&referrer=falak-astronomy-platform`;
+      try {
+        await new Promise((resolve, reject) => {
+          const testImg = new Image();
+          const timeout = setTimeout(() => reject(new Error("timeout")), 50000);
+          testImg.onload = () => { clearTimeout(timeout); resolve(); };
+          testImg.onerror = () => { clearTimeout(timeout); reject(new Error("load error")); };
+          testImg.src = imageUrl;
+        });
+        const img = document.createElement("img");
+        img.style.cssText = "max-width:100%;border-radius:14px;display:block;cursor:pointer;box-shadow:0 4px 28px rgba(6,182,212,.45);";
+        img.onclick = function() { if (typeof viewImage === "function") viewImage(imageUrl); };
+        img.src = imageUrl;
+        img.loading = "lazy";
+        box.innerHTML = "";
+        box.appendChild(img);
+        statusEl.innerHTML = "🎨 صورة مرتبطة بطلبك أعلاه";
+        ok = true;
+      } catch (err) {
+        console.warn("generateCompoundImageElement pollinations error:", err);
+      }
+    }
+    if (!ok) {
+      statusEl.innerHTML = "❌ فشل توليد الصورة المرتبطة بطلبك (جرّب تطلبها لوحدها في رسالة منفصلة).";
+    }
+
+    if (window.aiChatHistory) {
+      window.aiChatHistory.push({ role: 'user', content: 'طلبت توليد صورة: "' + prompt + '"' });
+      window.aiChatHistory.push({
+        role: 'assistant',
+        content: ok
+          ? ('تم توليد وعرض صورة للمستخدم في نفس رسالة الرد، وهي تصور: ' + enPrompt + '. لو المستخدم اتكلم بعد كده عن "الصورة" أو طلب تعديل عليها، فاهم إنه بيقصد الصورة دي بالتحديد.')
+          : 'حاولت أولّد صورة للمستخدم بناءً على طلبه لكن العملية فشلت تقنياً.'
+      });
+      if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+    }
+
+    return wrap;
+  }
+  window.generateCompoundImageElement = generateCompoundImageElement;
+
+  // ── لو فيه صورة "مركّبة" لسه بتتولّد في الخلفية لنفس الطلب، بننتظرها وبنلحقها بآخر عنصر تمامًا
+  // جوه فقاعة الرد النصي (appendChild في النهاية) — الرد النصي بيظهر ويكتمل الأول، والصورة بتيجي كخاتمة بعده ──
+  async function attachPendingCompoundImage(targetDiv) {
+    if (!window.__cosmosPendingCompoundImagePromise) return;
+    var _p = window.__cosmosPendingCompoundImagePromise;
+    window.__cosmosPendingCompoundImagePromise = null;
+    try {
+      var _el = await _p;
+      if (_el && targetDiv && targetDiv.isConnected) {
+        targetDiv.appendChild(_el);
+        var _c = targetDiv.closest ? targetDiv.closest('#aiChatMessages') : null;
+        if (_c) _c.scrollTop = _c.scrollHeight;
+      }
+    } catch (eAttach) { console.error('attachPendingCompoundImage failed:', eAttach); }
+  }
+  window.attachPendingCompoundImage = attachPendingCompoundImage;
+
   async function _doGenerate(finalPrompt, uid, origPrompt, cont, seed, attempt) {
     const stEl = document.getElementById(uid + "_st");
     const txEl = document.getElementById(uid + "_tx");
@@ -12485,10 +12612,25 @@ function slStopAllAnimations() {
           return;
         }
 
-        // ── رسالة مركّبة: نبدأ توليد الصورة (async، من غير await) ومنكملش نستنى، عشان باقي الرسالة (نص/بحث) يشتغل بالتوازي معاها ──
-        generateAndDisplayImage(imgPrompt).catch(function(eImgBg){ console.error('Compound-message background image generation failed:', eImgBg); });
+        // ── رسالة مركّبة: طلب واحد بس بيتعالج مرة واحدة — مفيش استنساخ/دبلجة له.
+        // بنبدأ توليد الصورة في الخلفية (من غير await، عشان مايوقفش باقي المعالجة) وبنخزّن الـ Promise
+        // بتاعها عشان نلحقها آخر فقاعة الرد النصي بعد ما يكتمل تمامًا (مش هتظهر كرسالة منفصلة) ──
+        var _compoundImgPromise = generateCompoundImageElement(imgPrompt, userMsg)
+          .catch(function(eImgBg){ console.error('Compound-message background image generation failed:', eImgBg); return null; });
+        window.__cosmosPendingCompoundImagePromise = _compoundImgPromise;
+        // ── شبكة أمان: لو مسار النص فشل بخطأ (exception) قبل ما يوصل لنقطة إلحاق الصورة عمداً،
+        // الصورة منعرضهاش ضايعة — بتتحط كفقاعة مستقلة بمجرد ما تخلص (بديل، مش الحالة العادية) ──
+        _compoundImgPromise.then(function(_elFallback){
+          if (window.__cosmosPendingCompoundImagePromise === _compoundImgPromise && _elFallback && msgs) {
+            window.__cosmosPendingCompoundImagePromise = null;
+            var _fallbackDiv = document.createElement('div');
+            _fallbackDiv.className = 'message received';
+            _fallbackDiv.appendChild(_elFallback);
+            msgs.appendChild(_fallbackDiv); msgs.scrollTop = msgs.scrollHeight;
+          }
+        });
         userMsg = (typeof removeImageClauseFromText === 'function' ? removeImageClauseFromText(userMsg) : userMsg) || userMsg;
-        // ملحوظة: مفيش return هنا عن قصد — الكود بيكمل تحت ليشتغل على باقي الرسالة (البحث الحي + التحليل النصي)
+        // ملحوظة: مفيش return هنا عن قصد — نفس الطلب المبعوت بيكمل تحت في نفس المسار الواحد (البحث الحي + التحليل النصي)
       }
 
       // ── سياق إضافي هيتضاف بس لطلب الذكاء الاصطناعي، ومش هيظهر في فقاعة رسالتك ──
@@ -13374,6 +13516,8 @@ function slStopAllAnimations() {
                 edCache.innerHTML = '<div class="message-sender" style="color:#06b6d4">' + persona.emoji + ' ' + persona.name + '</div><div class="message-content">' + (typeof window.formatAIAnswer === 'function' ? window.formatAIAnswer(_cachedObj.a) : _cachedObj.a) + '</div><div class="message-time">' + new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) + '</div>';
                 msgs.appendChild(edCache); msgs.scrollTop = msgs.scrollHeight;
                 if (typeof window.addAIMuteButton === 'function') { var _tC = edCache.querySelector('.message-content'); if (_tC) window.addAIMuteButton(edCache, _tC.textContent); }
+                // ── لو الرسالة كانت مركّبة (نص + صورة)، نستنى الصورة ونلحقها آخر الفقاعة دي بعد ما النص ظهر كامل ──
+                if (typeof window.attachPendingCompoundImage === 'function') await window.attachPendingCompoundImage(edCache);
               }
               if (typeof window.aiChatHistory !== 'undefined' && Array.isArray(window.aiChatHistory)) {
                 window.aiChatHistory.push({ role: 'user', content: userMsg }, { role: 'assistant', content: _cachedObj.a });
@@ -13743,6 +13887,10 @@ function slStopAllAnimations() {
             window.__cosmosPendingSearchImages = null;
           }
           msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
+          // ── الرد النصي ظهر واكتمل خلاص فوق ↑ — دلوقتي لو الرسالة كانت مركّبة (نص + صورة)، نستنى
+          // الصورة (لو لسه بتتولّد) ونلحقها آخر حاجة تمامًا (appendChild) جوه نفس فقاعة الرد ده،
+          // عشان الصورة تبقى هي خاتمة الرد مش رسالة تانية منفصلة ──
+          if (typeof window.attachPendingCompoundImage === 'function') await window.attachPendingCompoundImage(aiDiv);
           if (typeof window.addAIMuteButton === 'function') {
             var txtEl = aiDiv.querySelector('.message-content');
             if (txtEl) window.addAIMuteButton(aiDiv, txtEl.textContent);
