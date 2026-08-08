@@ -11682,6 +11682,47 @@ function slStopAllAnimations() {
     };
   })();
   // ══════════════════════════════════════════════════════════════
+  // ── تنظيف تلقائي لملفات النموذج المحلي (WebLLM Auto-Purge): أول ما خط الدفاع الرابع
+  // (WebLLM) يشتغل، بيحمّل موديل حجمه كام مية ميجا ويخزّنه في كاش/IndexedDB المتصفح عشان
+  // المرة الجاية يشتغل بسرعة من غير إعادة تحميل. لو مسحناه بعد كل محادثة (زي الفكرة
+  // الأصلية) هيبقى المستخدم بيعيد تحميل مية مية ميجا من الصفر في كل مرة الخدمات السحابية
+  // تقف، وده أسوأ لبيانات المستخدم مش أحسن. فبدل كده: بنسجّل آخر مرة اتستخدم فيها، ولو
+  // فضل من غير استخدام لمدة طويلة (يعني الخدمات السحابية كانت شغالة كويس طول الوقت ومحتجناش
+  // للنموذج المحلي)، بنمسحه تلقائياً ونرجّع المساحة للهاتف. ──
+  // ══════════════════════════════════════════════════════════════
+  var WEBLLM_PURGE_AFTER_DAYS = 14;
+  function markWebLLMUsedNow() {
+    try { localStorage.setItem('falak_webllm_last_used', String(Date.now())); } catch (e) {}
+  }
+  async function purgeWebLLMCacheIfStale() {
+    try {
+      var lastUsedRaw = localStorage.getItem('falak_webllm_last_used');
+      if (!lastUsedRaw) return; // معمول استخدام قبل كده؟ لأ، يبقى مفيش حاجة نمسحها أصلاً
+      var lastUsed = parseInt(lastUsedRaw, 10) || 0;
+      var daysSince = (Date.now() - lastUsed) / (1000 * 60 * 60 * 24);
+      if (daysSince < WEBLLM_PURGE_AFTER_DAYS) return;
+      if (typeof caches !== 'undefined' && caches.keys) {
+        var names = await caches.keys();
+        await Promise.all(names.filter(function (n) { return /webllm|mlc[-_]?ai/i.test(n); }).map(function (n) { return caches.delete(n); }));
+      }
+      if (typeof indexedDB !== 'undefined' && indexedDB.databases) {
+        try {
+          var dbs = await indexedDB.databases();
+          await Promise.all((dbs || []).filter(function (d) { return d && d.name && /webllm|mlc[-_]?ai/i.test(d.name); }).map(function (d) {
+            return new Promise(function (res) {
+              var req = indexedDB.deleteDatabase(d.name);
+              req.onsuccess = req.onerror = req.onblocked = function () { res(); };
+            });
+          }));
+        } catch (eDbList) { /* بعض المتصفحات (زي Firefox) مش بتدعم indexedDB.databases() — تجاهل */ }
+      }
+      localStorage.removeItem('falak_webllm_last_used');
+      window.__cosmosWebLLMEngine = null;
+      console.log('🧹 تم تنظيف كاش النموذج المحلي (WebLLM) تلقائياً بعد ' + Math.round(daysSince) + ' يوم من عدم الاستخدام');
+    } catch (ePurge) { console.warn('WebLLM purge failed', ePurge); }
+  }
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(purgeWebLLMCacheIfStale, 4000); });
+  // ══════════════════════════════════════════════════════════════
   // ── سجل مشاكل المنصة (للمشرف) — بيسجّل أي فشل حقيقي (Groq/Gemini/Tavily/TTS)
   // بتفاصيله عشان المشرف يقدر يشوفه من جوّه التطبيق نفسه (من غير Console)، خصوصاً من الموبايل.
   // ══════════════════════════════════════════════════════════════
@@ -12275,6 +12316,7 @@ function slStopAllAnimations() {
             visionData.candidates[0].content.parts[0].text) || null;
           if (!visionAnswer && visionData.error) throw new Error(JSON.stringify(visionData.error));
           if (window.AIHealth) window.AIHealth.record('gemini', !!visionAnswer);
+          _logCosmosStep('🖼️ حلّل الصورة/الملف المرفق');
           if (!visionAnswer) visionAnswer = 'عذراً، مقدرتش أحلل المرفقات.';
 
           // ── تعاون بين النماذج: Gemini بيحلل الصورة (شغلته)، وGroq بياخد التحليل الخام ويصيغه كتقرير احترافي منظم (شغلته) ──
@@ -12426,6 +12468,7 @@ function slStopAllAnimations() {
         try {
           var _searchRes = await window.performWebSearch(userMsg, _mentionedDomains);
           if (window.AIHealth) window.AIHealth.record('tavily', !!(_searchRes && _searchRes.results && _searchRes.results.length));
+          if (_searchRes && _searchRes.results && _searchRes.results.length) { _logCosmosStep('🔍 بحث في الإنترنت عن معلومات محدّثة (' + _searchRes.results.length + ' نتيجة)'); }
           if (_searchRes && _searchRes.results && _searchRes.results.length) {
             var _foundDomains = [];
             var _wctx = '\n\n--- نتائج بحث حقيقية من الإنترنت الآن ---\n';
@@ -12496,9 +12539,9 @@ function slStopAllAnimations() {
       // 8000 كانت بتتقطع فعليًا مع صفحات فيها CSS تفصيلي + JS كامل للعبة (زي السلم والتعبان)،
       // فرفعناها لمساحة أكبر بكتير (الموديل بيدعم لحد ~32-65 ألف توكن إخراج). ──
       var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
-      var _mainMaxTok     = _isCodeReq ? 28000 : 2200;
+      var _mainMaxTok     = _isCodeReq ? 28000 : 4500;
       var _fallbackMaxTok = _isCodeReq ? 28000 : 4000;
-      var _geminiMaxTok   = _isCodeReq ? 28000 : 2200;
+      var _geminiMaxTok   = _isCodeReq ? 28000 : 4500;
 
       // ── Show user bubble ── (لو صندوق مرفقات احترافي اتعرض فعلاً قبل كده، منعرضش نسخة تانية بالنص الخام)
       var _aiMsgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
@@ -12595,6 +12638,15 @@ function slStopAllAnimations() {
       var apiKey   = typeof getAiApiKey === 'function' ? getAiApiKey() : '';
 
       // ══════════════════════════════════════════════════════════════════
+      // 📋 سجل خطوات التنفيذ الحقيقية (Steps Log): بيسجّل كل مرحلة فعلية بيمر بيها الطلب ده
+      // (خطة هيكلية، بحث إنترنت، تحليل صورة، كتابة كود، مراجعة، تشغيل فعلي، إصلاح خطأ، إلخ) —
+      // مش وصف عام، بس المراحل اللي فعلاً حصلت لنفس الرسالة دي. بيتحط في نهاية الرد كملخص
+      // قابل للفتح، زي ما بيحصل في أدوات الذكاء الاصطناعي اللي بتعرض خطواتها خطوة بخطوة. ──
+      // ══════════════════════════════════════════════════════════════════
+      var _cosmosStepsLog = [];
+      function _logCosmosStep(label) { try { _cosmosStepsLog.push(String(label)); } catch (e) {} }
+
+      // ══════════════════════════════════════════════════════════════════
       // 🤔 قبل ما نبدأ نبني أي كود/لعبة/تطبيق: نتأكد إن الطلب واضح ومفهوم صح، بدل ما نخمّن ونبني
       // حاجة تانية خالص (زي ما حصل لما "السلم والتعبان" اتفهمت غلط وبقت لعبة "الثعبان" الأركيد العادية).
       // ده استدعاء صغير وسريع بيحصل قبل أي شغل تقيل، ولو الطلب واضح بيكمل عادي من غير أي تأخير محسوس. ──
@@ -12617,6 +12669,7 @@ function slStopAllAnimations() {
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
         try { _architectPlan = await window.planCosmosFileArchitecture(apiKey, userMsg); } catch (eArch) { _architectPlan = null; }
+        _logCosmosStep('🏗️ خطّط هيكل المشروع (الأقسام والدوال) قبل ما يكتب أي كود');
         if (_architectPlan && _architectPlan.sections && _architectPlan.sections.length) {
           _architectPlanBlock = '\n\n--- خطة هيكلية سريعة اتبنت قبل الكتابة (فكّر عليها الأول، ابني الكود عشان يغطيها كلها) ---\n'
             + 'الأقسام/الوظائف الرئيسية المطلوبة: ' + _architectPlan.sections.join('، ') + '\n'
@@ -12844,6 +12897,18 @@ function slStopAllAnimations() {
 
       var _imageGenPolicyBlock = '\n\nقاعدة إلزامية بخصوص الصور: إنت شخصياً متقدرش تولّد أو ترفع صور — التوليد الفعلي بيحصل من نظام منفصل تلقائي. ممنوع تمامًا تكتب رابط صورة وهمي (زي https://... .png أو .jpg من عندك) أو تتظاهر إنك "ولّدت" أو "أرفقت" صورة، لأن ده هيبقى معلومة كاذبة. لو حسيت إن المستخدم طالب صورة ولسه مطلعتش، قوله بوضوح إنك هتولدها له الآن أو اطلب منه يعيد صياغة طلبه بوضوح (مثلاً "اعمل لي صورة كذا")، من غير ما تخترع أي رابط أو تفاصيل ملف.';
 
+      // ── دفعة تفصيل أعمق: للأسئلة اللي مش مجرد سؤال بسيط جدًا (زي "كام" أو تحية)، اتجه للشرح
+      // الأعمق بدل الجملة الواحدة — بس التفصيل ده لازم يكون تفصيل حقيقي (أمثلة، سياق، أسباب،
+      // تفرعات) مش تكرار لنفس المعنى بكلام زيادة. الفرق بين "تفصيل" و"حشو": التفصيل بيضيف
+      // معلومة جديدة كل جملة، والحشو بيعيد نفس المعنى بصياغة تانية. ──
+      var _depthBlock = '\n\nقاعدة التعمّق: لو السؤال مش سؤال بسيط جدًا (زي تحية أو سؤال بإجابة رقم/كلمة واحدة)، وسّع في إجابتك: اشرح السبب مش بس النتيجة، هات مثال أو تشبيه لو بيسهّل الفهم، واذكر أي تفاصيل أو حالات خاصة مرتبطة بالسؤال لو مفيدة. لكن كل جملة إضافية لازم تحمل معلومة جديدة فعلاً — ممنوع تكرار نفس الفكرة بصياغة تانية أو حشو الرد بعبارات عامة عشان يبان طويل. لو السؤال فعلاً بسيط ومحتاج رد قصير مباشر، رد قصير ومباشر برضو من غير تطويل مصطنع.';
+
+      // ── معلومة عن بنية المنصة نفسها (لو حد سأل "بتشتغلوا إزاي لو النت وقع" أو "عندكوا وضع أوفلاين"):
+      // المنصة عندها نظام دفاع تلقائي بعدة مراحل (Groq → Gemini → OpenRouter → نموذج محلي على
+      // جهاز المستخدم عبر WebGPU) لو كل الخدمات السحابية فشلت مع بعض، والنموذج المحلي ده كمان
+      // بيتنظف تلقائيًا من ذاكرة الجهاز لو فضل من غير استخدام فترة طويلة. ──
+      var _platformResilienceBlock = '\n\nمعلومة عن المنصة (استخدمها بس لو حد سأل عن استقرار الخدمة أو وضع أوفلاين أو ليه في تأخير أحياناً): المنصة فيها نظام دفاع تلقائي بعدة مستويات لضمان إن المساعد الذكي يفضل شغال حتى لو خدمة سحابية معينة وقفت مؤقتاً — بينتقل تلقائيًا بين أكتر من مزوّد، وكخط دفاع أخير ممكن يشغّل نموذج ذكاء اصطناعي مصغّر محلياً على جهاز المستخدم نفسه (عبر تقنية WebGPU في المتصفح) من غير إنترنت خارجي، وده بيتنضف تلقائياً من الجهاز لو فضل فترة طويلة من غير استخدام عشان يوفر مساحة. الميزة دي شغالة بس على الأجهزة/المتصفحات اللي بتدعم WebGPU (متصفح Chrome حديث على أندرويد 12+ غالبًا)، ومش متاحة على آيفون/آيباد لحد دلوقتي. لو حد سأل عن التفاصيل التقنية دي، اشرحها ببساطة من غير تفاصيل برمجية داخلية.';
+
       // ── تعليمات المشرف العامة: قواعد يحطها المشرف من القائمة (📋) وتتطبّق فورًا على كل المستخدمين
       // من غير أي تعديل في الكود. بتتحط بأولوية عالية عشان توزن على أي قاعدة تانية لو فيه تعارض. ──
       var _globalAdminInstructions = (typeof window.getGlobalAiInstructions === 'function') ? window.getGlobalAiInstructions() : '';
@@ -12887,8 +12952,8 @@ function slStopAllAnimations() {
         var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
         var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _globalInstructionsBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _globalInstructionsBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _globalInstructionsBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -12980,7 +13045,7 @@ function slStopAllAnimations() {
       async function callGeminiTextFallback() {
         var pool = window.GeminiKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         // ── ينادي Gemini مرة واحدة بأي سياق محادثة مُعطى، ويرجّع النص + سبب التوقف (finishReason) ──
         async function _geminiOnce(gKey, convContents) {
           var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -13046,7 +13111,7 @@ function slStopAllAnimations() {
       async function callOpenRouterFallback() {
         var pool = window.OpenRouterKeyPool;
         if (!pool || !pool.count()) { _debugOpenRouterDetail = 'مفيش مفتاح OpenRouter متسجل أصلاً'; return null; }
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         var _orMsgs = [{ role: 'system', content: _sysFull }].concat(histMsgs).concat([{ role: 'user', content: _aiApiMsg }]);
         // ── قائمة موديلات مجانية على OpenRouter، بنجرب أول واحد ولو فشل (429/مش متاح) ننتقل للي بعده ──
         var _orModels = ['meta-llama/llama-3.3-70b-instruct:free', 'mistralai/mistral-7b-instruct:free', 'google/gemma-2-9b-it:free'];
@@ -13085,8 +13150,31 @@ function slStopAllAnimations() {
       // بيتفعّل بس لو كل المصادر السحابية (Groq/Gemini/OpenRouter) فشلوا مع بعض، لأن أول تحميل
       // للنموذج بياخد وقت (بينزل ملفات الموديل على الجهاز مرة واحدة وبعدين بيتخزن كاش في المتصفح). ──
       var _debugWebLLMDetail = '';
+      // ── فحص حقيقي لدعم WebGPU: وجود navigator.gpu لوحده مش كفاية (بعض المتصفحات بتعرّفه
+      // من غير ما يكون فيه adapter شغال فعلياً)، فبنطلب adapter حقيقي ونتأكد إنه رجع. كمان
+      // بنكشف لو التطبيق شغال جوه Android WebView مضمّن (زي تطبيق APK اتعمل بـ PWABuilder) —
+      // علامة "; wv)" في الـ User-Agent هي البصمة القياسية لده، وWebView المضمّن غالباً
+      // بيكون ناقص دعم WebGPU حتى لو نفس الجهاز بيدعمها في Chrome العادي. ──
+      async function checkWebGPUSupport() {
+        var ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+        var isEmbeddedWV = /; ?wv\)/i.test(ua);
+        if (typeof navigator === 'undefined' || !navigator.gpu) {
+          return { ok: false, isEmbeddedWebView: isEmbeddedWV, reason: isEmbeddedWV
+            ? 'التطبيق شغال جوه WebView مش بيدعم WebGPU حالياً — الميزة دي هتشتغل لو فتحت نفس رابط المنصة من متصفح Chrome عادي على نفس الجهاز'
+            : 'المتصفح الحالي مش بيدعم WebGPU (محتاج Chrome/Edge حديث)' };
+        }
+        try {
+          var _adapter = await navigator.gpu.requestAdapter();
+          if (!_adapter) return { ok: false, isEmbeddedWebView: isEmbeddedWV, reason: 'الجهاز مش عنده كارت شاشة كافي لتشغيل WebGPU' };
+          return { ok: true, isEmbeddedWebView: isEmbeddedWV, reason: '' };
+        } catch (eGpu) {
+          return { ok: false, isEmbeddedWebView: isEmbeddedWV, reason: 'فشل تجهيز WebGPU: ' + String(eGpu && eGpu.message || eGpu).slice(0, 100) };
+        }
+      }
+      var _webllmGpuCheck = null;
       async function callWebLLMFallback() {
-        if (typeof navigator === 'undefined' || !navigator.gpu) { _debugWebLLMDetail = 'الجهاز/المتصفح مش بيدعم WebGPU (لازم متصفح حديث زي Chrome/Edge على جهاز بيدعم الميزة)'; return null; }
+        _webllmGpuCheck = await checkWebGPUSupport();
+        if (!_webllmGpuCheck.ok) { _debugWebLLMDetail = _webllmGpuCheck.reason; return null; }
         try {
           if (!window.__cosmosWebLLMEngine) {
             if (typingEl && typingEl.isConnected) {
@@ -13119,7 +13207,7 @@ function slStopAllAnimations() {
           var _localMsgs = [{ role: 'system', content: persona.systemPrompt }].concat(_localHist).concat([{ role: 'user', content: String(_aiApiMsg).slice(0, 4000) }]);
           var _reply = await window.__cosmosWebLLMEngine.chat.completions.create({ messages: _localMsgs, temperature: 0.5, max_tokens: 800 });
           var _txt = _reply && _reply.choices && _reply.choices[0] && _reply.choices[0].message && _reply.choices[0].message.content;
-          if (_txt) { if (window.AIHealth) window.AIHealth.record('webllm', true); return _txt; }
+          if (_txt) { if (window.AIHealth) window.AIHealth.record('webllm', true); markWebLLMUsedNow(); _logCosmosStep('💻 كل الخدمات السحابية كانت مشغولة — رد من نموذج محلي شغال على جهازك (أوفلاين)'); return _txt; }
           _debugWebLLMDetail = 'النموذج المحلي رجّع رد فاضي';
           return null;
         } catch (eW) {
@@ -13296,7 +13384,11 @@ function slStopAllAnimations() {
         if (msgs) {
           var edBoth = document.createElement('div');
           edBoth.className = 'message received';
-          edBoth.innerHTML = '<div class="message-content" style="color:#ef4444">⏳ في زحمة على الخدمة دلوقتي، جرّب تاني بعد لحظات.</div>';
+          var _finalMsg = '⏳ في زحمة على الخدمة دلوقتي، جرّب تاني بعد لحظات.';
+          if (_webllmGpuCheck && _webllmGpuCheck.isEmbeddedWebView) {
+            _finalMsg += '<br><span style="font-size:.78rem;opacity:.75">(النموذج المحلي الاحتياطي مش شغال جوه التطبيق — لو الموضوع تكرر جرّب تفتح رابط المنصة من متصفح Chrome عادي)</span>';
+          }
+          edBoth.innerHTML = '<div class="message-content" style="color:#ef4444">' + _finalMsg + '</div>';
           msgs.appendChild(edBoth); msgs.scrollTop = msgs.scrollHeight;
         }
         return;
@@ -13324,6 +13416,7 @@ function slStopAllAnimations() {
           if (_wrapV) _wrapV.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيراجع الكود قبل ما يديهولك');
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
+        _logCosmosStep('🔎 راجع الكود قبل التسليم');
         try {
           var _verified = typeof window.verifyCosmosCodeAnswer === 'function'
             ? await window.verifyCosmosCodeAnswer(apiKey, userMsg, answer)
@@ -13346,6 +13439,7 @@ function slStopAllAnimations() {
           if (_wrapL) _wrapL.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيتأكد إن المنطق الوظيفي كامل');
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
+        _logCosmosStep('🧩 تأكد إن المنطق الوظيفي (JS) مكتمل ومفيهوش نواقص');
         try {
           var _deepened = typeof window.deepenCosmosJsLogic === 'function'
             ? await window.deepenCosmosJsLogic(apiKey, userMsg, answer, _architectPlan.core_logic)
@@ -13374,6 +13468,7 @@ function slStopAllAnimations() {
               if (_wrapT) _wrapT.innerHTML = window.buildCosmosThinkingHTML(persona.name + (_fixAttempts === 0 ? ' بيجرب يشغّل الكود فعليًا' : ' بيصلح خطأ لقاه (محاولة ' + (_fixAttempts + 1) + ')'));
               if (msgs) msgs.scrollTop = msgs.scrollHeight;
             }
+            _logCosmosStep(_fixAttempts === 0 ? '▶️ شغّل الكود فعليًا للتأكد إنه شغال قبل التسليم' : '🛠️ لقى خطأ وقت التشغيل الفعلي وصلّحه (محاولة ' + (_fixAttempts + 1) + ')');
             // ── فحص تركيبي فوري للـ JS جوه الرد الأول (قبل حتى ننتظر iframe) — بيمسك أخطاء
             // الـ syntax الواضحة فورًا من غير انتظار، ويوفّر وقت لو الخطأ واضح من الأول ──
             var _syntaxErrs = [];
@@ -13462,6 +13557,21 @@ function slStopAllAnimations() {
           // الكود، عشان لو المستخدم عجبه ويقيّمه 👍 نقدر نحفظ الخطة اللي أدت لكود ناجح، مش بس
           // وصف عام للطلب — كده المرات الجايه بنبني على أمثلة حقيقية نجحت فعلاً ──
           window.__cosmosLastArchitectPlan = (typeof _architectPlan !== 'undefined' && _architectPlan) ? _architectPlan : null;
+          // ── سجل خطوات التنفيذ (المرحلة النهائية): صندوق قابل للفتح فيه ملخّص مرتّب للخطوات
+          // الفعلية اللي اتنفذت لنفس الرد ده (بحث، تحليل صورة، خطة هيكلية، تشغيل فعلي، إصلاح...)
+          // — بيظهر بس لو فيه أكتر من خطوة حقيقية اتسجّلت، عشان ميبانش في الردود العادية البسيطة. ──
+          var _stepsHtml = '';
+          if (!_silentEdit && _cosmosStepsLog && _cosmosStepsLog.length >= 2) {
+            var _stepsListHtml = _cosmosStepsLog.map(function(s, si){
+              return '<div class="cosmos-step-item"><span class="cosmos-step-num">' + (si+1) + '</span><span>' + escapeHtml(s) + '</span></div>';
+            }).join('');
+            _stepsHtml = '<div class="cosmos-deep-think cosmos-steps-log">'
+              + '<button type="button" class="cosmos-deep-think-toggle" onclick="this.parentElement.classList.toggle(\'open\')">'
+              + '<i class="fas fa-list-check"></i><span>خطوات التنفيذ (' + _cosmosStepsLog.length + ')</span><i class="fas fa-chevron-down cosmos-deep-think-chevron"></i>'
+              + '</button>'
+              + '<div class="cosmos-deep-think-body"><div class="cosmos-deep-think-inner">' + _stepsListHtml + '</div></div>'
+              + '</div>';
+          }
           // ── غرفة التفكير العميق (المرحلة النهائية): صندوق قابل للفتح فيه تفكير الموديل الحقيقي كامل ──
           var _deepThinkHtml = '';
           if (!_silentEdit && answerReasoning && String(answerReasoning).trim()) {
@@ -13482,7 +13592,7 @@ function slStopAllAnimations() {
           }
           if (_bodyHtml === null) {
             // مفيش كود في الرد (سؤال عادي مش تعديل ملف) أو مش وضع صامت — نعرض الرد كامل زي العادة
-            _bodyHtml = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div>'+_deepThinkHtml+'<div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+            _bodyHtml = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div>'+_stepsHtml+_deepThinkHtml+'<div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           }
           aiDiv.innerHTML = _bodyHtml;
           if (window.__cosmosPendingSearchImages && window.__cosmosPendingSearchImages.length) {

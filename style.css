@@ -8442,6 +8442,32 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   font-size: .8rem;
   line-height: 1.7;
 }
+/* ── صندوق "خطوات التنفيذ" — نفس هيكل صندوق التفكير العميق بس بلون مميز (سماوي بدل بنفسجي)
+   عشان يتفرق بصريًا: ده ملخص خطوات فعلية اتنفذت، مش تفكير داخلي حر ──*/
+.cosmos-steps-log { border-color: rgba(6,182,212,.3); background: rgba(6,182,212,.05); }
+.cosmos-steps-log .cosmos-deep-think-toggle { color: #67e8f9; }
+.cosmos-steps-log .cosmos-deep-think-toggle i.fa-list-check { color: #22d3ee; }
+.cosmos-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  padding: .3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.cosmos-step-item:last-child { border-bottom: none; }
+.cosmos-step-num {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(6,182,212,.18);
+  color: #67e8f9;
+  font-size: .68rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* ============================================================
    ✨ COSMOS PRO — تحسينات احترافية: تلوين الأكواد + بطاقات المرفقات
