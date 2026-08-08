@@ -3095,6 +3095,66 @@ async function updateAdminUI() {
     return IMAGE_GEN_TRIGGERS.some(trigger => _isWholeWordMatch(t, trigger));
   }
 
+  // ── تقسّم رسالة طويلة لـ"جمل" (clauses) بناءً على علامات ترقيم أو كلمات ربط زي "ثم"/"بعدين"،
+  // ومع كل جزء بنسجّل موقع البداية والنهاية بتاعه جوه النص الأصلي (عشان نعرف نلاقي مين بيحتوي على أنهي index) ──
+  function _splitIntoClauses(text) {
+    const parts = [];
+    const regex = /[،,.؛!؟\n]+|(?:^|\s)(?:ثم|بعدين|بعد كده|وبعدين|وبعد كده)(?=\s|$)/g;
+    let lastIndex = 0, m;
+    while ((m = regex.exec(text)) !== null) {
+      parts.push({ text: text.slice(lastIndex, m.index), start: lastIndex, end: m.index });
+      lastIndex = regex.lastIndex;
+    }
+    parts.push({ text: text.slice(lastIndex), start: lastIndex, end: text.length });
+    return parts.filter(p => p.text.trim().length > 0 || parts.length === 1);
+  }
+
+  // ── بتلاقي أقرب/أول كلمة تشغيل صورة اتلاقت فعلاً كـ"كلمة كاملة" في النص، وترجع موقعها وطولها.
+  // لو أكتر من trigger بيبدأ من نفس الـ index (زي "ارسم" جوه "ارسم لي")، بناخد الأطول عشان يبقى أدق ويشيل الجملة كاملة ──
+  function _findImageTrigger(text) {
+    const tl = text.toLowerCase();
+    let bestIdx = -1, bestTrigger = null;
+    for (const trigger of IMAGE_GEN_TRIGGERS) {
+      if (!_isWholeWordMatch(tl, trigger)) continue;
+      const idx = tl.indexOf(trigger);
+      if (idx === -1) continue;
+      if (bestIdx === -1 || idx < bestIdx || (idx === bestIdx && trigger.length > bestTrigger.length)) {
+        bestIdx = idx; bestTrigger = trigger;
+      }
+    }
+    return bestTrigger === null ? null : { idx: bestIdx, trigger: bestTrigger };
+  }
+
+  // ── لو الرسالة فيها طلب صورة، هل هي "طلب صورة بس" ولا "رسالة مركّبة" فيها كمان طلب تاني (تحليل/بحث/كود)
+  // يستاهل رد نصي منفصل؟ بنحدد ده بمقارنة طول باقي الجمل غير جملة الصورة ──
+  function isCompoundWithImage(text) {
+    if (!isImageRequest(text)) return false;
+    const t = text.trim();
+    const hit = _findImageTrigger(t.toLowerCase());
+    if (!hit) return false;
+    const clauses = _splitIntoClauses(t);
+    const imgClause = clauses.find(c => hit.idx >= c.start && hit.idx < c.end);
+    const otherText = clauses.filter(c => c !== imgClause).map(c => c.text).join(' ').trim();
+    // حد أدنى 12 حرف (بعد شيل المسافات) عشان مانعتبرش أي فاصلة زيادة "رسالة مركّبة"
+    return otherText.replace(/\s+/g, '').length >= 12;
+  }
+  window.isCompoundWithImage = isCompoundWithImage;
+
+  // ── بتشيل جملة طلب الصورة بس من الرسالة، وترجع الباقي (يستخدم لما الرسالة مركّبة عشان نكمل بيه مسار النص/البحث) ──
+  function removeImageClauseFromText(text) {
+    const t = text.trim();
+    const hit = _findImageTrigger(t.toLowerCase());
+    if (!hit) return t;
+    const clauses = _splitIntoClauses(t);
+    const remaining = clauses
+      .filter(c => !(hit.idx >= c.start && hit.idx < c.end))
+      .map(c => c.text.trim())
+      .filter(Boolean)
+      .join('. ');
+    return remaining || t;
+  }
+  window.removeImageClauseFromText = removeImageClauseFromText;
+
   // ── هل المستخدم طلب صراحة إن الكود يتكتب بس من غير ما يتعمله ملف/تنزيل؟ ──
   function wantsNoFileOutput(text) {
     if (!text) return false;
@@ -3112,23 +3172,22 @@ async function updateAdminUI() {
 
   function extractImagePrompt(text) {
     const t = text.trim();
-    const tl = t.toLowerCase();
-    // بنلاقي أقرب كلمة تشغيل (trigger) ظهرت فعلاً كـ"كلمة كاملة" في النص (مش أول واحدة في الـ array)
-    let bestIdx = -1, bestTrigger = null;
-    for (const trigger of IMAGE_GEN_TRIGGERS) {
-      if (!_isWholeWordMatch(tl, trigger)) continue;
-      const idx = tl.indexOf(trigger);
-      if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) { bestIdx = idx; bestTrigger = trigger; }
-    }
-    if (bestTrigger !== null) {
-      // بنجمع الجزء اللي قبل كلمة التشغيل والجزء اللي بعدها — عشان التفاصيل (اللون، الموضوع، الأسلوب)
-      // ممكن تكون اتقالت قبل الفعل نفسه في الجملة العربية (مثلاً "صورة واقعية لكوكب المريخ اعمللي")
-      const before = t.slice(0, bestIdx).trim();
-      const after  = t.slice(bestIdx + bestTrigger.length).trim().replace(/^[:\-,\s]+/, '');
+    const hit = _findImageTrigger(t.toLowerCase());
+    if (!hit) return t;
+    // ── مهم: بناخد بس "الجملة" (clause) اللي فيها كلمة التشغيل، مش الرسالة كلها ──
+    // ده بيمنع إن رسالة مركّبة (تحليل + بحث + "...ارسم لي صورة تخيلية لمدارها") تتبعت كاملة كـ prompt لتوليد الصورة.
+    const clauses = _splitIntoClauses(t);
+    const clause = clauses.find(c => hit.idx >= c.start && hit.idx < c.end) || { text: t, start: 0, end: t.length };
+    const clauseText = clause.text;
+    const relIdx = clauseText.toLowerCase().indexOf(hit.trigger);
+    if (relIdx !== -1) {
+      // بنجمع الجزء اللي قبل كلمة التشغيل والجزء اللي بعدها *جوه نفس الجملة بس* — عشان التفاصيل (اللون، الموضوع، الأسلوب)
+      const before = clauseText.slice(0, relIdx).trim();
+      const after  = clauseText.slice(relIdx + hit.trigger.length).trim().replace(/^[:\-,\s]+/, '');
       const combined = [before, after].filter(Boolean).join(' ').trim();
       if (combined) return combined;
     }
-    return t;
+    return clauseText.trim() || t;
   }
 
   async function sendAIMessage() {
@@ -12404,6 +12463,9 @@ function slStopAllAnimations() {
       // ── Image generation check ──
       if (typeof isImageRequest === 'function' && isImageRequest(userMsg)) {
         var imgPrompt = typeof extractImagePrompt === 'function' ? extractImagePrompt(userMsg) : userMsg;
+        // ── هل الرسالة "مركّبة" (فيها كمان طلب تحليل/بحث/كود غير طلب الصورة)؟
+        // لو أيوه، منقفلش على الصورة بس — نولّدها في الخلفية ونكمل تحت بمسار النص/البحث العادي بالباقي ──
+        var _isCompoundImgMsg = typeof isCompoundWithImage === 'function' && isCompoundWithImage(userMsg);
         // نعرض فقاعة رسالة المستخدم زي أي رسالة عادية، عشان المحادثة تفضل متسلسلة ومفهومة بدل ما تقفز على طول لرسالة "بيولّد"
         var _imgReqReplyPayload = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
         if (msgs) {
@@ -12416,8 +12478,17 @@ function slStopAllAnimations() {
           msgs.appendChild(_imgReqDiv); msgs.scrollTop = msgs.scrollHeight;
         }
         if (_imgReqReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
-        await generateAndDisplayImage(imgPrompt);
-        return;
+
+        if (!_isCompoundImgMsg) {
+          // طلب صورة بحت — زي ما كان بالظبط
+          await generateAndDisplayImage(imgPrompt);
+          return;
+        }
+
+        // ── رسالة مركّبة: نبدأ توليد الصورة (async، من غير await) ومنكملش نستنى، عشان باقي الرسالة (نص/بحث) يشتغل بالتوازي معاها ──
+        generateAndDisplayImage(imgPrompt).catch(function(eImgBg){ console.error('Compound-message background image generation failed:', eImgBg); });
+        userMsg = (typeof removeImageClauseFromText === 'function' ? removeImageClauseFromText(userMsg) : userMsg) || userMsg;
+        // ملحوظة: مفيش return هنا عن قصد — الكود بيكمل تحت ليشتغل على باقي الرسالة (البحث الحي + التحليل النصي)
       }
 
       // ── سياق إضافي هيتضاف بس لطلب الذكاء الاصطناعي، ومش هيظهر في فقاعة رسالتك ──
