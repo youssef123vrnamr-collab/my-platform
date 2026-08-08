@@ -324,8 +324,10 @@ async function isAdminUser(userId) {
           _currentGlobalAiInstructions = (d.globalAiInstructions && String(d.globalAiInstructions).trim()) || "";
           const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
           const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
+          const openrouterArr = Array.isArray(d.openrouterApiKeys) ? d.openrouterApiKeys : [];
           if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
           if (window.GeminiKeyPool) window.GeminiKeyPool.setKeys(geminiArr);
+          if (window.OpenRouterKeyPool) window.OpenRouterKeyPool.setKeys(openrouterArr);
           const disp = document.getElementById("currentAiKeyDisplay");
           if (disp) disp.textContent = _maskKey(_currentAiKey);
         },
@@ -343,8 +345,10 @@ async function isAdminUser(userId) {
       _currentGlobalAiInstructions = (d.globalAiInstructions && String(d.globalAiInstructions).trim()) || "";
       const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
       const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
+      const openrouterArr = Array.isArray(d.openrouterApiKeys) ? d.openrouterApiKeys : [];
       if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
       if (window.GeminiKeyPool) window.GeminiKeyPool.setKeys(geminiArr);
+      if (window.OpenRouterKeyPool) window.OpenRouterKeyPool.setKeys(openrouterArr);
     } catch(e){ console.warn("loadAiKeyOnce failed", e); }
   }
   function openAiKeyModal(){
@@ -11768,6 +11772,9 @@ function slStopAllAnimations() {
   };
   window.GroqKeyPool = window.GroqKeyPool || window.ApiKeyPool.create();
   window.GeminiKeyPool = window.GeminiKeyPool || window.ApiKeyPool.create();
+  // ── OpenRouter: بوابة موديلات مجانية (Llama/Mistral/Gemma...) — خط دفاع ثالث لو Groq وGemini
+  // الاتنين فشلوا مع بعض في نفس اللحظة (نادر جداً)، بيوزّع بين مفاتيحه بنفس منطق الـ Round-Robin. ──
+  window.OpenRouterKeyPool = window.OpenRouterKeyPool || window.ApiKeyPool.create();
 
   window.openMultiKeyModal = function () {
     if (typeof isAdmin !== 'undefined' && !isAdmin) { if (typeof showToast === 'function') showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
@@ -11778,18 +11785,21 @@ function slStopAllAnimations() {
     modal.style.cssText = 'position:fixed;inset:0;z-index:10091;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(8px)';
     var groqCount = window.GroqKeyPool ? window.GroqKeyPool.count() : 0;
     var geminiCount = window.GeminiKeyPool ? window.GeminiKeyPool.count() : 0;
+    var openrouterCount = window.OpenRouterKeyPool ? window.OpenRouterKeyPool.count() : 0;
     modal.innerHTML =
       '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(6,182,212,.4);border-radius:22px;width:95%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;padding:1.3rem;box-shadow:0 30px 70px rgba(0,0,0,.7)">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">'
       + '<h2 style="color:#67e8f9;font-size:1.05rem;font-weight:900;margin:0">🔑 توزيع مفاتيح API (Load Balancing)</h2>'
       + '<button id="mkCloseBtn" style="background:rgba(255,255,255,.08);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">×</button>'
       + '</div>'
-      + '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.9rem">حط أكتر من مفتاح، مفتاح في كل سطر. النظام هيوزّع الطلبات بينهم تلقائياً، ولو مفتاح وصل لحد الكوتا هيتجنّبه مؤقتاً ويستخدم اللي بعده.</p>'
+      + '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.9rem">حط أكتر من مفتاح، مفتاح في كل سطر. النظام هيوزّع الطلبات بينهم تلقائياً، ولو مفتاح وصل لحد الكوتا هيتجنّبه مؤقتاً ويستخدم اللي بعده. لو Groq وGemini الاتنين فشلوا مع بعض، مفاتيح OpenRouter بتاخد المهمة كخط دفاع ثالث (مجاني تماماً — سجّل على openrouter.ai واعمل مفتاح API).</p>'
       + '<div style="overflow-y:auto;flex:1">'
       + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح Groq (حالياً: ' + groqCount + ')</label>'
       + '<textarea id="mkGroqTextarea" placeholder="gsk_...\ngsk_...\ngsk_..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:1rem;resize:vertical"></textarea>'
       + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح Gemini (حالياً: ' + geminiCount + ')</label>'
-      + '<textarea id="mkGeminiTextarea" placeholder="AIza...\nAIza..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:.5rem;resize:vertical"></textarea>'
+      + '<textarea id="mkGeminiTextarea" placeholder="AIza...\nAIza..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:1rem;resize:vertical"></textarea>'
+      + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح OpenRouter — خط دفاع ثالث (حالياً: ' + openrouterCount + ')</label>'
+      + '<textarea id="mkOpenRouterTextarea" placeholder="sk-or-v1-...\nsk-or-v1-..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:.5rem;resize:vertical"></textarea>'
       + '</div>'
       + '<button id="mkSaveBtn" style="margin-top:.8rem;background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:14px;padding:.8rem;font-family:Cairo,inherit;font-weight:800;font-size:.9rem;cursor:pointer">💾 حفظ وتوزيع المفاتيح</button>'
       + '</div>';
@@ -11799,11 +11809,13 @@ function slStopAllAnimations() {
     document.getElementById('mkSaveBtn').addEventListener('click', async function () {
       var groqLines = (document.getElementById('mkGroqTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
       var geminiLines = (document.getElementById('mkGeminiTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
-      if (!groqLines.length && !geminiLines.length) { if (typeof showToast === 'function') showToast('⚠️ حط مفتاح واحد على الأقل'); return; }
+      var openrouterLines = (document.getElementById('mkOpenRouterTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!groqLines.length && !geminiLines.length && !openrouterLines.length) { if (typeof showToast === 'function') showToast('⚠️ حط مفتاح واحد على الأقل'); return; }
       try {
         var payload = { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
         if (groqLines.length) { payload.groqApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, groqLines); }
         if (geminiLines.length) { payload.geminiApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, geminiLines); }
+        if (openrouterLines.length) { payload.openrouterApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, openrouterLines); }
         await db.collection('system').doc('ai_settings').set(payload, { merge: true });
         if (typeof loadAiKeyOnce === 'function') await loadAiKeyOnce();
         if (typeof showToast === 'function') showToast('✅ اتضافوا المفاتيح ودلوقتي النظام بيوزّع بينهم');
@@ -13027,6 +13039,140 @@ function slStopAllAnimations() {
         return null;
       }
 
+      // ── خط دفاع ثالث: لو Groq وGemini الاتنين فشلوا مع بعض (نادر)، OpenRouter بيتولى الرد —
+      // بوابة موحّدة بتوصلك بنماذج مجانية تماماً (Llama/Mistral/Gemma...) بمفتاح واحد،
+      // بنجرب أكتر من موديل مجاني ورا بعض لو موديل معين وصل لحد الكوتا. ──
+      var _debugOpenRouterDetail = '';
+      async function callOpenRouterFallback() {
+        var pool = window.OpenRouterKeyPool;
+        if (!pool || !pool.count()) { _debugOpenRouterDetail = 'مفيش مفتاح OpenRouter متسجل أصلاً'; return null; }
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _orMsgs = [{ role: 'system', content: _sysFull }].concat(histMsgs).concat([{ role: 'user', content: _aiApiMsg }]);
+        // ── قائمة موديلات مجانية على OpenRouter، بنجرب أول واحد ولو فشل (429/مش متاح) ننتقل للي بعده ──
+        var _orModels = ['meta-llama/llama-3.3-70b-instruct:free', 'mistralai/mistral-7b-instruct:free', 'google/gemma-2-9b-it:free'];
+        var maxAttempts = Math.min(pool.count(), 3);
+        for (var i = 0; i < maxAttempts; i++) {
+          var oKey = pool.next();
+          if (!oKey) break;
+          var _keyFailed429 = false;
+          for (var mi = 0; mi < _orModels.length; mi++) {
+            try {
+              var r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + oKey, 'Content-Type': 'application/json', 'HTTP-Referer': (typeof location !== 'undefined' ? location.origin : ''), 'X-Title': 'Falak Cosmos' },
+                body: JSON.stringify({ model: _orModels[mi], messages: _orMsgs, max_tokens: _fallbackMaxTok, temperature: 0.4 }),
+                signal: window.__cosmosAbortController ? window.__cosmosAbortController.signal : undefined
+              });
+              var d = await r.json();
+              var txt = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+              if (pool) pool.report(oKey, r.status !== 429);
+              if (txt) { if (window.AIHealth) window.AIHealth.record('openrouter', true); return txt; }
+              if (r.status === 429) { _keyFailed429 = true; continue; } // جرب موديل مجاني تاني بنفس المفتاح
+              _debugOpenRouterDetail = 'HTTP ' + r.status + ' — ' + (d && d.error ? JSON.stringify(d.error).slice(0,150) : 'رد غير متوقع');
+            } catch (eOr) {
+              if (eOr && eOr.name === 'AbortError') throw eOr;
+              _debugOpenRouterDetail = String(eOr && eOr.message || eOr).slice(0,150);
+            }
+          }
+          if (!_keyFailed429) break; // فشل مش بسبب كوتا (429) — مفيش فايدة نبدّل مفتاح
+        }
+        if (window.AIHealth) window.AIHealth.record('openrouter', false);
+        return null;
+      }
+
+      // ── خط دفاع رابع وأخير: تشغيل نموذج ذكاء اصطناعي خفيف محلياً على جهاز المستخدم نفسه
+      // (WebLLM عبر WebGPU) — أوفلاين بالكامل، مجاني 100%، ومن غير أي مفتاح API أو سيرفر خارجي.
+      // بيتفعّل بس لو كل المصادر السحابية (Groq/Gemini/OpenRouter) فشلوا مع بعض، لأن أول تحميل
+      // للنموذج بياخد وقت (بينزل ملفات الموديل على الجهاز مرة واحدة وبعدين بيتخزن كاش في المتصفح). ──
+      var _debugWebLLMDetail = '';
+      async function callWebLLMFallback() {
+        if (typeof navigator === 'undefined' || !navigator.gpu) { _debugWebLLMDetail = 'الجهاز/المتصفح مش بيدعم WebGPU (لازم متصفح حديث زي Chrome/Edge على جهاز بيدعم الميزة)'; return null; }
+        try {
+          if (!window.__cosmosWebLLMEngine) {
+            if (typingEl && typingEl.isConnected) {
+              if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+              var _wrapW0 = typingEl.querySelector('.message-content');
+              if (_wrapW0) _wrapW0.innerHTML = window.buildCosmosThinkingHTML('كل المصادر السحابية مشغولة دلوقتي — بيجهّز نموذج مصغّر يشتغل محلياً على جهازك (أول مرة بس، ممكن ياخد شوية وقت)');
+              if (msgs) msgs.scrollTop = msgs.scrollHeight;
+            }
+            var _webllmMod = await import('https://esm.run/@mlc-ai/web-llm');
+            window.__cosmosWebLLMEngine = await _webllmMod.CreateMLCEngine('Llama-3.2-1B-Instruct-q4f16_1-MLC', {
+              initProgressCallback: function (p) {
+                if (typingEl && typingEl.isConnected) {
+                  var _wrapW = typingEl.querySelector('.message-content');
+                  var _pct = Math.round(((p && p.progress) || 0) * 100);
+                  if (_wrapW) _wrapW.innerHTML = window.buildCosmosThinkingHTML('بيحمّل النموذج المحلي على جهازك (' + _pct + '%)');
+                  if (msgs) msgs.scrollTop = msgs.scrollHeight;
+                }
+              }
+            });
+          }
+          if (typingEl && typingEl.isConnected) {
+            if (typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+            var _wrapW2 = typingEl.querySelector('.message-content');
+            if (_wrapW2) _wrapW2.innerHTML = window.buildCosmosThinkingHTML('بيرد عليك من النموذج المحلي (أوفلاين) على جهازك');
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          }
+          // ── النموذج المحلي خفيف جداً (1B) وذاكرته محدودة — بنديله سياق مختصر بس (شخصية كوزموس +
+          // آخر رسائل قليلة) بدل كل الـ blocks الثقيلة اللي بتتحط للنماذج السحابية الكبيرة ──
+          var _localHist = histMsgs.slice(-6);
+          var _localMsgs = [{ role: 'system', content: persona.systemPrompt }].concat(_localHist).concat([{ role: 'user', content: String(_aiApiMsg).slice(0, 4000) }]);
+          var _reply = await window.__cosmosWebLLMEngine.chat.completions.create({ messages: _localMsgs, temperature: 0.5, max_tokens: 800 });
+          var _txt = _reply && _reply.choices && _reply.choices[0] && _reply.choices[0].message && _reply.choices[0].message.content;
+          if (_txt) { if (window.AIHealth) window.AIHealth.record('webllm', true); return _txt; }
+          _debugWebLLMDetail = 'النموذج المحلي رجّع رد فاضي';
+          return null;
+        } catch (eW) {
+          _debugWebLLMDetail = String(eW && eW.message || eW).slice(0,150);
+          if (window.AIHealth) window.AIHealth.record('webllm', false);
+          console.warn('AI Router: WebLLM المحلي فشل هو كمان:', eW);
+          return null;
+        }
+      }
+
+      // ══════════════════════════════════════════════════════════════════
+      // 🗄️ تخزين مؤقت ذكي للإجابات (Smart Caching) — قبل ما نكلّم أي API خارجي أصلاً،
+      // بنفحص هل نفس السؤال بالظبط اتسأل قبل كده وليه إجابة محفوظة محلياً (localStorage)
+      // من آخر 30 يوم. لو لقينا، بنعرضها فوراً من غير ما نستهلك أي طلب API — بس ده بيتطبّق
+      // بس على أسئلة عامة بسيطة (مش طلبات بناء كود، مش لو محتاجين بحث حي في الإنترنت أو
+      // سياق فلكي حي بيتغيّر، ومش لو فيه صور/ملفات مرفقة أو رد على رسالة سابقة) عشان الإجابة
+      // المحفوظة تفضل دقيقة ومناسبة للسياق. ──
+      // ══════════════════════════════════════════════════════════════════
+      var _cacheEligible = !_looksLikeBuildRequest && !_needsSearch && !hasTrigger(userMsg)
+        && !(window._aiSelectedImages && window._aiSelectedImages.length)
+        && !(window._aiSelectedFiles && window._aiSelectedFiles.length)
+        && !_aiReplyPayload;
+      var _cacheKey = null;
+      if (_cacheEligible) {
+        try {
+          var _normQ = userMsg.trim().replace(/\s+/g, ' ').toLowerCase();
+          var _hash = 0;
+          for (var _ci = 0; _ci < _normQ.length; _ci++) { _hash = ((_hash << 5) - _hash + _normQ.charCodeAt(_ci)) | 0; }
+          _cacheKey = 'cosmos_cache_' + (persona.name || 'ai') + '_' + _hash;
+          var _cachedRaw = localStorage.getItem(_cacheKey);
+          if (_cachedRaw) {
+            var _cachedObj = JSON.parse(_cachedRaw);
+            if (_cachedObj && _cachedObj.a && (Date.now() - _cachedObj.t) < (30 * 24 * 60 * 60 * 1000)) {
+              if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
+              if (typingEl) typingEl.remove();
+              if (msgs) {
+                var edCache = document.createElement('div');
+                edCache.className = 'message received';
+                var _cacheUid = 'ai' + Date.now() + Math.floor(Math.random() * 1000);
+                edCache.id = 'msg-' + _cacheUid; edCache.dataset.msgId = _cacheUid;
+                edCache.innerHTML = '<div class="message-sender" style="color:#06b6d4">' + persona.emoji + ' ' + persona.name + '</div><div class="message-content">' + (typeof window.formatAIAnswer === 'function' ? window.formatAIAnswer(_cachedObj.a) : _cachedObj.a) + '</div><div class="message-time">' + new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) + '</div>';
+                msgs.appendChild(edCache); msgs.scrollTop = msgs.scrollHeight;
+                if (typeof window.addAIMuteButton === 'function') { var _tC = edCache.querySelector('.message-content'); if (_tC) window.addAIMuteButton(edCache, _tC.textContent); }
+              }
+              if (typeof window.aiChatHistory !== 'undefined' && Array.isArray(window.aiChatHistory)) {
+                window.aiChatHistory.push({ role: 'user', content: userMsg }, { role: 'assistant', content: _cachedObj.a });
+              }
+              return;
+            }
+          }
+        } catch (eCacheCheck) { console.warn('cache check failed', eCacheCheck); }
+      }
+
       var answer = null;
       var answerReasoning = '';
       try {
@@ -13130,9 +13276,21 @@ function slStopAllAnimations() {
         if (!answer && _debugGeminiDetail && window.logPlatformIssue) window.logPlatformIssue('Gemini (خط الدفاع الثاني)', _debugGeminiDetail);
       }
 
+      // ── خط دفاع ثالث: Groq وGemini فشلوا مع بعض → OpenRouter (لو فيه مفاتيح مسجّلة) ──
       if (!answer) {
-        // ── الاتنين فشلوا فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
-        if (window.logPlatformIssue) window.logPlatformIssue('Router (فشل شامل نص)', 'Groq: ' + (_debugGroqDetail||'—') + ' | Gemini: ' + (_debugGeminiDetail||'—'));
+        answer = await callOpenRouterFallback();
+        if (!answer && _debugOpenRouterDetail && window.logPlatformIssue) window.logPlatformIssue('OpenRouter (خط الدفاع الثالث)', _debugOpenRouterDetail);
+      }
+
+      // ── خط دفاع رابع وأخير: كل المصادر السحابية فشلت → نموذج محلي أوفلاين على جهاز المستخدم (WebLLM) ──
+      if (!answer) {
+        answer = await callWebLLMFallback();
+        if (!answer && _debugWebLLMDetail && window.logPlatformIssue) window.logPlatformIssue('WebLLM (تشغيل محلي)', _debugWebLLMDetail);
+      }
+
+      if (!answer) {
+        // ── كل المصادر فشلت فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
+        if (window.logPlatformIssue) window.logPlatformIssue('Router (فشل شامل نص)', 'Groq: ' + (_debugGroqDetail||'—') + ' | Gemini: ' + (_debugGeminiDetail||'—') + ' | OpenRouter: ' + (_debugOpenRouterDetail||'—') + ' | WebLLM: ' + (_debugWebLLMDetail||'—'));
         if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
         if (typingEl) typingEl.remove();
         if (msgs) {
@@ -13142,6 +13300,12 @@ function slStopAllAnimations() {
           msgs.appendChild(edBoth); msgs.scrollTop = msgs.scrollHeight;
         }
         return;
+      }
+
+      // ── الإجابة جاهزة ونجحت من أي مصدر — لو كانت مؤهلة للكاش، خزّنها محلياً عشان لو نفس
+      // السؤال اتسأل تاني نرجّعه فوراً من غير أي استهلاك API جديد ──
+      if (_cacheKey && answer) {
+        try { localStorage.setItem(_cacheKey, JSON.stringify({ a: answer, t: Date.now() })); } catch (eCacheSave) { /* مساحة التخزين ممكن تكون فُلّت، متجاهلش الرد نفسه */ }
       }
 
       // ══════════════════════════════════════════════════════════════════
