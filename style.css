@@ -8468,6 +8468,18 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   align-items: center;
   justify-content: center;
 }
+/* ── أيقونة SVG لكل خطوة (بدل الإيموجي القديم) — بتتلون تلقائي مع الثيم السماوي بتاع الصندوق ── */
+.cosmos-step-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22d3ee;
+}
+.cosmos-step-icon svg { width: 14px; height: 14px; display: block; }
+.cosmos-step-text { flex: 1; }
 
 /* ============================================================
    ✨ COSMOS PRO — تحسينات احترافية: تلوين الأكواد + بطاقات المرفقات

@@ -12316,7 +12316,7 @@ function slStopAllAnimations() {
             visionData.candidates[0].content.parts[0].text) || null;
           if (!visionAnswer && visionData.error) throw new Error(JSON.stringify(visionData.error));
           if (window.AIHealth) window.AIHealth.record('gemini', !!visionAnswer);
-          _logCosmosStep('🖼️ حلّل الصورة/الملف المرفق');
+          _logCosmosStep('image', 'حلّل الصورة/الملف المرفق');
           if (!visionAnswer) visionAnswer = 'عذراً، مقدرتش أحلل المرفقات.';
 
           // ── تعاون بين النماذج: Gemini بيحلل الصورة (شغلته)، وGroq بياخد التحليل الخام ويصيغه كتقرير احترافي منظم (شغلته) ──
@@ -12468,7 +12468,7 @@ function slStopAllAnimations() {
         try {
           var _searchRes = await window.performWebSearch(userMsg, _mentionedDomains);
           if (window.AIHealth) window.AIHealth.record('tavily', !!(_searchRes && _searchRes.results && _searchRes.results.length));
-          if (_searchRes && _searchRes.results && _searchRes.results.length) { _logCosmosStep('🔍 بحث في الإنترنت عن معلومات محدّثة (' + _searchRes.results.length + ' نتيجة)'); }
+          if (_searchRes && _searchRes.results && _searchRes.results.length) { _logCosmosStep('search', 'بحث في الإنترنت عن معلومات محدّثة ولقى ' + _searchRes.results.length + ' نتيجة'); }
           if (_searchRes && _searchRes.results && _searchRes.results.length) {
             var _foundDomains = [];
             var _wctx = '\n\n--- نتائج بحث حقيقية من الإنترنت الآن ---\n';
@@ -12644,7 +12644,26 @@ function slStopAllAnimations() {
       // قابل للفتح، زي ما بيحصل في أدوات الذكاء الاصطناعي اللي بتعرض خطواتها خطوة بخطوة. ──
       // ══════════════════════════════════════════════════════════════════
       var _cosmosStepsLog = [];
-      function _logCosmosStep(label) { try { _cosmosStepsLog.push(String(label)); } catch (e) {} }
+      // ── أيقونات SVG بدل الإيموجي — كل خطوة بتاخد نوعها (type) فيتحدد شكل الأيقونة تلقائي،
+      // النص نفسه بقى حر تمامًا وبيتبني من محتوى حقيقي (خطة الموديل، نتائج البحث، إلخ) مش تكست ثابت ──
+      var _cosmosStepIcons = {
+        plan:   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+        logic:  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
+        run:    '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+        fix:    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
+        search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+        image:  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>',
+        verify: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>',
+        default:'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>'
+      };
+      // ── بيسجّل خطوة حقيقية: type بيحدد الأيقونة، text هو الوصف الفعلي (بيختلف من طلب للتاني حسب
+      // اللي حصل فعلاً — عدد ونوع الخطوات مش ثابت، بيبقى انعكاس لتفكير الموديل نفسه في الطلب ده بالذات) ──
+      function _logCosmosStep(type, text) {
+        try {
+          if (arguments.length < 2) { text = type; type = 'default'; } // توافق مع أي نداء قديم بمعامل واحد
+          _cosmosStepsLog.push({ type: String(type || 'default'), text: String(text) });
+        } catch (e) {}
+      }
 
       // ══════════════════════════════════════════════════════════════════
       // 🤔 قبل ما نبدأ نبني أي كود/لعبة/تطبيق: نتأكد إن الطلب واضح ومفهوم صح، بدل ما نخمّن ونبني
@@ -12669,7 +12688,15 @@ function slStopAllAnimations() {
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
         try { _architectPlan = await window.planCosmosFileArchitecture(apiKey, userMsg); } catch (eArch) { _architectPlan = null; }
-        _logCosmosStep('🏗️ خطّط هيكل المشروع (الأقسام والدوال) قبل ما يكتب أي كود');
+        // ── هنا الفرق الأساسي: مش بنسجّل سطر عام ثابت زي "خطّط الهيكل" — بنسجّل كل قسم فعلي
+        // قرره الموديل بنفسه كخطوة مستقلة بنص حقيقي، فعدد الخطوات ومحتواها بيختلف تلقائيًا
+        // من طلب للتاني حسب اللي الموديل فعلًا فكّر فيه لهذا الطلب بالذات ──
+        if (_architectPlan && _architectPlan.sections && _architectPlan.sections.length) {
+          _architectPlan.sections.forEach(function(_sec) { _logCosmosStep('plan', 'خطّط جزء: ' + _sec); });
+          if (_architectPlan.risk) _logCosmosStep('plan', 'حدد أصعب نقطة تقنية متوقعة: ' + _architectPlan.risk);
+        } else {
+          _logCosmosStep('plan', 'قيّم الطلب ووجد إنه بسيط، فبدأ الكتابة على طول من غير خطة هيكلية منفصلة');
+        }
         if (_architectPlan && _architectPlan.sections && _architectPlan.sections.length) {
           _architectPlanBlock = '\n\n--- خطة هيكلية سريعة اتبنت قبل الكتابة (فكّر عليها الأول، ابني الكود عشان يغطيها كلها) ---\n'
             + 'الأقسام/الوظائف الرئيسية المطلوبة: ' + _architectPlan.sections.join('، ') + '\n'
@@ -13207,7 +13234,7 @@ function slStopAllAnimations() {
           var _localMsgs = [{ role: 'system', content: persona.systemPrompt }].concat(_localHist).concat([{ role: 'user', content: String(_aiApiMsg).slice(0, 4000) }]);
           var _reply = await window.__cosmosWebLLMEngine.chat.completions.create({ messages: _localMsgs, temperature: 0.5, max_tokens: 800 });
           var _txt = _reply && _reply.choices && _reply.choices[0] && _reply.choices[0].message && _reply.choices[0].message.content;
-          if (_txt) { if (window.AIHealth) window.AIHealth.record('webllm', true); markWebLLMUsedNow(); _logCosmosStep('💻 كل الخدمات السحابية كانت مشغولة — رد من نموذج محلي شغال على جهازك (أوفلاين)'); return _txt; }
+          if (_txt) { if (window.AIHealth) window.AIHealth.record('webllm', true); markWebLLMUsedNow(); _logCosmosStep('default', 'كل الخدمات السحابية كانت مشغولة — رد من نموذج محلي شغال على جهازك (أوفلاين)'); return _txt; }
           _debugWebLLMDetail = 'النموذج المحلي رجّع رد فاضي';
           return null;
         } catch (eW) {
@@ -13416,7 +13443,7 @@ function slStopAllAnimations() {
           if (_wrapV) _wrapV.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيراجع الكود قبل ما يديهولك');
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
-        _logCosmosStep('🔎 راجع الكود قبل التسليم');
+        _logCosmosStep('verify', 'راجع الكود النهائي وقارنه بالطلب الأصلي قبل التسليم');
         try {
           var _verified = typeof window.verifyCosmosCodeAnswer === 'function'
             ? await window.verifyCosmosCodeAnswer(apiKey, userMsg, answer)
@@ -13439,7 +13466,7 @@ function slStopAllAnimations() {
           if (_wrapL) _wrapL.innerHTML = window.buildCosmosThinkingHTML(persona.name + ' بيتأكد إن المنطق الوظيفي كامل');
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
-        _logCosmosStep('🧩 تأكد إن المنطق الوظيفي (JS) مكتمل ومفيهوش نواقص');
+        _logCosmosStep('logic', 'راجع المنطق الوظيفي بالتفصيل' + (_architectPlan && _architectPlan.core_logic && _architectPlan.core_logic.length ? (': ' + _architectPlan.core_logic.join('، ')) : ' وتأكد إنه مكتمل ومفيهوش نواقص'));
         try {
           var _deepened = typeof window.deepenCosmosJsLogic === 'function'
             ? await window.deepenCosmosJsLogic(apiKey, userMsg, answer, _architectPlan.core_logic)
@@ -13468,7 +13495,11 @@ function slStopAllAnimations() {
               if (_wrapT) _wrapT.innerHTML = window.buildCosmosThinkingHTML(persona.name + (_fixAttempts === 0 ? ' بيجرب يشغّل الكود فعليًا' : ' بيصلح خطأ لقاه (محاولة ' + (_fixAttempts + 1) + ')'));
               if (msgs) msgs.scrollTop = msgs.scrollHeight;
             }
-            _logCosmosStep(_fixAttempts === 0 ? '▶️ شغّل الكود فعليًا للتأكد إنه شغال قبل التسليم' : '🛠️ لقى خطأ وقت التشغيل الفعلي وصلّحه (محاولة ' + (_fixAttempts + 1) + ')');
+            if (_fixAttempts === 0) {
+              _logCosmosStep('run', 'شغّل الكود فعليًا للتأكد إنه شغال قبل التسليم');
+            } else {
+              _logCosmosStep('fix', 'لقى خطأ وقت التشغيل الفعلي: «' + String(_lastErrors[0] || '').slice(0, 120) + '» وصلّحه (محاولة ' + (_fixAttempts + 1) + ')');
+            }
             // ── فحص تركيبي فوري للـ JS جوه الرد الأول (قبل حتى ننتظر iframe) — بيمسك أخطاء
             // الـ syntax الواضحة فورًا من غير انتظار، ويوفّر وقت لو الخطأ واضح من الأول ──
             var _syntaxErrs = [];
@@ -13563,7 +13594,12 @@ function slStopAllAnimations() {
           var _stepsHtml = '';
           if (!_silentEdit && _cosmosStepsLog && _cosmosStepsLog.length >= 2) {
             var _stepsListHtml = _cosmosStepsLog.map(function(s, si){
-              return '<div class="cosmos-step-item"><span class="cosmos-step-num">' + (si+1) + '</span><span>' + escapeHtml(s) + '</span></div>';
+              var _stType = (s && typeof s === 'object') ? s.type : 'default';
+              var _stText = (s && typeof s === 'object') ? s.text : s;
+              var _stIcon = (typeof _cosmosStepIcons !== 'undefined' && _cosmosStepIcons[_stType]) ? _cosmosStepIcons[_stType] : '';
+              return '<div class="cosmos-step-item"><span class="cosmos-step-num">' + (si+1) + '</span>'
+                + (_stIcon ? '<span class="cosmos-step-icon">' + _stIcon + '</span>' : '')
+                + '<span class="cosmos-step-text">' + escapeHtml(String(_stText)) + '</span></div>';
             }).join('');
             _stepsHtml = '<div class="cosmos-deep-think cosmos-steps-log">'
               + '<button type="button" class="cosmos-deep-think-toggle" onclick="this.parentElement.classList.toggle(\'open\')">'
