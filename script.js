@@ -3037,14 +3037,15 @@ async function updateAdminUI() {
   }
   window.generateCompoundImageElement = generateCompoundImageElement;
 
-  // ── لو فيه صورة "مركّبة" لسه بتتولّد في الخلفية لنفس الطلب، بننتظرها وبنلحقها بآخر عنصر تمامًا
-  // جوه فقاعة الرد النصي (appendChild في النهاية) — الرد النصي بيظهر ويكتمل الأول، والصورة بتيجي كخاتمة بعده ──
-  async function attachPendingCompoundImage(targetDiv) {
-    if (!window.__cosmosPendingCompoundImagePromise) return;
-    var _p = window.__cosmosPendingCompoundImagePromise;
-    window.__cosmosPendingCompoundImagePromise = null;
+  // ── لو فيه صورة "مركّبة" لسه بتتولّد في الخلفية لطلب معيّن، بننتظرها وبنلحقها بآخر عنصر تمامًا
+  // جوه فقاعة الرد النصي بتاعة *نفس الطلب ده بالظبط* (appendChild في النهاية). مهم جداً: الـ promise
+  // بيتبعت هنا كـ parameter صريح (مش عن طريق متغيّر global مشترك) — عشان لو فيه أكتر من طلب صورة
+  // بيتولّد في الخلفية في نفس الوقت (أو طلب قديم بطيء لسه ما خلصش)، كل صورة تتربط بالرد بتاعها هي بالظبط
+  // ومتلزّقش برد تاني مالوش علاقة بيها ──
+  async function attachPendingCompoundImage(targetDiv, imgPromise) {
+    if (!imgPromise) return;
     try {
-      var _el = await _p;
+      var _el = await imgPromise;
       if (_el && targetDiv && targetDiv.isConnected) {
         targetDiv.appendChild(_el);
         var _c = targetDiv.closest ? targetDiv.closest('#aiChatMessages') : null;
@@ -12614,15 +12615,16 @@ function slStopAllAnimations() {
 
         // ── رسالة مركّبة: طلب واحد بس بيتعالج مرة واحدة — مفيش استنساخ/دبلجة له.
         // بنبدأ توليد الصورة في الخلفية (من غير await، عشان مايوقفش باقي المعالجة) وبنخزّن الـ Promise
-        // بتاعها عشان نلحقها آخر فقاعة الرد النصي بعد ما يكتمل تمامًا (مش هتظهر كرسالة منفصلة) ──
+        // في متغيّر *محلي* لنفس الطلب ده بالظبط (مش global مشترك) — عشان لو طلب صورة قديم لسه بطيء
+        // وبيتولّد في الخلفية، منلزّقوش برد رسالة تانية مالهاش أي علاقة بيه ──
         var _compoundImgPromise = generateCompoundImageElement(imgPrompt, userMsg)
           .catch(function(eImgBg){ console.error('Compound-message background image generation failed:', eImgBg); return null; });
-        window.__cosmosPendingCompoundImagePromise = _compoundImgPromise;
+        var _compoundImgConsumed = false;
         // ── شبكة أمان: لو مسار النص فشل بخطأ (exception) قبل ما يوصل لنقطة إلحاق الصورة عمداً،
         // الصورة منعرضهاش ضايعة — بتتحط كفقاعة مستقلة بمجرد ما تخلص (بديل، مش الحالة العادية) ──
         _compoundImgPromise.then(function(_elFallback){
-          if (window.__cosmosPendingCompoundImagePromise === _compoundImgPromise && _elFallback && msgs) {
-            window.__cosmosPendingCompoundImagePromise = null;
+          if (!_compoundImgConsumed && _elFallback && msgs) {
+            _compoundImgConsumed = true;
             var _fallbackDiv = document.createElement('div');
             _fallbackDiv.className = 'message received';
             _fallbackDiv.appendChild(_elFallback);
@@ -13517,7 +13519,11 @@ function slStopAllAnimations() {
                 msgs.appendChild(edCache); msgs.scrollTop = msgs.scrollHeight;
                 if (typeof window.addAIMuteButton === 'function') { var _tC = edCache.querySelector('.message-content'); if (_tC) window.addAIMuteButton(edCache, _tC.textContent); }
                 // ── لو الرسالة كانت مركّبة (نص + صورة)، نستنى الصورة ونلحقها آخر الفقاعة دي بعد ما النص ظهر كامل ──
-                if (typeof window.attachPendingCompoundImage === 'function') await window.attachPendingCompoundImage(edCache);
+                // ── لو الرسالة كانت مركّبة (نص + صورة)، نستنى الصورة ونلحقها آخر الفقاعة دي بعد ما النص ظهر كامل ──
+                if (_compoundImgPromise && !_compoundImgConsumed) {
+                  _compoundImgConsumed = true;
+                  if (typeof window.attachPendingCompoundImage === 'function') await window.attachPendingCompoundImage(edCache, _compoundImgPromise);
+                }
               }
               if (typeof window.aiChatHistory !== 'undefined' && Array.isArray(window.aiChatHistory)) {
                 window.aiChatHistory.push({ role: 'user', content: userMsg }, { role: 'assistant', content: _cachedObj.a });
@@ -13890,7 +13896,10 @@ function slStopAllAnimations() {
           // ── الرد النصي ظهر واكتمل خلاص فوق ↑ — دلوقتي لو الرسالة كانت مركّبة (نص + صورة)، نستنى
           // الصورة (لو لسه بتتولّد) ونلحقها آخر حاجة تمامًا (appendChild) جوه نفس فقاعة الرد ده،
           // عشان الصورة تبقى هي خاتمة الرد مش رسالة تانية منفصلة ──
-          if (typeof window.attachPendingCompoundImage === 'function') await window.attachPendingCompoundImage(aiDiv);
+          if (_compoundImgPromise && !_compoundImgConsumed) {
+            _compoundImgConsumed = true;
+            if (typeof window.attachPendingCompoundImage === 'function') await window.attachPendingCompoundImage(aiDiv, _compoundImgPromise);
+          }
           if (typeof window.addAIMuteButton === 'function') {
             var txtEl = aiDiv.querySelector('.message-content');
             if (txtEl) window.addAIMuteButton(aiDiv, txtEl.textContent);
