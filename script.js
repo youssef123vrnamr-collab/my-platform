@@ -5580,6 +5580,31 @@ function switchProgressTab(tab) {
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
   // ============================================================
+  // 📎 فقاعة رسالة المستخدم القابلة للطي (زي Gemini) — لو الرسالة طويلة
+  // بيتعرض مقتطف بارتفاع محدود، وزرار سهم صغير بيفتح النص كامل عند الضغط
+  // ============================================================
+  window.__cosmosUmsgSeq = 0;
+  window.buildUserMsgContentHTML = function(text) {
+    var raw = (text == null) ? '' : String(text);
+    var esc = raw.replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+    var lineCount = (raw.match(/\n/g) || []).length + 1;
+    var isLong = raw.length > 220 || lineCount > 4;
+    if (!isLong) {
+      return '<div class="message-content">' + esc + '</div>';
+    }
+    var id = 'umsg_' + Date.now() + '_' + (window.__cosmosUmsgSeq++);
+    return '<div class="message-content user-msg-truncated" id="' + id + '">' + esc + '</div>'
+      + '<button type="button" class="user-msg-expand-btn" onclick="window.toggleUserMsgExpand(\'' + id + '\', this)" title="عرض النص كامل"><i class="fas fa-chevron-down"></i></button>';
+  };
+  window.toggleUserMsgExpand = function(id, btn) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var expanded = el.classList.toggle('expanded');
+    if (btn) btn.classList.toggle('expanded', expanded);
+    if (!expanded && el.scrollIntoView) el.scrollIntoView({block:'nearest'});
+  };
+
+  // ============================================================
   // AI-POWERED DYNAMIC CONTENT SYSTEM
   // يولد محتوى فلكي عربي جديد بالذكاء الاصطناعي كل 6 ساعات
   // ============================================================
@@ -12428,7 +12453,7 @@ function slStopAllAnimations() {
             divDocs.id = 'msg-'+_docsUid; divDocs.dataset.msgId = _docsUid;
             var _quotedDocs = (_replyPayloadDocs && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadDocs) : '';
             divDocs.innerHTML = _quotedDocs + '<div class="ai-file-cards-wrap">'+_docsCardsHtml+'</div>'
-              + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '')
+              + (extraText ? window.buildUserMsgContentHTML(extraText) : '')
               + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
             msgs.appendChild(divDocs); msgs.scrollTop = msgs.scrollHeight;
             if (_replyPayloadDocs && typeof cancelReply === 'function') cancelReply('ai');
@@ -12453,7 +12478,7 @@ function slStopAllAnimations() {
           var _quotedImg = (_replyPayloadImg && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadImg) : '';
           var _imgsHtml = dataUrls.filter(Boolean).map(function(u){ return '<div class="ai-img-gallery-item"><img src="'+u+'" loading="lazy"></div>'; }).join('');
           var _docsHtml = validDocs.length ? ('<div class="ai-file-cards-wrap ai-file-cards-compact"><div class="ai-file-card"><div class="ai-file-card-icon"><i class="fas fa-paperclip"></i></div><div class="ai-file-card-meta"><div class="ai-file-card-name">'+validDocs.map(function(f){return escapeHtml(f.name);}).join('، ')+'</div></div></div></div>') : '';
-          div.innerHTML = _quotedImg + (_imgsHtml ? '<div class="ai-img-gallery">'+_imgsHtml+'</div>' : '') + _docsHtml + (extraText ? '<div class="message-content">'+escapeHtml(extraText)+'</div>' : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          div.innerHTML = _quotedImg + (_imgsHtml ? '<div class="ai-img-gallery">'+_imgsHtml+'</div>' : '') + _docsHtml + (extraText ? window.buildUserMsgContentHTML(extraText) : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
         }
         if (_replyPayloadImg && typeof cancelReply === 'function') cancelReply('ai');
@@ -12675,7 +12700,7 @@ function slStopAllAnimations() {
           var _imgReqUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
           _imgReqDiv.id = 'msg-'+_imgReqUid; _imgReqDiv.dataset.msgId = _imgReqUid;
           var _quotedImgReq = (_imgReqReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_imgReqReplyPayload) : '';
-          _imgReqDiv.innerHTML = _quotedImgReq + '<div class="message-content">'+escapeHtml(userMsg)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+          _imgReqDiv.innerHTML = _quotedImgReq + window.buildUserMsgContentHTML(userMsg) + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           msgs.appendChild(_imgReqDiv); msgs.scrollTop = msgs.scrollHeight;
         }
         if (_imgReqReplyPayload && typeof cancelReply === 'function') cancelReply('ai');
@@ -12862,7 +12887,7 @@ function slStopAllAnimations() {
         ud.id = 'msg-'+_aiMsgUid;
         ud.dataset.msgId = _aiMsgUid;
         var _quoted = (_aiReplyPayload && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_aiReplyPayload) : '';
-        ud.innerHTML = _quoted + '<div class="message-content">'+escapeHtml(userMsg)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
+        ud.innerHTML = _quoted + window.buildUserMsgContentHTML(userMsg) + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
         msgs.appendChild(ud); msgs.scrollTop = msgs.scrollHeight;
       }
       window.__cosmosSkipNextBubble = false;
