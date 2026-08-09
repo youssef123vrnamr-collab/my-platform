@@ -1332,7 +1332,7 @@ async function updateAdminUI() {
   function loadAdminPreference() {
     // محاولة عرض واجهة المشرف فوراً من الكاش (تجربة المستخدم)، ثم التحقق الحقيقي من Firestore
     if (localStorage.getItem("falak_admin") === "true") { isAdmin = true; updateAdminUI(); }
-    try { refreshAdminStatusFromFirestore(); } catch(_){}
+    try { refreshAdminStatusFromFirestore(); } catch(eAdminPref) { console.error("loadAdminPreference: refreshAdminStatusFromFirestore failed:", eAdminPref); }
   }
   function updateGoogleLogoutButtonsVisibility() { const g1 = document.getElementById("googleLogoutBtn"); const g2 = document.getElementById("googleLogoutNavBtn"); if (g1) g1.style.display = (!isAdmin && googleUser) ? "block" : "none"; if (g2) g2.style.display = (!isAdmin && googleUser) ? "flex" : "none"; }
 
@@ -2219,13 +2219,22 @@ async function updateAdminUI() {
     } catch(e){ console.warn("fetchMyAdminInfo failed", e); return { isAdmin:false, isSuperAdmin:false, email:"" }; }
   }
   async function refreshAdminStatusFromFirestore(){
-    const info = await fetchMyAdminInfo();
-    isAdmin = !!info.isAdmin;
-    isSuperAdmin = !!info.isSuperAdmin;
-    if (isAdmin) localStorage.setItem("falak_admin","true"); else localStorage.removeItem("falak_admin");
-    try { updateAdminUI(); } catch(_){}
-    try { updateGoogleLogoutButtonsVisibility(); } catch(_){}
-    return info;
+    try {
+      const info = await fetchMyAdminInfo();
+      isAdmin = !!info.isAdmin;
+      isSuperAdmin = !!info.isSuperAdmin;
+      if (isAdmin) localStorage.setItem("falak_admin","true"); else localStorage.removeItem("falak_admin");
+      try { updateAdminUI(); } catch(eUI) { console.error("updateAdminUI failed after admin-status refresh:", eUI); }
+      try { updateGoogleLogoutButtonsVisibility(); } catch(eLB) { console.error("updateGoogleLogoutButtonsVisibility failed:", eLB); }
+      return info;
+    } catch (eFetch) {
+      // ── لو فشل السؤال عن صلاحيات المشرف (شبكة/صلاحيات Firestore)، منسيبش الواجهة عالقة بصمت:
+      // نسجّل الخطأ واضح في الـ Console، ونشغّل updateAdminUI بحالة "مش مشرف" الافتراضية عشان
+      // القائمة على الأقل تتبني وتفضل قابلة للاستخدام بدل ما تفضل في حالة غير محددة ──
+      console.error("refreshAdminStatusFromFirestore failed — falling back to non-admin UI:", eFetch);
+      try { updateAdminUI(); } catch (eUI2) { console.error("updateAdminUI fallback also failed:", eUI2); }
+      return { isAdmin: false, isSuperAdmin: false, error: eFetch };
+    }
   }
 
   // ✅ دالة إصلاح صلاحيات المشرف الرئيسي — تُستدعى تلقائياً أو من Console
@@ -3458,7 +3467,7 @@ async function updateAdminUI() {
         document.getElementById("googleLogoutBtn").style.display = "block"; 
         updateGoogleLogoutButtonsVisibility(); 
         SoundEffects.join(); 
-        try { await refreshAdminStatusFromFirestore(); } catch(_){} 
+        try { await refreshAdminStatusFromFirestore(); } catch(eAdmin2) { console.error("refreshAdminStatusFromFirestore failed on join:", eAdmin2); try { updateAdminUI(); } catch(_){} } 
         loadAdminPreference(); 
         listenToVideosWithRetry(); 
         listenToCoursesAccess(); 
@@ -4015,7 +4024,7 @@ async function updateAdminUI() {
   // تحقق من الحالة عند التحميل
   window.addEventListener("load", function() { setTimeout(updateInstallMenuVisibility, 1000); });
 
-  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(_){ updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
+  function initAuthState() { auth.onAuthStateChanged(async user => { if (user && !isAdmin) { googleUser = user; currentUserId = user.uid; let name = user.displayName; let email = user.email; let phone = user.phoneNumber || ""; currentUser = name; currentUserPhone = phone || ""; await loadUserDataFromFirebase(currentUserId); if (!currentUser) { currentUser = name; currentUserPhone = phone || ""; await saveUserDataToFirebase(currentUserId); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); document.getElementById("landingPage").style.display = "none"; document.getElementById("appWrapper").style.display = "flex"; document.getElementById("googleUserInfo").style.display = "flex"; document.getElementById("googleUserInfo").innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(user.displayName)}`; document.getElementById("googleLogoutBtn").style.display = "block"; updateGoogleLogoutButtonsVisibility(); try { await refreshAdminStatusFromFirestore(); } catch(eAdmin3) { console.error("refreshAdminStatusFromFirestore failed on auth state change:", eAdmin3); updateAdminUI(); } loadAdminPreference(); listenToVideosWithRetry(); listenToCoursesAccess(); listenToUserEnrollmentsAccess(); listenToMaintenance(); loadAIKnowledgeFromFirebase(); loadExamsFromFirebase(); loadExamResultsFromFirebase(); loadAppsFromFirebase(); initCloudinaryWidget(); checkUrlForShare(); loadEmailSettingsFromFirestore(); const _authUid = user.uid; setTimeout(function(){ try { if(currentUserId === _authUid) applyAllChatBgs(); } catch(_){} }, 800); setTimeout(function(){ loadUserDashboard().catch(function(){}); }, 500); setTimeout(function(){ document.dispatchEvent(new Event('userLoggedIn')); }, 1000);
 
         } else if (!user && !isAdmin) { try { clearAllChatBgsFromScreen(); } catch(_){} if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; var _aiMsgsEl2 = document.getElementById("aiChatMessages"); if (_aiMsgsEl2) _aiMsgsEl2.innerHTML = ""; } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; googleUser = null; currentUserId = null; currentUser = null; currentUserPhone = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); } }); }
 
@@ -8995,7 +9004,10 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   // Also show zoomLinkMenuItem for admins (hook into updateAdminUI)
   const _origUpdateAdminUI = window.updateAdminUI;
   window.updateAdminUI = function() {
-    if (_origUpdateAdminUI) _origUpdateAdminUI.apply(this, arguments);
+    // ── try/catch حوالين استدعاء الدالة الأصلية: لو أي طبقة سابقة في السلسلة رمت خطأ،
+    // الطبقة دي (zoomLinkMenuItem) لازم تفضل تشتغل عادي بدل ما توقف بصمت مع باقي السلسلة ──
+    try { if (_origUpdateAdminUI) _origUpdateAdminUI.apply(this, arguments); }
+    catch (eOrig) { console.error('updateAdminUI chain (zoomLinkMenuItem layer): previous layer failed:', eOrig); }
     const el = document.getElementById('zoomLinkMenuItem');
     if (el) el.style.display = (window.isAdmin) ? 'flex' : 'none';
   };
@@ -9196,7 +9208,8 @@ console.log('📋 الميزات: شريط رسم متحرك | ذكاء اصطن
   // ---- Show PDF button in updateAdminUI ----
   const _origUpdateAdminUI2 = window.updateAdminUI;
   window.updateAdminUI = function() {
-    if (_origUpdateAdminUI2) _origUpdateAdminUI2.apply(this, arguments);
+    try { if (_origUpdateAdminUI2) _origUpdateAdminUI2.apply(this, arguments); }
+    catch (eOrig2) { console.error('updateAdminUI chain (pdfFilesMenuItem layer): previous layer failed:', eOrig2); }
     const el = document.getElementById('pdfFilesMenuItem');
     if (el) el.style.display = (window.isAdmin) ? 'flex' : 'none';
     const mcEl = document.getElementById('manageCoursesMenuItem');
@@ -9353,7 +9366,8 @@ function showCertificateModal(courseTitle, certUrl) {
   // Hook into updateAdminUI to show the menu item for admins
   const _origUI = window.updateAdminUI;
   window.updateAdminUI = function() {
-    if (_origUI) _origUI.apply(this, arguments);
+    try { if (_origUI) _origUI.apply(this, arguments); }
+    catch (eOrig3) { console.error('updateAdminUI chain (manageCertificatesMenuItem layer): previous layer failed:', eOrig3); }
     const el = document.getElementById('manageCertificatesMenuItem');
     if (el) el.style.display = (window.isAdmin) ? 'flex' : 'none';
   };
