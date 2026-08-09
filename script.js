@@ -2960,6 +2960,7 @@ async function updateAdminUI() {
     const _userContent = _hasUsefulContext
       ? `Image request (describe THIS): "${prompt}"\n\nFull original message, for pronoun/reference resolution ONLY — do not describe parts of it that aren't the image's subject: "${fullContextText.trim()}"`
       : prompt;
+    console.log('[Cosmos/CompoundImage] clause:', prompt, '| context sent to translator:', _hasUsefulContext ? fullContextText.trim() : '(none)');
 
     let enPrompt = "";
     try {
@@ -2979,7 +2980,8 @@ async function updateAdminUI() {
       });
       const d = await r.json();
       enPrompt = (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content || "").trim();
-    } catch (e) {}
+    } catch (e) { console.warn('[Cosmos/CompoundImage] translator call failed:', e); }
+    console.log('[Cosmos/CompoundImage] resolved English prompt:', enPrompt || '(EMPTY — will fall back to raw context)');
     // ── فشل الاتصال بالموديل؟ الـ fallback بيفضّل السياق الكامل (لو موجود) على جملة الصورة المجردة،
     // عشان حتى لو فشلت الترجمة الذكية، منرجعش لمشهد عام من غير أي سياق أصلاً ──
     if (!enPrompt) enPrompt = (_hasUsefulContext ? fullContextText.trim() : prompt).substring(0, 160);
@@ -12617,7 +12619,15 @@ function slStopAllAnimations() {
         // بنبدأ توليد الصورة في الخلفية (من غير await، عشان مايوقفش باقي المعالجة) وبنخزّن الـ Promise
         // في متغيّر *محلي* لنفس الطلب ده بالظبط (مش global مشترك) — عشان لو طلب صورة قديم لسه بطيء
         // وبيتولّد في الخلفية، منلزّقوش برد رسالة تانية مالهاش أي علاقة بيه ──
-        var _compoundImgPromise = generateCompoundImageElement(imgPrompt, userMsg)
+        // ── بنحصر السياق اللي بيتبعت لموديل الترجمة في أقرب ~300 حرف *قبل* جملة الصورة بس (مش الرسالة
+        // كاملة)، عشان لو الرسالة طويلة جداً (فيها كذا فقرة/طلب تاني)، الموديل مايتلخبطش وسط نصوص
+        // بعيدة معندهاش علاقة بالضمير اللي محتاج يتفكّ — الفاعل الحقيقي غالبًا بيكون قريّب من الجملة ──
+        var _imgCtxRaw = userMsg;
+        if (typeof _findImageTrigger === 'function') {
+          var _hitCtx = _findImageTrigger(userMsg.toLowerCase());
+          if (_hitCtx) _imgCtxRaw = userMsg.slice(Math.max(0, _hitCtx.idx - 300));
+        }
+        var _compoundImgPromise = generateCompoundImageElement(imgPrompt, _imgCtxRaw)
           .catch(function(eImgBg){ console.error('Compound-message background image generation failed:', eImgBg); return null; });
         var _compoundImgConsumed = false;
         // ── شبكة أمان: لو مسار النص فشل بخطأ (exception) قبل ما يوصل لنقطة إلحاق الصورة عمداً،
