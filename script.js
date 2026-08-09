@@ -2862,6 +2862,13 @@ async function updateAdminUI() {
   document.addEventListener("mozfullscreenchange",    onFullscreenChange);
   function clearAIChat() { if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
   // ========== Image Generation via Vercel Proxy ==========
+  // ── الكلمة "professional astrophotography" في اللاحقة القديمة كانت بتتضاف لكل صورة مهما كان موضوعها،
+  // وده كان بيخلي حتى طلبات زي "ارسملي كلب" تطلع مناظر فضاء/جبال ليلية لأن الموديل بيدّي وزن كبير
+  // لكلمة "astrophotography" في البرومبت. دلوقتي بنضيف الطابع الفلكي بس لو الموضوع فعلاً بيتكلم عن
+  // فلك/فضاء/كواكب/نجوم..، وإلا بنستخدم لاحقة واقعية عامة من غير أي تحيّز لموضوع تاني ──
+  function _isAstroSubject(txt) {
+    return /فلك|فضاء|كوكب|كواكب|نجم|نجوم|مجرة|مجرات|كون\b|قمر|شمس|مذنب|نيزك|سديم|ثقب اسود|ثقب أسود|مركبة فضائية|رائد فضاء|رواد فضاء|صاروخ|القمر الصناعي|الأرض من الفضاء|مدار|كوازار|planet|galaxy|nebula|astronaut|spacecraft|rocket|comet|asteroid|black hole|solar system|cosmos|astro/i.test(txt || "");
+  }
   async function generateAndDisplayImage(prompt) {
     const cont = document.getElementById("aiChatMessages");
     if (!cont) return;
@@ -2913,10 +2920,13 @@ async function updateAdminUI() {
 
     if (!enPrompt) enPrompt = prompt.substring(0, 100);
 
-    // لاحقة الجودة تختلف حسب الأسلوب المطلوب — واقعي احترافي افتراضياً، أو كرتوني لو طُلب صراحةً
+    // لاحقة الجودة تختلف حسب الأسلوب المطلوب — واقعي احترافي افتراضياً، أو كرتوني لو طُلب صراحةً.
+    // لاحقة "astrophotography" بقت مشروطة بموضوع فلكي فعلي عشان مايبقاش كل طلب بينحرف لمشهد فضاء/جبال ليلية
     const finalPrompt = _wantsCartoon
       ? `${enPrompt}, vibrant digital illustration, clean bold linework, rich colors, detailed concept art, trending on artstation`
-      : `${enPrompt}, photorealistic, hyper-detailed, physically-based rendering, natural lighting, sharp focus, professional astrophotography, shot on full-frame camera, 8k UHD, award-winning`;
+      : _isAstroSubject(prompt) || _isAstroSubject(enPrompt)
+        ? `${enPrompt}, photorealistic, hyper-detailed, physically-based rendering, natural lighting, sharp focus, professional astrophotography, shot on full-frame camera, 8k UHD, award-winning`
+        : `${enPrompt}, photorealistic, hyper-detailed, natural lighting, sharp focus, shot on full-frame camera, 8k UHD, professional photography, award-winning`;
 
 
     // استدعاء Vercel proxy بدل Pollinations مباشرة
@@ -2997,7 +3007,9 @@ async function updateAdminUI() {
 
     const finalPrompt = _wantsCartoon
       ? `${enPrompt}, vibrant digital illustration, clean bold linework, rich colors, detailed concept art, trending on artstation`
-      : `${enPrompt}, photorealistic, hyper-detailed, physically-based rendering, natural lighting, sharp focus, professional astrophotography, shot on full-frame camera, 8k UHD, award-winning`;
+      : _isAstroSubject(prompt) || _isAstroSubject(enPrompt)
+        ? `${enPrompt}, photorealistic, hyper-detailed, physically-based rendering, natural lighting, sharp focus, professional astrophotography, shot on full-frame camera, 8k UHD, award-winning`
+        : `${enPrompt}, photorealistic, hyper-detailed, natural lighting, sharp focus, shot on full-frame camera, 8k UHD, professional photography, award-winning`;
 
     let ok = false;
     for (let attempt = 1; attempt <= 3 && !ok; attempt++) {
