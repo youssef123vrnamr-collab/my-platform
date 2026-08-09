@@ -325,9 +325,11 @@ async function isAdminUser(userId) {
           const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
           const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
           const openrouterArr = Array.isArray(d.openrouterApiKeys) ? d.openrouterApiKeys : [];
+          const vercelArr = Array.isArray(d.vercelApiKeys) ? d.vercelApiKeys : [];
           if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
           if (window.GeminiKeyPool) window.GeminiKeyPool.setKeys(geminiArr);
           if (window.OpenRouterKeyPool) window.OpenRouterKeyPool.setKeys(openrouterArr);
+          if (window.VercelGatewayKeyPool) window.VercelGatewayKeyPool.setKeys(vercelArr);
           const disp = document.getElementById("currentAiKeyDisplay");
           if (disp) disp.textContent = _maskKey(_currentAiKey);
         },
@@ -346,9 +348,11 @@ async function isAdminUser(userId) {
       const groqArr = Array.isArray(d.groqApiKeys) && d.groqApiKeys.length ? d.groqApiKeys : [_currentAiKey];
       const geminiArr = Array.isArray(d.geminiApiKeys) && d.geminiApiKeys.length ? d.geminiApiKeys : (_currentGeminiKey ? [_currentGeminiKey] : []);
       const openrouterArr = Array.isArray(d.openrouterApiKeys) ? d.openrouterApiKeys : [];
+      const vercelArr = Array.isArray(d.vercelApiKeys) ? d.vercelApiKeys : [];
       if (window.GroqKeyPool) window.GroqKeyPool.setKeys(groqArr);
       if (window.GeminiKeyPool) window.GeminiKeyPool.setKeys(geminiArr);
       if (window.OpenRouterKeyPool) window.OpenRouterKeyPool.setKeys(openrouterArr);
+      if (window.VercelGatewayKeyPool) window.VercelGatewayKeyPool.setKeys(vercelArr);
     } catch(e){ console.warn("loadAiKeyOnce failed", e); }
   }
   function openAiKeyModal(){
@@ -12079,6 +12083,9 @@ function slStopAllAnimations() {
   // ── OpenRouter: بوابة موديلات مجانية (Llama/Mistral/Gemma...) — خط دفاع ثالث لو Groq وGemini
   // الاتنين فشلوا مع بعض في نفس اللحظة (نادر جداً)، بيوزّع بين مفاتيحه بنفس منطق الـ Round-Robin. ──
   window.OpenRouterKeyPool = window.OpenRouterKeyPool || window.ApiKeyPool.create();
+  // ── Vercel AI Gateway: بوابة موحّدة بتوصلك لعشرات الموديلات (OpenAI/Anthropic/Google...) بمفتاح
+  // واحد (بيبدأ بـ vck_) — خط دفاع رابع لو Groq وGemini وOpenRouter التلاتة فشلوا مع بعض. ──
+  window.VercelGatewayKeyPool = window.VercelGatewayKeyPool || window.ApiKeyPool.create();
 
   window.openMultiKeyModal = function () {
     if (typeof isAdmin !== 'undefined' && !isAdmin) { if (typeof showToast === 'function') showToast('❌ هذه الصلاحية للمشرف فقط'); return; }
@@ -12090,20 +12097,23 @@ function slStopAllAnimations() {
     var groqCount = window.GroqKeyPool ? window.GroqKeyPool.count() : 0;
     var geminiCount = window.GeminiKeyPool ? window.GeminiKeyPool.count() : 0;
     var openrouterCount = window.OpenRouterKeyPool ? window.OpenRouterKeyPool.count() : 0;
+    var vercelCount = window.VercelGatewayKeyPool ? window.VercelGatewayKeyPool.count() : 0;
     modal.innerHTML =
       '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(6,182,212,.4);border-radius:22px;width:95%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;padding:1.3rem;box-shadow:0 30px 70px rgba(0,0,0,.7)">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">'
       + '<h2 style="color:#67e8f9;font-size:1.05rem;font-weight:900;margin:0">🔑 توزيع مفاتيح API (Load Balancing)</h2>'
       + '<button id="mkCloseBtn" style="background:rgba(255,255,255,.08);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">×</button>'
       + '</div>'
-      + '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.9rem">حط أكتر من مفتاح، مفتاح في كل سطر. النظام هيوزّع الطلبات بينهم تلقائياً، ولو مفتاح وصل لحد الكوتا هيتجنّبه مؤقتاً ويستخدم اللي بعده. لو Groq وGemini الاتنين فشلوا مع بعض، مفاتيح OpenRouter بتاخد المهمة كخط دفاع ثالث (مجاني تماماً — سجّل على openrouter.ai واعمل مفتاح API).</p>'
+      + '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.9rem">حط أكتر من مفتاح، مفتاح في كل سطر. النظام هيوزّع الطلبات بينهم تلقائياً، ولو مفتاح وصل لحد الكوتا هيتجنّبه مؤقتاً ويستخدم اللي بعده. الترتيب: Groq → Gemini → OpenRouter (مجاني — openrouter.ai) → Vercel AI Gateway (vercel.com/docs/ai-gateway) لو الثلاثة قبله فشلوا مع بعض.</p>'
       + '<div style="overflow-y:auto;flex:1">'
       + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح Groq (حالياً: ' + groqCount + ')</label>'
       + '<textarea id="mkGroqTextarea" placeholder="gsk_...\ngsk_...\ngsk_..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:1rem;resize:vertical"></textarea>'
       + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح Gemini (حالياً: ' + geminiCount + ')</label>'
       + '<textarea id="mkGeminiTextarea" placeholder="AIza...\nAIza..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:1rem;resize:vertical"></textarea>'
       + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح OpenRouter — خط دفاع ثالث (حالياً: ' + openrouterCount + ')</label>'
-      + '<textarea id="mkOpenRouterTextarea" placeholder="sk-or-v1-...\nsk-or-v1-..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:.5rem;resize:vertical"></textarea>'
+      + '<textarea id="mkOpenRouterTextarea" placeholder="sk-or-v1-...\nsk-or-v1-..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:1rem;resize:vertical"></textarea>'
+      + '<label style="color:#e2e8f0;font-size:.82rem;font-weight:700;display:block;margin-bottom:.4rem">مفاتيح Vercel AI Gateway — خط دفاع رابع (حالياً: ' + vercelCount + ')</label>'
+      + '<textarea id="mkVercelTextarea" placeholder="vck_...\nvck_..." style="width:100%;min-height:90px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.6rem;color:#fff;font-size:.8rem;direction:ltr;text-align:left;font-family:monospace;margin-bottom:.5rem;resize:vertical"></textarea>'
       + '</div>'
       + '<button id="mkSaveBtn" style="margin-top:.8rem;background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:14px;padding:.8rem;font-family:Cairo,inherit;font-weight:800;font-size:.9rem;cursor:pointer">💾 حفظ وتوزيع المفاتيح</button>'
       + '</div>';
@@ -12114,12 +12124,14 @@ function slStopAllAnimations() {
       var groqLines = (document.getElementById('mkGroqTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
       var geminiLines = (document.getElementById('mkGeminiTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
       var openrouterLines = (document.getElementById('mkOpenRouterTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
-      if (!groqLines.length && !geminiLines.length && !openrouterLines.length) { if (typeof showToast === 'function') showToast('⚠️ حط مفتاح واحد على الأقل'); return; }
+      var vercelLines = (document.getElementById('mkVercelTextarea').value || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!groqLines.length && !geminiLines.length && !openrouterLines.length && !vercelLines.length) { if (typeof showToast === 'function') showToast('⚠️ حط مفتاح واحد على الأقل'); return; }
       try {
         var payload = { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
         if (groqLines.length) { payload.groqApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, groqLines); }
         if (geminiLines.length) { payload.geminiApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, geminiLines); }
         if (openrouterLines.length) { payload.openrouterApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, openrouterLines); }
+        if (vercelLines.length) { payload.vercelApiKeys = firebase.firestore.FieldValue.arrayUnion.apply(null, vercelLines); }
         await db.collection('system').doc('ai_settings').set(payload, { merge: true });
         if (typeof loadAiKeyOnce === 'function') await loadAiKeyOnce();
         if (typeof showToast === 'function') showToast('✅ اتضافوا المفاتيح ودلوقتي النظام بيوزّع بينهم');
@@ -13471,7 +13483,48 @@ function slStopAllAnimations() {
         return null;
       }
 
-      // ── خط دفاع رابع وأخير: تشغيل نموذج ذكاء اصطناعي خفيف محلياً على جهاز المستخدم نفسه
+      // ── خط دفاع رابع: لو Groq وGemini وOpenRouter التلاتة فشلوا مع بعض (نادر جداً)، Vercel AI
+      // Gateway بيتولى الرد — بوابة موحّدة بتوصل لعشرات الموديلات (OpenAI/Anthropic/Google...) بمفتاح
+      // واحد بيبدأ بـ vck_، وبنفس منطق توزيع المفاتيح (Round-Robin). ──
+      var _debugVercelDetail = '';
+      async function callVercelGatewayFallback() {
+        var pool = window.VercelGatewayKeyPool;
+        if (!pool || !pool.count()) { _debugVercelDetail = 'مفيش مفتاح Vercel AI Gateway متسجل أصلاً'; return null; }
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _vgMsgs = [{ role: 'system', content: _sysFull }].concat(histMsgs).concat([{ role: 'user', content: _aiApiMsg }]);
+        // ── موديلات مرتّبة من الأرخص/الأسرع للأقوى؛ لو موديل معين مش متاح على مفتاحك أو وصل لحد الكوتا بنجرب اللي بعده ──
+        var _vgModels = ['openai/gpt-4o-mini', 'google/gemini-2.0-flash', 'anthropic/claude-haiku-4-5'];
+        var maxAttempts = Math.min(pool.count(), 3);
+        for (var i = 0; i < maxAttempts; i++) {
+          var vKey = pool.next();
+          if (!vKey) break;
+          var _keyFailed429 = false;
+          for (var mi = 0; mi < _vgModels.length; mi++) {
+            try {
+              var r = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + vKey, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: _vgModels[mi], messages: _vgMsgs, max_tokens: _fallbackMaxTok, temperature: 0.4, stream: false }),
+                signal: window.__cosmosAbortController ? window.__cosmosAbortController.signal : undefined
+              });
+              var d = await r.json();
+              var txt = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+              if (pool) pool.report(vKey, r.status !== 429);
+              if (txt) { if (window.AIHealth) window.AIHealth.record('vercelGateway', true); return txt; }
+              if (r.status === 429) { _keyFailed429 = true; continue; } // جرب موديل تاني بنفس المفتاح
+              _debugVercelDetail = 'HTTP ' + r.status + ' — ' + (d && d.error ? JSON.stringify(d.error).slice(0,150) : 'رد غير متوقع');
+            } catch (eVg) {
+              if (eVg && eVg.name === 'AbortError') throw eVg;
+              _debugVercelDetail = String(eVg && eVg.message || eVg).slice(0,150);
+            }
+          }
+          if (!_keyFailed429) break; // فشل مش بسبب كوتا (429) — مفيش فايدة نبدّل مفتاح
+        }
+        if (window.AIHealth) window.AIHealth.record('vercelGateway', false);
+        return null;
+      }
+
+      // ── خط دفاع خامس وأخير: تشغيل نموذج ذكاء اصطناعي خفيف محلياً على جهاز المستخدم نفسه
       // (WebLLM عبر WebGPU) — أوفلاين بالكامل، مجاني 100%، ومن غير أي مفتاح API أو سيرفر خارجي.
       // بيتفعّل بس لو كل المصادر السحابية (Groq/Gemini/OpenRouter) فشلوا مع بعض، لأن أول تحميل
       // للنموذج بياخد وقت (بينزل ملفات الموديل على الجهاز مرة واحدة وبعدين بيتخزن كاش في المتصفح). ──
@@ -13712,7 +13765,13 @@ function slStopAllAnimations() {
         if (!answer && _debugOpenRouterDetail && window.logPlatformIssue) window.logPlatformIssue('OpenRouter (خط الدفاع الثالث)', _debugOpenRouterDetail);
       }
 
-      // ── خط دفاع رابع وأخير: كل المصادر السحابية فشلت → نموذج محلي أوفلاين على جهاز المستخدم (WebLLM) ──
+      // ── خط دفاع رابع: Groq وGemini وOpenRouter التلاتة فشلوا → Vercel AI Gateway (لو فيه مفاتيح مسجّلة) ──
+      if (!answer) {
+        answer = await callVercelGatewayFallback();
+        if (!answer && _debugVercelDetail && window.logPlatformIssue) window.logPlatformIssue('Vercel AI Gateway (خط الدفاع الرابع)', _debugVercelDetail);
+      }
+
+      // ── خط دفاع خامس وأخير: كل المصادر السحابية فشلت → نموذج محلي أوفلاين على جهاز المستخدم (WebLLM) ──
       if (!answer) {
         answer = await callWebLLMFallback();
         if (!answer && _debugWebLLMDetail && window.logPlatformIssue) window.logPlatformIssue('WebLLM (تشغيل محلي)', _debugWebLLMDetail);
@@ -13720,7 +13779,7 @@ function slStopAllAnimations() {
 
       if (!answer) {
         // ── كل المصادر فشلت فعلاً — رسالة واحدة لطيفة للمستخدم بدل رسالة خطأ تقنية ──
-        if (window.logPlatformIssue) window.logPlatformIssue('Router (فشل شامل نص)', 'Groq: ' + (_debugGroqDetail||'—') + ' | Gemini: ' + (_debugGeminiDetail||'—') + ' | OpenRouter: ' + (_debugOpenRouterDetail||'—') + ' | WebLLM: ' + (_debugWebLLMDetail||'—'));
+        if (window.logPlatformIssue) window.logPlatformIssue('Router (فشل شامل نص)', 'Groq: ' + (_debugGroqDetail||'—') + ' | Gemini: ' + (_debugGeminiDetail||'—') + ' | OpenRouter: ' + (_debugOpenRouterDetail||'—') + ' | Vercel Gateway: ' + (_debugVercelDetail||'—') + ' | WebLLM: ' + (_debugWebLLMDetail||'—'));
         if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
         if (typingEl) typingEl.remove();
         if (msgs) {
