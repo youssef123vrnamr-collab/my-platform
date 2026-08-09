@@ -102,7 +102,7 @@ async function isAdminUser(userId) {
   // تنظيف الرسائل الطويلة مع حد أقصى
   function sanitizeMessage(str) {
     if (!str) return '';
-    return sanitizeInput(str).substring(0, 2000);
+    return sanitizeInput(str).substring(0, 6000);
   }
 
   // التحقق من البريد الإلكتروني
@@ -8096,7 +8096,7 @@ window.updateActiveToolLabel = function(label) {
     if (!text || typeof text !== 'string') return { valid: false, error: 'رسالة فارغة' };
     const trimmed = text.trim();
     if (trimmed.length === 0) return { valid: false, error: 'رسالة فارغة' };
-    if (trimmed.length > 2000) return { valid: false, error: '⚠️ الرسالة طويلة جداً (الحد 2000 حرف)' };
+    if (trimmed.length > 6000) return { valid: false, error: '⚠️ الرسالة طويلة جداً (الحد 6000 حرف)' };
     for (const pat of DANGEROUS_PATTERNS) {
       if (pat.test(trimmed)) {
         console.warn('Blocked dangerous content:', pat);
@@ -8134,8 +8134,8 @@ window.updateActiveToolLabel = function(label) {
           if (typeof showToast === 'function') showToast(v.error);
           return;
         }
-      } else if (inputEl && hasAttachedFile && inputEl.value.trim().length > 2000) {
-        if (typeof showToast === 'function') showToast('⚠️ الرسالة طويلة جداً (الحد 2000 حرف)');
+      } else if (inputEl && hasAttachedFile && inputEl.value.trim().length > 6000) {
+        if (typeof showToast === 'function') showToast('⚠️ الرسالة طويلة جداً (الحد 6000 حرف)');
         return;
       }
       return orig.apply(this, args);
