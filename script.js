@@ -10907,9 +10907,36 @@ function slStopAllAnimations() {
 
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js")
-      .then(reg => console.log("SW registered", reg))
+    // ── updateViaCache: 'none' يمنع المتصفح إنه يطبّق أي HTTP caching على ملف sw.js نفسه —
+    // من غيرها، السيرفر لو باعت أي Cache-Control عام على كل الملفات الاستاتيك، ممكن المتصفح
+    // يفضل شايف نسخة قديمة من sw.js لفترة طويلة وميعرفش أصلاً إن فيه تحديث موجود ──
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+      .then(reg => {
+        console.log("SW registered", reg);
+        // ── نتأكد إن فيه فحص لتحديث جديد كل مرة نفتح التطبيق، وكمان دوري كل ساعة لو التطبيق فاضل فاتح ──
+        reg.update().catch(()=>{});
+        setInterval(() => { reg.update().catch(()=>{}); }, 60 * 60 * 1000);
+        // ── لو اتلقى SW جديد، خليه ياخد السيطرة فورًا (skipWaiting) بدل ما يستنى قفل كل التابات ──
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              newWorker.postMessage("SKIP_WAITING");
+            }
+          });
+        });
+      })
       .catch(err => console.log("SW error", err));
+
+    // ── أول ما الـ SW الجديد ياخد السيطرة فعليًا، نعمل reload تلقائي مرة واحدة بس
+    // (عشان الصفحة تحمّل بالنسخة الجديدة من script.js/style.css من غير أي تدخل يدوي من المستخدم) ──
+    let _swControllerRefreshed = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (_swControllerRefreshed) return;
+      _swControllerRefreshed = true;
+      window.location.reload();
+    });
   }
 
 

@@ -1,7 +1,7 @@
 // ===== Astronomy and Space - Service Worker =====
-const CACHE_NAME = 'astronomy-space-v4';
-const STATIC_CACHE = 'astronomy-static-v4';
-const DYNAMIC_CACHE = 'astronomy-dynamic-v4';
+const CACHE_NAME = 'astronomy-space-v5';
+const STATIC_CACHE = 'astronomy-static-v5';
+const DYNAMIC_CACHE = 'astronomy-dynamic-v5';
 
 // ===== الملفات اللي هتتحفظ دايماً (Shell) =====
 const STATIC_ASSETS = [
