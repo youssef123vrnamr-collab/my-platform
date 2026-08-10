@@ -1302,6 +1302,7 @@ async function updateAdminUI() {
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); }, null, ["#9333ea","#c084fc"]);
             addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); }, null, ["#3b82f6","#93c5fd"]);
             addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); }, null, ["#f97316","#fdba74"]);
+            addItem("prayerSettingsMenuItem","fas fa-mosque","إعدادات الصلاة 🕌", () => { menu.classList.remove("active"); window.openPrayerSettingsModal && window.openPrayerSettingsModal(); }, null, ["#10b981","#06b6d4"]);
 
             if (uploadZone) uploadZone.classList.add("active");
             if (storageBar) storageBar.style.display = "block";
@@ -1319,6 +1320,7 @@ async function updateAdminUI() {
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); }, null, ["#9333ea","#c084fc"]);
             addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); }, null, ["#3b82f6","#93c5fd"]);
             addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); }, null, ["#f97316","#fdba74"]);
+            addItem("prayerSettingsMenuItem","fas fa-mosque","إعدادات الصلاة 🕌", () => { menu.classList.remove("active"); window.openPrayerSettingsModal && window.openPrayerSettingsModal(); }, null, ["#10b981","#06b6d4"]);
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); }, null, ["#eab308","#fde047"]);
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); }, null, ["#0284c7","#38bdf8"]);
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); }, null, ["#0ea5e9","#38bdf8"]);
@@ -15932,4 +15934,759 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   attachObserver();
 
   console.log('✅ Cosmos AI ChatGPT-style UI جاهزة — typewriter + action bar + thinking phrases');
+})();
+
+// ============================================================
+// 🕌 صلاتي — تذكير مواقيت الصلاة حسب الموقع الجغرافي + تشغيل القرآن الكريم
+// ميزة مستقلة بالكامل: مفيهاش أي تعديل على منطق الذكاء الاصطناعي الأساسي،
+// بس بتتصيد أوامر معيّنة في شات الذكاء الاصطناعي (زي "افتح اعدادات الصلاة"
+// أو "شغل سورة الكهف") وتنفذها محليًا فورًا من غير ما تكلّف طلب API.
+// ============================================================
+(function () {
+  'use strict';
+
+  // ── قائمة السور الـ 114 كاملة (بالترتيب) ──
+  var SURAHS = [
+    [1,"الفاتحة"],[2,"البقرة"],[3,"آل عمران"],[4,"النساء"],[5,"المائدة"],
+    [6,"الأنعام"],[7,"الأعراف"],[8,"الأنفال"],[9,"التوبة"],[10,"يونس"],
+    [11,"هود"],[12,"يوسف"],[13,"الرعد"],[14,"إبراهيم"],[15,"الحجر"],
+    [16,"النحل"],[17,"الإسراء"],[18,"الكهف"],[19,"مريم"],[20,"طه"],
+    [21,"الأنبياء"],[22,"الحج"],[23,"المؤمنون"],[24,"النور"],[25,"الفرقان"],
+    [26,"الشعراء"],[27,"النمل"],[28,"القصص"],[29,"العنكبوت"],[30,"الروم"],
+    [31,"لقمان"],[32,"السجدة"],[33,"الأحزاب"],[34,"سبأ"],[35,"فاطر"],
+    [36,"يس"],[37,"الصافات"],[38,"ص"],[39,"الزمر"],[40,"غافر"],
+    [41,"فصلت"],[42,"الشورى"],[43,"الزخرف"],[44,"الدخان"],[45,"الجاثية"],
+    [46,"الأحقاف"],[47,"محمد"],[48,"الفتح"],[49,"الحجرات"],[50,"ق"],
+    [51,"الذاريات"],[52,"الطور"],[53,"النجم"],[54,"القمر"],[55,"الرحمن"],
+    [56,"الواقعة"],[57,"الحديد"],[58,"المجادلة"],[59,"الحشر"],[60,"الممتحنة"],
+    [61,"الصف"],[62,"الجمعة"],[63,"المنافقون"],[64,"التغابن"],[65,"الطلاق"],
+    [66,"التحريم"],[67,"الملك"],[68,"القلم"],[69,"الحاقة"],[70,"المعارج"],
+    [71,"نوح"],[72,"الجن"],[73,"المزمل"],[74,"المدثر"],[75,"القيامة"],
+    [76,"الإنسان",["الدهر"]],[77,"المرسلات"],[78,"النبأ"],[79,"النازعات"],[80,"عبس"],
+    [81,"التكوير"],[82,"الانفطار"],[83,"المطففين"],[84,"الانشقاق"],[85,"البروج"],
+    [86,"الطارق"],[87,"الأعلى"],[88,"الغاشية"],[89,"الفجر"],[90,"البلد"],
+    [91,"الشمس"],[92,"الليل"],[93,"الضحى"],[94,"الشرح",["الانشراح"]],[95,"التين"],
+    [96,"العلق"],[97,"القدر"],[98,"البينة"],[99,"الزلزلة"],[100,"العاديات"],
+    [101,"القارعة"],[102,"التكاثر"],[103,"العصر"],[104,"الهمزة"],[105,"الفيل"],
+    [106,"قريش"],[107,"الماعون"],[108,"الكوثر"],[109,"الكافرون"],[110,"النصر"],
+    [111,"المسد",["تبت"]],[112,"الإخلاص"],[113,"الفلق"],[114,"الناس"]
+  ];
+
+  // ── قائمة القرّاء المتاحين (روابط cdn.islamic.network الرسمية — بدون مفتاح API) ──
+  var RECITERS = [
+    { id: "ar.alafasy",            name: "مشاري راشد العفاسي", aliases: ["العفاسي","مشاري راشد","مشاري"] },
+    { id: "ar.abdulbasitmurattal", name: "عبدالباسط عبدالصمد",  aliases: ["عبدالباسط","عبد الباسط","عبدالصمد"] },
+    { id: "ar.abdurrahmaansudais", name: "عبدالرحمن السديس",   aliases: ["السديس","سديس"] },
+    { id: "ar.husary",             name: "محمود خليل الحصري",  aliases: ["الحصري","حصري"] },
+    { id: "ar.minshawi",           name: "محمد صديق المنشاوي", aliases: ["المنشاوي","منشاوي"] },
+    { id: "ar.mahermuaiqly",       name: "ماهر المعيقلي",      aliases: ["المعيقلي","ماهر المعيقلي","ماهر"] },
+    { id: "ar.ahmedajamy",         name: "أحمد العجمي",        aliases: ["العجمي","احمد العجمي"] },
+    { id: "ar.hudhaify",           name: "علي الحذيفي",        aliases: ["الحذيفي","حذيفي"] },
+    { id: "ar.saoodshuraym",       name: "سعود الشريم",        aliases: ["الشريم","شريم"] }
+  ];
+  var DEFAULT_RECITER = "ar.alafasy";
+
+  var PRAYERS = [
+    { key: "Fajr",    label: "الفجر" },
+    { key: "Dhuhr",   label: "الظهر" },
+    { key: "Asr",     label: "العصر" },
+    { key: "Maghrib", label: "المغرب" },
+    { key: "Isha",    label: "العشاء" }
+  ];
+
+  var LS_KEY = "falak_prayer_settings";
+  var _state = null;
+
+  function _defaultState() {
+    return {
+      enabled: false,
+      lat: null, lng: null, city: "",
+      method: 5, // الهيئة المصرية العامة للمساحة
+      remindMinutes: 5,
+      reciter: DEFAULT_RECITER,
+      timings: null,     // مواقيت اليوم الحالي (بعد نجاح الجلب)
+      timingsDate: null, // "YYYY-MM-DD" بتاعة المواقيت المخزنة
+      timesReady: false, // ✅ ميفعّلش أي تذكير إلا لو ده true فعليًا
+      firedDate: null,
+      fired: {}
+    };
+  }
+
+  function loadState() {
+    if (_state) return _state;
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      _state = raw ? Object.assign(_defaultState(), JSON.parse(raw)) : _defaultState();
+    } catch (e) { _state = _defaultState(); }
+    // مواقيت يوم قديم يبقوا غير صالحين — لازم يتجابوا تاني
+    var todayStr = _todayStr();
+    if (_state.timingsDate !== todayStr) { _state.timings = null; _state.timesReady = false; }
+    return _state;
+  }
+
+  function saveState() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(_state)); } catch (e) {}
+  }
+
+  function _todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  // ── تطبيع النص العربي عشان مطابقة أسماء السور/القرّاء تبقى مرنة ──
+  function normAr(s) {
+    return (s || "").toString()
+      .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+      .replace(/[إأآا]/g, "ا")
+      .replace(/ى/g, "ي")
+      .replace(/ة/g, "ه")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function findSurah(text) {
+    var t = " " + normAr(text) + " ";
+    var best = null;
+    for (var i = 0; i < SURAHS.length; i++) {
+      var entry = SURAHS[i];
+      var names = [entry[1]].concat(entry[2] || []);
+      for (var j = 0; j < names.length; j++) {
+        var n = normAr(names[j]);
+        if (!n) continue;
+        // أسماء قصيرة جدًا (حرف واحد زي "ص"، "ق") لازم تتطابق ككلمة مستقلة بمسافات حواليها
+        var pattern = n.length <= 2 ? (" " + n + " ") : n;
+        var idx = t.indexOf(pattern);
+        if (idx !== -1) {
+          if (!best || n.length > best._len) best = { id: entry[0], name: entry[1], _len: n.length };
+        }
+      }
+    }
+    return best;
+  }
+
+  function findReciter(text) {
+    var t = " " + normAr(text) + " ";
+    for (var i = 0; i < RECITERS.length; i++) {
+      var r = RECITERS[i];
+      var names = [r.name].concat(r.aliases || []);
+      for (var j = 0; j < names.length; j++) {
+        var n = normAr(names[j]);
+        if (n && t.indexOf(n) !== -1) return r;
+      }
+    }
+    return null;
+  }
+
+  function reciterById(id) {
+    for (var i = 0; i < RECITERS.length; i++) if (RECITERS[i].id === id) return RECITERS[i];
+    return RECITERS[0];
+  }
+
+  // ============================================================
+  // 🔔 صوت تنبيه بسيط عبر WebAudio (مفيش ملف صوتي خارجي ممكن يتكسر رابطه)
+  // ============================================================
+  function playBeep() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      var ctx = new Ctx();
+      [0, 0.28].forEach(function (delay) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sine"; o.frequency.value = 880;
+        o.connect(g); g.connect(ctx.destination);
+        var t0 = ctx.currentTime + delay;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
+        o.start(t0); o.stop(t0 + 0.24);
+      });
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // 📍 الموقع الجغرافي + جلب المواقيت من Aladhan API (مجاني، بدون مفتاح)
+  // ============================================================
+  function getLocation() {
+    return new Promise(function (resolve, reject) {
+      if (!navigator.geolocation) { reject(new Error("المتصفح مبيدعمش تحديد الموقع")); return; }
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+        function (err) { reject(err); },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 3600000 }
+      );
+    });
+  }
+
+  function fetchTimings(lat, lng, method) {
+    var d = new Date();
+    var dateStr = String(d.getDate()).padStart(2, "0") + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + d.getFullYear();
+    var url = "https://api.aladhan.com/v1/timings/" + dateStr + "?latitude=" + encodeURIComponent(lat) + "&longitude=" + encodeURIComponent(lng) + "&method=" + (method || 5);
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (data) {
+      if (!data || !data.data || !data.data.timings) throw new Error("رد غير متوقع من خدمة المواقيت");
+      var raw = data.data.timings;
+      var clean = {};
+      PRAYERS.forEach(function (p) {
+        var v = raw[p.key];
+        if (v) clean[p.key] = v.split(" ")[0]; // "05:12 (EET)" -> "05:12"
+      });
+      var city = (data.data.meta && data.data.meta.timezone) || "";
+      return { timings: clean, city: city };
+    });
+  }
+
+  function parseTimeToday(hhmm) {
+    var parts = (hhmm || "").split(":");
+    if (parts.length < 2) return null;
+    var d = new Date();
+    d.setHours(parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0, 0, 0);
+    return d;
+  }
+
+  // ============================================================
+  // ⏰ جدولة التذكير — بتشتغل كل 20 ثانية، وبترفض تعمل أي حاجة لو المواقيت
+  // مش موثوقة (timesReady=false) — عشان محدش ياخد تنبيه غلط قبل ميعاد فعلي
+  // ============================================================
+  var _schedulerTimer = null;
+
+  function startScheduler() {
+    if (_schedulerTimer) return;
+    _schedulerTimer = setInterval(tickScheduler, 20000);
+    tickScheduler();
+  }
+
+  function stopScheduler() {
+    if (_schedulerTimer) { clearInterval(_schedulerTimer); _schedulerTimer = null; }
+  }
+
+  function tickScheduler() {
+    var s = loadState();
+    if (!s.enabled || !s.timesReady || !s.timings) return;
+
+    var todayStr = _todayStr();
+    if (s.timingsDate !== todayStr) {
+      // يوم جديد — المواقيت بتاعة إمبارح مش صالحة؛ نجيب مواقيت اليوم قبل أي تذكير
+      s.timesReady = false;
+      saveState();
+      if (s.lat != null && s.lng != null) refreshTimingsSilently();
+      return;
+    }
+    if (s.firedDate !== todayStr) { s.fired = {}; s.firedDate = todayStr; saveState(); }
+
+    var now = new Date();
+    PRAYERS.forEach(function (p) {
+      var t = s.timings[p.key];
+      if (!t) return;
+      var target = parseTimeToday(t);
+      if (!target) return;
+      var remindAt = new Date(target.getTime() - (s.remindMinutes || 5) * 60000);
+      var diff = now.getTime() - remindAt.getTime();
+      if (diff >= 0 && diff < 20000 && !s.fired[p.key]) {
+        s.fired[p.key] = true;
+        saveState();
+        fireReminder(p);
+      }
+    });
+  }
+
+  function refreshTimingsSilently() {
+    var s = loadState();
+    if (s.lat == null || s.lng == null) return;
+    fetchTimings(s.lat, s.lng, s.method).then(function (res) {
+      s.timings = res.timings;
+      s.timingsDate = _todayStr();
+      s.timesReady = true;
+      saveState();
+      renderSettingsTimesIfOpen();
+    }).catch(function (e) {
+      console.warn("[صلاتي] فشل تحديث مواقيت اليوم:", e);
+      // نسيب timesReady زي ما هي (false) — منمنعش تشغيل تذكير على مواقيت غير مؤكدة
+    });
+  }
+
+  function fireReminder(prayer) {
+    var s = loadState();
+    var msg = "متبقّي " + (s.remindMinutes || 5) + " دقايق على أذان " + prayer.label;
+    playBeep();
+    if (navigator.vibrate) { try { navigator.vibrate([200, 100, 200]); } catch (e) {} }
+    if (typeof showToast === "function") showToast("🕌 " + msg);
+    if (window.Notification && Notification.permission === "granted") {
+      try {
+        var n = new Notification("🕌 اقترب موعد أذان " + prayer.label, { body: msg, tag: "prayer-" + prayer.key, requireInteraction: false });
+        n.onclick = function () { window.focus(); n.close(); };
+      } catch (e) {}
+    }
+  }
+
+  // ============================================================
+  // 🎛️ تفعيل/إلغاء التذكير
+  // ============================================================
+  function enableReminder() {
+    var s = loadState();
+    return getLocation().then(function (loc) {
+      return fetchTimings(loc.lat, loc.lng, s.method).then(function (res) {
+        s.lat = loc.lat; s.lng = loc.lng; s.city = res.city;
+        s.timings = res.timings; s.timingsDate = _todayStr(); s.timesReady = true;
+        s.enabled = true; s.fired = {}; s.firedDate = _todayStr();
+        saveState();
+        startScheduler();
+        if (window.Notification && Notification.permission === "default") {
+          try { Notification.requestPermission(); } catch (e) {}
+        }
+        return s;
+      });
+    });
+  }
+
+  function disableReminder() {
+    var s = loadState();
+    s.enabled = false;
+    saveState();
+    stopScheduler();
+  }
+
+  // ============================================================
+  // 🎧 مشغّل القرآن — شريط عائم صغير + تشغيل مباشر عبر CDN بدون مفتاح API
+  // ============================================================
+  var _audioEl = null;
+
+  function ensurePlayerBar() {
+    var bar = document.getElementById("quranPlayerBar");
+    if (bar) return bar;
+    bar = document.createElement("div");
+    bar.id = "quranPlayerBar";
+    bar.className = "quran-player-bar";
+    bar.innerHTML =
+      '<div class="qpb-icon"><i class="fas fa-mosque"></i></div>' +
+      '<div class="qpb-info">' +
+        '<div class="qpb-surah" id="qpbSurahName">—</div>' +
+        '<div class="qpb-reciter" id="qpbReciterName">—</div>' +
+      '</div>' +
+      '<button class="qpb-btn" id="qpbPlayBtn" title="تشغيل/إيقاف مؤقت"><i class="fas fa-pause"></i></button>' +
+      '<button class="qpb-btn qpb-close" id="qpbCloseBtn" title="إغلاق"><i class="fas fa-xmark"></i></button>';
+    document.body.appendChild(bar);
+    document.getElementById("qpbPlayBtn").addEventListener("click", togglePlayPause);
+    document.getElementById("qpbCloseBtn").addEventListener("click", stopQuran);
+    return bar;
+  }
+
+  function togglePlayPause() {
+    if (!_audioEl) return;
+    var icon = document.querySelector("#qpbPlayBtn i");
+    if (_audioEl.paused) { _audioEl.play().catch(function () {}); if (icon) icon.className = "fas fa-pause"; }
+    else { _audioEl.pause(); if (icon) icon.className = "fas fa-play"; }
+  }
+
+  function stopQuran() {
+    if (_audioEl) { try { _audioEl.pause(); _audioEl.src = ""; } catch (e) {} _audioEl = null; }
+    var bar = document.getElementById("quranPlayerBar");
+    if (bar) bar.classList.remove("active");
+  }
+
+  function playSurah(surahId, surahName, reciter) {
+    var url = "https://cdn.islamic.network/quran/audio-surah/128/" + reciter.id + "/" + surahId + ".mp3";
+    stopQuran();
+    _audioEl = new Audio(url);
+    var bar = ensurePlayerBar();
+    bar.classList.add("active");
+    document.getElementById("qpbSurahName").textContent = "سورة " + surahName;
+    document.getElementById("qpbReciterName").textContent = reciter.name;
+    var icon = document.querySelector("#qpbPlayBtn i");
+    if (icon) icon.className = "fas fa-pause";
+    _audioEl.onended = function () { stopQuran(); };
+    _audioEl.onerror = function () {
+      if (typeof showToast === "function") showToast("⚠️ تعذّر تشغيل السورة بصوت هذا القارئ، جرّب قارئ تاني");
+      stopQuran();
+    };
+    _audioEl.play().catch(function () {
+      if (typeof showToast === "function") showToast("⚠️ اضغط زرار التشغيل في الشريط لبدء الصوت");
+    });
+  }
+
+  // ============================================================
+  // 🖼️ مودال إعدادات الصلاة (بيتبني ديناميكيًا، بيستخدم كلاسات الموديل العامة
+  // الموجودة أصلاً في style.css: modal / modal-content / modal-header / form-group)
+  // ============================================================
+  function ensureSettingsModal() {
+    var modal = document.getElementById("prayerSettingsModal");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.id = "prayerSettingsModal";
+    modal.className = "modal";
+    modal.innerHTML =
+      '<div class="modal-content" style="max-width:480px;height:auto;max-height:88vh;border-radius:16px;">' +
+        '<div class="modal-header">' +
+          '<div class="modal-header-left"><i class="fas fa-mosque"></i> إعدادات الصلاة والأذان</div>' +
+          '<button class="modal-close" id="prayerModalCloseBtn"><i class="fas fa-times"></i></button>' +
+        '</div>' +
+        '<div class="modal-body" style="padding:1.25rem;overflow-y:auto;">' +
+          '<div class="form-group" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">' +
+            '<label style="margin:0;">تذكير قبل الأذان بـ 5 دقايق</label>' +
+            '<label class="pq-toggle"><input type="checkbox" id="prayerEnableToggle"><span class="pq-toggle-slider"></span></label>' +
+          '</div>' +
+          '<div id="prayerLocationInfo" style="color:#aaa;font-size:.85rem;margin-bottom:1rem;">📍 لسه محددناش موقعك</div>' +
+          '<div id="prayerTimesList" style="display:none;margin-bottom:1rem;"></div>' +
+          '<div class="form-group">' +
+            '<label>القارئ الافتراضي لتلاوة القرآن</label>' +
+            '<select id="prayerReciterSelect"></select>' +
+          '</div>' +
+          '<button class="btn-primary" id="prayerRefreshBtn" style="width:100%;padding:.85rem;border:none;border-radius:10px;cursor:pointer;font-family:Cairo,sans-serif;font-size:.95rem;"><i class="fas fa-location-crosshairs"></i> تحديث الموقع والمواقيت</button>' +
+          '<p style="color:#777;font-size:.78rem;margin-top:1rem;line-height:1.6;">التذكير مبيتفعّلش إلا بعد ما نقدر نجيب مواقيت الصلاة فعليًا لموقعك — لو حصل أي فشل هنقولك وميوصلكش تنبيه غلط.</p>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    var reciterSel = document.getElementById("prayerReciterSelect");
+    reciterSel.innerHTML = RECITERS.map(function (r) { return '<option value="' + r.id + '">' + r.name + "</option>"; }).join("");
+    reciterSel.addEventListener("change", function () {
+      var s = loadState(); s.reciter = reciterSel.value; saveState();
+    });
+
+    document.getElementById("prayerModalCloseBtn").addEventListener("click", closePrayerSettingsModal);
+    modal.addEventListener("click", function (e) { if (e.target === modal) closePrayerSettingsModal(); });
+
+    document.getElementById("prayerEnableToggle").addEventListener("change", function (e) {
+      var checked = e.target.checked;
+      if (checked) {
+        var infoEl = document.getElementById("prayerLocationInfo");
+        infoEl.textContent = "⏳ بنحدد موقعك ونجيب مواقيت الصلاة...";
+        enableReminder().then(function (s) {
+          renderSettingsTimes();
+          if (typeof showToast === "function") showToast("✅ اتفعّل تذكير الأذان — هننبهك قبل كل صلاة بـ" + s.remindMinutes + " دقايق");
+        }).catch(function (err) {
+          e.target.checked = false;
+          document.getElementById("prayerLocationInfo").textContent = "❌ تعذّر تحديد موقعك أو جلب المواقيت — التذكير هيفضل متوقف";
+          if (typeof showToast === "function") showToast("❌ مقدرناش نفعّل التذكير: " + (err && err.message ? err.message : "تأكد من صلاحية الموقع الجغرافي"));
+        });
+      } else {
+        disableReminder();
+        if (typeof showToast === "function") showToast("🔕 اتلغى تذكير الأذان");
+      }
+    });
+
+    document.getElementById("prayerRefreshBtn").addEventListener("click", function () {
+      var infoEl = document.getElementById("prayerLocationInfo");
+      infoEl.textContent = "⏳ بنحدد موقعك ونجيب مواقيت الصلاة...";
+      enableReminder().then(function () {
+        renderSettingsTimes();
+        if (typeof showToast === "function") showToast("✅ اتحدّثت مواقيت الصلاة");
+      }).catch(function (err) {
+        infoEl.textContent = "❌ تعذّر تحديد موقعك أو جلب المواقيت";
+        if (typeof showToast === "function") showToast("❌ فشل التحديث: " + (err && err.message ? err.message : "حاول تاني"));
+      });
+    });
+
+    return modal;
+  }
+
+  function renderSettingsTimes() {
+    var s = loadState();
+    var infoEl = document.getElementById("prayerLocationInfo");
+    var listEl = document.getElementById("prayerTimesList");
+    if (!infoEl || !listEl) return;
+    if (s.timesReady && s.timings) {
+      infoEl.innerHTML = '📍 تم تحديد موقعك' + (s.city ? " (" + escapeHtml(s.city) + ")" : "");
+      listEl.style.display = "grid";
+      listEl.style.gridTemplateColumns = "repeat(3,1fr)";
+      listEl.style.gap = ".5rem";
+      listEl.innerHTML = PRAYERS.map(function (p) {
+        return '<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:.6rem;text-align:center;">' +
+          '<div style="color:#8b5cf6;font-size:.75rem;font-weight:700;">' + p.label + '</div>' +
+          '<div style="color:#fff;font-size:.95rem;margin-top:.2rem;">' + (s.timings[p.key] || "—") + '</div></div>';
+      }).join("");
+    } else {
+      infoEl.textContent = "📍 لسه محددناش موقعك";
+      listEl.style.display = "none";
+    }
+    var toggle = document.getElementById("prayerEnableToggle");
+    if (toggle) toggle.checked = !!s.enabled;
+    var reciterSel = document.getElementById("prayerReciterSelect");
+    if (reciterSel) reciterSel.value = s.reciter || DEFAULT_RECITER;
+  }
+
+  function renderSettingsTimesIfOpen() {
+    var modal = document.getElementById("prayerSettingsModal");
+    if (modal && modal.classList.contains("active")) renderSettingsTimes();
+  }
+
+  window.openPrayerSettingsModal = function () {
+    ensureSettingsModal();
+    renderSettingsTimes();
+    document.getElementById("prayerSettingsModal").classList.add("active");
+  };
+  window.closePrayerSettingsModal = function () {
+    var modal = document.getElementById("prayerSettingsModal");
+    if (modal) modal.classList.remove("active");
+  };
+  var closePrayerSettingsModal = window.closePrayerSettingsModal;
+
+  // ============================================================
+  // 🧠 Tool Calling حقيقي — الذكاء الاصطناعي (Groq) هو اللي بيقرر لوحده لو
+  // رسالة المستخدم محتاجة أداة من أدوات الصلاة/القرآن دي ولا لأ، وبيستخرج
+  // البراميترات بنفسه (اسم السورة، اسم القارئ...). مفيش أي مطابقة كلمات هنا خالص.
+  // ============================================================
+  var TOOL_DEFS = [
+    {
+      type: "function",
+      function: {
+        name: "open_prayer_settings",
+        description: "يفتح واجهة إعدادات مواقيت الصلاة والأذان للمستخدم عشان يشوفها أو يظبطها",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "enable_prayer_reminder",
+        description: "يفعّل تذكير الأذان: يحدد الموقع الجغرافي للمستخدم، يجيب مواقيت الصلاة الفعلية له، وينبهه قبل كل صلاة بعدد دقائق معيّن",
+        parameters: {
+          type: "object",
+          properties: {
+            minutes_before: { type: "number", description: "عدد الدقائق قبل الأذان اللي المستخدم عايز ينتبه فيها، لو مذكورش يبقى الافتراضي 5" }
+          },
+          required: []
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "disable_prayer_reminder",
+        description: "يلغي أو يوقف تذكير الأذان اللي كان مفعّل",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "play_quran_surah",
+        description: "يشغّل تلاوة صوتية لسورة معيّنة من سور القرآن الكريم، ممكن بصوت قارئ معيّن لو المستخدم ذكره",
+        parameters: {
+          type: "object",
+          properties: {
+            surah_name: { type: "string", description: "اسم السورة بالعربي زي ما المستخدم قاله، مثال: الكهف، يس، الفاتحة" },
+            reciter_name: { type: "string", description: "اسم القارئ لو المستخدم ذكره، مثال: السديس، العفاسي، عبدالباسط، الحصري، المنشاوي، المعيقلي، العجمي، الحذيفي، الشريم" }
+          },
+          required: ["surah_name"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "stop_quran",
+        description: "يوقف تشغيل التلاوة القرآنية الحالية",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
+    }
+  ];
+
+  var TOOL_ROUTER_SYSTEM_PROMPT =
+    "أنت موجّه أدوات (tool router) جوّه تطبيق فلك. الأدوات المتاحة ليك خاصة بمواقيت الصلاة/تذكير الأذان وتشغيل تلاوة القرآن الكريم فقط. " +
+    "لو رسالة المستخدم بتطلب حاجة من الأدوات دي بوضوح (حتى لو مش بنفس الكلمات اللي في وصف الأداة، المهم تفهم القصد)، نادِ الأداة المناسبة بالبراميترات الصح. " +
+    "لو رسالة المستخدم مش متعلقة بالصلاة أو الأذان أو تلاوة القرآن خالص (زي أسئلة فلكية، طلب كتابة كود، طلب توليد صورة، كلام عادي أو سلام)، متناديش أي أداة إطلاقًا ورد بس بكلمة: تجاهل";
+
+  function executeTool(name, args) {
+    args = args || {};
+    var s = loadState();
+    switch (name) {
+      case "open_prayer_settings":
+        window.openPrayerSettingsModal();
+        return { success: true, detail: "اتفتحت واجهة إعدادات الصلاة" };
+
+      case "enable_prayer_reminder":
+        window.openPrayerSettingsModal();
+        if (args.minutes_before && !isNaN(args.minutes_before)) {
+          s.remindMinutes = Math.max(1, Math.min(60, Math.round(args.minutes_before)));
+          saveState();
+        }
+        var toggle = document.getElementById("prayerEnableToggle");
+        if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event("change")); }
+        return { success: true, detail: "جاري تفعيل تذكير الأذان قبل " + (s.remindMinutes || 5) + " دقايق — هيتأكد فعليًا بس بعد ما ناخد موقعك الجغرافي وننجح نجيب مواقيت الصلاة" };
+
+      case "disable_prayer_reminder":
+        disableReminder();
+        var toggle2 = document.getElementById("prayerEnableToggle");
+        if (toggle2) toggle2.checked = false;
+        return { success: true, detail: "اتلغى تذكير الأذان" };
+
+      case "play_quran_surah":
+        var surah = findSurah(args.surah_name || "");
+        if (!surah) return { success: false, error: "معرفتش أحدد اسم السورة دي بالظبط، ممكن توضحه أكتر؟" };
+        var reciter = (args.reciter_name && findReciter(args.reciter_name)) || reciterById(s.reciter || DEFAULT_RECITER);
+        playSurah(surah.id, surah.name, reciter);
+        return { success: true, detail: "بتشغّل سورة " + surah.name + " بصوت " + reciter.name };
+
+      case "stop_quran":
+        stopQuran();
+        return { success: true, detail: "اتوقف تشغيل التلاوة" };
+
+      default:
+        return { success: false, error: "أداة غير معروفة" };
+    }
+  }
+
+  function displayToolTurn(userText, aiText) {
+    var msgs = document.getElementById("aiChatMessages");
+    if (!msgs) return;
+    var time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+
+    var uid1 = "u" + Date.now() + Math.floor(Math.random() * 1000);
+    var userDiv = document.createElement("div");
+    userDiv.className = "message sent";
+    userDiv.id = "msg-" + uid1;
+    userDiv.innerHTML = (typeof window.buildUserMsgContentHTML === "function" ? window.buildUserMsgContentHTML(userText) : escapeHtml(userText)) + '<div class="message-time">' + time + "</div>";
+    msgs.appendChild(userDiv);
+
+    var persona = (typeof window.getCurrentAIPersona === "function" && window.getCurrentAIPersona()) || { emoji: "🕌", name: "مساعد فلك" };
+    var uid2 = "a" + Date.now() + Math.floor(Math.random() * 1000);
+    var aiDiv = document.createElement("div");
+    aiDiv.className = "message received";
+    aiDiv.id = "msg-" + uid2;
+    aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">' + persona.emoji + " " + persona.name + '</div><div class="message-content">' + escapeHtml(aiText) + '</div><div class="message-time">' + time + "</div>";
+    msgs.appendChild(aiDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    if (window.aiChatHistory) {
+      window.aiChatHistory.push({ role: "user", content: userText });
+      window.aiChatHistory.push({ role: "assistant", content: aiText });
+    }
+  }
+
+  function showRoutingIndicator() {
+    var msgs = document.getElementById("aiChatMessages");
+    if (!msgs) return null;
+    var el = document.createElement("div");
+    el.className = "message received";
+    el.dataset.cosmosSkip = "1";
+    el.innerHTML = '<div class="message-content">' + (typeof window.buildCosmosThinkingHTML === "function" ? window.buildCosmosThinkingHTML("بيفكر") : "...") + "</div>";
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return el;
+  }
+
+  // ── بيرجع Promise<boolean>: true لو اتنفذ عن طريق أداة محلية، false لو الرسالة مالهاش علاقة
+  // بالصلاة/القرآن خالص (وبالتالي المسار العادي بتاع الذكاء الاصطناعي هو اللي هيرد) ──
+  async function tryHandleCommand(rawText) {
+    var text = (rawText || "").trim();
+    if (!text) return false;
+    var key = (typeof getAiApiKey === "function") ? getAiApiKey() : "";
+    if (!key) return false; // مفيش مفتاح Groq متاح — نسيب المسار العادي يتصرف (هو أصلاً هيطلب المفتاح)
+
+    var indicator = null;
+    try {
+      indicator = showRoutingIndicator();
+      var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages: [
+            { role: "system", content: TOOL_ROUTER_SYSTEM_PROMPT },
+            { role: "user", content: text }
+          ],
+          tools: TOOL_DEFS,
+          tool_choice: "auto",
+          max_tokens: 300,
+          temperature: 0
+        })
+      });
+      var data = await resp.json();
+      var msg = data && data.choices && data.choices[0] && data.choices[0].message;
+      if (!msg || !msg.tool_calls || !msg.tool_calls.length) {
+        if (indicator) indicator.remove();
+        return false;
+      }
+
+      var toolResults = [];
+      for (var i = 0; i < msg.tool_calls.length; i++) {
+        var call = msg.tool_calls[i];
+        var args = {};
+        try { args = JSON.parse(call.function.arguments || "{}"); } catch (eArgs) {}
+        var result = executeTool(call.function.name, args);
+        toolResults.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: JSON.stringify(result) });
+      }
+
+      // نداء تاني بسيط عشان ناخد رد طبيعي بالعربي المصري يتحط في الشات (مش تفاصيل تقنية)
+      var finalText = "تم ✅";
+      try {
+        var followupMessages = [
+          { role: "system", content: "أنت مساعد فلك الذكي. المستخدم طلب حاجة بخصوص الصلاة أو القرآن ونفّذتها له بالفعل. رد عليه بجملة قصيرة ودودة بالعربية المصرية تؤكد إنك نفذت طلبه، من غير ما تكرر أي تفاصيل تقنية زي أسماء الأدوات." },
+          { role: "user", content: text },
+          msg
+        ].concat(toolResults);
+        var resp2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: followupMessages, max_tokens: 150, temperature: 0.4 })
+        });
+        var data2 = await resp2.json();
+        var t2 = data2 && data2.choices && data2.choices[0] && data2.choices[0].message && data2.choices[0].message.content;
+        if (t2 && t2.trim()) finalText = t2.trim();
+      } catch (eFollow) {
+        // لو الرد الودود فشل، برضه الأداة نفذت فعليًا — بنعرض تأكيد بسيط
+        var firstOk = toolResults[0] && JSON.parse(toolResults[0].content);
+        finalText = (firstOk && firstOk.detail) || (firstOk && firstOk.error) || "تم ✅";
+      }
+
+      if (indicator) indicator.remove();
+      displayToolTurn(text, finalText);
+      return true;
+    } catch (eRoute) {
+      console.warn("[صلاتي] تعذّر تحديد نوع الأمر عبر الذكاء الاصطناعي، هيتبعت المسار العادي:", eRoute);
+      if (indicator) indicator.remove();
+      return false;
+    }
+  }
+
+  window.PrayerQuran = {
+    tryHandleCommand: tryHandleCommand,
+    open: window.openPrayerSettingsModal
+  };
+
+  // ── تشغيل المجدول أوتوماتيك لو التذكير كان مفعّل من قبل ──
+  document.addEventListener("DOMContentLoaded", function () {
+    var s = loadState();
+    if (s.enabled) startScheduler();
+  });
+  if (document.readyState !== "loading") {
+    var s0 = loadState();
+    if (s0.enabled) startScheduler();
+  }
+
+  // ============================================================
+  // 🔌 اعتراض رسائل الشات: كل رسالة نصية (من غير مرفقات) بتتبعت الأول لموجّه
+  // الأدوات (tryHandleCommand) اللي بيسأل Groq "هل ده أمر صلاة/قرآن؟". لو أيوه،
+  // بتتنفذ الأداة محليًا ومنبعتش حاجة للمسار العادي. لو لأ، الرسالة بتكمل زي
+  // ما كانت للمسار العادي (سؤال فلكي، كود، صورة... إلخ) من غير أي تغيير فيه.
+  // ============================================================
+  function hookIntoAIChat() {
+    if (typeof window.sendAIMessage !== "function" || window.__prayerQuranHooked) return;
+    window.__prayerQuranHooked = true;
+    var _prevSend = window.sendAIMessage;
+    window.sendAIMessage = async function (injectedMsg, _fromQueueDrain) {
+      if (!injectedMsg && !_fromQueueDrain) {
+        var inp = document.getElementById("aiChatInput");
+        var raw = inp ? inp.value.trim() : "";
+        var hasAttachments = (window._aiSelectedImages && window._aiSelectedImages.length) || (window._aiSelectedFiles && window._aiSelectedFiles.length);
+        if (raw && !hasAttachments) {
+          var handled = await tryHandleCommand(raw);
+          if (handled) {
+            if (inp) { inp.value = ""; inp.style.height = ""; inp.dispatchEvent(new Event("input")); }
+            return;
+          }
+        }
+      }
+      return _prevSend.apply(this, arguments);
+    };
+  }
+  // بنحاول نعمل hook فورًا، ولو الدالة لسه مش موجودة (لسه الصفحة بتحمّل) بنعيد المحاولة كل نص ثانية
+  hookIntoAIChat();
+  var _hookRetry = setInterval(function () {
+    hookIntoAIChat();
+    if (window.__prayerQuranHooked) clearInterval(_hookRetry);
+  }, 500);
+
 })();
