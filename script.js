@@ -15933,3 +15933,565 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 
   console.log('✅ Cosmos AI ChatGPT-style UI جاهزة — typewriter + action bar + thinking phrases');
 })();
+
+
+/* ======================================================================
+   ================  وحدة مواقيت الصلاة + القبلة + الأذان  ================
+   ======================================================================
+   - بتحدد موقع المستخدم (Geolocation) وتجيب مواقيت الصلاة (Aladhan API)
+   - بتحسب اتجاه القبلة رياضيًا من إحداثيات المستخدم
+   - بتنبه قبل كل صلاة بـ5 دقايق + بتشغل صوت الأذان في وقت الصلاة (اختياري)
+   - كل حاجة بتتخزن في localStorage عشان متطلبش نت كل مرة تفتح التطبيق
+   ====================================================================== */
+(function () {
+  "use strict";
+
+  var KAABA_LAT = 21.4225, KAABA_LON = 39.8262;
+
+  // صوت أذان عام (مستخدم بشكل واسع في مشاريع مفتوحة المصدر لمواقيت الصلاة)
+  var ADHAN_AUDIO_URL = "https://www.islamcan.com/audio/adhan/azan1.mp3";
+
+  var PRAYER_META = [
+    { key: "Fajr",    name: "الفجر",   icon: "fa-cloud-moon",  countable: true  },
+    { key: "Sunrise", name: "الشروق",  icon: "fa-sun",         countable: false },
+    { key: "Dhuhr",   name: "الظهر",   icon: "fa-sun",         countable: true  },
+    { key: "Asr",     name: "العصر",   icon: "fa-cloud-sun",   countable: true  },
+    { key: "Maghrib", name: "المغرب",  icon: "fa-moon",        countable: true  },
+    { key: "Isha",    name: "العشاء",  icon: "fa-star-and-crescent", countable: true }
+  ];
+
+  var state = {
+    lat: null, lon: null, city: "",
+    dateKey: "", timings: null,   // {Fajr:"04:32", ...} بصيغة 24 ساعة
+    qiblaDeg: null,
+    reminderOn: true, adhanOn: true,
+    timers: [],
+    tickInterval: null,
+    loaded: false, loading: false, error: null
+  };
+
+  function todayKey(d) {
+    d = d || new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+
+  function loadPrefs() {
+    try {
+      var loc = JSON.parse(localStorage.getItem("falak_prayer_loc") || "null");
+      if (loc && loc.lat && loc.lon) { state.lat = loc.lat; state.lon = loc.lon; state.city = loc.city || ""; }
+      var r = localStorage.getItem("falak_prayer_reminder_on");
+      var a = localStorage.getItem("falak_prayer_adhan_on");
+      state.reminderOn = r === null ? true : r === "1";
+      state.adhanOn    = a === null ? true : a === "1";
+    } catch (e) {}
+  }
+
+  function savePrefs() {
+    try {
+      localStorage.setItem("falak_prayer_reminder_on", state.reminderOn ? "1" : "0");
+      localStorage.setItem("falak_prayer_adhan_on", state.adhanOn ? "1" : "0");
+    } catch (e) {}
+  }
+
+  function saveLocation() {
+    try {
+      localStorage.setItem("falak_prayer_loc", JSON.stringify({ lat: state.lat, lon: state.lon, city: state.city }));
+    } catch (e) {}
+  }
+
+  // ── حساب اتجاه القبلة (bearing) من موقع المستخدم لمكة ──
+  function calcQibla(lat, lon) {
+    var φ1 = lat * Math.PI / 180, φ2 = KAABA_LAT * Math.PI / 180;
+    var Δλ = (KAABA_LON - lon) * Math.PI / 180;
+    var y = Math.sin(Δλ) * Math.cos(φ2);
+    var x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    var θ = Math.atan2(y, x) * 180 / Math.PI;
+    return (θ + 360) % 360;
+  }
+
+  function getLocation() {
+    return new Promise(function (resolve, reject) {
+      if (!navigator.geolocation) { reject(new Error("no-geo")); return; }
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
+        function (err) { reject(err); },
+        { enableHighAccuracy: false, timeout: 12000, maximumAge: 3600000 }
+      );
+    });
+  }
+
+  async function reverseGeocodeCity(lat, lon) {
+    try {
+      var res = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lon + "&localityLanguage=ar");
+      var d = await res.json();
+      return d.city || d.locality || d.principalSubdivision || d.countryName || "موقعك الحالي";
+    } catch (e) { return "موقعك الحالي"; }
+  }
+
+  function fmtDateForApi(d) {
+    d = d || new Date();
+    function pad(n) { return String(n).padStart(2, "0"); }
+    return pad(d.getDate()) + "-" + pad(d.getMonth() + 1) + "-" + d.getFullYear();
+  }
+
+  function cleanTime(t) {
+    // Aladhan بيرجع أحيانًا "04:32 (EET)" — بنشيل أي حاجة بعد المسافة
+    return (t || "").split(" ")[0];
+  }
+
+  async function fetchTimings(lat, lon, d) {
+    var url = "https://api.aladhan.com/v1/timings/" + fmtDateForApi(d) +
+      "?latitude=" + lat + "&longitude=" + lon + "&method=5";
+    var res = await fetch(url);
+    var data = await res.json();
+    if (!data || !data.data || !data.data.timings) throw new Error("bad-timings-response");
+    var raw = data.data.timings;
+    var out = {};
+    PRAYER_META.forEach(function (p) { out[p.key] = cleanTime(raw[p.key]); });
+    return out;
+  }
+
+  function timeStrToDate(hhmm, baseDate) {
+    var parts = hhmm.split(":");
+    var d = new Date(baseDate || new Date());
+    d.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), 0, 0);
+    return d;
+  }
+
+  // ── يرجّع أقرب صلاة جاية (باستثناء الشروق) ──
+  function getNextPrayer() {
+    if (!state.timings) return null;
+    var now = new Date();
+    var candidates = PRAYER_META.filter(function (p) { return p.countable; });
+    for (var i = 0; i < candidates.length; i++) {
+      var t = timeStrToDate(state.timings[candidates[i].key], now);
+      if (t.getTime() > now.getTime()) return { meta: candidates[i], time: t };
+    }
+    // كل صلوات النهارده فاتت — نرجع فجر بكرة (تقريبي بنفس توقيت فجر النهارده)
+    var tomorrow = new Date(now.getTime() + 24 * 3600 * 1000);
+    var fajrTomorrow = timeStrToDate(state.timings.Fajr, tomorrow);
+    return { meta: PRAYER_META[0], time: fajrTomorrow, isTomorrow: true };
+  }
+
+  function clearAllTimers() {
+    state.timers.forEach(function (id) { clearTimeout(id); });
+    state.timers = [];
+  }
+
+  // ── جدولة تنبيه قبل كل صلاة بـ5 دقايق + تشغيل الأذان في وقتها ──
+  function scheduleAlarms() {
+    clearAllTimers();
+    if (!state.timings) return;
+    var now = new Date();
+    PRAYER_META.filter(function (p) { return p.countable; }).forEach(function (p) {
+      var prayerTime = timeStrToDate(state.timings[p.key], now);
+      if (prayerTime.getTime() <= now.getTime()) return; // فات بالفعل
+      var reminderTime = new Date(prayerTime.getTime() - 5 * 60 * 1000);
+
+      if (state.reminderOn && reminderTime.getTime() > now.getTime()) {
+        var idR = setTimeout(function () { fireReminder(p); }, reminderTime.getTime() - now.getTime());
+        state.timers.push(idR);
+      }
+      var idP = setTimeout(function () { firePrayerTime(p); }, prayerTime.getTime() - now.getTime());
+      state.timers.push(idP);
+    });
+  }
+
+  function requestNotifyPermissionSilently() {
+    try {
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    } catch (e) {}
+  }
+
+  function nativeNotify(title, body) {
+    try {
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body: body, icon: "/icon-192.png" });
+      }
+    } catch (e) {}
+  }
+
+  function fireReminder(p) {
+    if (typeof showToast === "function") showToast("🕌 تبقى 5 دقايق على أذان " + p.name);
+    nativeNotify("قربت صلاة " + p.name, "تبقى 5 دقايق على أذان " + p.name);
+    try { if (window.SoundEffects && window.SoundEffects.tick) window.SoundEffects.tick(); } catch (e) {}
+    renderModalIfOpen();
+  }
+
+  var _adhanAudioEl = null;
+  function firePrayerTime(p) {
+    if (typeof showToast === "function") showToast("🕌 حان الآن موعد صلاة " + p.name);
+    nativeNotify("حان وقت الصلاة", "حان الآن موعد صلاة " + p.name);
+    if (state.adhanOn) {
+      try {
+        if (_adhanAudioEl) { _adhanAudioEl.pause(); _adhanAudioEl = null; }
+        _adhanAudioEl = new Audio(ADHAN_AUDIO_URL);
+        _adhanAudioEl.play().catch(function () {});
+      } catch (e) {}
+    }
+    renderModalIfOpen();
+    renderFabBadge();
+  }
+
+  // ── العدّاد التنازلي (بادج الزرار العائم + المودال) ──
+  function tickCountdown() {
+    var next = getNextPrayer();
+    if (!next) return;
+    var now = new Date();
+    var diff = Math.max(0, next.time.getTime() - now.getTime());
+    var h = Math.floor(diff / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    var pad = function (n) { return String(n).padStart(2, "0"); };
+    var label = (h > 0 ? h + ":" : "") + pad(m) + ":" + pad(s);
+
+    var badge = document.getElementById("prayerFabBadge");
+    if (badge) { badge.style.display = "block"; badge.textContent = next.meta.name + " " + label; }
+
+    var cd = document.getElementById("prayerCountdownVal");
+    if (cd) cd.textContent = label;
+    var nn = document.getElementById("prayerNextName");
+    if (nn) nn.textContent = next.meta.name + (next.isTomorrow ? " (بكرة)" : "");
+
+    // لو اليوم اتغير (بعد نص الليل) نجيب مواقيت جديدة
+    if (todayKey() !== state.dateKey) refreshForNewDay();
+  }
+
+  async function refreshForNewDay() {
+    if (state.lat == null) return;
+    try {
+      state.timings = await fetchTimings(state.lat, state.lon);
+      state.dateKey = todayKey();
+      scheduleAlarms();
+      renderModalIfOpen();
+    } catch (e) {}
+  }
+
+  function renderModalIfOpen() {
+    var modal = document.getElementById("prayerModal");
+    if (modal && modal.classList.contains("active")) renderModal();
+  }
+
+  function qiblaHint(deg) {
+    var dirs = ["الشمال", "الشمال الشرقي", "الشرق", "الجنوب الشرقي", "الجنوب", "الجنوب الغربي", "الغرب", "الشمال الغربي"];
+    var idx = Math.round(deg / 45) % 8;
+    return dirs[idx];
+  }
+
+  function renderModal() {
+    var body = document.getElementById("prayerModalBody");
+    if (!body) return;
+
+    if (state.loading) {
+      body.innerHTML = '<div class="prayer-loading-state"><i class="fas fa-spinner fa-spin"></i>جاري تحديد موقعك لحساب مواقيت الصلاة...</div>';
+      return;
+    }
+    if (state.error || !state.timings) {
+      body.innerHTML =
+        '<div class="prayer-loading-state">' +
+          '<i class="fas fa-map-marker-alt"></i>' +
+          'محتاجين نعرف موقعك عشان نحسب مواقيت الصلاة والقبلة بدقة.' +
+          '<br><button onclick="PrayerModule.requestAndLoad()"><i class="fas fa-location-crosshairs"></i> تحديد موقعي</button>' +
+        '</div>';
+      return;
+    }
+
+    var next = getNextPrayer();
+    var now = new Date();
+
+    var rows = PRAYER_META.map(function (p) {
+      var t = state.timings[p.key];
+      var isActive = next && next.meta.key === p.key && !next.isTomorrow;
+      return '<div class="prayer-row' + (isActive ? ' active-now' : '') + '">' +
+        '<div class="prayer-row-name"><i class="fas ' + p.icon + '"></i> ' + p.name + '</div>' +
+        '<div class="prayer-row-time">' + t + '</div>' +
+      '</div>';
+    }).join("");
+
+    var qDeg = state.qiblaDeg != null ? Math.round(state.qiblaDeg) : null;
+
+    body.innerHTML =
+      '<div class="prayer-hero">' +
+        '<div class="prayer-hero-city"><i class="fas fa-location-dot"></i>' + escapeHtml(state.city || "موقعك الحالي") + '</div>' +
+        '<div class="prayer-hero-next">الصلاة الجاية: <span id="prayerNextName">' + (next ? next.meta.name + (next.isTomorrow ? " (بكرة)" : "") : "—") + '</span></div>' +
+        '<div class="prayer-hero-countdown" id="prayerCountdownVal">--:--</div>' +
+      '</div>' +
+      '<div class="prayer-list">' + rows + '</div>' +
+      (qDeg != null ?
+        '<div class="prayer-qibla-box">' +
+          '<div class="prayer-qibla-compass"><div class="qc-ring"><span class="qc-kaaba">🕋</span>' +
+            '<div class="qc-arrow" style="transform:translateX(-50%) rotate(' + qDeg + 'deg)"></div>' +
+          '</div></div>' +
+          '<div class="prayer-qibla-text"><b>اتجاه القبلة: ' + qDeg + '° من الشمال</b>' +
+          '<span>لف بالموبايل لحد ما بوصلة الشمال (لو فاتح تطبيق بوصلة) تظبط على ' + qDeg + '° — يعني ناحية ' + qiblaHint(qDeg) + ' تقريبًا.</span></div>' +
+        '</div>' : '') +
+      '<div class="prayer-settings-row"><span><i class="fas fa-bell" style="color:#10b981;margin-left:.4rem"></i> تنبيه قبل الصلاة بـ5 دقايق</span>' +
+        '<button class="prayer-toggle ' + (state.reminderOn ? 'on' : '') + '" onclick="PrayerModule.toggleReminder()"></button></div>' +
+      '<div class="prayer-settings-row"><span><i class="fas fa-volume-high" style="color:#10b981;margin-left:.4rem"></i> تشغيل الأذان تلقائيًا</span>' +
+        '<button class="prayer-toggle ' + (state.adhanOn ? 'on' : '') + '" onclick="PrayerModule.toggleAdhan()"></button></div>' +
+      '<div class="prayer-settings-row"><span><i class="fas fa-rotate" style="color:#10b981;margin-left:.4rem"></i> تحديث الموقع</span>' +
+        '<button onclick="PrayerModule.requestAndLoad()" style="background:none;border:1px solid rgba(16,185,129,.4);color:#6ee7b7;border-radius:8px;padding:.35rem .8rem;font-family:Cairo,sans-serif;cursor:pointer"><i class="fas fa-location-crosshairs"></i></button></div>';
+
+    tickCountdown();
+  }
+
+  function renderFabBadge() { tickCountdown(); }
+
+  async function loadAll(silent) {
+    state.loading = !silent;
+    state.error = null;
+    renderModalIfOpen();
+    try {
+      var loc = await getLocation();
+      state.lat = loc.lat; state.lon = loc.lon;
+      state.city = await reverseGeocodeCity(loc.lat, loc.lon);
+      saveLocation();
+      state.qiblaDeg = calcQibla(loc.lat, loc.lon);
+      state.timings = await fetchTimings(loc.lat, loc.lon);
+      state.dateKey = todayKey();
+      state.loaded = true;
+      scheduleAlarms();
+      requestNotifyPermissionSilently();
+    } catch (e) {
+      state.error = e;
+      if (!silent && typeof showToast === "function") showToast("❌ محتاجين إذن الموقع عشان نحسب مواقيت الصلاة والقبلة");
+    } finally {
+      state.loading = false;
+      renderModalIfOpen();
+      renderFabBadge();
+    }
+  }
+
+  // ── لو عندنا موقع محفوظ من قبل، نحمّل المواقيت من غير ما نطلب إذن تاني كل مرة ──
+  async function initFromCache() {
+    if (state.lat == null) return false;
+    try {
+      state.qiblaDeg = calcQibla(state.lat, state.lon);
+      state.timings = await fetchTimings(state.lat, state.lon);
+      state.dateKey = todayKey();
+      state.loaded = true;
+      scheduleAlarms();
+      return true;
+    } catch (e) { return false; }
+  }
+
+  async function init() {
+    loadPrefs();
+    if (state.tickInterval) clearInterval(state.tickInterval);
+    state.tickInterval = setInterval(tickCountdown, 1000);
+    var okFromCache = await initFromCache();
+    if (!okFromCache) {
+      // أول مرة أو الموقع مش متاح — نحاول نجيبه بهدوء من غير ما نزعج المستخدم برسائل خطأ
+      await loadAll(true);
+    }
+    renderFabBadge();
+  }
+
+  window.PrayerModule = {
+    init: init,
+    requestAndLoad: function () { loadAll(false); },
+    toggleReminder: function () { state.reminderOn = !state.reminderOn; savePrefs(); scheduleAlarms(); renderModalIfOpen(); },
+    toggleAdhan: function () { state.adhanOn = !state.adhanOn; savePrefs(); renderModalIfOpen(); },
+    getState: function () { return state; }
+  };
+
+  window.openPrayerModal = function () {
+    var m = document.getElementById("prayerModal");
+    if (!m) return;
+    m.classList.add("active");
+    document.body.style.overflow = "hidden";
+    if (!state.loaded && !state.loading) window.PrayerModule.requestAndLoad();
+    renderModal();
+  };
+  window.closePrayerModal = function () {
+    var m = document.getElementById("prayerModal");
+    if (m) m.classList.remove("active");
+    document.body.style.overflow = "";
+  };
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    setTimeout(init, 1500);
+  } else {
+    window.addEventListener("DOMContentLoaded", function () { setTimeout(init, 1500); });
+  }
+})();
+
+
+/* ======================================================================
+   ================  وحدة تشغيل القرآن بالقارئ (من داخل شات AI)  ================
+   ======================================================================
+   المستخدم بيكتب لـ AlalaGyGyAgha حاجة زي "شغللي سورة الكهف بصوت العفاسي"
+   والموديول ده بيكتشف الطلب، يحدد رقم السورة والقارئ، ويشغّل الصوت مباشرة
+   جوه شات الـAI من غير ما نحتاج نكلم Groq أصلًا (تنفيذ حتمي، مش توليد نص).
+   ====================================================================== */
+(function () {
+  "use strict";
+
+  var SURAHS = [
+    "الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
+    "هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
+    "الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
+    "لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر",
+    "فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق",
+    "الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة",
+    "الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج",
+    "نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس",
+    "التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد",
+    "الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات",
+    "القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر",
+    "المسد","الإخلاص","الفلق","الناس"
+  ];
+
+  // خرائط سيرفرات mp3quran.net المعروفة والمستقرة لأشهر القراء
+  var RECITERS = [
+    { aliases: ["العفاسي","مشاري","مشاري العفاسي","مشاري راشد"], name: "مشاري راشد العفاسي", base: "https://server8.mp3quran.net/afs/" },
+    { aliases: ["عبدالباسط","عبد الباسط","عبدالباسط عبدالصمد"], name: "عبد الباسط عبد الصمد", base: "https://server7.mp3quran.net/basit/" },
+    { aliases: ["الحصري","محمود الحصري","محمود خليل الحصري"], name: "محمود خليل الحصري", base: "https://server13.mp3quran.net/husr/" },
+    { aliases: ["السديس","عبدالرحمن السديس","عبد الرحمن السديس"], name: "عبد الرحمن السديس", base: "https://server11.mp3quran.net/sds/" },
+    { aliases: ["الشريم","سعود الشريم"], name: "سعود الشريم", base: "https://server10.mp3quran.net/shur/" },
+    { aliases: ["المعيقلي","ماهر المعيقلي","ماهر"], name: "ماهر المعيقلي", base: "https://server12.mp3quran.net/maher/" },
+    { aliases: ["الدوسري","ياسر الدوسري","ياسر"], name: "ياسر الدوسري", base: "https://server11.mp3quran.net/yasser/" },
+    { aliases: ["المنشاوي","محمد صديق المنشاوي"], name: "محمد صديق المنشاوي", base: "https://server10.mp3quran.net/minsh/" },
+    { aliases: ["القطامي","ناصر القطامي"], name: "ناصر القطامي", base: "https://server6.mp3quran.net/qtm/" },
+    { aliases: ["الغامدي","سعد الغامدي"], name: "سعد الغامدي", base: "https://server7.mp3quran.net/s_gmd/" }
+  ];
+  var DEFAULT_RECITER = RECITERS[0];
+
+  function normalize(s) {
+    return (s || "")
+      .replace(/[\u064B-\u0652]/g, "")           // تشكيل
+      .replace(/[إأآا]/g, "ا")
+      .replace(/ى/g, "ي").replace(/ة/g, "ه")
+      .replace(/^ال/, "")
+      .replace(/\s+/g, "")
+      .trim();
+  }
+
+  function findSurahNumber(text) {
+    var t = text.trim();
+    var asNum = parseInt(t, 10);
+    if (!isNaN(asNum) && asNum >= 1 && asNum <= 114) return asNum;
+    var nt = normalize(t);
+    for (var i = 0; i < SURAHS.length; i++) {
+      var sn = normalize(SURAHS[i]);
+      if (nt === sn || nt.indexOf(sn) !== -1 || sn.indexOf(nt) !== -1) return i + 1;
+    }
+    return null;
+  }
+
+  function findReciter(text) {
+    if (!text) return DEFAULT_RECITER;
+    var nt = normalize(text);
+    for (var i = 0; i < RECITERS.length; i++) {
+      var r = RECITERS[i];
+      for (var j = 0; j < r.aliases.length; j++) {
+        if (nt.indexOf(normalize(r.aliases[j])) !== -1) return r;
+      }
+    }
+    return DEFAULT_RECITER;
+  }
+
+  // ── كشف الطلب من رسالة المستخدم ──
+  function detectRequest(userMsg) {
+    var t = (userMsg || "").trim();
+    if (!t) return null;
+    var playVerb = /(شغل|شغّل|شغلي|افتح|سمعني|اسمعني|اسمعنى|ابعتلي|نزلي|play)/i.test(t);
+    var hasSurahWord = /سور[ةه]/.test(t);
+    if (!playVerb || !hasSurahWord) return null;
+
+    var m = t.match(/سور[ةه]\s+([^\n]+)/);
+    if (!m) return null;
+    var rest = m[1];
+
+    var reciterMatch = rest.match(/(?:بصوت|بقراءة|للقارئ|بقرائة|قارئ|صوت الشيخ|صوت)\s+(.+)/);
+    var surahPart = reciterMatch ? rest.slice(0, reciterMatch.index) : rest;
+    var reciterPart = reciterMatch ? reciterMatch[1] : "";
+
+    surahPart = surahPart.replace(/[،,.؟!]+$/, "").trim();
+    reciterPart = reciterPart.replace(/[،,.؟!]+$/, "").trim();
+
+    var surahNum = findSurahNumber(surahPart);
+    if (!surahNum) return null;
+
+    var reciter = findReciter(reciterPart);
+    return { surahNum: surahNum, surahName: SURAHS[surahNum - 1], reciter: reciter };
+  }
+
+  var _currentQuranAudio = null;
+
+  function buildAudioUrl(reciter, surahNum) {
+    var padded = String(surahNum).padStart(3, "0");
+    return reciter.base + padded + ".mp3";
+  }
+
+  function playInChat(req) {
+    var msgs = document.getElementById("aiChatMessages");
+    if (!msgs) return false;
+
+    if (_currentQuranAudio) { try { _currentQuranAudio.pause(); } catch (e) {} }
+
+    var url = buildAudioUrl(req.reciter, req.surahNum);
+    var wrap = document.createElement("div");
+    wrap.className = "message received";
+    var cardId = "qpc_" + Date.now();
+    wrap.innerHTML =
+      '<div class="quran-play-card" id="' + cardId + '">' +
+        '<div class="qpc-title"><i class="fas fa-book-quran"></i> سورة ' + escapeHtml(req.surahName) + '</div>' +
+        '<div class="qpc-sub">بصوت الشيخ ' + escapeHtml(req.reciter.name) + '</div>' +
+        '<audio controls autoplay src="' + url + '"></audio>' +
+      '</div>';
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    var audioEl = wrap.querySelector("audio");
+    _currentQuranAudio = audioEl;
+    audioEl.addEventListener("error", function () {
+      var card = document.getElementById(cardId);
+      if (card) {
+        card.querySelector(".qpc-sub").textContent = "تعذر تشغيل هذا القارئ الآن — جرّب تكتب اسم قارئ تاني زي العفاسي أو السديس";
+      }
+      if (typeof showToast === "function") showToast("❌ تعذر تشغيل الصوت، جرّب قارئ تاني");
+    });
+    return true;
+  }
+
+  window.QuranPlayer = { detectRequest: detectRequest, playInChat: playInChat };
+
+  // ── نلف حوالين sendAIMessage: لو الرسالة أمر تشغيل قرآن، ننفذه مباشرة من غير استدعاء الذكاء الاصطناعي ──
+  var _origSendAIMessage = null;
+  function wrapSendAIMessage() {
+    if (typeof window.sendAIMessage !== "function" || window.sendAIMessage.__quranWrapped) return;
+    _origSendAIMessage = window.sendAIMessage;
+    var wrapped = async function (injectedMsg, _fromQueueDrain) {
+      if (!injectedMsg) {
+        var inp = document.getElementById("aiChatInput");
+        var raw = inp ? inp.value : "";
+        var req = detectRequest(raw);
+        if (req) {
+          // نعرض رسالة المستخدم زي أي رسالة عادية في الشات قبل ما نشغل الصوت
+          var msgs = document.getElementById("aiChatMessages");
+          if (msgs) {
+            var userDiv = document.createElement("div");
+            userDiv.className = "message sent";
+            userDiv.innerHTML = '<div class="message-content">' + escapeHtml(raw) + '</div>';
+            msgs.appendChild(userDiv);
+            msgs.scrollTop = msgs.scrollHeight;
+          }
+          if (inp) inp.value = "";
+          if (typeof window.__updateAISendBtnUI === "function") window.__updateAISendBtnUI();
+          playInChat(req);
+          return;
+        }
+      }
+      return _origSendAIMessage(injectedMsg, _fromQueueDrain);
+    };
+    wrapped.__quranWrapped = true;
+    window.sendAIMessage = wrapped;
+  }
+
+  // sendAIMessage بيتعرّف/يتعدّل جوه setTimeout في آخر السكريبت — نستنى شوية ونتأكد إننا اللف الأخير
+  setTimeout(wrapSendAIMessage, 800);
+  setTimeout(wrapSendAIMessage, 2000);
+})();
