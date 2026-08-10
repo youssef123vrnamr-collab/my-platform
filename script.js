@@ -14133,12 +14133,14 @@ function slStopAllAnimations() {
         }
 
         window.__cosmosBusy = true;
+        window.__cosmosBusySince = Date.now();
         window.__cosmosAbortController = new AbortController();
         window.__updateAISendBtnUI();
         try {
           await _coreSend(injectedMsg);
         } finally {
           window.__cosmosBusy = false;
+          window.__cosmosBusySince = null;
           window.__cosmosAbortController = null;
           window.__updateAISendBtnUI();
         }
