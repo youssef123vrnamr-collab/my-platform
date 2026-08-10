@@ -12775,7 +12775,13 @@ function slStopAllAnimations() {
       // كان بيتفعّل غلط في الحالات دي ويجيب نتائج مالهاش علاقة (مواقع/مجتمعات عشوائية). نمنعه هنا تمامًا،
       // ونسيب بس البحث الصريح (لو المستخدم فعلاً كتب كلمة زي "ابحث" أو "آخر أخبار") شغال زي ما هو. ──
       var _pageBuildVerbs = /(اعمل|أعمل|اعملي|صمم|أصمم|اصمم|ابني|ابنيلي|انشئ|أنشئ|اكتب|اكتبلي|صمملي|design|create|build)/i;
-      var _looksLikeBuildRequest = /(كود|لعبة|لعبه|موقع|تطبيق|سكربت|سكريبت|أداة|اداة|برنامج|مكوّن|مكون|كومبوننت|component)/i.test(userMsg)
+      // ── علامة اختيارية من موجّه الأدوات (tool router) اللي بيسأل الذكاء الاصطناعي نفسه هل ده طلب
+      // بناء كود قبل ما نوصل هنا خالص — بتتفعّل لو الصياغة مش بنفس الكلمات المعتادة تحت. لو مفعّلة،
+      // بتضاف على الفحص العادي (مش بديلة له) — أي فشل أو غياب لها، السلوك القديم بالظبط زي ما كان ──
+      var _aiFlaggedBuild = !!window.__cosmosForceBuildRequest;
+      window.__cosmosForceBuildRequest = false;
+      var _looksLikeBuildRequest = _aiFlaggedBuild
+        || /(كود|لعبة|لعبه|موقع|تطبيق|سكربت|سكريبت|أداة|اداة|برنامج|مكوّن|مكون|كومبوننت|component)/i.test(userMsg)
         || (/(صفحة|صفحه)/i.test(userMsg) && _pageBuildVerbs.test(userMsg)); // ── "صفحة" لوحدها (بدون فعل بناء) مش كفاية — عشان أسئلة التنقل زي "ازاي اروح صفحة البروفايل" متتلخبطش مع طلب بناء صفحة جديدة ──
       var _needsSearch = _tavilyReady && _userAskedToSearch;
       if (_tavilyReady && !_needsSearch && !_looksLikeBuildRequest && typeof window.classifyNeedsSearch === 'function') {
@@ -12876,7 +12882,7 @@ function slStopAllAnimations() {
       // عشان يقدر يكتب كود كامل واحترافي من غير ما يتقطع أو يختصر بسبب حد التوكنز —
       // 8000 كانت بتتقطع فعليًا مع صفحات فيها CSS تفصيلي + JS كامل للعبة (زي السلم والتعبان)،
       // فرفعناها لمساحة أكبر بكتير (الموديل بيدعم لحد ~32-65 ألف توكن إخراج). ──
-      var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
+      var _isCodeReq = _looksLikeBuildRequest || /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
       var _mainMaxTok     = _isCodeReq ? 28000 : 4500;
       var _fallbackMaxTok = _isCodeReq ? 28000 : 4000;
       var _geminiMaxTok   = _isCodeReq ? 28000 : 4500;
@@ -16480,13 +16486,35 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         description: "يوقف تشغيل التلاوة القرآنية الحالية",
         parameters: { type: "object", properties: {}, required: [] }
       }
+    },
+    {
+      type: "function",
+      function: {
+        name: "generate_image",
+        description: "يولّد صورة بالذكاء الاصطناعي بناءً على وصف ويعرضها في الشات. استخدمها لما المستخدم يطلب صورة/رسمة/تصميم بصري لأي حاجة — مش لازم يقول كلمة 'ارسم' حرفيًا، المهم يكون قصده إنشاء صورة",
+        parameters: {
+          type: "object",
+          properties: {
+            image_prompt: { type: "string", description: "وصف واضح ومفصّل بالعربي لمحتوى الصورة المطلوبة، مستخرج من كلام المستخدم بالكامل" }
+          },
+          required: ["image_prompt"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "flag_code_build_request",
+        description: "علامة داخلية بس (مفيهاش أي رد للمستخدم): نادِها لما تكتشف إن المستخدم عايز إنشاء/كتابة كود برمجي أو بناء موقع/تطبيق/لعبة/سكريبت/مكوّن برمجي من الصفر أو تعديل كود موجود — حتى لو مقالش كلمة 'كود' حرفيًا. متستخدمهاش لأسئلة عادية عن البرمجة (زي شرح مفهوم) — بس لطلب إنشاء أو تعديل فعلي",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
     }
   ];
 
   var TOOL_ROUTER_SYSTEM_PROMPT =
-    "أنت موجّه أدوات (tool router) جوّه تطبيق فلك. الأدوات المتاحة ليك خاصة بمواقيت الصلاة/تذكير الأذان وتشغيل تلاوة القرآن الكريم فقط. " +
-    "لو رسالة المستخدم بتطلب حاجة من الأدوات دي بوضوح (حتى لو مش بنفس الكلمات اللي في وصف الأداة، المهم تفهم القصد)، نادِ الأداة المناسبة بالبراميترات الصح. " +
-    "لو رسالة المستخدم مش متعلقة بالصلاة أو الأذان أو تلاوة القرآن خالص (زي أسئلة فلكية، طلب كتابة كود، طلب توليد صورة، كلام عادي أو سلام)، متناديش أي أداة إطلاقًا ورد بس بكلمة: تجاهل";
+    "أنت موجّه أدوات (tool router) جوّه تطبيق فلك. عندك أدوات لثلاث مجموعات: (1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) علامة داخلية لو الطلب بناء/تعديل كود برمجي. " +
+    "افهم قصد المستخدم مش بس الكلمات الحرفية، ونادِ الأداة أو الأدوات المناسبة بالبراميترات الصح — ممكن تنادي أكتر من أداة في نفس الرسالة لو محتاج. " +
+    "لو رسالة المستخدم مش متعلقة بأي حاجة من دول (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة إطلاقًا.";
 
   function executeTool(name, args) {
     args = args || {};
@@ -16528,18 +16556,24 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     }
   }
 
-  function displayToolTurn(userText, aiText) {
+  function displayUserBubbleOnly(userText) {
     var msgs = document.getElementById("aiChatMessages");
     if (!msgs) return;
     var time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-
     var uid1 = "u" + Date.now() + Math.floor(Math.random() * 1000);
     var userDiv = document.createElement("div");
     userDiv.className = "message sent";
     userDiv.id = "msg-" + uid1;
     userDiv.innerHTML = (typeof window.buildUserMsgContentHTML === "function" ? window.buildUserMsgContentHTML(userText) : escapeHtml(userText)) + '<div class="message-time">' + time + "</div>";
     msgs.appendChild(userDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+    if (window.aiChatHistory) window.aiChatHistory.push({ role: "user", content: userText });
+  }
 
+  function displayAIBubbleOnly(aiText) {
+    var msgs = document.getElementById("aiChatMessages");
+    if (!msgs) return;
+    var time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
     var persona = (typeof window.getCurrentAIPersona === "function" && window.getCurrentAIPersona()) || { emoji: "🕌", name: "مساعد فلك" };
     var uid2 = "a" + Date.now() + Math.floor(Math.random() * 1000);
     var aiDiv = document.createElement("div");
@@ -16548,11 +16582,12 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">' + persona.emoji + " " + persona.name + '</div><div class="message-content">' + escapeHtml(aiText) + '</div><div class="message-time">' + time + "</div>";
     msgs.appendChild(aiDiv);
     msgs.scrollTop = msgs.scrollHeight;
+    if (window.aiChatHistory) window.aiChatHistory.push({ role: "assistant", content: aiText });
+  }
 
-    if (window.aiChatHistory) {
-      window.aiChatHistory.push({ role: "user", content: userText });
-      window.aiChatHistory.push({ role: "assistant", content: aiText });
-    }
+  function displayToolTurn(userText, aiText) {
+    displayUserBubbleOnly(userText);
+    displayAIBubbleOnly(aiText);
   }
 
   function showRoutingIndicator() {
@@ -16567,8 +16602,11 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     return el;
   }
 
-  // ── بيرجع Promise<boolean>: true لو اتنفذ عن طريق أداة محلية، false لو الرسالة مالهاش علاقة
-  // بالصلاة/القرآن خالص (وبالتالي المسار العادي بتاع الذكاء الاصطناعي هو اللي هيرد) ──
+  // ── بيرجع Promise<boolean>: true لو اتنفذ محليًا بالكامل (مفيش داعي المسار العادي يشتغل)،
+  // false لو الرسالة مالهاش أداة واضحة (فالمسار العادي بتاع الذكاء الاصطناعي هو اللي هيرد).
+  // ملحوظة: لو الرسالة "طلب بناء كود" بس، بيرجع false برضه (عشان الموديل الأساسي هو اللي
+  // بيكتب الكود فعليًا)، لكن بيسيب علامة (window.__cosmosForceBuildRequest) عشان المسار
+  // العادي يعرف إن ده طلب بناء حقيقي حتى لو الصياغة مش بالكلمات المعتادة. ──
   async function tryHandleCommand(rawText) {
     var text = (rawText || "").trim();
     if (!text) return false;
@@ -16600,39 +16638,66 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         return false;
       }
 
-      var toolResults = [];
+      // ── نفرز نداءات الأدوات: صورة / علامة كود (مش عندها تنفيذ فوري) / باقي الأدوات المحلية ──
+      var imageCall = null, hasCodeFlag = false, otherCalls = [];
       for (var i = 0; i < msg.tool_calls.length; i++) {
         var call = msg.tool_calls[i];
         var args = {};
         try { args = JSON.parse(call.function.arguments || "{}"); } catch (eArgs) {}
-        var result = executeTool(call.function.name, args);
-        toolResults.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: JSON.stringify(result) });
+        if (call.function.name === "generate_image" && !imageCall) imageCall = { call: call, args: args };
+        else if (call.function.name === "flag_code_build_request") hasCodeFlag = true;
+        else otherCalls.push({ call: call, args: args });
       }
 
-      // نداء تاني بسيط عشان ناخد رد طبيعي بالعربي المصري يتحط في الشات (مش تفاصيل تقنية)
-      var finalText = "تم ✅";
-      try {
-        var followupMessages = [
-          { role: "system", content: "أنت مساعد فلك الذكي. المستخدم طلب حاجة بخصوص الصلاة أو القرآن ونفّذتها له بالفعل. رد عليه بجملة قصيرة ودودة بالعربية المصرية تؤكد إنك نفذت طلبه، من غير ما تكرر أي تفاصيل تقنية زي أسماء الأدوات." },
-          { role: "user", content: text },
-          msg
-        ].concat(toolResults);
-        var resp2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: followupMessages, max_tokens: 150, temperature: 0.4 })
-        });
-        var data2 = await resp2.json();
-        var t2 = data2 && data2.choices && data2.choices[0] && data2.choices[0].message && data2.choices[0].message.content;
-        if (t2 && t2.trim()) finalText = t2.trim();
-      } catch (eFollow) {
-        // لو الرد الودود فشل، برضه الأداة نفذت فعليًا — بنعرض تأكيد بسيط
-        var firstOk = toolResults[0] && JSON.parse(toolResults[0].content);
-        finalText = (firstOk && firstOk.detail) || (firstOk && firstOk.error) || "تم ✅";
+      // ── حالة 1: طلب بناء كود بس (مفيش صورة ولا أداة تانية) — منتدخلش، بس نسيب علامة للمسار العادي ──
+      if (hasCodeFlag && !imageCall && !otherCalls.length) {
+        if (indicator) indicator.remove();
+        window.__cosmosForceBuildRequest = true;
+        return false;
       }
 
+      // ── حالة 2: مفيش أي أداة فعلية اتنادت (نظريًا مش متوقع هنا لأن فوق فحصنا tool_calls.length) ──
+      if (!imageCall && !otherCalls.length) {
+        if (indicator) indicator.remove();
+        return false;
+      }
+
+      // ── من هنا فيه تدخل فعلي: صورة و/أو أداة صلاة/قرآن (ممكن الاتنين مع بعض) ──
       if (indicator) indicator.remove();
-      displayToolTurn(text, finalText);
+      displayUserBubbleOnly(text);
+
+      if (otherCalls.length) {
+        var toolResults = [];
+        for (var j = 0; j < otherCalls.length; j++) {
+          var result = executeTool(otherCalls[j].call.function.name, otherCalls[j].args);
+          toolResults.push({ role: "tool", tool_call_id: otherCalls[j].call.id, name: otherCalls[j].call.function.name, content: JSON.stringify(result) });
+        }
+        var finalText = "تم ✅";
+        try {
+          var followupMessages = [
+            { role: "system", content: "أنت مساعد فلك الذكي. المستخدم طلب حاجة بخصوص الصلاة أو القرآن ونفّذتها له بالفعل. رد عليه بجملة قصيرة ودودة بالعربية المصرية تؤكد إنك نفذت طلبه، من غير ما تكرر أي تفاصيل تقنية زي أسماء الأدوات." },
+            { role: "user", content: text },
+            { role: "assistant", content: null, tool_calls: otherCalls.map(function (o) { return o.call; }) }
+          ].concat(toolResults);
+          var resp2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+            body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: followupMessages, max_tokens: 150, temperature: 0.4 })
+          });
+          var data2 = await resp2.json();
+          var t2 = data2 && data2.choices && data2.choices[0] && data2.choices[0].message && data2.choices[0].message.content;
+          if (t2 && t2.trim()) finalText = t2.trim();
+        } catch (eFollow) {
+          var firstOk = toolResults[0] && JSON.parse(toolResults[0].content);
+          finalText = (firstOk && firstOk.detail) || (firstOk && firstOk.error) || "تم ✅";
+        }
+        displayAIBubbleOnly(finalText);
+      }
+
+      if (imageCall && typeof window.generateAndDisplayImage === "function") {
+        await window.generateAndDisplayImage(imageCall.args.image_prompt || text);
+      }
+
       return true;
     } catch (eRoute) {
       console.warn("[صلاتي] تعذّر تحديد نوع الأمر عبر الذكاء الاصطناعي، هيتبعت المسار العادي:", eRoute);
