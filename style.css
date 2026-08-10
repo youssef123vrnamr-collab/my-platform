@@ -48,6 +48,7 @@ button, [onclick] {
     .settings-menu.active { display: flex; }
     .settings-menu-item { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; color: #fff; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(255,255,255,.05); }
     .settings-menu-item:last-child { border-bottom: none; }
+    .settings-menu-item:hover { background: rgba(99,102,241,0.3); padding-right: 1.25rem; }
     .settings-menu-item i { width: 24px; text-align: center; color: #6366f1; }
     .settings-menu-item.sl-menu-item { background: linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08)) !important; border-bottom: 1px solid rgba(16,185,129,.2) !important; }
     .settings-menu-item.sl-menu-item:hover { background: linear-gradient(135deg,rgba(16,185,129,.25),rgba(6,182,212,.18)) !important; }
@@ -80,12 +81,17 @@ button, [onclick] {
     .dismiss-btn { background: 0 0; border: 1px solid rgba(255,255,255,.2); color: #ccc; padding: .6rem 1.2rem; border-radius: 30px; font-family: 'Cairo', sans-serif; cursor: pointer; transition: .3s; }
     .dismiss-btn:hover { background: rgba(255,255,255,.1); }
     .videos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+    .video-card { background: #0f0a1a; border-radius: 12px; overflow: hidden; border: none; transition: all .3s; cursor: pointer; display: flex; flex-direction: column; position: relative; box-shadow: none; }
+    .video-card:hover { transform: translateY(-4px); }
     .video-thumbnail { position: relative; width: 100%; padding-top: 56.25%; /* 16:9 */ background: #1a1025; overflow: hidden; border-radius: 10px; }
     .video-thumbnail .bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; border-radius: 10px; transition: transform .3s; }
+    .video-card:hover .video-thumbnail .bg-image { transform: scale(1.03); }
     .video-thumbnail::before { display: none; }
     .play-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .3s; z-index: 3; border-radius: 10px; }
+    .video-card:hover .play-overlay { opacity: 1; }
     .play-btn { width: 56px; height: 56px; background: rgba(0,0,0,.75); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff; border: 2px solid rgba(255,255,255,.8); }
     .video-info { padding: .75rem .25rem .5rem; flex: 1; background: transparent; position: relative; z-index: 4; margin-top: 0; border-radius: 0; min-height: unset; display: flex; flex-direction: column; justify-content: flex-start; gap: .25rem; }
+    .video-title { font-size: .95rem; font-weight: 700; margin-bottom: 0; text-shadow: none; line-height: 1.4; color: #f1f1f1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .video-description { color: #aaa; font-size: .8rem; margin-bottom: 0; line-height: 1.5; white-space: normal; word-wrap: break-word; max-height: 2.4rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .video-meta { color: #888; font-size: .78rem; display: flex; gap: .5rem; flex-wrap: wrap; margin-top: auto; padding-top: .35rem; border-top: none; }
     .video-duration { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,.85); padding: .15rem .5rem; border-radius: 4px; font-size: .78rem; color: #fff; z-index: 5; font-weight: 600; }
@@ -1052,6 +1058,10 @@ button, [onclick] {
     /* Modal polish (non-chat) */
     .modal:not(.chat-modal) > .modal-content{ box-shadow:var(--polish-shadow-lg) !important; border:1px solid var(--polish-border) !important; backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%); }
     .modal-header{ background:var(--polish-grad-aurora) !important; border-bottom:1px solid var(--polish-border-soft) !important; }
+
+    /* Cards / video cards lift */
+    .video-card{ transition:transform .3s ease; }
+    .video-card:hover{ transform:translateY(-4px) !important; box-shadow:none !important; border-color:transparent !important; }
     .cosmos-card, .news-card, .course-card{ transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, border-color .35s; }
     .video-card:hover, .cosmos-card:hover, .news-card:hover, .course-card:hover{ transform:translateY(-6px); box-shadow:0 20px 45px -15px rgba(99,102,241,.4), 0 10px 25px -8px rgba(0,0,0,.5); border-color:rgba(139,92,246,.4) !important; }
 
@@ -1142,6 +1152,7 @@ button, [onclick] {
     align-items: center;
   }
 }
+
 
 
 /* ===== Certificate Feature ===== */
@@ -1853,6 +1864,11 @@ body {
   transition: width 0.2s ease;
 }
 .settings-menu-item:hover::before { width: 100%; }
+.settings-menu-item:hover {
+  background: rgba(124,58,237,0.15) !important;
+  padding-right: 1.3rem !important;
+  color: #fff !important;
+}
 .settings-menu-item i { color: #a78bfa !important; width: 20px !important; text-align: center !important; }
 
 /* موبايل */
@@ -1916,6 +1932,10 @@ body {
   font-size: 0.88rem !important;
   border-bottom: 1px solid rgba(255,255,255,0.04) !important;
   transition: background 0.15s, padding-right 0.15s !important;
+}
+.settings-menu-item:hover {
+  background: rgba(124,58,237,0.18) !important;
+  padding-right: 1.2rem !important;
 }
 .settings-menu-item i { color: #a78bfa !important; }
 
@@ -2006,6 +2026,19 @@ body {
   grid-template-columns: repeat(4, 1fr) !important;
   gap: 1rem !important;
 }
+.video-card {
+  background: var(--card) !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border) !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+  box-shadow: none !important;
+}
+.video-card:hover {
+  transform: translateY(-6px) scale(1.015) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,58,237,0.35) !important;
+  border-color: rgba(124,58,237,0.35) !important;
+  z-index: 2;
+}
 .video-thumbnail {
   border-radius: 10px 10px 0 0 !important;
 }
@@ -2013,12 +2046,16 @@ body {
   border-radius: 10px 10px 0 0 !important;
   transition: transform 0.4s ease !important;
 }
+.video-card:hover .video-thumbnail .bg-image {
+  transform: scale(1.06) !important;
+}
 .play-overlay {
   background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 60%) !important;
   border-radius: 10px 10px 0 0 !important;
   opacity: 0 !important;
   transition: opacity 0.25s ease !important;
 }
+.video-card:hover .play-overlay { opacity: 1 !important; }
 .play-btn {
   width: 48px !important;
   height: 48px !important;
@@ -2034,6 +2071,12 @@ body {
   padding: 0.75rem 0.85rem 0.7rem !important;
   background: var(--card) !important;
   border-radius: 0 0 10px 10px;
+}
+.video-title {
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  color: #ede9fe !important;
+  line-height: 1.4 !important;
 }
 .video-description {
   color: #7c7a92 !important;
@@ -3233,6 +3276,19 @@ body {
       box-shadow: 0 4px 30px rgba(99,102,241,0.15) !important;
     }
 
+    /* Video cards enhancement */
+    .video-card {
+      border: 1px solid rgba(99,102,241,0.2) !important;
+      transition: all 0.4s ease !important;
+      background: rgba(15,10,26,0.8) !important;
+      backdrop-filter: blur(10px) !important;
+    }
+    .video-card:hover {
+      border-color: rgba(139,92,246,0.6) !important;
+      box-shadow: 0 0 30px rgba(99,102,241,0.3), 0 20px 40px rgba(0,0,0,0.4) !important;
+      transform: translateY(-6px) !important;
+    }
+
     /* Section headers glow */
     .course-section-header {
       box-shadow: 0 4px 20px rgba(99,102,241,0.2) !important;
@@ -3257,8 +3313,10 @@ body {
 #groupVoiceRoomModal { align-items: center !important; justify-content: center !important; background: rgba(0,0,0,.75) !important; }
 
 
+
 #zoomLinkModal { align-items: stretch !important; justify-content: stretch !important; background: rgba(0,0,0,.8) !important; padding: 0 !important; }
 #zoomLinkModal > .modal-content { width: 100% !important; max-width: 100% !important; min-height: 100dvh !important; height: 100dvh !important; max-height: 100dvh !important; border-radius: 0 !important; overflow-y: auto !important; margin: 0 !important; }
+
 
 
 /* ===== Modal اختيار الشخصية ===== */
@@ -3403,6 +3461,7 @@ body {
 }
 
 
+
 /* ── Daily Quest Bar ── */
 .dq-bar{display:none;}
 /* ── Quest Modal ── */
@@ -3437,6 +3496,7 @@ body {
 @keyframes dqXpUp{0%{opacity:0;transform:translateY(0) scale(.7)}20%{opacity:1;transform:translateY(-12px) scale(1.15)}100%{opacity:0;transform:translateY(-80px) scale(.9)}}
 
 
+
 .lb-modal{position:fixed;inset:0;z-index:9998;background:linear-gradient(160deg,#1a1025,#0f0a1a);display:none;align-items:stretch;justify-content:stretch;padding:0;}
 .lb-modal.active{display:flex;}
 .lb-card{background:transparent;border:none;border-radius:0;width:100%;max-width:100%;padding:1.5rem;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -3457,6 +3517,7 @@ body {
 .lb-score{font-size:1rem;font-weight:900;color:#fde047;}
 
 
+
 /* Glow breathing stars on background */
 @keyframes starGlow {
   0%,100%{opacity:.25;transform:scale(1);}
@@ -3466,6 +3527,7 @@ body {
   position:fixed;border-radius:50%;pointer-events:none;z-index:0;
   background:radial-gradient(circle,rgba(255,255,255,.9) 0%,transparent 70%);
 }
+
 
 
 /* ══════════════════════════════════════════
@@ -3543,6 +3605,22 @@ body {
   line-height: 1.2;
   text-shadow: 0 0 60px rgba(99,102,241,.3) !important;
 }
+
+/* ══════════════════════════════════════════
+   💎 VIDEO CARDS — Premium Glass
+══════════════════════════════════════════ */
+.video-card {
+  background: linear-gradient(160deg, rgba(26,16,37,.9) 0%, rgba(15,10,26,.95) 100%) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.6);
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, border-color .35s;
+}
+.video-card:hover {
+  transform: translateY(-8px) scale(1.01) !important;
+  border-color: rgba(99,102,241,.45) !important;
+  box-shadow: 0 24px 48px -12px rgba(0,0,0,.7), 0 0 0 1px rgba(99,102,241,.2), 0 0 30px rgba(99,102,241,.15);
+}
 .video-thumbnail {
   border-radius: 14px 14px 0 0;
   overflow: hidden;
@@ -3554,12 +3632,17 @@ body {
   box-shadow: 0 4px 20px rgba(99,102,241,.5);
   transition: transform .25s, box-shadow .25s;
 }
+.video-card:hover .play-btn {
+  transform: scale(1.15) !important;
+  box-shadow: 0 8px 32px rgba(99,102,241,.7);
+}
 .video-info {
   background: linear-gradient(180deg, rgba(26,16,37,.8), rgba(15,10,26,.95)) !important;
   border-radius: 0 0 14px 14px;
   border-top: 1px solid rgba(99,102,241,.1) !important;
   padding: 0.9rem 0.85rem 0.8rem;
 }
+.video-title { color: #ede9fe !important; letter-spacing: .2px; }
 
 /* ══════════════════════════════════════════
    🌈 BUTTONS — Holographic
@@ -3860,6 +3943,9 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border: 1px solid rgba(99,102,241,.2) !important;
   border-radius: 18px;
   box-shadow: 0 24px 56px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03);
+}
+.settings-menu-item:hover {
+  background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(139,92,246,.1)) !important;
 }
 .settings-menu-item i { color: #a78bfa !important; }
 
@@ -4239,10 +4325,28 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     inset 0 1px 2px rgba(255,255,255,.2) !important;
 }
 
+/* ──────────────────────────────────────────────
+   VIDEO CARDS — YouTube-style, clean & modern
+────────────────────────────────────────────── */
+.video-card {
+  background: transparent !important;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: transform .2s ease !important;
+}
+.video-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: none !important;
+}
+
 .video-thumbnail {
   border-radius: 12px !important;
   overflow: hidden !important;
   background: #1a1025 !important;
+}
+.video-card:hover .video-thumbnail .bg-image {
+  transform: scale(1.04) !important;
 }
 
 /* Play overlay — soft dark vignette */
@@ -4260,11 +4364,21 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   box-shadow: 0 4px 20px rgba(0,0,0,.4) !important;
   transition: transform .2s ease !important;
 }
+.video-card:hover .play-btn {
+  transform: scale(1.1) !important;
+}
 
 /* Video info — cleaner typography like YouTube */
 .video-info {
   padding: .65rem .1rem .4rem !important;
   background: transparent !important;
+}
+.video-title {
+  font-size: .93rem !important;
+  font-weight: 600 !important;
+  color: #f1f1f1 !important;
+  line-height: 1.45 !important;
+  letter-spacing: .1px;
 }
 .video-description {
   color: #999 !important;
@@ -4400,10 +4514,9 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 .settings-menu-item {
   transition: background .18s ease, padding-right .18s ease !important;
-}.settings-menu-item:hover {
+}
+.settings-menu-item:hover {
   background: rgba(99,102,241,.18) !important;
-  padding-right: 1.2rem !important;
-  color: #fff !important;
 }
 
 /* ──────────────────────────────────────────────
@@ -4912,6 +5025,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
+
 /* ══ FIXES ══ */
 
 /* شيل النجوم والنيازك والـ laser rings */
@@ -4941,6 +5055,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   height: auto !important;
   flex: none !important;
 }
+
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -5102,7 +5217,31 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 .video-player-container:-webkit-full-screen::before,
 .video-player-container:-webkit-full-screen::after {
   display: none !important;
-}.video-card::before {
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   🎴 ULTRA PREMIUM VIDEO CARDS
+   ══════════════════════════════════════════════════════════════ */
+
+.video-card {
+  background: #0c0816 !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition:
+    transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
+    box-shadow 0.35s ease,
+    border-color 0.3s ease !important;
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.5),
+    0 0 0 0 transparent !important;
+}
+
+/* إطار خفي يظهر عند الهوفر */
+.video-card::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -5121,13 +5260,27 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   pointer-events: none;
   z-index: 5;
   transition: background 0.35s ease;
-}.video-card:hover::before {
+}
+
+.video-card:hover::before {
   background: linear-gradient(
     135deg,
     rgba(99,102,241,0.8) 0%,
     rgba(168,85,247,0.6) 40%,
     rgba(236,72,153,0.7) 100%
   );
+}
+
+.video-card:hover {
+  transform: translateY(-6px) scale(1.015) !important;
+  border-color: transparent !important;
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.45),
+    0 8px 16px rgba(0,0,0,0.5),
+    0 20px 48px rgba(0,0,0,0.55),
+    0 0 60px rgba(99,102,241,0.12),
+    0 0 0 4px rgba(99,102,241,0.06) !important;
+  z-index: 2 !important;
 }
 
 /* الصورة المصغرة */
@@ -5147,7 +5300,8 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   object-fit: cover !important;
   transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94) !important;
   border-radius: 0 !important;
-}.video-card:hover .video-thumbnail .bg-image {
+}
+.video-card:hover .video-thumbnail .bg-image {
   transform: scale(1.06) !important;
 }
 
@@ -5168,9 +5322,8 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   transition: opacity 0.3s ease !important;
   z-index: 3 !important;
   border-radius: 0 !important;
-}.video-card:hover .play-overlay {
-  opacity: 1 !important;
 }
+.video-card:hover .play-overlay { opacity: 1 !important; }
 
 /* زر التشغيل */
 .play-btn {
@@ -5188,9 +5341,11 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     0 4px 20px rgba(0,0,0,0.5),
     0 0 0 4px rgba(255,255,255,0.15) !important;
   transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease !important;
-}.video-card:hover .play-btn {
+}
+.video-card:hover .play-btn {
   transform: scale(1.12) !important;
-  box-shadow: 0 6px 28px rgba(0,0,0,0.6),
+  box-shadow:
+    0 6px 28px rgba(0,0,0,0.6),
     0 0 0 6px rgba(255,255,255,0.2) !important;
 }
 
@@ -5205,9 +5360,20 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   z-index: 4 !important;
   position: relative !important;
   border-top: 1px solid rgba(255,255,255,0.04) !important;
-}.video-card:hover .video-title {
-  color: #fff !important;
 }
+
+.video-title {
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  color: #edeaf5 !important;
+  line-height: 1.45 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  transition: color 0.2s ease !important;
+}
+.video-card:hover .video-title { color: #fff !important; }
 
 .video-description {
   color: #7c7a8a !important;
@@ -5303,6 +5469,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
+
 /* ══ VIDEO FILLS FRAME — no letterbox, no gaps ══ */
 
 .video-player {
@@ -5338,6 +5505,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     border-radius: 12px !important;
   }
 }
+
 
 
 /* ══ GLOW BORDER ON ALL DEVICES (mobile + desktop) ══ */
@@ -5397,6 +5565,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
+
 /* ══ FINAL: thin curved border on container, NO border on video itself ══ */
 
 .video-player-container,
@@ -5445,6 +5614,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
+
 /* ══ FIX: remove black bars, video fills container fully ══ */
 
 .video-player-container,
@@ -5484,6 +5654,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border: none !important;
   box-shadow: none !important;
 }
+
 
 
 /* ══ FINAL OVERRIDE: kill all black bars everywhere ══ */
@@ -5565,6 +5736,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
+
 /* ══ FIX: remove black space above/below video in modal ══ */
 
 #videoModal .modal-content {
@@ -5594,11 +5766,21 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   gap: 0 !important;
 }
 
+#videoModal .video-player-container {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: 1px solid rgba(139,92,246,0.3) !important;
+}
+
 @media (max-width: 768px) {
   #videoModal .video-player-container {
     border-radius: 0 !important;
   }
 }
+
 
 
 /* ══ VIDEO 100% WIDTH — fills exactly the modal width ══ */
@@ -5637,6 +5819,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
+
 /* ══ VIDEO FILLS ITS BOX EXACTLY — no more, no less ══ */
 
 #videoModal .modal-content,
@@ -5652,6 +5835,16 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 #videoModal .video-with-board {
   padding: 1rem !important;
   gap: 1rem !important;
+}
+
+#videoModal .video-player-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(139,92,246,0.35) !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 #videoModal .video-player {
@@ -5684,6 +5877,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 }
 
 
+
 /* ══ DEFINITIVE FIX: crop black bars with cover ══ */
 
 #videoModal .video-player {
@@ -5696,6 +5890,19 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border-radius: 0 !important;
 }
 
+#videoModal .video-player-container {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(139,92,246,0.35) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #000 !important;
+}
+
+
 
 /* ══ FINAL FIX: video container fixed aspect ratio, no stretching ══ */
 
@@ -5704,6 +5911,24 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   flex-direction: column !important;
   padding: 0 !important;
   gap: 0 !important;
+}
+
+#videoModal .video-player-container {
+  order: 1 !important;
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  height: auto !important;
+  min-height: unset !important;
+  max-height: unset !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #000 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(139,92,246,0.3) !important;
+  position: relative !important;
 }
 
 #videoModal .video-player {
@@ -5720,6 +5945,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 #videoModal .drawing-board {
   order: 2 !important;
 }
+
 
 
 /* ══ YOUTUBE STYLE: video fills top of screen edge to edge ══ */
@@ -5776,6 +6002,21 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   padding: 0 !important;
 }
 
+#videoModal .video-player-container {
+  order: 1 !important;
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  height: auto !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #000 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  position: relative !important;
+}
+
 #videoModal .video-player-container::before,
 #videoModal .video-player-container::after {
   display: none !important;
@@ -5800,6 +6041,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   border: none !important;
   border-top: 1px solid rgba(139,92,246,0.2) !important;
 }
+
 
 
 /* ══ VIDEO STARTS RIGHT BELOW HEADER — no gap ══ */
@@ -5833,19 +6075,16 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 #videoModal .video-player-container {
   margin: 0 !important;
   border-radius: 0 !important;
-  padding: 0 !important;
   border: none !important;
-  overflow: hidden !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  position: relative !important;
+}
+
+
+
+/* ══ CROP letterbox bars: tighter aspect ratio ══ */
+
+#videoModal .video-player-container {
   aspect-ratio: 16/8 !important;
-  background: #000 !important;
-  order: 1 !important;
-  height: auto !important;
-  min-height: unset !important;
-  max-height: unset !important;
-  flex-shrink: 0 !important;
+  overflow: hidden !important;
 }
 
 #videoModal .video-player {
@@ -5858,6 +6097,7 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
   max-height: none !important;
   object-fit: cover !important;
 }
+
 
 
 /* ╔══════════════════════════════════════════════════════════════╗
@@ -6097,24 +6337,23 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
     max-height: none !important;
     aspect-ratio: unset !important;
   }
-}.video-card {
+}
+
+/* ══════════════════════════════════════════════════════════════
+   🎴 VIDEO CARDS — تحسين شكل الكروت
+   ══════════════════════════════════════════════════════════════ */
+
+.video-card {
   background: #0e0a1c !important;
   border-radius: 14px !important;
-  overflow: hidden !important;
   border: 1px solid rgba(99,102,241,0.12) !important;
+  overflow: hidden !important;
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
-  cursor: pointer !important;
-  display: flex;
-  flex-direction: column;
-  position: relative !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5),
-    0 0 0 0 transparent !important;
-  backdrop-filter: blur(10px) !important;
-}.video-card:hover {
+}
+.video-card:hover {
   transform: translateY(-5px) !important;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.2) !important;
   border-color: rgba(99,102,241,0.35) !important;
-  z-index: 2 !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.2) !important;
 }
 .video-thumbnail {
   border-radius: 10px 10px 0 0 !important;
@@ -6123,19 +6362,12 @@ input.v-err { border-color: rgba(248,113,113,.6) !important; box-shadow: 0 0 0 3
 .video-info {
   background: transparent !important;
   padding: 0.75rem 0.6rem 0.6rem !important;
-}.video-title {
+}
+.video-title {
   font-size: 0.92rem !important;
   font-weight: 700 !important;
-  margin-bottom: 0;
-  text-shadow: none;
-  line-height: 1.4 !important;
   color: #eee !important;
-  display: -webkit-box !important;
-  -webkit-line-clamp: 2 !important;
-  -webkit-box-orient: vertical !important;
-  overflow: hidden !important;
-  letter-spacing: .2px;
-  transition: color 0.2s ease !important;
+  line-height: 1.4 !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -8667,112 +8899,3 @@ html body button:not([class]):not([style*="background"]) {
   box-shadow: 0 6px 18px rgba(99,102,241,.35);
 }
 
-
-/* ================================================================
-   ===== وحدة مواقيت الصلاة + القبلة + الأذان (Prayer Module) =====
-   ================================================================ */
-.prayer-fab {
-  position: fixed; bottom: 2rem; right: 1.2rem; width: 55px; height: 55px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border-radius: 50%; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;
-  box-shadow: 0 8px 25px rgba(16,185,129,.45); z-index: 997;
-  display: flex; align-items: center; justify-content: center;
-  user-select: none; -webkit-tap-highlight-color: transparent;
-  transition: transform .2s;
-}
-.prayer-fab:active { transform: scale(.92); }
-/* لما صفحة شات الذكاء الاصطناعي تكون مفتوحة، زرار الصلاة يظهر فوق يمين مكان الدائرة اللي اتحددت، بدل تحت */
-body:has(#aiChatModal.active) .prayer-fab {
-  top: 4.6rem;
-  bottom: auto;
-  left: .8rem;
-  right: auto;
-  z-index: 10050;
-}
-.prayer-fab .prayer-fab-badge {
-  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
-  background: #0f0a1a; border: 1px solid rgba(16,185,129,.6); color: #6ee7b7;
-  font-size: .58rem; font-weight: 800; padding: .12rem .4rem; border-radius: 8px;
-  white-space: nowrap; font-family: 'Cairo', sans-serif; line-height: 1.3;
-  box-shadow: 0 2px 8px rgba(0,0,0,.4);
-}
-.prayer-modal-body { padding: 0 !important; }
-.prayer-hero {
-  background: linear-gradient(135deg, rgba(16,185,129,.18), rgba(6,182,212,.1));
-  border-bottom: 1px solid rgba(16,185,129,.25);
-  padding: 1.4rem 1.2rem; text-align: center;
-}
-.prayer-hero-city { color: #9ca3af; font-size: .82rem; margin-bottom: .3rem; }
-.prayer-hero-city i { color: #10b981; margin-left: .3rem; }
-.prayer-hero-next { color: #fff; font-size: 1.15rem; font-weight: 800; margin-bottom: .2rem; }
-.prayer-hero-countdown {
-  color: #6ee7b7; font-size: 2rem; font-weight: 900; direction: ltr;
-  font-family: 'Cairo', sans-serif; letter-spacing: 1px;
-}
-.prayer-list { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .55rem; }
-.prayer-row {
-  display: flex; align-items: center; justify-content: space-between;
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
-  border-radius: 12px; padding: .7rem 1rem; transition: all .2s;
-}
-.prayer-row.active-now {
-  background: rgba(16,185,129,.14); border-color: rgba(16,185,129,.5);
-  box-shadow: 0 0 0 1px rgba(16,185,129,.3) inset;
-}
-.prayer-row-name { display: flex; align-items: center; gap: .6rem; color: #e5e7eb; font-weight: 700; font-size: .95rem; }
-.prayer-row-name i { color: #10b981; width: 18px; text-align: center; }
-.prayer-row-time { color: #9ad6e6; font-weight: 800; direction: ltr; font-family: 'Cairo', sans-serif; }
-.prayer-qibla-box {
-  margin: 0 1.2rem 1.1rem; padding: 1rem; border-radius: 14px;
-  background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25);
-  display: flex; align-items: center; gap: 1rem;
-}
-.prayer-qibla-compass { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
-.prayer-qibla-compass .qc-ring {
-  width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgba(167,139,250,.4);
-  display: flex; align-items: center; justify-content: center; position: relative;
-}
-.prayer-qibla-compass .qc-arrow {
-  position: absolute; top: 4px; left: 50%; width: 3px; height: 26px;
-  background: linear-gradient(180deg, #a78bfa, transparent);
-  transform-origin: bottom center; transform: translateX(-50%) rotate(0deg);
-  border-radius: 3px; transition: transform .4s ease;
-}
-.prayer-qibla-compass .qc-kaaba { font-size: .95rem; }
-.prayer-qibla-text { flex: 1; }
-.prayer-qibla-text b { color: #c4b5fd; display: block; margin-bottom: .2rem; font-size: .92rem; }
-.prayer-qibla-text span { color: #9ca3af; font-size: .8rem; line-height: 1.6; }
-.prayer-settings-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .7rem 1.2rem; border-top: 1px solid rgba(255,255,255,.06); color: #cbd5e1; font-size: .88rem;
-}
-.prayer-toggle {
-  width: 44px; height: 24px; border-radius: 20px; background: rgba(255,255,255,.12);
-  position: relative; cursor: pointer; transition: background .2s; border: none; flex-shrink: 0;
-}
-.prayer-toggle.on { background: #10b981; }
-.prayer-toggle::after {
-  content: ''; position: absolute; top: 2px; right: 2px; width: 20px; height: 20px;
-  border-radius: 50%; background: #fff; transition: right .2s; box-shadow: 0 2px 4px rgba(0,0,0,.3);
-}
-.prayer-toggle.on::after { right: 22px; }
-.prayer-loading-state { padding: 2.5rem 1.2rem; text-align: center; color: #9ca3af; }
-.prayer-loading-state i { font-size: 1.8rem; color: #10b981; margin-bottom: .6rem; display: block; }
-.prayer-loading-state button {
-  margin-top: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: #fff;
-  border: none; border-radius: 10px; padding: .65rem 1.3rem; font-family: 'Cairo', sans-serif;
-  font-weight: 700; cursor: pointer;
-}
-
-/* ── بطاقة تشغيل القرآن داخل شات الذكاء الاصطناعي ── */
-.quran-play-card {
-  background: linear-gradient(135deg, rgba(16,185,129,.1), rgba(6,182,212,.06));
-  border: 1px solid rgba(16,185,129,.3); border-radius: 14px; padding: .9rem 1rem;
-  max-width: 320px;
-}
-.quran-play-card .qpc-title {
-  display: flex; align-items: center; gap: .5rem; color: #6ee7b7; font-weight: 800;
-  font-size: .95rem; margin-bottom: .2rem;
-}
-.quran-play-card .qpc-sub { color: #9ca3af; font-size: .78rem; margin-bottom: .6rem; }
-.quran-play-card audio { width: 100%; height: 34px; }

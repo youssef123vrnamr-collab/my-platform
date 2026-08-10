@@ -945,26 +945,6 @@
 </div>
 
 
-<!-- ===== زرار وواجهة مواقيت الصلاة والقبلة ===== -->
-<button class="prayer-fab" id="prayerFab" onclick="openPrayerModal()" title="مواقيت الصلاة والقبلة">
-  <i class="fas fa-mosque"></i>
-  <span class="prayer-fab-badge" id="prayerFabBadge" style="display:none"></span>
-</button>
-<div class="modal" id="prayerModal">
-  <div class="modal-content" style="max-width:480px">
-    <div class="modal-header">
-      <h3><i class="fas fa-mosque" style="color:#10b981"></i> مواقيت الصلاة والقبلة</h3>
-      <button class="modal-close" onclick="closePrayerModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body prayer-modal-body" id="prayerModalBody">
-      <div class="prayer-loading-state">
-        <i class="fas fa-spinner fa-spin"></i>
-        جاري تحديد موقعك لحساب مواقيت الصلاة...
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Modal إنشاء / تعديل كورس -->
 <!-- ===== Cosmos Explorer modal ===== -->
 <div class="modal" id="cosmosModal">
@@ -1836,38 +1816,6 @@ function _onFSChange() {
 }
 document.addEventListener('fullscreenchange', _onFSChange);
 document.addEventListener('webkitfullscreenchange', _onFSChange);
-</script>
-
-<script>
-// ═══ إصلاح زرار إرسال شات الذكاء الاصطناعي: أحياناً بيفضل عالق (busy) من محاولة
-// سابقة فيبقى مش بيستجيب للضغط خالص. الكود ده بيربط الزرار بشكل مباشر وموثوق،
-// وبيصفّر أي "عالق" قديم قبل أي إرسال جديد ══
-(function(){
-  function bindAISendFailsafe(){
-    var btn = document.querySelector('#aiChatModal .unified-send-btn.ai-color');
-    if (!btn || btn.__failsafeBound) return;
-    btn.__failsafeBound = true;
-    // نشيل onclick القديم عشان نضمن مفيش استدعاء مزدوج للدالة (اللي كان بيسبب
-    // إلغاء الإرسال فوراً بعد بدايته)
-    btn.removeAttribute('onclick');
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      // لو فاضل "بيفكر" من غير رد لمدة أطول من دقيقة، ده عالق فعلاً — نصفّره
-      if (window.__cosmosBusy && (!window.__cosmosBusySince || (Date.now() - window.__cosmosBusySince) > 60000)) {
-        window.__cosmosBusy = false;
-        window.__cosmosAbortController = null;
-        if (typeof window.__updateAISendBtnUI === 'function') window.__updateAISendBtnUI();
-      }
-      if (typeof window.__aiSendOrStop === 'function') window.__aiSendOrStop();
-      else if (typeof window.sendAIMessage === 'function') window.sendAIMessage();
-    });
-  }
-  [500, 1500, 3000, 5000].forEach(function(t){ setTimeout(bindAISendFailsafe, t); });
-  // ونعيد المحاولة كل مرة يتفتح فيها شات الذكاء الاصطناعي، احتياطاً
-  document.addEventListener('click', function(e){
-    if (e.target.closest && e.target.closest('#aiChatBtn')) setTimeout(bindAISendFailsafe, 200);
-  });
-})();
 </script>
 
 <script>
