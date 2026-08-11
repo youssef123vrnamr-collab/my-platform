@@ -12775,13 +12775,7 @@ function slStopAllAnimations() {
       // كان بيتفعّل غلط في الحالات دي ويجيب نتائج مالهاش علاقة (مواقع/مجتمعات عشوائية). نمنعه هنا تمامًا،
       // ونسيب بس البحث الصريح (لو المستخدم فعلاً كتب كلمة زي "ابحث" أو "آخر أخبار") شغال زي ما هو. ──
       var _pageBuildVerbs = /(اعمل|أعمل|اعملي|صمم|أصمم|اصمم|ابني|ابنيلي|انشئ|أنشئ|اكتب|اكتبلي|صمملي|design|create|build)/i;
-      // ── علامة اختيارية من موجّه الأدوات (tool router) اللي بيسأل الذكاء الاصطناعي نفسه هل ده طلب
-      // بناء كود قبل ما نوصل هنا خالص — بتتفعّل لو الصياغة مش بنفس الكلمات المعتادة تحت. لو مفعّلة،
-      // بتضاف على الفحص العادي (مش بديلة له) — أي فشل أو غياب لها، السلوك القديم بالظبط زي ما كان ──
-      var _aiFlaggedBuild = !!window.__cosmosForceBuildRequest;
-      window.__cosmosForceBuildRequest = false;
-      var _looksLikeBuildRequest = _aiFlaggedBuild
-        || /(كود|لعبة|لعبه|موقع|تطبيق|سكربت|سكريبت|أداة|اداة|برنامج|مكوّن|مكون|كومبوننت|component)/i.test(userMsg)
+      var _looksLikeBuildRequest = /(كود|لعبة|لعبه|موقع|تطبيق|سكربت|سكريبت|أداة|اداة|برنامج|مكوّن|مكون|كومبوننت|component)/i.test(userMsg)
         || (/(صفحة|صفحه)/i.test(userMsg) && _pageBuildVerbs.test(userMsg)); // ── "صفحة" لوحدها (بدون فعل بناء) مش كفاية — عشان أسئلة التنقل زي "ازاي اروح صفحة البروفايل" متتلخبطش مع طلب بناء صفحة جديدة ──
       var _needsSearch = _tavilyReady && _userAskedToSearch;
       if (_tavilyReady && !_needsSearch && !_looksLikeBuildRequest && typeof window.classifyNeedsSearch === 'function') {
@@ -12882,7 +12876,7 @@ function slStopAllAnimations() {
       // عشان يقدر يكتب كود كامل واحترافي من غير ما يتقطع أو يختصر بسبب حد التوكنز —
       // 8000 كانت بتتقطع فعليًا مع صفحات فيها CSS تفصيلي + JS كامل للعبة (زي السلم والتعبان)،
       // فرفعناها لمساحة أكبر بكتير (الموديل بيدعم لحد ~32-65 ألف توكن إخراج). ──
-      var _isCodeReq = _looksLikeBuildRequest || /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
+      var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
       var _mainMaxTok     = _isCodeReq ? 28000 : 4500;
       var _fallbackMaxTok = _isCodeReq ? 28000 : 4000;
       var _geminiMaxTok   = _isCodeReq ? 28000 : 4500;
@@ -16089,6 +16083,60 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
 
   // ============================================================
+  // 🧭 قايمة صفحات المنصة القابلة للفتح عن طريق أداة navigate_to_page — كل صفحة
+  // ليها أسماء بديلة (aliases) عشان البحث النصي المرن يقدر يلاقيها من وصف حر.
+  // كل الدوال دي أصلاً موجودة وشغالة في المنصة (نفس اللي في منيو الإعدادات/الأقسام)،
+  // إحنا بس بنستدعيها؛ لو أي دالة مش موجودة (نسخة قديمة من الكود)، بنتجاهلها بأمان. ──
+  var PAGE_REGISTRY = [
+    { aliases: ["اخبار الكون", "الاخبار", "اخبار"], label: "أخبار الكون", fn: function () { if (typeof scrollToSectionAndOpen === "function") scrollToSectionAndOpen("news"); } },
+    { aliases: ["تقدم الطالب", "تقدمي", "التقدم"], label: "تقدم الطالب", fn: function () { if (typeof openStudentProgress === "function") openStudentProgress(); } },
+    { aliases: ["اضافة صديق", "اصدقاء", "صديق جديد"], label: "إضافة صديق", fn: function () { if (typeof openAddFriendModal === "function") openAddFriendModal(); } },
+    { aliases: ["ملفات الدروس", "ملفات بي دي اف", "ملفات pdf", "الملفات"], label: "ملفات الدروس", fn: function () { if (typeof openPdfFilesModal === "function") openPdfFilesModal(); else if (window.openPdfFilesModal) window.openPdfFilesModal(); } },
+    { aliases: ["تواصل مع المشرفين", "شات المشرفين", "المشرفين"], label: "تواصل مع المشرفين", fn: function () { if (typeof openPrivateAdminChat === "function") openPrivateAdminChat(); } },
+    { aliases: ["تحدث مع صديقك", "شات الاصدقاء", "محادثة صديق"], label: "تحدث مع صديقك", fn: function () { if (typeof openFriendChatMenu === "function") openFriendChatMenu(); } },
+    { aliases: ["التعلم الذاتي", "التعلم الذكي", "تعلم ذاتي"], label: "التعلم الذاتي", fn: function () { if (typeof openSelfLearning === "function") openSelfLearning(); } },
+    { aliases: ["مهامي اليوميه", "المهام اليوميه", "مهام يوميه"], label: "مهامي اليومية", fn: function () { if (typeof openDQ === "function") openDQ(); } },
+    { aliases: ["لوحة المتصدرين", "المتصدرين", "الترتيب"], label: "لوحة المتصدرين", fn: function () { if (typeof openLB === "function") openLB(); } },
+    { aliases: ["ادواتي", "أدواتي"], label: "أدواتي", fn: function () { if (typeof openToolsLibraryModal === "function") openToolsLibraryModal(); } },
+    { aliases: ["اعدادات الصلاه", "الصلاه", "الاذان"], label: "إعدادات الصلاة", fn: function () { window.openPrayerSettingsModal && window.openPrayerSettingsModal(); } },
+    { aliases: ["تقييم المنصه", "التقييم"], label: "تقييم المنصة", fn: function () { if (typeof openFeedbackModal === "function") openFeedbackModal(); } },
+    { aliases: ["كيفية استخدام المنصه", "طريقة الاستخدام", "المساعده", "الشرح"], label: "كيفية استخدام المنصة", fn: function () { window.openHowToUseModal && window.openHowToUseModal(); } },
+    { aliases: ["تطبيقات المنصه", "التطبيقات"], label: "تطبيقات المنصة", fn: function () { if (typeof openAppsModal === "function") openAppsModal(); } },
+    { aliases: ["شخصية الذكاء الاصطناعي", "تغيير الشخصيه"], label: "شخصية الذكاء الاصطناعي", fn: function () { window.openPersonaModal && window.openPersonaModal(); } },
+    { aliases: ["مفتاح الذكاء الاصطناعي", "مفتاح جروك", "مفتاح API"], label: "مفتاح الذكاء الاصطناعي", fn: function () { if (typeof openAiKeyModal === "function") openAiKeyModal(); } },
+    { aliases: ["خلفية الدردشه", "تغيير الخلفيه"], label: "خلفية الدردشة", fn: function () { if (typeof openChatBgModal === "function") openChatBgModal(); } },
+    { aliases: ["نتيجة الامتحان", "نتيجتي"], label: "نتيجة الامتحان", fn: function () { if (typeof openExamResultModal === "function") openExamResultModal(); } },
+    { aliases: ["تعديل الملف الشخصي", "البروفايل", "الملف الشخصي"], label: "الملف الشخصي", fn: function () { if (typeof openEditProfileModal === "function") openEditProfileModal(); } },
+    { aliases: ["تحديد المشرفين", "اضافة مشرف"], label: "تحديد المشرفين", fn: function () { if (typeof openSetAdminsModal === "function") openSetAdminsModal(); } },
+    { aliases: ["اداره التطبيقات"], label: "إدارة التطبيقات", fn: function () { if (typeof openManageAppsModal === "function") openManageAppsModal(); } },
+    { aliases: ["معرفة راي الجمهور", "التقييمات"], label: "آراء الجمهور", fn: function () { if (typeof openViewFeedbacksModal === "function") openViewFeedbacksModal(); } },
+    { aliases: ["اعدادات البريد الالكتروني", "الايميل"], label: "إعدادات البريد الإلكتروني", fn: function () { if (typeof openEmailSettingsModal === "function") openEmailSettingsModal(); } },
+    { aliases: ["رابط زوم"], label: "رابط Zoom", fn: function () { if (typeof openZoomLinkSettings === "function") openZoomLinkSettings(); } },
+    { aliases: ["استلام المدفوعات", "المدفوعات"], label: "استلام المدفوعات", fn: function () { if (typeof openSupervisorPayoutModal === "function") openSupervisorPayoutModal(); } },
+    { aliases: ["تحديث المحتوى", "الصيانه"], label: "تحديث المحتوى", fn: function () { if (typeof openMaintenanceModal === "function") openMaintenanceModal(); } },
+    { aliases: ["اداره المحادثه الجماعيه"], label: "إدارة المحادثة الجماعية", fn: function () { if (typeof openGroupChatAdminPanel === "function") openGroupChatAdminPanel(); } },
+    { aliases: ["اداره ملفات pdf", "اداره الملفات"], label: "إدارة ملفات PDF", fn: function () { if (typeof openPdfManagerModal === "function") openPdfManagerModal(); } },
+    { aliases: ["اداره الكورسات"], label: "إدارة الكورسات", fn: function () { if (typeof showCoursesList === "function") showCoursesList(); } },
+    { aliases: ["اداره الشهادات", "شهادات الكورسات"], label: "إدارة الشهادات", fn: function () { if (typeof openCertificatesManager === "function") openCertificatesManager(); } },
+    { aliases: ["تعليم الذكاء الاصطناعي"], label: "تعليم الذكاء الاصطناعي", fn: function () { if (typeof openTeachAICircleModal === "function") openTeachAICircleModal(); } }
+  ];
+
+  function findPage(text) {
+    var t = " " + normAr(text) + " ";
+    var best = null;
+    for (var i = 0; i < PAGE_REGISTRY.length; i++) {
+      var entry = PAGE_REGISTRY[i];
+      for (var j = 0; j < entry.aliases.length; j++) {
+        var n = normAr(entry.aliases[j]);
+        if (!n) continue;
+        var idx = t.indexOf(n);
+        if (idx !== -1 && (!best || n.length > best._len)) best = { entry: entry, _len: n.length };
+      }
+    }
+    return best ? best.entry : null;
+  }
+
+  // ============================================================
   // 🔔 صوت تنبيه بسيط عبر WebAudio (مفيش ملف صوتي خارجي ممكن يتكسر رابطه)
   // ============================================================
   function playBeep() {
@@ -16504,19 +16552,27 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     {
       type: "function",
       function: {
-        name: "flag_code_build_request",
-        description: "علامة داخلية بس (مفيهاش أي رد للمستخدم): نادِها لما تكتشف إن المستخدم عايز إنشاء/كتابة كود برمجي أو بناء موقع/تطبيق/لعبة/سكريبت/مكوّن برمجي من الصفر أو تعديل كود موجود — حتى لو مقالش كلمة 'كود' حرفيًا. متستخدمهاش لأسئلة عادية عن البرمجة (زي شرح مفهوم) — بس لطلب إنشاء أو تعديل فعلي",
-        parameters: { type: "object", properties: {}, required: [] }
+        name: "navigate_to_page",
+        description: "يفتح أي صفحة أو قسم من أقسام منصة فلك للمستخدم مباشرة. من أمثلة الصفحات المتاحة: أخبار الكون، تقدم الطالب، إضافة صديق، ملفات الدروس، تواصل مع المشرفين، تحدث مع صديقك، التعلم الذاتي، مهامي اليومية، لوحة المتصدرين، أدواتي، إعدادات الصلاة، تقييم المنصة، كيفية استخدام المنصة، تطبيقات المنصة، شخصية الذكاء الاصطناعي، مفتاح الذكاء الاصطناعي، خلفية الدردشة، نتيجة الامتحان، الملف الشخصي، وصفحات إدارية زي إدارة الكورسات وتحديد المشرفين وغيرها. استخدمها لما المستخدم يطلب فتح/الذهاب/عرض أي صفحة من دول، حتى لو وصفها بكلامه الخاص مش بنفس الاسم بالظبط",
+        parameters: {
+          type: "object",
+          properties: {
+            page_name: { type: "string", description: "اسم أو وصف الصفحة اللي المستخدم عايز يفتحها، بالعربي، مأخوذ من كلامه" }
+          },
+          required: ["page_name"]
+        }
       }
     }
   ];
 
   var TOOL_ROUTER_SYSTEM_PROMPT =
-    "أنت موجّه أدوات (tool router) جوّه تطبيق فلك. عندك أدوات لثلاث مجموعات: (1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) علامة داخلية لو الطلب بناء/تعديل كود برمجي. " +
-    "افهم قصد المستخدم مش بس الكلمات الحرفية، ونادِ الأداة أو الأدوات المناسبة بالبراميترات الصح — ممكن تنادي أكتر من أداة في نفس الرسالة لو محتاج. " +
-    "لو رسالة المستخدم مش متعلقة بأي حاجة من دول (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة إطلاقًا.";
+    "أنت وكيل أدوات (tool agent) جوّه تطبيق فلك، بتشتغل بنفس مبدأ الوكلاء اللي بيقدروا يستخدموا أكتر من أداة على التوالي في نفس المحادثة. عندك أدوات لأربع مجموعات: " +
+    "(1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) فتح أي صفحة من صفحات المنصة. " +
+    "افهم قصد المستخدم مش بس الكلمات الحرفية. لو الرسالة فيها أكتر من طلب (مثلاً: افتح إعدادات الصلاة وشغّل سورة الكهف)، نادِ كل الأدوات المطلوبة — ممكن على أكتر من دورة لو محتاج تشوف نتيجة أداة قبل ما تقرر التانية. " +
+    "بعد ما تنفذ كل الأدوات المطلوبة، رد على المستخدم برسالة نهائية قصيرة وودودة بالعربية المصرية تلخّص اللي حصل، من غير تفاصيل تقنية أو أسماء أدوات. " +
+    "لو رسالة المستخدم مش متعلقة بأي حاجة من الأربع مجموعات دي إطلاقًا (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة، ورد فورًا بكلمة: تجاهل";
 
-  function executeTool(name, args) {
+  async function executeTool(name, args) {
     args = args || {};
     var s = loadState();
     switch (name) {
@@ -16551,6 +16607,23 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         stopQuran();
         return { success: true, detail: "اتوقف تشغيل التلاوة" };
 
+      case "generate_image":
+        if (typeof window.generateAndDisplayImage === "function") {
+          try {
+            await window.generateAndDisplayImage(args.image_prompt || "");
+            return { success: true, detail: "اتولدت الصورة وظهرت في الشات فعلاً" };
+          } catch (eImg) {
+            return { success: false, error: "تعذّر توليد الصورة" };
+          }
+        }
+        return { success: false, error: "أداة توليد الصور مش متاحة دلوقتي" };
+
+      case "navigate_to_page":
+        var page = findPage(args.page_name || "");
+        if (!page) return { success: false, error: "معرفتش أحدد الصفحة دي بالظبط، ممكن توضحها أكتر؟" };
+        try { page.fn(); } catch (ePage) { return { success: false, error: "حصلت مشكلة وإحنا بنفتح الصفحة" }; }
+        return { success: true, detail: "اتفتحت صفحة " + page.label };
+
       default:
         return { success: false, error: "أداة غير معروفة" };
     }
@@ -16567,7 +16640,6 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     userDiv.innerHTML = (typeof window.buildUserMsgContentHTML === "function" ? window.buildUserMsgContentHTML(userText) : escapeHtml(userText)) + '<div class="message-time">' + time + "</div>";
     msgs.appendChild(userDiv);
     msgs.scrollTop = msgs.scrollHeight;
-    if (window.aiChatHistory) window.aiChatHistory.push({ role: "user", content: userText });
   }
 
   function displayAIBubbleOnly(aiText) {
@@ -16582,12 +16654,6 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">' + persona.emoji + " " + persona.name + '</div><div class="message-content">' + escapeHtml(aiText) + '</div><div class="message-time">' + time + "</div>";
     msgs.appendChild(aiDiv);
     msgs.scrollTop = msgs.scrollHeight;
-    if (window.aiChatHistory) window.aiChatHistory.push({ role: "assistant", content: aiText });
-  }
-
-  function displayToolTurn(userText, aiText) {
-    displayUserBubbleOnly(userText);
-    displayAIBubbleOnly(aiText);
   }
 
   function showRoutingIndicator() {
@@ -16602,105 +16668,84 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     return el;
   }
 
-  // ── بيرجع Promise<boolean>: true لو اتنفذ محليًا بالكامل (مفيش داعي المسار العادي يشتغل)،
-  // false لو الرسالة مالهاش أداة واضحة (فالمسار العادي بتاع الذكاء الاصطناعي هو اللي هيرد).
-  // ملحوظة: لو الرسالة "طلب بناء كود" بس، بيرجع false برضه (عشان الموديل الأساسي هو اللي
-  // بيكتب الكود فعليًا)، لكن بيسيب علامة (window.__cosmosForceBuildRequest) عشان المسار
-  // العادي يعرف إن ده طلب بناء حقيقي حتى لو الصياغة مش بالكلمات المعتادة. ──
+  var MAX_AGENT_STEPS = 5;
+
+  async function callAgentModel(key, messages) {
+    var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-120b",
+        messages: messages,
+        tools: TOOL_DEFS,
+        tool_choice: "auto",
+        max_tokens: 500,
+        temperature: 0.2
+      })
+    });
+    var data = await resp.json();
+    return data && data.choices && data.choices[0] && data.choices[0].message;
+  }
+
+  // ── حلقة agentic كاملة: نداء → تنفيذ أداة/أدوات → نداء تاني بالنتيجة → الموديل يقرر
+  // يكمل ولا يرد نهائي، وهكذا لحد MAX_AGENT_STEPS. بترجع Promise<boolean>: true لو
+  // الوكيل تدخل فعليًا (تم عرض رد في الشات)، false لو الرسالة أصلاً مالهاش أداة
+  // (فالمسار العادي بتاع فلك هو اللي هيرد بمعرفته الفلكية الكاملة). ──
   async function tryHandleCommand(rawText) {
     var text = (rawText || "").trim();
     if (!text) return false;
     var key = (typeof getAiApiKey === "function") ? getAiApiKey() : "";
-    if (!key) return false; // مفيش مفتاح Groq متاح — نسيب المسار العادي يتصرف (هو أصلاً هيطلب المفتاح)
+    if (!key) return false;
+
+    var history = (Array.isArray(window.aiChatHistory) ? window.aiChatHistory.slice(-12) : [])
+      .filter(function (m) { return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string"; });
+
+    var messages = [{ role: "system", content: TOOL_ROUTER_SYSTEM_PROMPT }].concat(history).concat([{ role: "user", content: text }]);
 
     var indicator = null;
     try {
       indicator = showRoutingIndicator();
-      var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          messages: [
-            { role: "system", content: TOOL_ROUTER_SYSTEM_PROMPT },
-            { role: "user", content: text }
-          ],
-          tools: TOOL_DEFS,
-          tool_choice: "auto",
-          max_tokens: 300,
-          temperature: 0
-        })
-      });
-      var data = await resp.json();
-      var msg = data && data.choices && data.choices[0] && data.choices[0].message;
-      if (!msg || !msg.tool_calls || !msg.tool_calls.length) {
+
+      var firstMsg = await callAgentModel(key, messages);
+      if (!firstMsg || !firstMsg.tool_calls || !firstMsg.tool_calls.length) {
+        // مفيش نداء أداة من أول رد — يبقى الرسالة أصلاً مش شغل الوكيل ده، سيبها للمسار العادي
         if (indicator) indicator.remove();
         return false;
       }
 
-      // ── نفرز نداءات الأدوات: صورة / علامة كود (مش عندها تنفيذ فوري) / باقي الأدوات المحلية ──
-      var imageCall = null, hasCodeFlag = false, otherCalls = [];
-      for (var i = 0; i < msg.tool_calls.length; i++) {
-        var call = msg.tool_calls[i];
-        var args = {};
-        try { args = JSON.parse(call.function.arguments || "{}"); } catch (eArgs) {}
-        if (call.function.name === "generate_image" && !imageCall) imageCall = { call: call, args: args };
-        else if (call.function.name === "flag_code_build_request") hasCodeFlag = true;
-        else otherCalls.push({ call: call, args: args });
-      }
-
-      // ── حالة 1: طلب بناء كود بس (مفيش صورة ولا أداة تانية) — منتدخلش، بس نسيب علامة للمسار العادي ──
-      if (hasCodeFlag && !imageCall && !otherCalls.length) {
-        if (indicator) indicator.remove();
-        window.__cosmosForceBuildRequest = true;
-        return false;
-      }
-
-      // ── حالة 2: مفيش أي أداة فعلية اتنادت (نظريًا مش متوقع هنا لأن فوق فحصنا tool_calls.length) ──
-      if (!imageCall && !otherCalls.length) {
-        if (indicator) indicator.remove();
-        return false;
-      }
-
-      // ── من هنا فيه تدخل فعلي: صورة و/أو أداة صلاة/قرآن (ممكن الاتنين مع بعض) ──
-      if (indicator) indicator.remove();
+      // ── من هنا اتأكد إن فيه تدخل فعلي — نعرض فقاعة المستخدم ونبدأ الحلقة ──
+      messages.push(firstMsg);
       displayUserBubbleOnly(text);
+      if (window.aiChatHistory) window.aiChatHistory.push({ role: "user", content: text });
 
-      if (otherCalls.length) {
-        var toolResults = [];
-        for (var j = 0; j < otherCalls.length; j++) {
-          var result = executeTool(otherCalls[j].call.function.name, otherCalls[j].args);
-          toolResults.push({ role: "tool", tool_call_id: otherCalls[j].call.id, name: otherCalls[j].call.function.name, content: JSON.stringify(result) });
+      var currentMsg = firstMsg;
+
+      for (var step = 0; step < MAX_AGENT_STEPS; step++) {
+        if (!currentMsg.tool_calls || !currentMsg.tool_calls.length) break;
+
+        for (var i = 0; i < currentMsg.tool_calls.length; i++) {
+          var call = currentMsg.tool_calls[i];
+          var args = {};
+          try { args = JSON.parse(call.function.arguments || "{}"); } catch (eArgs) {}
+
+          var result = await executeTool(call.function.name, args);
+          messages.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: JSON.stringify(result) });
         }
-        var finalText = "تم ✅";
-        try {
-          var followupMessages = [
-            { role: "system", content: "أنت مساعد فلك الذكي. المستخدم طلب حاجة بخصوص الصلاة أو القرآن ونفّذتها له بالفعل. رد عليه بجملة قصيرة ودودة بالعربية المصرية تؤكد إنك نفذت طلبه، من غير ما تكرر أي تفاصيل تقنية زي أسماء الأدوات." },
-            { role: "user", content: text },
-            { role: "assistant", content: null, tool_calls: otherCalls.map(function (o) { return o.call; }) }
-          ].concat(toolResults);
-          var resp2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: followupMessages, max_tokens: 150, temperature: 0.4 })
-          });
-          var data2 = await resp2.json();
-          var t2 = data2 && data2.choices && data2.choices[0] && data2.choices[0].message && data2.choices[0].message.content;
-          if (t2 && t2.trim()) finalText = t2.trim();
-        } catch (eFollow) {
-          var firstOk = toolResults[0] && JSON.parse(toolResults[0].content);
-          finalText = (firstOk && firstOk.detail) || (firstOk && firstOk.error) || "تم ✅";
-        }
-        displayAIBubbleOnly(finalText);
+
+        currentMsg = await callAgentModel(key, messages);
+        if (!currentMsg) break;
+        messages.push(currentMsg);
       }
 
-      if (imageCall && typeof window.generateAndDisplayImage === "function") {
-        await window.generateAndDisplayImage(imageCall.args.image_prompt || text);
-      }
+      if (indicator) indicator.remove();
+
+      var finalText = (currentMsg && currentMsg.content && currentMsg.content.trim()) || "تم ✅";
+      displayAIBubbleOnly(finalText);
+      if (window.aiChatHistory) window.aiChatHistory.push({ role: "assistant", content: finalText });
 
       return true;
     } catch (eRoute) {
-      console.warn("[صلاتي] تعذّر تحديد نوع الأمر عبر الذكاء الاصطناعي، هيتبعت المسار العادي:", eRoute);
+      console.warn("[صلاتي] تعذّر تشغيل الوكيل، هيتبعت المسار العادي:", eRoute);
       if (indicator) indicator.remove();
       return false;
     }
