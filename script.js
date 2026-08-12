@@ -1,4 +1,35 @@
 
+  // ============================================================
+  // 🛑 مُسجّل أخطاء شامل للمنصة كلها — بيمسك أي خطأ JavaScript أو Promise
+  // اتفض من غير معالجة في أي مكان في التطبيق، ويسجّله في نفس "سجل مشاكل
+  // المنصة" (Issues Log) اللي المشرف بيشوفه من داخل التطبيق. لازم يكون
+  // في أول الملف عشان يمسك أخطاء بدري من لحظة تحميل الصفحة. لو logPlatformIssue
+  // لسه معرّفتش وقت حدوث الخطأ، بنحتفظ بيه مؤقتًا ونفرّغه أول ما تتاح. ──
+  window.__earlyErrorBuffer = window.__earlyErrorBuffer || [];
+  (function () {
+    function record(source, detail) {
+      if (window.logPlatformIssue) { window.logPlatformIssue(source, detail); return; }
+      window.__earlyErrorBuffer.push({ source: source, detail: detail });
+    }
+    window.addEventListener("error", function (e) {
+      var msg = (e && e.message) || "خطأ غير معروف وقت التشغيل";
+      var loc = (e && e.filename) ? (" — " + e.filename.split("/").pop() + ":" + e.lineno) : "";
+      record("خطأ JavaScript غير متوقع", msg + loc);
+    });
+    window.addEventListener("unhandledrejection", function (e) {
+      var reason = e && e.reason;
+      var msg = (reason && reason.message) ? reason.message : String(reason);
+      record("Promise اتفض من غير معالجة", msg);
+    });
+    var flushTimer = setInterval(function () {
+      if (window.logPlatformIssue && window.__earlyErrorBuffer.length) {
+        window.__earlyErrorBuffer.forEach(function (e) { window.logPlatformIssue(e.source, e.detail); });
+        window.__earlyErrorBuffer.length = 0;
+      }
+      if (window.logPlatformIssue) clearInterval(flushTimer);
+    }, 2000);
+  })();
+
   // ===== ضبط ارتفاع حقيقي للفيوبورت (--app-vh) — حل احتياطي أقوى من 100dvh
   //       في نسخ WebView القديمة (بيستخدمه صفحة الرسم في المودال) =====
   (function setupAppViewportHeight() {
@@ -16256,6 +16287,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       renderSettingsTimesIfOpen();
     }).catch(function (e) {
       console.warn("[صلاتي] فشل تحديث مواقيت اليوم:", e);
+      if (window.logPlatformIssue) window.logPlatformIssue("مواقيت الصلاة (Aladhan API)", String(e && e.message || e).slice(0, 200));
       // نسيب timesReady زي ما هي (false) — منمنعش تشغيل تذكير على مواقيت غير مؤكدة
     });
   }
@@ -16684,7 +16716,19 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       })
     });
     var data = await resp.json();
-    return data && data.choices && data.choices[0] && data.choices[0].message;
+    if (!resp.ok || data.error) {
+      var errDetail = "HTTP " + resp.status + " — " + JSON.stringify(data.error || data).slice(0, 250);
+      console.error("[صلاتي] فشل نداء الوكيل:", errDetail);
+      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", errDetail);
+      return null;
+    }
+    var msg = data && data.choices && data.choices[0] && data.choices[0].message;
+    if (!msg) {
+      console.warn("[صلاتي] رد غير متوقع من الموديل (مفيش message):", data);
+      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", "رد غير متوقع من الموديل: " + JSON.stringify(data).slice(0, 250));
+      return null;
+    }
+    return msg;
   }
 
   // ── حلقة agentic كاملة: نداء → تنفيذ أداة/أدوات → نداء تاني بالنتيجة → الموديل يقرر
@@ -16746,6 +16790,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       return true;
     } catch (eRoute) {
       console.warn("[صلاتي] تعذّر تشغيل الوكيل، هيتبعت المسار العادي:", eRoute);
+      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", String(eRoute && eRoute.message || eRoute).slice(0, 200));
       if (indicator) indicator.remove();
       return false;
     }
