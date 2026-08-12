@@ -11303,6 +11303,31 @@ function slStopAllAnimations() {
     galaxy:  'onwK4e9ZLuTAKqWW03F9'  // Daniel — رجالي حكّاء (جالكسي)
   };
 
+  // ===== خط دفاع ثالث ومجاني بالكامل: نطق المتصفح نفسه (Web Speech API) — بدون
+  // مفتاح، بدون كوتة، بدون إنترنت حتى في أغلب المتصفحات. بيتفعّل تلقائيًا لو
+  // Groq TTS وElevenLabs الاتنين فشلوا، عشان الصوت مايفضلش ساكت خالص. =====
+  function browserSpeakFallback(text, btn, isArabic) {
+    if (!('speechSynthesis' in window)) { stopGroqTTS(); return; }
+    try {
+      window.speechSynthesis.cancel();
+      var utt = new SpeechSynthesisUtterance(String(text || '').slice(0, 3000));
+      utt.lang = isArabic ? 'ar-SA' : 'en-US';
+      utt.rate = 0.95;
+      utt.pitch = 1;
+      _ttsActive = true;
+      _ttsBtn = btn || null;
+      if (btn) {
+        btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
+        btn.classList.add('muted');
+      }
+      utt.onend = function () { stopGroqTTS(); };
+      utt.onerror = function () { stopGroqTTS(); };
+      window.speechSynthesis.speak(utt);
+    } catch (eBrowserTts) {
+      stopGroqTTS();
+    }
+  }
+
   async function tryElevenLabsTTS(text, btn, isArabic) {
     if (!_ttsActive) return;
     try {
@@ -11327,8 +11352,7 @@ function slStopAllAnimations() {
         var errMsg = errData.detail && errData.detail.message ? errData.detail.message : (errData.detail || JSON.stringify(errData));
         if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
         if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', 'HTTP ' + resp.status + ' — ' + String(errMsg).slice(0,150));
-        if (typeof showToast === 'function') showToast('ElevenLabs خطأ ' + resp.status + ': ' + errMsg);
-        stopGroqTTS();
+        browserSpeakFallback(text, btn, isArabic);
         return;
       }
 
@@ -11357,7 +11381,7 @@ function slStopAllAnimations() {
       console.error('[TTS] ElevenLabs error:', e);
       if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
       if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', String(e && e.message || e).slice(0,150));
-      stopGroqTTS();
+      browserSpeakFallback(text, btn, isArabic);
     }
   }
 
