@@ -13504,17 +13504,38 @@ function slStopAllAnimations() {
       // بوابة موحّدة بتوصلك بنماذج مجانية تماماً (Llama/Mistral/Gemma...) بمفتاح واحد،
       // بنجرب أكتر من موديل مجاني ورا بعض لو موديل معين وصل لحد الكوتا. ──
       var _debugOpenRouterDetail = '';
+      // ── قائمة الموديلات المجانية على OpenRouter بتتغيّر باستمرار (بيشيلوا/يضيفوا موديلات كل شوية،
+      // زي ما حصل مع gemma-2-9b اللي اتشال فجأة). بدل اسم ثابت ممكن يتشال في أي وقت، بنسأل
+      // OpenRouter نفسه وقت الطلب عن الموديلات اللي سعرها صفر فعليًا دلوقتي. بنكاش النتيجة لمدة
+      // 30 دقيقة عشان منعملش استعلام إضافي مع كل رسالة من غير داعي. ──
+      window.__orFreeModelsCache = window.__orFreeModelsCache || { list: [], key: null, at: 0 };
+      async function getFreeOpenRouterModels(key) {
+        var cache = window.__orFreeModelsCache;
+        if (cache.key === key && cache.list.length && (Date.now() - cache.at) < 1800000) return cache.list;
+        try {
+          var r = await fetch('https://openrouter.ai/api/v1/models', { headers: { 'Authorization': 'Bearer ' + key } });
+          var d = await r.json();
+          var list = (d && d.data ? d.data : []).filter(function (m) {
+            return m && m.pricing && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0;
+          }).map(function (m) { return m.id; }).slice(0, 3);
+          if (list.length) { window.__orFreeModelsCache = { list: list, key: key, at: Date.now() }; return list; }
+          return [];
+        } catch (eList) { return []; }
+      }
+
       async function callOpenRouterFallback() {
         var pool = window.OpenRouterKeyPool;
         if (!pool || !pool.count()) { _debugOpenRouterDetail = 'مفيش مفتاح OpenRouter متسجل أصلاً'; return null; }
         var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         var _orMsgs = [{ role: 'system', content: _sysFull }].concat(histMsgs).concat([{ role: 'user', content: _aiApiMsg }]);
-        // ── قائمة موديلات مجانية على OpenRouter، بنجرب أول واحد ولو فشل (429/مش متاح) ننتقل للي بعده ──
-        var _orModels = ['meta-llama/llama-3.3-70b-instruct:free', 'mistralai/mistral-7b-instruct:free', 'google/gemma-2-9b-it:free'];
         var maxAttempts = Math.min(pool.count(), 3);
         for (var i = 0; i < maxAttempts; i++) {
           var oKey = pool.next();
           if (!oKey) break;
+          // ── نسأل OpenRouter عن الموديلات المجانية فعليًا دلوقتي بهذا المفتاح؛ لو الاستعلام
+          // فشل لأي سبب، نرجع للقايمة الثابتة القديمة كخط أمان أخير ──
+          var _orModels = await getFreeOpenRouterModels(oKey);
+          if (!_orModels.length) _orModels = ['meta-llama/llama-3.3-70b-instruct:free', 'mistralai/mistral-7b-instruct:free', 'google/gemma-2-9b-it:free'];
           var _keyFailed429 = false;
           for (var mi = 0; mi < _orModels.length; mi++) {
             try {
