@@ -16961,11 +16961,19 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     return _jspdfReady;
   }
 
+  // تحويل رابط جوجل درايف لرابط البروكسي بتاعنا (يتجاوز CORS)
+  function toProxiedPdfUrl(url) {
+    if (!url) return url;
+    var m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/drive\.google\.com\/open\?id=([^&]+)/) || url.match(/[?&]id=([^&]+)/);
+    if (m) return '/api/drive-pdf?id=' + m[1];
+    return url; // رابط مباشر لسيرفر تاني (مش درايف)
+  }
+
   // رندر أول صفحة من ملف PDF على كانفاس
   async function renderPdfPageToCanvas(url, scale) {
     scale = scale || 2.2;
     var pdfjsLib = await ensurePdfJs();
-    if (typeof convertDriveUrl === 'function') url = convertDriveUrl(url);
+    url = toProxiedPdfUrl(url);
     var pdf = await pdfjsLib.getDocument(url).promise;
     var page = await pdf.getPage(1);
     var viewport = page.getViewport({ scale: scale });
