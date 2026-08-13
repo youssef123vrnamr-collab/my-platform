@@ -17071,10 +17071,15 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     if (!existing.empty) {
       var docSnap = existing.docs[0];
       var rec = Object.assign({ id: docSnap.id }, docSnap.data());
+      // لو المستخدم عدّل اسمه في مودال التأكيد، حدّث الاسم في السجل المحفوظ (رقم الشهادة بيفضل زي ما هو)
+      if (studentNameOverride && studentNameOverride.trim() && studentNameOverride.trim() !== rec.studentName) {
+        rec.studentName = studentNameOverride.trim();
+        try { await db.collection('certificates').doc(rec.id).update({ studentName: rec.studentName }); } catch (e) { console.error(e); }
+      }
       rec.verifyUrl = verifyBase + '?verify=' + encodeURIComponent(rec.certNumber);
       return rec;
     }
-    var studentName = studentNameOverride || (window.currentUser) || (window.googleUser && googleUser.displayName) || 'طالب';
+    var studentName = (studentNameOverride && studentNameOverride.trim()) || (window.currentUser) || (window.googleUser && googleUser.displayName) || 'طالب';
     var tpl = courseData.certTemplate || {};
     var certNumber = genCertNumber();
     var payload = {
@@ -17162,23 +17167,26 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         }
       }
 
-      // لو الشهادة صدرت قبل كده، مفيش داعي لعرض التأكيد تاني — نجيبها زي ما هي
+      // لو الشهادة صدرت قبل كده وباسم غلط (مثلاً "طالب")، نعرض التأكيد تاني عشان تتصحح؛ ولو الاسم صح من الأول منعرضش تاني
       var alreadyIssued = await db.collection('certificates')
         .where('userId', '==', currentUserId)
         .where('courseId', '==', courseId)
         .limit(1).get();
 
+      var existingRec = alreadyIssued.empty ? null : alreadyIssued.docs[0].data();
+      var needsNameFix = !existingRec || !existingRec.studentName || existingRec.studentName === 'طالب';
+
       var confirmedName = null;
-      if (alreadyIssued.empty) {
+      if (!existingRec || needsNameFix) {
         btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
         var tpl0 = courseData.certTemplate || {};
-        var defaultName = (window.currentUser) || (window.googleUser && googleUser.displayName) || 'طالب';
+        var defaultName = (existingRec && existingRec.studentName !== 'طالب' && existingRec.studentName) || (window.currentUser) || (window.googleUser && googleUser.displayName) || '';
         confirmedName = await showCertConfirmModal({
           studentName: defaultName,
           courseTitle: esc(courseData.title || ''),
-          hours: tpl0.hours || courseData.certHours || '',
-          level: tpl0.level || courseData.certLevel || '',
-          dateStr: todayStr()
+          hours: (existingRec && existingRec.hours) || tpl0.hours || courseData.certHours || '',
+          level: (existingRec && existingRec.level) || tpl0.level || courseData.certLevel || '',
+          dateStr: (existingRec && existingRec.issueDateStr) || todayStr()
         });
         if (!confirmedName) return; // المستخدم لغى العملية
         btnEl.disabled = true;
