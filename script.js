@@ -16961,6 +16961,21 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     return _jspdfReady;
   }
 
+  // تأكيد تحميل مكتبة QRCode (لو لسه متحملتش من index.html وقت الضغط على الزرار)
+  var _qrLibReady = null;
+  function ensureQRLib() {
+    if (_qrLibReady) return _qrLibReady;
+    _qrLibReady = new Promise(function (resolve, reject) {
+      if (window.QRCode) return resolve(window.QRCode);
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      s.onload = function () { resolve(window.QRCode); };
+      s.onerror = function () { reject(new Error('QRCode lib failed to load')); };
+      document.head.appendChild(s);
+    });
+    return _qrLibReady;
+  }
+
   // تحويل رابط جوجل درايف لرابط البروكسي بتاعنا (يتجاوز CORS)
   function toProxiedPdfUrl(url) {
     if (!url) return url;
@@ -16988,30 +17003,32 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   // توليد QR كـ canvas مستقل (باستخدام qrcodejs المحمّلة أصلاً في المنصة)
   function makeQRCanvas(text, size) {
     return new Promise(function (resolve) {
-      if (!window.QRCode) { resolve(null); return; }
-      var tmp = document.createElement('div');
-      tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
-      document.body.appendChild(tmp);
-      try { new QRCode(tmp, { text: text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); }
-      catch (e) { document.body.removeChild(tmp); resolve(null); return; }
-      setTimeout(function () {
-        var out = document.createElement('canvas');
-        out.width = size; out.height = size;
-        var octx = out.getContext('2d');
-        var cnv = tmp.querySelector('canvas');
-        var img = tmp.querySelector('img');
-        if (cnv) {
-          octx.drawImage(cnv, 0, 0, size, size);
-          document.body.removeChild(tmp);
-          resolve(out);
-        } else if (img) {
-          function done() { octx.drawImage(img, 0, 0, size, size); document.body.removeChild(tmp); resolve(out); }
-          if (img.complete) done(); else img.onload = done;
-        } else {
-          document.body.removeChild(tmp);
-          resolve(null);
-        }
-      }, 250);
+      ensureQRLib().then(function () {
+        if (!window.QRCode) { resolve(null); return; }
+        var tmp = document.createElement('div');
+        tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+        document.body.appendChild(tmp);
+        try { new QRCode(tmp, { text: text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); }
+        catch (e) { document.body.removeChild(tmp); resolve(null); return; }
+        setTimeout(function () {
+          var out = document.createElement('canvas');
+          out.width = size; out.height = size;
+          var octx = out.getContext('2d');
+          var cnv = tmp.querySelector('canvas');
+          var img = tmp.querySelector('img');
+          if (cnv) {
+            octx.drawImage(cnv, 0, 0, size, size);
+            document.body.removeChild(tmp);
+            resolve(out);
+          } else if (img) {
+            function done() { octx.drawImage(img, 0, 0, size, size); document.body.removeChild(tmp); resolve(out); }
+            if (img.complete) done(); else img.onload = done;
+          } else {
+            document.body.removeChild(tmp);
+            resolve(null);
+          }
+        }, 250);
+      }).catch(function () { resolve(null); });
     });
   }
 
@@ -17071,10 +17088,18 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     if (!existing.empty) {
       var docSnap = existing.docs[0];
       var rec = Object.assign({ id: docSnap.id }, docSnap.data());
+      var patch = {};
       // لو المستخدم عدّل اسمه في مودال التأكيد، حدّث الاسم في السجل المحفوظ (رقم الشهادة بيفضل زي ما هو)
       if (studentNameOverride && studentNameOverride.trim() && studentNameOverride.trim() !== rec.studentName) {
         rec.studentName = studentNameOverride.trim();
-        try { await db.collection('certificates').doc(rec.id).update({ studentName: rec.studentName }); } catch (e) { console.error(e); }
+        patch.studentName = rec.studentName;
+      }
+      // لو الساعات/المستوى كانوا فاضيين وقت الإصدار وتم إضافتهم بعدين في القالب، حدّثهم في السجل القديم
+      var tplNow = courseData.certTemplate || {};
+      if (!rec.hours && (tplNow.hours || courseData.certHours)) { rec.hours = tplNow.hours || courseData.certHours; patch.hours = rec.hours; }
+      if (!rec.level && (tplNow.level || courseData.certLevel)) { rec.level = tplNow.level || courseData.certLevel; patch.level = rec.level; }
+      if (Object.keys(patch).length) {
+        try { await db.collection('certificates').doc(rec.id).update(patch); } catch (e) { console.error(e); }
       }
       rec.verifyUrl = verifyBase + '?verify=' + encodeURIComponent(rec.certNumber);
       return rec;
@@ -17320,8 +17345,8 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           '<input id="certDesHours" placeholder="عدد الساعات التدريبية (مثال: 20)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
           '<input id="certDesLevel" placeholder="مستوى الدورة (مثال: مبتدئ)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
         '</div>' +
-        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">لون كل نص (لو مش باين على التصميم غيّر لونه من هنا):</p>' +
-        '<div id="certDesColors" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.9rem"></div>' +
+        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">لون وحجم كل نص (لو مش باين أو صغير، غيّره من هنا):</p>' +
+        '<div id="certDesColors" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.9rem"></div>' +
         '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">ضبط دقيق لمكان ومقاس QR (لو السحب بالإصبع مش دقيق كفاية):</p>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.9rem">' +
           '<div><label style="color:#94a3b8;font-size:.68rem">أفقي X%</label><input id="certDesQrX" type="number" step="0.1" style="width:100%;padding:.4rem;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.78rem"></div>' +
@@ -17460,13 +17485,21 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       var wrap = document.createElement('div');
       wrap.style.cssText = 'display:flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.04);border-radius:8px;padding:.35rem .5rem';
       var curColor = (fields[key] && fields[key].color) || '#ffffff';
+      var curSize = (fields[key] && fields[key].size) || 16;
       wrap.innerHTML =
         '<input type="color" value="' + curColor + '" style="width:26px;height:26px;border:none;background:none;padding:0;cursor:pointer">' +
-        '<span style="color:#cbd5e1;font-size:.72rem">' + labels[key] + '</span>';
+        '<span style="color:#cbd5e1;font-size:.72rem;flex:1">' + labels[key] + '</span>' +
+        '<input type="number" min="6" max="80" step="1" value="' + curSize + '" style="width:48px;padding:.25rem;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:Cairo;font-size:.72rem;text-align:center" title="حجم الخط">';
       var colorInput = wrap.querySelector('input[type=color]');
+      var sizeInput = wrap.querySelector('input[type=number]');
       colorInput.addEventListener('input', function () {
         if (!fields[key]) fields[key] = {};
         fields[key].color = colorInput.value;
+      });
+      sizeInput.addEventListener('input', function () {
+        if (!fields[key]) fields[key] = {};
+        var v = parseInt(sizeInput.value, 10);
+        if (!isNaN(v)) fields[key].size = v;
       });
       colorPickerHost.appendChild(wrap);
     });
