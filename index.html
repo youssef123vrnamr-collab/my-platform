@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Astronomy and space</title>
 
   <!-- Google AdSense -->
@@ -53,17 +53,9 @@
   </script>
 
   <link rel="manifest" href="manifest.json">
-  <!-- PWA Icons - كل الأحجام لضمان الظهور على كل جهاز -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-192x192.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="icon-192x192.png">
-  <link rel="apple-touch-icon" sizes="144x144" href="icon-192x192.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="icon-192x192.png">
-  <link rel="apple-touch-icon" sizes="76x76"  href="icon-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-192x192.png">
+  <!-- PWA Icons -->
+  <link rel="apple-touch-icon" href="icon-192x192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
-  <link rel="icon" type="image/png" sizes="96x96"  href="icon-192x192.png">
-  <link rel="icon" type="image/png" sizes="32x32"  href="icon-192x192.png">
-  <link rel="icon" type="image/png" sizes="16x16"  href="icon-192x192.png">
   <meta name="theme-color" content="#6366f1">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -97,6 +89,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <link rel="stylesheet" href="style.css?v=1786269474">
   <style>
     /* ===== إصلاح الفيديو ===== */
@@ -239,7 +233,11 @@
     }
 
     /* fullscreen mode */
-    #videoModal:fullscreen #videoModalContent,
+    #videoModal:fullscreen #videoModalContent {
+      width: 100vw !important; max-width: 100vw !important;
+      height: 100vh !important; max-height: 100vh !important;
+      border-radius: 0 !important; border: none !important; margin: 0 !important;
+    }
     #videoModal:-webkit-full-screen #videoModalContent {
       width: 100vw !important; max-width: 100vw !important;
       height: 100vh !important; max-height: 100vh !important;
@@ -1222,7 +1220,7 @@
     <div class="modal-body" style="padding:1.25rem;overflow-y:auto;flex:1">
       <p style="color:#94a3b8;font-size:.87rem;line-height:1.6;margin-bottom:1rem">
         <i class="fas fa-info-circle" style="color:#f59e0b"></i>
-        ضع رابط PDF الشهادة لكل كورس. الطالب سيشوف زرار "استلام شهادتك" بعد ما يكمل مشاهدة كل فيديوهات الكورس.
+        1) ضع رابط PDF قالب الشهادة لكل كورس واحفظه. 2) اضغط زرار <i class="fas fa-crosshairs"></i> لتحديد أماكن الاسم/التاريخ/الساعات/المستوى/رقم الشهادة/QR فوق التصميم. الطالب هيشوف زرار "استلام شهادتك" بعد إكمال كل فيديوهات الكورس، وهتتملى شهادته تلقائيًا برقم فريد وQR تحقق خاص بيه.
       </p>
       <div id="certManagerList"><p style="color:#888;text-align:center"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</p></div>
     </div>

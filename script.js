@@ -1,4 +1,35 @@
 
+  // ============================================================
+  // 🛑 مُسجّل أخطاء شامل للمنصة كلها — بيمسك أي خطأ JavaScript أو Promise
+  // اتفض من غير معالجة في أي مكان في التطبيق، ويسجّله في نفس "سجل مشاكل
+  // المنصة" (Issues Log) اللي المشرف بيشوفه من داخل التطبيق. لازم يكون
+  // في أول الملف عشان يمسك أخطاء بدري من لحظة تحميل الصفحة. لو logPlatformIssue
+  // لسه معرّفتش وقت حدوث الخطأ، بنحتفظ بيه مؤقتًا ونفرّغه أول ما تتاح. ──
+  window.__earlyErrorBuffer = window.__earlyErrorBuffer || [];
+  (function () {
+    function record(source, detail) {
+      if (window.logPlatformIssue) { window.logPlatformIssue(source, detail); return; }
+      window.__earlyErrorBuffer.push({ source: source, detail: detail });
+    }
+    window.addEventListener("error", function (e) {
+      var msg = (e && e.message) || "خطأ غير معروف وقت التشغيل";
+      var loc = (e && e.filename) ? (" — " + e.filename.split("/").pop() + ":" + e.lineno) : "";
+      record("خطأ JavaScript غير متوقع", msg + loc);
+    });
+    window.addEventListener("unhandledrejection", function (e) {
+      var reason = e && e.reason;
+      var msg = (reason && reason.message) ? reason.message : String(reason);
+      record("Promise اتفض من غير معالجة", msg);
+    });
+    var flushTimer = setInterval(function () {
+      if (window.logPlatformIssue && window.__earlyErrorBuffer.length) {
+        window.__earlyErrorBuffer.forEach(function (e) { window.logPlatformIssue(e.source, e.detail); });
+        window.__earlyErrorBuffer.length = 0;
+      }
+      if (window.logPlatformIssue) clearInterval(flushTimer);
+    }, 2000);
+  })();
+
   // ===== ضبط ارتفاع حقيقي للفيوبورت (--app-vh) — حل احتياطي أقوى من 100dvh
   //       في نسخ WebView القديمة (بيستخدمه صفحة الرسم في المودال) =====
   (function setupAppViewportHeight() {
@@ -1302,6 +1333,7 @@ async function updateAdminUI() {
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); }, null, ["#9333ea","#c084fc"]);
             addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); }, null, ["#3b82f6","#93c5fd"]);
             addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); }, null, ["#f97316","#fdba74"]);
+            addItem("prayerSettingsMenuItem","fas fa-mosque","إعدادات الصلاة 🕌", () => { menu.classList.remove("active"); window.openPrayerSettingsModal && window.openPrayerSettingsModal(); }, null, ["#10b981","#06b6d4"]);
 
             if (uploadZone) uploadZone.classList.add("active");
             if (storageBar) storageBar.style.display = "block";
@@ -1319,6 +1351,7 @@ async function updateAdminUI() {
             addItem("appsMenuItem","fas fa-th-large","تطبيقات المنصة", () => { menu.classList.remove("active"); openAppsModal(); }, null, ["#9333ea","#c084fc"]);
             addItem("aiPersonaMenuItem","fas fa-user-astronaut","تغيير شخصية الذكاء الاصطناعي", () => { menu.classList.remove("active"); window.openPersonaModal && window.openPersonaModal(); }, null, ["#3b82f6","#93c5fd"]);
             addItem("myToolsMenuItem","fas fa-toolbox","أدواتي 🛠️", () => { menu.classList.remove("active"); openToolsLibraryModal(); }, null, ["#f97316","#fdba74"]);
+            addItem("prayerSettingsMenuItem","fas fa-mosque","إعدادات الصلاة 🕌", () => { menu.classList.remove("active"); window.openPrayerSettingsModal && window.openPrayerSettingsModal(); }, null, ["#10b981","#06b6d4"]);
             addItem("feedbackMenuItem","fas fa-star","تقييم المنصة", () => { menu.classList.remove("active"); openFeedbackModal(); }, null, ["#eab308","#fde047"]);
             addItem("howToUseMenuItem","fas fa-circle-question","كيفية استخدام المنصة", () => { menu.classList.remove("active"); openHowToUseModal(); }, null, ["#0284c7","#38bdf8"]);
             if (isGoogleUser) addItem("googleLogoutMenuItem","fab fa-google","تسجيل الخروج من جوجل", () => { menu.classList.remove("active"); googleLogout(); }, null, ["#0ea5e9","#38bdf8"]);
@@ -11270,6 +11303,31 @@ function slStopAllAnimations() {
     galaxy:  'onwK4e9ZLuTAKqWW03F9'  // Daniel — رجالي حكّاء (جالكسي)
   };
 
+  // ===== خط دفاع ثالث ومجاني بالكامل: نطق المتصفح نفسه (Web Speech API) — بدون
+  // مفتاح، بدون كوتة، بدون إنترنت حتى في أغلب المتصفحات. بيتفعّل تلقائيًا لو
+  // Groq TTS وElevenLabs الاتنين فشلوا، عشان الصوت مايفضلش ساكت خالص. =====
+  function browserSpeakFallback(text, btn, isArabic) {
+    if (!('speechSynthesis' in window)) { stopGroqTTS(); return; }
+    try {
+      window.speechSynthesis.cancel();
+      var utt = new SpeechSynthesisUtterance(String(text || '').slice(0, 3000));
+      utt.lang = isArabic ? 'ar-SA' : 'en-US';
+      utt.rate = 0.95;
+      utt.pitch = 1;
+      _ttsActive = true;
+      _ttsBtn = btn || null;
+      if (btn) {
+        btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
+        btn.classList.add('muted');
+      }
+      utt.onend = function () { stopGroqTTS(); };
+      utt.onerror = function () { stopGroqTTS(); };
+      window.speechSynthesis.speak(utt);
+    } catch (eBrowserTts) {
+      stopGroqTTS();
+    }
+  }
+
   async function tryElevenLabsTTS(text, btn, isArabic) {
     if (!_ttsActive) return;
     try {
@@ -11294,8 +11352,7 @@ function slStopAllAnimations() {
         var errMsg = errData.detail && errData.detail.message ? errData.detail.message : (errData.detail || JSON.stringify(errData));
         if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
         if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', 'HTTP ' + resp.status + ' — ' + String(errMsg).slice(0,150));
-        if (typeof showToast === 'function') showToast('ElevenLabs خطأ ' + resp.status + ': ' + errMsg);
-        stopGroqTTS();
+        browserSpeakFallback(text, btn, isArabic);
         return;
       }
 
@@ -11324,7 +11381,7 @@ function slStopAllAnimations() {
       console.error('[TTS] ElevenLabs error:', e);
       if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
       if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', String(e && e.message || e).slice(0,150));
-      stopGroqTTS();
+      browserSpeakFallback(text, btn, isArabic);
     }
   }
 
@@ -13471,17 +13528,38 @@ function slStopAllAnimations() {
       // بوابة موحّدة بتوصلك بنماذج مجانية تماماً (Llama/Mistral/Gemma...) بمفتاح واحد،
       // بنجرب أكتر من موديل مجاني ورا بعض لو موديل معين وصل لحد الكوتا. ──
       var _debugOpenRouterDetail = '';
+      // ── قائمة الموديلات المجانية على OpenRouter بتتغيّر باستمرار (بيشيلوا/يضيفوا موديلات كل شوية،
+      // زي ما حصل مع gemma-2-9b اللي اتشال فجأة). بدل اسم ثابت ممكن يتشال في أي وقت، بنسأل
+      // OpenRouter نفسه وقت الطلب عن الموديلات اللي سعرها صفر فعليًا دلوقتي. بنكاش النتيجة لمدة
+      // 30 دقيقة عشان منعملش استعلام إضافي مع كل رسالة من غير داعي. ──
+      window.__orFreeModelsCache = window.__orFreeModelsCache || { list: [], key: null, at: 0 };
+      async function getFreeOpenRouterModels(key) {
+        var cache = window.__orFreeModelsCache;
+        if (cache.key === key && cache.list.length && (Date.now() - cache.at) < 1800000) return cache.list;
+        try {
+          var r = await fetch('https://openrouter.ai/api/v1/models', { headers: { 'Authorization': 'Bearer ' + key } });
+          var d = await r.json();
+          var list = (d && d.data ? d.data : []).filter(function (m) {
+            return m && m.pricing && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0;
+          }).map(function (m) { return m.id; }).slice(0, 3);
+          if (list.length) { window.__orFreeModelsCache = { list: list, key: key, at: Date.now() }; return list; }
+          return [];
+        } catch (eList) { return []; }
+      }
+
       async function callOpenRouterFallback() {
         var pool = window.OpenRouterKeyPool;
         if (!pool || !pool.count()) { _debugOpenRouterDetail = 'مفيش مفتاح OpenRouter متسجل أصلاً'; return null; }
         var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         var _orMsgs = [{ role: 'system', content: _sysFull }].concat(histMsgs).concat([{ role: 'user', content: _aiApiMsg }]);
-        // ── قائمة موديلات مجانية على OpenRouter، بنجرب أول واحد ولو فشل (429/مش متاح) ننتقل للي بعده ──
-        var _orModels = ['meta-llama/llama-3.3-70b-instruct:free', 'mistralai/mistral-7b-instruct:free', 'google/gemma-2-9b-it:free'];
         var maxAttempts = Math.min(pool.count(), 3);
         for (var i = 0; i < maxAttempts; i++) {
           var oKey = pool.next();
           if (!oKey) break;
+          // ── نسأل OpenRouter عن الموديلات المجانية فعليًا دلوقتي بهذا المفتاح؛ لو الاستعلام
+          // فشل لأي سبب، نرجع للقايمة الثابتة القديمة كخط أمان أخير ──
+          var _orModels = await getFreeOpenRouterModels(oKey);
+          if (!_orModels.length) _orModels = ['meta-llama/llama-3.3-70b-instruct:free', 'mistralai/mistral-7b-instruct:free', 'google/gemma-2-9b-it:free'];
           var _keyFailed429 = false;
           for (var mi = 0; mi < _orModels.length; mi++) {
             try {
@@ -15932,4 +16010,1379 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   attachObserver();
 
   console.log('✅ Cosmos AI ChatGPT-style UI جاهزة — typewriter + action bar + thinking phrases');
+})();
+
+// ============================================================
+// 🕌 صلاتي — تذكير مواقيت الصلاة حسب الموقع الجغرافي + تشغيل القرآن الكريم
+// ميزة مستقلة بالكامل: مفيهاش أي تعديل على منطق الذكاء الاصطناعي الأساسي،
+// بس بتتصيد أوامر معيّنة في شات الذكاء الاصطناعي (زي "افتح اعدادات الصلاة"
+// أو "شغل سورة الكهف") وتنفذها محليًا فورًا من غير ما تكلّف طلب API.
+// ============================================================
+(function () {
+  'use strict';
+
+  // ── قائمة السور الـ 114 كاملة (بالترتيب) ──
+  var SURAHS = [
+    [1,"الفاتحة"],[2,"البقرة"],[3,"آل عمران"],[4,"النساء"],[5,"المائدة"],
+    [6,"الأنعام"],[7,"الأعراف"],[8,"الأنفال"],[9,"التوبة"],[10,"يونس"],
+    [11,"هود"],[12,"يوسف"],[13,"الرعد"],[14,"إبراهيم"],[15,"الحجر"],
+    [16,"النحل"],[17,"الإسراء"],[18,"الكهف"],[19,"مريم"],[20,"طه"],
+    [21,"الأنبياء"],[22,"الحج"],[23,"المؤمنون"],[24,"النور"],[25,"الفرقان"],
+    [26,"الشعراء"],[27,"النمل"],[28,"القصص"],[29,"العنكبوت"],[30,"الروم"],
+    [31,"لقمان"],[32,"السجدة"],[33,"الأحزاب"],[34,"سبأ"],[35,"فاطر"],
+    [36,"يس"],[37,"الصافات"],[38,"ص"],[39,"الزمر"],[40,"غافر"],
+    [41,"فصلت"],[42,"الشورى"],[43,"الزخرف"],[44,"الدخان"],[45,"الجاثية"],
+    [46,"الأحقاف"],[47,"محمد"],[48,"الفتح"],[49,"الحجرات"],[50,"ق"],
+    [51,"الذاريات"],[52,"الطور"],[53,"النجم"],[54,"القمر"],[55,"الرحمن"],
+    [56,"الواقعة"],[57,"الحديد"],[58,"المجادلة"],[59,"الحشر"],[60,"الممتحنة"],
+    [61,"الصف"],[62,"الجمعة"],[63,"المنافقون"],[64,"التغابن"],[65,"الطلاق"],
+    [66,"التحريم"],[67,"الملك"],[68,"القلم"],[69,"الحاقة"],[70,"المعارج"],
+    [71,"نوح"],[72,"الجن"],[73,"المزمل"],[74,"المدثر"],[75,"القيامة"],
+    [76,"الإنسان",["الدهر"]],[77,"المرسلات"],[78,"النبأ"],[79,"النازعات"],[80,"عبس"],
+    [81,"التكوير"],[82,"الانفطار"],[83,"المطففين"],[84,"الانشقاق"],[85,"البروج"],
+    [86,"الطارق"],[87,"الأعلى"],[88,"الغاشية"],[89,"الفجر"],[90,"البلد"],
+    [91,"الشمس"],[92,"الليل"],[93,"الضحى"],[94,"الشرح",["الانشراح"]],[95,"التين"],
+    [96,"العلق"],[97,"القدر"],[98,"البينة"],[99,"الزلزلة"],[100,"العاديات"],
+    [101,"القارعة"],[102,"التكاثر"],[103,"العصر"],[104,"الهمزة"],[105,"الفيل"],
+    [106,"قريش"],[107,"الماعون"],[108,"الكوثر"],[109,"الكافرون"],[110,"النصر"],
+    [111,"المسد",["تبت"]],[112,"الإخلاص"],[113,"الفلق"],[114,"الناس"]
+  ];
+
+  // ── قائمة القرّاء المتاحين (روابط cdn.islamic.network الرسمية — بدون مفتاح API) ──
+  var RECITERS = [
+    { id: "ar.alafasy",            name: "مشاري راشد العفاسي", aliases: ["العفاسي","مشاري راشد","مشاري"] },
+    { id: "ar.abdulbasitmurattal", name: "عبدالباسط عبدالصمد",  aliases: ["عبدالباسط","عبد الباسط","عبدالصمد"] },
+    { id: "ar.abdurrahmaansudais", name: "عبدالرحمن السديس",   aliases: ["السديس","سديس"] },
+    { id: "ar.husary",             name: "محمود خليل الحصري",  aliases: ["الحصري","حصري"] },
+    { id: "ar.minshawi",           name: "محمد صديق المنشاوي", aliases: ["المنشاوي","منشاوي"] },
+    { id: "ar.mahermuaiqly",       name: "ماهر المعيقلي",      aliases: ["المعيقلي","ماهر المعيقلي","ماهر"] },
+    { id: "ar.ahmedajamy",         name: "أحمد العجمي",        aliases: ["العجمي","احمد العجمي"] },
+    { id: "ar.hudhaify",           name: "علي الحذيفي",        aliases: ["الحذيفي","حذيفي"] },
+    { id: "ar.saoodshuraym",       name: "سعود الشريم",        aliases: ["الشريم","شريم"] }
+  ];
+  var DEFAULT_RECITER = "ar.alafasy";
+
+  var PRAYERS = [
+    { key: "Fajr",    label: "الفجر" },
+    { key: "Dhuhr",   label: "الظهر" },
+    { key: "Asr",     label: "العصر" },
+    { key: "Maghrib", label: "المغرب" },
+    { key: "Isha",    label: "العشاء" }
+  ];
+
+  var LS_KEY = "falak_prayer_settings";
+  var _state = null;
+
+  function _defaultState() {
+    return {
+      enabled: false,
+      lat: null, lng: null, city: "",
+      method: 5, // الهيئة المصرية العامة للمساحة
+      remindMinutes: 5,
+      reciter: DEFAULT_RECITER,
+      timings: null,     // مواقيت اليوم الحالي (بعد نجاح الجلب)
+      timingsDate: null, // "YYYY-MM-DD" بتاعة المواقيت المخزنة
+      timesReady: false, // ✅ ميفعّلش أي تذكير إلا لو ده true فعليًا
+      firedDate: null,
+      fired: {}
+    };
+  }
+
+  function loadState() {
+    if (_state) return _state;
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      _state = raw ? Object.assign(_defaultState(), JSON.parse(raw)) : _defaultState();
+    } catch (e) { _state = _defaultState(); }
+    // مواقيت يوم قديم يبقوا غير صالحين — لازم يتجابوا تاني
+    var todayStr = _todayStr();
+    if (_state.timingsDate !== todayStr) { _state.timings = null; _state.timesReady = false; }
+    return _state;
+  }
+
+  function saveState() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(_state)); } catch (e) {}
+  }
+
+  function _todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  // ── تطبيع النص العربي عشان مطابقة أسماء السور/القرّاء تبقى مرنة ──
+  function normAr(s) {
+    return (s || "").toString()
+      .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+      .replace(/[إأآا]/g, "ا")
+      .replace(/ى/g, "ي")
+      .replace(/ة/g, "ه")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function findSurah(text) {
+    var t = " " + normAr(text) + " ";
+    var best = null;
+    for (var i = 0; i < SURAHS.length; i++) {
+      var entry = SURAHS[i];
+      var names = [entry[1]].concat(entry[2] || []);
+      for (var j = 0; j < names.length; j++) {
+        var n = normAr(names[j]);
+        if (!n) continue;
+        // أسماء قصيرة جدًا (حرف واحد زي "ص"، "ق") لازم تتطابق ككلمة مستقلة بمسافات حواليها
+        var pattern = n.length <= 2 ? (" " + n + " ") : n;
+        var idx = t.indexOf(pattern);
+        if (idx !== -1) {
+          if (!best || n.length > best._len) best = { id: entry[0], name: entry[1], _len: n.length };
+        }
+      }
+    }
+    return best;
+  }
+
+  function findReciter(text) {
+    var t = " " + normAr(text) + " ";
+    for (var i = 0; i < RECITERS.length; i++) {
+      var r = RECITERS[i];
+      var names = [r.name].concat(r.aliases || []);
+      for (var j = 0; j < names.length; j++) {
+        var n = normAr(names[j]);
+        if (n && t.indexOf(n) !== -1) return r;
+      }
+    }
+    return null;
+  }
+
+  function reciterById(id) {
+    for (var i = 0; i < RECITERS.length; i++) if (RECITERS[i].id === id) return RECITERS[i];
+    return RECITERS[0];
+  }
+
+  // ============================================================
+  // 🧭 قايمة صفحات المنصة القابلة للفتح عن طريق أداة navigate_to_page — كل صفحة
+  // ليها أسماء بديلة (aliases) عشان البحث النصي المرن يقدر يلاقيها من وصف حر.
+  // كل الدوال دي أصلاً موجودة وشغالة في المنصة (نفس اللي في منيو الإعدادات/الأقسام)،
+  // إحنا بس بنستدعيها؛ لو أي دالة مش موجودة (نسخة قديمة من الكود)، بنتجاهلها بأمان. ──
+  var PAGE_REGISTRY = [
+    { aliases: ["اخبار الكون", "الاخبار", "اخبار"], label: "أخبار الكون", fn: function () { if (typeof scrollToSectionAndOpen === "function") scrollToSectionAndOpen("news"); } },
+    { aliases: ["تقدم الطالب", "تقدمي", "التقدم"], label: "تقدم الطالب", fn: function () { if (typeof openStudentProgress === "function") openStudentProgress(); } },
+    { aliases: ["اضافة صديق", "اصدقاء", "صديق جديد"], label: "إضافة صديق", fn: function () { if (typeof openAddFriendModal === "function") openAddFriendModal(); } },
+    { aliases: ["ملفات الدروس", "ملفات بي دي اف", "ملفات pdf", "الملفات"], label: "ملفات الدروس", fn: function () { if (typeof openPdfFilesModal === "function") openPdfFilesModal(); else if (window.openPdfFilesModal) window.openPdfFilesModal(); } },
+    { aliases: ["تواصل مع المشرفين", "شات المشرفين", "المشرفين"], label: "تواصل مع المشرفين", fn: function () { if (typeof openPrivateAdminChat === "function") openPrivateAdminChat(); } },
+    { aliases: ["تحدث مع صديقك", "شات الاصدقاء", "محادثة صديق"], label: "تحدث مع صديقك", fn: function () { if (typeof openFriendChatMenu === "function") openFriendChatMenu(); } },
+    { aliases: ["التعلم الذاتي", "التعلم الذكي", "تعلم ذاتي"], label: "التعلم الذاتي", fn: function () { if (typeof openSelfLearning === "function") openSelfLearning(); } },
+    { aliases: ["مهامي اليوميه", "المهام اليوميه", "مهام يوميه"], label: "مهامي اليومية", fn: function () { if (typeof openDQ === "function") openDQ(); } },
+    { aliases: ["لوحة المتصدرين", "المتصدرين", "الترتيب"], label: "لوحة المتصدرين", fn: function () { if (typeof openLB === "function") openLB(); } },
+    { aliases: ["ادواتي", "أدواتي"], label: "أدواتي", fn: function () { if (typeof openToolsLibraryModal === "function") openToolsLibraryModal(); } },
+    { aliases: ["اعدادات الصلاه", "الصلاه", "الاذان"], label: "إعدادات الصلاة", fn: function () { window.openPrayerSettingsModal && window.openPrayerSettingsModal(); } },
+    { aliases: ["تقييم المنصه", "التقييم"], label: "تقييم المنصة", fn: function () { if (typeof openFeedbackModal === "function") openFeedbackModal(); } },
+    { aliases: ["كيفية استخدام المنصه", "طريقة الاستخدام", "المساعده", "الشرح"], label: "كيفية استخدام المنصة", fn: function () { window.openHowToUseModal && window.openHowToUseModal(); } },
+    { aliases: ["تطبيقات المنصه", "التطبيقات"], label: "تطبيقات المنصة", fn: function () { if (typeof openAppsModal === "function") openAppsModal(); } },
+    { aliases: ["شخصية الذكاء الاصطناعي", "تغيير الشخصيه"], label: "شخصية الذكاء الاصطناعي", fn: function () { window.openPersonaModal && window.openPersonaModal(); } },
+    { aliases: ["مفتاح الذكاء الاصطناعي", "مفتاح جروك", "مفتاح API"], label: "مفتاح الذكاء الاصطناعي", fn: function () { if (typeof openAiKeyModal === "function") openAiKeyModal(); } },
+    { aliases: ["خلفية الدردشه", "تغيير الخلفيه"], label: "خلفية الدردشة", fn: function () { if (typeof openChatBgModal === "function") openChatBgModal(); } },
+    { aliases: ["نتيجة الامتحان", "نتيجتي"], label: "نتيجة الامتحان", fn: function () { if (typeof openExamResultModal === "function") openExamResultModal(); } },
+    { aliases: ["تعديل الملف الشخصي", "البروفايل", "الملف الشخصي"], label: "الملف الشخصي", fn: function () { if (typeof openEditProfileModal === "function") openEditProfileModal(); } },
+    { aliases: ["تحديد المشرفين", "اضافة مشرف"], label: "تحديد المشرفين", fn: function () { if (typeof openSetAdminsModal === "function") openSetAdminsModal(); } },
+    { aliases: ["اداره التطبيقات"], label: "إدارة التطبيقات", fn: function () { if (typeof openManageAppsModal === "function") openManageAppsModal(); } },
+    { aliases: ["معرفة راي الجمهور", "التقييمات"], label: "آراء الجمهور", fn: function () { if (typeof openViewFeedbacksModal === "function") openViewFeedbacksModal(); } },
+    { aliases: ["اعدادات البريد الالكتروني", "الايميل"], label: "إعدادات البريد الإلكتروني", fn: function () { if (typeof openEmailSettingsModal === "function") openEmailSettingsModal(); } },
+    { aliases: ["رابط زوم"], label: "رابط Zoom", fn: function () { if (typeof openZoomLinkSettings === "function") openZoomLinkSettings(); } },
+    { aliases: ["استلام المدفوعات", "المدفوعات"], label: "استلام المدفوعات", fn: function () { if (typeof openSupervisorPayoutModal === "function") openSupervisorPayoutModal(); } },
+    { aliases: ["تحديث المحتوى", "الصيانه"], label: "تحديث المحتوى", fn: function () { if (typeof openMaintenanceModal === "function") openMaintenanceModal(); } },
+    { aliases: ["اداره المحادثه الجماعيه"], label: "إدارة المحادثة الجماعية", fn: function () { if (typeof openGroupChatAdminPanel === "function") openGroupChatAdminPanel(); } },
+    { aliases: ["اداره ملفات pdf", "اداره الملفات"], label: "إدارة ملفات PDF", fn: function () { if (typeof openPdfManagerModal === "function") openPdfManagerModal(); } },
+    { aliases: ["اداره الكورسات"], label: "إدارة الكورسات", fn: function () { if (typeof showCoursesList === "function") showCoursesList(); } },
+    { aliases: ["اداره الشهادات", "شهادات الكورسات"], label: "إدارة الشهادات", fn: function () { if (typeof openCertificatesManager === "function") openCertificatesManager(); } },
+    { aliases: ["تعليم الذكاء الاصطناعي"], label: "تعليم الذكاء الاصطناعي", fn: function () { if (typeof openTeachAICircleModal === "function") openTeachAICircleModal(); } }
+  ];
+
+  function findPage(text) {
+    var t = " " + normAr(text) + " ";
+    var best = null;
+    for (var i = 0; i < PAGE_REGISTRY.length; i++) {
+      var entry = PAGE_REGISTRY[i];
+      for (var j = 0; j < entry.aliases.length; j++) {
+        var n = normAr(entry.aliases[j]);
+        if (!n) continue;
+        var idx = t.indexOf(n);
+        if (idx !== -1 && (!best || n.length > best._len)) best = { entry: entry, _len: n.length };
+      }
+    }
+    return best ? best.entry : null;
+  }
+
+  // ============================================================
+  // 🔔 صوت تنبيه بسيط عبر WebAudio (مفيش ملف صوتي خارجي ممكن يتكسر رابطه)
+  // ============================================================
+  function playBeep() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      var ctx = new Ctx();
+      [0, 0.28].forEach(function (delay) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sine"; o.frequency.value = 880;
+        o.connect(g); g.connect(ctx.destination);
+        var t0 = ctx.currentTime + delay;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
+        o.start(t0); o.stop(t0 + 0.24);
+      });
+    } catch (e) {}
+  }
+
+  // ============================================================
+  // 📍 الموقع الجغرافي + جلب المواقيت من Aladhan API (مجاني، بدون مفتاح)
+  // ============================================================
+  function getLocation() {
+    return new Promise(function (resolve, reject) {
+      if (!navigator.geolocation) { reject(new Error("المتصفح مبيدعمش تحديد الموقع")); return; }
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+        function (err) { reject(err); },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 3600000 }
+      );
+    });
+  }
+
+  function fetchTimings(lat, lng, method) {
+    var d = new Date();
+    var dateStr = String(d.getDate()).padStart(2, "0") + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + d.getFullYear();
+    var url = "https://api.aladhan.com/v1/timings/" + dateStr + "?latitude=" + encodeURIComponent(lat) + "&longitude=" + encodeURIComponent(lng) + "&method=" + (method || 5);
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (data) {
+      if (!data || !data.data || !data.data.timings) throw new Error("رد غير متوقع من خدمة المواقيت");
+      var raw = data.data.timings;
+      var clean = {};
+      PRAYERS.forEach(function (p) {
+        var v = raw[p.key];
+        if (v) clean[p.key] = v.split(" ")[0]; // "05:12 (EET)" -> "05:12"
+      });
+      var city = (data.data.meta && data.data.meta.timezone) || "";
+      return { timings: clean, city: city };
+    });
+  }
+
+  function parseTimeToday(hhmm) {
+    var parts = (hhmm || "").split(":");
+    if (parts.length < 2) return null;
+    var d = new Date();
+    d.setHours(parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0, 0, 0);
+    return d;
+  }
+
+  // ============================================================
+  // ⏰ جدولة التذكير — بتشتغل كل 20 ثانية، وبترفض تعمل أي حاجة لو المواقيت
+  // مش موثوقة (timesReady=false) — عشان محدش ياخد تنبيه غلط قبل ميعاد فعلي
+  // ============================================================
+  var _schedulerTimer = null;
+
+  function startScheduler() {
+    if (_schedulerTimer) return;
+    _schedulerTimer = setInterval(tickScheduler, 20000);
+    tickScheduler();
+  }
+
+  function stopScheduler() {
+    if (_schedulerTimer) { clearInterval(_schedulerTimer); _schedulerTimer = null; }
+  }
+
+  function tickScheduler() {
+    var s = loadState();
+    if (!s.enabled || !s.timesReady || !s.timings) return;
+
+    var todayStr = _todayStr();
+    if (s.timingsDate !== todayStr) {
+      // يوم جديد — المواقيت بتاعة إمبارح مش صالحة؛ نجيب مواقيت اليوم قبل أي تذكير
+      s.timesReady = false;
+      saveState();
+      if (s.lat != null && s.lng != null) refreshTimingsSilently();
+      return;
+    }
+    if (s.firedDate !== todayStr) { s.fired = {}; s.firedDate = todayStr; saveState(); }
+
+    var now = new Date();
+    PRAYERS.forEach(function (p) {
+      var t = s.timings[p.key];
+      if (!t) return;
+      var target = parseTimeToday(t);
+      if (!target) return;
+      var remindAt = new Date(target.getTime() - (s.remindMinutes || 5) * 60000);
+      var diff = now.getTime() - remindAt.getTime();
+      if (diff >= 0 && diff < 20000 && !s.fired[p.key]) {
+        s.fired[p.key] = true;
+        saveState();
+        fireReminder(p);
+      }
+    });
+  }
+
+  function refreshTimingsSilently() {
+    var s = loadState();
+    if (s.lat == null || s.lng == null) return;
+    fetchTimings(s.lat, s.lng, s.method).then(function (res) {
+      s.timings = res.timings;
+      s.timingsDate = _todayStr();
+      s.timesReady = true;
+      saveState();
+      renderSettingsTimesIfOpen();
+    }).catch(function (e) {
+      console.warn("[صلاتي] فشل تحديث مواقيت اليوم:", e);
+      if (window.logPlatformIssue) window.logPlatformIssue("مواقيت الصلاة (Aladhan API)", String(e && e.message || e).slice(0, 200));
+      // نسيب timesReady زي ما هي (false) — منمنعش تشغيل تذكير على مواقيت غير مؤكدة
+    });
+  }
+
+  function fireReminder(prayer) {
+    var s = loadState();
+    var msg = "متبقّي " + (s.remindMinutes || 5) + " دقايق على أذان " + prayer.label;
+    playBeep();
+    if (navigator.vibrate) { try { navigator.vibrate([200, 100, 200]); } catch (e) {} }
+    if (typeof showToast === "function") showToast("🕌 " + msg);
+    if (window.Notification && Notification.permission === "granted") {
+      try {
+        var n = new Notification("🕌 اقترب موعد أذان " + prayer.label, { body: msg, tag: "prayer-" + prayer.key, requireInteraction: false });
+        n.onclick = function () { window.focus(); n.close(); };
+      } catch (e) {}
+    }
+  }
+
+  // ============================================================
+  // 🎛️ تفعيل/إلغاء التذكير
+  // ============================================================
+  function enableReminder() {
+    var s = loadState();
+    return getLocation().then(function (loc) {
+      return fetchTimings(loc.lat, loc.lng, s.method).then(function (res) {
+        s.lat = loc.lat; s.lng = loc.lng; s.city = res.city;
+        s.timings = res.timings; s.timingsDate = _todayStr(); s.timesReady = true;
+        s.enabled = true; s.fired = {}; s.firedDate = _todayStr();
+        saveState();
+        startScheduler();
+        if (window.Notification && Notification.permission === "default") {
+          try { Notification.requestPermission(); } catch (e) {}
+        }
+        return s;
+      });
+    });
+  }
+
+  function disableReminder() {
+    var s = loadState();
+    s.enabled = false;
+    saveState();
+    stopScheduler();
+  }
+
+  // ============================================================
+  // 🎧 مشغّل القرآن — شريط عائم صغير + تشغيل مباشر عبر CDN بدون مفتاح API
+  // ============================================================
+  var _audioEl = null;
+
+  function ensurePlayerBar() {
+    var bar = document.getElementById("quranPlayerBar");
+    if (bar) return bar;
+    bar = document.createElement("div");
+    bar.id = "quranPlayerBar";
+    bar.className = "quran-player-bar";
+    bar.innerHTML =
+      '<div class="qpb-icon"><i class="fas fa-mosque"></i></div>' +
+      '<div class="qpb-info">' +
+        '<div class="qpb-surah" id="qpbSurahName">—</div>' +
+        '<div class="qpb-reciter" id="qpbReciterName">—</div>' +
+      '</div>' +
+      '<button class="qpb-btn" id="qpbPlayBtn" title="تشغيل/إيقاف مؤقت"><i class="fas fa-pause"></i></button>' +
+      '<button class="qpb-btn qpb-close" id="qpbCloseBtn" title="إغلاق"><i class="fas fa-xmark"></i></button>';
+    document.body.appendChild(bar);
+    document.getElementById("qpbPlayBtn").addEventListener("click", togglePlayPause);
+    document.getElementById("qpbCloseBtn").addEventListener("click", stopQuran);
+    return bar;
+  }
+
+  function togglePlayPause() {
+    if (!_audioEl) return;
+    var icon = document.querySelector("#qpbPlayBtn i");
+    if (_audioEl.paused) { _audioEl.play().catch(function () {}); if (icon) icon.className = "fas fa-pause"; }
+    else { _audioEl.pause(); if (icon) icon.className = "fas fa-play"; }
+  }
+
+  function stopQuran() {
+    if (_audioEl) { try { _audioEl.pause(); _audioEl.src = ""; } catch (e) {} _audioEl = null; }
+    var bar = document.getElementById("quranPlayerBar");
+    if (bar) bar.classList.remove("active");
+  }
+
+  function playSurah(surahId, surahName, reciter) {
+    var url = "https://cdn.islamic.network/quran/audio-surah/128/" + reciter.id + "/" + surahId + ".mp3";
+    stopQuran();
+    _audioEl = new Audio(url);
+    var bar = ensurePlayerBar();
+    bar.classList.add("active");
+    document.getElementById("qpbSurahName").textContent = "سورة " + surahName;
+    document.getElementById("qpbReciterName").textContent = reciter.name;
+    var icon = document.querySelector("#qpbPlayBtn i");
+    if (icon) icon.className = "fas fa-pause";
+    _audioEl.onended = function () { stopQuran(); };
+    _audioEl.onerror = function () {
+      if (typeof showToast === "function") showToast("⚠️ تعذّر تشغيل السورة بصوت هذا القارئ، جرّب قارئ تاني");
+      stopQuran();
+    };
+    _audioEl.play().catch(function () {
+      if (typeof showToast === "function") showToast("⚠️ اضغط زرار التشغيل في الشريط لبدء الصوت");
+    });
+  }
+
+  // ============================================================
+  // 🖼️ مودال إعدادات الصلاة (بيتبني ديناميكيًا، بيستخدم كلاسات الموديل العامة
+  // الموجودة أصلاً في style.css: modal / modal-content / modal-header / form-group)
+  // ============================================================
+  function ensureSettingsModal() {
+    var modal = document.getElementById("prayerSettingsModal");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.id = "prayerSettingsModal";
+    modal.className = "modal";
+    modal.innerHTML =
+      '<div class="modal-content" style="max-width:480px;height:auto;max-height:88vh;border-radius:16px;">' +
+        '<div class="modal-header">' +
+          '<div class="modal-header-left"><i class="fas fa-mosque"></i> إعدادات الصلاة والأذان</div>' +
+          '<button class="modal-close" id="prayerModalCloseBtn"><i class="fas fa-times"></i></button>' +
+        '</div>' +
+        '<div class="modal-body" style="padding:1.25rem;overflow-y:auto;">' +
+          '<div class="form-group" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">' +
+            '<label style="margin:0;">تذكير قبل الأذان بـ 5 دقايق</label>' +
+            '<label class="pq-toggle"><input type="checkbox" id="prayerEnableToggle"><span class="pq-toggle-slider"></span></label>' +
+          '</div>' +
+          '<div id="prayerLocationInfo" style="color:#aaa;font-size:.85rem;margin-bottom:1rem;">📍 لسه محددناش موقعك</div>' +
+          '<div id="prayerTimesList" style="display:none;margin-bottom:1rem;"></div>' +
+          '<div class="form-group">' +
+            '<label>القارئ الافتراضي لتلاوة القرآن</label>' +
+            '<select id="prayerReciterSelect"></select>' +
+          '</div>' +
+          '<button class="btn-primary" id="prayerRefreshBtn" style="width:100%;padding:.85rem;border:none;border-radius:10px;cursor:pointer;font-family:Cairo,sans-serif;font-size:.95rem;"><i class="fas fa-location-crosshairs"></i> تحديث الموقع والمواقيت</button>' +
+          '<p style="color:#777;font-size:.78rem;margin-top:1rem;line-height:1.6;">التذكير مبيتفعّلش إلا بعد ما نقدر نجيب مواقيت الصلاة فعليًا لموقعك — لو حصل أي فشل هنقولك وميوصلكش تنبيه غلط.</p>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    var reciterSel = document.getElementById("prayerReciterSelect");
+    reciterSel.innerHTML = RECITERS.map(function (r) { return '<option value="' + r.id + '">' + r.name + "</option>"; }).join("");
+    reciterSel.addEventListener("change", function () {
+      var s = loadState(); s.reciter = reciterSel.value; saveState();
+    });
+
+    document.getElementById("prayerModalCloseBtn").addEventListener("click", closePrayerSettingsModal);
+    modal.addEventListener("click", function (e) { if (e.target === modal) closePrayerSettingsModal(); });
+
+    document.getElementById("prayerEnableToggle").addEventListener("change", function (e) {
+      var checked = e.target.checked;
+      if (checked) {
+        var infoEl = document.getElementById("prayerLocationInfo");
+        infoEl.textContent = "⏳ بنحدد موقعك ونجيب مواقيت الصلاة...";
+        enableReminder().then(function (s) {
+          renderSettingsTimes();
+          if (typeof showToast === "function") showToast("✅ اتفعّل تذكير الأذان — هننبهك قبل كل صلاة بـ" + s.remindMinutes + " دقايق");
+        }).catch(function (err) {
+          e.target.checked = false;
+          document.getElementById("prayerLocationInfo").textContent = "❌ تعذّر تحديد موقعك أو جلب المواقيت — التذكير هيفضل متوقف";
+          if (typeof showToast === "function") showToast("❌ مقدرناش نفعّل التذكير: " + (err && err.message ? err.message : "تأكد من صلاحية الموقع الجغرافي"));
+        });
+      } else {
+        disableReminder();
+        if (typeof showToast === "function") showToast("🔕 اتلغى تذكير الأذان");
+      }
+    });
+
+    document.getElementById("prayerRefreshBtn").addEventListener("click", function () {
+      var infoEl = document.getElementById("prayerLocationInfo");
+      infoEl.textContent = "⏳ بنحدد موقعك ونجيب مواقيت الصلاة...";
+      enableReminder().then(function () {
+        renderSettingsTimes();
+        if (typeof showToast === "function") showToast("✅ اتحدّثت مواقيت الصلاة");
+      }).catch(function (err) {
+        infoEl.textContent = "❌ تعذّر تحديد موقعك أو جلب المواقيت";
+        if (typeof showToast === "function") showToast("❌ فشل التحديث: " + (err && err.message ? err.message : "حاول تاني"));
+      });
+    });
+
+    return modal;
+  }
+
+  function renderSettingsTimes() {
+    var s = loadState();
+    var infoEl = document.getElementById("prayerLocationInfo");
+    var listEl = document.getElementById("prayerTimesList");
+    if (!infoEl || !listEl) return;
+    if (s.timesReady && s.timings) {
+      infoEl.innerHTML = '📍 تم تحديد موقعك' + (s.city ? " (" + escapeHtml(s.city) + ")" : "");
+      listEl.style.display = "grid";
+      listEl.style.gridTemplateColumns = "repeat(3,1fr)";
+      listEl.style.gap = ".5rem";
+      listEl.innerHTML = PRAYERS.map(function (p) {
+        return '<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:.6rem;text-align:center;">' +
+          '<div style="color:#8b5cf6;font-size:.75rem;font-weight:700;">' + p.label + '</div>' +
+          '<div style="color:#fff;font-size:.95rem;margin-top:.2rem;">' + (s.timings[p.key] || "—") + '</div></div>';
+      }).join("");
+    } else {
+      infoEl.textContent = "📍 لسه محددناش موقعك";
+      listEl.style.display = "none";
+    }
+    var toggle = document.getElementById("prayerEnableToggle");
+    if (toggle) toggle.checked = !!s.enabled;
+    var reciterSel = document.getElementById("prayerReciterSelect");
+    if (reciterSel) reciterSel.value = s.reciter || DEFAULT_RECITER;
+  }
+
+  function renderSettingsTimesIfOpen() {
+    var modal = document.getElementById("prayerSettingsModal");
+    if (modal && modal.classList.contains("active")) renderSettingsTimes();
+  }
+
+  window.openPrayerSettingsModal = function () {
+    ensureSettingsModal();
+    renderSettingsTimes();
+    document.getElementById("prayerSettingsModal").classList.add("active");
+  };
+  window.closePrayerSettingsModal = function () {
+    var modal = document.getElementById("prayerSettingsModal");
+    if (modal) modal.classList.remove("active");
+  };
+  var closePrayerSettingsModal = window.closePrayerSettingsModal;
+
+  // ============================================================
+  // 🧠 Tool Calling حقيقي — الذكاء الاصطناعي (Groq) هو اللي بيقرر لوحده لو
+  // رسالة المستخدم محتاجة أداة من أدوات الصلاة/القرآن دي ولا لأ، وبيستخرج
+  // البراميترات بنفسه (اسم السورة، اسم القارئ...). مفيش أي مطابقة كلمات هنا خالص.
+  // ============================================================
+  var TOOL_DEFS = [
+    {
+      type: "function",
+      function: {
+        name: "open_prayer_settings",
+        description: "يفتح واجهة إعدادات مواقيت الصلاة والأذان للمستخدم عشان يشوفها أو يظبطها",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "enable_prayer_reminder",
+        description: "يفعّل تذكير الأذان: يحدد الموقع الجغرافي للمستخدم، يجيب مواقيت الصلاة الفعلية له، وينبهه قبل كل صلاة بعدد دقائق معيّن",
+        parameters: {
+          type: "object",
+          properties: {
+            minutes_before: { type: "number", description: "عدد الدقائق قبل الأذان اللي المستخدم عايز ينتبه فيها، لو مذكورش يبقى الافتراضي 5" }
+          },
+          required: []
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "disable_prayer_reminder",
+        description: "يلغي أو يوقف تذكير الأذان اللي كان مفعّل",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "play_quran_surah",
+        description: "يشغّل تلاوة صوتية لسورة معيّنة من سور القرآن الكريم، ممكن بصوت قارئ معيّن لو المستخدم ذكره",
+        parameters: {
+          type: "object",
+          properties: {
+            surah_name: { type: "string", description: "اسم السورة بالعربي زي ما المستخدم قاله، مثال: الكهف، يس، الفاتحة" },
+            reciter_name: { type: "string", description: "اسم القارئ لو المستخدم ذكره، مثال: السديس، العفاسي، عبدالباسط، الحصري، المنشاوي، المعيقلي، العجمي، الحذيفي، الشريم" }
+          },
+          required: ["surah_name"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "stop_quran",
+        description: "يوقف تشغيل التلاوة القرآنية الحالية",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "generate_image",
+        description: "يولّد صورة بالذكاء الاصطناعي بناءً على وصف ويعرضها في الشات. استخدمها لما المستخدم يطلب صورة/رسمة/تصميم بصري لأي حاجة — مش لازم يقول كلمة 'ارسم' حرفيًا، المهم يكون قصده إنشاء صورة",
+        parameters: {
+          type: "object",
+          properties: {
+            image_prompt: { type: "string", description: "وصف واضح ومفصّل بالعربي لمحتوى الصورة المطلوبة، مستخرج من كلام المستخدم بالكامل" }
+          },
+          required: ["image_prompt"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "navigate_to_page",
+        description: "يفتح أي صفحة أو قسم من أقسام منصة فلك للمستخدم مباشرة. من أمثلة الصفحات المتاحة: أخبار الكون، تقدم الطالب، إضافة صديق، ملفات الدروس، تواصل مع المشرفين، تحدث مع صديقك، التعلم الذاتي، مهامي اليومية، لوحة المتصدرين، أدواتي، إعدادات الصلاة، تقييم المنصة، كيفية استخدام المنصة، تطبيقات المنصة، شخصية الذكاء الاصطناعي، مفتاح الذكاء الاصطناعي، خلفية الدردشة، نتيجة الامتحان، الملف الشخصي، وصفحات إدارية زي إدارة الكورسات وتحديد المشرفين وغيرها. استخدمها لما المستخدم يطلب فتح/الذهاب/عرض أي صفحة من دول، حتى لو وصفها بكلامه الخاص مش بنفس الاسم بالظبط",
+        parameters: {
+          type: "object",
+          properties: {
+            page_name: { type: "string", description: "اسم أو وصف الصفحة اللي المستخدم عايز يفتحها، بالعربي، مأخوذ من كلامه" }
+          },
+          required: ["page_name"]
+        }
+      }
+    }
+  ];
+
+  var TOOL_ROUTER_SYSTEM_PROMPT =
+    "أنت وكيل أدوات (tool agent) جوّه تطبيق فلك، بتشتغل بنفس مبدأ الوكلاء اللي بيقدروا يستخدموا أكتر من أداة على التوالي في نفس المحادثة. عندك أدوات لأربع مجموعات: " +
+    "(1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) فتح أي صفحة من صفحات المنصة. " +
+    "افهم قصد المستخدم مش بس الكلمات الحرفية. لو الرسالة فيها أكتر من طلب (مثلاً: افتح إعدادات الصلاة وشغّل سورة الكهف)، نادِ كل الأدوات المطلوبة — ممكن على أكتر من دورة لو محتاج تشوف نتيجة أداة قبل ما تقرر التانية. " +
+    "بعد ما تنفذ كل الأدوات المطلوبة، رد على المستخدم برسالة نهائية قصيرة وودودة بالعربية المصرية تلخّص اللي حصل، من غير تفاصيل تقنية أو أسماء أدوات. " +
+    "لو رسالة المستخدم مش متعلقة بأي حاجة من الأربع مجموعات دي إطلاقًا (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة، ورد فورًا بكلمة: تجاهل";
+
+  async function executeTool(name, args) {
+    args = args || {};
+    var s = loadState();
+    switch (name) {
+      case "open_prayer_settings":
+        window.openPrayerSettingsModal();
+        return { success: true, detail: "اتفتحت واجهة إعدادات الصلاة" };
+
+      case "enable_prayer_reminder":
+        window.openPrayerSettingsModal();
+        if (args.minutes_before && !isNaN(args.minutes_before)) {
+          s.remindMinutes = Math.max(1, Math.min(60, Math.round(args.minutes_before)));
+          saveState();
+        }
+        var toggle = document.getElementById("prayerEnableToggle");
+        if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event("change")); }
+        return { success: true, detail: "جاري تفعيل تذكير الأذان قبل " + (s.remindMinutes || 5) + " دقايق — هيتأكد فعليًا بس بعد ما ناخد موقعك الجغرافي وننجح نجيب مواقيت الصلاة" };
+
+      case "disable_prayer_reminder":
+        disableReminder();
+        var toggle2 = document.getElementById("prayerEnableToggle");
+        if (toggle2) toggle2.checked = false;
+        return { success: true, detail: "اتلغى تذكير الأذان" };
+
+      case "play_quran_surah":
+        var surah = findSurah(args.surah_name || "");
+        if (!surah) return { success: false, error: "معرفتش أحدد اسم السورة دي بالظبط، ممكن توضحه أكتر؟" };
+        var reciter = (args.reciter_name && findReciter(args.reciter_name)) || reciterById(s.reciter || DEFAULT_RECITER);
+        playSurah(surah.id, surah.name, reciter);
+        return { success: true, detail: "بتشغّل سورة " + surah.name + " بصوت " + reciter.name };
+
+      case "stop_quran":
+        stopQuran();
+        return { success: true, detail: "اتوقف تشغيل التلاوة" };
+
+      case "generate_image":
+        if (typeof window.generateAndDisplayImage === "function") {
+          try {
+            await window.generateAndDisplayImage(args.image_prompt || "");
+            return { success: true, detail: "اتولدت الصورة وظهرت في الشات فعلاً" };
+          } catch (eImg) {
+            return { success: false, error: "تعذّر توليد الصورة" };
+          }
+        }
+        return { success: false, error: "أداة توليد الصور مش متاحة دلوقتي" };
+
+      case "navigate_to_page":
+        var page = findPage(args.page_name || "");
+        if (!page) return { success: false, error: "معرفتش أحدد الصفحة دي بالظبط، ممكن توضحها أكتر؟" };
+        try { page.fn(); } catch (ePage) { return { success: false, error: "حصلت مشكلة وإحنا بنفتح الصفحة" }; }
+        return { success: true, detail: "اتفتحت صفحة " + page.label };
+
+      default:
+        return { success: false, error: "أداة غير معروفة" };
+    }
+  }
+
+  function displayUserBubbleOnly(userText) {
+    var msgs = document.getElementById("aiChatMessages");
+    if (!msgs) return;
+    var time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    var uid1 = "u" + Date.now() + Math.floor(Math.random() * 1000);
+    var userDiv = document.createElement("div");
+    userDiv.className = "message sent";
+    userDiv.id = "msg-" + uid1;
+    userDiv.innerHTML = (typeof window.buildUserMsgContentHTML === "function" ? window.buildUserMsgContentHTML(userText) : escapeHtml(userText)) + '<div class="message-time">' + time + "</div>";
+    msgs.appendChild(userDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function displayAIBubbleOnly(aiText) {
+    var msgs = document.getElementById("aiChatMessages");
+    if (!msgs) return;
+    var time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    var persona = (typeof window.getCurrentAIPersona === "function" && window.getCurrentAIPersona()) || { emoji: "🕌", name: "مساعد فلك" };
+    var uid2 = "a" + Date.now() + Math.floor(Math.random() * 1000);
+    var aiDiv = document.createElement("div");
+    aiDiv.className = "message received";
+    aiDiv.id = "msg-" + uid2;
+    aiDiv.innerHTML = '<div class="message-sender" style="color:#06b6d4">' + persona.emoji + " " + persona.name + '</div><div class="message-content">' + escapeHtml(aiText) + '</div><div class="message-time">' + time + "</div>";
+    msgs.appendChild(aiDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function showRoutingIndicator() {
+    var msgs = document.getElementById("aiChatMessages");
+    if (!msgs) return null;
+    var el = document.createElement("div");
+    el.className = "message received";
+    el.dataset.cosmosSkip = "1";
+    el.innerHTML = '<div class="message-content">' + (typeof window.buildCosmosThinkingHTML === "function" ? window.buildCosmosThinkingHTML("بيفكر") : "...") + "</div>";
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return el;
+  }
+
+  var MAX_AGENT_STEPS = 5;
+
+  async function callAgentModel(key, messages) {
+    var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-120b",
+        messages: messages,
+        tools: TOOL_DEFS,
+        tool_choice: "auto",
+        max_tokens: 500,
+        temperature: 0.2
+      })
+    });
+    var data = await resp.json();
+    if (!resp.ok || data.error) {
+      var errDetail = "HTTP " + resp.status + " — " + JSON.stringify(data.error || data).slice(0, 250);
+      console.error("[صلاتي] فشل نداء الوكيل:", errDetail);
+      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", errDetail);
+      return null;
+    }
+    var msg = data && data.choices && data.choices[0] && data.choices[0].message;
+    if (!msg) {
+      console.warn("[صلاتي] رد غير متوقع من الموديل (مفيش message):", data);
+      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", "رد غير متوقع من الموديل: " + JSON.stringify(data).slice(0, 250));
+      return null;
+    }
+    return msg;
+  }
+
+  // ── حلقة agentic كاملة: نداء → تنفيذ أداة/أدوات → نداء تاني بالنتيجة → الموديل يقرر
+  // يكمل ولا يرد نهائي، وهكذا لحد MAX_AGENT_STEPS. بترجع Promise<boolean>: true لو
+  // الوكيل تدخل فعليًا (تم عرض رد في الشات)، false لو الرسالة أصلاً مالهاش أداة
+  // (فالمسار العادي بتاع فلك هو اللي هيرد بمعرفته الفلكية الكاملة). ──
+  async function tryHandleCommand(rawText) {
+    var text = (rawText || "").trim();
+    if (!text) return false;
+    var key = (typeof getAiApiKey === "function") ? getAiApiKey() : "";
+    if (!key) return false;
+
+    var history = (Array.isArray(window.aiChatHistory) ? window.aiChatHistory.slice(-12) : [])
+      .filter(function (m) { return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string"; });
+
+    var messages = [{ role: "system", content: TOOL_ROUTER_SYSTEM_PROMPT }].concat(history).concat([{ role: "user", content: text }]);
+
+    var indicator = null;
+    try {
+      indicator = showRoutingIndicator();
+
+      var firstMsg = await callAgentModel(key, messages);
+      if (!firstMsg || !firstMsg.tool_calls || !firstMsg.tool_calls.length) {
+        // مفيش نداء أداة من أول رد — يبقى الرسالة أصلاً مش شغل الوكيل ده، سيبها للمسار العادي
+        if (indicator) indicator.remove();
+        return false;
+      }
+
+      // ── من هنا اتأكد إن فيه تدخل فعلي — نعرض فقاعة المستخدم ونبدأ الحلقة ──
+      messages.push(firstMsg);
+      displayUserBubbleOnly(text);
+      if (window.aiChatHistory) window.aiChatHistory.push({ role: "user", content: text });
+
+      var currentMsg = firstMsg;
+
+      for (var step = 0; step < MAX_AGENT_STEPS; step++) {
+        if (!currentMsg.tool_calls || !currentMsg.tool_calls.length) break;
+
+        for (var i = 0; i < currentMsg.tool_calls.length; i++) {
+          var call = currentMsg.tool_calls[i];
+          var args = {};
+          try { args = JSON.parse(call.function.arguments || "{}"); } catch (eArgs) {}
+
+          var result = await executeTool(call.function.name, args);
+          messages.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: JSON.stringify(result) });
+        }
+
+        currentMsg = await callAgentModel(key, messages);
+        if (!currentMsg) break;
+        messages.push(currentMsg);
+      }
+
+      if (indicator) indicator.remove();
+
+      var finalText = (currentMsg && currentMsg.content && currentMsg.content.trim()) || "تم ✅";
+      displayAIBubbleOnly(finalText);
+      if (window.aiChatHistory) window.aiChatHistory.push({ role: "assistant", content: finalText });
+
+      return true;
+    } catch (eRoute) {
+      console.warn("[صلاتي] تعذّر تشغيل الوكيل، هيتبعت المسار العادي:", eRoute);
+      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", String(eRoute && eRoute.message || eRoute).slice(0, 200));
+      if (indicator) indicator.remove();
+      return false;
+    }
+  }
+
+  window.PrayerQuran = {
+    tryHandleCommand: tryHandleCommand,
+    open: window.openPrayerSettingsModal
+  };
+
+  // ── تشغيل المجدول أوتوماتيك لو التذكير كان مفعّل من قبل ──
+  document.addEventListener("DOMContentLoaded", function () {
+    var s = loadState();
+    if (s.enabled) startScheduler();
+  });
+  if (document.readyState !== "loading") {
+    var s0 = loadState();
+    if (s0.enabled) startScheduler();
+  }
+
+  // ============================================================
+  // 🔌 اعتراض رسائل الشات: كل رسالة نصية (من غير مرفقات) بتتبعت الأول لموجّه
+  // الأدوات (tryHandleCommand) اللي بيسأل Groq "هل ده أمر صلاة/قرآن؟". لو أيوه،
+  // بتتنفذ الأداة محليًا ومنبعتش حاجة للمسار العادي. لو لأ، الرسالة بتكمل زي
+  // ما كانت للمسار العادي (سؤال فلكي، كود، صورة... إلخ) من غير أي تغيير فيه.
+  // ============================================================
+  function hookIntoAIChat() {
+    if (typeof window.sendAIMessage !== "function" || window.__prayerQuranHooked) return;
+    window.__prayerQuranHooked = true;
+    var _prevSend = window.sendAIMessage;
+    window.sendAIMessage = async function (injectedMsg, _fromQueueDrain) {
+      if (!injectedMsg && !_fromQueueDrain) {
+        var inp = document.getElementById("aiChatInput");
+        var raw = inp ? inp.value.trim() : "";
+        var hasAttachments = (window._aiSelectedImages && window._aiSelectedImages.length) || (window._aiSelectedFiles && window._aiSelectedFiles.length);
+        if (raw && !hasAttachments) {
+          var handled = await tryHandleCommand(raw);
+          if (handled) {
+            if (inp) { inp.value = ""; inp.style.height = ""; inp.dispatchEvent(new Event("input")); }
+            return;
+          }
+        }
+      }
+      return _prevSend.apply(this, arguments);
+    };
+  }
+  // بنحاول نعمل hook فورًا، ولو الدالة لسه مش موجودة (لسه الصفحة بتحمّل) بنعيد المحاولة كل نص ثانية
+  hookIntoAIChat();
+  var _hookRetry = setInterval(function () {
+    hookIntoAIChat();
+    if (window.__prayerQuranHooked) clearInterval(_hookRetry);
+  }, 500);
+
+})();
+
+
+/* ========================================== */
+/* ===== نظام الشهادات التلقائي v2 (تعبئة تلقائية + رقم فريد + تحقق) ===== */
+(function () {
+  'use strict';
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = (s === null || s === undefined) ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function genCertNumber() {
+    function seg() {
+      return Math.random().toString(36).slice(2, 6).toUpperCase();
+    }
+    return 'ASP-' + seg() + '-' + seg() + '-' + seg();
+  }
+
+  function todayStr() {
+    var d = new Date();
+    function p(n) { return String(n).padStart(2, '0'); }
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+  }
+
+  // مواضع افتراضية (نسبة % من عرض/ارتفاع الصفحة) — المشرف يقدر يغيّرها من "مصمم الشهادة"
+  var DEFAULT_FIELDS = {
+    studentName: { xPct: 50,   yPct: 43, size: 30, color: '#e8e6ff', align: 'center', weight: '800' },
+    date:        { xPct: 47,   yPct: 71, size: 14, color: '#e0d8ff', align: 'center', weight: '600' },
+    hours:       { xPct: 9,    yPct: 52, size: 12, color: '#e0d8ff', align: 'center', weight: '600' },
+    level:       { xPct: 9,    yPct: 61, size: 12, color: '#e0d8ff', align: 'center', weight: '600' },
+    certNumber:  { xPct: 87,   yPct: 82, size: 12, color: '#111111', align: 'center', weight: '700' }
+  };
+  var DEFAULT_QR = { xPct: 87, yPct: 63, sizePct: 11 };
+
+  // ---------- تحميل المكتبات لحظة الحاجة فقط ----------
+  var _pdfjsReady = null;
+  function ensurePdfJs() {
+    if (_pdfjsReady) return _pdfjsReady;
+    _pdfjsReady = new Promise(function (resolve, reject) {
+      if (window.pdfjsLib) {
+        try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch (e) {}
+        return resolve(window.pdfjsLib);
+      }
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = function () {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        resolve(window.pdfjsLib);
+      };
+      s.onerror = function () { reject(new Error('pdf.js failed to load')); };
+      document.head.appendChild(s);
+    });
+    return _pdfjsReady;
+  }
+
+  var _jspdfReady = null;
+  function ensureJsPDF() {
+    if (_jspdfReady) return _jspdfReady;
+    _jspdfReady = new Promise(function (resolve, reject) {
+      if (window.jspdf && window.jspdf.jsPDF) return resolve(window.jspdf.jsPDF);
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = function () { resolve(window.jspdf.jsPDF); };
+      s.onerror = function () { reject(new Error('jsPDF failed to load')); };
+      document.head.appendChild(s);
+    });
+    return _jspdfReady;
+  }
+
+  // رندر أول صفحة من ملف PDF على كانفاس
+  async function renderPdfPageToCanvas(url, scale) {
+    scale = scale || 2.2;
+    var pdfjsLib = await ensurePdfJs();
+    var pdf = await pdfjsLib.getDocument(url).promise;
+    var page = await pdf.getPage(1);
+    var viewport = page.getViewport({ scale: scale });
+    var canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    var ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+    return canvas;
+  }
+
+  // توليد QR كـ canvas مستقل (باستخدام qrcodejs المحمّلة أصلاً في المنصة)
+  function makeQRCanvas(text, size) {
+    return new Promise(function (resolve) {
+      if (!window.QRCode) { resolve(null); return; }
+      var tmp = document.createElement('div');
+      tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+      document.body.appendChild(tmp);
+      try { new QRCode(tmp, { text: text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); }
+      catch (e) { document.body.removeChild(tmp); resolve(null); return; }
+      setTimeout(function () {
+        var out = document.createElement('canvas');
+        out.width = size; out.height = size;
+        var octx = out.getContext('2d');
+        var cnv = tmp.querySelector('canvas');
+        var img = tmp.querySelector('img');
+        if (cnv) {
+          octx.drawImage(cnv, 0, 0, size, size);
+          document.body.removeChild(tmp);
+          resolve(out);
+        } else if (img) {
+          function done() { octx.drawImage(img, 0, 0, size, size); document.body.removeChild(tmp); resolve(out); }
+          if (img.complete) done(); else img.onload = done;
+        } else {
+          document.body.removeChild(tmp);
+          resolve(null);
+        }
+      }, 250);
+    });
+  }
+
+  // تركيب الشهادة النهائية: قالب PDF + بيانات الطالب + QR ديناميكي
+  async function composeCertificateCanvas(courseData, certRecord) {
+    var tpl = courseData.certTemplate || {};
+    var url = tpl.url || courseData.certificateUrl;
+    var fields = Object.assign({}, DEFAULT_FIELDS, tpl.fields || {});
+    var qrPos = Object.assign({}, DEFAULT_QR, tpl.qr || {});
+
+    var canvas = await renderPdfPageToCanvas(url, 2.2);
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+
+    function drawField(key, value) {
+      var f = fields[key];
+      if (!f || !value) return;
+      var x = W * (f.xPct / 100);
+      var y = H * (f.yPct / 100);
+      ctx.save();
+      ctx.direction = 'rtl';
+      ctx.textAlign = f.align || 'center';
+      ctx.textBaseline = 'middle';
+      var fontPx = Math.round((f.size || 16) * (W / 1000));
+      ctx.font = (f.weight || '700') + ' ' + fontPx + 'px Cairo, Tahoma, Arial, sans-serif';
+      ctx.fillStyle = f.color || '#222';
+      ctx.fillText(String(value), x, y);
+      ctx.restore();
+    }
+
+    drawField('studentName', certRecord.studentName);
+    drawField('date', certRecord.issueDateStr);
+    drawField('hours', certRecord.hours ? (certRecord.hours + ' ساعة') : '');
+    drawField('level', certRecord.level || '');
+    drawField('certNumber', certRecord.certNumber);
+
+    try {
+      var qrSizePx = W * (qrPos.sizePct / 100);
+      var qrCanvas = await makeQRCanvas(certRecord.verifyUrl, Math.round(qrSizePx));
+      if (qrCanvas) {
+        var qx = W * (qrPos.xPct / 100) - qrSizePx / 2;
+        var qy = H * (qrPos.yPct / 100) - qrSizePx / 2;
+        ctx.drawImage(qrCanvas, qx, qy, qrSizePx, qrSizePx);
+      }
+    } catch (e) { console.error('QR draw failed', e); }
+
+    return canvas;
+  }
+
+  // إصدار شهادة جديدة للطالب أو إرجاع شهادته الموجودة (رقم ثابت لا يتغيّر لنفس الطالب/الكورس)
+  async function issueOrGetCertificate(courseId, courseData) {
+    var existing = await db.collection('certificates')
+      .where('userId', '==', currentUserId)
+      .where('courseId', '==', courseId)
+      .limit(1).get();
+    var verifyBase = location.origin + location.pathname;
+    if (!existing.empty) {
+      var docSnap = existing.docs[0];
+      var rec = Object.assign({ id: docSnap.id }, docSnap.data());
+      rec.verifyUrl = verifyBase + '?verify=' + encodeURIComponent(rec.certNumber);
+      return rec;
+    }
+    var studentName = (window.currentUser) || (window.googleUser && googleUser.displayName) || 'طالب';
+    var tpl = courseData.certTemplate || {};
+    var certNumber = genCertNumber();
+    var payload = {
+      certNumber: certNumber,
+      userId: currentUserId,
+      studentName: studentName,
+      courseId: courseId,
+      courseTitle: courseData.title || '',
+      hours: tpl.hours || courseData.certHours || '',
+      level: tpl.level || courseData.certLevel || '',
+      issueDateStr: todayStr(),
+      status: 'valid',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    var ref = await db.collection('certificates').add(payload);
+    payload.id = ref.id;
+    payload.verifyUrl = verifyBase + '?verify=' + encodeURIComponent(certNumber);
+    return payload;
+  }
+
+  // ---------- override: زرار "استلام شهادتك" ----------
+  window.checkAndShowCertificate = async function (courseId, btnEl) {
+    if (!currentUserId) { showToast('❌ يجب تسجيل الدخول أولاً'); return; }
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+    try {
+      var courseDoc = await db.collection('courses').doc(courseId).get();
+      if (!courseDoc.exists) { showToast('❌ الكورس غير موجود'); btnEl.disabled = false; return; }
+      var courseData = courseDoc.data();
+      var videoIds = courseData.videoIds || [];
+      var hasTemplate = !!((courseData.certTemplate && courseData.certTemplate.url) || courseData.certificateUrl);
+      if (!hasTemplate) {
+        showToast('⚠️ لا توجد شهادة مرتبطة بهذا الكورس بعد');
+        btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
+        return;
+      }
+      var allWatched = true;
+      if (videoIds.length) {
+        var watchSnap = await db.collection('watch_history').where('userId', '==', currentUserId).get();
+        var watchedIds = new Set();
+        watchSnap.forEach(function (d) { watchedIds.add(d.data().videoId); });
+        allWatched = videoIds.every(function (id) { return watchedIds.has(id); });
+        if (!allWatched) {
+          var watched = videoIds.filter(function (id) { return watchedIds.has(id); }).length;
+          showToast('⏳ أكملت ' + watched + ' من ' + videoIds.length + ' فيديو — باقي ' + (videoIds.length - watched) + ' فيديو للحصول على الشهادة');
+          btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
+          return;
+        }
+      }
+      btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تجهيز الشهادة...';
+      var certRecord = await issueOrGetCertificate(courseId, courseData);
+      await showFilledCertificateModal(courseData, certRecord);
+      btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
+    } catch (e) {
+      console.error(e);
+      showToast('❌ حدث خطأ في تجهيز الشهادة');
+      btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
+    }
+  };
+
+  async function showFilledCertificateModal(courseData, certRecord) {
+    var old = document.getElementById('certViewModal');
+    if (old) old.remove();
+    var modal = document.createElement('div');
+    modal.id = 'certViewModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10080;background:rgba(0,0,0,.87);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(10px)';
+    modal.innerHTML =
+      '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(245,158,11,.5);border-radius:26px;width:95%;max-width:520px;padding:1.5rem;text-align:center;max-height:92dvh;overflow-y:auto">' +
+        '<div style="width:70px;height:70px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 1rem;box-shadow:0 10px 30px rgba(245,158,11,.5)">🏆</div>' +
+        '<h2 style="color:#fde68a;font-weight:900;margin-bottom:.3rem">مبروك! 🎉</h2>' +
+        '<p style="color:#e0e7ff;font-size:.9rem;margin-bottom:1rem">أتممت كورس <b style="color:#fbbf24">' + esc(courseData.title || '') + '</b> بنجاح</p>' +
+        '<div id="certPreviewWrap" style="background:#111;border-radius:12px;padding:.5rem;margin-bottom:1rem;min-height:120px;display:flex;align-items:center;justify-content:center">' +
+          '<p style="color:#888;font-size:.8rem"><i class="fas fa-spinner fa-spin"></i> جاري تجهيز شهادتك...</p>' +
+        '</div>' +
+        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.75rem">رقم الشهادة: <b dir="ltr" style="color:#fbbf24">' + esc(certRecord.certNumber) + '</b></p>' +
+        '<button id="certDownloadBtn" style="display:flex;align-items:center;justify-content:center;gap:.6rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:14px;padding:.8rem 1.5rem;width:100%;font-family:Cairo;font-size:.95rem;font-weight:700;margin-bottom:.6rem;cursor:pointer;opacity:.5" disabled>' +
+          '<i class="fas fa-download"></i> تحميل الشهادة PDF</button>' +
+        '<button onclick="document.getElementById(\'certViewModal\').remove()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;border-radius:10px;padding:.6rem 1.5rem;width:100%;font-family:Cairo;font-size:.9rem;cursor:pointer">إغلاق</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.remove(); });
+
+    try {
+      var canvas = await composeCertificateCanvas(courseData, certRecord);
+      var wrap = document.getElementById('certPreviewWrap');
+      if (wrap) {
+        wrap.innerHTML = '';
+        var img = document.createElement('img');
+        img.src = canvas.toDataURL('image/jpeg', 0.92);
+        img.style.cssText = 'width:100%;border-radius:8px;display:block';
+        wrap.appendChild(img);
+      }
+      var btn = document.getElementById('certDownloadBtn');
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.onclick = async function () {
+          var oldHtml = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التجهيز...';
+          try {
+            var jsPDFCtor = await ensureJsPDF();
+            var orientation = canvas.width >= canvas.height ? 'l' : 'p';
+            var pdf = new jsPDFCtor({ orientation: orientation, unit: 'px', format: [canvas.width, canvas.height] });
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, canvas.width, canvas.height);
+            pdf.save('شهادة-' + (courseData.title || 'كورس') + '.pdf');
+          } catch (e) { console.error(e); showToast('❌ تعذر تحميل الملف'); }
+          btn.innerHTML = oldHtml;
+        };
+      }
+    } catch (e) {
+      console.error(e);
+      var wrap2 = document.getElementById('certPreviewWrap');
+      if (wrap2) wrap2.innerHTML = '<p style="color:#ef4444;font-size:.8rem;padding:1rem">تعذر تجهيز معاينة الشهادة، تأكد إن رابط قالب الشهادة صحيح</p>';
+    }
+  }
+
+  window.__certComposeCanvas = composeCertificateCanvas;
+  window.__certIssueOrGet = issueOrGetCertificate;
+  window.__certDefaultFields = DEFAULT_FIELDS;
+  window.__certDefaultQR = DEFAULT_QR;
+  window.__certRenderPdfPage = renderPdfPageToCanvas;
+})();
+
+/* ========================================== */
+/* ===== مصمم مواضع حقول الشهادة (للمشرف) ===== */
+(function () {
+  'use strict';
+
+  function injectDesignerButtons() {
+    var rows = document.querySelectorAll('#certManagerList input[id^="certUrl_"]');
+    rows.forEach(function (inp) {
+      var courseId = inp.id.replace('certUrl_', '');
+      var row = inp.closest('.cert-manager-row');
+      if (!row || row.querySelector('.cert-des-btn')) return;
+      var btn = document.createElement('button');
+      btn.className = 'cert-des-btn';
+      btn.title = 'تحديد أماكن الحقول على تصميم الشهادة';
+      btn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+      btn.style.cssText = 'background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;border-radius:10px;padding:.5rem .7rem;cursor:pointer;flex-shrink:0';
+      btn.onclick = function () { window.openCertDesigner(courseId); };
+      row.appendChild(btn);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var listEl = document.getElementById('certManagerList');
+    if (listEl && window.MutationObserver) {
+      var obs = new MutationObserver(function () { injectDesignerButtons(); });
+      obs.observe(listEl, { childList: true, subtree: true });
+    }
+  });
+
+  window.openCertDesigner = async function (courseId) {
+    if (!window.isAdmin) { showToast('❌ المشرف فقط'); return; }
+    var courseDoc = await db.collection('courses').doc(courseId).get();
+    if (!courseDoc.exists) { showToast('❌ الكورس غير موجود'); return; }
+    var courseData = courseDoc.data();
+    var certUrl = (courseData.certTemplate && courseData.certTemplate.url) || courseData.certificateUrl || '';
+    if (!certUrl) { showToast('⚠️ ارفع رابط PDF قالب الشهادة واحفظه الأول'); return; }
+
+    var old = document.getElementById('certDesignerModal2');
+    if (old) old.remove();
+    var modal = document.createElement('div');
+    modal.id = 'certDesignerModal2';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10090;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:.75rem';
+    modal.innerHTML =
+      '<div style="background:#150d22;border-radius:18px;width:100%;max-width:740px;max-height:96dvh;overflow-y:auto;padding:1rem;border:1px solid rgba(245,158,11,.3)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">' +
+          '<h3 style="color:#fde68a;font-size:1rem;margin:0"><i class="fas fa-crosshairs"></i> تحديد أماكن حقول الشهادة</h3>' +
+          '<button id="certDesCloseBtn" style="background:none;border:none;color:#aaa;font-size:1.2rem;cursor:pointer"><i class="fas fa-times"></i></button>' +
+        '</div>' +
+        '<p style="color:#94a3b8;font-size:.78rem;margin-bottom:.6rem;line-height:1.6">اسحب كل بالونة لمكانها الصحيح فوق تصميم الشهادة (الاسم، التاريخ، الساعات، المستوى، رقم الشهادة، QR)، ثم احفظ. المواضع دي هتتحفظ لهذا الكورس بس.</p>' +
+        '<div id="certDesignerStage" style="position:relative;width:100%;border-radius:10px;overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none"></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.75rem 0">' +
+          '<input id="certDesHours" placeholder="عدد الساعات التدريبية (مثال: 20)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
+          '<input id="certDesLevel" placeholder="مستوى الدورة (مثال: مبتدئ)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
+        '</div>' +
+        '<button id="certDesSaveBtn" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:.7rem;font-family:Cairo;font-weight:700;cursor:pointer"><i class="fas fa-save"></i> حفظ المواضع</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.remove(); });
+    document.getElementById('certDesCloseBtn').onclick = function () { modal.remove(); };
+
+    var tpl = courseData.certTemplate || {};
+    document.getElementById('certDesHours').value = tpl.hours || courseData.certHours || '';
+    document.getElementById('certDesLevel').value = tpl.level || courseData.certLevel || '';
+
+    var stage = document.getElementById('certDesignerStage');
+    stage.innerHTML = '<p style="color:#888;padding:2.5rem 1rem;text-align:center"><i class="fas fa-spinner fa-spin"></i> جاري تحميل التصميم...</p>';
+
+    var canvas;
+    try { canvas = await window.__certRenderPdfPage(certUrl, 1.5); }
+    catch (e) { console.error(e); stage.innerHTML = '<p style="color:#ef4444;padding:2rem;text-align:center;font-size:.85rem">تعذر تحميل ملف الـ PDF — تأكد إن الرابط صحيح ومتاح</p>'; return; }
+
+    stage.innerHTML = '';
+    canvas.style.cssText = 'width:100%;display:block;pointer-events:none';
+    stage.appendChild(canvas);
+
+    var fields = JSON.parse(JSON.stringify(Object.assign({}, window.__certDefaultFields, tpl.fields || {})));
+    var qr = JSON.parse(JSON.stringify(Object.assign({}, window.__certDefaultQR, tpl.qr || {})));
+
+    var labels = { studentName: 'الاسم', date: 'التاريخ', hours: 'الساعات', level: 'المستوى', certNumber: 'رقم الشهادة' };
+    var colors = { studentName: '#6366f1', date: '#8b5cf6', hours: '#0ea5e9', level: '#14b8a6', certNumber: '#374151', qr: '#f59e0b' };
+
+    function addMarker(key, pos, labelText, color) {
+      var m = document.createElement('div');
+      m.textContent = labelText;
+      m.style.cssText = 'position:absolute;transform:translate(-50%,-50%);background:' + color + ';color:#fff;font-family:Cairo;font-size:.62rem;font-weight:700;padding:.25rem .55rem;border-radius:20px;cursor:grab;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.6);border:2px solid #fff;z-index:5;left:' + pos.xPct + '%;top:' + pos.yPct + '%;touch-action:none';
+      stage.appendChild(m);
+      var dragging = false;
+      function move(clientX, clientY) {
+        var r = stage.getBoundingClientRect();
+        var xPct = Math.min(100, Math.max(0, (clientX - r.left) / r.width * 100));
+        var yPct = Math.min(100, Math.max(0, (clientY - r.top) / r.height * 100));
+        m.style.left = xPct + '%'; m.style.top = yPct + '%';
+        pos.xPct = xPct; pos.yPct = yPct;
+      }
+      m.addEventListener('pointerdown', function (e) { dragging = true; m.style.cursor = 'grabbing'; try { m.setPointerCapture(e.pointerId); } catch (err) {} e.preventDefault(); });
+      m.addEventListener('pointermove', function (e) { if (dragging) { move(e.clientX, e.clientY); e.preventDefault(); } });
+      m.addEventListener('pointerup', function () { dragging = false; m.style.cursor = 'grab'; });
+      m.addEventListener('pointercancel', function () { dragging = false; m.style.cursor = 'grab'; });
+    }
+
+    addMarker('studentName', fields.studentName, labels.studentName, colors.studentName);
+    addMarker('date', fields.date, labels.date, colors.date);
+    addMarker('hours', fields.hours, labels.hours, colors.hours);
+    addMarker('level', fields.level, labels.level, colors.level);
+    addMarker('certNumber', fields.certNumber, labels.certNumber, colors.certNumber);
+    addMarker('qr', qr, 'QR', colors.qr);
+
+    document.getElementById('certDesSaveBtn').onclick = async function () {
+      var saveBtn = this;
+      var oldHtml = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+      saveBtn.disabled = true;
+      try {
+        var newTpl = {
+          url: certUrl,
+          hours: document.getElementById('certDesHours').value.trim(),
+          level: document.getElementById('certDesLevel').value.trim(),
+          fields: fields,
+          qr: qr
+        };
+        await db.collection('courses').doc(courseId).update({ certTemplate: newTpl });
+        showToast('✅ تم حفظ تصميم الشهادة');
+        modal.remove();
+      } catch (e) {
+        console.error(e);
+        showToast('❌ فشل الحفظ');
+        saveBtn.innerHTML = oldHtml;
+        saveBtn.disabled = false;
+      }
+    };
+  };
+})();
+
+/* ========================================== */
+/* ===== صفحة تحقق عامة من الشهادة (via ?verify=CERT-NUMBER) ===== */
+(function () {
+  'use strict';
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = (s === null || s === undefined) ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function getVerifyParam() {
+    try { return new URLSearchParams(location.search).get('verify'); } catch (e) { return null; }
+  }
+
+  function renderVerifyCard(state, data, certNumber) {
+    // state: 'valid' | 'revoked' | 'notfound' | 'error'
+    var valid = state === 'valid';
+    var borderColor = valid ? 'rgba(16,185,129,.5)' : 'rgba(239,68,68,.5)';
+    var icon = valid ? '✅' : (state === 'error' ? '⚠️' : '❌');
+    var title = valid ? 'شهادة صالحة' : (state === 'revoked' ? 'شهادة ملغاة' : (state === 'error' ? 'تعذر التحقق حاليًا' : 'شهادة غير موجودة'));
+    var body = '';
+    if (data) {
+      body = '<div style="text-align:right;background:rgba(255,255,255,.04);border-radius:12px;padding:1rem;margin:1rem 0;font-size:.88rem;color:#e0e7ff;line-height:2.1">' +
+        '<div><b style="color:#94a3b8">الاسم:</b> ' + esc(data.studentName || '') + '</div>' +
+        '<div><b style="color:#94a3b8">الكورس:</b> ' + esc(data.courseTitle || '') + '</div>' +
+        (data.hours ? '<div><b style="color:#94a3b8">الساعات التدريبية:</b> ' + esc(String(data.hours)) + '</div>' : '') +
+        (data.level ? '<div><b style="color:#94a3b8">مستوى الدورة:</b> ' + esc(data.level) + '</div>' : '') +
+        '<div><b style="color:#94a3b8">تاريخ الإصدار:</b> ' + esc(data.issueDateStr || '') + '</div>' +
+        '<div><b style="color:#94a3b8">الجهة المانحة:</b> منصة فلك — Astronomy and Space</div>' +
+      '</div>';
+    }
+    return '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid ' + borderColor + ';border-radius:22px;padding:2rem 1.5rem;max-width:420px;width:100%;margin:0 auto;box-shadow:0 30px 70px rgba(0,0,0,.6);text-align:center;font-family:Cairo,Tahoma,Arial,sans-serif">' +
+      '<div style="font-size:2.5rem;margin-bottom:.5rem">' + icon + '</div>' +
+      '<h2 style="color:#fde68a;font-weight:900;margin-bottom:.3rem;font-size:1.25rem">' + title + '</h2>' +
+      '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.25rem">رقم الشهادة: <span dir="ltr" style="color:#fbbf24">' + esc(certNumber || '') + '</span></p>' +
+      body +
+      '<button onclick="location.href=location.pathname" style="margin-top:.75rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;border-radius:10px;padding:.6rem 1.5rem;font-family:Cairo;font-size:.85rem;cursor:pointer;width:100%">الذهاب لمنصة فلك</button>' +
+    '</div>';
+  }
+
+  async function showVerificationScreen(certNumber) {
+    var overlay = document.createElement('div');
+    overlay.id = 'certVerifyOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:radial-gradient(circle at 50% 0%,#1a1025,#05030a);display:flex;align-items:center;justify-content:center;padding:1.25rem;font-family:Cairo,Tahoma,Arial,sans-serif';
+    overlay.innerHTML = '<div style="text-align:center;color:#94a3b8"><div style="font-size:2rem;color:#f59e0b"><i class="fas fa-spinner fa-spin"></i></div><p style="margin-top:1rem">جاري التحقق من الشهادة...</p></div>';
+    document.body.appendChild(overlay);
+    try {
+      var snap = await db.collection('certificates').where('certNumber', '==', certNumber).limit(1).get();
+      if (snap.empty) { overlay.innerHTML = renderVerifyCard('notfound', null, certNumber); return; }
+      var data = snap.docs[0].data();
+      var state = (data.status === 'revoked') ? 'revoked' : 'valid';
+      overlay.innerHTML = renderVerifyCard(state, data, certNumber);
+    } catch (e) {
+      console.error(e);
+      overlay.innerHTML = renderVerifyCard('error', null, certNumber);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var certNumber = getVerifyParam();
+    if (certNumber) showVerificationScreen(certNumber);
+  });
 })();
