@@ -4195,7 +4195,7 @@ function convertDriveUrl(url) {
   m = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
   if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
   // إذا كان بالفعل uc?export=view
-  if (url.includes("uc?export=view")) return url;
+  if (url.includes("uc?export=")) return url;
   return url;
 }
 
@@ -16965,6 +16965,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   async function renderPdfPageToCanvas(url, scale) {
     scale = scale || 2.2;
     var pdfjsLib = await ensurePdfJs();
+    if (typeof convertDriveUrl === 'function') url = convertDriveUrl(url);
     var pdf = await pdfjsLib.getDocument(url).promise;
     var page = await pdf.getPage(1);
     var viewport = page.getViewport({ scale: scale });
