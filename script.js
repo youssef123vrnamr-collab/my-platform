@@ -16922,7 +16922,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     date:        { xPct: 47,   yPct: 71, size: 14, color: '#e0d8ff', align: 'center', weight: '600' },
     hours:       { xPct: 9,    yPct: 52, size: 12, color: '#e0d8ff', align: 'center', weight: '600' },
     level:       { xPct: 9,    yPct: 61, size: 12, color: '#e0d8ff', align: 'center', weight: '600' },
-    certNumber:  { xPct: 87,   yPct: 82, size: 12, color: '#111111', align: 'center', weight: '700' }
+    certNumber:  { xPct: 87,   yPct: 82, size: 12, color: '#fbbf24', align: 'center', weight: '700' }
   };
   var DEFAULT_QR = { xPct: 87, yPct: 63, sizePct: 11 };
 
@@ -17062,7 +17062,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
 
   // إصدار شهادة جديدة للطالب أو إرجاع شهادته الموجودة (رقم ثابت لا يتغيّر لنفس الطالب/الكورس)
-  async function issueOrGetCertificate(courseId, courseData) {
+  async function issueOrGetCertificate(courseId, courseData, studentNameOverride) {
     var existing = await db.collection('certificates')
       .where('userId', '==', currentUserId)
       .where('courseId', '==', courseId)
@@ -17074,7 +17074,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       rec.verifyUrl = verifyBase + '?verify=' + encodeURIComponent(rec.certNumber);
       return rec;
     }
-    var studentName = (window.currentUser) || (window.googleUser && googleUser.displayName) || 'طالب';
+    var studentName = studentNameOverride || (window.currentUser) || (window.googleUser && googleUser.displayName) || 'طالب';
     var tpl = courseData.certTemplate || {};
     var certNumber = genCertNumber();
     var payload = {
@@ -17093,6 +17093,43 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     payload.id = ref.id;
     payload.verifyUrl = verifyBase + '?verify=' + encodeURIComponent(certNumber);
     return payload;
+  }
+
+  // ---------- مودال تأكيد بيانات الشهادة قبل الإصدار ----------
+  function showCertConfirmModal(previewData) {
+    return new Promise(function (resolve) {
+      var old = document.getElementById('certConfirmModal');
+      if (old) old.remove();
+      var modal = document.createElement('div');
+      modal.id = 'certConfirmModal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:10085;background:rgba(0,0,0,.87);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(10px)';
+      modal.innerHTML =
+        '<div style="background:linear-gradient(135deg,#1a1025,#0f0a1a);border:2px solid rgba(245,158,11,.5);border-radius:22px;width:95%;max-width:440px;padding:1.4rem;text-align:right">' +
+          '<h3 style="color:#fde68a;font-weight:900;margin-bottom:.9rem;text-align:center"><i class="fas fa-clipboard-check"></i> تأكيد بيانات الشهادة</h3>' +
+          '<p style="color:#94a3b8;font-size:.78rem;margin-bottom:.9rem;line-height:1.7">دي البيانات اللي هتتحط في شهادتك. تأكد إن اسمك مكتوب صح قبل ما تكمل، لأنه مش هيتغيّر بعد كده.</p>' +
+          '<label style="display:block;color:#cbd5e1;font-size:.8rem;margin-bottom:.3rem">الاسم اللي هيظهر في الشهادة</label>' +
+          '<input id="certConfirmName" value="' + previewData.studentName.replace(/"/g, '&quot;') + '" style="width:100%;padding:.65rem .8rem;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(245,158,11,.4);color:#fff;font-family:Cairo;font-size:.9rem;margin-bottom:1rem" placeholder="اكتب اسمك بالكامل">' +
+          '<div style="background:rgba(255,255,255,.04);border-radius:12px;padding:.8rem 1rem;margin-bottom:1.1rem;font-size:.82rem;color:#e0e7ff;line-height:2.1">' +
+            '<div><b style="color:#94a3b8">الكورس:</b> ' + previewData.courseTitle + '</div>' +
+            (previewData.hours ? '<div><b style="color:#94a3b8">الساعات التدريبية:</b> ' + previewData.hours + '</div>' : '') +
+            (previewData.level ? '<div><b style="color:#94a3b8">مستوى الدورة:</b> ' + previewData.level + '</div>' : '') +
+            '<div><b style="color:#94a3b8">تاريخ الإصدار:</b> ' + previewData.dateStr + '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:.6rem">' +
+            '<button id="certConfirmCancelBtn" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;border-radius:10px;padding:.7rem;font-family:Cairo;font-size:.88rem;cursor:pointer">إلغاء</button>' +
+            '<button id="certConfirmOkBtn" style="flex:2;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;padding:.7rem;font-family:Cairo;font-weight:700;font-size:.88rem;cursor:pointer">تأكيد وإصدار الشهادة 🏆</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(modal);
+      document.getElementById('certConfirmCancelBtn').onclick = function () { modal.remove(); resolve(null); };
+      document.getElementById('certConfirmOkBtn').onclick = function () {
+        var nameVal = (document.getElementById('certConfirmName').value || '').trim();
+        if (!nameVal) { showToast('⚠️ اكتب اسمك الأول'); return; }
+        modal.remove();
+        resolve(nameVal);
+      };
+      modal.addEventListener('click', function (e) { if (e.target === modal) { modal.remove(); resolve(null); } });
+    });
   }
 
   // ---------- override: زرار "استلام شهادتك" ----------
@@ -17124,8 +17161,31 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           return;
         }
       }
+
+      // لو الشهادة صدرت قبل كده، مفيش داعي لعرض التأكيد تاني — نجيبها زي ما هي
+      var alreadyIssued = await db.collection('certificates')
+        .where('userId', '==', currentUserId)
+        .where('courseId', '==', courseId)
+        .limit(1).get();
+
+      var confirmedName = null;
+      if (alreadyIssued.empty) {
+        btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
+        var tpl0 = courseData.certTemplate || {};
+        var defaultName = (window.currentUser) || (window.googleUser && googleUser.displayName) || 'طالب';
+        confirmedName = await showCertConfirmModal({
+          studentName: defaultName,
+          courseTitle: esc(courseData.title || ''),
+          hours: tpl0.hours || courseData.certHours || '',
+          level: tpl0.level || courseData.certLevel || '',
+          dateStr: todayStr()
+        });
+        if (!confirmedName) return; // المستخدم لغى العملية
+        btnEl.disabled = true;
+      }
+
       btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تجهيز الشهادة...';
-      var certRecord = await issueOrGetCertificate(courseId, courseData);
+      var certRecord = await issueOrGetCertificate(courseId, courseData, confirmedName);
       await showFilledCertificateModal(courseData, certRecord);
       btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-certificate"></i> 🏆 استلام شهادتك';
     } catch (e) {
@@ -17252,6 +17312,14 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           '<input id="certDesHours" placeholder="عدد الساعات التدريبية (مثال: 20)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
           '<input id="certDesLevel" placeholder="مستوى الدورة (مثال: مبتدئ)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
         '</div>' +
+        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">لون كل نص (لو مش باين على التصميم غيّر لونه من هنا):</p>' +
+        '<div id="certDesColors" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.9rem"></div>' +
+        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">ضبط دقيق لمكان ومقاس QR (لو السحب بالإصبع مش دقيق كفاية):</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.9rem">' +
+          '<div><label style="color:#94a3b8;font-size:.68rem">أفقي X%</label><input id="certDesQrX" type="number" step="0.1" style="width:100%;padding:.4rem;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.78rem"></div>' +
+          '<div><label style="color:#94a3b8;font-size:.68rem">رأسي Y%</label><input id="certDesQrY" type="number" step="0.1" style="width:100%;padding:.4rem;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.78rem"></div>' +
+          '<div><label style="color:#94a3b8;font-size:.68rem">المقاس %</label><input id="certDesQrSize" type="number" step="0.1" style="width:100%;padding:.4rem;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.78rem"></div>' +
+        '</div>' +
         '<button id="certDesSaveBtn" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:.7rem;font-family:Cairo;font-weight:700;cursor:pointer"><i class="fas fa-save"></i> حفظ المواضع</button>' +
       '</div>';
     document.body.appendChild(modal);
@@ -17298,12 +17366,102 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       m.addEventListener('pointercancel', function () { dragging = false; m.style.cursor = 'grab'; });
     }
 
+    // ---- بالونة الـ QR بشكل مربع بمقاسه الحقيقي، قابل للسحب وتغيير المقاس ----
+    var qrBox, qrSizeInput, qrXInput, qrYInput;
+    function addQRBox() {
+      qrBox = document.createElement('div');
+      qrBox.style.cssText = 'position:absolute;transform:translate(-50%,-50%);border:2px dashed #f59e0b;background:rgba(245,158,11,.18);display:flex;align-items:center;justify-content:center;color:#fde68a;font-family:Cairo;font-size:.65rem;font-weight:700;cursor:grab;box-sizing:border-box;z-index:6;touch-action:none';
+      qrBox.textContent = 'QR';
+      stage.appendChild(qrBox);
+
+      var resizeHandle = document.createElement('div');
+      resizeHandle.style.cssText = 'position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;background:#f59e0b;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;touch-action:none;z-index:7';
+      qrBox.appendChild(resizeHandle);
+
+      function render() {
+        var r = stage.getBoundingClientRect();
+        var sizePx = r.width * (qr.sizePct / 100);
+        qrBox.style.left = qr.xPct + '%';
+        qrBox.style.top = qr.yPct + '%';
+        qrBox.style.width = sizePx + 'px';
+        qrBox.style.height = sizePx + 'px';
+        if (qrXInput) qrXInput.value = qr.xPct.toFixed(1);
+        if (qrYInput) qrYInput.value = qr.yPct.toFixed(1);
+        if (qrSizeInput) qrSizeInput.value = qr.sizePct.toFixed(1);
+      }
+      render();
+
+      var dragging = false;
+      qrBox.addEventListener('pointerdown', function (e) {
+        if (e.target === resizeHandle) return;
+        dragging = true; qrBox.style.cursor = 'grabbing';
+        try { qrBox.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault();
+      });
+      qrBox.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        var r = stage.getBoundingClientRect();
+        qr.xPct = Math.min(100, Math.max(0, (e.clientX - r.left) / r.width * 100));
+        qr.yPct = Math.min(100, Math.max(0, (e.clientY - r.top) / r.height * 100));
+        render();
+        e.preventDefault();
+      });
+      qrBox.addEventListener('pointerup', function () { dragging = false; qrBox.style.cursor = 'grab'; });
+      qrBox.addEventListener('pointercancel', function () { dragging = false; qrBox.style.cursor = 'grab'; });
+
+      var resizing = false;
+      resizeHandle.addEventListener('pointerdown', function (e) {
+        resizing = true;
+        try { resizeHandle.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault(); e.stopPropagation();
+      });
+      resizeHandle.addEventListener('pointermove', function (e) {
+        if (!resizing) return;
+        var r = stage.getBoundingClientRect();
+        var cx = r.left + r.width * (qr.xPct / 100);
+        var cy = r.top + r.height * (qr.yPct / 100);
+        var dx = Math.abs(e.clientX - cx), dy = Math.abs(e.clientY - cy);
+        var half = Math.max(dx, dy);
+        var sizePct = Math.min(60, Math.max(2, (half * 2 / r.width) * 100));
+        qr.sizePct = sizePct;
+        render();
+        e.preventDefault(); e.stopPropagation();
+      });
+      resizeHandle.addEventListener('pointerup', function () { resizing = false; });
+      resizeHandle.addEventListener('pointercancel', function () { resizing = false; });
+
+      qrXInput = document.getElementById('certDesQrX');
+      qrYInput = document.getElementById('certDesQrY');
+      qrSizeInput = document.getElementById('certDesQrSize');
+      qrXInput.addEventListener('input', function () { var v = parseFloat(qrXInput.value); if (!isNaN(v)) { qr.xPct = Math.min(100, Math.max(0, v)); render(); } });
+      qrYInput.addEventListener('input', function () { var v = parseFloat(qrYInput.value); if (!isNaN(v)) { qr.yPct = Math.min(100, Math.max(0, v)); render(); } });
+      qrSizeInput.addEventListener('input', function () { var v = parseFloat(qrSizeInput.value); if (!isNaN(v)) { qr.sizePct = Math.min(60, Math.max(2, v)); render(); } });
+    }
+
     addMarker('studentName', fields.studentName, labels.studentName, colors.studentName);
     addMarker('date', fields.date, labels.date, colors.date);
     addMarker('hours', fields.hours, labels.hours, colors.hours);
     addMarker('level', fields.level, labels.level, colors.level);
     addMarker('certNumber', fields.certNumber, labels.certNumber, colors.certNumber);
-    addMarker('qr', qr, 'QR', colors.qr);
+    addQRBox();
+
+    // ---- منتقي لون النص لكل حقل (بيتحفظ ويتظبط على تصميم الشهادة) ----
+    var colorPickerHost = document.getElementById('certDesColors');
+    var textFieldKeys = ['studentName', 'date', 'hours', 'level', 'certNumber'];
+    textFieldKeys.forEach(function (key) {
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.04);border-radius:8px;padding:.35rem .5rem';
+      var curColor = (fields[key] && fields[key].color) || '#ffffff';
+      wrap.innerHTML =
+        '<input type="color" value="' + curColor + '" style="width:26px;height:26px;border:none;background:none;padding:0;cursor:pointer">' +
+        '<span style="color:#cbd5e1;font-size:.72rem">' + labels[key] + '</span>';
+      var colorInput = wrap.querySelector('input[type=color]');
+      colorInput.addEventListener('input', function () {
+        if (!fields[key]) fields[key] = {};
+        fields[key].color = colorInput.value;
+      });
+      colorPickerHost.appendChild(wrap);
+    });
 
     document.getElementById('certDesSaveBtn').onclick = async function () {
       var saveBtn = this;
