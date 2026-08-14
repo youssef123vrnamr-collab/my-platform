@@ -17398,13 +17398,16 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     var qr = JSON.parse(JSON.stringify(Object.assign({}, window.__certDefaultQR, tpl.qr || {})));
 
     var labels = { studentName: 'الاسم', date: 'التاريخ', hours: 'الساعات', level: 'المستوى', certNumber: 'رقم الشهادة' };
-    var sampleText = {
-      studentName: 'يوسف عمرو حسن',
-      date: '14/08/2026',
-      hours: '20 ساعة',
-      level: 'مبتدئ',
-      certNumber: 'ASP-8M95-GHKG-UPI0'
-    };
+    var hoursInputEl = document.getElementById('certDesHours');
+    var levelInputEl = document.getElementById('certDesLevel');
+    function currentSampleText(key) {
+      if (key === 'hours') return (hoursInputEl.value.trim() ? (hoursInputEl.value.trim() + ' ساعة') : '(اكتب عدد الساعات تحت)');
+      if (key === 'level') return (levelInputEl.value.trim() || '(اكتب مستوى الدورة تحت)');
+      if (key === 'studentName') return 'يوسف عمرو حسن';
+      if (key === 'date') return '14/08/2026';
+      if (key === 'certNumber') return 'ASP-8M95-GHKG-UPI0';
+      return '';
+    }
 
     // ---- كل حقل نص بيتعرض بشكله وحجمه ولونه الحقيقي (مش بالونة) عشان تشوف بالظبط شكله على السطر ----
     var markerEls = {};
@@ -17415,7 +17418,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       stage.appendChild(wrap);
 
       var el = document.createElement('div');
-      el.textContent = sampleText[key];
+      el.textContent = currentSampleText(key);
       el.dataset.key = key;
       el.style.cssText = 'white-space:nowrap;cursor:grab;font-family:Cairo,Tahoma,Arial,sans-serif;padding:2px 10px 2px 2px;outline:1px dashed rgba(255,255,255,.35);outline-offset:2px;position:relative';
       wrap.appendChild(el);
@@ -17435,11 +17438,14 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         el.style.fontSize = fontPx + 'px';
         el.style.fontWeight = f.weight || '700';
         el.style.color = f.color || '#ffffff';
+        el.textContent = currentSampleText(key);
         var sizeInputEl = document.getElementById('certDesSize_' + key);
         if (sizeInputEl) sizeInputEl.value = f.size;
       }
       render();
       el._render = render;
+      if (key === 'hours') hoursInputEl.addEventListener('input', render);
+      if (key === 'level') levelInputEl.addEventListener('input', render);
 
       var dragging = false;
       function move(clientX, clientY) {
