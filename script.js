@@ -4345,12 +4345,15 @@ window.openPaidCourseModal = async function(courseId) {
           </div>
           ${!isEnrolled
             ? `<button onclick="this.closest('.modal').remove(); enrollInCourseAndOpen('${courseId}')" style="width:100%;padding:1rem;background:${price > 0 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#10b981,#059669)'};color:#fff;border:none;border-radius:14px;font-family:Cairo;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px ${price>0?'rgba(245,158,11,.4)':'rgba(16,185,129,.4)'};display:flex;align-items:center;justify-content:center;gap:.6rem"><i class="fas ${price > 0 ? 'fa-shopping-cart' : 'fa-unlock'}"></i> ${price > 0 ? 'اشترك الآن · ' + price + ' جنيه' : 'ادخل مجاناً'}</button>`
-            : (c.certificateUrl ? `<button class="cert-btn" onclick="checkAndShowCertificate('${courseId}',this)" style="width:100%;margin-top:.5rem"><i class="fas fa-certificate"></i> 🏆 استلام شهادتك</button>` : '')
+            : (c.certificateUrl ? `<div id="certBtnContainer_paidmodal" style="width:100%;display:none"><button class="cert-btn" onclick="checkAndShowCertificate('${courseId}',this)" style="width:100%;margin-top:.5rem"><i class="fas fa-certificate"></i> 🏆 استلام شهادتك</button></div>` : '')
           }
         </div>
       </div>`;
     modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     document.body.appendChild(modal);
+    if (isEnrolled && c.certificateUrl && typeof window.refreshCertButtonVisibility === 'function') {
+      window.refreshCertButtonVisibility(courseId, 'certBtnContainer_paidmodal');
+    }
   } catch(e) {
     console.error('openPaidCourseModal error:', e);
     showCoursesList();
@@ -4499,7 +4502,7 @@ async function showCoursesList() {
         ? `<button type="button" onclick="this.closest('.modal').remove(); openPaidCourseModal('${doc.id}')" style="padding:.65rem 1.2rem;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;font-family:Cairo;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.5rem;box-shadow:0 4px 14px rgba(16,185,129,.4)"><i class="fas fa-play-circle"></i> مشاهدة الفيديوهات <i class="fas fa-check-circle" style="font-size:.8rem;opacity:.85"></i></button>`
         : `<button type="button" class="btn btn-primary" onclick="enrollInCourseFromList('${doc.id}')"><i class="fas fa-lock-open"></i> اشترك الآن</button>`
       }
-      ${isEnrolledInThis && c.certificateUrl ? `<div id="certBtnContainer_${doc.id}" style="width:100%"><button class="cert-btn" onclick="checkAndShowCertificate('${doc.id}',this)"><i class="fas fa-certificate"></i> 🏆 استلام شهادتك</button></div>` : ''}
+      ${isEnrolledInThis && c.certificateUrl ? `<div id="certBtnContainer_${doc.id}" style="width:100%;display:none"><button class="cert-btn" onclick="checkAndShowCertificate('${doc.id}',this)"><i class="fas fa-certificate"></i> 🏆 استلام شهادتك</button></div>` : ''}
       ${isAdmin ? `<button type="button" class="btn btn-warning" onclick="editCourse('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>` : ''}
       ${isAdmin ? `<button type="button" class="btn btn-info" onclick="showCourseExamsManager('${doc.id}','${safeTitle}')"><i class="fas fa-clipboard-list"></i> امتحانات الكورس</button>` : ''}
       ${isAdmin && paid ? `<button type="button" class="btn btn-danger" onclick="deleteCourse('${doc.id}','${safeTitle}')" style="background:linear-gradient(135deg,#ef4444,#b91c1c);font-weight:700"><i class="fas fa-trash"></i> حذف الكورس المدفوع</button>` : ''}
@@ -4513,6 +4516,11 @@ async function showCoursesList() {
   modal.className = "modal active courses-list-modal";
   modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3><i class="fas fa-layer-group"></i> قائمة الكورسات</h3><button class="modal-close" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></button></div><div class="modal-body">${listHtml}</div></div>`;
   document.body.appendChild(modal);
+  for (const doc of coursesSnap.docs) {
+    if (userEnrolledCourseIds.has(doc.id) && doc.data().certificateUrl && typeof window.refreshCertButtonVisibility === 'function') {
+      window.refreshCertButtonVisibility(doc.id, 'certBtnContainer_' + doc.id);
+    }
+  }
 }
 
 async function editCourse(courseId) {
@@ -17161,6 +17169,26 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       modal.addEventListener('click', function (e) { if (e.target === modal) { modal.remove(); resolve(null); } });
     });
   }
+
+  // ---------- إخفاء زرار "استلام شهادتك" لحد ما الطالب يخلص كل فيديوهات الكورس ----------
+  async function refreshCertButtonVisibility(courseId, containerId) {
+    var container = document.getElementById(containerId);
+    if (!container || !currentUserId) return;
+    container.style.display = 'none'; // مخفي افتراضيًا لحد ما نتأكد
+    try {
+      var courseDoc = await db.collection('courses').doc(courseId).get();
+      if (!courseDoc.exists) return;
+      var courseData = courseDoc.data();
+      var videoIds = courseData.videoIds || [];
+      if (!videoIds.length) { container.style.display = ''; return; } // مفيش فيديوهات = مفيش شرط إتمام
+      var watchSnap = await db.collection('watch_history').where('userId', '==', currentUserId).get();
+      var watchedIds = new Set();
+      watchSnap.forEach(function (d) { watchedIds.add(d.data().videoId); });
+      var allWatched = videoIds.every(function (id) { return watchedIds.has(id); });
+      if (allWatched) container.style.display = '';
+    } catch (e) { console.error('refreshCertButtonVisibility error:', e); }
+  }
+  window.refreshCertButtonVisibility = refreshCertButtonVisibility;
 
   // ---------- override: زرار "استلام شهادتك" ----------
   window.checkAndShowCertificate = async function (courseId, btnEl) {
