@@ -17321,7 +17321,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   });
 
   window.openCertDesigner = async function (courseId) {
-    if (!window.isAdmin) { showToast('❌ المشرف فقط'); return; }
+    if (!isAdmin) { showToast('❌ المشرف فقط'); return; }
     var courseDoc = await db.collection('courses').doc(courseId).get();
     if (!courseDoc.exists) { showToast('❌ الكورس غير موجود'); return; }
     var courseData = courseDoc.data();
