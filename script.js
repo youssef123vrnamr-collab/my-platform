@@ -17410,21 +17410,33 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     var markerEls = {};
     function addTextMarker(key) {
       var f = fields[key];
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'position:absolute;transform:translate(-50%,-50%);touch-action:none;z-index:5';
+      stage.appendChild(wrap);
+
       var el = document.createElement('div');
       el.textContent = sampleText[key];
       el.dataset.key = key;
-      el.style.cssText = 'position:absolute;transform:translate(-50%,-50%);white-space:nowrap;cursor:grab;touch-action:none;font-family:Cairo,Tahoma,Arial,sans-serif;padding:2px 4px;outline:1px dashed rgba(255,255,255,.35);outline-offset:2px;z-index:5';
-      stage.appendChild(el);
+      el.style.cssText = 'white-space:nowrap;cursor:grab;font-family:Cairo,Tahoma,Arial,sans-serif;padding:2px 10px 2px 2px;outline:1px dashed rgba(255,255,255,.35);outline-offset:2px;position:relative';
+      wrap.appendChild(el);
+
+      // نقطة تكبير/تصغير حجم الخط بالسحب (زي مقبض الـ QR بالظبط)
+      var sizeHandle = document.createElement('div');
+      sizeHandle.style.cssText = 'position:absolute;right:-9px;bottom:-9px;width:16px;height:16px;background:#f59e0b;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;touch-action:none;z-index:8';
+      wrap.appendChild(sizeHandle);
+
       markerEls[key] = el;
 
       function render() {
         var r = stage.getBoundingClientRect();
         var fontPx = (f.size || 16) * (r.width / 1000);
-        el.style.left = f.xPct + '%';
-        el.style.top = f.yPct + '%';
+        wrap.style.left = f.xPct + '%';
+        wrap.style.top = f.yPct + '%';
         el.style.fontSize = fontPx + 'px';
         el.style.fontWeight = f.weight || '700';
         el.style.color = f.color || '#ffffff';
+        var sizeInputEl = document.getElementById('certDesSize_' + key);
+        if (sizeInputEl) sizeInputEl.value = f.size;
       }
       render();
       el._render = render;
@@ -17440,6 +17452,24 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       el.addEventListener('pointermove', function (e) { if (dragging) { move(e.clientX, e.clientY); e.preventDefault(); } });
       el.addEventListener('pointerup', function () { dragging = false; el.style.cursor = 'grab'; });
       el.addEventListener('pointercancel', function () { dragging = false; el.style.cursor = 'grab'; });
+
+      // سحب المقبض لأعلى = تكبير، لأسفل = تصغير — بيحس بيه زي أي أداة تصميم عادية
+      var resizing = false, startY = 0, startSize = 0;
+      sizeHandle.addEventListener('pointerdown', function (e) {
+        resizing = true; startY = e.clientY; startSize = f.size || 16;
+        try { sizeHandle.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault(); e.stopPropagation();
+      });
+      sizeHandle.addEventListener('pointermove', function (e) {
+        if (!resizing) return;
+        var delta = startY - e.clientY; // سحب لفوق = تكبير
+        var newSize = Math.min(80, Math.max(6, Math.round(startSize + delta / 2)));
+        f.size = newSize;
+        render();
+        e.preventDefault(); e.stopPropagation();
+      });
+      sizeHandle.addEventListener('pointerup', function () { resizing = false; });
+      sizeHandle.addEventListener('pointercancel', function () { resizing = false; });
     }
 
     // ---- بالونة الـ QR بشكل مربع بمقاسه الحقيقي، قابل للسحب وتغيير المقاس ----
@@ -17534,7 +17564,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       wrap.innerHTML =
         '<input type="color" value="' + curColor + '" style="width:26px;height:26px;border:none;background:none;padding:0;cursor:pointer">' +
         '<span style="color:#cbd5e1;font-size:.72rem;flex:1">' + labels[key] + '</span>' +
-        '<input type="number" min="6" max="80" step="1" value="' + curSize + '" style="width:48px;padding:.25rem;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:Cairo;font-size:.72rem;text-align:center" title="حجم الخط">';
+        '<input id="certDesSize_' + key + '" type="number" min="6" max="80" step="1" value="' + curSize + '" style="width:48px;padding:.25rem;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:Cairo;font-size:.72rem;text-align:center" title="حجم الخط">';
       var colorInput = wrap.querySelector('input[type=color]');
       var sizeInput = wrap.querySelector('input[type=number]');
       colorInput.addEventListener('input', function () {
