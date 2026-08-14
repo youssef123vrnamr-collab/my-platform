@@ -17339,13 +17339,21 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           '<h3 style="color:#fde68a;font-size:1rem;margin:0"><i class="fas fa-crosshairs"></i> تحديد أماكن حقول الشهادة</h3>' +
           '<button id="certDesCloseBtn" style="background:none;border:none;color:#aaa;font-size:1.2rem;cursor:pointer"><i class="fas fa-times"></i></button>' +
         '</div>' +
-        '<p style="color:#94a3b8;font-size:.78rem;margin-bottom:.6rem;line-height:1.6">اسحب كل بالونة لمكانها الصحيح فوق تصميم الشهادة (الاسم، التاريخ، الساعات، المستوى، رقم الشهادة، QR)، ثم احفظ. المواضع دي هتتحفظ لهذا الكورس بس.</p>' +
-        '<div id="certDesignerStage" style="position:relative;width:100%;border-radius:10px;overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none"></div>' +
+        '<p style="color:#94a3b8;font-size:.78rem;margin-bottom:.6rem;line-height:1.6">اسحب النص نفسه لمكانه الصحيح فوق تصميم الشهادة. استخدم شريط الزوم عشان تكبّر وتشوف بالظبط بتحطه فين. المواضع دي هتتحفظ لهذا الكورس بس.</p>' +
+        '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">' +
+          '<i class="fas fa-search-minus" style="color:#94a3b8;font-size:.8rem"></i>' +
+          '<input id="certDesZoom" type="range" min="100" max="350" value="100" style="flex:1">' +
+          '<i class="fas fa-search-plus" style="color:#94a3b8;font-size:.8rem"></i>' +
+          '<span id="certDesZoomVal" style="color:#fde68a;font-size:.72rem;width:38px;text-align:center">100%</span>' +
+        '</div>' +
+        '<div id="certDesignerStageWrap" style="position:relative;width:100%;max-height:60vh;overflow:auto;border-radius:10px;background:#000;border:1px solid rgba(255,255,255,.12)">' +
+          '<div id="certDesignerStage" style="position:relative;width:100%;touch-action:pan-x pan-y;-webkit-user-select:none;user-select:none"></div>' +
+        '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.75rem 0">' +
           '<input id="certDesHours" placeholder="عدد الساعات التدريبية (مثال: 20)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
           '<input id="certDesLevel" placeholder="مستوى الدورة (مثال: مبتدئ)" style="padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:Cairo;font-size:.82rem">' +
         '</div>' +
-        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">لون وحجم كل نص (لو مش باين أو صغير، غيّره من هنا):</p>' +
+        '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">لون وحجم كل نص (بيتحدث في المعاينة فورًا):</p>' +
         '<div id="certDesColors" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.9rem"></div>' +
         '<p style="color:#94a3b8;font-size:.75rem;margin-bottom:.4rem">ضبط دقيق لمكان ومقاس QR (لو السحب بالإصبع مش دقيق كفاية):</p>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.9rem">' +
@@ -17363,6 +17371,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     document.getElementById('certDesHours').value = tpl.hours || courseData.certHours || '';
     document.getElementById('certDesLevel').value = tpl.level || courseData.certLevel || '';
 
+    var stageWrap = document.getElementById('certDesignerStageWrap');
     var stage = document.getElementById('certDesignerStage');
     stage.innerHTML = '<p style="color:#888;padding:2.5rem 1rem;text-align:center"><i class="fas fa-spinner fa-spin"></i> جاري تحميل التصميم...</p>';
 
@@ -17374,29 +17383,63 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     canvas.style.cssText = 'width:100%;display:block;pointer-events:none';
     stage.appendChild(canvas);
 
+    // ---- شريط الزوم: بيكبّر عرض الـ stage والحاوية بتاعته بتسمح بالسحب/التمرير ----
+    var zoomSlider = document.getElementById('certDesZoom');
+    var zoomVal = document.getElementById('certDesZoomVal');
+    var baseWidthPx = stageWrap.clientWidth;
+    zoomSlider.addEventListener('input', function () {
+      var pct = parseInt(zoomSlider.value, 10);
+      zoomVal.textContent = pct + '%';
+      stage.style.width = Math.round(baseWidthPx * (pct / 100)) + 'px';
+      refreshAllMarkers();
+    });
+
     var fields = JSON.parse(JSON.stringify(Object.assign({}, window.__certDefaultFields, tpl.fields || {})));
     var qr = JSON.parse(JSON.stringify(Object.assign({}, window.__certDefaultQR, tpl.qr || {})));
 
     var labels = { studentName: 'الاسم', date: 'التاريخ', hours: 'الساعات', level: 'المستوى', certNumber: 'رقم الشهادة' };
-    var colors = { studentName: '#6366f1', date: '#8b5cf6', hours: '#0ea5e9', level: '#14b8a6', certNumber: '#374151', qr: '#f59e0b' };
+    var sampleText = {
+      studentName: 'يوسف عمرو حسن',
+      date: '14/08/2026',
+      hours: '20 ساعة',
+      level: 'مبتدئ',
+      certNumber: 'ASP-8M95-GHKG-UPI0'
+    };
 
-    function addMarker(key, pos, labelText, color) {
-      var m = document.createElement('div');
-      m.textContent = labelText;
-      m.style.cssText = 'position:absolute;transform:translate(-50%,-50%);background:' + color + ';color:#fff;font-family:Cairo;font-size:.62rem;font-weight:700;padding:.25rem .55rem;border-radius:20px;cursor:grab;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.6);border:2px solid #fff;z-index:5;left:' + pos.xPct + '%;top:' + pos.yPct + '%;touch-action:none';
-      stage.appendChild(m);
+    // ---- كل حقل نص بيتعرض بشكله وحجمه ولونه الحقيقي (مش بالونة) عشان تشوف بالظبط شكله على السطر ----
+    var markerEls = {};
+    function addTextMarker(key) {
+      var f = fields[key];
+      var el = document.createElement('div');
+      el.textContent = sampleText[key];
+      el.dataset.key = key;
+      el.style.cssText = 'position:absolute;transform:translate(-50%,-50%);white-space:nowrap;cursor:grab;touch-action:none;font-family:Cairo,Tahoma,Arial,sans-serif;padding:2px 4px;outline:1px dashed rgba(255,255,255,.35);outline-offset:2px;z-index:5';
+      stage.appendChild(el);
+      markerEls[key] = el;
+
+      function render() {
+        var r = stage.getBoundingClientRect();
+        var fontPx = (f.size || 16) * (r.width / 1000);
+        el.style.left = f.xPct + '%';
+        el.style.top = f.yPct + '%';
+        el.style.fontSize = fontPx + 'px';
+        el.style.fontWeight = f.weight || '700';
+        el.style.color = f.color || '#ffffff';
+      }
+      render();
+      el._render = render;
+
       var dragging = false;
       function move(clientX, clientY) {
         var r = stage.getBoundingClientRect();
-        var xPct = Math.min(100, Math.max(0, (clientX - r.left) / r.width * 100));
-        var yPct = Math.min(100, Math.max(0, (clientY - r.top) / r.height * 100));
-        m.style.left = xPct + '%'; m.style.top = yPct + '%';
-        pos.xPct = xPct; pos.yPct = yPct;
+        f.xPct = Math.min(100, Math.max(0, (clientX - r.left) / r.width * 100));
+        f.yPct = Math.min(100, Math.max(0, (clientY - r.top) / r.height * 100));
+        render();
       }
-      m.addEventListener('pointerdown', function (e) { dragging = true; m.style.cursor = 'grabbing'; try { m.setPointerCapture(e.pointerId); } catch (err) {} e.preventDefault(); });
-      m.addEventListener('pointermove', function (e) { if (dragging) { move(e.clientX, e.clientY); e.preventDefault(); } });
-      m.addEventListener('pointerup', function () { dragging = false; m.style.cursor = 'grab'; });
-      m.addEventListener('pointercancel', function () { dragging = false; m.style.cursor = 'grab'; });
+      el.addEventListener('pointerdown', function (e) { dragging = true; el.style.cursor = 'grabbing'; try { el.setPointerCapture(e.pointerId); } catch (err) {} e.preventDefault(); });
+      el.addEventListener('pointermove', function (e) { if (dragging) { move(e.clientX, e.clientY); e.preventDefault(); } });
+      el.addEventListener('pointerup', function () { dragging = false; el.style.cursor = 'grab'; });
+      el.addEventListener('pointercancel', function () { dragging = false; el.style.cursor = 'grab'; });
     }
 
     // ---- بالونة الـ QR بشكل مربع بمقاسه الحقيقي، قابل للسحب وتغيير المقاس ----
@@ -17423,6 +17466,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         if (qrSizeInput) qrSizeInput.value = qr.sizePct.toFixed(1);
       }
       render();
+      qrBox._render = render;
 
       var dragging = false;
       qrBox.addEventListener('pointerdown', function (e) {
@@ -17471,16 +17515,17 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       qrSizeInput.addEventListener('input', function () { var v = parseFloat(qrSizeInput.value); if (!isNaN(v)) { qr.sizePct = Math.min(60, Math.max(2, v)); render(); } });
     }
 
-    addMarker('studentName', fields.studentName, labels.studentName, colors.studentName);
-    addMarker('date', fields.date, labels.date, colors.date);
-    addMarker('hours', fields.hours, labels.hours, colors.hours);
-    addMarker('level', fields.level, labels.level, colors.level);
-    addMarker('certNumber', fields.certNumber, labels.certNumber, colors.certNumber);
+    function refreshAllMarkers() {
+      Object.keys(markerEls).forEach(function (k) { if (markerEls[k]._render) markerEls[k]._render(); });
+      if (qrBox && qrBox._render) qrBox._render();
+    }
+
+    var textFieldKeys = ['studentName', 'date', 'hours', 'level', 'certNumber'];
+    textFieldKeys.forEach(function (key) { addTextMarker(key); });
     addQRBox();
 
-    // ---- منتقي لون النص لكل حقل (بيتحفظ ويتظبط على تصميم الشهادة) ----
+    // ---- منتقي لون وحجم كل حقل (بيحدّث المعاينة فورًا) ----
     var colorPickerHost = document.getElementById('certDesColors');
-    var textFieldKeys = ['studentName', 'date', 'hours', 'level', 'certNumber'];
     textFieldKeys.forEach(function (key) {
       var wrap = document.createElement('div');
       wrap.style.cssText = 'display:flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.04);border-radius:8px;padding:.35rem .5rem';
@@ -17495,11 +17540,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       colorInput.addEventListener('input', function () {
         if (!fields[key]) fields[key] = {};
         fields[key].color = colorInput.value;
+        if (markerEls[key] && markerEls[key]._render) markerEls[key]._render();
       });
       sizeInput.addEventListener('input', function () {
         if (!fields[key]) fields[key] = {};
         var v = parseInt(sizeInput.value, 10);
         if (!isNaN(v)) fields[key].size = v;
+        if (markerEls[key] && markerEls[key]._render) markerEls[key]._render();
       });
       colorPickerHost.appendChild(wrap);
     });
