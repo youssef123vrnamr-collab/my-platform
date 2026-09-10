@@ -1081,8 +1081,8 @@ async function isAdminUser(userId) {
   };
 
   // ========== User Data Management ==========
-  async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
-  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
+  async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; try { if (data.aiMemory && Array.isArray(data.aiMemory.chatHistory) && data.aiMemory.chatHistory.length) { window.aiChatHistory = data.aiMemory.chatHistory; window.aiSessionDigest = Array.isArray(data.aiMemory.sessionDigest) ? data.aiMemory.sessionDigest : []; try { localStorage.setItem('cosmos_ai_chat_history', JSON.stringify(window.aiChatHistory.slice(-80))); localStorage.setItem('cosmos_ai_session_digest', JSON.stringify(window.aiSessionDigest.slice(-12))); } catch(eCacheAIRestore) {} } } catch(eAIRestore) { console.error("Error restoring AI memory:", eAIRestore); } return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
+  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; try { if (window.aiChatHistory && window.aiChatHistory.length) { data.aiMemory = { chatHistory: window.aiChatHistory.slice(-80), sessionDigest: (window.aiSessionDigest || []).slice(-12) }; } } catch(eAISave) { console.error("Error preparing AI memory for save:", eAISave); } data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
   // ====== تسجيل مشاهدة فيديو (موحّد لكل أنواع الفيديوهات) ======
@@ -12059,11 +12059,21 @@ function slStopAllAnimations() {
     if (_savedAIDigest) { var _parsedDigest = JSON.parse(_savedAIDigest); if (Array.isArray(_parsedDigest)) window.aiSessionDigest = _parsedDigest; }
   } catch(eRestoreDigest) { /* تجاهل أي خطأ */ }
   // ── حفظ دوري كل شوية ثواني + عند إغلاق الصفحة/إخفاء التاب، عشان الذاكرة متضيعش لو المستخدم قفل فجأة ──
+  var _lastAIFirestoreSync = 0;
   function _persistAICosmosMemory() {
     try {
       if (window.aiChatHistory) localStorage.setItem('cosmos_ai_chat_history', JSON.stringify(window.aiChatHistory.slice(-80)));
       if (window.aiSessionDigest) localStorage.setItem('cosmos_ai_session_digest', JSON.stringify(window.aiSessionDigest.slice(-12)));
     } catch(ePersist) { /* تجاهل أي خطأ (مساحة التخزين ممتلئة مثلاً) */ }
+    // ── مزامنة الذاكرة مع حساب المستخدم في Firestore كل ٢٠ ثانية على الأكتر، عشان الذاكرة تفضل
+    // مربوطة بالحساب مش بالجهاز بس — من غير ما نضرب Firestore بكتابة كل ٤ ثواني ──
+    try {
+      var _now = Date.now();
+      if (typeof currentUserId !== 'undefined' && currentUserId && window.aiChatHistory && window.aiChatHistory.length && (_now - _lastAIFirestoreSync) > 20000) {
+        _lastAIFirestoreSync = _now;
+        if (typeof saveUserDataToFirebase === 'function') saveUserDataToFirebase(currentUserId);
+      }
+    } catch(eSyncAI) { /* تجاهل أي خطأ */ }
   }
   window._persistAICosmosMemory = _persistAICosmosMemory;
   setInterval(_persistAICosmosMemory, 4000);
