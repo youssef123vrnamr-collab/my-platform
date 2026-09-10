@@ -92,6 +92,9 @@ async function isAdminUser(userId) {
   let aiGoodAnswers = [];
   // غرفة 3 (امتداد): أمثلة كود عجبت المستخدمين قبل كده (👍 تحت الكود) — بتتحمّل من Firestore عشان نحافظ على نفس المستوى ونطوّر عليه
   let aiGoodCodeExamples = [], unsubscribeAIGoodCode = null;
+  // غرفة 3 (امتداد ثالث): أكواد ملقتش إعجاب (👎) — بتتحمّل من Firestore زي الأكواد الكويسة بالظبط، عشان
+  // الذكاء الاصطناعي يفتكرها في كل جلسة جاية وميكررش نفس الغلطة تاني، بدل ما تتمسح من غير أي أثر
+  let aiBadCodeExamples = [], unsubscribeAIBadCode = null;
   // غرفة 2: الذاكرة المؤقتة — ملخص جلسة المحادثة الحالية بس (بيتصفر لما الشات يتمسح أو المستخدم يخرج)
   window.aiSessionDigest = window.aiSessionDigest || [];
   // ===== Paid courses access control =====
@@ -1553,7 +1556,7 @@ async function updateAdminUI() {
 
   function loadExamsFromFirebase() { unsubscribeExams && unsubscribeExams(); unsubscribeExams = db.collection("exams").onSnapshot(snap => { exams = []; snap.forEach(d => exams.push({ id: d.id, ...d.data() })); renderVideos(); }, e => console.error("Error loading exams:", e)); }
   function loadExamResultsFromFirebase() { unsubscribeExamResults && unsubscribeExamResults(); unsubscribeExamResults = db.collection("exam_results").orderBy("submittedAt", "desc").onSnapshot(snap => { examResults = []; snap.forEach(d => examResults.push({ id: d.id, ...d.data() })); }, e => console.error("Error loading exam results:", e)); }
-  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); loadAILessonsFromFirebase(); loadAIGoodCodeFromFirebase(); }
+  function loadAIKnowledgeFromFirebase() { unsubscribeAIKnowledge && unsubscribeAIKnowledge(); unsubscribeAIKnowledge = db.collection("ai_knowledge").orderBy("createdAt", "desc").onSnapshot(snap => { aiKnowledgeBase = []; snap.forEach(d => aiKnowledgeBase.push({ id: d.id, ...d.data() })); if (isAdmin && document.getElementById("teachAICircleModal")?.classList.contains("active")) renderAIKnowledgeList(); }, e => console.error("Error loading AI knowledge:", e)); loadAILessonsFromFirebase(); loadAIGoodCodeFromFirebase(); loadAIBadCodeFromFirebase(); }
 
   // ===== غرفة 3: الذاكرة الثابتة — تحميل الدروس المستفادة من التقييمات السلبية (👎) لحظيًا =====
   // بتشتغل مع نفس نداءات loadAIKnowledgeFromFirebase() الموجودة، فمحتاجة سطر واحد بس هنا.
@@ -1576,6 +1579,15 @@ async function updateAdminUI() {
       snap.forEach(d => good.push(d.data()));
       aiGoodCodeExamples = good;
     }, e => console.error("Error loading good AI code examples:", e));
+  }
+  // ===== غرفة 3 (امتداد ثالث): تحميل الأكواد اللي ملقتش إعجاب (👎) لحظيًا — عشان تتحول لقاعدة دائمة =====
+  function loadAIBadCodeFromFirebase() {
+    unsubscribeAIBadCode && unsubscribeAIBadCode();
+    unsubscribeAIBadCode = db.collection("ai_bad_code").orderBy("createdAt", "desc").limit(8).onSnapshot(snap => {
+      const bad = [];
+      snap.forEach(d => bad.push(d.data()));
+      aiBadCodeExamples = bad;
+    }, e => console.error("Error loading bad AI code examples:", e));
   }
   function listenToMaintenance() { unsubscribeMaintenance && unsubscribeMaintenance(); unsubscribeMaintenance = db.collection("system").doc("maintenance").onSnapshot(doc => { if (doc.exists && doc.data().status === "maintenance") { maintenanceEndTime = doc.data().endTime ? doc.data().endTime.toDate() : null; showMaintenanceScreen(doc.data().message || "جاري تحديث المنصة...", maintenanceEndTime); } else hideMaintenanceScreen(); }, e => console.error("Error listening to maintenance:", e)); }
   function showMaintenanceScreen(msg, end) { const ov = document.getElementById("maintenanceOverlay"), msgEl = document.getElementById("maintenanceMessage"), cancelBtn = document.getElementById("cancelMaintenanceBtn"), endEl = document.getElementById("maintenanceEndTime"); document.body.style.overflow = "hidden"; document.documentElement.style.overflow = "hidden"; if (ov && !ov._scrollLocked) { ov._scrollLocked = true; ov.addEventListener('touchmove', function(e) { e.stopPropagation(); }, { passive: true }); } ov && msgEl && cancelBtn && (msgEl.textContent = msg, ov.classList.add("active"), cancelBtn.classList.toggle("active", isAdmin), maintenanceTimerInterval && clearInterval(maintenanceTimerInterval), end && (maintenanceTimerInterval = setInterval(() => { const now = Date.now(), diff = end.getTime() - now; if (diff <= 0) { clearInterval(maintenanceTimerInterval); autoEndMaintenance(); return; } updateTimerDisplay(diff); }, 1000)), tickInterval || (tickInterval = setInterval(() => SoundEffects.tick(), 1000)), endEl && (endEl.textContent = "ينتهي عند: " + end.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
@@ -2797,6 +2809,16 @@ async function updateAdminUI() {
     document.body.style.overflow = "hidden";
     var msgs = document.getElementById("aiChatMessages");
     if (msgs.children.length === 0) displayAIMessage("مرحباً! أنا مساعد Astronomy.", "ai");
+    // ── نظبط شكل زرار الكتم عند فتح الشات عشان يعكس الحالة المحفوظة فعليًا (مش دايمًا "شغال") ──
+    try {
+      var _muteBtnSync = document.getElementById('aiGlobalMuteBtn');
+      if (_muteBtnSync) {
+        _muteBtnSync.innerHTML = window.aiIsMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+        _muteBtnSync.style.color = window.aiIsMuted ? '#ef4444' : '#10b981';
+        _muteBtnSync.title = window.aiIsMuted ? 'تشغيل الصوت' : 'كتم الصوت';
+        _muteBtnSync.classList.toggle('muted', !!window.aiIsMuted);
+      }
+    } catch(eMuteSync) {}
     setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; setupChatKeyboard("aiChatModal"); }, 150);
   }
   function closeAIChat() {
@@ -2897,7 +2919,18 @@ async function updateAdminUI() {
   document.addEventListener("fullscreenchange",       onFullscreenChange);
   document.addEventListener("webkitfullscreenchange", onFullscreenChange);
   document.addEventListener("mozfullscreenchange",    onFullscreenChange);
-  function clearAIChat() { if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return; const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML=""; if(window.speechSynthesis) window.speechSynthesis.cancel(); showToast("🗑️ تم مسح المحادثة"); }
+  function clearAIChat() {
+    if (!confirm("مسح كل المحادثة مع الذكاء الاصطناعي؟")) return;
+    const c = document.getElementById("aiChatMessages"); if(c) c.innerHTML="";
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    if (typeof window.stopAllAISpeech === 'function') window.stopAllAISpeech();
+    // ── مسح المحادثة لازم يمسح الذاكرة الفعلية كمان (مش بس الشكل على الشاشة)، وإلا الذكاء
+    // الاصطناعي هيفضل "فاكر" رسائل قديمة حتى بعد ما المستخدم شافها اتمسحت قدامه ──
+    window.aiChatHistory = [];
+    window.aiSessionDigest = [];
+    try { localStorage.removeItem('cosmos_ai_chat_history'); localStorage.removeItem('cosmos_ai_session_digest'); } catch(e) {}
+    showToast("🗑️ تم مسح المحادثة والذاكرة المرتبطة بيها");
+  }
   // ========== Image Generation via Vercel Proxy ==========
   // ── الكلمة "professional astrophotography" في اللاحقة القديمة كانت بتتضاف لكل صورة مهما كان موضوعها،
   // وده كان بيخلي حتى طلبات زي "ارسملي كلب" تطلع مناظر فضاء/جبال ليلية لأن الموديل بيدّي وزن كبير
@@ -2979,7 +3012,7 @@ async function updateAdminUI() {
           ? ('تم توليد وعرض صورة للمستخدم في الشات، وهي تصور: ' + enPrompt + '. لو المستخدم اتكلم بعد كده عن "الصورة" أو طلب تعديل عليها، فاهم إنه بيقصد الصورة دي بالتحديد، ولو طلب تعديل اقترح عليه يعيد صياغة الطلب بالتفاصيل الجديدة عشان أولّد نسخة معدّلة.')
           : 'حاولت أولّد صورة للمستخدم بناءً على طلبه لكن العملية فشلت تقنياً.'
       });
-      if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+      if (window.aiChatHistory.length > 80) window.aiChatHistory.splice(0, 2);
     }
   }
 
@@ -3090,7 +3123,7 @@ async function updateAdminUI() {
           ? ('تم توليد وعرض صورة للمستخدم في نفس رسالة الرد، وهي تصور: ' + enPrompt + '. لو المستخدم اتكلم بعد كده عن "الصورة" أو طلب تعديل عليها، فاهم إنه بيقصد الصورة دي بالتحديد.')
           : 'حاولت أولّد صورة للمستخدم بناءً على طلبه لكن العملية فشلت تقنياً.'
       });
-      if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+      if (window.aiChatHistory.length > 80) window.aiChatHistory.splice(0, 2);
     }
 
     return wrap;
@@ -3382,6 +3415,11 @@ async function updateAdminUI() {
     let input = document.getElementById("aiChatInput");
     let text = input.value.trim();
     if (!text) return;
+    // ── هل الرسالة دي جت من تفريغ صوتي (ميك) من غير ما المستخدم يعدّلها يدوي؟ لو آه، الرد
+    // الجاي هيتقال بالصوت تلقائيًا (لو الصوت مش مكتوم)؛ لو المستخدم كتب أو عدّل النص، يبقى
+    // إدخال كتابي ويرد بالكتابة بس من غير قراءة تلقائية ──
+    window._aiLastInputWasVoice = !!(window._aiVoicePendingText && text === window._aiVoicePendingText);
+    window._aiVoicePendingText = null;
     const sendBtn = document.querySelector("#aiChatModal .chat-send-btn");
     if (sendBtn) { sendBtn.classList.remove("sending"); void sendBtn.offsetWidth; sendBtn.classList.add("sending"); setTimeout(() => sendBtn.classList.remove("sending"), 600); }
     displayAIMessage(text, "user");
@@ -3554,7 +3592,7 @@ async function updateAdminUI() {
     } 
 }
   // loadUserDashboard() — يتعمل من داخل googleLogin بعد login ناجح فقط
-  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
+  async function googleLogout() { if (currentUserId) await saveUserDataToFirebase(currentUserId); if (typeof stopFriendRequestsListener === 'function') stopFriendRequestsListener(); if (googleUser && googleUser.email) { try { const sessions = await db.collection("active_sessions").where("email", "==", googleUser.email).where("active", "==", true).get(); sessions.forEach(async (doc) => { await db.collection("active_sessions").doc(doc.id).update({ active: false, endedAt: firebase.firestore.FieldValue.serverTimestamp() }); }); } catch(e) { console.error("Error ending Google session:", e); } } if (window.googleSessionHeartbeat) { clearInterval(window.googleSessionHeartbeat); window.googleSessionHeartbeat = null; } stopUserEnrollmentsAccess(); try { clearAllChatBgsFromScreen(); } catch(_){} auth.signOut().then(() => { googleUser = null; currentUserId = null; localStorage.removeItem("falak_username"); localStorage.removeItem("falak_userphone"); localStorage.removeItem("falak_device_id"); currentUser = null; currentUserPhone = null; try { window.aiChatHistory = []; window.aiSessionDigest = []; window.__cosmosPendingSearchImages = null; window._aiSelectedImages = []; window._aiSelectedFiles = []; localStorage.removeItem('cosmos_ai_chat_history'); localStorage.removeItem('cosmos_ai_session_digest'); var _aiMsgsEl = document.getElementById("aiChatMessages"); if (_aiMsgsEl) _aiMsgsEl.innerHTML = ""; var _aiModalEl = document.getElementById("aiChatModal"); if (_aiModalEl) _aiModalEl.classList.remove("active"); } catch(_){} document.getElementById("landingPage").style.display = "flex"; document.getElementById("appWrapper").style.display = "none"; document.getElementById("googleUserInfo").style.display = "none"; document.getElementById("googleLogoutBtn").style.display = "none"; if (isAdmin) logout(); SoundEffects.recordStop(); showToast("👋 تم تسجيل الخروج من Google — ومسحنا ذاكرة الشات الذكي من الجهاز"); updateGoogleLogoutButtonsVisibility(); updateAdminUI(); }).catch(e => { console.error(e); SoundEffects.error(); showToast("❌ فشل تسجيل الخروج"); }); }
   function loadUserDataFromStorage() { let savedName = localStorage.getItem("falak_username"); let savedPhone = localStorage.getItem("falak_userphone"); if (savedName && savedPhone) { currentUser = savedName; currentUserPhone = savedPhone; return true; } return false; }
   function saveUserDataToStorage(name, phone) { if (!name || !phone) return false; localStorage.setItem("falak_username", name); localStorage.setItem("falak_userphone", phone); currentUser = name; currentUserPhone = phone; if (currentUserId) saveUserDataToFirebase(currentUserId); return true; }
   function checkUserName() { if (currentUser && currentUserPhone) return true; return loadUserDataFromStorage(); }
@@ -7918,7 +7956,12 @@ window.updateActiveToolLabel = function(label) {
 // 2. AI CHAT - MUTE PER MESSAGE
 // ============================
 (function() {
-  let aiIsMuted = false;
+  // ── مصدر واحد للحقيقة لحالة الكتم: window.aiIsMuted — أي جزء تاني في الكود (حتى لو في IIFE
+  // منفصلة) يقدر يتأكد منه فعليًا، بدل ما كل جزء يفترض حالة مختلفة عن التاني ──
+  window.aiIsMuted = false;
+  try { window.aiIsMuted = localStorage.getItem('cosmos_ai_muted') === '1'; } catch(eMuteInit) {}
+  // متغير محلي بيتزامن مع window.aiIsMuted عشان الكود القديم اللي بيستخدمه هنا يفضل شغال
+  let aiIsMuted = window.aiIsMuted;
   // المتغير ده بيتتبع النص اللي بيتقرأ دلوقتي
   let _currentSpeakingBtn = null;
 
@@ -7936,6 +7979,8 @@ window.updateActiveToolLabel = function(label) {
   // زرار الكتم/التشغيل العام في الـ header
   window.toggleAIMute = function() {
     aiIsMuted = !aiIsMuted;
+    window.aiIsMuted = aiIsMuted;
+    try { localStorage.setItem('cosmos_ai_muted', aiIsMuted ? '1' : '0'); } catch(eMutePersist) {}
     const btn = document.getElementById('aiGlobalMuteBtn');
     if (btn) {
       btn.innerHTML = aiIsMuted
@@ -7943,7 +7988,12 @@ window.updateActiveToolLabel = function(label) {
         : '<i class="fas fa-volume-up"></i>';
       btn.style.color = aiIsMuted ? '#ef4444' : '#10b981';
       btn.title = aiIsMuted ? 'تشغيل الصوت' : 'كتم الصوت';
+      // ── نضيف/نشيل كلاس muted فعليًا على الزرار، عشان أي كود تاني بيتأكد من
+      // classList.contains('muted') يشتغل صح بدل ما يفضل دايمًا false ──
+      btn.classList.toggle('muted', aiIsMuted);
     }
+    const btn2 = document.getElementById('aiMuteBtn');
+    if (btn2) btn2.classList.toggle('muted', aiIsMuted);
     if (aiIsMuted) {
       stopAllSpeech();
       showToast('🔇 تم كتم الصوت');
@@ -7951,6 +8001,7 @@ window.updateActiveToolLabel = function(label) {
       showToast('🔊 تم تشغيل الصوت');
     }
   };
+
 
   // زرار الصوت على كل رسالة من الـ AI
   window.addAIMuteButton = function(msgEl, text) {
@@ -8055,6 +8106,9 @@ window.updateActiveToolLabel = function(label) {
       const text = e.results[0][0].transcript;
       const inp = document.getElementById('aiChatInput');
       if (inp) inp.value = (inp.value + ' ' + text).trim();
+      // ── نسجّل إن آخر إدخال كان بالصوت، عشان الرد يرجع بالصوت هو كمان (لو الكلام اتبعت زي
+      // ما اتفرّغ من غير تعديل يدوي) — يتفحص فعليًا في sendAIMessage ──
+      if (inp) window._aiVoicePendingText = inp.value.trim();
     };
     aiVoiceRecognition.onend = () => {
       aiVoiceRecognition = null;
@@ -8129,6 +8183,8 @@ window.updateActiveToolLabel = function(label) {
         inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
         inp.focus();
         inp.dispatchEvent(new Event('input', { bubbles: true }));
+        // ── نفس تسجيل "آخر إدخال كان بالصوت" هنا كمان ──
+        window._aiVoicePendingText = inp.value.trim();
       }
     };
     aiVoiceNoteRecognition.onend = () => {
@@ -11217,6 +11273,10 @@ function slStopAllAnimations() {
     if (btn && _ttsBtn === btn && _ttsActive) { stopGroqTTS(); return; }
     stopGroqTTS();
 
+    // ── فحص الكتم مركزي هنا: أي حد ينادي aiSpeak من أي مكان في الكود (رسالة ترحيب، رد تلقائي،
+    // زرار يدوي) هيتوقف هنا لو الصوت مكتوم عالميًا — بدل ما كل نقطة نداء تفتكر تتأكد بنفسها ──
+    if (window.aiIsMuted) return;
+
     var key = (typeof getAiApiKey === 'function') ? getAiApiKey() : '';
     if (!key) {
       if (typeof showToast === 'function') showToast('⚠️ ادخل مفتاح Groq API أولاً');
@@ -11253,6 +11313,15 @@ function slStopAllAnimations() {
       btn.classList.add('muted');
     }
 
+    await _speakWithGroq(clean, btn, isArabic, model, voice, 0);
+  };
+
+  // ── محاولة Groq TTS مع إعادة محاولة تلقائية (حتى GROQ_MAX_RETRIES مرة) قبل ما ننتقل لـ
+  // ElevenLabs — عشان أول فشل مؤقت (شبكة بطيئة، خطأ عابر) ميخليناش نستسلم على طول ──
+  var GROQ_MAX_RETRIES = 2;
+  async function _speakWithGroq(clean, btn, isArabic, model, voice, attempt) {
+    if (!_ttsActive) return;
+    var key = (typeof getAiApiKey === 'function') ? getAiApiKey() : '';
     try {
       var resp = await fetch('https://api.groq.com/openai/v1/audio/speech', {
         method: 'POST',
@@ -11271,11 +11340,14 @@ function slStopAllAnimations() {
       if (!resp.ok) {
         var err = await resp.json().catch(function(){ return {}; });
         var msg = (err.error && err.error.message) || ('HTTP ' + resp.status);
-        console.warn('[TTS] Groq failed, trying ElevenLabs...', msg);
         if (window.AIHealth) window.AIHealth.record('groq_tts', false);
         if (window.logPlatformIssue) window.logPlatformIssue('Groq TTS', msg);
-        await tryElevenLabsTTS(clean, btn, isArabic);
-        return;
+        if (attempt < GROQ_MAX_RETRIES) {
+          console.warn('[TTS] Groq failed (attempt ' + (attempt+1) + '), retrying...', msg);
+          return _speakWithGroq(clean, btn, isArabic, model, voice, attempt + 1);
+        }
+        console.warn('[TTS] Groq failed after retries, trying ElevenLabs...', msg);
+        return _speakWithElevenLabs(clean, btn, isArabic, 0);
       }
 
       if (window.AIHealth) window.AIHealth.record('groq_tts', true);
@@ -11297,11 +11369,12 @@ function slStopAllAnimations() {
       console.error('[TTS] Groq error:', e);
       if (window.AIHealth) window.AIHealth.record('groq_tts', false);
       if (window.logPlatformIssue) window.logPlatformIssue('Groq TTS', String(e && e.message || e).slice(0,150));
-      await tryElevenLabsTTS(clean, btn, isArabic);
+      if (attempt < GROQ_MAX_RETRIES) return _speakWithGroq(clean, btn, isArabic, model, voice, attempt + 1);
+      return _speakWithElevenLabs(clean, btn, isArabic, 0);
     }
-  };
+  }
 
-  // ===== ElevenLabs Fallback TTS =====
+  // ===== ElevenLabs Fallback TTS (الصوت التاني اللي بنعتمد عليه لو Groq فشل) =====
   var ELEVENLABS_KEY = 'sk_fb9731db4191c0001f2b6609b4c0982d7fc9e5ca7c4a9455';
   // أصوات ElevenLabs — صوت مختلف لكل شخصية (multilingual يدعم العربي)
   var EL_VOICES = {
@@ -11310,87 +11383,72 @@ function slStopAllAnimations() {
     nova:    'EXAVITQu4vr4xnSDxMaL', // Sarah  — أنثوي (نوفا)
     galaxy:  'onwK4e9ZLuTAKqWW03F9'  // Daniel — رجالي حكّاء (جالكسي)
   };
+  var EL_MAX_RETRIES = 2;
 
-  // ===== خط دفاع ثالث ومجاني بالكامل: نطق المتصفح نفسه (Web Speech API) — بدون
-  // مفتاح، بدون كوتة، بدون إنترنت حتى في أغلب المتصفحات. بيتفعّل تلقائيًا لو
-  // Groq TTS وElevenLabs الاتنين فشلوا، عشان الصوت مايفضلش ساكت خالص. =====
-  function browserSpeakFallback(text, btn, isArabic) {
-    if (!('speechSynthesis' in window)) { stopGroqTTS(); return; }
-    try {
-      window.speechSynthesis.cancel();
-      var utt = new SpeechSynthesisUtterance(String(text || '').slice(0, 3000));
-      utt.lang = isArabic ? 'ar-SA' : 'en-US';
-      utt.rate = 0.95;
-      utt.pitch = 1;
-      _ttsActive = true;
-      _ttsBtn = btn || null;
-      if (btn) {
-        btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
-        btn.classList.add('muted');
-      }
-      utt.onend = function () { stopGroqTTS(); };
-      utt.onerror = function () { stopGroqTTS(); };
-      window.speechSynthesis.speak(utt);
-    } catch (eBrowserTts) {
-      stopGroqTTS();
-    }
-  }
+  // ── مفيش خط دفاع ثالث بصوت المتصفح: لو Groq وElevenLabs الاتنين فشلوا بعد إعادة المحاولة،
+  // بنوقف بهدوء ونبلّغ المستخدم بدل ما نشغّل صوت المتصفح الرديء اللي كان بيتفعّل قبل كده ──
+  function _speakWithElevenLabs(text, btn, isArabic, attempt) {
+    if (!_ttsActive) return Promise.resolve();
+    var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
+    var voiceId = EL_VOICES[p.id] || EL_VOICES.cosmos;
 
-  async function tryElevenLabsTTS(text, btn, isArabic) {
-    if (!_ttsActive) return;
-    try {
-      var p = window.getCurrentAIPersona() || AI_PERSONAS[0];
-      var voiceId = EL_VOICES[p.id] || EL_VOICES.cosmos;
-
-      var resp = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
-        method: 'POST',
-        headers: {
-          'xi-api-key': ELEVENLABS_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          text: text.slice(0, 2500),
-          model_id: 'eleven_turbo_v2_5',
-          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
-        })
-      });
-
+    return fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': ELEVENLABS_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        text: text.slice(0, 2500),
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+      })
+    }).then(function(resp) {
       if (!resp.ok) {
-        var errData = await resp.json().catch(function(){ return {}; });
-        var errMsg = errData.detail && errData.detail.message ? errData.detail.message : (errData.detail || JSON.stringify(errData));
-        if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
-        if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', 'HTTP ' + resp.status + ' — ' + String(errMsg).slice(0,150));
-        browserSpeakFallback(text, btn, isArabic);
-        return;
+        return resp.json().catch(function(){ return {}; }).then(function(errData) {
+          var errMsg = errData.detail && errData.detail.message ? errData.detail.message : (errData.detail || JSON.stringify(errData));
+          if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
+          if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', 'HTTP ' + resp.status + ' — ' + String(errMsg).slice(0,150));
+          if (attempt < EL_MAX_RETRIES) {
+            console.warn('[TTS] ElevenLabs failed (attempt ' + (attempt+1) + '), retrying...', errMsg);
+            return _speakWithElevenLabs(text, btn, isArabic, attempt + 1);
+          }
+          // ── الاتنين فشلوا بعد كل المحاولات — نوقف بهدوء من غير صوت المتصفح ──
+          console.error('[TTS] both providers failed after retries');
+          if (typeof showToast === 'function') showToast('⚠️ تعذّر تشغيل الصوت دلوقتي، جرّب تاني بعد شوية');
+          stopGroqTTS();
+        });
       }
 
       if (window.AIHealth) window.AIHealth.record('elevenlabs', true);
       if (!_ttsActive) return;
 
-      var blob = await resp.blob();
-      var url  = URL.createObjectURL(blob);
-      var audio = new Audio(url);
-      _ttsAudio = audio;
-      _ttsBtn   = btn || null;
+      return resp.blob().then(function(blob) {
+        var url  = URL.createObjectURL(blob);
+        var audio = new Audio(url);
+        _ttsAudio = audio;
+        _ttsBtn   = btn || null;
 
-      if (btn) {
-        btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
-        btn.classList.add('muted');
-      }
+        if (btn) {
+          btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
+          btn.classList.add('muted');
+        }
 
-      audio.onended = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
-      audio.onerror = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
-      audio.play().catch(function(e) {
-        console.warn('[TTS] ElevenLabs play failed:', e);
-        stopGroqTTS();
+        audio.onended = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
+        audio.onerror = function() { URL.revokeObjectURL(url); stopGroqTTS(); };
+        audio.play().catch(function(e) {
+          console.warn('[TTS] ElevenLabs play failed:', e);
+          stopGroqTTS();
+        });
       });
-
-    } catch(e) {
+    }).catch(function(e) {
       console.error('[TTS] ElevenLabs error:', e);
       if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
       if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', String(e && e.message || e).slice(0,150));
-      browserSpeakFallback(text, btn, isArabic);
-    }
+      if (attempt < EL_MAX_RETRIES) return _speakWithElevenLabs(text, btn, isArabic, attempt + 1);
+      if (typeof showToast === 'function') showToast('⚠️ تعذّر تشغيل الصوت دلوقتي، جرّب تاني بعد شوية');
+      stopGroqTTS();
+    });
   }
 
   // ===== 7. زرار الصوت على رسائل AI =====
@@ -11498,7 +11556,7 @@ function slStopAllAnimations() {
 
         // ✅ نحسب طول الرسالة ونضبط الـ history بناءً عليها
         var msgLen = userMsg.length;
-        var histLimit = msgLen > 2000 ? 2 : msgLen > 800 ? 4 : 8;
+        var histLimit = msgLen > 2000 ? 6 : msgLen > 800 ? 10 : 18;
         var histMsgs = (typeof aiChatHistory !== 'undefined' && Array.isArray(aiChatHistory))
           ? aiChatHistory.slice(-histLimit) : [];
 
@@ -11554,7 +11612,7 @@ function slStopAllAnimations() {
           if (typeof aiChatHistory !== 'undefined') {
             aiChatHistory.push({ role: 'user', content: userMsg });
             aiChatHistory.push({ role: 'assistant', content: answer });
-            if (aiChatHistory.length > 30) aiChatHistory.splice(0, 2);
+            if (aiChatHistory.length > 80) aiChatHistory.splice(0, 2);
           }
 
           if (typingEl) typingEl.remove();
@@ -11567,11 +11625,8 @@ function slStopAllAnimations() {
             var txt = aiDiv.querySelector('.message-content');
             if (txt) window.addAIMuteButton(aiDiv, txt.textContent);
 
-            // نطق تلقائي لو مش مكتوم
-            var isMuted = (typeof aiIsMuted !== 'undefined' && aiIsMuted);
-            var muteBtn = document.getElementById('aiMuteBtn');
-            if (muteBtn && muteBtn.classList.contains('muted')) isMuted = true;
-            if (!isMuted) window.aiSpeak(answer, null);
+            // نطق تلقائي بس لو مش مكتوم ولو آخر إدخال من المستخدم كان بالصوت (رد بنفس وسيلة الإدخال)
+            if (window._aiLastInputWasVoice) window.aiSpeak(answer, null);
           }
         } catch(err) {
           if (typingEl) typingEl.remove();
@@ -11992,7 +12047,28 @@ function slStopAllAnimations() {
 
 (function(){
   // ── Global history array (stays alive across turns) ──
+  // ── ذاكرة دائمة عبر الجلسات: نحاول نرجّع المحادثة والملخص اللي كانوا محفوظين في الجهاز
+  // قبل ما نصفّرهم، عشان الذكاء الاصطناعي يفتكر اللي اتقال قبل كده حتى بعد إغلاق الصفحة ──
   window.aiChatHistory = [];
+  try {
+    var _savedAIHist = localStorage.getItem('cosmos_ai_chat_history');
+    if (_savedAIHist) { var _parsedHist = JSON.parse(_savedAIHist); if (Array.isArray(_parsedHist)) window.aiChatHistory = _parsedHist; }
+  } catch(eRestoreHist) { /* تجاهل أي خطأ */ }
+  try {
+    var _savedAIDigest = localStorage.getItem('cosmos_ai_session_digest');
+    if (_savedAIDigest) { var _parsedDigest = JSON.parse(_savedAIDigest); if (Array.isArray(_parsedDigest)) window.aiSessionDigest = _parsedDigest; }
+  } catch(eRestoreDigest) { /* تجاهل أي خطأ */ }
+  // ── حفظ دوري كل شوية ثواني + عند إغلاق الصفحة/إخفاء التاب، عشان الذاكرة متضيعش لو المستخدم قفل فجأة ──
+  function _persistAICosmosMemory() {
+    try {
+      if (window.aiChatHistory) localStorage.setItem('cosmos_ai_chat_history', JSON.stringify(window.aiChatHistory.slice(-80)));
+      if (window.aiSessionDigest) localStorage.setItem('cosmos_ai_session_digest', JSON.stringify(window.aiSessionDigest.slice(-12)));
+    } catch(ePersist) { /* تجاهل أي خطأ (مساحة التخزين ممتلئة مثلاً) */ }
+  }
+  window._persistAICosmosMemory = _persistAICosmosMemory;
+  setInterval(_persistAICosmosMemory, 4000);
+  window.addEventListener('beforeunload', _persistAICosmosMemory);
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') _persistAICosmosMemory(); });
 
   // ══════════════════════════════════════════════════════════════
   // ── نظام "المدير الذكي" (AI Router): مراقبة صحة المزوّدين ──
@@ -12711,7 +12787,7 @@ function slStopAllAnimations() {
           if (window.aiChatHistory) {
             window.aiChatHistory.push({ role:'user', content: '[أرسل المستخدم '+imgs.length+' صورة'+(validDocs.length ? (' و'+validDocs.length+' ملف') : '')+'] ' + (extraText||'') });
             window.aiChatHistory.push({ role:'assistant', content: visionAnswer });
-            if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+            if (window.aiChatHistory.length > 80) window.aiChatHistory.splice(0, 2);
           }
           if (typingEl2) typingEl2.remove();
           if (msgs) {
@@ -12749,6 +12825,10 @@ function slStopAllAnimations() {
       // ── Read message ──
       var userMsg = injectedMsg !== undefined ? String(injectedMsg) : (inp ? inp.value.trim() : '');
       if (!userMsg) return;
+      // ── هل الرسالة دي جت من تفريغ صوتي (ميك) من غير تعديل يدوي؟ لو آه، الرد الجاي هيتقال
+      // بالصوت تلقائيًا (لو مش مكتوم)؛ لو اتكتبت أو اتعدّلت، الرد هيبقى بالكتابة بس ──
+      window._aiLastInputWasVoice = !!(injectedMsg === undefined && window._aiVoicePendingText && userMsg === window._aiVoicePendingText);
+      window._aiVoicePendingText = null;
       if (inp && injectedMsg === undefined) { inp.value = ''; inp.style.height = 'auto'; }
 
       // ── Image generation check ──
@@ -13108,7 +13188,7 @@ function slStopAllAnimations() {
       }
 
       // ── History slice (adaptive) ──
-      var histLimit = userMsg.length > 2000 ? 2 : userMsg.length > 800 ? 4 : 8;
+      var histLimit = userMsg.length > 2000 ? 6 : userMsg.length > 800 ? 10 : 18;
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
 
       // ── سياق مكتبة الفيديوهات — يخلي الذكاء الاصطناعي عارف عدد الفيديوهات وأسماءها ومحتواها ──
@@ -13331,6 +13411,12 @@ function slStopAllAnimations() {
       // معلومة جديدة كل جملة، والحشو بيعيد نفس المعنى بصياغة تانية. ──
       var _depthBlock = '\n\nقاعدة التعمّق: لو السؤال مش سؤال بسيط جدًا (زي تحية أو سؤال بإجابة رقم/كلمة واحدة)، وسّع في إجابتك: اشرح السبب مش بس النتيجة، هات مثال أو تشبيه لو بيسهّل الفهم، واذكر أي تفاصيل أو حالات خاصة مرتبطة بالسؤال لو مفيدة. لكن كل جملة إضافية لازم تحمل معلومة جديدة فعلاً — ممنوع تكرار نفس الفكرة بصياغة تانية أو حشو الرد بعبارات عامة عشان يبان طويل. لو السؤال فعلاً بسيط ومحتاج رد قصير مباشر، رد قصير ومباشر برضو من غير تطويل مصطنع.';
 
+      // ── قاعدة الإبداع الإضافي: خلي تفكيرك ميقفش عند حرفية الطلب — فكّر في زوايا واحتياجات
+      // المستخدم عمره ما ذكرها صراحة بس منطقيًا هتفيده (حالة استخدام هيحتاجها بعدين، خطأ شائع
+      // هيقع فيه، تحسين بسيط يرفع مستوى الشغل). القاعدة الأساسية: أضف ومتستبدلش — فكرة
+      // المستخدم الأصلية هي الأساس دايمًا، وأي إضافة منك بتُذكر كاقتراح واضح جنبها مش بديل عنها ──
+      var _creativityBlock = '\n\nقاعدة الإبداع الإضافي: بعد ما تلبي طلب المستخدم بالظبط زي ما طلبه، فكّر بعمق لو فيه زاوية أو احتياج منطقي مرتبط بطلبه هو ماذكرهوش صراحة بس هيفيده (مثلاً: حالة حافة (edge case) هتحصل لو طلبه ده كود، أو فكرة تحسين بسيطة، أو خطوة تالية منطقية). لو لقيت حاجة زي دي فعلاً مفيدة ومش تفصيلة تافهة، اذكرها بإيجاز في آخر ردك كاقتراح واضح منفصل (مثلاً "💡 فكرة إضافية:")، من غير ما تفرضها أو تستبدل بيها اللي طلبه بالظبط. ممنوع تمامًا تغيّر أو "تصلّح" فكرة المستخدم الأساسية من غير ما يطلب — أضف عليها، ما تزفتهاش.';
+
       // ── معلومة عن بنية المنصة نفسها (لو حد سأل "بتشتغلوا إزاي لو النت وقع" أو "عندكوا وضع أوفلاين"):
       // المنصة عندها نظام دفاع تلقائي بعدة مراحل (Groq → Gemini → OpenRouter → نموذج محلي على
       // جهاز المستخدم عبر WebGPU) لو كل الخدمات السحابية فشلت مع بعض، والنموذج المحلي ده كمان
@@ -13372,6 +13458,17 @@ function slStopAllAnimations() {
         }
       } catch(eGoodCtx) { /* تجاهل أي خطأ */ }
 
+      // ── غرفة 3 (امتداد ثالث): أكواد ملقتش إعجاب قبل كده (👎) — دروس دائمة عبر كل الجلسات، مش بس الجلسة الحالية ──
+      var _badCodeContextBlock = '';
+      try {
+        if (typeof aiBadCodeExamples !== 'undefined' && aiBadCodeExamples && aiBadCodeExamples.length) {
+          var _bcList = aiBadCodeExamples.map(function(b, bi){
+            return (bi + 1) + '. طلب "' + String(b.question || '').slice(0,120) + '" — الملفات: ' + (b.filenames || '—') + (b.reason ? (' — السبب اللي ذكره المستخدم: ' + String(b.reason).slice(0,150)) : '');
+          }).join('\n');
+          _badCodeContextBlock = '\n\n--- أكواد سابقة ملقتش إعجاب المستخدمين وقيّموها 👎 (تجنّب نفس القصور) ---\n' + _bcList + '\n---\nلو جالك طلب شبيه بأي واحد من دول، خد بالك ميتكررش نفس المشكلة، واكتب الكود بمستوى أعلى وأدق من المرة اللي فاتت.';
+        }
+      } catch(eBadCtx) { /* تجاهل أي خطأ */ }
+
       function buildPayload(model, maxTok, hist, lean) {
         // lean=true: بنستخدمها في محاولة الطوارئ (الموديل الصغير) — بنشيل القوائم الثقيلة
         // (فيديوهات/كورسات/معرفة/إحصائيات) لأنها ممكن لوحدها تتخطى حد الموديل الصغير،
@@ -13380,8 +13477,8 @@ function slStopAllAnimations() {
         var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
         var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _globalInstructionsBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _globalInstructionsBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _badCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _creativityBlock + _globalInstructionsBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _badCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _creativityBlock + _globalInstructionsBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -14044,7 +14141,7 @@ function slStopAllAnimations() {
         // ── Save to history ──
         window.aiChatHistory.push({ role:'user', content: userMsg });
         window.aiChatHistory.push({ role:'assistant', content: answer });
-        if (window.aiChatHistory.length > 30) window.aiChatHistory.splice(0, 2);
+        if (window.aiChatHistory.length > 80) window.aiChatHistory.splice(0, 2);
 
         // ── غرفة 2: الذاكرة المؤقتة — نضيف ملخص قصير لكل رسالة مستخدم عشان السياق العام يفضل موجود
         // حتى لو الرسالة القديمة اتشالت من الـ history المرسل فعليًا للموديل (اللي بيبقى آخر 8 بس) ──
@@ -14143,10 +14240,8 @@ function slStopAllAnimations() {
             var txtEl = aiDiv.querySelector('.message-content');
             if (txtEl) window.addAIMuteButton(aiDiv, txtEl.textContent);
           }
-          // Auto-speak if not muted
-          var muteBtn = document.getElementById('aiMuteBtn') || document.getElementById('aiGlobalMuteBtn');
-          var isMuted = (muteBtn && muteBtn.classList.contains('muted')) || (typeof aiIsMuted !== 'undefined' && aiIsMuted);
-          if (!isMuted && typeof window.aiSpeak === 'function') {
+          // نطق تلقائي بس لو مش مكتوم ولو آخر إدخال من المستخدم كان بالصوت (رد بنفس وسيلة الإدخال)
+          if (window._aiLastInputWasVoice && typeof window.aiSpeak === 'function') {
             // نمرر النص النظيف بدون HTML أو markdown
             var cleanAnswer = answer
               .replace(/<[^>]*>/g, ' ')
@@ -15423,7 +15518,29 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     var msgEl = card.closest('.message.received');
     var _blocksBad = (window.__aiCodeGroups && window.__aiCodeGroups[gid]) || [];
     var _filenamesBad = _blocksBad.map(function(b){ return b.filename || b.lang || ''; }).filter(Boolean).join('، ');
-    // ── مفيش أي تخزين في أي قاعدة بيانات هنا خالص — الكود ده هيتمسح تمامًا وميتحفظش عنه أي أثر دائم ──
+    var _questionBad = '';
+    if (msgEl) {
+      var _nodeBad = msgEl.previousElementSibling;
+      while (_nodeBad) {
+        if (_nodeBad.classList && _nodeBad.classList.contains('message') && _nodeBad.classList.contains('sent')) {
+          var _cBad = _nodeBad.querySelector('.message-content');
+          _questionBad = _cBad ? (_cBad.textContent || '') : '';
+          break;
+        }
+        _nodeBad = _nodeBad.previousElementSibling;
+      }
+    }
+    // ── الكود ده بيتمسح من الشاشة، لكن دلوقتي بيتحفظ كـ"درس" دائم في ai_bad_code عشان الذكاء
+    // الاصطناعي يفتكره في كل جلسة جاية وميكررش نفس القصور — مفيش نص الكود نفسه بيتحفظ، بس
+    // وصف الطلب واسم الملفات، عشان يبقى درس مش أرشيف كامل للكود المرفوض ──
+    try {
+      db.collection('ai_bad_code').add({
+        userId: (typeof currentUserId !== 'undefined' ? currentUserId : null) || null,
+        question: String(_questionBad || '').slice(0, 400),
+        filenames: _filenamesBad,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(function(e){ console.error('bad code save err', e); });
+    } catch(eBadSave) { console.error(eBadSave); }
     if (window.__aiCodeGroups) delete window.__aiCodeGroups[gid];
     if (msgEl && msgEl.parentNode) msgEl.remove();
     else if (card.parentNode) card.remove();
@@ -15435,7 +15552,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       window.aiSessionDigest = window.aiSessionDigest || [];
       window.aiSessionDigest.push('قيّمت كود سابق (الملفات: ' + (_filenamesBad || '—') + ') بـ 👎 وحذفته — الأسلوب ده مش عاجبني.');
     } catch(eBadHist) { /* تجاهل أي خطأ */ }
-    if (typeof window.showToast === 'function') window.showToast('🗑️ تم حذف الكود نهائيًا من غير ما يتخزن أي حاجة عنه في أي قاعدة بيانات');
+    if (typeof window.showToast === 'function') window.showToast('🗑️ تم حذف الكود من الشات، وحفظنا الدرس ده عشان ميتكررش تاني');
   };
 
 
