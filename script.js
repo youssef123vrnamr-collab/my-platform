@@ -2967,28 +2967,59 @@ async function updateAdminUI() {
       ? "Translate and expand the user's request into a vivid English description for an AI image generator, max 45 words. You MUST preserve every specific detail the user mentioned (subject, count, colors, objects, pose, background, composition) — never drop or generalize them. Describe a colorful cartoon/anime-style illustration. Reply ONLY with the description, no quotes, no explanation."
       : "Translate and expand the user's request into a vivid English description for an AI image generator, max 45 words. You MUST preserve every specific detail the user mentioned (subject, count, colors, objects, pose, background, composition) — never drop or generalize them. Describe realistic textures, materials, lighting direction and color, and camera framing as if describing a real photograph — not a drawing. Reply ONLY with the description, no quotes, no explanation.";
 
-    // ترجمة + إثراء الوصف (12 ثانية timeout)
-    let enPrompt = "";
-    try {
-      const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 12000);
-      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST", signal: ctrl.signal,
-        headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          messages: [
-            { role: "system", content: _styleForTranslator },
-            { role: "user", content: prompt }
-          ],
-          max_tokens: 110, temperature: 0.4
-        })
-      });
-      const d = await r.json();
-      enPrompt = (d?.choices?.[0]?.message?.content || "").trim();
-    } catch(e) {}
+    // ترجمة + إثراء الوصف (12 ثانية timeout لكل محاولة، بحد أقصى محاولتين لو الأولى فشلت أو رجّعت
+    // نص مش متترجم فعليًا — عشان مانبعتش عربي خام لـ Pollinations، ده بيولّد صورة عشوائية
+    // ملهاش علاقة بالطلب وبردو بيتقال للمستخدم "تم التوليد!" وهو مش صح) ──
+    async function _translateImagePromptOnce() {
+      try {
+        const ctrl = new AbortController();
+        const _t = setTimeout(() => ctrl.abort(), 12000);
+        const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST", signal: ctrl.signal,
+          headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "openai/gpt-oss-120b",
+            messages: [
+              { role: "system", content: _styleForTranslator },
+              { role: "user", content: prompt }
+            ],
+            max_tokens: 110, temperature: 0.4
+          })
+        });
+        clearTimeout(_t);
+        const d = await r.json();
+        return (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content || "").trim();
+      } catch (e) { console.warn('[Cosmos/ImageGen] translation attempt failed:', e); return ""; }
+    }
+    // ── "متترجمة فعلاً" يعني فيها حروف لاتينية كفاية (مش عربي خام رجع زي ما هو، ومش فاضية) ──
+    function _looksTranslated(s) { return !!s && /[a-zA-Z]{3,}/.test(s); }
 
-    if (!enPrompt) enPrompt = prompt.substring(0, 100);
+    let enPrompt = await _translateImagePromptOnce();
+    if (!_looksTranslated(enPrompt)) {
+      console.warn('[Cosmos/ImageGen] first translation attempt didn\'t look translated ("' + enPrompt + '"), retrying once...');
+      enPrompt = await _translateImagePromptOnce();
+    }
+
+    if (!_looksTranslated(enPrompt)) {
+      // ── فشلت الترجمة فعليًا بعد محاولتين — الصح إننا نصدق مع المستخدم بدل ما نولّد صورة
+      // عشوائية ملهاش علاقة بطلبه ونقوله "تم التوليد!" ──
+      console.error('[Cosmos/ImageGen] translation failed after retry, aborting instead of generating an unrelated image. Original prompt:', prompt);
+      const stEl2 = document.getElementById(uid + "_st");
+      if (stEl2) stEl2.innerHTML = `<span>❌ تعذّرت ترجمة الوصف عشان مشكلة في الاتصال — الصورة كانت هتطلع مش مطابقة لطلبك، فوقفنا بدل ما نولّدها غلط.
+        <button onclick="generateAndDisplayImage(decodeURIComponent('${encodeURIComponent(prompt)}'))"
+          style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;
+                 border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;
+                 font-size:.85rem;margin-top:6px;display:inline-block;">
+          <i class="fas fa-redo"></i> إعادة المحاولة
+        </button></span>`;
+      if (window.aiChatHistory) {
+        window.aiChatHistory.push({ role: 'user', content: 'طلبت توليد صورة: "' + prompt + '"' });
+        window.aiChatHistory.push({ role: 'assistant', content: 'حاولت أولّد صورة للمستخدم بناءً على طلبه لكن الترجمة الداخلية فشلت تقنياً، فمتولدتش أي صورة.' });
+        if (window.aiChatHistory.length > 80) window.aiChatHistory.splice(0, 2);
+      }
+      return;
+    }
+    console.log('[Cosmos/ImageGen] translated prompt:', enPrompt);
 
     // لاحقة الجودة تختلف حسب الأسلوب المطلوب — واقعي احترافي افتراضياً، أو كرتوني لو طُلب صراحةً.
     // لاحقة "astrophotography" بقت مشروطة بموضوع فلكي فعلي عشان مايبقاش كل طلب بينحرف لمشهد فضاء/جبال ليلية
@@ -3051,29 +3082,42 @@ async function updateAdminUI() {
       : prompt;
     console.log('[Cosmos/CompoundImage] clause:', prompt, '| context sent to translator:', _hasUsefulContext ? fullContextText.trim() : '(none)');
 
-    let enPrompt = "";
-    try {
-      const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 12000);
-      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST", signal: ctrl.signal,
-        headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          messages: [
-            { role: "system", content: _styleForTranslator },
-            { role: "user", content: _userContent }
-          ],
-          max_tokens: 110, temperature: 0.4
-        })
-      });
-      const d = await r.json();
-      enPrompt = (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content || "").trim();
-    } catch (e) { console.warn('[Cosmos/CompoundImage] translator call failed:', e); }
-    console.log('[Cosmos/CompoundImage] resolved English prompt:', enPrompt || '(EMPTY — will fall back to raw context)');
-    // ── فشل الاتصال بالموديل؟ الـ fallback بيفضّل السياق الكامل (لو موجود) على جملة الصورة المجردة،
-    // عشان حتى لو فشلت الترجمة الذكية، منرجعش لمشهد عام من غير أي سياق أصلاً ──
-    if (!enPrompt) enPrompt = (_hasUsefulContext ? fullContextText.trim() : prompt).substring(0, 160);
+    async function _translateCompoundPromptOnce() {
+      try {
+        const ctrl = new AbortController();
+        const _t = setTimeout(() => ctrl.abort(), 12000);
+        const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST", signal: ctrl.signal,
+          headers: { "Authorization": "Bearer " + getAiApiKey(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "openai/gpt-oss-120b",
+            messages: [
+              { role: "system", content: _styleForTranslator },
+              { role: "user", content: _userContent }
+            ],
+            max_tokens: 110, temperature: 0.4
+          })
+        });
+        clearTimeout(_t);
+        const d = await r.json();
+        return (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content || "").trim();
+      } catch (e) { console.warn('[Cosmos/CompoundImage] translator call failed:', e); return ""; }
+    }
+    function _looksTranslatedCompound(s) { return !!s && /[a-zA-Z]{3,}/.test(s); }
+    let enPrompt = await _translateCompoundPromptOnce();
+    if (!_looksTranslatedCompound(enPrompt)) enPrompt = await _translateCompoundPromptOnce();
+    console.log('[Cosmos/CompoundImage] resolved English prompt:', enPrompt || '(EMPTY after retry)');
+    // ── فشل الترجمة فعليًا بعد محاولتين — منرجعش لسياق عربي خام (بيولّد صورة عشوائية ملهاش
+    // علاقة بالطلب)، أحسن نوقف ونصدق مع المستخدم بدل ما نديله نتيجة غلط باسم "تم" ──
+    if (!_looksTranslatedCompound(enPrompt)) {
+      statusEl.innerHTML = "❌ تعذّرت ترجمة الوصف عشان مشكلة في الاتصال — جرّب تطلب الصورة تاني في رسالة منفصلة.";
+      if (window.aiChatHistory) {
+        window.aiChatHistory.push({ role: 'user', content: 'طلبت توليد صورة: "' + prompt + '"' });
+        window.aiChatHistory.push({ role: 'assistant', content: 'حاولت أولّد صورة للمستخدم بناءً على طلبه لكن الترجمة الداخلية فشلت تقنياً، فمتولدتش أي صورة.' });
+        if (window.aiChatHistory.length > 80) window.aiChatHistory.splice(0, 2);
+      }
+      return wrap;
+    }
 
     const finalPrompt = _wantsCartoon
       ? `${enPrompt}, vibrant digital illustration, clean bold linework, rich colors, detailed concept art, trending on artstation`
