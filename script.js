@@ -3870,6 +3870,72 @@ async function updateAdminUI() {
   function endCall() { if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } clearInterval(callTimer); document.getElementById("callModal").classList.remove("active"); document.getElementById("callTimer").textContent = "00:00"; }
   function viewImage(src) { let viewer = document.getElementById("imageViewer"); let img = document.getElementById("viewerImage"); viewer && img && (img.src = src, viewer.classList.add("active")); }
   function closeImageViewer() { document.getElementById("imageViewer").classList.remove("active"); }
+  async function downloadViewerImage() {
+    try {
+      const src = document.getElementById("viewerImage").src;
+      if (!src) return;
+      showToast("⏳ جاري تجهيز الصورة للتنزيل...");
+      const resp = await fetch(src);
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "cosmos-image-" + Date.now() + ".jpg";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+      SoundEffects.success();
+      showToast("✅ اتنزلت الصورة");
+    } catch (e) {
+      console.error("downloadViewerImage error:", e);
+      SoundEffects.error();
+      showToast("❌ تعذّر تنزيل الصورة");
+    }
+  }
+  async function copyViewerImage() {
+    try {
+      const src = document.getElementById("viewerImage").src;
+      if (!src) return;
+      const resp = await fetch(src);
+      const blob = await resp.blob();
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([new window.ClipboardItem({ [blob.type || "image/png"]: blob })]);
+        SoundEffects.success();
+        showToast("✅ اتنسخت الصورة");
+      } else {
+        await navigator.clipboard.writeText(src);
+        showToast("✅ اتنسخ رابط الصورة (المتصفح ده مش بيدعم نسخ الصورة نفسها)");
+      }
+    } catch (e) {
+      console.error("copyViewerImage error:", e);
+      SoundEffects.error();
+      showToast("❌ تعذّر نسخ الصورة");
+    }
+  }
+  async function shareViewerImage() {
+    try {
+      const src = document.getElementById("viewerImage").src;
+      if (!src) return;
+      if (navigator.share) {
+        try {
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          const file = new File([blob], "cosmos-image.jpg", { type: blob.type || "image/jpeg" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: "صورة من فلك" });
+            return;
+          }
+        } catch (eShareFile) { /* fallback to link share below */ }
+        await navigator.share({ title: "صورة من فلك", url: src });
+      } else {
+        await navigator.clipboard.writeText(src);
+        showToast("✅ المشاركة مش مدعومة هنا — اتنسخ رابط الصورة بدل منها");
+      }
+    } catch (e) {
+      if (e && e.name !== "AbortError") { console.error("shareViewerImage error:", e); showToast("❌ تعذّرت المشاركة"); }
+    }
+  }
   function scrollToBottom() { let c = document.getElementById("chatMessages"); c && (c.scrollTop = c.scrollHeight); }
   function initPresenceSystem() { if (!currentUser) return; let uid = localStorage.getItem("falak_user_id"); if (!uid) { uid = "user_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now(); localStorage.setItem("falak_user_id", uid); } userPresenceRef = onlineUsersRef.doc(uid); userPresenceRef.set({ name: currentUser, userId: currentUserId || null, joinedAt: firebase.firestore.FieldValue.serverTimestamp(), lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); presenceInterval = setInterval(() => { userPresenceRef && userPresenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(console.error); }, 20000); listenToOnlineUsers(); }
   function removePresence() { if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; } if (userPresenceRef) { userPresenceRef.delete().catch(console.error); userPresenceRef = null; } if (onlineUnsubscribe) { onlineUnsubscribe(); onlineUnsubscribe = null; } }

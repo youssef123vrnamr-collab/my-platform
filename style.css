@@ -425,6 +425,11 @@ button, [onclick] {
     .image-viewer img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
     .image-viewer-close { position: absolute; top: 2rem; right: 2rem; width: 50px; height: 50px; background: rgba(255,255,255,.1); border: none; color: #fff; border-radius: 50%; font-size: 1.5rem; cursor: pointer; }
     .image-viewer-close:hover { background: rgba(239,68,68,.5); }
+    .image-viewer-actions { position: absolute; top: 2rem; left: 2rem; display: flex; gap: .6rem; z-index: 2; }
+    .image-viewer-action-btn { display: flex; align-items: center; gap: .4rem; background: rgba(255,255,255,.1); border: none; color: #fff; border-radius: 20px; padding: .55rem 1rem; font-size: .85rem; font-family: inherit; cursor: pointer; transition: background .2s; }
+    .image-viewer-action-btn:hover { background: rgba(6,182,212,.5); }
+    .image-viewer-action-btn span { white-space: nowrap; }
+    @media (max-width: 480px) { .image-viewer-actions { top: unset; bottom: 1.25rem; left: 50%; transform: translateX(-50%); } .image-viewer-action-btn span { display: none; } .image-viewer-action-btn { padding: .7rem; } }
     .message-time { font-size: .75rem; color: #888; margin-top: .5rem; text-align: left; direction: ltr; }
     .message.sent .message-time { color: rgba(255,255,255,.7); text-align: right; }
     @media (max-width:768px) { .chat-container { height: 100vh; max-width: 100%; border-radius: 0; } .chat-btn { bottom: 1rem; left: 1rem; width: 55px; height: 55px; } .message { max-width: 85%; padding: .875rem 1rem; } .chat-header { padding: 1rem; } .chat-avatar { width: 40px; height: 40px; font-size: 1.2rem; } .message-delete-btn { display: flex; } .voice-message { min-width: 140px; max-width: 200px; } }
