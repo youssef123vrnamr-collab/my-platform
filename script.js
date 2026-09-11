@@ -16754,21 +16754,52 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 
   function stopQuran() {
     if (_audioEl) { try { _audioEl.pause(); _audioEl.src = ""; } catch (e) {} _audioEl = null; }
+    _quranQueue = []; _quranQueueIdx = 0;
     var bar = document.getElementById("quranPlayerBar");
     if (bar) bar.classList.remove("active");
   }
 
-  function playSurah(surahId, surahName, reciter) {
-    var url = "https://cdn.islamic.network/quran/audio-surah/128/" + reciter.id + "/" + surahId + ".mp3";
+  var _quranQueue = [];
+  var _quranQueueIdx = 0;
+  var _quranQueueReciter = null;
+  var _quranQueueSpeed = 1;
+
+  function playSurah(surahId, surahName, reciter, speed) {
+    playSurahQueue([{ id: surahId, name: surahName }], reciter, speed);
+  }
+
+  // ── تشغيل تسلسلي: قائمة سور بالترتيب اللي اتبعت بيه، بسرعة تشغيل اختيارية،
+  // وبمجرد ما سورة تخلص بيتشغل اللي بعدها أوتوماتيك لحد ما القائمة تخلص ──
+  function playSurahQueue(surahList, reciter, speed) {
+    if (!surahList || !surahList.length) return;
     stopQuran();
+    _quranQueue = surahList.slice();
+    _quranQueueIdx = 0;
+    _quranQueueReciter = reciter;
+    _quranQueueSpeed = (speed && speed > 0.25 && speed < 4) ? speed : 1;
+    _playQuranQueueItem();
+  }
+
+  function _playQuranQueueItem() {
+    if (_quranQueueIdx >= _quranQueue.length) { stopQuran(); return; }
+    var item = _quranQueue[_quranQueueIdx];
+    var reciter = _quranQueueReciter;
+    var url = "https://cdn.islamic.network/quran/audio-surah/128/" + reciter.id + "/" + item.id + ".mp3";
+    if (_audioEl) { try { _audioEl.pause(); } catch (e) {} }
     _audioEl = new Audio(url);
+    _audioEl.playbackRate = _quranQueueSpeed || 1;
     var bar = ensurePlayerBar();
     bar.classList.add("active");
-    document.getElementById("qpbSurahName").textContent = "سورة " + surahName;
-    document.getElementById("qpbReciterName").textContent = reciter.name;
+    var remaining = _quranQueue.length - _quranQueueIdx - 1;
+    document.getElementById("qpbSurahName").textContent = "سورة " + item.name + (remaining > 0 ? " (باقي " + remaining + ")" : "");
+    document.getElementById("qpbReciterName").textContent = reciter.name + (_quranQueueSpeed !== 1 ? " · " + _quranQueueSpeed + "x" : "");
     var icon = document.querySelector("#qpbPlayBtn i");
     if (icon) icon.className = "fas fa-pause";
-    _audioEl.onended = function () { stopQuran(); };
+    _audioEl.onended = function () {
+      _quranQueueIdx++;
+      if (_quranQueueIdx < _quranQueue.length) _playQuranQueueItem();
+      else stopQuran();
+    };
     _audioEl.onerror = function () {
       if (typeof showToast === "function") showToast("⚠️ تعذّر تشغيل السورة بصوت هذا القارئ، جرّب قارئ تاني");
       stopQuran();
@@ -16935,14 +16966,15 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       type: "function",
       function: {
         name: "play_quran_surah",
-        description: "يشغّل تلاوة صوتية لسورة معيّنة من سور القرآن الكريم بصوت قارئ محدد. ما تناديش الأداة دي غير لما يكون اسم القارئ معروف فعلاً (إما المستخدم قاله في الرسالة دي، أو قاله قبل كده في نفس المحادثة، أو عنده قارئ افتراضي محفوظ). لو مش معروف، ماتناديش الأداة — رد بسؤال نصي عادي تسأله فيه عن اسم القارئ.",
+        description: "يشغّل تلاوة صوتية لسورة أو أكتر من سور القرآن الكريم بصوت قارئ معيّن، بالترتيب اللي يفهمه من كلام المستخدم، وبسرعة تشغيل معيّنة لو طلب. استخدم فهمك لقصد المستخدم بالكامل: لو ذكر أكتر من سورة (بأي صيغة: 'شغل كذا وكذا'، 'شغلهم ورا بعض'، 'ابدأ بكذا وبعدين كذا') ابعتهم كلهم في نفس النداء بالترتيب اللي فهمته من كلامه. لو ذكر رغبته في سرعة (أسرع/أبطأ/بسرعة معينة) استنتج رقم مناسب. لو مفيش اسم قارئ مذكور في الرسالة دي ولا قبلها في المحادثة، استخدم القارئ الافتراضي المحفوظ للمستخدم من غير ما تسأل — منادي الأداة دايمًا لما يكون قصد المستخدم تشغيل سورة أو أكتر واضح، ومتردّدش أو تطلب توضيح إلا لو فعلاً مش فاهم اسم السورة نفسها.",
         parameters: {
           type: "object",
           properties: {
-            surah_name: { type: "string", description: "اسم السورة بالعربي زي ما المستخدم قاله، مثال: الكهف، يس، الفاتحة" },
-            reciter_name: { type: "string", description: "اسم القارئ اللي المستخدم ذكره (في الرسالة دي أو قبل كده في المحادثة)، مثال: السديس، العفاسي، عبدالباسط، الحصري، المنشاوي، المعيقلي، العجمي، الحذيفي، الشريم" }
+            surah_names: { type: "array", items: { type: "string" }, description: "أسماء السور بالترتيب اللي المستخدم قصده أو ذكرها بيه، مثال: [\"الفلق\",\"الناس\",\"الإخلاص\"]. لو سورة واحدة بس، ابعتها كعنصر واحد في المصفوفة" },
+            reciter_name: { type: "string", description: "اسم القارئ لو المستخدم ذكره (في الرسالة دي أو قبل كده في المحادثة)، مثال: السديس، العفاسي، عبدالباسط، الحصري، المنشاوي، المعيقلي، العجمي، الحذيفي، الشريم. لو مش مذكور سيبه فاضي وهيتاخد القارئ الافتراضي تلقائيًا" },
+            speed: { type: "number", description: "سرعة التشغيل كنسبة، 1 يعني السرعة العادية، أقل من 1 أبطأ (زي 0.75)، أكتر من 1 أسرع (زي 1.25 أو 1.5). استنتجها من كلام المستخدم لو طلب سرعة معينة، وسيبها فاضية لو مذكرش حاجة عن السرعة" }
           },
-          required: ["surah_name"]
+          required: ["surah_names"]
         }
       }
     },
@@ -16988,7 +17020,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     "أنت وكيل أدوات (tool agent) جوّه تطبيق فلك، بتشتغل بنفس مبدأ الوكلاء اللي بيقدروا يستخدموا أكتر من أداة على التوالي في نفس المحادثة. عندك أدوات لأربع مجموعات: " +
     "(1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) فتح أي صفحة من صفحات المنصة. " +
     "افهم قصد المستخدم مش بس الكلمات الحرفية، وده يشمل أي صيغة نحوية أو لهجة (مذكر/مؤنث، أمر/طلب، فصحى/عامية) — مثلاً \"اعملي صوره كلب احترافيه\" أو \"عايزة صورة قطة\" أو \"ينفع تطلعلي رسمة بحر\" كلها طلبات توليد صورة واضحة زي \"ارسم لي\" بالظبط، حتى لو مفيهاش كلمة \"ارسم\" أو صيغة مذكر. لو الرسالة فيها أكتر من طلب (مثلاً: افتح إعدادات الصلاة وشغّل سورة الكهف)، نادِ كل الأدوات المطلوبة — ممكن على أكتر من دورة لو محتاج تشوف نتيجة أداة قبل ما تقرر التانية. " +
-    "مهم جدًا بخصوص القرآن: لما المستخدم يطلب تشغيل سورة ومايكونش قال اسم القارئ (لا في الرسالة دي ولا قبل كده في نفس المحادثة)، ماتناديش أداة play_quran_surah خالص من غير اسم قارئ — بدل كده رد عليه برسالة نصية عادية وديّة (من صياغتك إنت مش جملة جاهزة) تسأله فيها بأي صوت يحب يسمع السورة، واقترح كام اسم قارئ مشهور (زي السديس أو العفاسي أو عبدالباسط أو الحصري) كأمثلة بس مش شرط يلتزم بيها. لما يرد باسم القارئ في رسالته الجاية، هيبقى معاك في نفس المحادثة فتقدر تنادي الأداة فورًا بالسورة اللي طلبها قبل كده مع القارئ الجديد. " +
+    "بخصوص القرآن: أداة play_quran_surah بتفهم قصد المستخدم بالكامل مش بس كلمة كلمة — لو طلب أكتر من سورة (بأي صياغة: 'شغل كذا وكذا'، 'شغلهم ورا بعض'، 'ابدأ بكذا وبعدين كذا وبعدين كذا') ابعتهم كلهم في نداء واحد كمصفوفة surah_names بنفس الترتيب اللي فهمته من كلامه، وهما هيتشغلوا تلقائيًا واحدة ورا التانية من غير ما تحتاج تنادي الأداة أكتر من مرة. لو طلب سرعة معينة (أسرع، أبطأ، بسرعة ونص، إلخ) ابعت رقم مناسب في speed. القارئ مش شرط يتذكر — لو مش مذكور في الرسالة أو المحادثة، سيب reciter_name فاضي وهيتشغل بالقارئ الافتراضي المحفوظ تلقائيًا؛ نادِ الأداة على طول من غير ما تسأل عن القارئ إلا لو حسّيت إن قصد المستخدم نفسه (اسم السورة) مش واضح. " +
     "بعد ما تنفذ كل الأدوات المطلوبة، رد على المستخدم برسالة نهائية قصيرة وودودة بالعربية المصرية تلخّص اللي حصل، من غير تفاصيل تقنية أو أسماء أدوات. " +
     "لو رسالة المستخدم مش متعلقة بأي حاجة من الأربع مجموعات دي إطلاقًا (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة، ورد فورًا بكلمة: تجاهل";
 
@@ -17017,11 +17049,19 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         return { success: true, detail: "اتلغى تذكير الأذان" };
 
       case "play_quran_surah":
-        var surah = findSurah(args.surah_name || "");
-        if (!surah) return { success: false, error: "معرفتش أحدد اسم السورة دي بالظبط، ممكن توضحه أكتر؟" };
+        var namesIn = Array.isArray(args.surah_names) ? args.surah_names : (args.surah_name ? [args.surah_name] : []);
+        var resolvedSurahs = [];
+        for (var qi = 0; qi < namesIn.length; qi++) {
+          var oneSurah = findSurah(namesIn[qi] || "");
+          if (oneSurah) resolvedSurahs.push(oneSurah);
+        }
+        if (!resolvedSurahs.length) return { success: false, error: "معرفتش أحدد اسم السورة دي بالظبط، ممكن توضحه أكتر؟" };
         var reciter = (args.reciter_name && findReciter(args.reciter_name)) || reciterById(s.reciter || DEFAULT_RECITER);
-        playSurah(surah.id, surah.name, reciter);
-        return { success: true, detail: "بتشغّل سورة " + surah.name + " بصوت " + reciter.name };
+        var speedArg = parseFloat(args.speed);
+        var playSpeed = (!isNaN(speedArg) && speedArg > 0.25 && speedArg < 4) ? speedArg : 1;
+        playSurahQueue(resolvedSurahs, reciter, playSpeed);
+        var namesList = resolvedSurahs.map(function (sr) { return sr.name; }).join("، ثم ");
+        return { success: true, detail: "بتشغّل " + (resolvedSurahs.length > 1 ? "السور بالترتيب: " : "سورة ") + namesList + " بصوت " + reciter.name + (playSpeed !== 1 ? " بسرعة " + playSpeed + "x" : "") };
 
       case "stop_quran":
         stopQuran();
@@ -17166,9 +17206,23 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       var hasTools = !!(firstMsg.tool_calls && firstMsg.tool_calls.length);
 
       if (!hasTools && (!firstText || firstText === "تجاهل")) {
-        // مفيش نداء أداة ومفيش رد حقيقي — يبقى الرسالة أصلاً مش شغل الوكيل ده، سيبها للمسار العادي
-        if (indicator) indicator.remove();
-        return { handled: false };
+        // ── الموديل الصغير أحيانًا بيتلخبط ويرجّع "تجاهل" برضو مع رسايل قرآن/صلاة واضحة.
+        // لو الرسالة شكلها متعلقة، منسيبهاش تروح للمسار العادي (اللي هيرد "معنديش إمكانية تشغيل صوت")
+        // — بدل كده نديله فرصة تانية بنداء واحد إضافي بإصرار أوضح إنه ينفذ الأداة المناسبة ──
+        var looksRelated2 = /قرآن|القرآن|سوره|سورة|تلاوة|قارئ|شيخ|الأذان|أذان|صلاة|الصلاة/.test(text);
+        if (looksRelated2) {
+          try {
+            var retryMsgs = messages.concat([{ role: "user", content: "ركّز، الرسالة اللي قبل كده متعلقة فعلاً بالقرآن أو الصلاة — لازم تنادي الأداة المناسبة دلوقتي، ماتردّش 'تجاهل'." }]);
+            var retryMsg = await callAgentModel(key, retryMsgs, signal);
+            if (retryMsg && retryMsg.tool_calls && retryMsg.tool_calls.length) {
+              firstMsg = retryMsg; hasTools = true; firstText = (retryMsg.content && retryMsg.content.trim()) || "";
+            }
+          } catch (eRetry) {}
+        }
+        if (!hasTools) {
+          if (indicator) indicator.remove();
+          return { handled: false };
+        }
       }
 
       // ── من هنا اتأكد إن فيه تدخل فعلي (أداة أو حتى سؤال توضيحي زي "بأي صوت؟") ──
