@@ -16462,6 +16462,21 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       .trim();
   }
 
+  function findVideoByName(text) {
+    var t = normAr(text || "");
+    if (!t) return null;
+    var best = null;
+    for (var i = 0; i < (videos || []).length; i++) {
+      var v = videos[i];
+      var n = normAr(v.title || "");
+      if (!n) continue;
+      if (t.indexOf(n) !== -1 || n.indexOf(t) !== -1) {
+        if (!best || n.length > best._len) best = { id: v.id, title: v.title, _len: n.length };
+      }
+    }
+    return best;
+  }
+
   function findSurah(text) {
     var t = " " + normAr(text) + " ";
     var best = null;
@@ -17013,16 +17028,54 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           required: ["page_name"]
         }
       }
+    },
+    {
+      type: "function",
+      function: {
+        name: "update_my_name",
+        description: "يعدّل اسم المستخدم الحالي (اللي بيتكلم دلوقتي) في المنصة، لما يطلب يغيّر اسمه من غير ما يروح لصفحة الإعدادات بنفسه. بيغيّر اسم صاحب المحادثة نفسه بس، مش أي حد تاني.",
+        parameters: {
+          type: "object",
+          properties: {
+            new_name: { type: "string", description: "الاسم الجديد اللي المستخدم عايزه، زي ما قاله بالظبط" }
+          },
+          required: ["new_name"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "request_admin_access",
+        description: "لما مستخدم عادي (مش مشرف أصلاً) يطلب يبقى مشرف أو يطلب صلاحيات أعلى، الأداة دي بتبعت طلبه كرسالة لصفحة تواصل المشرف الخاصة بيه — القرار النهائي بالموافقة أو الرفض بيفضل في إيد المشرف البشري يدويًا، الأداة دي بس بتوصل الطلب. لو المستخدم مشرف أصلاً متناديش الأداة دي.",
+        parameters: { type: "object", properties: {}, required: [] }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "create_course",
+        description: "بيُنشئ كورس جديد على المنصة ويحطله فيديو أو أكتر من الفيديوهات الموجودة أصلاً. متاحة للمشرف بس — لو اللي بيتكلم مش مشرف، هتترفض تلقائيًا مهما كان الطلب.",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "اسم الكورس الجديد زي ما طلبه المشرف" },
+            video_names: { type: "array", items: { type: "string" }, description: "أسماء الفيديوهات (زي ما هي مخزنة على المنصة أو زي ما ذكرها المشرف) المطلوب ضمها للكورس" },
+            price: { type: "number", description: "سعر الكورس بالجنيه، 0 لو مجاني أو مذكورش" }
+          },
+          required: ["title", "video_names"]
+        }
+      }
     }
   ];
 
   var TOOL_ROUTER_SYSTEM_PROMPT =
-    "أنت وكيل أدوات (tool agent) جوّه تطبيق فلك، بتشتغل بنفس مبدأ الوكلاء اللي بيقدروا يستخدموا أكتر من أداة على التوالي في نفس المحادثة. عندك أدوات لأربع مجموعات: " +
-    "(1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) فتح أي صفحة من صفحات المنصة. " +
+    "أنت وكيل أدوات (tool agent) جوّه تطبيق فلك، بتشتغل بنفس مبدأ الوكلاء اللي بيقدروا يستخدموا أكتر من أداة على التوالي في نفس المحادثة. عندك أدوات لسبع مجموعات: " +
+    "(1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) فتح أي صفحة من صفحات المنصة، (5) تغيير اسم المستخدم الحالي، (6) طلب صلاحية مشرف (لغير المشرفين)، (7) إنشاء كورس جديد وربطه بفيديوهات موجودة (للمشرف بس). " +
     "افهم قصد المستخدم مش بس الكلمات الحرفية، وده يشمل أي صيغة نحوية أو لهجة (مذكر/مؤنث، أمر/طلب، فصحى/عامية) — مثلاً \"اعملي صوره كلب احترافيه\" أو \"عايزة صورة قطة\" أو \"ينفع تطلعلي رسمة بحر\" كلها طلبات توليد صورة واضحة زي \"ارسم لي\" بالظبط، حتى لو مفيهاش كلمة \"ارسم\" أو صيغة مذكر. لو الرسالة فيها أكتر من طلب (مثلاً: افتح إعدادات الصلاة وشغّل سورة الكهف)، نادِ كل الأدوات المطلوبة — ممكن على أكتر من دورة لو محتاج تشوف نتيجة أداة قبل ما تقرر التانية. " +
     "بخصوص القرآن: أداة play_quran_surah بتفهم قصد المستخدم بالكامل مش بس كلمة كلمة — لو طلب أكتر من سورة (بأي صياغة: 'شغل كذا وكذا'، 'شغلهم ورا بعض'، 'ابدأ بكذا وبعدين كذا وبعدين كذا') ابعتهم كلهم في نداء واحد كمصفوفة surah_names بنفس الترتيب اللي فهمته من كلامه، وهما هيتشغلوا تلقائيًا واحدة ورا التانية من غير ما تحتاج تنادي الأداة أكتر من مرة. لو طلب سرعة معينة (أسرع، أبطأ، بسرعة ونص، إلخ) ابعت رقم مناسب في speed. القارئ مش شرط يتذكر — لو مش مذكور في الرسالة أو المحادثة، سيب reciter_name فاضي وهيتشغل بالقارئ الافتراضي المحفوظ تلقائيًا؛ نادِ الأداة على طول من غير ما تسأل عن القارئ إلا لو حسّيت إن قصد المستخدم نفسه (اسم السورة) مش واضح. " +
     "بعد ما تنفذ كل الأدوات المطلوبة، رد على المستخدم برسالة نهائية قصيرة وودودة بالعربية المصرية تلخّص اللي حصل، من غير تفاصيل تقنية أو أسماء أدوات. " +
-    "لو رسالة المستخدم مش متعلقة بأي حاجة من الأربع مجموعات دي إطلاقًا (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة، ورد فورًا بكلمة: تجاهل";
+    "لو رسالة المستخدم مش متعلقة بأي حاجة من السبع مجموعات دي إطلاقًا (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة، ورد فورًا بكلمة: تجاهل";
 
   async function executeTool(name, args) {
     args = args || {};
@@ -17083,6 +17136,62 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         if (!page) return { success: false, error: "معرفتش أحدد الصفحة دي بالظبط، ممكن توضحها أكتر؟" };
         try { page.fn(); } catch (ePage) { return { success: false, error: "حصلت مشكلة وإحنا بنفتح الصفحة" }; }
         return { success: true, detail: "اتفتحت صفحة " + page.label };
+
+      case "update_my_name":
+        var newName = (args.new_name || "").toString().trim();
+        if (!newName) return { success: false, error: "محتاج اسم واضح عشان أقدر أغيّره" };
+        if (newName.length > 60) return { success: false, error: "الاسم طويل أوي، ممكن اسم أقصر؟" };
+        var oldName = currentUser;
+        currentUser = newName;
+        try {
+          localStorage.setItem("falak_username", newName);
+          if (typeof currentUserId !== "undefined" && currentUserId && typeof saveUserDataToFirebase === "function") {
+            await saveUserDataToFirebase(currentUserId);
+          }
+          var nameDisplayEl = document.getElementById("googleUserInfo");
+          if (nameDisplayEl) nameDisplayEl.innerHTML = '<i class="fas fa-user-circle"></i> ' + escapeHtml(newName);
+        } catch (eName) {
+          currentUser = oldName;
+          return { success: false, error: "حصلت مشكلة وإحنا بنحفظ الاسم الجديد" };
+        }
+        return { success: true, detail: "اتغيّر الاسم لـ " + newName };
+
+      case "request_admin_access":
+        if (isAdmin) return { success: false, error: "المستخدم ده مشرف أصلاً" };
+        if (typeof window.forwardAIMessageToAdmin !== "function") return { success: false, error: "ميزة التواصل مع المشرفين مش متاحة دلوقتي" };
+        try {
+          await window.forwardAIMessageToAdmin("🙋 طلب صلاحية مشرف: المستخدم " + (currentUser || "غير معروف") + " طالب يبقى مشرف على المنصة.");
+          return { success: true, detail: "اتبعت طلبك للمشرفين، وهيراجعوه ويردوا عليك في محادثة المشرفين الخاصة" };
+        } catch (eReq) {
+          return { success: false, error: "تعذّر إرسال الطلب للمشرفين دلوقتي" };
+        }
+
+      case "create_course":
+        if (!isAdmin) return { success: false, error: "الميزة دي للمشرف بس" };
+        var cTitle = (args.title || "").toString().trim();
+        if (!cTitle) return { success: false, error: "محتاج اسم واضح للكورس" };
+        var cVideoNames = Array.isArray(args.video_names) ? args.video_names : [];
+        var cVideoIds = [];
+        var cNotFound = [];
+        for (var vi = 0; vi < cVideoNames.length; vi++) {
+          var foundV = findVideoByName(cVideoNames[vi]);
+          if (foundV) cVideoIds.push(foundV.id); else cNotFound.push(cVideoNames[vi]);
+        }
+        if (!cVideoIds.length) return { success: false, error: "معرفتش ألاقي أي فيديو بالأسماء دي على المنصة، ممكن تتأكد من الاسم؟" };
+        try {
+          await db.collection("courses").add({
+            title: cTitle,
+            description: "",
+            videoIds: cVideoIds,
+            price: (!isNaN(parseInt(args.price)) ? parseInt(args.price) : 0),
+            paymentLink: null,
+            imageUrl: null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          return { success: true, detail: "اتعمل كورس \"" + cTitle + "\" وفيه " + cVideoIds.length + " فيديو" + (cNotFound.length ? " (ماعرفتش ألاقي: " + cNotFound.join("، ") + ")" : "") };
+        } catch (eCourse) {
+          return { success: false, error: "حصلت مشكلة وإحنا بننشئ الكورس" };
+        }
 
       default:
         return { success: false, error: "أداة غير معروفة" };
@@ -17178,7 +17287,8 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     var history = (Array.isArray(window.aiChatHistory) ? window.aiChatHistory.slice(-12) : [])
       .filter(function (m) { return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string"; });
 
-    var messages = [{ role: "system", content: TOOL_ROUTER_SYSTEM_PROMPT }].concat(history).concat([{ role: "user", content: text }]);
+    var roleContext = "\n\nمعلومة سياق (مش من المستخدم، من النظام): الشخص اللي بيكلمك دلوقتي هو " + (isAdmin ? "مشرف (admin) على المنصة." : "مستخدم عادي (مش مشرف).") + " استخدم المعلومة دي بس عشان تقرر تنادي أنهي أداة تناسب دوره — الأدوات نفسها (زي create_course) بترفض تلقائيًا لو الدور مش مطابق حتى لو حاولت تناديها.";
+    var messages = [{ role: "system", content: TOOL_ROUTER_SYSTEM_PROMPT + roleContext }].concat(history).concat([{ role: "user", content: text }]);
 
     var indicator = null;
     try {
