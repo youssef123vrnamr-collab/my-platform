@@ -2684,7 +2684,11 @@ body {
   border-radius: 12px;
   min-width: 180px;
   max-width: 260px;
+  cursor: pointer;
+  transition: background .15s ease;
 }
+.ai-file-card:hover { background: rgba(255,255,255,0.1); }
+.ai-file-card:active { transform: scale(.98); }
 .ai-file-card-icon {
   width: 34px; height: 34px;
   border-radius: 9px;
@@ -2715,6 +2719,7 @@ body {
   overflow: hidden;
   border: none;
   box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  cursor: pointer;
 }
 .ai-img-gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
@@ -8594,13 +8599,25 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
 .ai-code-pro-pre::-webkit-scrollbar-track,
 .ai-code-file-panels pre::-webkit-scrollbar-track { background: transparent; }
 
-/* --- بطاقات المرفقات الاحترافية (قبل الإرسال) --- */
+/* --- بطاقات المرفقات الاحترافية (قبل الإرسال) — شريط أفقي قابل للسحب --- */
 .ai-attach-pro-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
   gap: .5rem;
-  padding: .35rem .1rem;
+  padding: .35rem .1rem .55rem;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6,182,212,.4) transparent;
 }
+.ai-attach-pro-row.ai-attach-dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+.ai-attach-pro-row::-webkit-scrollbar { height: 5px; }
+.ai-attach-pro-row::-webkit-scrollbar-thumb { background: rgba(6,182,212,.4); border-radius: 10px; }
+.ai-attach-pro-row::-webkit-scrollbar-track { background: transparent; }
 .ai-attach-card {
   position: relative;
   display: flex;
@@ -8612,9 +8629,15 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   padding: .5rem .65rem;
   min-width: 150px;
   max-width: 190px;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
   box-shadow: 0 4px 14px rgba(0,0,0,.18);
   animation: cosmosAttachPop .18s ease;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
 }
+.ai-attach-card:active { transform: scale(.97); }
+.ai-attach-card:hover { box-shadow: 0 6px 18px rgba(6,182,212,.25); }
 @keyframes cosmosAttachPop {
   from { opacity: 0; transform: translateY(4px) scale(.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -8656,12 +8679,60 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   padding: 0;
   overflow: hidden;
   border-radius: 12px;
+  flex: 0 0 auto;
 }
 .ai-attach-thumb {
   width: 64px; height: 64px;
   object-fit: cover;
   display: block;
   border-radius: 12px;
+}
+
+/* --- نافذة معاينة المرفق (صورة كاملة أو محتوى ملف نصي أو بطاقة معلومات) --- */
+.ai-attach-preview-modal {
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(8,6,16,.82);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 1.2rem;
+}
+.ai-attach-preview-modal.active { display: flex; }
+.ai-attach-preview-box {
+  background: #1a1626;
+  border-radius: 16px;
+  max-width: min(560px, 94vw);
+  max-height: 86vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  animation: cosmosAttachPop .16s ease;
+}
+.ai-attach-preview-header {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.ai-attach-preview-header .ai-attach-icon { flex-shrink: 0; }
+.ai-attach-preview-title { flex: 1; min-width: 0; font-size: .85rem; font-weight: 700; color: #e7e9ee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ai-attach-preview-sub { font-size: .68rem; color: rgba(255,255,255,.45); }
+.ai-attach-preview-close {
+  background: rgba(255,255,255,.08); border: none; color: #fff;
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.ai-attach-preview-body { overflow: auto; padding: 0; flex: 1; display: flex; }
+.ai-attach-preview-body img { width: 100%; height: auto; object-fit: contain; display: block; margin: auto; }
+.ai-attach-preview-text {
+  width: 100%; margin: 0; padding: 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: .78rem; color: #d5d8e0;
+  white-space: pre-wrap; word-break: break-word;
+}
+.ai-attach-preview-empty {
+  margin: auto; padding: 2.2rem 1rem; text-align: center; color: rgba(255,255,255,.5); font-size: .82rem;
 }
 
 /* --- مؤشر التفكير: شكل أنعم واحترافي أكتر --- */

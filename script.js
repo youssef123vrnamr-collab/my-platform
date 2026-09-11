@@ -9034,6 +9034,94 @@ window.updateActiveToolLabel = function(label) {
     return Math.max(1, Math.round(bytes/1024)) + ' KB';
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // 🖼️ نافذة معاينة موحّدة للمرفقات — صورة كاملة، أو محتوى ملف نصي، أو بطاقة
+  // معلومات لملف مش نصي. تشتغل مع الملفات قبل الإرسال (File objects) وكمان
+  // مع الصور والملفات بعد ما تتبعت فعلاً (عبر مخزن window.__aiSentFilesStore). ──
+  // ══════════════════════════════════════════════════════════════════
+  var _AI_TEXT_EXTS = ['txt','md','js','ts','jsx','tsx','html','htm','css','json','csv','py','java','c','cpp','cs','php','rb','go','rs','sh','yml','yaml','xml','sql','log'];
+  function _ensureAIAttachPreviewModal() {
+    var m = document.getElementById('aiAttachPreviewModal');
+    if (m) return m;
+    m = document.createElement('div');
+    m.id = 'aiAttachPreviewModal';
+    m.className = 'ai-attach-preview-modal';
+    m.innerHTML = '<div class="ai-attach-preview-box" onclick="event.stopPropagation()">'
+      + '<div class="ai-attach-preview-header">'
+      + '<div class="ai-attach-icon" id="aiAttachPreviewIcon" style="width:30px;height:30px"><i class="fas fa-file"></i></div>'
+      + '<div style="min-width:0;flex:1"><div class="ai-attach-preview-title" id="aiAttachPreviewTitle"></div><div class="ai-attach-preview-sub" id="aiAttachPreviewSub"></div></div>'
+      + '<button type="button" class="ai-attach-preview-close" onclick="window.closeAIAttachPreview()"><i class="fas fa-xmark"></i></button>'
+      + '</div>'
+      + '<div class="ai-attach-preview-body" id="aiAttachPreviewBody"></div>'
+      + '</div>';
+    m.addEventListener('click', function(){ window.closeAIAttachPreview(); });
+    document.body.appendChild(m);
+    return m;
+  }
+  window.closeAIAttachPreview = function(){
+    var m = document.getElementById('aiAttachPreviewModal');
+    if (m) m.classList.remove('active');
+  };
+  // kind: 'image' (src=dataURL/objectURL) أو 'file' (f=File object) أو 'fileinfo' (name/size بس من غير محتوى)
+  window.showAIAttachPreview = function(kind, payload) {
+    var m = _ensureAIAttachPreviewModal();
+    var body = document.getElementById('aiAttachPreviewBody');
+    var titleEl = document.getElementById('aiAttachPreviewTitle');
+    var subEl = document.getElementById('aiAttachPreviewSub');
+    var iconEl = document.getElementById('aiAttachPreviewIcon');
+    m.classList.add('active');
+    if (kind === 'image') {
+      titleEl.textContent = payload.name || 'صورة';
+      subEl.textContent = 'صورة';
+      iconEl.innerHTML = '<i class="fas fa-image"></i>';
+      body.innerHTML = '<img src="' + payload.src + '" alt="">';
+      return;
+    }
+    var f = payload.f;
+    var name = (f && f.name) || payload.name || 'ملف';
+    var size = (f && f.size) || payload.size || 0;
+    var kindInfo = _aiFileKind(name);
+    titleEl.textContent = name;
+    subEl.textContent = kindInfo.label + (size ? (' · ' + _aiFileSizeLabel(size)) : '');
+    iconEl.innerHTML = '<i class="fas ' + kindInfo.icon + '"></i>';
+    iconEl.style.color = kindInfo.color;
+    var ext = (name.split('.').pop() || '').toLowerCase();
+    if (f && _AI_TEXT_EXTS.indexOf(ext) !== -1) {
+      body.innerHTML = '<div class="ai-attach-preview-empty">جاري تحميل المحتوى...</div>';
+      var r = new FileReader();
+      r.onload = function(){
+        var txt = typeof r.result === 'string' ? r.result : '';
+        body.innerHTML = '<pre class="ai-attach-preview-text">' + escapeHtml(txt.slice(0, 20000)) + (txt.length > 20000 ? '\n\n… (الملف طويل، ده أول جزء منه بس)' : '') + '</pre>';
+      };
+      r.onerror = function(){ body.innerHTML = '<div class="ai-attach-preview-empty">مش قادر أقرا محتوى الملف ده.</div>'; };
+      r.readAsText(f, 'UTF-8');
+    } else {
+      body.innerHTML = '<div class="ai-attach-preview-empty"><i class="fas ' + kindInfo.icon + '" style="font-size:2.2rem;color:' + kindInfo.color + ';margin-bottom:.6rem;display:block"></i>معاينة المحتوى مش متاحة لنوع الملف ده، بس ده اسمه وحجمه فوق.</div>';
+    }
+  };
+
+  // ── سحب أفقي بالماوس على شريط المرفقات (باللمس بيشتغل تلقائي من غير كود) ──
+  function _setupAIAttachDragScroll(row) {
+    if (!row || row._aiDragBound) return;
+    row._aiDragBound = true;
+    var isDown = false, startX = 0, scrollStart = 0, moved = false;
+    row.addEventListener('mousedown', function(e){
+      isDown = true; moved = false;
+      startX = e.pageX; scrollStart = row.scrollLeft;
+      row.classList.add('ai-attach-dragging');
+    });
+    window.addEventListener('mouseup', function(){ isDown = false; row.classList.remove('ai-attach-dragging'); });
+    window.addEventListener('mousemove', function(e){
+      if (!isDown) return;
+      var dx = e.pageX - startX;
+      if (Math.abs(dx) > 4) moved = true;
+      row.scrollLeft = scrollStart - dx;
+    });
+    row.addEventListener('click', function(e){
+      if (moved) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  }
+
   function renderAIAttachPreview() {
     const preview = document.getElementById('aiFilePreview');
     if (!preview) return;
@@ -9047,22 +9135,24 @@ window.updateActiveToolLabel = function(label) {
     preview.innerHTML = items.map(it => {
       if (it.type === 'image') {
         const url = URL.createObjectURL(it.f);
-        return `<div class="ai-attach-card ai-attach-card-image" title="${it.f.name}">
-          <img src="${url}" alt="" class="ai-attach-thumb" onload="URL.revokeObjectURL(this.src)">
-          <button type="button" onclick="removeAIAttachment('image',${it.i})" class="ai-attach-remove"><i class="fas fa-xmark"></i></button>
+        return `<div class="ai-attach-card ai-attach-card-image" title="${it.f.name}" onclick="window.showAIAttachPreview('image',{src:'${url}',name:${JSON.stringify(it.f.name)}})">
+          <img src="${url}" alt="" class="ai-attach-thumb">
+          <button type="button" onclick="event.stopPropagation();removeAIAttachment('image',${it.i})" class="ai-attach-remove"><i class="fas fa-xmark"></i></button>
         </div>`;
       }
       const kind = _aiFileKind(it.f.name);
       const shortName = it.f.name.length > 16 ? it.f.name.slice(0, 13) + '…' : it.f.name;
-      return `<div class="ai-attach-card" title="${it.f.name}">
+      const fIdx = window._aiSelectedFiles.indexOf(it.f);
+      return `<div class="ai-attach-card" title="${it.f.name}" onclick="window.showAIAttachPreview('file',{f:window._aiSelectedFiles[${fIdx}]})">
         <div class="ai-attach-icon" style="color:${kind.color}"><i class="fas ${kind.icon}"></i></div>
         <div class="ai-attach-info">
           <span class="ai-attach-name">${shortName}</span>
           <span class="ai-attach-meta">${kind.label} · ${_aiFileSizeLabel(it.f.size)}</span>
         </div>
-        <button type="button" onclick="removeAIAttachment('file',${it.i})" class="ai-attach-remove"><i class="fas fa-xmark"></i></button>
+        <button type="button" onclick="event.stopPropagation();removeAIAttachment('file',${it.i})" class="ai-attach-remove"><i class="fas fa-xmark"></i></button>
       </div>`;
     }).join('');
+    _setupAIAttachDragScroll(preview);
   }
 
   window.removeAIAttachment = function(type, idx) {
@@ -11667,7 +11757,7 @@ function slStopAllAnimations() {
 
         // ✅ نحسب طول الرسالة ونضبط الـ history بناءً عليها
         var msgLen = userMsg.length;
-        var histLimit = msgLen > 2000 ? 6 : msgLen > 800 ? 10 : 18;
+        var histLimit = msgLen > 2000 ? 10 : msgLen > 800 ? 16 : 26;
         var histMsgs = (typeof aiChatHistory !== 'undefined' && Array.isArray(aiChatHistory))
           ? aiChatHistory.slice(-histLimit) : [];
 
@@ -12700,11 +12790,14 @@ function slStopAllAnimations() {
               if (/^(zip|rar|7z)$/.test(ext)) return 'fa-solid fa-file-zipper';
               return 'fa-solid fa-file-lines';
             };
-            var _docsCardsHtml = validDocs.map(function(f){
+            // ── نخزّن ملفات المستند نفسها عشان نقدر نفتحها تاني بعد الإرسال بالضغط على البطاقة ──
+            window.__aiSentFilesStore = window.__aiSentFilesStore || {};
+            window.__aiSentFilesStore[_docsUid] = validDocs;
+            var _docsCardsHtml = validDocs.map(function(f, _fi){
               var ext = (f.name.split('.').pop()||'').toUpperCase();
               var kb = (f.size/1024);
               var sizeStr = kb > 1024 ? (kb/1024).toFixed(1)+' MB' : kb.toFixed(0)+' KB';
-              return '<div class="ai-file-card">'
+              return '<div class="ai-file-card" onclick="window.showAIAttachPreview(\'file\',{f:(window.__aiSentFilesStore[\''+_docsUid+'\']||[])['+_fi+']})">'
                 + '<div class="ai-file-card-icon"><i class="'+_extIcon(f.name)+'"></i></div>'
                 + '<div class="ai-file-card-meta"><div class="ai-file-card-name">'+escapeHtml(f.name)+'</div>'
                 + '<div class="ai-file-card-sub">'+ext+' · '+sizeStr+'</div></div>'
@@ -12733,13 +12826,15 @@ function slStopAllAnimations() {
 
         var _replyPayloadImg = (window._replyState && window._replyState.ai) ? window._replyState.ai : null;
         var _imgUid = 'ai'+Date.now()+Math.floor(Math.random()*1000);
+        window.__aiSentFilesStore = window.__aiSentFilesStore || {};
+        window.__aiSentFilesStore[_imgUid] = validDocs;
         if (msgs) {
           var div = document.createElement('div');
           div.className = 'message sent';
           div.id = 'msg-'+_imgUid; div.dataset.msgId = _imgUid;
           var _quotedImg = (_replyPayloadImg && typeof window.renderQuotedReply === 'function') ? window.renderQuotedReply(_replyPayloadImg) : '';
-          var _imgsHtml = dataUrls.filter(Boolean).map(function(u){ return '<div class="ai-img-gallery-item"><img src="'+u+'" loading="lazy"></div>'; }).join('');
-          var _docsHtml = validDocs.length ? ('<div class="ai-file-cards-wrap ai-file-cards-compact"><div class="ai-file-card"><div class="ai-file-card-icon"><i class="fas fa-paperclip"></i></div><div class="ai-file-card-meta"><div class="ai-file-card-name">'+validDocs.map(function(f){return escapeHtml(f.name);}).join('، ')+'</div></div></div></div>') : '';
+          var _imgsHtml = dataUrls.filter(Boolean).map(function(u){ return '<div class="ai-img-gallery-item" onclick="window.showAIAttachPreview(\'image\',{src:'+JSON.stringify(u)+'})"><img src="'+u+'" loading="lazy"></div>'; }).join('');
+          var _docsHtml = validDocs.length ? ('<div class="ai-file-cards-wrap ai-file-cards-compact"><div class="ai-file-card" onclick="window.showAIAttachPreview(\'file\',{f:(window.__aiSentFilesStore[\''+_imgUid+'\']||[])[0]})"><div class="ai-file-card-icon"><i class="fas fa-paperclip"></i></div><div class="ai-file-card-meta"><div class="ai-file-card-name">'+validDocs.map(function(f){return escapeHtml(f.name);}).join('، ')+'</div></div></div></div>') : '';
           div.innerHTML = _quotedImg + (_imgsHtml ? '<div class="ai-img-gallery">'+_imgsHtml+'</div>' : '') + _docsHtml + (extraText ? window.buildUserMsgContentHTML(extraText) : '') + '<div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
         }
@@ -13309,7 +13404,7 @@ function slStopAllAnimations() {
       }
 
       // ── History slice (adaptive) ──
-      var histLimit = userMsg.length > 2000 ? 6 : userMsg.length > 800 ? 10 : 18;
+      var histLimit = userMsg.length > 2000 ? 10 : userMsg.length > 800 ? 16 : 26;
       var histMsgs  = window.aiChatHistory.slice(-histLimit);
 
       // ── سياق مكتبة الفيديوهات — يخلي الذكاء الاصطناعي عارف عدد الفيديوهات وأسماءها ومحتواها ──
@@ -16839,12 +16934,12 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       type: "function",
       function: {
         name: "play_quran_surah",
-        description: "يشغّل تلاوة صوتية لسورة معيّنة من سور القرآن الكريم، ممكن بصوت قارئ معيّن لو المستخدم ذكره",
+        description: "يشغّل تلاوة صوتية لسورة معيّنة من سور القرآن الكريم بصوت قارئ محدد. ما تناديش الأداة دي غير لما يكون اسم القارئ معروف فعلاً (إما المستخدم قاله في الرسالة دي، أو قاله قبل كده في نفس المحادثة، أو عنده قارئ افتراضي محفوظ). لو مش معروف، ماتناديش الأداة — رد بسؤال نصي عادي تسأله فيه عن اسم القارئ.",
         parameters: {
           type: "object",
           properties: {
             surah_name: { type: "string", description: "اسم السورة بالعربي زي ما المستخدم قاله، مثال: الكهف، يس، الفاتحة" },
-            reciter_name: { type: "string", description: "اسم القارئ لو المستخدم ذكره، مثال: السديس، العفاسي، عبدالباسط، الحصري، المنشاوي، المعيقلي، العجمي، الحذيفي، الشريم" }
+            reciter_name: { type: "string", description: "اسم القارئ اللي المستخدم ذكره (في الرسالة دي أو قبل كده في المحادثة)، مثال: السديس، العفاسي، عبدالباسط، الحصري، المنشاوي، المعيقلي، العجمي، الحذيفي، الشريم" }
           },
           required: ["surah_name"]
         }
@@ -16892,6 +16987,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     "أنت وكيل أدوات (tool agent) جوّه تطبيق فلك، بتشتغل بنفس مبدأ الوكلاء اللي بيقدروا يستخدموا أكتر من أداة على التوالي في نفس المحادثة. عندك أدوات لأربع مجموعات: " +
     "(1) مواقيت الصلاة وتذكير الأذان، (2) تشغيل تلاوة القرآن الكريم، (3) توليد صورة بالذكاء الاصطناعي، (4) فتح أي صفحة من صفحات المنصة. " +
     "افهم قصد المستخدم مش بس الكلمات الحرفية، وده يشمل أي صيغة نحوية أو لهجة (مذكر/مؤنث، أمر/طلب، فصحى/عامية) — مثلاً \"اعملي صوره كلب احترافيه\" أو \"عايزة صورة قطة\" أو \"ينفع تطلعلي رسمة بحر\" كلها طلبات توليد صورة واضحة زي \"ارسم لي\" بالظبط، حتى لو مفيهاش كلمة \"ارسم\" أو صيغة مذكر. لو الرسالة فيها أكتر من طلب (مثلاً: افتح إعدادات الصلاة وشغّل سورة الكهف)، نادِ كل الأدوات المطلوبة — ممكن على أكتر من دورة لو محتاج تشوف نتيجة أداة قبل ما تقرر التانية. " +
+    "مهم جدًا بخصوص القرآن: لما المستخدم يطلب تشغيل سورة ومايكونش قال اسم القارئ (لا في الرسالة دي ولا قبل كده في نفس المحادثة)، ماتناديش أداة play_quran_surah خالص من غير اسم قارئ — بدل كده رد عليه برسالة نصية عادية وديّة (من صياغتك إنت مش جملة جاهزة) تسأله فيها بأي صوت يحب يسمع السورة، واقترح كام اسم قارئ مشهور (زي السديس أو العفاسي أو عبدالباسط أو الحصري) كأمثلة بس مش شرط يلتزم بيها. لما يرد باسم القارئ في رسالته الجاية، هيبقى معاك في نفس المحادثة فتقدر تنادي الأداة فورًا بالسورة اللي طلبها قبل كده مع القارئ الجديد. " +
     "بعد ما تنفذ كل الأدوات المطلوبة، رد على المستخدم برسالة نهائية قصيرة وودودة بالعربية المصرية تلخّص اللي حصل، من غير تفاصيل تقنية أو أسماء أدوات. " +
     "لو رسالة المستخدم مش متعلقة بأي حاجة من الأربع مجموعات دي إطلاقًا (زي أسئلة فلكية عادية، كلام عام، سلام)، متناديش أي أداة، ورد فورًا بكلمة: تجاهل";
 
@@ -16993,10 +17089,11 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 
   var MAX_AGENT_STEPS = 5;
 
-  async function callAgentModel(key, messages) {
+  async function callAgentModel(key, messages, signal) {
     var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      signal: signal,
       body: JSON.stringify({
         model: "openai/gpt-oss-120b",
         messages: messages,
@@ -17026,11 +17123,13 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   // يكمل ولا يرد نهائي، وهكذا لحد MAX_AGENT_STEPS. بترجع Promise<boolean>: true لو
   // الوكيل تدخل فعليًا (تم عرض رد في الشات)، false لو الرسالة أصلاً مالهاش أداة
   // (فالمسار العادي بتاع فلك هو اللي هيرد بمعرفته الفلكية الكاملة). ──
-  async function tryHandleCommand(rawText) {
+  // بترجع { handled: boolean, stopped: boolean }. handled=true يعني الوكيل رد فعليًا
+  // (أداة أو حتى سؤال توضيحي نصي)، stopped=true يعني المستخدم ضغط زرار الإيقاف.
+  async function tryHandleCommand(rawText, signal) {
     var text = (rawText || "").trim();
-    if (!text) return false;
+    if (!text) return { handled: false };
     var key = (typeof getAiApiKey === "function") ? getAiApiKey() : "";
-    if (!key) return false;
+    if (!key) return { handled: false };
 
     var history = (Array.isArray(window.aiChatHistory) ? window.aiChatHistory.slice(-12) : [])
       .filter(function (m) { return m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string"; });
@@ -17041,18 +17140,30 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     try {
       indicator = showRoutingIndicator();
 
-      var firstMsg = await callAgentModel(key, messages);
-      if (!firstMsg || !firstMsg.tool_calls || !firstMsg.tool_calls.length) {
-        // مفيش نداء أداة من أول رد — يبقى الرسالة أصلاً مش شغل الوكيل ده، سيبها للمسار العادي
+      var firstMsg = await callAgentModel(key, messages, signal);
+
+      var firstText = (firstMsg && firstMsg.content && firstMsg.content.trim()) || "";
+      var hasTools = !!(firstMsg && firstMsg.tool_calls && firstMsg.tool_calls.length);
+
+      if (!firstMsg || (!hasTools && (!firstText || firstText === "تجاهل"))) {
+        // مفيش نداء أداة ومفيش رد حقيقي — يبقى الرسالة أصلاً مش شغل الوكيل ده، سيبها للمسار العادي
         if (indicator) indicator.remove();
-        return false;
+        return { handled: false };
       }
 
-      // ── من هنا اتأكد إن فيه تدخل فعلي — نعرض فقاعة المستخدم ونبدأ الحلقة ──
-      messages.push(firstMsg);
+      // ── من هنا اتأكد إن فيه تدخل فعلي (أداة أو حتى سؤال توضيحي زي "بأي صوت؟") ──
       displayUserBubbleOnly(text);
       if (window.aiChatHistory) window.aiChatHistory.push({ role: "user", content: text });
 
+      if (!hasTools) {
+        // رد نصي بس (مثلاً بيسأل عن اسم القارئ) — نعرضه ونسجله ونوقف هنا، من غير تنفيذ أدوات
+        if (indicator) indicator.remove();
+        displayAIBubbleOnly(firstText);
+        if (window.aiChatHistory) window.aiChatHistory.push({ role: "assistant", content: firstText });
+        return { handled: true };
+      }
+
+      messages.push(firstMsg);
       var currentMsg = firstMsg;
 
       for (var step = 0; step < MAX_AGENT_STEPS; step++) {
@@ -17067,7 +17178,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
           messages.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: JSON.stringify(result) });
         }
 
-        currentMsg = await callAgentModel(key, messages);
+        currentMsg = await callAgentModel(key, messages, signal);
         if (!currentMsg) break;
         messages.push(currentMsg);
       }
@@ -17078,12 +17189,23 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       displayAIBubbleOnly(finalText);
       if (window.aiChatHistory) window.aiChatHistory.push({ role: "assistant", content: finalText });
 
-      return true;
+      return { handled: true };
     } catch (eRoute) {
+      if (indicator) indicator.remove();
+      if (eRoute && eRoute.name === "AbortError") {
+        // المستخدم ضغط زرار الإيقاف بنفسه — نقفل بهدوء من غير رسالة خطأ ومن غير fallback
+        var msgsEl = document.getElementById("aiChatMessages");
+        if (msgsEl) {
+          var edStopped = document.createElement("div");
+          edStopped.className = "message received";
+          edStopped.innerHTML = '<div class="message-content" style="opacity:.7;font-style:italic">⏹️ تم إيقاف التفكير بواسطتك.</div>';
+          msgsEl.appendChild(edStopped); msgsEl.scrollTop = msgsEl.scrollHeight;
+        }
+        return { handled: true, stopped: true };
+      }
       console.warn("[صلاتي] تعذّر تشغيل الوكيل، هيتبعت المسار العادي:", eRoute);
       if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", String(eRoute && eRoute.message || eRoute).slice(0, 200));
-      if (indicator) indicator.remove();
-      return false;
+      return { handled: false };
     }
   }
 
@@ -17118,8 +17240,21 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         var raw = inp ? inp.value.trim() : "";
         var hasAttachments = (window._aiSelectedImages && window._aiSelectedImages.length) || (window._aiSelectedFiles && window._aiSelectedFiles.length);
         if (raw && !hasAttachments) {
-          var handled = await tryHandleCommand(raw);
-          if (handled) {
+          if (window.__cosmosBusy) return; // بيفكر فعلاً — الزرار نفسه بقى زرار إيقاف
+          // ── نفس حالة "بيفكر" وAbortController اللي زرار الإيقاف بيتحكم فيهم، عشان
+          // زرار التوقيف يشتغل صح حتى لو الرسالة دخلت مسار وكيل الصلاة/القرآن/الصور ──
+          window.__cosmosBusy = true;
+          window.__cosmosAbortController = new AbortController();
+          if (window.__updateAISendBtnUI) window.__updateAISendBtnUI();
+          var routed;
+          try {
+            routed = await tryHandleCommand(raw, window.__cosmosAbortController.signal);
+          } finally {
+            window.__cosmosBusy = false;
+            window.__cosmosAbortController = null;
+            if (window.__updateAISendBtnUI) window.__updateAISendBtnUI();
+          }
+          if (routed && routed.handled) {
             if (inp) { inp.value = ""; inp.style.height = ""; inp.dispatchEvent(new Event("input")); }
             return;
           }
