@@ -11303,7 +11303,8 @@ function slStopAllAnimations() {
   // صور أو إنه هيولّد صورة، لأنه معندهوش أي قدرة فعلية يستدعي بيها نظام الصور بنفسه — الاستدعاء
   // الحقيقي بيحصل بس لو المستخدم استخدم كلمة صريحة زي "ارسم"/"ارسملي" وقتها الكود (مش الموديل)
   // هو اللي بيشغّل التوليد. من غير التعليمة دي، الموديل كان بيوعد بحاجة مش هتحصل فعلياً ──
-  const _NO_FAKE_IMAGE_CLAIM_SUFFIX = ' مهم جداً: معندكش أي قدرة تولّد أو تبعت طلب توليد صورة بنفسك، ولا تقدر "توجّه" أو "تبعت" طلب لأي نظام توليد تلقائي — الاستدعاء الفعلي بيحصل بس لو المستخدم كتب كلمة صريحة زي "ارسم" أو "ارسملي". ممنوع تمنعاً باتاً تدّعي أو تقول للمستخدم إنك "بعت الطلب" أو "الصورة قيد التحضير" أو أي كلام مشابه، لأن ده مش هيحصل فعلياً وهيكون كذب. لو المستخدم طلب صورة بصيغة غير مباشرة، رد عليه بحماس وقوله يكتب "ارسم لي..." صراحة عشان الصورة تتولّد فعلاً.';
+  const _NO_FAKE_IMAGE_CLAIM_SUFFIX = ' مهم جداً: معندكش أي قدرة تولّد أو تبعت طلب توليد صورة بنفسك، ولا تقدر "توجّه" أو "تبعت" طلب لأي نظام توليد تلقائي — الاستدعاء الفعلي بيحصل بس لو المستخدم كتب كلمة صريحة زي "ارسم" أو "ارسملي". ممنوع تمنعاً باتاً تدّعي أو تقول للمستخدم إنك "بعت الطلب" أو "الصورة قيد التحضير" أو أي كلام مشابه، لأن ده مش هيحصل فعلياً وهيكون كذب. لو المستخدم طلب صورة بصيغة غير مباشرة، رد عليه بحماس وقوله يكتب "ارسم لي..." صراحة عشان الصورة تتولّد فعلاً. ' +
+    'كمان مهم: لو المستخدم طلب منك تشغيل تلاوة قرآن أو مواقيت صلاة ومحصلش تنفيذ فعلي (يعني مفيش تشغيل صوت ظهر بالفعل في الشات)، ممنوع تطلب منه رابط موقع أو تقوله ابعتلي لينك الصوت — ده مش موجود عندك أصلاً. بدل كده قوله بصراحة إنك واجهت مشكلة تقنية بسيطة وينفع يجرب يكتب طلبه تاني كمان شوية.';
 
   // ===== 1. تعريف الشخصيات =====
   const AI_PERSONAS = [
@@ -17088,8 +17089,10 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   }
 
   var MAX_AGENT_STEPS = 5;
+  var _lastAgentErrDetail = null;
 
   async function callAgentModel(key, messages, signal) {
+    _lastAgentErrDetail = null;
     var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
@@ -17107,6 +17110,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     if (!resp.ok || data.error) {
       var errDetail = "HTTP " + resp.status + " — " + JSON.stringify(data.error || data).slice(0, 250);
       console.error("[صلاتي] فشل نداء الوكيل:", errDetail);
+      _lastAgentErrDetail = errDetail;
       if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", errDetail);
       return null;
     }
@@ -17142,10 +17146,26 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
 
       var firstMsg = await callAgentModel(key, messages, signal);
 
-      var firstText = (firstMsg && firstMsg.content && firstMsg.content.trim()) || "";
-      var hasTools = !!(firstMsg && firstMsg.tool_calls && firstMsg.tool_calls.length);
+      if (!firstMsg) {
+        // ── فشل نداء الوكيل تقنيًا (شبكة/API) — من غير ما نعرف قصد الرسالة، منسيبهاش
+        // تروح للمسار العادي (اللي هيهلوس ويطلب رابط موقع مثلاً) لو شكلها خاصة بالقرآن/الصلاة أصلاً ──
+        if (indicator) indicator.remove();
+        var looksRelated = /قرآن|القرآن|سوره|سورة|تلاوة|قارئ|شيخ|الأذان|أذان|صلاة|الصلاة/.test(text);
+        if (looksRelated) {
+          displayUserBubbleOnly(text);
+          if (window.aiChatHistory) window.aiChatHistory.push({ role: "user", content: text });
+          var errMsg = "معلش، واجهت مشكلة تقنية بسيطة وأنا بحاول أنفذ طلبك (" + (_lastAgentErrDetail ? "تفاصيل في سجل مشاكل المنصة" : "غير معروفة") + ")، ممكن تجرب تاني كمان شوية؟";
+          displayAIBubbleOnly(errMsg);
+          if (window.aiChatHistory) window.aiChatHistory.push({ role: "assistant", content: errMsg });
+          return { handled: true };
+        }
+        return { handled: false };
+      }
 
-      if (!firstMsg || (!hasTools && (!firstText || firstText === "تجاهل"))) {
+      var firstText = (firstMsg.content && firstMsg.content.trim()) || "";
+      var hasTools = !!(firstMsg.tool_calls && firstMsg.tool_calls.length);
+
+      if (!hasTools && (!firstText || firstText === "تجاهل")) {
         // مفيش نداء أداة ومفيش رد حقيقي — يبقى الرسالة أصلاً مش شغل الوكيل ده، سيبها للمسار العادي
         if (indicator) indicator.remove();
         return { handled: false };
