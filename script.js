@@ -13105,6 +13105,9 @@ function slStopAllAnimations() {
 
       // ── سياق إضافي هيتضاف بس لطلب الذكاء الاصطناعي، ومش هيظهر في فقاعة رسالتك ──
       var _extraContextForAI = '';
+      // ── صور البحث بتاعة *هذا الرد بالذات* — محلية للمكالمة دي وبس، مش global مشترك،
+      // عشان لو المستخدم بعت رسالتين ورا بعض بسرعة، الصور بتاعة رسالة قديمة ما تتلزقش برد تاني مالوش علاقة بيها ──
+      var _localPendingSearchImages = null;
 
       // ── Space context injection ──
       if (hasTrigger(userMsg)) {
@@ -13181,7 +13184,7 @@ function slStopAllAnimations() {
 
             // صور حقيقية من نتائج البحث (لو موجودة) — هتتعرض فعلياً تحت رد الذكاء الاصطناعي
             var _imgs = (_searchRes.images || []).map(function(im){ return typeof im === 'string' ? im : (im && im.url); }).filter(Boolean).slice(0, 4);
-            if (_imgs.length) window.__cosmosPendingSearchImages = _imgs;
+            if (_imgs.length) _localPendingSearchImages = _imgs;
 
             if (_searchStatusEl && _foundDomains.length) {
               var _sLabel = _searchStatusEl.querySelector('.cosmos-thinking-label');
@@ -14430,10 +14433,10 @@ function slStopAllAnimations() {
             _bodyHtml = '<div class="message-sender" style="color:#06b6d4">'+persona.emoji+' '+persona.name+'</div>'+_stepsHtml+_deepThinkHtml+'<div class="message-content">'+(typeof window.formatAIAnswer==='function'?window.formatAIAnswer(answer):answer)+'</div><div class="message-time">'+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})+'</div>';
           }
           aiDiv.innerHTML = _bodyHtml;
-          if (window.__cosmosPendingSearchImages && window.__cosmosPendingSearchImages.length) {
+          if (_localPendingSearchImages && _localPendingSearchImages.length) {
             var _gal = document.createElement('div');
             _gal.className = 'cosmos-search-gallery';
-            window.__cosmosPendingSearchImages.forEach(function(_imgUrl){
+            _localPendingSearchImages.forEach(function(_imgUrl){
               var _a = document.createElement('a');
               _a.href = _imgUrl; _a.target = '_blank'; _a.rel = 'noopener noreferrer';
               var _im = document.createElement('img');
@@ -14443,7 +14446,7 @@ function slStopAllAnimations() {
             });
             var _timeEl = aiDiv.querySelector('.message-time');
             if (_timeEl) aiDiv.insertBefore(_gal, _timeEl); else aiDiv.appendChild(_gal);
-            window.__cosmosPendingSearchImages = null;
+            _localPendingSearchImages = null;
           }
           msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
           // ── الرد النصي ظهر واكتمل خلاص فوق ↑ — دلوقتي لو الرسالة كانت مركّبة (نص + صورة)، نستنى
