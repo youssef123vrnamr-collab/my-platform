@@ -13272,7 +13272,7 @@ function slStopAllAnimations() {
       // 8000 كانت بتتقطع فعليًا مع صفحات فيها CSS تفصيلي + JS كامل للعبة (زي السلم والتعبان)،
       // فرفعناها لمساحة أكبر بكتير (الموديل بيدعم لحد ~32-65 ألف توكن إخراج). ──
       var _isCodeReq = /كود|script|scss|css\b|javascript|جافا\s*سكريبت|html|برمجة|اكتب.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود|سكريبت)|اعمل.*(صفحة|موقع|لعبة|تطبيق|برنامج|كود)|عايز.*(صفحة|موقع|لعبة|تطبيق|كود)|صمم.*(صفحة|موقع|لعبة|تطبيق)|website|webpage|web\s*app|game\b|function\s*\(|class\s+\w|import\s+.+from/i.test(userMsg) || (typeof isLikelyCode === 'function' && isLikelyCode(userMsg));
-      var _mainMaxTok     = _isCodeReq ? 28000 : 4500;
+      var _mainMaxTok     = _isCodeReq ? 28000 : 6000;
       var _fallbackMaxTok = _isCodeReq ? 28000 : 4000;
       var _geminiMaxTok   = _isCodeReq ? 28000 : 4500;
 
@@ -14194,7 +14194,30 @@ function slStopAllAnimations() {
           } catch (eCont) { console.warn('continuation pass failed', eCont); break; }
         }
         if (!answer) {
-          _debugGroqDetail = 'HTTP ' + result.res.status + ' — ' + (result.data && result.data.error ? JSON.stringify(result.data.error).slice(0,150) : JSON.stringify(result.data).slice(0,150));
+          // ── لو الرد رجع HTTP 200 سليم بس المحتوى طلع فاضي وكان بيتقطع بسبب حد التوكنز
+          // (finish_reason === 'length')، يبقى على الأغلب "غرفة التفكير العميق" (reasoning_effort:'high')
+          // استهلكت كل الميزانية قبل ما توصل لأي كلمة من الرد النهائي نفسه — مش فشل شبكة أو API فعلي.
+          // بدل ما نستسلم على طول ونضيّع الرد، نجرب مرة واحدة تانية بمجهود تفكير أقل عشان
+          // يوصل لرد فعلي جوه نفس ميزانية التوكنز. ──
+          if (result.res.ok && _truncFinishReason === 'length') {
+            try {
+              var _payloadLightReasoning = buildPayload('openai/gpt-oss-120b', _mainMaxTok, histMsgs);
+              _payloadLightReasoning.reasoning_effort = 'low';
+              var _resLight = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+                body: JSON.stringify(_payloadLightReasoning)
+              });
+              var _dataLight = await _resLight.json().catch(function () { return {}; });
+              var _answerLight = (_dataLight.choices && _dataLight.choices[0] && _dataLight.choices[0].message && _dataLight.choices[0].message.content) || null;
+              if (_answerLight) { answer = _answerLight; result = { res: _resLight, data: _dataLight }; }
+            } catch (eLight) { console.warn('light-reasoning retry failed', eLight); }
+          }
+        }
+        if (!answer) {
+          _debugGroqDetail = result.res.ok
+            ? 'HTTP 200 لكن الرد رجع فاضي — على الأغلب "غرفة التفكير العميق" استهلكت كل ميزانية التوكنز قبل ما توصل لرد فعلي (مش فشل شبكة أو API) — تفاصيل: ' + JSON.stringify(result.data).slice(0,150)
+            : 'HTTP ' + result.res.status + ' — ' + (result.data && result.data.error ? JSON.stringify(result.data.error).slice(0,150) : JSON.stringify(result.data).slice(0,150));
         }
         if (!answer && result.data.error) throw new Error(JSON.stringify(result.data.error));
         if (window.AIHealth) window.AIHealth.record('groq', !!answer);
@@ -17310,19 +17333,32 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   // ── محاولة واحدة فعلية لنداء الموديل — بترجع نتيجة موصوفة (نجاح/فشل + هل يستاهل
   // إعادة محاولة) من غير ما تقرر هي نفسها إيه اللي يحصل بعد كده ──
   async function _callAgentModelOnce(key, messages, signal) {
-    var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-      signal: signal,
-      body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: messages,
-        tools: TOOL_DEFS,
-        tool_choice: "auto",
-        max_tokens: 500,
-        temperature: 0.2
-      })
-    });
+    var resp;
+    try {
+      resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+        signal: signal,
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages: messages,
+          tools: TOOL_DEFS,
+          tool_choice: "auto",
+          max_tokens: 500,
+          temperature: 0.2
+        })
+      });
+    } catch (eFetch) {
+      // ── لو المستخدم ضغط زرار الإيقاف بنفسه، سيب الاستثناء يطلع زي ما هو عشان الكود
+      // اللي فوق يتعامل معاه كإيقاف هادئ — مش كفشل تقني ──
+      if (eFetch && eFetch.name === "AbortError") throw eFetch;
+      // ── أي فشل شبكة حقيقي تاني (مفيش نت، DNS، الاتصال اتقطع فجأة...) — ده اللي كان
+      // بيهرب من كل منطق إعادة المحاولة قبل كده لأنه بيرمي استثناء بدل ما يرجّع رد HTTP
+      // عادي، فكان بيوصل مباشرة لل-catch الخارجي وبيخلي الرسالة "تختفي" وتروح للمسار
+      // العادي من غير ما المستخدم ياخد أي تفسير ولا نعيد المحاولة خالص. دلوقتي بنمسكه
+      // هنا ونعتبره فشل عادي قابل لإعادة المحاولة زي أي فشل HTTP تاني. ──
+      return { ok: false, errDetail: "خطأ شبكة: " + (eFetch && eFetch.message ? eFetch.message : String(eFetch)), retryable: true };
+    }
     var data = await resp.json().catch(function () { return {}; });
     if (!resp.ok || data.error) {
       var errDetail = "HTTP " + resp.status + " — " + JSON.stringify(data.error || data).slice(0, 250);
