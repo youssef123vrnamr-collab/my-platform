@@ -545,7 +545,7 @@
 </div></div></div>
   <div class="modal chat-modal" id="aiChatModal"><div class="chat-container"><div class="chat-header"><div class="chat-header-info"><div class="chat-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-robot"></i></div><div class="chat-header-text"><p><span class="online-dot"></span> متصل الآن</p></div></div><div class="chat-actions"><button class="chat-action-btn" onclick="closeAIChat()" title="إغلاق"><i class="fas fa-times"></i></button></div></div><div class="chat-messages" id="aiChatMessages"></div><div class="chat-input-area">
   <div class="reply-preview-bar" id="aiReplyPreview" style="display:none"><div class="reply-preview-line"></div><div class="reply-preview-body"><span class="reply-preview-sender" id="aiReplyPreviewSender"></span><span class="reply-preview-text" id="aiReplyPreviewText"></span></div><button class="reply-preview-close" onclick="cancelReply('ai')"><i class="fas fa-times"></i></button></div>
-  <div id="aiFilePreview" class="unified-file-preview" style="display:none;flex-wrap:wrap;gap:.4rem"></div>
+  <div id="aiFilePreview" class="unified-file-preview" style="display:none"></div>
   <div class="unified-input-wrapper" id="aiInputWrapper">
     <textarea id="aiChatInput" placeholder="اكتب سؤالك هنا..." rows="1" class="unified-textarea" onkeypress="handleAIKeyPress(event)"></textarea>
     <div class="unified-bottom-row">
@@ -555,9 +555,13 @@
           <div class="ai-attach-menu" id="aiAttachMenu">
             <button class="ai-attach-menu-item" onclick="document.getElementById('aiImageInput').click(); closeAIAttachMenu();"><i class="fas fa-image"></i><span>صورة</span></button>
             <button class="ai-attach-menu-item" onclick="document.getElementById('aiFileInput').click(); closeAIAttachMenu();"><i class="fas fa-paperclip"></i><span>ملف</span></button>
+            <button class="ai-attach-menu-item" onclick="document.getElementById('aiVideoInput').click(); closeAIAttachMenu();"><i class="fas fa-video"></i><span>فيديو</span></button>
+            <button class="ai-attach-menu-item" onclick="document.getElementById('aiAudioInput').click(); closeAIAttachMenu();"><i class="fas fa-music"></i><span>ملف صوتي</span></button>
           </div>
           <input id="aiFileInput" type="file" style="display:none" multiple onchange="handleAIFileSelect(this)">
           <input id="aiImageInput" type="file" style="display:none" multiple accept="image/*" onchange="handleAIImageSelect(this)">
+          <input id="aiVideoInput" type="file" style="display:none" multiple accept="video/*" onchange="handleAIFileSelect(this)">
+          <input id="aiAudioInput" type="file" style="display:none" multiple accept="audio/*" onchange="handleAIFileSelect(this)">
         </div>
         <button class="unified-tool-btn" onclick="toggleAIMute()" id="aiGlobalMuteBtn" title="صوت"><i class="fas fa-volume-up"></i></button>
         <button class="unified-tool-btn" onclick="toggleAIVoiceNote()" id="aiVoiceNoteBtn" title="رسالة صوتية — سجّل وهيتفهم ويترد عليها زي أي رسالة"><i class="fas fa-microphone"></i></button>

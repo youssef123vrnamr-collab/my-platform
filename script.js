@@ -9024,7 +9024,16 @@ window.updateActiveToolLabel = function(label) {
       json: { icon:'fa-file-code',   color:'#eab308', label:'JSON' },
       py:   { icon:'fa-file-code',   color:'#3b82f6', label:'PY'   },
       txt:  { icon:'fa-file-lines',  color:'#94a3b8', label:'TXT'  },
-      md:   { icon:'fa-file-lines',  color:'#94a3b8', label:'MD'   }
+      md:   { icon:'fa-file-lines',  color:'#94a3b8', label:'MD'   },
+      mp3:  { icon:'fa-file-audio',  color:'#ec4899', label:'MP3'  },
+      wav:  { icon:'fa-file-audio',  color:'#ec4899', label:'WAV'  },
+      m4a:  { icon:'fa-file-audio',  color:'#ec4899', label:'M4A'  },
+      ogg:  { icon:'fa-file-audio',  color:'#ec4899', label:'OGG'  },
+      mp4:  { icon:'fa-file-video',  color:'#06b6d4', label:'MP4'  },
+      mov:  { icon:'fa-file-video',  color:'#06b6d4', label:'MOV'  },
+      webm: { icon:'fa-file-video',  color:'#06b6d4', label:'WEBM' },
+      mkv:  { icon:'fa-file-video',  color:'#06b6d4', label:'MKV'  },
+      avi:  { icon:'fa-file-video',  color:'#06b6d4', label:'AVI'  }
     };
     return map[ext] || { icon:'fa-file', color:'#8b93a7', label: ext ? ext.toUpperCase() : 'FILE' };
   }
@@ -11471,6 +11480,33 @@ function slStopAllAnimations() {
   }
   window.stopAllAISpeech = stopGroqTTS;
 
+  // ── خط الدفاع الأخير: صوت المتصفح المدمج (SpeechSynthesis) — مجاني ومتاح دايمًا
+  // من غير إنترنت زيادة أو مفتاح API، عشان الصوت "ما يقفش خالص" حتى لو Groq وElevenLabs
+  // الاتنين وقعوا (شبكة، حصة الاستخدام خلصت، إلخ). جودته أقل لكنه بيفضل شغال ──
+  function _speakWithBrowser(text, btn, isArabic) {
+    if (!('speechSynthesis' in window)) {
+      if (typeof showToast === 'function') showToast('⚠️ تعذّر تشغيل الصوت دلوقتي، جرّب تاني بعد شوية');
+      stopGroqTTS();
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = isArabic ? 'ar-SA' : 'en-US';
+      _ttsBtn = btn || null;
+      if (btn) {
+        btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
+        btn.classList.add('muted');
+      }
+      u.onend = function(){ stopGroqTTS(); };
+      u.onerror = function(){ stopGroqTTS(); };
+      window.speechSynthesis.speak(u);
+    } catch(e) {
+      console.error('[TTS] browser fallback error:', e);
+      stopGroqTTS();
+    }
+  }
+
   window.aiSpeak = async function(text, btn) {
     if (btn && _ttsBtn === btn && _ttsActive) { stopGroqTTS(); return; }
     stopGroqTTS();
@@ -11480,11 +11516,6 @@ function slStopAllAnimations() {
     if (window.aiIsMuted) return;
 
     var key = (typeof getAiApiKey === 'function') ? getAiApiKey() : '';
-    if (!key) {
-      if (typeof showToast === 'function') showToast('⚠️ ادخل مفتاح Groq API أولاً');
-      if (typeof openAiKeyModal === 'function') openAiKeyModal();
-      return;
-    }
 
     var clean = cleanForTTS(text);
     if (!clean) return;
@@ -11514,6 +11545,9 @@ function slStopAllAnimations() {
       btn.innerHTML = '<span class="ai-speaking-wave"><span></span><span></span><span></span><span></span></span><i class="fas fa-stop"></i>';
       btn.classList.add('muted');
     }
+
+    // ── لو مفيش مفتاح Groq، منوقفش الصوت خالص — ننتقل على طول لـ ElevenLabs (مفتاحه متضمن جاهز) ──
+    if (!key) { await _speakWithElevenLabs(clean, btn, isArabic, 0); return; }
 
     await _speakWithGroq(clean, btn, isArabic, model, voice, 0);
   };
@@ -11615,10 +11649,9 @@ function slStopAllAnimations() {
             console.warn('[TTS] ElevenLabs failed (attempt ' + (attempt+1) + '), retrying...', errMsg);
             return _speakWithElevenLabs(text, btn, isArabic, attempt + 1);
           }
-          // ── الاتنين فشلوا بعد كل المحاولات — نوقف بهدوء من غير صوت المتصفح ──
-          console.error('[TTS] both providers failed after retries');
-          if (typeof showToast === 'function') showToast('⚠️ تعذّر تشغيل الصوت دلوقتي، جرّب تاني بعد شوية');
-          stopGroqTTS();
+          // ── الاتنين فشلوا بعد كل المحاولات — منسيبش المستخدم من غير صوت خالص، نستخدم صوت المتصفح ──
+          console.error('[TTS] both providers failed after retries, using browser fallback');
+          _speakWithBrowser(text, btn, isArabic);
         });
       }
 
@@ -11648,8 +11681,7 @@ function slStopAllAnimations() {
       if (window.AIHealth) window.AIHealth.record('elevenlabs', false);
       if (window.logPlatformIssue) window.logPlatformIssue('ElevenLabs TTS', String(e && e.message || e).slice(0,150));
       if (attempt < EL_MAX_RETRIES) return _speakWithElevenLabs(text, btn, isArabic, attempt + 1);
-      if (typeof showToast === 'function') showToast('⚠️ تعذّر تشغيل الصوت دلوقتي، جرّب تاني بعد شوية');
-      stopGroqTTS();
+      _speakWithBrowser(text, btn, isArabic);
     });
   }
 
@@ -13637,6 +13669,8 @@ function slStopAllAnimations() {
       // المستخدم الأصلية هي الأساس دايمًا، وأي إضافة منك بتُذكر كاقتراح واضح جنبها مش بديل عنها ──
       var _creativityBlock = '\n\nقاعدة الإبداع الإضافي: بعد ما تلبي طلب المستخدم بالظبط زي ما طلبه، فكّر بعمق لو فيه زاوية أو احتياج منطقي مرتبط بطلبه هو ماذكرهوش صراحة بس هيفيده (مثلاً: حالة حافة (edge case) هتحصل لو طلبه ده كود، أو فكرة تحسين بسيطة، أو خطوة تالية منطقية). لو لقيت حاجة زي دي فعلاً مفيدة ومش تفصيلة تافهة، اذكرها بإيجاز في آخر ردك كاقتراح واضح منفصل (مثلاً "💡 فكرة إضافية:")، من غير ما تفرضها أو تستبدل بيها اللي طلبه بالظبط. ممنوع تمامًا تغيّر أو "تصلّح" فكرة المستخدم الأساسية من غير ما يطلب — أضف عليها، ما تزفتهاش.';
 
+      var _colorPolicyBlock = '\n\nقاعدة تلوين النص: عندك إمكانية تلوّن أجزاء من ردك النصي (مش الكود) بنفسك وقت ما تحس إن اللون هيفيد فعلاً — زي تحذير مهم بالأحمر، أو نقطة إيجابية/نجاح بالأخضر، أو معلومة مميزة بلون مختلف. استخدم الصيغة دي بالظبط حوالين الجزء اللي عايز تلوّنه: [[color:الاسم]]النص هنا[[/color]] — والاسم لازم يكون واحد من دول بالظبط: red, green, blue, yellow, orange, purple, pink, cyan, teal, gold. متستخدمش الصيغة دي إلا لو فعلاً محتاجها، ومتلوّنش الرد كله ولا كل سطر — استخدمها بمزاجك وبس لما تكون مفيدة فعلاً للقارئ، وسيب باقي الرد من غير تلوين. ممنوع تستخدم أي اسم لون غير الأسماء العشرة دي.';
+
       // ── معلومة عن بنية المنصة نفسها (لو حد سأل "بتشتغلوا إزاي لو النت وقع" أو "عندكوا وضع أوفلاين"):
       // المنصة عندها نظام دفاع تلقائي بعدة مراحل (Groq → Gemini → OpenRouter → نموذج محلي على
       // جهاز المستخدم عبر WebGPU) لو كل الخدمات السحابية فشلت مع بعض، والنموذج المحلي ده كمان
@@ -13697,8 +13731,8 @@ function slStopAllAnimations() {
         var _geniusBlock = typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '';
         var _liveTimeBlock = typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '';
         var sys = lean
-          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _badCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _creativityBlock + _globalInstructionsBlock)
-          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _badCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _creativityBlock + _globalInstructionsBlock);
+          ? (persona.systemPrompt + _reasoningRoomBlock + _lessonsContextBlock + _goodAnswersContextBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _badCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _colorPolicyBlock + _creativityBlock + _globalInstructionsBlock)
+          : (persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + _badCodeContextBlock + _geniusBlock + _liveTimeBlock + _platformResilienceBlock + _depthBlock + _colorPolicyBlock + _creativityBlock + _globalInstructionsBlock);
         var userMsgFinal = lean ? String(_aiApiMsg).slice(0, 12000) : _aiApiMsg;
         return {
           model: model,
@@ -13790,7 +13824,7 @@ function slStopAllAnimations() {
       async function callGeminiTextFallback() {
         var pool = window.GeminiKeyPool;
         var maxAttempts = (pool && pool.count() > 1) ? Math.min(pool.count(), 3) : 1;
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + _colorPolicyBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         // ── ينادي Gemini مرة واحدة بأي سياق محادثة مُعطى، ويرجّع النص + سبب التوقف (finishReason) ──
         async function _geminiOnce(gKey, convContents) {
           var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
@@ -13875,7 +13909,7 @@ function slStopAllAnimations() {
       async function callOpenRouterFallback() {
         var pool = window.OpenRouterKeyPool;
         if (!pool || !pool.count()) { _debugOpenRouterDetail = 'مفيش مفتاح OpenRouter متسجل أصلاً'; return null; }
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + _colorPolicyBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         var _orMsgs = [{ role: 'system', content: _sysFull }].concat(histMsgs).concat([{ role: 'user', content: _aiApiMsg }]);
         var maxAttempts = Math.min(pool.count(), 3);
         for (var i = 0; i < maxAttempts; i++) {
@@ -13918,7 +13952,7 @@ function slStopAllAnimations() {
       async function callVercelGatewayFallback() {
         var pool = window.VercelGatewayKeyPool;
         if (!pool || !pool.count()) { _debugVercelDetail = 'مفيش مفتاح Vercel AI Gateway متسجل أصلاً'; return null; }
-        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
+        var _sysFull = persona.systemPrompt + _courseContextBlock + _aggregatedContextBlock + _videoContextBlock + _examContextBlock + _archContextBlock + _newsContextBlock + _sectionsMenuContextBlock + _adminMenuContextBlock + _myResultContextBlock + _reasoningRoomBlock + _proSystemSuffix + _imageGenPolicyBlock + _codeFormatPolicyBlock + _expertEngineerPolicyBlock + _architectPlanBlock + _goodCodeContextBlock + (typeof window.buildCosmosGeniusFoundation === 'function' ? window.buildCosmosGeniusFoundation() : '') + (typeof window.buildCosmosLiveTimeContext === 'function' ? window.buildCosmosLiveTimeContext() : '') + _platformResilienceBlock + _depthBlock + _colorPolicyBlock + (typeof window.getGlobalAiInstructions === 'function' && window.getGlobalAiInstructions() ? ('\n\nتعليمات إلزامية من مشرف المنصة — أولوية عالية، لازم تلتزم بيها حرفيًا في كل رد حتى لو تعارضت مع أسلوبك الافتراضي:\n' + window.getGlobalAiInstructions()) : '');
         var _vgMsgs = [{ role: 'system', content: _sysFull }].concat(histMsgs).concat([{ role: 'user', content: _aiApiMsg }]);
         // ── موديلات مرتّبة من الأرخص/الأسرع للأقوى؛ لو موديل معين مش متاح على مفتاحك أو وصل لحد الكوتا بنجرب اللي بعده ──
         var _vgModels = ['openai/gpt-4o-mini', 'google/gemini-2.0-flash', 'anthropic/claude-haiku-4-5'];
@@ -15898,6 +15932,18 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     window.__cosmosNoFileRequested = false; // نستهلك الفلاج مرة واحدة بس لكل رد
 
     var s = String(raw);
+
+    // ── تلوين النص: الذكاء الاصطناعي بيلوّن أجزاء بنفسه بصيغة [[color:name]]نص[[/color]] —
+    // نستخرجها هنا قبل أي حاجة تانية، ونتأكد إن الاسم من لستة الألوان المسموحة بس (أمان) ──
+    var colorBlocks = [];
+    var _allowedColorNames = /^(red|green|blue|yellow|orange|purple|pink|cyan|teal|gold)$/i;
+    s = s.replace(/\[\[color:([a-zA-Z]+)\]\]([\s\S]*?)\[\[\/color\]\]/g, function(m, colorName, inner){
+      if (!_allowedColorNames.test(colorName.trim())) return inner; // لون مش مسموح — رجّع النص عادي من غير تلوين
+      var idx = colorBlocks.length;
+      colorBlocks.push({ color: colorName.trim().toLowerCase(), text: inner });
+      return '\u0000CL' + idx + '\u0000';
+    });
+
     // ── نستخرج كل كتل الكود الأول من النص الخام (قبل الـ escaping) ونسيب مكانها placeholder ──
     var codeBlocks = [];
     s = s.replace(/```([a-zA-Z0-9]*)\n?([\s\S]*?)```/g, function(m, lang, code){
@@ -15941,6 +15987,15 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
     s = s.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,.08);padding:.1rem .3rem;border-radius:4px;direction:ltr;display:inline-block">$1</code>');
     s = s.replace(/\n{3,}/g, '\n\n').replace(/\n/g, '<br>');
+
+    // ── نستبدل الـ placeholders بتاعة التلوين بالـ HTML الفعلي (بعد كل الـ escaping والتنسيق) ──
+    for (var _ci = 0; _ci < colorBlocks.length; _ci++) {
+      var _cb = colorBlocks[_ci];
+      var _escInner = _cb.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      _escInner = _escInner.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+      var _spanHtml = '<span style="color:' + _cb.color + '">' + _escInner + '</span>';
+      s = s.split('\u0000CL' + _ci + '\u0000').join(_spanHtml);
+    }
 
     // ── لو مفيش كتل كود، رجّع النص عادي ──
     if (!codeBlocks.length) return s;
