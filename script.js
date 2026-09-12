@@ -17307,8 +17307,9 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   var MAX_AGENT_STEPS = 5;
   var _lastAgentErrDetail = null;
 
-  async function callAgentModel(key, messages, signal) {
-    _lastAgentErrDetail = null;
+  // ── محاولة واحدة فعلية لنداء الموديل — بترجع نتيجة موصوفة (نجاح/فشل + هل يستاهل
+  // إعادة محاولة) من غير ما تقرر هي نفسها إيه اللي يحصل بعد كده ──
+  async function _callAgentModelOnce(key, messages, signal) {
     var resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
@@ -17322,21 +17323,55 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         temperature: 0.2
       })
     });
-    var data = await resp.json();
+    var data = await resp.json().catch(function () { return {}; });
     if (!resp.ok || data.error) {
       var errDetail = "HTTP " + resp.status + " — " + JSON.stringify(data.error || data).slice(0, 250);
-      console.error("[صلاتي] فشل نداء الوكيل:", errDetail);
-      _lastAgentErrDetail = errDetail;
-      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", errDetail);
-      return null;
+      // 401/403 = المفتاح نفسه تالف/مرفوض — إعادة المحاولة بنفس المفتاح مفيدش،
+      // لكن أي حاجة تانية (429 محدودية طلبات، 5xx، رد غير متوقع) ممكن تتحل بمحاولة تانية
+      var retryable = resp.status !== 401 && resp.status !== 403;
+      return { ok: false, errDetail: errDetail, retryable: retryable };
     }
     var msg = data && data.choices && data.choices[0] && data.choices[0].message;
     if (!msg) {
-      console.warn("[صلاتي] رد غير متوقع من الموديل (مفيش message):", data);
-      if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", "رد غير متوقع من الموديل: " + JSON.stringify(data).slice(0, 250));
-      return null;
+      return { ok: false, errDetail: "رد غير متوقع من الموديل (مفيش message): " + JSON.stringify(data).slice(0, 250), retryable: true };
     }
-    return msg;
+    return { ok: true, msg: msg };
+  }
+
+  // ── نداء الوكيل بمحاولات متعددة: لو فيه أكتر من مفتاح Groq مسجّل (GroqKeyPool)
+  // بيجرب مفتاح تاني عند الفشل بدل ما يوقف على طول، ولو مفتاح واحد بس بيعيد المحاولة
+  // مرة زيادة (فشل عابر زي شبكة بطيئة أو rate-limit مؤقت) قبل ما يرجّع null ويظهر
+  // رسالة "مشكلة تقنية بسيطة" للمستخدم — ده كان بيحصل من أول فشل واحد بس قبل كده. ──
+  async function callAgentModel(key, messages, signal) {
+    _lastAgentErrDetail = null;
+    var pool = window.GroqKeyPool;
+    var poolCount = pool ? pool.count() : 0;
+    var maxAttempts = poolCount > 1 ? Math.min(poolCount, 3) : 2;
+    var lastErrWasAuth = false;
+
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      if (attempt > 0) {
+        // مفتاح وحيد وفشل بمشكلة صلاحيات (401/403) — معادش فايدة نعيد بنفس المفتاح
+        if (lastErrWasAuth && poolCount <= 1) break;
+        await new Promise(function (res) { setTimeout(res, 400); });
+      }
+      var useKey = (attempt === 0) ? key : ((pool && pool.count()) ? pool.next() : key);
+
+      var result = await _callAgentModelOnce(useKey, messages, signal);
+
+      if (result.ok) {
+        if (pool) pool.report(useKey, true);
+        return result.msg;
+      }
+
+      if (pool) pool.report(useKey, false);
+      console.error("[صلاتي] فشل نداء الوكيل (محاولة " + (attempt + 1) + "/" + maxAttempts + "):", result.errDetail);
+      _lastAgentErrDetail = result.errDetail;
+      lastErrWasAuth = !result.retryable;
+    }
+
+    if (window.logPlatformIssue) window.logPlatformIssue("وكيل الصلاة/القرآن/الصور (Groq Tool Agent)", _lastAgentErrDetail || "فشل غير معروف بعد كل المحاولات");
+    return null;
   }
 
   // ── حلقة agentic كاملة: نداء → تنفيذ أداة/أدوات → نداء تاني بالنتيجة → الموديل يقرر
