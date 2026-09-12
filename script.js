@@ -17438,7 +17438,9 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         // ── فشل نداء الوكيل تقنيًا (شبكة/API) — من غير ما نعرف قصد الرسالة، منسيبهاش
         // تروح للمسار العادي (اللي هيهلوس ويطلب رابط موقع مثلاً) لو شكلها خاصة بالقرآن/الصلاة أصلاً ──
         if (indicator) indicator.remove();
-        var looksRelated = /قرآن|القرآن|سوره|سورة|تلاوة|قارئ|شيخ|الأذان|أذان|صلاة|الصلاة/.test(text);
+        // ── مفيش موديل شغال هنا نسأله (الاستدعاء فشل تقنيًا)، فمعندناش وسيلة "فهم قصد" حقيقية —
+        // بس بنوسّع شبكة الكلمات المرتبطة قد ما نقدر (مش بس أسماء صريحة) عشان نغطي صيغ غير مباشرة أكتر ──
+        var looksRelated = /قرآن|القرآن|سوره|سورة|تلاوة|قارئ|شيخ|الأذان|أذان|صلاة|الصلاة|مصحف|آيات|ايات|اذاعة|إذاعة|راديو|دعاء|أدعية|ادعية|تسبيح|أذكار|اذكار|اسمعني|سمعني|اقرأ لي|اقرالي/.test(text);
         if (looksRelated) {
           displayUserBubbleOnly(text);
           if (window.aiChatHistory) window.aiChatHistory.push({ role: "user", content: text });
@@ -17454,19 +17456,18 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       var hasTools = !!(firstMsg.tool_calls && firstMsg.tool_calls.length);
 
       if (!hasTools && (!firstText || firstText === "تجاهل")) {
-        // ── الموديل الصغير أحيانًا بيتلخبط ويرجّع "تجاهل" برضو مع رسايل قرآن/صلاة واضحة.
-        // لو الرسالة شكلها متعلقة، منسيبهاش تروح للمسار العادي (اللي هيرد "معنديش إمكانية تشغيل صوت")
-        // — بدل كده نديله فرصة تانية بنداء واحد إضافي بإصرار أوضح إنه ينفذ الأداة المناسبة ──
-        var looksRelated2 = /قرآن|القرآن|سوره|سورة|تلاوة|قارئ|شيخ|الأذان|أذان|صلاة|الصلاة/.test(text);
-        if (looksRelated2) {
-          try {
-            var retryMsgs = messages.concat([{ role: "user", content: "ركّز، الرسالة اللي قبل كده متعلقة فعلاً بالقرآن أو الصلاة — لازم تنادي الأداة المناسبة دلوقتي، ماتردّش 'تجاهل'." }]);
-            var retryMsg = await callAgentModel(key, retryMsgs, signal);
-            if (retryMsg && retryMsg.tool_calls && retryMsg.tool_calls.length) {
-              firstMsg = retryMsg; hasTools = true; firstText = (retryMsg.content && retryMsg.content.trim()) || "";
-            }
-          } catch (eRetry) {}
-        }
+        // ── الموديل الصغير أحيانًا بيتلخبط ويرجّع "تجاهل" مع رسايل واضحة (قرآن/صلاة/أي أداة
+        // تانية متاحة عنده). بدل ما نحصر الفرصة التانية دي على كلمات محددة بس (ده كان بيمنع
+        // فهم الطلبات غير المباشرة اللي مفيهاش كلمة زي "قرآن" أو "صلاة" حرفيًا)، بنديله فرصة
+        // تانية دايمًا في الحالة دي — ونسيب الموديل نفسه (اللي بيفهم القصد مش بس الكلمات) يقرر
+        // هل فعلاً فيه أداة تناسب الطلب ولا لأ ──
+        try {
+          var retryMsgs = messages.concat([{ role: "user", content: "راجع الرسالة اللي قبل كده كويس — لو قصد المستخدم فيها (حتى لو مش بكلمات صريحة) بيحتاج أي أداة من الأدوات المتاحة عندك (تشغيل قرآن، مواقيت صلاة، أو أي أداة تانية)، لازم تنادي الأداة المناسبة دلوقتي، ماتردّش 'تجاهل' إلا لو فعلاً مفيش أي أداة تناسب قصده." }]);
+          var retryMsg = await callAgentModel(key, retryMsgs, signal);
+          if (retryMsg && retryMsg.tool_calls && retryMsg.tool_calls.length) {
+            firstMsg = retryMsg; hasTools = true; firstText = (retryMsg.content && retryMsg.content.trim()) || "";
+          }
+        } catch (eRetry) {}
         if (!hasTools) {
           if (indicator) indicator.remove();
           return { handled: false };
