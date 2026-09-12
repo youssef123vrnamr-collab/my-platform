@@ -395,7 +395,8 @@ button, [onclick] {
     .message-sender { font-size: .8rem; font-weight: 600; color: #ec4899; margin-bottom: .3rem; }
     .message.sent .message-sender { color: #fff; opacity: .9; }
     .message-content { font-size: .95rem; line-height: 1.6; word-wrap: break-word; }
-    .message-image { max-width: 100%; border-radius: 10px; margin-top: .5rem; cursor: pointer; transition: transform .3s; }
+    .message-image { max-width: 100%; border-radius: 10px; margin-top: .5rem; cursor: pointer; transition: transform .3s; border: 1px solid rgba(255,255,255,.12); }
+    .message:has(> .message-image):not(:has(.message-content)) { background: transparent !important; border: none !important; box-shadow: none !important; padding: 3px !important; }
     .message-image:hover { transform: scale(1.02); }
     .voice-message { display: flex; align-items: center; gap: .5rem; background: rgba(0,0,0,.3); padding: .5rem .75rem; border-radius: 12px; margin-top: .3rem; min-width: 160px; max-width: 220px; direction: ltr; }
     .voice-play-btn { width: 32px; height: 32px; border: none; background: linear-gradient(135deg, #6366f1, #ec4899); color: #fff; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; transition: transform .2s; }
@@ -1040,12 +1041,16 @@ button, [onclick] {
     .pac-header::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:2px; background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1,#8b5cf6,#ec4899,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1); background-size:200% 100%; animation:navbarRainbow 4s linear infinite; pointer-events:none; }
     .chat-avatar{ box-shadow:0 6px 20px -6px rgba(99,102,241,.55), inset 0 1px 0 rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.18); }
 
-    /* Premium message bubbles */
-    .message{ box-shadow:var(--polish-shadow-md); transition:transform .25s ease, box-shadow .25s ease; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
-    .message:hover{ transform:translateY(-1px); box-shadow:0 14px 32px -14px rgba(0,0,0,.55), 0 6px 14px -4px rgba(139,92,246,.35); }
-    .message.sent{ background:linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.06)) !important; border:1px solid rgba(255,255,255,.1); }
-    .message.received{ background:linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.06)) !important; border:1px solid var(--polish-border-soft); }
+    /* Premium message bubbles — ظل خفيف بس من غير برواز واضح، عشان الرسالة تندمج مع خلفية
+       الشات مش تبان كصندوق منفصل حواليها */
+    .message{ box-shadow:0 2px 10px -6px rgba(0,0,0,.4); transition:transform .25s ease, box-shadow .25s ease; }
+    .message:hover{ transform:translateY(-1px); box-shadow:0 6px 16px -8px rgba(0,0,0,.45); }
+    .message.sent{ background:linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.05)) !important; border:none; }
+    .message.received{ background:rgba(255,255,255,.045) !important; border:none; }
     .message.system{ background:linear-gradient(135deg, rgba(99,102,241,.18), rgba(236,72,153,.14)) !important; border:1px solid rgba(99,102,241,.3); border-radius:999px !important; }
+    /* شات الذكاء الاصطناعي (Cosmos): رد المساعد ياخد تلوين سماوي/بنفسجي خفيف جدًا عشان
+       يتناسق مع هوية الشات ده تحديدًا، بدل اللون الأبيض العام اللي بيبان غريب حواليه */
+    #aiChatModal .message.received{ background:linear-gradient(135deg, rgba(6,182,212,.07), rgba(99,102,241,.05)) !important; }
     .message-sender{ letter-spacing:.02em; }
     .message-content{ line-height:1.7 !important; }
 
@@ -2717,11 +2722,19 @@ body {
   aspect-ratio: 1 / 1;
   border-radius: 12px;
   overflow: hidden;
-  border: none;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: none;
   cursor: pointer;
 }
 .ai-img-gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* ── لما الرسالة تبقى صورة/صور بس من غير أي نص، نشيل خلفية وبرواز الفقاعة نفسها —
+   الصورة تنزل شبه لوحدها، وبرواز رفيع جدًا حوالين الصورة نفسها بس (مش حوالين الفقاعة كلها) ── */
+.message:has(.ai-img-gallery):not(:has(.message-content)) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 3px !important;
+}
 
 /* ── أيقونات SVG بدل الإيموجي في الواجهة — بتورّث حجم ولون النص اللي حواليها ── */
 .cosmos-icon {
@@ -8512,44 +8525,49 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   font-size: .8rem;
   line-height: 1.7;
 }
-/* ── صندوق "خطوات التنفيذ" — نفس هيكل صندوق التفكير العميق بس بلون مميز (سماوي بدل بنفسجي)
-   عشان يتفرق بصريًا: ده ملخص خطوات فعلية اتنفذت، مش تفكير داخلي حر ──*/
-.cosmos-steps-log { border-color: rgba(6,182,212,.3); background: rgba(6,182,212,.05); }
-.cosmos-steps-log .cosmos-deep-think-toggle { color: #67e8f9; }
-.cosmos-steps-log .cosmos-deep-think-toggle i.fa-list-check { color: #22d3ee; }
+/* ── صندوق "خطوات التنفيذ" — بطاقة محايدة أنيقة (زي أدوات الذكاء الاصطناعي الاحترافية:
+   تعريف علوي خفيف باسم الموديل والوقت، وتحته بطاقة قابلة للطي فيها الخطوات الفعلية اللي حصلت،
+   من غير أرقام ولا ألوان صارخة — عشان تندمج مع أي رد بدل ما تبان كصندوق منفصل غريب ──*/
+.cosmos-steps-meta {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  color: #7d8590;
+  font-size: .72rem;
+  margin: .1rem .15rem .4rem;
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+.cosmos-steps-meta-dot { opacity: .55; }
+.cosmos-steps-log {
+  border: 1px solid rgba(255,255,255,.09);
+  background: rgba(255,255,255,.03);
+  border-radius: 12px;
+}
+.cosmos-steps-log .cosmos-deep-think-toggle { color: #d7dae0; font-weight: 600; padding: .6rem .8rem; }
+.cosmos-steps-log .cosmos-deep-think-toggle i.fa-list-check { color: #9aa3af; }
+.cosmos-steps-log .cosmos-deep-think-inner { padding: 0 .8rem .7rem; }
 .cosmos-step-item {
   display: flex;
-  align-items: flex-start;
-  gap: .5rem;
-  padding: .3rem 0;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-}
-.cosmos-step-item:last-child { border-bottom: none; }
-.cosmos-step-num {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: rgba(6,182,212,.18);
-  color: #67e8f9;
-  font-size: .68rem;
-  font-weight: 800;
-  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: .6rem;
+  padding: .42rem 0;
+  border-bottom: none;
 }
-/* ── أيقونة SVG لكل خطوة (بدل الإيموجي القديم) — بتتلون تلقائي مع الثيم السماوي بتاع الصندوق ── */
+/* ── أيقونة SVG لكل خطوة — رمادية محايدة هادية بدل الألوان الصارخة، بتاخد شكلها من نوع الخطوة ── */
 .cosmos-step-icon {
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #22d3ee;
+  color: #9aa3af;
 }
-.cosmos-step-icon svg { width: 14px; height: 14px; display: block; }
-.cosmos-step-text { flex: 1; }
+.cosmos-step-icon svg { width: 13px; height: 13px; display: block; }
+.cosmos-step-text { flex: 1; color: #b7bcc4; font-size: .8rem; line-height: 1.5; }
 
 /* ============================================================
    ✨ COSMOS PRO — تحسينات احترافية: تلوين الأكواد + بطاقات المرفقات
@@ -8680,12 +8698,14 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   overflow: hidden;
   border-radius: 12px;
   flex: 0 0 auto;
+  box-shadow: none;
+  border: 1px solid rgba(255,255,255,.12);
 }
 .ai-attach-thumb {
   width: 64px; height: 64px;
   object-fit: cover;
   display: block;
-  border-radius: 12px;
+  border-radius: 11px;
 }
 
 /* --- نافذة معاينة المرفق (صورة كاملة أو محتوى ملف نصي أو بطاقة معلومات) --- */

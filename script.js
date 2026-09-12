@@ -13377,6 +13377,7 @@ function slStopAllAnimations() {
       // قابل للفتح، زي ما بيحصل في أدوات الذكاء الاصطناعي اللي بتعرض خطواتها خطوة بخطوة. ──
       // ══════════════════════════════════════════════════════════════════
       var _cosmosStepsLog = [];
+      var _cosmosStepsStartTime = Date.now(); // ← لحساب مدة التنفيذ الفعلية وعرضها فوق صندوق الخطوات
       // ── أيقونات SVG بدل الإيموجي — كل خطوة بتاخد نوعها (type) فيتحدد شكل الأيقونة تلقائي،
       // النص نفسه بقى حر تمامًا وبيتبني من محتوى حقيقي (خطة الموديل، نتائج البحث، إلخ) مش تكست ثابت ──
       var _cosmosStepIcons = {
@@ -14431,15 +14432,21 @@ function slStopAllAnimations() {
           // — بيظهر بس لو فيه أكتر من خطوة حقيقية اتسجّلت، عشان ميبانش في الردود العادية البسيطة. ──
           var _stepsHtml = '';
           if (!_silentEdit && _cosmosStepsLog && _cosmosStepsLog.length >= 2) {
-            var _stepsListHtml = _cosmosStepsLog.map(function(s, si){
+            // ── سطر تعريف صغير فوق الصندوق (زي "Gemini • Running for 12s") — بيوضح مين نفّذ
+            // وقد إيه استغرق فعليًا، من غير ما يبقى جزء تقيل من التصميم ──
+            var _stepsElapsedSec = Math.max(1, Math.round((Date.now() - _cosmosStepsStartTime) / 1000));
+            var _stepsPersonaName = (persona && persona.name) ? persona.name : 'Cosmos';
+            var _stepsListHtml = _cosmosStepsLog.map(function(s){
               var _stType = (s && typeof s === 'object') ? s.type : 'default';
               var _stText = (s && typeof s === 'object') ? s.text : s;
-              var _stIcon = (typeof _cosmosStepIcons !== 'undefined' && _cosmosStepIcons[_stType]) ? _cosmosStepIcons[_stType] : '';
-              return '<div class="cosmos-step-item"><span class="cosmos-step-num">' + (si+1) + '</span>'
+              var _stIcon = (typeof _cosmosStepIcons !== 'undefined' && (_cosmosStepIcons[_stType] || _cosmosStepIcons.default)) || '';
+              return '<div class="cosmos-step-item">'
                 + (_stIcon ? '<span class="cosmos-step-icon">' + _stIcon + '</span>' : '')
                 + '<span class="cosmos-step-text">' + escapeHtml(String(_stText)) + '</span></div>';
             }).join('');
-            _stepsHtml = '<div class="cosmos-deep-think cosmos-steps-log">'
+            _stepsHtml = '<div class="cosmos-steps-meta">' + escapeHtml(_stepsPersonaName)
+              + ' <span class="cosmos-steps-meta-dot">•</span> استغرق ' + _stepsElapsedSec + ' ث</div>'
+              + '<div class="cosmos-deep-think cosmos-steps-log">'
               + '<button type="button" class="cosmos-deep-think-toggle" onclick="this.parentElement.classList.toggle(\'open\')">'
               + '<i class="fas fa-list-check"></i><span>خطوات التنفيذ (' + _cosmosStepsLog.length + ')</span><i class="fas fa-chevron-down cosmos-deep-think-chevron"></i>'
               + '</button>'
