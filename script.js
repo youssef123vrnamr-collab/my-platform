@@ -14227,12 +14227,7 @@ function slStopAllAnimations() {
           // ولا نوريه رسالة خطأ؛ بس نقفل صندوق التفكير بهدوء ونعرض إشارة إيقاف واضحة. ──
           if (typingEl && typingEl._cosmosStageTimer) clearInterval(typingEl._cosmosStageTimer);
           if (typingEl) typingEl.remove();
-          if (msgs) {
-            var edStopped = document.createElement('div');
-            edStopped.className = 'message received';
-            edStopped.innerHTML = '<div class="message-content" style="opacity:.7;font-style:italic">⏹️ تم إيقاف التفكير بواسطتك.</div>';
-            msgs.appendChild(edStopped); msgs.scrollTop = msgs.scrollHeight;
-          }
+          // ⏹️ إيقاف هادئ تمامًا: من غير إضافة أي رسالة للمحادثة
           return;
         }
         if (!_debugGroqDetail) _debugGroqDetail = String(errGroq && errGroq.message || errGroq).slice(0,150);
@@ -17516,14 +17511,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     } catch (eRoute) {
       if (indicator) indicator.remove();
       if (eRoute && eRoute.name === "AbortError") {
-        // المستخدم ضغط زرار الإيقاف بنفسه — نقفل بهدوء من غير رسالة خطأ ومن غير fallback
-        var msgsEl = document.getElementById("aiChatMessages");
-        if (msgsEl) {
-          var edStopped = document.createElement("div");
-          edStopped.className = "message received";
-          edStopped.innerHTML = '<div class="message-content" style="opacity:.7;font-style:italic">⏹️ تم إيقاف التفكير بواسطتك.</div>';
-          msgsEl.appendChild(edStopped); msgsEl.scrollTop = msgsEl.scrollHeight;
-        }
+        // ⏹️ إيقاف هادئ تمامًا: من غير إضافة أي رسالة للمحادثة
         return { handled: true, stopped: true };
       }
       console.warn("[صلاتي] تعذّر تشغيل الوكيل، هيتبعت المسار العادي:", eRoute);
