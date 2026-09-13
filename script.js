@@ -13446,8 +13446,10 @@ function slStopAllAnimations() {
 
       // ── سياق مكتبة الفيديوهات — يخلي الذكاء الاصطناعي عارف عدد الفيديوهات وأسماءها ومحتواها ──
       var _videoContextBlock = '';
-      var _videosForContext = (typeof videos !== 'undefined' && videos && videos.length) ? videos : null;
-      if (!_videosForContext) {
+      var _videoKeywords = ['فيديو', 'فيديوهات', 'الفيديوهات', 'مقطع', 'مقاطع', 'دروس المنصة', 'محتوى المنصة'];
+      var _asksAboutVideos = _videoKeywords.some(function(kw){ return userMsg.indexOf(kw) !== -1; });
+      var _videosForContext = (_asksAboutVideos && typeof videos !== 'undefined' && videos && videos.length) ? videos : null;
+      if (_asksAboutVideos && !_videosForContext) {
         // ── الكاش المحلي (videos[]) لسه فاضي — غالبًا الـ listener لسه ماوصلش، مش إن مفيش فيديوهات فعلاً.
         // بدل ما نسيب السياق فاضي ويقول الذكاء الاصطناعي "معنديش وصول لقاعدة البيانات"، نجيب نسخة سريعة
         // مرة واحدة (one-time fetch) مباشرة من Firestore عشان نضمن رقم حقيقي دايمًا ──
@@ -13470,8 +13472,10 @@ function slStopAllAnimations() {
 
       // ── سياق أخطاء الامتحانات — أكتر الأسئلة اللي الطلاب بيغلطوا فيها ──
       var _examContextBlock = '';
+      var _examKeywords = ['امتحان', 'امتحانات', 'اختبار', 'اختبارات', 'كويز', 'سؤال صعب', 'أسئلة صعبة', 'اسئلة صعبة', 'أخطاء الطلاب', 'اخطاء الطلاب', 'الأكتر غلط', 'الاكتر غلط'];
+      var _asksAboutExams = _examKeywords.some(function(kw){ return userMsg.indexOf(kw) !== -1; });
       try {
-        if (typeof exams !== 'undefined' && exams && exams.length && typeof examResults !== 'undefined' && examResults) {
+        if (_asksAboutExams && typeof exams !== 'undefined' && exams && exams.length && typeof examResults !== 'undefined' && examResults) {
           var _missStats = [];
           exams.forEach(function(ex){
             if (!ex.questions || !ex.questions.length) return;
@@ -13502,8 +13506,10 @@ function slStopAllAnimations() {
 
       // ── سياق الكورسات — يخلي الذكاء الاصطناعي عارف كل كورس، وصفه، سعره، والفيديوهات اللي جواه ──
       var _courseContextBlock = '';
+      var _courseKeywords = ['كورس', 'كورسات', 'الكورسات', 'دورة', 'دورات', 'الدورة', 'الدورات', 'سعر', 'اسعار', 'أسعار', 'اشتراك', 'شراء', 'اشترك'];
+      var _asksAboutCourses = _courseKeywords.some(function(kw){ return userMsg.indexOf(kw) !== -1; });
       try {
-        if (typeof paidCoursesData !== 'undefined' && paidCoursesData && paidCoursesData.length) {
+        if (_asksAboutCourses && typeof paidCoursesData !== 'undefined' && paidCoursesData && paidCoursesData.length) {
           var _cList = paidCoursesData.slice(0, 60).map(function(c, ci){
             var _priceTxt = (c.price && c.price > 0) ? (c.price + ' جنيه') : 'مجاني';
             var _descTxt = c.description ? (' — الوصف: ' + String(c.description).slice(0, 200)) : '';
@@ -13536,8 +13542,10 @@ function slStopAllAnimations() {
 
       // ── سياق أخبار الكون (صفحة "أخبار الكون" في القائمة) — محتوى عام غير حساس، متاح لأي مستخدم ──
       var _newsContextBlock = '';
+      var _newsKeywords = ['خبر', 'أخبار', 'اخبار', 'جديد في الفضاء', 'آخر الأخبار', 'اخر الاخبار'];
+      var _asksAboutNews = _newsKeywords.some(function(kw){ return userMsg.indexOf(kw) !== -1; });
       try {
-        if (typeof window.COSMOS_DATA !== 'undefined' && window.COSMOS_DATA && window.COSMOS_DATA.news && window.COSMOS_DATA.news.items && window.COSMOS_DATA.news.items.length) {
+        if (_asksAboutNews && typeof window.COSMOS_DATA !== 'undefined' && window.COSMOS_DATA && window.COSMOS_DATA.news && window.COSMOS_DATA.news.items && window.COSMOS_DATA.news.items.length) {
           var _newsItems = window.COSMOS_DATA.news.items.slice(0, 20).map(function(n, ni){
             return (ni + 1) + '. [' + (n.tag || '') + '] ' + n.title + ' — ' + n.text;
           }).join('\n');
