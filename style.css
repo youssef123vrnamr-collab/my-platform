@@ -8251,6 +8251,62 @@ meta[name="theme-color"] { content: "#0f0a1a"; }
   display: block;
 }
 
+/* ── قائمة الملفات بشكل "بطاقات" منفصلة (زي أدوات الـ AI الاحترافية: كل ملف
+   سطر لوحده، دوس عليه تفتح معاينة تلقائي، وقائمة ⋮ فيها نسخ/تنزيل/مشاركة) ── */
+.ai-code-artifact-list { display: flex; flex-direction: column; }
+.ai-code-artifact-item {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .7rem .8rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: background .15s ease;
+  position: relative;
+}
+.ai-code-artifact-item:last-child { border-bottom: none; }
+.ai-code-artifact-item:hover, .ai-code-artifact-item.active { background: rgba(255,255,255,.05); }
+.ai-code-artifact-icon {
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.06); color: #fff; font-size: .82rem;
+}
+.ai-code-artifact-icon.ai-code-dot-html { color: #f97316; }
+.ai-code-artifact-icon.ai-code-dot-css  { color: #38bdf8; }
+.ai-code-artifact-icon.ai-code-dot-js   { color: #facc15; }
+.ai-code-artifact-icon.ai-code-dot-json { color: #a3e635; }
+.ai-code-artifact-icon.ai-code-dot-py   { color: #22d3ee; }
+.ai-code-artifact-meta { flex: 1; min-width: 0; }
+.ai-code-artifact-name { font-size: .82rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ai-code-artifact-sub { font-size: .68rem; color: rgba(255,255,255,.45); margin-top: .1rem; }
+.ai-code-artifact-chevron { font-size: .7rem; color: rgba(255,255,255,.4); transition: transform .2s ease; flex-shrink: 0; }
+.ai-code-artifact-chevron.open { transform: rotate(180deg); }
+.ai-code-artifact-actions { position: relative; flex-shrink: 0; }
+.ai-code-artifact-menu-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: none;
+  background: transparent; color: rgba(255,255,255,.55);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.ai-code-artifact-menu-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+.ai-code-artifact-menu {
+  display: none;
+  position: absolute; top: 34px; left: 0; z-index: 20;
+  background: #1f1a30; border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; overflow: hidden; min-width: 150px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.4);
+}
+.ai-code-artifact-menu.active { display: block; }
+.ai-code-artifact-menu button {
+  display: flex; align-items: center; gap: .5rem; width: 100%;
+  padding: .55rem .75rem; background: none; border: none; color: #e5e7eb;
+  font-size: .76rem; text-align: left; cursor: pointer;
+}
+.ai-code-artifact-menu button:hover { background: rgba(255,255,255,.08); }
+.ai-code-artifact-preview { display: none; max-width: 100%; box-sizing: border-box; background: rgba(0,0,0,.15); }
+.ai-code-artifact-preview.active { display: block; }
+.ai-code-artifact-preview .ai-code-run-frame { display: block; margin: .5rem; width: calc(100% - 1rem); }
+.ai-code-artifact-preview .ai-code-pro-pre { margin: 0; max-height: 320px; }
+
 @keyframes cosmosDotBlink {
   0%, 100% { opacity: .25; }
   50%      { opacity: 1; }
@@ -9155,13 +9211,15 @@ html body button:not([class]):not([style*="background"]) {
   50%     { box-shadow: 0 0 0 6px rgba(99,102,241,0); }
 }
 
-/* --- زر اختيار الموديل: شكل كبسولة زجاجية --- */
+/* --- زر اختيار الموديل: شكل كبسولة زجاجية، اسم الموديل بالأبيض + سهم برتقالي لفوق --- */
 #aiChatModal .ai-model-switch-btn {
   background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.14)) !important;
   border: 1px solid rgba(139,92,246,.35) !important;
   backdrop-filter: blur(8px);
   transition: transform .2s ease, box-shadow .2s ease;
 }
+#aiChatModal .ai-model-switch-btn span { color: #fff !important; }
+#aiChatModal .ai-model-switch-arrow { color: #f59e0b !important; font-size: .7rem !important; flex-shrink: 0; }
 #aiChatModal .ai-model-switch-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px -6px rgba(139,92,246,.5);

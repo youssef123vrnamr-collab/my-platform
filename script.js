@@ -11709,7 +11709,7 @@ function slStopAllAnimations() {
       return '<div class="persona-card ' + (isSel ? 'selected' : '') + '" id="pcard_' + p.id + '" onclick="selectPersonaCard(\'' + p.id + '\')" ontouchend="event.preventDefault();selectPersonaCard(\'' + p.id + '\')">'
         + '<span class="persona-card-check"><i class="fas fa-check"></i></span>'
         + '<span class="persona-card-text">'
-        + '<span class="persona-card-toprow"><span class="persona-lang-badge">' + p.badge + '</span><span class="persona-card-name">' + p.emoji + ' ' + p.name + '</span></span>'
+        + '<span class="persona-card-toprow"><span class="persona-lang-badge">' + p.badge + '</span><span class="persona-card-name">' + p.name + '</span></span>'
         + '<span class="persona-card-desc">' + p.desc + '</span>'
         + '</span>'
         + '</div>';
@@ -15692,7 +15692,8 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       }).join('');
     }
 
-    var tabsHtml = '', panelsHtml = '', usedNames = {};
+    var itemsHtml = '', usedNames = {};
+    var hasHtmlOverall = blocks.some(function(b){ return b.lang === 'html' || b.lang === 'htm' || /<!DOCTYPE|<html[\s>]/i.test(b.code); });
     blocks.forEach(function(b, i){
       var ext = EXT_MAP[b.lang] || 'txt';
       var label = LABEL_MAP[b.lang] || (b.lang ? b.lang.toUpperCase() : 'TXT');
@@ -15701,36 +15702,38 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       if (usedNames[filename]) { usedNames[filename]++; filename = baseName + usedNames[filename] + '.' + ext; }
       else { usedNames[filename] = 1; }
       b.filename = filename;
-      tabsHtml += '<button type="button" class="ai-code-tab'+(i===0?' active':'')+'" data-gid="'+gid+'" data-idx="'+i+'" onclick="switchAICodeTab(\''+gid+'\','+i+')">'
-                + '<span class="ai-code-tab-dot ai-code-dot-'+ext+'"></span>' + label + '</button>';
       var hljsLang = HLJS_LANG_MAP[b.lang] || b.lang || 'plaintext';
       var lineCount = (b.code.match(/\n/g) || []).length + 1;
-      panelsHtml += '<div class="ai-code-panel'+(i===0?' active':'')+'" id="cfPanel_'+gid+'_'+i+'">'
-                  + '<div class="ai-code-panel-bar"><span class="ai-code-filename" dir="ltr"><i class="fas fa-code"></i> '+filename+'</span>'
-                  + '<span class="ai-code-linecount">'+lineCount+' سطر</span>'
-                  + '<button type="button" class="ai-code-copy-btn" onclick="copyAICodeBlock(\''+gid+'\','+i+',this)"><i class="fas fa-copy"></i> نسخ</button></div>'
-                  + '<pre class="ai-code-pro-pre"><code class="hljs language-'+hljsLang+'">'+_escHtmlAI(b.code)+'</code></pre></div>';
+
+      itemsHtml += '<div class="ai-code-artifact-item" data-gid="'+gid+'" data-idx="'+i+'" onclick="toggleAICodeArtifactPreview(\''+gid+'\','+i+')">'
+        + '<div class="ai-code-artifact-icon ai-code-dot-'+ext+'"><i class="fas fa-code"></i></div>'
+        + '<div class="ai-code-artifact-meta">'
+        + '<div class="ai-code-artifact-name" dir="ltr">'+filename+'</div>'
+        + '<div class="ai-code-artifact-sub">'+label+' · '+lineCount+' سطر</div>'
+        + '</div>'
+        + '<div class="ai-code-artifact-actions">'
+        + '<button type="button" class="ai-code-artifact-menu-btn" onclick="event.stopPropagation();toggleAICodeMenu(\''+gid+'\','+i+',this)"><i class="fas fa-ellipsis-vertical"></i></button>'
+        + '<div class="ai-code-artifact-menu" id="cfMenu_'+gid+'_'+i+'">'
+        + '<button type="button" onclick="event.stopPropagation();copyAICodeBlock(\''+gid+'\','+i+',this);closeAICodeMenus()"><i class="fas fa-copy"></i> نسخ الكود</button>'
+        + '<button type="button" onclick="event.stopPropagation();downloadAICodeFile(\''+gid+'\','+i+');closeAICodeMenus()"><i class="fas fa-download"></i> تنزيل الملف</button>'
+        + '<button type="button" onclick="event.stopPropagation();shareAICodeFile(\''+gid+'\','+i+');closeAICodeMenus()"><i class="fas fa-share-nodes"></i> مشاركة</button>'
+        + '</div></div>'
+        + '<i class="fas fa-chevron-down ai-code-artifact-chevron" id="cfChevron_'+gid+'_'+i+'"></i>'
+        + '</div>'
+        + '<div class="ai-code-artifact-preview" id="cfPreview_'+gid+'_'+i+'"></div>';
     });
 
-    var hasHtml = blocks.some(function(b){ return b.lang === 'html' || b.lang === 'htm' || /<!DOCTYPE|<html[\s>]/i.test(b.code); });
-    var runBtn = hasHtml
-      ? '<button type="button" class="ai-code-download-btn ai-code-run-btn" onclick="toggleAICodeRun(\''+gid+'\', this)"><i class="fas fa-play"></i> شغّل المعاينة</button>'
-      : '';
-
-    var footer = '<div class="ai-code-file-footer">'
-      + runBtn
-      + '<button type="button" class="ai-code-download-btn" onclick="downloadAICodeFile(\''+gid+'\', window.__aiCodeActiveIdx_'+gid+'||0)"><i class="fas fa-download"></i> تنزيل هذا الملف</button>'
-      + (blocks.length > 1 ? '<button type="button" class="ai-code-download-btn ai-code-download-all" onclick="downloadAllAICodeFiles(\''+gid+'\')"><i class="fas fa-file-archive"></i> تنزيل كل الملفات ('+blocks.length+')</button>' : '')
-      + '</div>'
+    var footer = (blocks.length > 1 ? '<div class="ai-code-file-footer">'
+      + '<button type="button" class="ai-code-download-btn ai-code-download-all" onclick="downloadAllAICodeFiles(\''+gid+'\')"><i class="fas fa-file-archive"></i> تنزيل كل الملفات ('+blocks.length+')</button>'
+      + '</div>' : '')
       + '<div class="ai-code-rate-bar" data-gid="'+gid+'">'
       + '<span class="ai-code-rate-label">الكود ده عجبك؟</span>'
       + '<button type="button" class="ai-code-rate-btn ai-code-rate-good" onclick="rateAICodeGood(\''+gid+'\', this)" title="عجبني — حافظ على المستوى ده"><i class="fas fa-thumbs-up"></i></button>'
       + '<button type="button" class="ai-code-rate-btn ai-code-rate-bad" onclick="rateAICodeBad(\''+gid+'\', this)" title="مش عاجبني — امسحه"><i class="fas fa-thumbs-down"></i></button>'
       + '</div>';
 
-    return '<div class="ai-code-file-card" data-gid="'+gid+'">'
-         + '<div class="ai-code-file-tabs">'+tabsHtml+'</div>'
-         + '<div class="ai-code-file-panels">'+panelsHtml+'</div>'
+    return '<div class="ai-code-file-card" data-gid="'+gid+'" data-has-html="'+(hasHtmlOverall?'1':'0')+'">'
+         + '<div class="ai-code-artifact-list">'+itemsHtml+'</div>'
          + footer
          + '</div>';
   }
@@ -15845,36 +15848,67 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   };
 
 
-  window.toggleAICodeRun = function(gid, btnEl){
+  // ── فتح/قفل معاينة ملف واحد جوه بطاقة الأكواد: لو المجموعة فيها HTML، أي ملف
+  // (حتى CSS أو JS) بيفتح نفس المعاينة الحية المدمجة زي أدوات الـ AI الاحترافية؛ لو مفيش
+  // HTML خالص، بيعرض بس الكود ملوّن جوه نفس المكان ──
+  window.toggleAICodeArtifactPreview = function(gid, idx){
     var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
     if (!card) return;
-    var existing = card.querySelector('.ai-code-run-frame-wrap');
-    if (existing) {
-      existing.remove();
-      if (btnEl) btnEl.innerHTML = '<i class="fas fa-play"></i> شغّل المعاينة';
-      return;
-    }
+    var item = card.querySelector('.ai-code-artifact-item[data-idx="'+idx+'"]');
+    var previewEl = document.getElementById('cfPreview_'+gid+'_'+idx);
+    var chevron = document.getElementById('cfChevron_'+gid+'_'+idx);
+    if (!previewEl) return;
+    var isOpen = previewEl.classList.contains('active');
+    // نقفل أي معاينة تانية مفتوحة جوه نفس الكارت الأول (زي أدوات الـ AI: معاينة واحدة في المرة)
+    card.querySelectorAll('.ai-code-artifact-preview.active').forEach(function(p){ p.classList.remove('active'); p.innerHTML = ''; });
+    card.querySelectorAll('.ai-code-artifact-chevron').forEach(function(c){ c.classList.remove('open'); });
+    card.querySelectorAll('.ai-code-artifact-item.active').forEach(function(it){ it.classList.remove('active'); });
+    if (isOpen) return; // كان مفتوح وقفلناه فوق، خلاص
     var group = window.__aiCodeGroups[gid];
     if (!group) return;
-    var doc = _buildRunnableHTML(group);
-    var wrap = document.createElement('div');
-    wrap.className = 'ai-code-run-frame-wrap';
-    var iframe = document.createElement('iframe');
-    iframe.className = 'ai-code-run-frame';
-    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock');
-    iframe.srcdoc = doc;
-    wrap.appendChild(iframe);
-    card.appendChild(wrap);
-    if (btnEl) btnEl.innerHTML = '<i class="fas fa-stop"></i> إخفاء المعاينة';
-    setTimeout(function(){ wrap.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 80);
+    var hasHtml = card.dataset.hasHtml === '1';
+    if (hasHtml) {
+      var doc = _buildRunnableHTML(group);
+      var iframe = document.createElement('iframe');
+      iframe.className = 'ai-code-run-frame';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock');
+      iframe.srcdoc = doc;
+      previewEl.appendChild(iframe);
+    } else {
+      var b = group[idx];
+      var hljsLang = HLJS_LANG_MAP[b.lang] || b.lang || 'plaintext';
+      previewEl.innerHTML = '<pre class="ai-code-pro-pre"><code class="hljs language-'+hljsLang+'">'+_escHtmlAI(b.code)+'</code></pre>';
+      if (window.hljs) { try { window.hljs.highlightElement(previewEl.querySelector('code')); } catch(e){} }
+    }
+    previewEl.classList.add('active');
+    if (chevron) chevron.classList.add('open');
+    if (item) item.classList.add('active');
+    setTimeout(function(){ previewEl.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 80);
   };
 
-  window.switchAICodeTab = function(gid, idx){
-    var card = document.querySelector('.ai-code-file-card[data-gid="'+gid+'"]');
-    if (!card) return;
-    card.querySelectorAll('.ai-code-tab').forEach(function(t){ t.classList.toggle('active', +t.dataset.idx === idx); });
-    card.querySelectorAll('.ai-code-panel').forEach(function(p, i){ p.classList.toggle('active', i === idx); });
-    window['__aiCodeActiveIdx_' + gid] = idx;
+  // ── قائمة الثلاث نقط المنبثقة لكل ملف — نقفل أي قائمة تانية مفتوحة قبل ما نفتح دي ──
+  window.toggleAICodeMenu = function(gid, idx, btnEl){
+    var menu = document.getElementById('cfMenu_'+gid+'_'+idx);
+    if (!menu) return;
+    var wasOpen = menu.classList.contains('active');
+    closeAICodeMenus();
+    if (!wasOpen) menu.classList.add('active');
+  };
+  window.closeAICodeMenus = function(){
+    document.querySelectorAll('.ai-code-artifact-menu.active').forEach(function(m){ m.classList.remove('active'); });
+  };
+  document.addEventListener('click', function(){ window.closeAICodeMenus(); });
+
+  window.shareAICodeFile = function(gid, idx){
+    var group = window.__aiCodeGroups[gid];
+    if (!group || !group[idx]) return;
+    var b = group[idx];
+    if (navigator.share) {
+      navigator.share({ title: b.filename || 'ملف كود', text: b.code }).catch(function(){});
+    } else {
+      window.copyAICodeBlock(gid, idx, null);
+      if (typeof showToast === 'function') showToast('📋 المشاركة المباشرة مش متاحة على متصفحك، فنسخنا الكود بدل منها');
+    }
   };
 
   window.copyAICodeBlock = function(gid, idx, btnEl){
