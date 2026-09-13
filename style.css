@@ -9042,9 +9042,9 @@ html body button:not([class]):not([style*="background"]) {
    ✨ AI CHAT — REDESIGN & ANIMATIONS (تحسين شكل شات الذكاء الاصطناعي)
    ============================================================ */
 
-/* --- خلفية الهيدر: سديم متحرك هادئ --- */
+/* --- خلفية الهيدر: تدرج هادئ ومتناسق (بنفسجي-إندجو) بتباين واضح مع النص --- */
 #aiChatModal .chat-header {
-  background: linear-gradient(120deg, rgba(6,182,212,.28), rgba(99,102,241,.22) 45%, rgba(139,92,246,.22) 100%) !important;
+  background: linear-gradient(120deg, rgba(15,10,30,.55), rgba(79,70,229,.30) 45%, rgba(139,92,246,.30) 100%) !important;
   background-size: 220% 220% !important;
   animation: aiNebulaDrift 10s ease-in-out infinite !important;
   position: relative;
@@ -9066,7 +9066,7 @@ html body button:not([class]):not([style*="background"]) {
   content: '';
   position: absolute; inset: -5px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, #06b6d4, #6366f1, #a855f7, #06b6d4);
+  background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #3b82f6, #6366f1);
   animation: aiRingSpin 3.5s linear infinite;
   opacity: .85;
 }
@@ -9076,10 +9076,11 @@ html body button:not([class]):not([style*="background"]) {
   border-radius: 50%;
   background: #0f0a1a;
 }
-.ai-avatar-ring .chat-avatar {
+#aiChatModal .ai-avatar-ring .chat-avatar {
   position: relative; z-index: 1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
   animation: aiAvatarBreathe 2.6s ease-in-out infinite;
-  box-shadow: 0 0 18px rgba(6,182,212,.55) !important;
+  box-shadow: 0 0 18px rgba(139,92,246,.55) !important;
 }
 @keyframes aiRingSpin { to { transform: rotate(360deg); } }
 @keyframes aiAvatarBreathe {
@@ -9087,13 +9088,17 @@ html body button:not([class]):not([style*="background"]) {
   50%     { transform: scale(1.06); }
 }
 
-/* --- عنوان + حالة الاتصال --- */
+/* --- اسم المساعد: خط واضح وثابت (مش gradient-text عشان يفضل مقروء في كل الأجهزة) --- */
 #aiChatModal .chat-header-text h3 {
+  font-family: 'Cairo', Tahoma, Arial, sans-serif;
   font-weight: 800;
-  background: linear-gradient(90deg,#fff,#a5f3fc);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-size: 1.15rem;
+  letter-spacing: .3px;
+  color: #f8fafc !important;
+  text-shadow: 0 0 14px rgba(139,92,246,.55), 0 1px 2px rgba(0,0,0,.35);
 }
 #aiChatModal .online-dot {
+
   position: relative;
 }
 #aiChatModal .online-dot::before {
@@ -9118,15 +9123,15 @@ html body button:not([class]):not([style*="background"]) {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 #aiChatModal .message.received {
-  background: linear-gradient(135deg, rgba(6,182,212,.10), rgba(99,102,241,.06)) !important;
+  background: linear-gradient(135deg, rgba(99,102,241,.10), rgba(139,92,246,.06)) !important;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-radius: 16px 16px 16px 4px !important;
 }
 #aiChatModal .message.sent {
-  background: linear-gradient(135deg,#06b6d4,#6366f1) !important;
+  background: linear-gradient(135deg,#6366f1,#8b5cf6) !important;
   border-radius: 16px 16px 4px 16px !important;
-  box-shadow: 0 8px 22px -8px rgba(6,182,212,.55) !important;
+  box-shadow: 0 8px 22px -8px rgba(99,102,241,.55) !important;
 }
 
 /* --- منطقة الإدخال: توهج عند التركيز --- */
@@ -9134,33 +9139,33 @@ html body button:not([class]):not([style*="background"]) {
   transition: box-shadow .3s ease, border-color .3s ease !important;
 }
 #aiChatModal .unified-input-wrapper:focus-within {
-  border-color: rgba(6,182,212,.55) !important;
-  box-shadow: 0 0 0 3px rgba(6,182,212,.18), 0 8px 24px -10px rgba(6,182,212,.45) !important;
+  border-color: rgba(139,92,246,.55) !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,.18), 0 8px 24px -10px rgba(99,102,241,.45) !important;
 }
 
 /* --- زر الإرسال: نبضة عند الاستعداد + ارتداد عند الضغط --- */
 #aiChatModal .unified-send-btn.ai-color {
-  background: linear-gradient(135deg,#06b6d4,#6366f1) !important;
+  background: linear-gradient(135deg,#6366f1,#8b5cf6) !important;
   transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .25s !important;
   animation: aiSendPulse 2.4s ease-in-out infinite;
 }
 #aiChatModal .unified-send-btn.ai-color:hover { transform: scale(1.08) rotate(-8deg); }
 #aiChatModal .unified-send-btn.ai-color:active { transform: scale(.9); }
 @keyframes aiSendPulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(6,182,212,.45); }
-  50%     { box-shadow: 0 0 0 6px rgba(6,182,212,0); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,.45); }
+  50%     { box-shadow: 0 0 0 6px rgba(99,102,241,0); }
 }
 
 /* --- زر اختيار الموديل: شكل كبسولة زجاجية --- */
 #aiChatModal .ai-model-switch-btn {
-  background: linear-gradient(135deg, rgba(6,182,212,.18), rgba(99,102,241,.14)) !important;
-  border: 1px solid rgba(6,182,212,.35) !important;
+  background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(139,92,246,.14)) !important;
+  border: 1px solid rgba(139,92,246,.35) !important;
   backdrop-filter: blur(8px);
   transition: transform .2s ease, box-shadow .2s ease;
 }
 #aiChatModal .ai-model-switch-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px -6px rgba(6,182,212,.5);
+  box-shadow: 0 6px 16px -6px rgba(139,92,246,.5);
 }
 
 /* --- زر فتح الشات العائم: تحويم خفيف مستمر --- */
@@ -9175,5 +9180,5 @@ html body button:not([class]):not([style*="background"]) {
 
 /* --- سكرول بار مطابق للثيم داخل شات الذكاء الاصطناعي --- */
 #aiChatModal .chat-messages::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg,#06b6d4,#6366f1) !important;
+  background: linear-gradient(180deg,#6366f1,#8b5cf6) !important;
 }
