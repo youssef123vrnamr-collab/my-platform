@@ -9020,12 +9020,11 @@ html body button:not([class]):not([style*="background"]) {
 .pq-toggle input:checked + .pq-toggle-slider::before { transform: translateX(-20px); }
 
 .quran-player-bar {
-  position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%) translateY(120%);
-  width: min(94vw, 420px); display: flex; align-items: center; gap: .75rem;
-  background: linear-gradient(135deg, rgba(15,10,26,.97), rgba(30,20,50,.97));
-  border: 1px solid rgba(139,92,246,.35); border-radius: 16px; padding: .6rem .9rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,.5); z-index: 9999; opacity: 0;
-  transition: transform .25s ease, opacity .25s ease;
+  /* المستخدم طلب صراحة إن مشغل القرآن يبقى مخفي تمامًا، من غير أي واجهة أو زرار
+     ظاهر في المنصة — التحكم كله (تشغيل/إيقاف/تغيير سرعة) بيتم بس عن طريق الشات
+     مع الذكاء الاصطناعي. سيبنا كل منطق التشغيل والحالة زي ما هو، وبس منعنا ظهور
+     الشريط نفسه بصريًا. */
+  display: none !important;
 }
 .quran-player-bar.active { transform: translateX(-50%) translateY(0); opacity: 1; }
 .qpb-icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#10b981,#06b6d4); color: #fff; font-size: 1rem; }

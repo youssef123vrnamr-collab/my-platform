@@ -16833,6 +16833,29 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   // ============================================================
   var _audioEl = null;
 
+  // ── فتح إذن التشغيل التلقائي (autoplay unlock) — المتصفحات (خصوصًا على الموبايل)
+  // بترفض أي audio.play() برمجي إلا لو حصل جوه نفس اللفة المتزامنة لحدث تفاعل حقيقي
+  // من المستخدم (تاب/كليك)، وده مستحيل يتحقق هنا لأن التشغيل الفعلي بيجي بعد كذا
+  // نداء شبكة (Groq) يعني بعد await كتير. الحل القياسي: نعمل عنصر Audio واحد ثابت
+  // ونـ"نفتحه" بلعبة تشغيل/إيقاف فورية جوه نفس حدث التاب (زرار الإرسال) *قبل* أي
+  // await، وبعدين نعيد استخدام نفس العنصر ده بس بنغيّر مصدره لما السورة الفعلية
+  // تتحدد — أغلب المتصفحات بتفضل سامحة لنفس العنصر بمجرد ما يتشغل أول مرة بإذن حقيقي. ──
+  function _ensurePersistentAudio() {
+    if (!_audioEl) { _audioEl = new Audio(); _audioEl.playsInline = true; }
+    return _audioEl;
+  }
+  window.__unlockQuranAudioGesture = function () {
+    try {
+      var a = _ensurePersistentAudio();
+      var wasMuted = a.muted;
+      a.muted = true;
+      var p = a.play();
+      if (p && p.catch) p.catch(function () {});
+      a.pause();
+      a.muted = wasMuted;
+    } catch (e) {}
+  };
+
   function ensurePlayerBar() {
     var bar = document.getElementById("quranPlayerBar");
     if (bar) return bar;
@@ -16893,8 +16916,11 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     var item = _quranQueue[_quranQueueIdx];
     var reciter = _quranQueueReciter;
     var url = "https://cdn.islamic.network/quran/audio-surah/128/" + reciter.id + "/" + item.id + ".mp3";
-    if (_audioEl) { try { _audioEl.pause(); } catch (e) {} }
-    _audioEl = new Audio(url);
+    // ── بنستخدم نفس عنصر الـ Audio اللي اتفتح إذنه على أول تاب من المستخدم (مش عنصر
+    // جديد)، عشان إذن التشغيل التلقائي المكتسب يفضل شغال حتى بعد كل نداءات الشبكة ──
+    _audioEl = _ensurePersistentAudio();
+    try { _audioEl.pause(); } catch (e) {}
+    _audioEl.src = url;
     _audioEl.playbackRate = _quranQueueSpeed || 1;
     var bar = ensurePlayerBar();
     bar.classList.add("active");
@@ -16913,7 +16939,7 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       stopQuran();
     };
     _audioEl.play().catch(function () {
-      if (typeof showToast === "function") showToast("⚠️ اضغط زرار التشغيل في الشريط لبدء الصوت");
+      if (typeof showToast === "function") showToast("⚠️ المتصفح منع التشغيل التلقائي، اكتب أي رسالة تانية في الشات (حتى لو كلمة بسيطة) وبعدها جرّب تطلب التشغيل تاني");
     });
   }
 
@@ -17554,6 +17580,9 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
     window.__prayerQuranHooked = true;
     var _prevSend = window.sendAIMessage;
     window.sendAIMessage = async function (injectedMsg, _fromQueueDrain) {
+      // ── لازم يكون أول سطر فعلي هنا، قبل أي await، عشان يفضل جوه نفس حدث تفاعل
+      // المستخدم (تاب زرار الإرسال) ويقدر "يفتح" إذن تشغيل الصوت للمشغل المخفي ──
+      if (typeof window.__unlockQuranAudioGesture === "function") window.__unlockQuranAudioGesture();
       if (!injectedMsg && !_fromQueueDrain) {
         var inp = document.getElementById("aiChatInput");
         var raw = inp ? inp.value.trim() : "";
