@@ -1081,8 +1081,8 @@ async function isAdminUser(userId) {
   };
 
   // ========== User Data Management ==========
-  async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; try { if (data.aiMemory && Array.isArray(data.aiMemory.chatHistory) && data.aiMemory.chatHistory.length) { window.aiChatHistory = data.aiMemory.chatHistory; window.aiSessionDigest = Array.isArray(data.aiMemory.sessionDigest) ? data.aiMemory.sessionDigest : []; try { localStorage.setItem('cosmos_ai_chat_history', JSON.stringify(window.aiChatHistory.slice(-80))); localStorage.setItem('cosmos_ai_session_digest', JSON.stringify(window.aiSessionDigest.slice(-12))); } catch(eCacheAIRestore) {} } } catch(eAIRestore) { console.error("Error restoring AI memory:", eAIRestore); } return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
-  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; try { if (window.aiChatHistory && window.aiChatHistory.length) { data.aiMemory = { chatHistory: window.aiChatHistory.slice(-80), sessionDigest: (window.aiSessionDigest || []).slice(-12) }; } } catch(eAISave) { console.error("Error preparing AI memory for save:", eAISave); } data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
+  async function loadUserDataFromFirebase(userId) { try { const userDoc = await db.collection("user_progress").doc(userId).get(); if (userDoc.exists) { const data = userDoc.data(); if (data.username) currentUser = data.username; if (data.phone) currentUserPhone = data.phone; if (data.voiceSettings) voiceSettings = data.voiceSettings; if (data.lastWatched) { lastWatchedData = data.lastWatched; setTimeout(() => checkForResume(), 1000); } if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); window._userProfileExtra = { photoUrl: data.photoUrl || "", nationality: data.nationality || "", country: data.country || "" }; try { if (data.aiMemory && Array.isArray(data.aiMemory.chatHistory) && data.aiMemory.chatHistory.length) { window.aiChatHistory = data.aiMemory.chatHistory; window.aiSessionDigest = Array.isArray(data.aiMemory.sessionDigest) ? data.aiMemory.sessionDigest : []; try { localStorage.setItem('cosmos_ai_chat_history', JSON.stringify(window.aiChatHistory.slice(-80))); localStorage.setItem('cosmos_ai_session_digest', JSON.stringify(window.aiSessionDigest.slice(-30))); } catch(eCacheAIRestore) {} } } catch(eAIRestore) { console.error("Error restoring AI memory:", eAIRestore); } return true; } } catch (e) { console.error("Error loading user data:", e); } return false; }
+  async function saveUserDataToFirebase(userId) { if (!userId) return; try { const data = {}; if (currentUser) data.username = currentUser; if (currentUserPhone) data.phone = currentUserPhone; if (voiceSettings) data.voiceSettings = voiceSettings; if (lastWatchedData) data.lastWatched = lastWatchedData; try { if (window.aiChatHistory && window.aiChatHistory.length) { data.aiMemory = { chatHistory: window.aiChatHistory.slice(-80), sessionDigest: (window.aiSessionDigest || []).slice(-30) }; } } catch(eAISave) { console.error("Error preparing AI memory for save:", eAISave); } data.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); await db.collection("user_progress").doc(userId).set(data, { merge: true }); if (currentUser) localStorage.setItem("falak_username", currentUser); if (currentUserPhone) localStorage.setItem("falak_userphone", currentUserPhone); } catch (e) { console.error("Error saving user data:", e); } }
   async function saveWatchProgressToFirebase(userId, videoId, currentTime, duration) { if (!userId || !videoId) return; try { const watchData = { videoId, title: videos.find(v => v.id === videoId)?.title || "", currentTime, duration, timestamp: Date.now() }; await db.collection("user_progress").doc(userId).set({ lastWatched: watchData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); lastWatchedData = watchData; } catch (e) { console.error("Error saving watch progress:", e); } }
 
   // ====== تسجيل مشاهدة فيديو (موحّد لكل أنواع الفيديوهات) ======
@@ -12297,7 +12297,7 @@ function slStopAllAnimations() {
   function _persistAICosmosMemory() {
     try {
       if (window.aiChatHistory) localStorage.setItem('cosmos_ai_chat_history', JSON.stringify(window.aiChatHistory.slice(-80)));
-      if (window.aiSessionDigest) localStorage.setItem('cosmos_ai_session_digest', JSON.stringify(window.aiSessionDigest.slice(-12)));
+      if (window.aiSessionDigest) localStorage.setItem('cosmos_ai_session_digest', JSON.stringify(window.aiSessionDigest.slice(-30)));
     } catch(ePersist) { /* تجاهل أي خطأ (مساحة التخزين ممتلئة مثلاً) */ }
     // ── مزامنة الذاكرة مع حساب المستخدم في Firestore كل ٢٠ ثانية على الأكتر، عشان الذاكرة تفضل
     // مربوطة بالحساب مش بالجهاز بس — من غير ما نضرب Firestore بكتابة كل ٤ ثواني ──
@@ -13650,7 +13650,13 @@ function slStopAllAnimations() {
       // ══════════════════════════════════════════════════════════════════
       var _tempMemoryDigestBlock = '';
       try {
-        if (window.aiSessionDigest && window.aiSessionDigest.length > histLimit) {
+        // ── الشرط القديم كان بيقارن طول الملخص (سقفه 12) بـ histLimit (لحد 26)، يعني
+        // عمليًا الشرط ده كان بيفشل غالبًا وملخص المواضيع القديمة كان بيتقطع من غير ما
+        // يوصل للموديل خالص — فلو المستخدم رجع لموضوع اتكلم فيه بدري في نفس الجلسة، الموديل
+        // كان بيقول "مش فاكر" رغم إن الملخص موجود فعليًا في aiSessionDigest. الصح إننا نبعت
+        // الملخص كل ما يكون فيه مواضيع خارج النافذة المرئية الحالية (يعني كل المحادثة أطول
+        // من اللي فعليًا بيتبعت للموديل)، مش نقارنه بطول الملخص نفسه ──
+        if (window.aiSessionDigest && window.aiSessionDigest.length && window.aiChatHistory.length > histLimit) {
           var _digestList = window.aiSessionDigest.map(function(d, di){ return (di+1)+'. '+d; }).join('\n');
           _tempMemoryDigestBlock = '\n\n--- ملخص مؤقت لسياق المحادثة الحالية (كل النقاط اللي اتكلم فيها المستخدم من بداية الجلسة) ---\n' + _digestList + '\n---\nاستخدم الملخص ده عشان تفهم السياق العام للمحادثة، حتى لو الرسائل القديمة مش ظاهرة كاملة قدامك دلوقتي.';
         }
@@ -14431,7 +14437,7 @@ function slStopAllAnimations() {
         try {
           window.aiSessionDigest = window.aiSessionDigest || [];
           window.aiSessionDigest.push(String(userMsg).slice(0, 100));
-          if (window.aiSessionDigest.length > 12) window.aiSessionDigest.splice(0, window.aiSessionDigest.length - 12);
+          if (window.aiSessionDigest.length > 30) window.aiSessionDigest.splice(0, window.aiSessionDigest.length - 30);
         } catch(eDigestPush) { /* تجاهل أي خطأ */ }
 
         // ── Show AI bubble ──
@@ -16936,17 +16942,20 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
   // ── تشغيل تسلسلي: قائمة سور بالترتيب اللي اتبعت بيه، بسرعة تشغيل اختيارية،
   // وبمجرد ما سورة تخلص بيتشغل اللي بعدها أوتوماتيك لحد ما القائمة تخلص ──
   function playSurahQueue(surahList, reciter, speed) {
-    if (!surahList || !surahList.length) return;
+    if (!surahList || !surahList.length) return Promise.resolve(false);
     stopQuran();
     _quranQueue = surahList.slice();
     _quranQueueIdx = 0;
     _quranQueueReciter = reciter;
     _quranQueueSpeed = (speed && speed > 0.25 && speed < 4) ? speed : 1;
-    _playQuranQueueItem();
+    return _playQuranQueueItem();
   }
 
+  // ── بترجع Promise<boolean>: true لو الصوت فعلاً بدأ التشغيل، false لو المتصفح
+  // منع الـ autoplay (أو أي خطأ تاني) — عشان الأداة متقولش للموديل "تم التشغيل"
+  // وهي في الحقيقة مفيش صوت طلع خالص (ده كان بيخلي فلك يكدب على المستخدم). ──
   function _playQuranQueueItem() {
-    if (_quranQueueIdx >= _quranQueue.length) { stopQuran(); return; }
+    if (_quranQueueIdx >= _quranQueue.length) { stopQuran(); return Promise.resolve(false); }
     var item = _quranQueue[_quranQueueIdx];
     var reciter = _quranQueueReciter;
     var url = "https://cdn.islamic.network/quran/audio-surah/128/" + reciter.id + "/" + item.id + ".mp3";
@@ -16972,8 +16981,11 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
       if (typeof showToast === "function") showToast("⚠️ تعذّر تشغيل السورة بصوت هذا القارئ، جرّب قارئ تاني");
       stopQuran();
     };
-    _audioEl.play().catch(function () {
+    return _audioEl.play().then(function () {
+      return true;
+    }).catch(function () {
       if (typeof showToast === "function") showToast("⚠️ المتصفح منع التشغيل التلقائي، اكتب أي رسالة تانية في الشات (حتى لو كلمة بسيطة) وبعدها جرّب تطلب التشغيل تاني");
+      return false;
     });
   }
 
@@ -17265,9 +17277,18 @@ document.addEventListener('userLoggedIn', () => setTimeout(loadUserToolsFromFire
         var reciter = (args.reciter_name && findReciter(args.reciter_name)) || reciterById(s.reciter || DEFAULT_RECITER);
         var speedArg = parseFloat(args.speed);
         var playSpeed = (!isNaN(speedArg) && speedArg > 0.25 && speedArg < 4) ? speedArg : 1;
-        playSurahQueue(resolvedSurahs, reciter, playSpeed);
         var namesList = resolvedSurahs.map(function (sr) { return sr.name; }).join("، ثم ");
-        return { success: true, detail: "بتشغّل " + (resolvedSurahs.length > 1 ? "السور بالترتيب: " : "سورة ") + namesList + " بصوت " + reciter.name + (playSpeed !== 1 ? " بسرعة " + playSpeed + "x" : "") };
+        // ── لازم ننتظر تأكيد إن الصوت فعلاً بدأ (مش بس نبدأ التشغيل ونرجّع success
+        // على طول)، عشان الموديل ميقولش للمستخدم "تم التشغيل، استمتع بالتلاوة" وهو
+        // في الحقيقة المتصفح منع التشغيل التلقائي ومفيش صوت طلع خالص ──
+        var didPlay = await playSurahQueue(resolvedSurahs, reciter, playSpeed);
+        if (!didPlay) {
+          return {
+            success: false,
+            error: "حاولت أشغّل " + (resolvedSurahs.length > 1 ? "السور: " : "سورة ") + namesList + " لكن المتصفح منع التشغيل التلقائي هذه المرة. قول للمستخدم بصراحة إن التشغيل ماحصلش فعليًا، واطلب منه يكتب أي رسالة بسيطة تانية في الشات وبعدها يجرب يطلب التشغيل تاني — ممنوع تقوله 'تم التشغيل' أو 'استمتع بالتلاوة' في الحالة دي."
+          };
+        }
+        return { success: true, detail: "بدأ فعليًا تشغيل " + (resolvedSurahs.length > 1 ? "السور بالترتيب: " : "سورة ") + namesList + " بصوت " + reciter.name + (playSpeed !== 1 ? " بسرعة " + playSpeed + "x" : "") };
 
       case "stop_quran":
         stopQuran();
